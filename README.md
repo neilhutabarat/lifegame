@@ -1,6 +1,6 @@
 # Juragan Rental PS 2002
 
-Game simulasi bisnis rental konsol PlayStation & Xbox dan warung camilan mulai tahun 2002. Mainkan sebagai orang tua sejak anak lahir (usia 0 tahun) dengan modal 10 unit PS1, kelola keuangan keluarga, konsumsi harian, dan nafkah suami, lalu wariskan bisnisnya ke anak saat berusia 12 tahun di tahun 2014.
+Game simulasi bisnis rental konsol PlayStation & Xbox dan warung camilan mulai tahun 2002. Mainkan sebagai Ibu (Chinese) & Suami/Ayah (Batak, tukang ojek) sejak anak perempuan mereka lahir (usia 0 tahun) dengan modal 10 unit PS1, lalu wariskan bisnisnya ke sang anak perempuan (blasteran Batak-Chinese) saat berusia 12 tahun di tahun 2014.
 
 ## Isi repo
 - `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)

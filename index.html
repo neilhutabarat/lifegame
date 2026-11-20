@@ -3,18 +3,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Juragan Rental PS 2002</title>
 <style>
-:root{--bg:#f4f1ea;--sf:#fff;--tx:#1d1d1b;--mt:#6b6a63;--bd:#dcd8cc;--ac:#0f766e;--ok:#15803d;--wr:#b45309;--bad:#b91c1c;color-scheme:light}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;color-scheme:dark}
+:root{--bg:#f4f1ea;--sf:#fff;--tx:#1d1d1b;--mt:#6b6a63;--bd:#dcd8cc;--ac:#0f766e;--ok:#15803d;--wr:#b45309;--bad:#b91c1c;--pk:#db2777;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;--pk:#f472b6;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;--pk:#f472b6;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:13.5px/1.36 system-ui,-apple-system,Segoe UI,sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-.top{background:var(--sf);border-bottom:1px solid var(--bd);padding:6px 12px;flex-shrink:0}
+body{margin:0;background:var(--bg);color:var(--tx);font:13.5px/1.38 system-ui,-apple-system,Segoe UI,sans-serif}
+.top{position:sticky;top:0;z-index:6;background:var(--sf);border-bottom:1px solid var(--bd);padding:6px 12px}
 .r{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
 .r b{font-size:16px}.mt,.lg{color:var(--mt)}.lg{font-size:11.5px}
 .bar{height:6px;background:var(--bd);border-radius:4px;overflow:hidden;margin-top:4px}
-.bar i{display:block;height:100%;background:var(--ac);transition:width .15s}
+.bar i{display:block;height:100%;background:var(--ac)}
 .chip{padding:1px 7px;border-radius:99px;border:1px solid var(--bd);font-size:11px;font-weight:600}
-.ctlbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:5px 12px;flex-shrink:0;border-bottom:1px solid var(--bd);background:var(--bg)}
+.ctlbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid var(--bd);background:var(--bg)}
 .ctl{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 button,input{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:4px 8px}
 button{cursor:pointer}button.on{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
@@ -22,29 +22,28 @@ button:disabled{opacity:.4;cursor:default}
 button.sm{padding:2.5px 6.5px;font-size:11.5px;border-radius:6px}
 button.bad{border-color:var(--bad);color:var(--bad)}
 input{width:76px;padding:3px 6px}
-main{flex:1;min-height:0;padding:8px 12px;display:grid;gap:12px;grid-template-columns:1fr;max-width:1320px;width:100%;margin:auto;overflow:hidden}
+main{padding:8px 12px 24px;display:grid;gap:12px;grid-template-columns:1fr;max-width:1320px;margin:auto;align-items:start}
 @media(min-width:860px){main{grid-template-columns:1.05fr 1fr}}
-main>section{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.shd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-shrink:0}
-h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt);margin:0}
-.subh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mt);margin:7px 0 3px;font-weight:700}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px;align-content:start}
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt);margin:0 0 6px}
+.subh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mt);margin:8px 0 4px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(162px,1fr));gap:6px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;min-height:84px}
 .card.p{border-color:var(--ac)}.card.d{border-color:var(--wr)}.card.brk{border-color:var(--bad)}
 .upbox{margin-top:3px;padding-top:4px;border-top:1px dashed var(--bd);display:flex;flex-direction:column;gap:3px}
-.row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:4.5px 0;border-bottom:1px solid var(--bd)}
+.row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd)}
 .row:last-child{border:0}
 .box{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:6px 8px;margin-bottom:6px}
-.tabs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;flex-shrink:0}.tabs button{padding:3.5px 8px;font-size:12px}
-.subtabs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;flex-shrink:0}
-.pane{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.tabs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px}.tabs button{padding:3.5px 8px;font-size:12px}
+.subtabs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;margin:5px 0}
 .cal div{padding:3px 2px;border-radius:5px;font-size:11.5px;border:1px solid transparent}
 .cal .ch{font-weight:700;color:var(--mt)}
 .cal .hol{color:var(--bad);font-weight:700}
 .cal .tod{border-color:var(--ac);background:var(--ac);color:var(--bg);font-weight:700}
-.pgnav{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--mt)}
-@media(max-width:859px){body{height:auto;overflow:auto}main{overflow:visible}main>section{overflow:visible}.pane{overflow:visible}}
+.fam{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:6px;margin-bottom:7px}
+.avcard{background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:6px;display:flex;align-items:center;gap:7px}
+.avcard.main{border-color:var(--pk)}
+.avsvg{width:54px;height:62px;flex-shrink:0}
 </style></head><body>
 <div id="hd" class="top"></div>
 <div class="ctlbar">
@@ -52,15 +51,15 @@ h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt
   <div id="auth" class="ctl"><span class="lg" id="authmsg">Simpanan: lokal</span><button id="login" class="sm" hidden>Masuk Google</button><button id="cloudsave" class="sm" hidden>Simpan Cloud</button><button id="logout" class="sm" hidden>Keluar</button></div>
 </div>
 <main>
-  <section><div class="shd"><h2>Ruang Rental PS & Xbox</h2><div id="stpg" class="pgnav"></div></div><div id="sts" class="grid"></div></section>
-  <section><div id="tb" class="tabs"></div><div id="side" class="pane"></div></section>
+  <section><div id="fam" class="fam"></div><h2>Ruang Rental PS & Xbox</h2><div id="sts" class="grid"></div></section>
+  <section><div id="tb" class="tabs"></div><div id="side"></div></section>
 </main>
 <script>
 const $=s=>document.querySelector(s);
 const fmt=n=>(n<0?'-':'')+'Rp '+Math.abs(Math.round(n)).toLocaleString('id-ID');
 const put=(e,h)=>{if(e._h!==h){e._h=h;e.innerHTML=h}};
 
-const START_YEAR=2002; // Mulai awal 2002 (Usia anak 0 thn -> 2014 usia 12 thn diwariskan!)
+const START_YEAR=2002; // 2002: anak lahir (0 thn), 2014: usia 12 thn bisnis diwariskan ke anak perempuan
 
 const K={
   ps1:{n:'PS1',r:1500,p:450000,yr:2002,pf:'ps1',w:20,pt:'stik_ps1',next:'ps2',up:950000},
@@ -80,21 +79,13 @@ const TV=[
   {n:'LED 43" FHD',p:5800000,yr:2014,w:85,q:.09},
   {n:'Smart TV 4K 55"',p:8500000,yr:2019,w:110,q:.12}
 ];
-const UPLV=[
-  {n:'Standar',p:0,m:1},
-  {n:'Lv 1 (Stik Ori & Karpet Tebal)',p:400000,m:1.15},
-  {n:'Lv 2 (Kipas Angin & Bantal Duduk)',p:850000,m:1.30},
-  {n:'Lv 3 (VIP Sofa & AC)',p:1700000,m:1.45}
-];
 const GM=[
-  // PS1 (2002+)
   {id:'we02',pf:'ps1',yr:2002,n:'Winning Eleven 2002 PS1 (Ori)',p:150000},
   {id:'ctr',pf:'ps1',yr:2002,n:'Crash Team Racing PS1 (Ori)',p:150000},
   {id:'tk3',pf:'ps1',yr:2002,n:'Tekken 3 PS1 (Ori)',p:180000},
   {id:'hmbtn',pf:'ps1',yr:2002,n:'Harvest Moon: Back to Nature (Ori)',p:180000},
   {id:'vig8',pf:'ps1',yr:2002,n:'Vigilante 8: 2nd Offense (Ori)',p:150000},
   {id:'pepsi',pf:'ps1',yr:2002,n:'Pepsiman PS1 (Ori)',p:140000},
-  // PS2 (2002+)
   {id:'gta3',pf:'ps2',yr:2002,n:'GTA III PS2 (Ori)',p:350000},
   {id:'gtavc',pf:'ps2',yr:2002,n:'GTA Vice City PS2 (Ori)',p:380000},
   {id:'we7',pf:'ps2',yr:2003,n:'Winning Eleven 7 PS2 (Ori)',p:350000},
@@ -103,36 +94,29 @@ const GM=[
   {id:'gow2',pf:'ps2',yr:2007,n:'God of War II PS2 (Ori)',p:400000},
   {id:'naruto',pf:'ps2',yr:2007,n:'Naruto Ultimate Ninja 3 PS2 (Ori)',p:350000},
   {id:'downhill',pf:'ps2',yr:2003,n:'Downhill Domination PS2 (Ori)',p:320000},
-  // PS3 (2007+)
   {id:'pesps3',pf:'ps3',yr:2007,n:'PES 2008 PS3 Blu-ray (Ori)',p:550000},
   {id:'gta4ps3',pf:'ps3',yr:2008,n:'GTA IV PS3 Blu-ray (Ori)',p:600000},
   {id:'mgs4',pf:'ps3',yr:2008,n:'Metal Gear Solid 4 PS3 (Ori)',p:600000},
   {id:'gow3',pf:'ps3',yr:2010,n:'God of War III PS3 (Ori)',p:600000},
   {id:'tlou',pf:'ps3',yr:2013,n:'The Last of Us PS3 (Ori)',p:650000},
   {id:'gtavps3',pf:'ps3',yr:2013,n:'GTA V PS3 (Ori)',p:680000},
-  // PS4 (2013+)
   {id:'fifa14ps4',pf:'ps4',yr:2013,n:'FIFA 14 PS4 (Ori)',p:650000},
   {id:'pes15ps4',pf:'ps4',yr:2014,n:'PES 2015 PS4 (Ori)',p:650000},
   {id:'uc4',pf:'ps4',yr:2016,n:'Uncharted 4 PS4 (Ori)',p:700000},
   {id:'gowps4',pf:'ps4',yr:2018,n:'God of War PS4 (Ori)',p:730000},
   {id:'spidey4',pf:'ps4',yr:2018,n:"Marvel's Spider-Man PS4 (Ori)",p:730000},
-  // PS5 (2020+)
   {id:'miles5',pf:'ps5',yr:2020,n:'Spider-Man: Miles Morales PS5 (Ori)',p:730000},
   {id:'gowr5',pf:'ps5',yr:2022,n:'God of War Ragnarok PS5 (Ori)',p:980000},
   {id:'fc24ps5',pf:'ps5',yr:2023,n:'EA Sports FC 24 PS5 (Ori)',p:1000000},
   {id:'gta6ps5',pf:'ps5',yr:2026,n:'Grand Theft Auto VI PS5 (Ori)',p:1150000},
-  // Xbox Original (2002+)
   {id:'halo1',pf:'xb1',yr:2002,n:'Halo: Combat Evolved Xbox (Ori)',p:300000},
   {id:'halo2',pf:'xb1',yr:2004,n:'Halo 2 Xbox (Ori)',p:350000},
   {id:'fable',pf:'xb1',yr:2004,n:'Fable Xbox (Ori)',p:320000},
-  // Xbox 360 (2006+)
   {id:'gow1x',pf:'xb360',yr:2006,n:'Gears of War Xbox 360 (Ori)',p:520000},
   {id:'halo3',pf:'xb360',yr:2007,n:'Halo 3 Xbox 360 (Ori)',p:520000},
   {id:'rdrx',pf:'xb360',yr:2010,n:'Red Dead Redemption Xbox 360 (Ori)',p:580000},
-  // Xbox One (2013+)
   {id:'fm5',pf:'xbone',yr:2013,n:'Forza Motorsport 5 Xbox One (Ori)',p:650000},
   {id:'fh4',pf:'xbone',yr:2018,n:'Forza Horizon 4 Xbox One (Ori)',p:750000},
-  // Xbox Series X (2020+)
   {id:'fh5',pf:'xbsx',yr:2021,n:'Forza Horizon 5 Xbox Series X (Ori)',p:850000},
   {id:'starf',pf:'xbsx',yr:2023,n:'Starfield Xbox Series X (Ori)',p:950000}
 ];
@@ -156,19 +140,35 @@ const I=[
   {id:'chitato',n:'Chitato',p:3500,c:2600,w:2}
 ];
 const EQ={kom:['Kompor gas',220000],kul:['Kulkas',1600000]};
+
+// Motor & Mobil (Pribadi, Ojek Suami, Rental Kendaraan, Angkutan/Travel)
+const VEH=[
+  {id:'supra',n:'Honda Supra X 100',yr:2002,p:11500000,role:'ojek',incDay:22000,maint:150000,stam:.04},
+  {id:'rxking',n:'Yamaha RX-King',yr:2002,p:13500000,role:'ojek',incDay:28000,maint:180000,stam:.04},
+  {id:'vixion',n:'Yamaha V-Ixion (Ojek/Ojol)',yr:2008,p:19500000,role:'ojek',incDay:45000,maint:250000,stam:.05},
+  {id:'nmax',n:'Yamaha NMAX 155 (Maxim/Gojek)',yr:2015,p:25000000,role:'ojek',incDay:68000,maint:320000,stam:.06},
+  {id:'beat_r',n:'Honda BeAT (Rental Motor)',yr:2009,p:12500000,role:'rental',incDay:45000,maint:220000,stam:0},
+  {id:'carry',n:'Suzuki Carry Angkot',yr:2002,p:58000000,role:'angkut',incDay:95000,maint:650000,stam:0},
+  {id:'l300',n:'Mitsubishi L300 Travel',yr:2005,p:115000000,role:'angkut',incDay:165000,maint:1100000,stam:0},
+  {id:'avanza_r',n:'Toyota Avanza (Rental Mobil)',yr:2004,p:105000000,role:'rental',incDay:185000,maint:950000,stam:.08},
+  {id:'innova_r',n:'Toyota Kijang Innova (Rental/Travel)',yr:2005,p:165000000,role:'rental',incDay:260000,maint:1350000,stam:.10},
+  {id:'hiace',n:'Toyota HiAce Commuter (Travel)',yr:2013,p:385000000,role:'angkut',incDay:480000,maint:2500000,stam:0}
+];
+
+// Kontrakan, Kos, & Properti Sewa
+const PROP=[
+  {id:'petak2',n:'Kontrakan 2 Pintu',p:45000000,rentMo:750000,maint:100000},
+  {id:'kos6',n:'Rumah Kos 6 Kamar',p:110000000,rentMo:2100000,maint:250000},
+  {id:'petak6',n:'Kontrakan 6 Pintu',p:160000000,rentMo:3200000,maint:350000},
+  {id:'ruko_sewa',n:'Ruko Komersial Disewakan',p:340000000,rentMo:7500000,maint:600000},
+  {id:'apt_mini',n:'Kost Eksklusif & Minimarket',p:680000000,rentMo:16500000,maint:1200000}
+];
+
 const V=[
   {id:'pulsa',n:'Counter pulsa & voucher HP',p:25e6,a:1.4e6,b:2.8e6,u:4e5},
   {id:'fc',n:'Fotokopi dan ATK',p:40e6,a:1.8e6,b:3.6e6,u:7e5},
   {id:'laundry',n:'Laundry kiloan',p:38e6,a:2.2e6,b:4.2e6,u:9e5},
-  {id:'wm',n:'Warung makan',p:55e6,a:2.8e6,b:5.5e6,u:1.3e6},
-  {id:'toko',n:'Toko kelontong',p:75e6,a:3.6e6,b:7.2e6,u:1.8e6},
-  {id:'bengkel',n:'Bengkel motor (jasa servis)',p:110e6,a:4.5e6,b:9e6,u:2e6}
-];
-const AS=[
-  {id:'hp',n:'Nokia 3310 / 6300',p:1.8e6,r:.03},
-  {id:'mtr',n:'Honda Supra X',p:12.5e6,r:.05},
-  {id:'avz',n:'Toyota Avanza',p:115e6,r:.1},
-  {id:'jazz',n:'Honda Jazz',p:175e6,r:.12}
+  {id:'wm',n:'Warung makan',p:55e6,a:2.8e6,b:5.5e6,u:1.3e6}
 ];
 const BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
@@ -208,16 +208,15 @@ const HOL={
   '2025-1-27':'Isra Miraj','2025-1-29':'Imlek','2025-3-29':'Nyepi','2025-3-31':'Idul Fitri','2025-4-1':'Idul Fitri','2025-4-18':'Wafat Isa Almasih','2025-5-12':'Waisak','2025-5-29':'Kenaikan Isa Almasih','2025-6-6':'Idul Adha','2025-6-27':'Tahun Baru Islam','2025-9-5':'Maulid Nabi',
   '2026-1-16':'Isra Miraj','2026-2-17':'Imlek','2026-3-19':'Nyepi','2026-3-21':'Idul Fitri','2026-3-22':'Idul Fitri','2026-4-3':'Wafat Isa Almasih','2026-5-14':'Kenaikan Isa Almasih','2026-5-27':'Idul Adha','2026-5-31':'Waisak','2026-6-16':'Tahun Baru Islam','2026-8-25':'Maulid Nabi'
 };
-// Inflasi 2002..2026+
 const INF=[10.03,5.06,6.4,17.11,6.6,6.59,11.06,2.78,6.96,3.79,4.3,8.38,8.36,3.35,3.02,3.61,3.13,2.72,1.68,1.87,5.51,2.61,1.57,2.9,2.8];
-const KEY='rental_ps_2002_warisan_v1';
-let S,rc=0,editIdx=-1,stPage=0,subTab='',subPage=0;
+const KEY='rental_ps_2002_batak_chinese_v1';
+let S,rc=0,editIdx=-1,subTab='';
 
 const day=()=>Math.floor(S.T/1440);
 const curDate=()=>new Date(START_YEAR,0,1+day());
 const curYear=()=>curDate().getFullYear();
-const kidAge=()=>curYear()-START_YEAR; // 2002 = usia 0, 2014 = usia 12 (diwariskan ke aku!)
-const isInherited=()=>kidAge()>=12;    // true mulai tahun 2014 (usia 12)
+const kidAge=()=>curYear()-START_YEAR;
+const isInherited=()=>kidAge()>=12;
 const clock=()=>String(Math.floor(S.T/60)%24).padStart(2,'0')+':'+String(S.T%60).padStart(2,'0');
 
 function holName(y,m,d){
@@ -231,7 +230,6 @@ function holName(y,m,d){
 const isHol=dt=>{const d=dt||curDate();return d.getDay()===0||!!holName(d.getFullYear(),d.getMonth(),d.getDate())};
 function schoolEnd(dt){
   const d=dt||curDate(),dow=d.getDay();
-  // Setelah diwariskan (usia 12..17 tahun) ada jadwal sekolah; usia 18+ lulus; sebelum 2014 main sebagai orang tua (tidak sekolah)
   if(!isInherited()||kidAge()>=18||isHol(d))return 0;
   return dow===5?12:dow===6?13:14;
 }
@@ -278,44 +276,110 @@ function taxInfo(omzetBulan){
   return {rate:.005,amt:Math.round(kena*.005),lbl:'UU HPP 0,5%'};
 }
 
-// Konsumsi Harian Keluarga (naik sesuai inflasi & usia anak)
+// Avatar SVG Statis & Cantik (Ibu Chinese, Ayah Batak, Anak Perempuan Blasteran Batak-Chinese)
+function avatarSVG(role,opts={}){
+  const {mood='happy',preg=false,rain=false,school=false,affair=false,age=25,helm=false}=opts;
+  // Kulit & Rambut
+  const skin=role==='mom'?'#ffe4d6':role==='dad'?'#e6b696':'#f9d6c1';
+  const blush=role!=='dad'?'<ellipse cx="18" cy="36" rx="3.2" ry="1.8" fill="#fb7185" opacity=".45"/><ellipse cx="36" cy="36" rx="3.2" ry="1.8" fill="#fb7185" opacity=".45"/>':'';
+  const hair=role==='dad'?'#1f1d1b':'#181514';
+
+  // Gaya Rambut & Aksesori
+  let backHair='',frontHair='',outfit='';
+  if(role==='mom'){
+    // Ibu Chinese: rambut panjang lurus belah samping + jepit rambut jade/merah
+    backHair=`<path d="M12 24 C10 42, 11 54, 15 58 L39 58 C43 54, 44 42, 42 24 Z" fill="${hair}"/>`;
+    frontHair=`<path d="M13 24 C14 11, 40 11, 41 24 C36 16, 26 17, 19 22 C16 24, 14 26, 13 24 Z" fill="${hair}"/><circle cx="37" cy="18" r="2.2" fill="#e11d48"/>`;
+    outfit=preg
+      ?`<path d="M13 46 Q27 43 41 46 L45 62 L9 62 Z" fill="#f43f5e"/><ellipse cx="27" cy="55" rx="9" ry="6" fill="#fda4af" opacity=".6"/>`
+      :`<path d="M14 46 Q27 43 40 46 L43 62 L11 62 Z" fill="#0d9488"/>`;
+  }else if(role==='dad'){
+    // Suami Batak: alis tegas, rambut cepak, jaket ojek hijau/hitam
+    frontHair=`<path d="M13 24 C13 11, 41 11, 41 24 C38 16, 16 16, 13 24 Z" fill="${hair}"/>`;
+    if(helm)frontHair+=`<path d="M11 22 C11 8, 43 8, 43 22 Z" fill="#15803d"/><rect x="13" y="19" width="28" height="4" rx="2" fill="#38bdf8" opacity=".7"/>`;
+    outfit=`<path d="M12 46 Q27 43 42 46 L45 62 L9 62 Z" fill="#166534"/><path d="M24 45 L27 62 L30 45 Z" fill="#1e293b"/>`;
+  }else{
+    // Anak Perempuan Blasteran Batak-Chinese (tumbuh dari bayi -> anak SD -> gadis cantik)
+    if(age<4){
+      backHair=`<circle cx="14" cy="20" r="4.5" fill="${hair}"/><circle cx="40" cy="20" r="4.5" fill="${hair}"/>`;
+      frontHair=`<path d="M14 24 C15 12, 39 12, 40 24 C34 17, 20 17, 14 24 Z" fill="${hair}"/>`;
+      outfit=`<path d="M15 47 Q27 44 39 47 L42 62 L12 62 Z" fill="#f472b6"/>`;
+    }else if(age<18){
+      backHair=`<path d="M11 24 C9 42, 11 55, 15 60 L39 60 C43 55, 45 42, 43 24 Z" fill="${hair}"/>`;
+      frontHair=`<path d="M13 24 C14 11, 40 11, 41 24 C35 17, 25 18, 19 22 Z" fill="${hair}"/><circle cx="16" cy="18" r="2" fill="#f472b6"/><circle cx="38" cy="18" r="2" fill="#f472b6"/>`;
+      outfit=school
+        ?`<path d="M14 46 Q27 43 40 46 L43 62 L11 62 Z" fill="#fff"/><path d="M19 46 L27 56 L35 46 L38 62 L16 62 Z" fill="#1d4ed8"/>`
+        :`<path d="M14 46 Q27 43 40 46 L43 62 L11 62 Z" fill="#ec4899"/>`;
+    }else{
+      backHair=`<path d="M10 24 C8 44, 10 57, 15 61 L39 61 C44 57, 46 44, 44 24 Z" fill="${hair}"/>`;
+      frontHair=`<path d="M13 24 C14 11, 40 11, 41 24 C35 16, 26 17, 19 22 Z" fill="${hair}"/><path d="M36 16 L40 19 L36 20 Z" fill="#fbbf24"/>`;
+      outfit=preg
+        ?`<path d="M13 46 Q27 43 41 46 L45 62 L9 62 Z" fill="#e11d48"/><ellipse cx="27" cy="55" rx="9" ry="6" fill="#fda4af" opacity=".6"/>`
+        :`<path d="M14 46 Q27 43 40 46 L43 62 L11 62 Z" fill="#db2777"/>`;
+    }
+  }
+
+  // Mata & Mulut sesuai ekspresi
+  let eyes='',mouth='';
+  if(mood==='sad'){
+    eyes=`<path d="M18 30 Q21 32 24 30" stroke="#1d1d1b" stroke-width="1.6" fill="none"/><path d="M30 30 Q33 32 36 30" stroke="#1d1d1b" stroke-width="1.6" fill="none"/>`;
+    mouth=`<path d="M23 41 Q27 38 31 41" stroke="#b91c1c" stroke-width="1.6" fill="none"/>`;
+  }else if(mood==='tired'){
+    eyes=`<line x1="18" y1="30" x2="24" y2="30" stroke="#1d1d1b" stroke-width="1.6"/><line x1="30" y1="30" x2="36" y2="30" stroke="#1d1d1b" stroke-width="1.6"/>`;
+    mouth=`<circle cx="27" cy="40" r="2.2" fill="#9f1239"/>`;
+  }else{
+    eyes=role==='dad'
+      ?`<circle cx="21" cy="30" r="1.8" fill="#1d1d1b"/><circle cx="33" cy="30" r="1.8" fill="#1d1d1b"/><path d="M17 26 L24 27" stroke="#1d1d1b" stroke-width="1.8"/><path d="M30 27 L37 26" stroke="#1d1d1b" stroke-width="1.8"/>`
+      :`<ellipse cx="21" cy="30" rx="1.7" ry="2" fill="#1d1d1b"/><ellipse cx="33" cy="30" rx="1.7" ry="2" fill="#1d1d1b"/><circle cx="21.5" cy="29.3" r=".6" fill="#fff"/><circle cx="33.5" cy="29.3" r=".6" fill="#fff"/>`;
+    mouth=`<path d="M23 39 Q27 42.5 31 39" stroke="#be123c" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+  }
+
+  const badge=affair?'💔':preg?'🤰':rain?'🌧️':school?'🎒':'';
+  return `<svg viewBox="0 0 54 62" class="avsvg">
+    <rect width="54" height="62" rx="9" fill="var(--bg)"/>
+    ${backHair}${outfit}
+    <rect x="23" y="41" width="8" height="6" rx="2" fill="${skin}"/>
+    <ellipse cx="27" cy="30" rx="13" ry="14.5" fill="${skin}"/>
+    ${blush}${eyes}${mouth}${frontHair}
+    ${badge?`<text x="38" y="13" font-size="11">${badge}</text>`:''}
+  </svg>`;
+}
+
 function dailyFoodCost(){
   const ka=kidAge();
-  const base=!isInherited()?(25000+ka*1500):(ka<18?15000:35000);
+  const base=!isInherited()?(24000+ka*1200):(ka<18?15000:32000);
   return P(base);
 }
-function monthlyLivingCost(){
+function monthlyUtilityCost(){
   const ka=kidAge();
-  if(!isInherited()){
-    // Era orang tua (2002-2013): biaya listrik/air rumah + kebutuhan bayi/anak sekolah
-    return P(450000+ka*65000+(S.kb?35000:0));
-  }
-  // Era anak mengelola (2014+): usia 12-17 masih ikut ortu (biaya ringan), usia 18+ mandiri penuh
-  if(ka<18)return P(250000);
-  return P(1400000+(S.mar?500000:0)+(S.kids||0)*900000+(S.kb?50000:0));
+  return P(350000+ka*45000+(S.kb?35000:0)+(S.bpjs?75000:0));
 }
 
 function fresh(){
   const pr={};Object.keys(K).forEach(k=>pr[k]=K[k].r);I.forEach(i=>pr[i.id]=i.p);
-  // Modal awal 10 unit PS1 + TV Tabung 14", 2 game ori PS1, 5 stik PS1 cadangan, token listrik 150 kWh, modal kas Rp 3 juta + tabungan Rp 7 juta
+  // Modal awal 10 unit PS1 + TV Tabung 14", 2 game ori PS1, 5 stik PS1, token 150 kWh, kas Rp 3 jt + tabungan Rp 7 jt
   const st=[];
-  for(let i=0;i<10;i++)st.push({k:'ps1',tv:0,lv:0,brk:false,c:null});
+  for(let i=0;i<10;i++)st.push({k:'ps1',tv:0,brk:false,c:null});
   S={
     m:3000000,b:7000000,T:480,stam:100,rr:3.2,open:true,faint:false,st,
     stock:Object.fromEntries(I.map(i=>[i.id,0])),sup:{gas:0,gal:0},eq:{},
     games:{we02:1,ctr:1},parts:{stik_ps1:5,stik_ps2:0,stik_ps3:0,stik_ps4:0,stik_ps5:0,stik_xb:0,stik_xb360:0,stik_xbone:0},
-    q:[],kwh:150,out:0,gen:false,
+    q:[],kwh:150,out:0,gen:false,wx:'cerah',
     cap:15,rent:0,emps:[],empSeq:1,
-    husband:{n:'Suami (Ayah)',sal:2200000,jl:0},
+    // Keluarga awal (2002): Ibu (Chinese), Suami Batak (tukang ojek), Anak Perempuan blasteran Batak-Chinese (usia 0 thn)
+    mom:{n:'Mei Ling (Ibu)',love:85,preg:0,affair:null,affairPreg:0,secretKid:0},
+    dad:{n:'Poltak Siregar (Suami)',baseOjek:75000,cheating:false},
+    kidName:'Tiara Siregar (Anak)',
     handedOver:false,
-    dep:[],ln:null,propLn:null,v:{},as:{},pt:null,mar:0,kids:0,preg:0,kb:0,busy:0,jp:0,
+    vehs:{},props:{},izin:false,bpjs:false,arisan:0,
+    dep:[],ln:null,propLn:null,v:{},pt:null,mar:0,kids:0,preg:0,kb:0,busy:0,jp:0,
     hist:[],rec:[],cm:0,hm:0,hv:'p',mute:false,dt:-9999,
     bC:0,bI:0,spd:1,pause:false,tab:'un',pr,cf:-999,
     log:[
-      '1 Jan 2002 (Usia anak 0 thn). Kamu bermain sebagai Orang Tua mengelola modal 10 unit PS1 + TV Tabung!',
-      'Nafkah 80% gaji suami masuk tiap akhir bulan, dan ada konsumsi harian keluarga. Tahun 2014 (usia 12) rental ini diwariskan ke kamu!'
+      '1 Jan 2002 (Usia anak 0 thn). Ibu (Mei Ling) & Ayah (Poltak Siregar, tukang ojek) memulai bisnis modal 10 PS1.',
+      'Suami setor 80% hasil ngojek tiap hari (20% untuk bensin/makan di jalan). Tahun 2014 (usia 12) rental diwariskan ke Tiara!'
     ],
-    inc:0,exp:0,yrInc:0,moFood:0,moNafkah:0
+    inc:0,exp:0,yrInc:0,moFood:0,moOjek:0
   };
 }
 function migrate(o){
@@ -325,12 +389,20 @@ function migrate(o){
   if(!Array.isArray(o.emps))o.emps=[];
   if(!Array.isArray(o.dep))o.dep=[];
   if(!Array.isArray(o.rec))o.rec=[];
-  if(!o.husband)o.husband={n:'Suami (Ayah)',sal:2200000,jl:0};
+  if(!o.wx)o.wx='cerah';
+  if(!o.mom)o.mom={n:'Mei Ling (Ibu)',love:85,preg:0,affair:null,affairPreg:0,secretKid:0};
+  if(!o.dad)o.dad={n:'Poltak Siregar (Suami)',baseOjek:75000,cheating:false};
+  if(!o.kidName)o.kidName='Tiara Siregar (Anak)';
+  if(!o.vehs)o.vehs={};
+  if(!o.props)o.props={};
+  if(o.izin===undefined)o.izin=false;
+  if(o.bpjs===undefined)o.bpjs=false;
+  if(o.arisan===undefined)o.arisan=0;
   if(o.handedOver===undefined)o.handedOver=false;
   if(o.moFood===undefined)o.moFood=0;
-  if(o.moNafkah===undefined)o.moNafkah=0;
+  if(o.moOjek===undefined)o.moOjek=0;
   if(![1,4,16,64,128,256,512].includes(o.spd))o.spd=1;
-  o.st.forEach(s=>{if(s.lv===undefined)s.lv=0;if(s.brk===undefined)s.brk=false});
+  o.st.forEach(s=>{if(s.brk===undefined)s.brk=false});
   return o;
 }
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -357,18 +429,24 @@ function snd(t){
 
 const dstr=()=>{const dt=curDate();return HARI[dt.getDay()]+', '+dt.getDate()+' '+BLN[dt.getMonth()]+' '+dt.getFullYear()+' '+clock()};
 const dur=m=>Math.floor(m/60)+'j '+(m%60)+'m';
-const bill=c=>Math.round(c.r*(c.lm||1)*c.used/60/100)*100+c.o.reduce((a,i)=>a+i.p,0);
+const bill=c=>Math.round(c.r*c.used/60/100)*100+c.o.reduce((a,i)=>a+i.p,0);
 const sw=s=>K[s.k].w+(s.tv>=0?TV[s.tv].w:0);
 const rep=d=>{S.rr=Math.min(5,Math.max(1,S.rr+d))};
-const red=()=>Math.min(.3,AS.reduce((a,x)=>a+(S.as[x.id]?x.r:0),0));
-const drain=()=>3.8*(1+(S.mar?.2:0)+(S.preg?.3:0)+(S.kids||0)*.1)/(1+(empOnDuty()?1.5*activeEmps().length:0))*(1-red());
+const vehStamBonus=()=>Math.min(.3,VEH.reduce((a,v)=>a+((S.vehs[v.id]||0)>0?v.stam:0),0));
+const drain=()=>3.6*(1+(S.mom.preg||S.preg?.3:0))/(1+(empOnDuty()?1.5*activeEmps().length:0))*(1-vehStamBonus());
 const dm=k=>Math.min(1.6,Math.max(.15,1.7-.7*S.pr[k]/Py(K[k].r,K[k].yr)));
 const ownedGames=pf=>GM.filter(g=>g.pf===pf&&S.games[g.id]);
 const unitVal=s=>{
-  const c=K[s.k];let v=Py(c.p,c.yr)+(s.tv>=0?Py(TV[s.tv].p,TV[s.tv].yr):0);
-  for(let i=1;i<=(s.lv||0);i++)v+=P(UPLV[i].p);
+  const c=K[s.k];const v=Py(c.p,c.yr)+(s.tv>=0?Py(TV[s.tv].p,TV[s.tv].yr):0);
   return Math.round(v*.6);
 };
+const wxIcon=()=>S.wx==='cerah'?'☀️ Cerah':S.wx==='mendung'?'⛅ Mendung':'🌧️ Hujan';
+
+function updateWeather(){
+  const m=curDate().getMonth(),rainy=(m>=10||m<=2);
+  const r=Math.random();
+  S.wx=rainy?(r<.38?'cerah':r<.72?'mendung':'hujan'):(r<.65?'cerah':r<.88?'mendung':'hujan');
+}
 
 function order(c){
   const a=I.filter(i=>(!i.eq||S.eq[i.eq])&&S.stock[i.id]>0&&S.sup.gas>=(i.g||0)&&S.sup.gal>=(i.l||0));
@@ -387,18 +465,49 @@ function power(){
 }
 
 function dayEnd(){
-  // 1. Konsumsi Harian (dipotong setiap hari!)
+  // 1. Konsumsi Harian Keluarga
   const food=dailyFoodCost();
   spend(food);
   S.moFood=(S.moFood||0)+food;
-  if(S.spd<=64)log('Konsumsi harian: -'+fmt(food)+'.');
 
-  // 2. Karyawan (tidak ada tingkat jenuh; hanya memulihkan libur & cek sakit realistis)
+  // 2. Suami Ngojek & Setor 80% Setiap Hari (20% untuk bensin & makan suami di jalan)
+  let ojekGross=0;
+  if(!isInherited()&&S.dad){
+    let bestMotor=0;
+    VEH.filter(v=>v.role==='ojek'&&(S.vehs[v.id]||0)>0).forEach(v=>{if(v.incDay>bestMotor)bestMotor=v.incDay});
+    const base=bestMotor>0?P(bestMotor):P(S.dad.baseOjek);
+    const wxFactor=S.wx==='hujan'?0.65:S.wx==='mendung'?0.9:1.05;
+    ojekGross=Math.round(base*wxFactor*(0.85+Math.random()*0.3));
+    if(S.dad.cheating)ojekGross=Math.round(ojekGross*0.5); // suami selingkuh -> setorannya dipotong jajan selingkuhan!
+    const setor80=Math.round(ojekGross*0.80);
+    S.m+=setor80;S.moOjek=(S.moOjek||0)+setor80;
+    if(S.spd<=64)log('Suami setor ojek (80%): +'+fmt(setor80)+(S.wx==='hujan'?' (hujan tarikan sepi)':'')+'.');
+  }else if(isInherited()&&S.mar&&S.pt){
+    const base=P(S.pt.ojekDay||95000);
+    const wxFactor=S.wx==='hujan'?0.65:1.0;
+    const setor80=Math.round(base*wxFactor*0.80);
+    S.m+=setor80;S.moOjek=(S.moOjek||0)+setor80;
+  }
+
+  // 3. Pemasukan Harian Rental Motor/Mobil & Angkutan/Travel
+  let fleetDay=0;
+  VEH.forEach(v=>{
+    const cnt=S.vehs[v.id]||0;
+    if(cnt>0&&(v.role==='rental'||v.role==='angkut')){
+      fleetDay+=cnt*P(v.incDay)*(S.wx==='hujan'&&v.role==='rental'?0.8:1);
+    }
+  });
+  if(fleetDay>0){
+    const netFleet=Math.round(fleetDay*0.85);
+    S.b+=netFleet;S.inc+=netFleet;
+  }
+
+  // 4. Karyawan (tanpa tingkat jenuh)
   S.emps.forEach(e=>{
     if(e.off>0)e.off--;
     if(e.sick>0){
       e.sick--;
-      if(e.sick===0)log(e.n+' sudah sembuh dan siap kerja lagi.');
+      if(e.sick===0)log(e.n+' sudah sembuh dan kembali kerja.');
       return;
     }
     const hrs=shiftHours(e);
@@ -406,29 +515,60 @@ function dayEnd(){
     if(Math.random()<(.002+over*.003)){
       e.sick=1+Math.floor(Math.random()*2);
       log(e.n+' sakit ('+e.sick+' hari). Kamu menggantikan shift-nya.');
-      snd('warn');
     }
   });
+
+  // 5. Keharmonisan & Risiko Suami Selingkuh jika Rumah Tangga Berantakan
+  if(!isInherited()&&S.mom){
+    S.mom.love=Math.max(0,S.mom.love-(S.stam<30?2:0.5));
+    if(S.mom.love<30&&!S.dad.cheating&&Math.random()<.08){
+      S.dad.cheating=true;
+      log('⚠️ Rumah tangga berantakan! Suami ketahuan selingkuh di pangkalan ojek & setorannya berkurang!');
+      snd('warn');
+    }
+  }
 }
 
 function monthEnd(){
   let inc=0;
   const pay=n=>{if(n>0)spend(n)};
   const dt=curDate(),prev=new Date(dt.getFullYear(),dt.getMonth()-1,1);
-  const y=dt.getFullYear(),mo=(y-START_YEAR)*12+dt.getMonth();
+  const y=dt.getFullYear();
 
-  // Cek momen pewarisan bisnis di awal tahun 2014 (Usia 12 tahun!)
   if(y>=2014&&!S.handedOver){
     S.handedOver=true;
-    log('🎉 TAHUN 2014 (Usia 12 Tahun): Orang tuamu resmi mewariskan bisnis Rental PS ini kepadamu!');
+    log('🎉 TAHUN 2014 (Usia 12 Tahun): Orang tuamu mewariskan bisnis Rental PS & seluruh aset kepada '+S.kidName+'!');
     snd('month');
   }
 
-  // Biaya rutin bulanan (gaji pegawai, sewa tempat, biaya hidup)
+  // Biaya bulanan: gaji karyawan, sewa tempat, listrik/air rumah, servis kendaraan, perawatan kontrakan
   const totalGaji=S.emps.reduce((z,e)=>z+e.sal,0);
   pay(totalGaji);
   pay(P(S.rent));
-  pay(monthlyLivingCost());
+  pay(monthlyUtilityCost());
+
+  let vehMaint=0;
+  VEH.forEach(v=>{const cnt=S.vehs[v.id]||0;if(cnt>0)vehMaint+=cnt*P(v.maint)});
+  if(vehMaint>0)pay(vehMaint);
+
+  // Pemasukan & perawatan kontrakan/kos
+  let propNet=0;
+  PROP.forEach(pr=>{
+    const cnt=S.props[pr.id]||0;
+    if(cnt>0)propNet+=cnt*(P(pr.rentMo)-P(pr.maint));
+  });
+  if(propNet>0){S.b+=propNet;inc+=propNet;log('Sewa kontrakan/kos masuk: +'+fmt(propNet)+'.')}
+
+  // Arisan Kampung
+  if(S.arisan>0){
+    const iuran=P(200000);
+    pay(iuran);
+    if(Math.random()<.12){
+      const menang=P(2400000);
+      S.m+=menang;inc+=menang;
+      log('🎉 Dapat kocokan Arisan Kampung: +'+fmt(menang)+'!');
+    }
+  }
 
   // Cicilan bank & ruko
   if(S.ln){
@@ -442,25 +582,56 @@ function monthEnd(){
     if(--S.propLn.left<=0){S.propLn=null;log('Cicilan ruko LUNAS!')}
   }
 
-  // Nafkah Suami = 80% gaji suami!
-  // Sebelum 2014: dari Suami (Ayah) untuk rumah tangga; Setelah 2014 (jika sudah menikah): dari Suamimu sendiri
-  let nafkah=0;
-  if(!isInherited()&&S.husband){
-    if(dt.getMonth()===0&&mo>0){
-      const infRate=INF[Math.floor(mo/12)-1]!==undefined?INF[Math.floor(mo/12)-1]:4;
-      S.husband.sal=Math.round(S.husband.sal*(1+infRate/100)*(.98+Math.random()*.08));
+  // Kehamilan & Selingkuh (Era Ibu & Era Anak Dewasa)
+  if(!isInherited()){
+    if(S.mom.preg>0){
+      if(--S.mom.preg===0){
+        if(!S.bpjs)pay(P(2500000));
+        if(S.mom.affairPreg){
+          S.mom.affairPreg=0;
+          if(Math.random()<.55){
+            S.mom.love=Math.max(5,S.mom.love-45);
+            S.mom.affair=null;
+            log('😱 Bayi lahir dan KETAHUAN suami bukan anaknya! Suami marah besar & keharmonisan hancur!');
+            snd('warn');
+          }else{
+            S.mom.secretKid=(S.mom.secretKid||0)+1;
+            log('🤫 Bayi lahir! Suami tidak curiga dan mengira itu anaknya sendiri.');
+          }
+        }else{
+          log('Adik bayi lahir sehat!');
+        }
+      }
+    }else if(S.mom.affair&&Math.random()<(S.kb?.01:.14)){
+      S.mom.preg=9;S.mom.affairPreg=1;
+      log(S.kb?'⚠️ KB kebobolan! Kamu hamil dari selingkuhan!':'⚠️ Kamu lupa aktifkan KB dan HAMIL dari selingkuhan!');
+      snd('warn');
     }
-    nafkah=Math.round(S.husband.sal*0.80);
-    S.b+=nafkah;inc+=nafkah;
-    log('Nafkah suami (80% gaji): +'+fmt(nafkah)+'.');
-  }else if(isInherited()&&S.mar&&S.pt){
-    if(dt.getMonth()===0){
-      const infRate=INF[Math.floor(mo/12)-1]!==undefined?INF[Math.floor(mo/12)-1]:4;
-      S.pt.sal=Math.round(S.pt.sal*(1+infRate/100)*(.98+Math.random()*.08));
+  }else if(isInherited()){
+    if(S.preg>0){
+      if(--S.preg===0){
+        if(!S.bpjs)pay(P(3000000));
+        if(S.affairPreg){
+          S.affairPreg=0;
+          if(Math.random()<.55){
+            if(S.pt)S.pt.love=Math.max(5,S.pt.love-50);
+            S.affair=null;
+            log('😱 Anak lahir dan KETAHUAN selingkuh! Pasanganmu murka!');
+            snd('warn');
+          }else{
+            S.kids=(S.kids||0)+1;
+            log('🤫 Anak lahir! Tidak ketahuan selingkuh.');
+          }
+        }else{
+          S.kids=(S.kids||0)+1;
+          log('Anakmu lahir sehat!');
+        }
+      }
+    }else if(S.affair&&Math.random()<(S.kb?.01:.14)){
+      S.preg=9;S.affairPreg=1;
+      log(S.kb?'⚠️ KB kebobolan! Kamu hamil dari selingkuhan!':'⚠️ Lupa aktifkan KB! Kamu HAMIL dari selingkuhan!');
+      snd('warn');
     }
-    nafkah=Math.round(S.pt.sal*0.80);
-    S.b+=nafkah;inc+=nafkah;
-    log('Nafkah suami (80% gaji): +'+fmt(nafkah)+'.');
   }
 
   // Bunga tabungan & deposito
@@ -475,35 +646,23 @@ function monthEnd(){
     if(depInt>0){S.b+=depInt;inc+=depInt;log('Bunga deposito masuk '+fmt(depInt)+'.')}
   }
 
-  // Usaha sampingan
   V.forEach(v=>{if(S.v[v.id]){const g=P((v.a+Math.random()*(v.b-v.a))*(.6+S.rr/5)-v.u);S.b+=g;inc+=g}});
 
-  // Pajak sesuai tahun
   const tx=taxInfo(S.inc);
   if(tx.amt>0){pay(tx.amt);log('Bayar pajak ('+tx.lbl+'): '+fmt(tx.amt)+'.')}
   S.yrInc=(S.yrInc||0)+S.inc;
   if(dt.getMonth()===0)S.yrInc=0;
 
-  if(S.pt&&isInherited()){
-    S.pt.love=Math.max(0,S.pt.love-(S.stam<30?6:1));
-    if(S.mar){
-      if(S.pt.love<15){pay(5000000);S.mar=0;S.pt=null;S.preg=0;log('Rumah tangga retak, kalian bercerai.')}
-    }else if(S.pt.love<=0){S.pt=null;log('Pacar memutuskan hubungan.')}
-  }
-  if(S.mar&&isInherited()){
-    if(S.preg>0){if(--S.preg===0){S.kids=(S.kids||0)+1;pay(3000000);log('Anak lahir! Biaya persalinan Rp 3 juta.')}}
-    else if((S.kids||0)<3&&Math.random()<(S.kb?.015:.08)){S.preg=9;log('Kamu hamil.')}
-  }
-
-  (S.rec=S.rec||[]).push({y:prev.getFullYear(),m:prev.getMonth(),w:S.inc,o:inc,x:S.exp,c:S.cm||0,h:S.hm||0});
+  (S.rec=S.rec||[]).push({y:prev.getFullYear(),m:prev.getMonth(),w:S.inc,o:inc+(S.moOjek||0),x:S.exp,c:S.cm||0,h:S.hm||0});
   S.cm=0;S.hm=0;
-  log('Rekap '+BLN[prev.getMonth()]+' '+prev.getFullYear()+': Rental '+fmt(S.inc)+', Nafkah/Lain '+fmt(inc)+', Keluar '+fmt(S.exp)+' (termasuk makan '+fmt(S.moFood||0)+').');
-  snd('month');S.inc=0;S.exp=0;S.moFood=0;save();
+  log('Rekap '+BLN[prev.getMonth()]+' '+prev.getFullYear()+': Rental '+fmt(S.inc)+', Ojek/Lain '+fmt(inc+(S.moOjek||0))+', Keluar '+fmt(S.exp)+'.');
+  snd('month');S.inc=0;S.exp=0;S.moFood=0;S.moOjek=0;save();
 }
 
 function step(){
   S.T++;
   const h=Math.floor(S.T/60)%24,mi=S.T%60;
+  if(mi===0&&h%4===0)updateWeather();
   if(S.T%1440===0&&day()>0){
     dayEnd();
     if(curDate().getDate()===1)monthEnd();
@@ -537,14 +696,22 @@ function step(){
   if(S.out)return;
 
   if(S.open){
+    // Razia Satpol PP jika buka pagi jam sekolah tanpa izin usaha
+    if(mi===30&&h===9&&!isHol()&&!S.izin&&Math.random()<.015){
+      const denda=P(350000);
+      spend(denda);
+      log('🚨 Razia Satpol PP! Banyak anak bolos main PS & belum punya Izin Usaha, kena denda '+fmt(denda)+'.');
+      snd('warn');
+    }
     const holM=isHol()?1.35:1;
-    const wt=(h>=15&&h<23?1:h>=8&&h<15?.6:h>=23||h<3?.4:.15)*holM;
+    const rainM=S.wx==='hujan'?1.28:1; // Kalau hujan anak-anak banyak berteduh main PS!
+    const wt=(h>=15&&h<23?1:h>=8&&h<15?.6:h>=23||h<3?.4:.15)*holM*rainM;
     S.st.forEach(s=>{
       if(s.brk)return;
       const kc=K[s.k],gms=ownedGames(kc.pf);
       if(gms.length===0)return;
       const gBonus=1+Math.min(.5,(gms.length-1)*.1);
-      if(Math.random()<.34*wt*(.5+S.rr/5)*dm(s.k)*gBonus*(S.bC?2:1)/60){
+      if(Math.random()<.35*wt*(.5+S.rr/5)*dm(s.k)*gBonus*(S.bC?2:1)/60){
         const g=gms[Math.random()*gms.length|0];
         snd('bell');
         S.q.push({n:NM[Math.random()*NM.length|0],pf:kc.pf,act:g.n.replace(' (Ori)',''),want:60+Math.random()*180|0,used:0,wait:0,o:[],ph:'q'});
@@ -555,8 +722,8 @@ function step(){
     c.wait++;
     const s=S.st.find(x=>!x.c&&!x.brk&&K[x.k].pf===c.pf&&ownedGames(K[x.k].pf).length>0);
     if(s){
-      s.c=c;c.k=s.k;c.r=S.pr[s.k];c.lm=UPLV[s.lv||0].m;
-      c.q=(s.tv>=0?TV[s.tv].q:0)+(s.lv||0)*.015;
+      s.c=c;c.k=s.k;c.r=S.pr[s.k];
+      c.q=(s.tv>=0?TV[s.tv].q:0);
       c.ph='p';
       S.q.splice(S.q.indexOf(c),1);
     }else if(c.wait>75){
@@ -572,7 +739,7 @@ function step(){
         const pId=K[s.k].pt;
         if((S.parts[pId]||0)>0){
           S.parts[pId]--;
-          if(S.spd<=64)log(PT[pId].n+' di '+K[s.k].n+' rusak, otomatis diganti stok cadangan (sisa '+S.parts[pId]+').');
+          if(S.spd<=64)log(PT[pId].n+' di '+K[s.k].n+' rusak, diganti stok cadangan (sisa '+S.parts[pId]+').');
         }else{
           s.brk=true;c.ph='d';collect(i);
           log(PT[pId].n+' di '+K[s.k].n+' RUSAK! Stok cadangan habis, beli di tab Game.');
@@ -605,10 +772,8 @@ const A={
   },
   pause(){S.pause=!S.pause},
   spd(i){S.spd=+i},
-  tab(i){S.tab=i;subTab='';subPage=0},
-  stab(i){subTab=i;subPage=0},
-  spg(d){subPage=Math.max(0,subPage+(+d))},
-  stpg(d){stPage=Math.max(0,stPage+(+d))},
+  tab(i){S.tab=i;subTab=''},
+  stab(i){subTab=i},
   cof(){
     if(S.T-S.cf<60||S.stam>=100)return log('Stamina masih segar.');
     if(!buy(10000))return;
@@ -622,7 +787,7 @@ const A={
     if(used()>=S.cap)return log('Ruangan penuh.');
     const cost=Py(c.p,c.yr)+(t?Py(t.p,t.yr):0);
     if(!buy(cost))return;
-    S.st.push({k,tv:t?+j:-1,lv:0,brk:false,c:null});
+    S.st.push({k,tv:t?+j:-1,brk:false,c:null});
     log('Beli '+c.n+(t?' + TV '+t.n:'')+'.');
     if(!ownedGames(c.pf).length)log('Beli game ori untuk '+c.pf.toUpperCase()+' di tab Game!');
   },
@@ -638,7 +803,7 @@ const A={
     const nk=K[c.next];
     if(nk.yr>curYear())return log(nk.n+' baru rilis tahun '+nk.yr+'.');
     if(!buy(Py(c.up,nk.yr)))return;
-    s.k=c.next;log('Upgrade unit jadi '+nk.n+'!');
+    s.k=c.next;log('Upgrade konsol jadi '+nk.n+'!');
   },
   uptv(v){
     const[idx,j]=v.split(':'),s=S.st[+idx];if(!s||s.c||s.tv<0||+j<=s.tv)return;
@@ -646,12 +811,6 @@ const A={
     const cost=Math.max(100000,Py(TV[+j].p,TV[+j].yr)-Math.round(Py(TV[s.tv].p,TV[s.tv].yr)*.5));
     if(!buy(cost))return;
     s.tv=+j;log('Upgrade TV unit #'+(+idx+1)+' jadi '+TV[s.tv].n+'.');
-  },
-  uplv(i){
-    const s=S.st[+i];if(!s||s.c)return;
-    const nl=(s.lv||0)+1;if(nl>=UPLV.length)return;
-    if(!buy(P(UPLV[nl].p)))return;
-    s.lv=nl;log('Upgrade unit #'+(+i+1)+' ke '+UPLV[nl].n+'.');
   },
   fix(i){
     const s=S.st[+i];if(!s||!s.brk)return;
@@ -688,6 +847,80 @@ const A={
       if(buy(90e6)){S.cap=80;S.rent=0;S.propLn={pay:8200000,left:60};log('Kredit ruko disetujui! DP Rp 90 jt, cicilan Rp 8,2 jt/bln x 60 bln.')}
     }
   },
+  bveh(id){
+    const v=VEH.find(x=>x.id===id);if(!v||v.yr>curYear())return;
+    if(buy(Py(v.p,v.yr))){S.vehs[id]=(S.vehs[id]||0)+1;log('Beli '+v.n+'!')}
+  },
+  bprop(id){
+    const pr=PROP.find(x=>x.id===id);if(!pr)return;
+    if(buy(P(pr.p))){S.props[id]=(S.props[id]||0)+1;log('Beli properti: '+pr.n+'!')}
+  },
+  izin(){if(!S.izin&&buy(P(2500000))){S.izin=true;log('Izin Usaha & HO resmi terbit! Aman dari razia Satpol PP.')}},
+  bpjs(){S.bpjs=!S.bpjs},
+  arisan(){S.arisan=S.arisan?0:1},
+  tourney(){
+    if(S.T-S.dt<1440)return log('Turnamen PS cukup diadakan sehari sekali.');
+    if(!S.st.length)return log('Belum ada unit konsol.');
+    if(!buy(P(150000)))return;
+    S.dt=S.T;rep(.15);
+    const hadiah=P(450000);
+    S.m+=hadiah;S.inc+=hadiah;
+    log('🏆 Turnamen PS Kampung sukses! Reputasi naik & pemasukan tiket/jajan +'+fmt(hadiah)+'.');
+  },
+
+  // Keluarga, Keharmonisan, & Selingkuh
+  date(){
+    if(!buy(P(100000)))return;
+    if(!isInherited()){
+      S.mom.love=Math.min(100,S.mom.love+10);
+      if(S.dad.cheating&&S.mom.love>=75){S.dad.cheating=false;log('Suami insaf & kembali setia setelah hubungan membaik!')}
+      log('Jalan & makan malam bareng suami, keharmonisan naik ('+Math.round(S.mom.love)+'%).');
+    }else if(S.pt){
+      S.pt.love=Math.min(100,S.pt.love+10);
+      log('Kencan dengan pasangan, keharmonisan naik.');
+    }
+  },
+  findaffair(){
+    const richNames=['Ko Hendra (Bos Elektronik)','Pak Budi (Juragan Sawit)','Ko Kevin (Dealer Mobil)','Koh Andre (Pengusaha Tambang)','Pak Rudi (Kontraktor)'];
+    const n=richNames[Math.random()*richNames.length|0];
+    const gift=P(650000+Math.floor(Math.random()*900000));
+    if(!isInherited()){
+      S.mom.affair={n,gift};
+      log('💋 Kenalan diam-diam dengan '+n+' (lebih kaya dari suami).');
+    }else{
+      S.affair={n,gift};
+      log('💋 Punya selingkuhan tajir: '+n+'.');
+    }
+  },
+  dateaffair(){
+    const af=!isInherited()?S.mom.affair:S.affair;
+    if(!af)return;
+    S.m+=af.gift;
+    if(!isInherited()){
+      S.mom.love=Math.max(0,S.mom.love-6);
+      log('💋 Jalan diam-diam dengan '+af.n+', dikasih uang jajan +'+fmt(af.gift)+'!'+(S.kb?' (KB aktif)':' (⚠️ KB tidak aktif!)'));
+    }else{
+      if(S.pt)S.pt.love=Math.max(0,S.pt.love-6);
+      log('💋 Jalan diam-diam dengan '+af.n+', dikasih uang jajan +'+fmt(af.gift)+'!');
+    }
+  },
+  endaffair(){
+    if(!isInherited())S.mom.affair=null;
+    else S.affair=null;
+    log('Hubungan gelap diakhiri.');
+  },
+  kb(){S.kb=S.kb?0:1},
+
+  // Pasangan era anak (setelah usia 18)
+  fd(){
+    if(!isInherited()||kidAge()<18||S.pt)return;
+    const x=Math.random(),s=x<.35?[85000,120000,'sederhana']:x<.85?[140000,220000,'biasa']:[350000,650000,'mapan'];
+    S.pt={n:['Andre','Hendra','Kevin','Rudi','Tommy'][Math.random()*5|0],ojekDay:Math.round(s[0]+Math.random()*(s[1]-s[0])),cls:s[2],love:30};
+  },
+  mr(){if(!S.pt||S.mar||kidAge()<19||S.pt.love<60||!buy(10e6))return;S.mar=1;log('Kalian menikah! Mulai besok dapat setoran 80% penghasilan suami.')},
+  bk(){if(!S.pt)return;if(S.mar)spend(5e6);S.mar=0;S.pt=null;S.preg=0},
+
+  // Pegawai
   hi(){
     const id=S.empSeq++,n=EMPNM[(id-1)%EMPNM.length]+' #'+id;
     const st=S.emps.length%2===0?8:20,en=(st+12)%24;
@@ -706,6 +939,8 @@ const A={
     e.off=1;e.offMo=cm;
     log(e.n+' diberi libur 1 hari.');
   },
+
+  // Bank
   dep(n){const t=Math.min(+n,S.m);S.m-=t;S.b+=t},
   wd(n){const t=Math.min(+n,Math.max(S.b,0));S.b-=t;S.m+=t},
   mkdep(n){
@@ -722,20 +957,6 @@ const A={
     if(S.ln)return log('Masih ada cicilan berjalan.');
     n=+n;const r=.16/12;S.ln={pay:Math.round(n*r/(1-Math.pow(1+r,-12))),left:12};S.b+=n;log('Pinjaman cair '+fmt(n)+'.');
   },
-  fd(){
-    if(!isInherited()||kidAge()<18||S.pt)return;
-    const x=Math.random(),s=x<.35?[2e6,3.5e6,'sederhana']:x<.85?[4.5e6,8e6,'biasa']:[18e6,45e6,'mapan'];
-    S.pt={n:['Andre','Hendra','Kevin','Rudi','Tommy'][Math.random()*5|0],sal:Math.round(s[0]+Math.random()*(s[1]-s[0])),cls:s[2],love:25};
-  },
-  date(){if(!S.pt||!buy(100000))return;S.stam=Math.max(10,S.stam-4);S.pt.love=Math.min(100,S.pt.love+6+Math.random()*6)},
-  qt(){if(!S.pt||S.T-S.dt<1440)return;S.dt=S.T;S.pt.love=Math.min(100,S.pt.love+4)},
-  mr(){if(!S.pt||S.mar||kidAge()<19||S.pt.love<60||!buy(10e6))return;S.mar=1;log('Kalian menikah! Mulai bulan depan dapat nafkah 80% gaji suami.')},
-  bk(){if(!S.pt)return;if(S.mar)spend(5e6);S.mar=0;S.pt=null;S.preg=0},
-  kb(){S.kb=S.kb?0:1},
-  ven(i){const v=V.find(x=>x.id===i);if(S.v[i])return;if(buy(P(v.p)))S.v[i]=1},
-  ast(i){const x=AS.find(y=>y.id===i);if(!S.as[i]&&buy(P(x.p)))S.as[i]=1},
-  bI(){S.bI=S.bI?0:1},
-  bC(){S.bC=S.bC?0:1},
   job(i){
     const j=J[i];if(S.busy>0)return log('Masih bekerja di luar.');
     if(isInherited()&&kidAge()<j.age)return log('Belum cukup umur untuk pekerjaan ini.');
@@ -746,8 +967,8 @@ const A={
   },
   mk(){Object.keys(K).forEach(k=>S.pr[k]=Py(K[k].r,K[k].yr));I.forEach(i=>S.pr[i.id]=P(i.p))},
   mute(){S.mute=!S.mute;if(!S.mute)snd('coin')},
-  hv(i){S.hv=i;subPage=0},
-  rst(){if(!rc){rc=1;return}rc=0;editIdx=-1;stPage=0;subTab='';subPage=0;fresh();save()}
+  hv(i){S.hv=i},
+  rst(){if(!rc){rc=1;return}rc=0;editIdx=-1;subTab='';fresh();save()}
 };
 
 document.addEventListener('pointerup',e=>{
@@ -763,144 +984,148 @@ const R=(l,s,a,i,b,x)=>`<div class="row"><span>${l}<br><span class="lg">${s}</sp
 const B=(a,i,t,x,cl='')=>`<button data-a="${a}" data-i="${i}" class="${cl}" ${x?'disabled':''}>${t}</button>`;
 const padH=n=>String(n).padStart(2,'0')+':00';
 
-function paginate(items,perPage){
-  const maxP=Math.max(0,Math.ceil(items.length/perPage)-1);
-  if(subPage>maxP)subPage=maxP;
-  const slice=items.slice(subPage*perPage,(subPage+1)*perPage);
-  const nav=maxP>0?`<div class="pgnav" style="justify-content:flex-end;margin-top:4px">${B('spg',-1,'◀',subPage<=0,'sm')}<span>Hal ${subPage+1}/${maxP+1}</span>${B('spg',1,'▶',subPage>=maxP,'sm')}</div>`:'';
-  return {slice,nav};
-}
-
 function side(){
   const t=S.tab,yr=curYear();let h='';
 
   if(t==='un'){
     const st=subTab||'ps';
     const availTV=TV.map((v,j)=>({...v,j})).filter(v=>v.yr<=yr);
-    const tabs=`<div class="subtabs">${[['ps','PlayStation & Xbox'],['eq','Peralatan Warung']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
-    let rows=[];
+    h=`<div class="subtabs">${[['ps','Konsol PS & Xbox'],['eq','Peralatan Warung']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`
+      +`<div class="lg" style="margin-bottom:4px">Slot ruangan: <b>${used()}/${S.cap}</b> (tahun ${yr}). Klik <b>Kelola</b> di kartu konsol untuk upgrade seri atau jual second.</div>`;
     if(st==='ps'){
-      rows=Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>{
+      h+=Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>{
         const c=K[k];
         return `<div class="row"><span>${c.n}<br><span class="lg">pasar ${fmt(Py(c.r,c.yr))}/jam · rilis ${c.yr}</span></span><span>${availTV.map(v=>B('bu',k+':'+v.j,v.n+' '+fmt(Py(c.p,c.yr)+Py(v.p,v.yr)),0,'sm')).join(' ')}</span></div>`;
-      });
+      }).join('');
     }else{
-      rows=Object.keys(EQ).map(k=>R(EQ[k][0],'syarat jual makanan/minuman','eq',k,S.eq[k]?'Punya':fmt(EQ[k][1]),S.eq[k]));
+      h+=Object.keys(EQ).map(k=>R(EQ[k][0],'syarat jual makanan/minuman','eq',k,S.eq[k]?'Punya':fmt(EQ[k][1]),S.eq[k])).join('');
     }
-    const pg=paginate(rows,5);
-    h=`<div>${tabs}<div class="lg">Slot ruangan: <b>${used()}/${S.cap}</b> (tahun ${yr}). Upgrade & jual second lewat tombol <b>Kelola</b> di kartu konsol.</div>${pg.slice.join('')}</div>${pg.nav}`;
   }
 
   if(t==='gm'){
     const pfs=['part','ps1','ps2','ps3','ps4','ps5','xb1','xb360','xbone','xbsx'].filter(pf=>pf==='part'||GM.some(g=>g.pf===pf&&g.yr<=yr));
     const st=pfs.includes(subTab)?subTab:'part';
-    const tabs=`<div class="subtabs">${pfs.map(pf=>B('stab',pf,pf==='part'?'Stik Cadangan':pf.toUpperCase(),0,'sm '+(st===pf?'on':''))).join('')}</div>`;
-    let rows=[];
+    h=`<div class="subtabs">${pfs.map(pf=>B('stab',pf,pf==='part'?'Stik Cadangan':pf.toUpperCase(),0,'sm '+(st===pf?'on':''))).join('')}</div>`;
     if(st==='part'){
-      rows=Object.keys(PT).filter(id=>PT[id].yr<=yr).map(id=>{
+      h+=Object.keys(PT).filter(id=>PT[id].yr<=yr).map(id=>{
         const p=PT[id],pr=Py(p.p,p.yr);
         return `<div class="row"><span>${p.n} (stok ${S.parts[id]||0})<br><span class="lg">${fmt(pr)}/pcs · otomatis mengganti saat rusak</span></span><span>${[1,100,500,1000].map(q=>B('bpt',id+':'+q,'+'+q+' ('+fmt(pr*q)+')',0,'sm')).join(' ')}</span></div>`;
-      });
+      }).join('');
     }else{
-      rows=GM.filter(g=>g.pf===st&&g.yr<=yr).map(g=>R(g.n,'rilis '+g.yr+' · harga ori','bgm',g.id,S.games[g.id]?'Dimiliki':fmt(Py(g.p,g.yr)),S.games[g.id]));
+      h+=GM.filter(g=>g.pf===st&&g.yr<=yr).map(g=>R(g.n,'rilis '+g.yr+' · harga ori','bgm',g.id,S.games[g.id]?'Dimiliki':fmt(Py(g.p,g.yr)),S.games[g.id])).join('');
     }
-    const pg=paginate(rows,5);
-    h=`<div>${tabs}${pg.slice.join('')}</div>${pg.nav}`;
   }
 
   if(t==='st'){
-    const rows=I.map(i=>`<div class="row"><span>${i.n} (stok ${S.stock[i.id]})<br><span class="lg">modal ${fmt(P(i.c))}/pcs${i.eq?' · butuh '+EQ[i.eq][0]:''}</span></span><span>${[100,250,500,1000].map(q=>B('bs',i.id+':'+q,'+'+q+' ('+fmt(P(i.c)*q)+')',0,'sm')).join(' ')}</span></div>`)
-    .concat([
-      `<div class="row"><span>Gas 3 kg (stok ${S.sup.gas.toFixed(1)})<br><span class="lg">${fmt(P(12000))}/tabung · Indomie, kopi, gorengan</span></span><span>${[5,500,1000].map(q=>B('sp','gas:'+q,'+'+q+' ('+fmt(P(12000)*q)+')',0,'sm')).join(' ')}</span></div>`,
-      `<div class="row"><span>Air galon (stok ${S.sup.gal.toFixed(1)})<br><span class="lg">${fmt(P(8000))}/galon · es teh dan kopi</span></span><span>${[5,500,1000].map(q=>B('sp','gal:'+q,'+'+q+' ('+fmt(P(8000)*q)+')',0,'sm')).join(' ')}</span></div>`
-    ]);
-    const pg=paginate(rows,5);
-    h=`<div>${pg.slice.join('')}</div>${pg.nav}`;
+    h=I.map(i=>`<div class="row"><span>${i.n} (stok ${S.stock[i.id]})<br><span class="lg">modal ${fmt(P(i.c))}/pcs${i.eq?' · butuh '+EQ[i.eq][0]:''}</span></span><span>${[100,250,500,1000].map(q=>B('bs',i.id+':'+q,'+'+q+' ('+fmt(P(i.c)*q)+')',0,'sm')).join(' ')}</span></div>`).join('')
+      +`<div class="row"><span>Gas 3 kg (stok ${S.sup.gas.toFixed(1)})<br><span class="lg">${fmt(P(12000))}/tabung · Indomie, kopi, gorengan</span></span><span>${[5,500,1000].map(q=>B('sp','gas:'+q,'+'+q+' ('+fmt(P(12000)*q)+')',0,'sm')).join(' ')}</span></div>`
+      +`<div class="row"><span>Air galon (stok ${S.sup.gal.toFixed(1)})<br><span class="lg">${fmt(P(8000))}/galon · es teh dan kopi</span></span><span>${[5,500,1000].map(q=>B('sp','gal:'+q,'+'+q+' ('+fmt(P(8000)*q)+')',0,'sm')).join(' ')}</span></div>`;
   }
 
   if(t==='li'){
-    h=`<div><div class="box"><div class="lg">Sisa Token PLN: <b>${S.kwh.toFixed(1)} kWh</b> (${fmt(P(900))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''}</div></div>`
+    h=`<div class="box"><div class="lg">Sisa Token PLN: <b>${S.kwh.toFixed(1)} kWh</b> (${fmt(P(900))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''} · Cuaca: <b>${wxIcon()}</b></div></div>`
       +[50,100,250,500].map(n=>R('Token '+n+' kWh','','tok',n,fmt(P(n*900)+2500))).join('')
-      +R('Genset Cadangan','otomatis menyala saat token habis, bensin '+fmt(P(4500))+'/jam','gen','',S.gen?'Terpasang':fmt(4000000),S.gen)
-      +`</div>`;
+      +R('Genset Cadangan','otomatis menyala saat token habis, bensin '+fmt(P(4500))+'/jam','gen','',S.gen?'Terpasang':fmt(4000000),S.gen);
   }
 
   if(t==='hd'){
     const ka=kidAge(),inh=isInherited();
-    const naAmt=!inh?Math.round(S.husband.sal*0.80):(S.mar&&S.pt?Math.round(S.pt.sal*0.80):0);
-    h=`<div><div class="box">
-      <div class="r"><b>${inh?'Peran: Kamu (Usia '+ka+' thn - Pemilik Warisan)':'Peran: Orang Tua (Usia Anak '+ka+' thn)'}</b><span class="chip" style="color:${inh?'var(--ok)':'var(--ac)'}">${inh?'Sudah Diwariskan (2014+)':'Menuju Warisan 2014 ('+(12-ka)+' thn lagi)'}</span></div>
-      <div class="lg">Konsumsi harian keluarga: <b style="color:var(--bad)">-${fmt(dailyFoodCost())}/hari</b> · Biaya bulanan rumah: <b>${fmt(monthlyLivingCost())}/bln</b></div>
-      <div class="lg">Nafkah suami (80% gaji): <b style="color:var(--ok)">+${fmt(naAmt)}/bln</b>${!inh?' ('+S.husband.n+', gaji '+fmt(S.husband.sal)+')':''}</div>
+    const af=!inh?S.mom.affair:S.affair;
+    h=`<div class="box">
+      <div class="r"><b>${inh?'Pemilik: '+S.kidName+' (Usia '+ka+' thn)':'Pengelola: '+S.mom.n+' (Ibu Chinese)'}</b><span class="chip" style="color:${inh?'var(--ok)':'var(--pk)'}">${inh?'Sudah Diwariskan (2014+)':'Warisan 2014 ('+(12-ka)+' thn lagi)'}</span></div>
+      <div class="lg">Konsumsi harian: <b style="color:var(--bad)">-${fmt(dailyFoodCost())}/hari</b> · Listrik/Air & Rumah: <b>-${fmt(monthlyUtilityCost())}/bln</b></div>
+      ${!inh?`<div class="lg">Suami: <b>${S.dad.n}</b> (Ojek, setor 80% tiap hari) · Harmonis: <b>${Math.round(S.mom.love)}%</b> ${S.dad.cheating?'<b style="color:var(--bad)">⚠️ SUAMI SELINGKUH!</b>':''}</div>`:''}
     </div>`;
+
+    // Kontrol KB & Hubungan
+    h+=`<div class="row"><span>Kontrasepsi (KB): <b>${S.kb?'AKTIF (Aman)':'MATI (⚠️ Rawan hamil jika selingkuh!)'}</b></span>${B('kb','',S.kb?'Matikan KB':'Aktifkan KB',0,'sm '+(S.kb?'on':''))}</div>`;
+
     if(!inh){
-      h+=`<div class="lg">Rawat dan besarkan bisnis 10 PS1 ini bersama suami. Tepat tahun <b>2014</b> saat anak berusia <b>12 tahun</b>, seluruh usaha dan tabungan akan diserahkan kepadanya!</div>`
-        +R('Pakai KB Keluarga','menjaga pengeluaran anak tetap stabil','kb','',S.kb?'KB Aktif':'Aktifkan KB');
+      h+=`<div class="row"><span>Jaga Keharmonisan Rumah Tangga<br><span class="lg">mencegah suami selingkuh & menambah keharmonisan</span></span>${B('date','','Jalan Bareng Suami ('+fmt(P(100000))+')',0,'sm')}</div>`;
+      h+=`<div class="subh">Kisah Rahasia & Selingkuh (Calon Lebih Kaya)</div>`;
+      if(af){
+        h+=`<div class="box" style="border-color:var(--pk)">
+          <div class="r"><b>💋 Selingkuhan: ${af.n}</b><span class="lg">uang jajan ±${fmt(af.gift)}</span></div>
+          <div class="row">${B('dateaffair','','Ketemuan Diam-Diam (+Uang Jajan)',0,'sm')}${B('endaffair','','Putuskan',0,'sm bad')}</div>
+        </div>`;
+      }else{
+        h+=R('Cari Kenalan Lebih Kaya','awas risiko hamil jika KB mati & ketahuan suami!','findaffair','','Cari Calon Tajir');
+      }
     }else{
       const p=S.pt;
       h+=(p
-        ?R(p.n+(S.mar?' (suami)':' (pacar)'),'tipe '+p.cls+' · gaji ±'+fmt(p.sal)+' · hubungan '+Math.round(p.love)+(S.mar?' · nafkah 80% gaji':''),'bk','','Putus/cerai')
-          +`<div class="row">${B('date','','Kencan 100rb',0,'sm')}${B('qt','','Waktu bersama',0,'sm')}${B('mr','','Nikah 10jt (19+, hub 60)',S.mar||ka<19,'sm')}${B('kb','',S.kb?'KB aktif':'KB 50rb/bln',0,'sm')}</div>`
-        :R('Belum punya pasangan','bisa cari pasangan mulai usia 18 tahun','fd','','Cari pasangan',ka<18));
+        ?R(p.n+(S.mar?' (suami)':' (pacar)'),'tipe '+p.cls+' · hubungan '+Math.round(p.love)+(S.mar?' · setor 80% tiap hari':''),'bk','','Putus/cerai')
+          +`<div class="row">${B('date','','Kencan',0,'sm')}${B('mr','','Menikah 10jt (19+, hub 60)',S.mar||ka<19,'sm')}</div>`
+        :R('Belum punya pasangan','mulai usia 18 tahun','fd','','Cari pasangan',ka<18));
+      h+=`<div class="subh">Selingkuh (Calon Lebih Kaya)</div>`;
+      if(af){
+        h+=`<div class="box" style="border-color:var(--pk)">
+          <div class="r"><b>💋 ${af.n}</b><span class="lg">uang jajan ±${fmt(af.gift)}</span></div>
+          <div class="row">${B('dateaffair','','Ketemuan (+Uang Jajan)',0,'sm')}${B('endaffair','','Putuskan',0,'sm bad')}</div>
+        </div>`;
+      }else{
+        h+=R('Kenalan dengan Pengusaha Tajir','risiko hamil jika KB mati & ketahuan pasangan','findaffair','','Cari Calon Tajir');
+      }
     }
-    h+=`</div>`;
+  }
+
+  if(t==='veh'){
+    const st=subTab||'kend';
+    h=`<div class="subtabs">${[['kend','Motor & Mobil (Ojek/Rental/Angkutan)'],['prop','Kontrakan & Kos-Kosan']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
+    if(st==='kend'){
+      h+=`<div class="lg" style="margin-bottom:4px">Motor ojek menaikkan setoran harian suami (80%). Rental & angkutan menghasilkan pemasukan harian otomatis (biaya servis dipotong bulanan).</div>`
+        +VEH.filter(v=>v.yr<=yr).map(v=>{
+          const cnt=S.vehs[v.id]||0;
+          const roleTxt=v.role==='ojek'?'Motor Ojek Suami':v.role==='rental'?'Usaha Rental':'Angkutan/Travel';
+          return R(v.n+(cnt?` (${cnt} unit)`:''),roleTxt+' · hasil ±'+fmt(P(v.incDay))+'/hr · servis '+fmt(P(v.maint))+'/bln','bveh',v.id,fmt(Py(v.p,v.yr)));
+        }).join('');
+    }else{
+      h+=`<div class="lg" style="margin-bottom:4px">Bangun kontrakan & rumah kos untuk pemasukan pasif bersih setiap bulan.</div>`
+        +PROP.map(pr=>{
+          const cnt=S.props[pr.id]||0;
+          return R(pr.n+(cnt?` (${cnt} unit)`:''),'sewa bersih +'+fmt(P(pr.rentMo-pr.maint))+'/bln','bprop',pr.id,fmt(P(pr.p)));
+        }).join('');
+    }
   }
 
   if(t==='us'){
-    const st=subTab||'rk';
-    const tabs=`<div class="subtabs">${[['rk','Ruko & Mode'],['vn','Usaha Sampingan'],['as','Aset Pribadi']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
-    let rows=[];
-    if(st==='rk'){
-      rows=[
-        R('Garasi rumah','kapasitas 15 slot',0),
-        R('Sewa ruko','35 slot · sewa Rp 2 jt/bln + deposit Rp 4 jt','mv','r',S.cap>=35?'Aktif':fmt(4e6),S.cap>=35),
-        R('Beli ruko (Tunai)','80 slot, bebas sewa selamanya','mv','b',S.cap>=80?'Punya':fmt(450e6),S.cap>=80),
-        R('Beli ruko (Kredit/Cicilan)','80 slot · DP Rp 90 jt + Rp 8,2 jt/bln x 60 bln','mv','bc',S.propLn?'Cicilan '+S.propLn.left+' bln':S.cap>=80?'Punya':'DP '+fmt(90e6),S.cap>=80||!!S.propLn),
-        R('Mode Cuan x2 (Gratis)','tagihan pelanggan dobel, bebas ON/OFF','bI','',S.bI?'ON':'OFF'),
-        R('Mode Ramai x2 (Gratis)','pelanggan datang dobel, bebas ON/OFF','bC','',S.bC?'ON':'OFF')
-      ];
-    }else if(st==='vn'){
-      rows=V.map(v=>R(v.n,'untung ±'+fmt(P((v.a+v.b)/2-v.u))+'/bln','ven',v.id,S.v[v.id]?'Aktif':fmt(P(v.p)),S.v[v.id]));
-    }else{
-      rows=AS.map(x=>R(x.n,'hemat stamina '+Math.round(x.r*100)+'%','ast',x.id,S.as[x.id]?'Punya':fmt(P(x.p)),S.as[x.id]));
-    }
-    const pg=paginate(rows,5);
-    h=`<div>${tabs}${pg.slice.join('')}</div>${pg.nav}`;
+    h=R('Garasi rumah','kapasitas 15 slot',0)
+      +R('Sewa ruko','35 slot · sewa Rp 2 jt/bln + deposit Rp 4 jt','mv','r',S.cap>=35?'Aktif':fmt(4e6),S.cap>=35)
+      +R('Beli ruko (Tunai)','80 slot, bebas sewa selamanya','mv','b',S.cap>=80?'Punya':fmt(450e6),S.cap>=80)
+      +R('Beli ruko (Kredit/Cicilan)','80 slot · DP Rp 90 jt + Rp 8,2 jt/bln x 60 bln','mv','bc',S.propLn?'Cicilan '+S.propLn.left+' bln':S.cap>=80?'Punya':'DP '+fmt(90e6),S.cap>=80||!!S.propLn)
+      +R('Izin Usaha & HO Resmi','bebas dari razia & denda Satpol PP saat buka pagi','izin','',S.izin?'Terbit':fmt(P(2500000)),S.izin)
+      +R('BPJS & Asuransi Keluarga','iuran '+fmt(P(75000))+'/bln · gratis biaya melahirkan & rumah sakit','bpjs','',S.bpjs?'Aktif':'Daftar')
+      +R('Arisan Kampung','iuran '+fmt(P(200000))+'/bln · peluang menang '+fmt(P(2400000)),'arisan','',S.arisan?'Ikut':'Gabung')
+      +R('Gelar Turnamen PS Kampung','modal '+fmt(P(150000))+' · ramai & reputasi naik cepat','tourney','',fmt(P(150000)))
+      +'<div class="subh">Usaha Sampingan</div>'
+      +V.map(v=>R(v.n,'untung ±'+fmt(P((v.a+v.b)/2-v.u))+'/bln','ven',v.id,S.v[v.id]?'Aktif':fmt(P(v.p)),S.v[v.id])).join('');
   }
 
   if(t==='bk'){
     const st=subTab||'dp';
-    const tabs=`<div class="subtabs">${[['dp','Tabungan & Deposito'],['ln','Pinjaman Bank']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
+    h=`<div class="subtabs">${[['dp','Tabungan & Deposito'],['ln','Pinjaman Bank']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
     if(st==='dp'){
-      const dRows=S.dep.map((d,idx)=>R('Deposito '+fmt(d.amt),'umur '+d.mo+' bln · bunga '+(depRate(d.mo)*100).toFixed(1)+'% ('+fmt(d.amt*depRate(d.mo))+'/bln)','cldep',idx,'Cairkan'));
-      const pg=paginate(dRows,3);
-      h=`<div>${tabs}<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo Bank (bunga 4%/thn)</span>${B('dep',1000000,'Setor 1jt',0,'sm')}${B('wd',1000000,'Tarik 1jt',0,'sm')}</div>`
+      h+=`<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo Bank (bunga 4%/thn)</span>${B('dep',1000000,'Setor 1jt',0,'sm')}${B('wd',1000000,'Tarik 1jt',0,'sm')}</div>`
         +`<div class="row"><span>Buka Deposito (bunga naik +0,1%/bln)</span><span>${[5e6,15e6,50e6,150e6].map(n=>B('mkdep',n,fmt(n),S.b<n,'sm')).join(' ')}</span></div>`
-        +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada deposito aktif.</div>')
-        +`</div>${pg.nav}`;
+        +(S.dep.length?S.dep.map((d,idx)=>R('Deposito '+fmt(d.amt),'umur '+d.mo+' bln · bunga '+(depRate(d.mo)*100).toFixed(1)+'% ('+fmt(d.amt*depRate(d.mo))+'/bln)','cldep',idx,'Cairkan')).join(''):'<div class="lg">Belum ada deposito aktif.</div>');
     }else{
-      h=`<div>${tabs}`
-        +(S.ln?R('Cicilan bank berjalan',fmt(S.ln.pay)+'/bln · sisa '+S.ln.left+' bln'):'')
+      h+=(S.ln?R('Cicilan bank berjalan',fmt(S.ln.pay)+'/bln · sisa '+S.ln.left+' bln'):'')
         +(S.propLn?R('Cicilan ruko berjalan',fmt(S.propLn.pay)+'/bln · sisa '+S.propLn.left+' bln'):'')
-        +[10e6,25e6,50e6,100e6].map(n=>R('Pinjaman '+fmt(n),'bunga 16%/thn, 12 bulan','ln',n,'Ajukan',!!S.ln)).join('')
-        +`</div>`;
+        +[10e6,25e6,50e6,100e6].map(n=>R('Pinjaman '+fmt(n),'bunga 16%/thn, 12 bulan','ln',n,'Ajukan',!!S.ln)).join('');
     }
   }
 
   if(t==='pg'){
     const cm=(curYear()-START_YEAR)*12+curDate().getMonth(),stdSal=P(850000);
-    const eCards=S.emps.map(e=>{
-      const hrs=shiftHours(e),st=e.sick>0?`<b style="color:var(--bad)">SAKIT (${e.sick}h)</b>`:e.off>0?'<b style="color:var(--ok)">LIBUR</b>':empWorkingNow(e)?'<b style="color:var(--ok)">Jaga</b>':'Off';
-      const usedOff=e.offMo===cm;
-      return `<div class="box">
-        <div class="r"><b>${e.n}</b><span class="lg">${st} · Shift ${padH(e.start)}–${padH(e.end)} (${hrs}j)</span>${B('fi',e.id,'Pecat',0,'sm bad')}</div>
-        <div class="row"><span class="lg">Shift:</span><span>${B('es',e.id+':-1','-Msk',0,'sm')} ${B('es',e.id+':1','+Msk',0,'sm')} ${B('ee',e.id+':-1','-Plg',0,'sm')} ${B('ee',e.id+':1','+Plg',0,'sm')}</span><span class="lg">Gaji ${fmt(e.sal)}</span><span>${B('esal',e.id+':-100000','-100rb',0,'sm')} ${B('esal',e.id+':100000','+100rb',0,'sm')} ${B('eoff',e.id,usedOff?'Sudah Libur':'Libur',usedOff||e.sick>0,'sm')}</span></div>
-      </div>`;
-    });
-    const pg=paginate(eCards,3);
-    h=`<div><div class="row"><span>Karyawan: <b>${S.emps.length}</b> (jaga = stamina kamu 100% aman · standar ${fmt(stdSal)}/bln)</span>${B('hi','','+ Rekrut',0,'sm')}</div>`
-      +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada karyawan. Rekrut agar rental tetap buka saat sekolah/kerja!</div>')
-      +`</div>${pg.nav}`;
+    h=`<div class="row"><span>Karyawan: <b>${S.emps.length}</b> (jaga = stamina kamu 100% aman · standar ${fmt(stdSal)}/bln)</span>${B('hi','','+ Rekrut',0,'sm')}</div>`
+      +(S.emps.length?S.emps.map(e=>{
+        const hrs=shiftHours(e),st=e.sick>0?`<b style="color:var(--bad)">SAKIT (${e.sick}h)</b>`:e.off>0?'<b style="color:var(--ok)">LIBUR</b>':empWorkingNow(e)?'<b style="color:var(--ok)">Jaga</b>':'Off';
+        const usedOff=e.offMo===cm;
+        return `<div class="box">
+          <div class="r"><b>${e.n}</b><span class="lg">${st} · Shift ${padH(e.start)}–${padH(e.end)} (${hrs}j)</span>${B('fi',e.id,'Pecat',0,'sm bad')}</div>
+          <div class="row"><span class="lg">Shift:</span><span>${B('es',e.id+':-1','-Msk',0,'sm')} ${B('es',e.id+':1','+Msk',0,'sm')} ${B('ee',e.id+':-1','-Plg',0,'sm')} ${B('ee',e.id+':1','+Plg',0,'sm')}</span><span class="lg">Gaji ${fmt(e.sal)}</span><span>${B('esal',e.id+':-100000','-100rb',0,'sm')} ${B('esal',e.id+':100000','+100rb',0,'sm')} ${B('eoff',e.id,usedOff?'Sudah Libur':'Libur',usedOff||e.sick>0,'sm')}</span></div>
+        </div>`;
+      }).join(''):'<div class="lg">Belum ada karyawan. Rekrut agar rental tetap buka saat sekolah/kerja!</div>');
   }
 
   if(t==='kl'){
@@ -914,37 +1139,34 @@ function side(){
       cells+=`<div class="${red?'hol':''} ${d===td?'tod':''}">${d}</div>`;
     }
     const se=schoolEnd();
-    h=`<div><div class="r"><b>${BLN[m]} ${y}</b><span class="lg">${!isInherited()?'Era Orang Tua (Anak usia '+kidAge()+' thn)':kidAge()<18?(se?'Sekolah hari ini: 07:00–'+se+':00':'Hari ini libur sekolah!'):'Sudah lulus sekolah'}</span></div>`
+    h=`<div class="r"><b>${BLN[m]} ${y}</b><span class="lg">${!isInherited()?'Era Orang Tua (Anak usia '+kidAge()+' thn)':kidAge()<18?(se?'Sekolah hari ini: 07:00–'+se+':00':'Hari ini libur sekolah!'):'Sudah lulus sekolah'}</span></div>`
       +`<div class="cal">${cells}</div>`
-      +`<div class="lg"><b>Libur Nasional:</b> ${list.length?list.join(' · '):'Tidak ada selain hari Minggu.'}</div></div>`;
+      +`<div class="lg"><b>Libur Nasional:</b> ${list.length?list.join(' · '):'Tidak ada selain hari Minggu.'}</div>`;
   }
 
   if(t==='jb'){
-    h=`<div><div class="lg">Kerja di luar memakai stamina & waktu. Jika rental buka, pastikan ada karyawan jaga.</div>`
-      +J.map((j,i)=>R(j.n,j.h+'j · '+fmt(P(j.pay))+' · stam -'+j.st+(isInherited()?' · usia '+j.age+'+':'')+(j.e?' · '+j.e+' kry':''),'job',i,'Ambil',S.busy>0||(isInherited()&&kidAge()<j.age)||inSchool())).join('')+`</div>`;
+    h=`<div class="lg" style="margin-bottom:4px">Kerja di luar memakai stamina & waktu. Jika rental buka, pastikan ada karyawan jaga.</div>`
+      +J.map((j,i)=>R(j.n,j.h+'j · '+fmt(P(j.pay))+' · stam -'+j.st+(isInherited()?' · usia '+j.age+'+':'')+(j.e?' · '+j.e+' kry':''),'job',i,'Ambil',S.busy>0||(isInherited()&&kidAge()<j.age)||inSchool())).join('');
   }
 
   if(t==='hg'){
-    const rows=Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>`<div class="row"><span>${K[k].n} <span class="lg">(pasar ${fmt(Py(K[k].r,K[k].yr))}/j)</span></span><input type="number" data-p="${k}" value="${S.pr[k]}"></div>`)
-      .concat(I.map(i=>`<div class="row"><span>${i.n} <span class="lg">(pasar ${fmt(P(i.p))})</span></span><input type="number" data-p="${i.id}" value="${S.pr[i.id]}"></div>`));
-    const pg=paginate(rows,5);
-    h=`<div><div class="row"><span class="lg">Harga pasar naik tiap tahun sesuai inflasi.</span>${B('mk','','Samakan Pasar',0,'sm')}</div>${pg.slice.join('')}</div>${pg.nav}`;
+    h=`<div class="row"><span class="lg">Harga pasar naik tiap tahun sesuai inflasi.</span>${B('mk','','Samakan Pasar',0,'sm')}</div>`
+      +Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>`<div class="row"><span>${K[k].n} <span class="lg">(pasar ${fmt(Py(K[k].r,K[k].yr))}/j)</span></span><input type="number" data-p="${k}" value="${S.pr[k]}"></div>`).join('')
+      +I.map(i=>`<div class="row"><span>${i.n} <span class="lg">(pasar ${fmt(P(i.p))})</span></span><input type="number" data-p="${i.id}" value="${S.pr[i.id]}"></div>`).join('');
   }
 
   if(t==='rh'){
-    const v=S.hv||'p',rec=S.rec||[],cur={w:S.inc,o:0,x:S.exp,c:S.cm||0,h:S.hm||0};
+    const v=S.hv||'p',rec=S.rec||[],cur={w:S.inc,o:S.moOjek||0,x:S.exp,c:S.cm||0,h:S.hm||0};
     const sum=a=>a.reduce((z,r)=>({w:z.w+r.w,o:z.o+r.o,x:z.x+r.x,c:z.c+r.c,h:z.h+r.h}),{w:0,o:0,x:0,c:0,h:0});
-    const row=(l,r)=>`<div class="row"><span>${l}<br><span class="lg">${r.c} plg · ${Math.round(r.h/60)}j · rental ${fmt(r.w)} · nafkah/lain ${fmt(r.o)} · keluar ${fmt(r.x)}</span></span><b style="color:${r.w+r.o-r.x<0?'var(--bad)':'var(--ok)'}">${fmt(r.w+r.o-r.x)}</b></div>`;
-    let rows=[];
-    if(v==='p')rows=(S.hist||[]).map(x=>`<div class="row"><span>${x.n} · ${x.u}<br><span class="lg">${dur(x.m)} · ${x.o} psn · ${x.d}</span></span><b>${fmt(x.b)}</b></div>`);
-    if(v==='b')rows=[row('Bulan berjalan',cur)].concat(rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)));
-    if(v==='t'){const ys={},yc=curYear();rec.forEach(r=>(ys[r.y]=ys[r.y]||[]).push(r));if(!ys[yc])ys[yc]=[];rows=Object.keys(ys).sort().reverse().map(y=>row('Tahun '+y+(+y===yc?' (berjalan)':''),sum(ys[y].concat(+y===yc?[cur]:[]))))}
-    const pg=paginate(rows,5);
-    h=`<div><div class="subtabs">${[['p','Pemain'],['b','Bulanan'],['t','Tahunan']].map(x=>B('hv',x[0],x[1],0,'sm '+(v===x[0]?'on':''))).join('')}</div>${pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada riwayat.</div>'}</div>${pg.nav}`;
+    const row=(l,r)=>`<div class="row"><span>${l}<br><span class="lg">${r.c} plg · ${Math.round(r.h/60)}j · rental ${fmt(r.w)} · ojek/lain ${fmt(r.o)} · keluar ${fmt(r.x)}</span></span><b style="color:${r.w+r.o-r.x<0?'var(--bad)':'var(--ok)'}">${fmt(r.w+r.o-r.x)}</b></div>`;
+    h=`<div class="subtabs">${[['p','Pemain'],['b','Bulanan'],['t','Tahunan']].map(x=>B('hv',x[0],x[1],0,'sm '+(v===x[0]?'on':''))).join('')}</div>`;
+    if(v==='p')h+=(S.hist||[]).map(x=>`<div class="row"><span>${x.n} · ${x.u}<br><span class="lg">${dur(x.m)} · ${x.o} psn · ${x.d}</span></span><b>${fmt(x.b)}</b></div>`).join('')||'<div class="lg">Belum ada riwayat.</div>';
+    if(v==='b')h+=row('Bulan berjalan',cur)+rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)).join('');
+    if(v==='t'){const ys={},yc=curYear();rec.forEach(r=>(ys[r.y]=ys[r.y]||[]).push(r));if(!ys[yc])ys[yc]=[];h+=Object.keys(ys).sort().reverse().map(y=>row('Tahun '+y+(+y===yc?' (berjalan)':''),sum(ys[y].concat(+y===yc?[cur]:[])))).join('')}
   }
 
   if(t==='lg'){
-    h=`<div>${S.log.slice(0,11).map(l=>`<div class="lg" style="padding:3px 0;border-bottom:1px dashed var(--bd)">${l}</div>`).join('')}</div><div style="margin-top:6px"><button data-a="rst" class="sm bad">${rc?'Yakin? Tap lagi':'Mulai ulang game'}</button></div>`;
+    h=S.log.map(l=>`<div class="lg" style="padding:3px 0;border-bottom:1px dashed var(--bd)">${l}</div>`).join('')+`<div style="margin-top:8px"><button data-a="rst" class="sm bad">${rc?'Yakin? Tap lagi':'Mulai ulang game'}</button></div>`;
   }
   return h;
 }
@@ -952,12 +1174,11 @@ function side(){
 function render(){
   const dt=curDate(),yr=curYear(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
   const tx=taxInfo(S.inc),sk=sickEmps().length,ka=kidAge(),inh=isInherited();
-  const h=Math.floor(S.T/60)%24;
   const st=S.busy>0?['KERJA '+Math.ceil(S.busy/60)+'j','var(--wr)']:S.out?['PADAM','var(--bad)']:S.faint?['CAPEK','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:S.open?['BUKA','var(--ok)']:['TUTUP','var(--mt)'];
-  const roleTag=inh?'Pemilik (Usia '+ka+' thn)':'Orang Tua (Anak '+ka+' thn)';
+  const roleTag=inh?'Pemilik: '+S.kidName+' ('+ka+' thn)':'Ibu Chinese & Suami Batak (Anak '+ka+' thn)';
 
   put($('#hd'),
-    `<div class="r"><b>${fmt(S.m)}</b><span class="lg">bank ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span class="chip" style="color:${inh?'var(--ok)':'var(--ac)'}">${roleTag}</span><span class="chip" style="color:${st[1]}">${st[0]}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}${sk?`<span class="chip" style="color:var(--wr)">${sk} Sakit</span>`:''}</div>`
+    `<div class="r"><b>${fmt(S.m)}</b><span class="lg">bank ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span class="chip" style="color:${inh?'var(--ok)':'var(--pk)'}">${roleTag}</span><span class="chip" style="color:${st[1]}">${st[0]}</span><span>${wxIcon()}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}${sk?`<span class="chip" style="color:var(--wr)">${sk} Sakit</span>`:''}</div>`
     +`<div class="r lg"><span>Rep ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)}kWh</span><span>Slot ${used()}/${S.cap}</span><span>Makan -${fmt(dailyFoodCost())}/hr</span><span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>x${fx().toFixed(2)}</span></div>`
     +`<div class="bar"><i style="width:${S.stam}%;background:${S.stam<25?'var(--bad)':'var(--ac)'}"></i></div>`
   );
@@ -972,25 +1193,52 @@ function render(){
     +`<button data-a="mute" class="sm">${S.mute?'Suara: Off':'Suara: On'}</button>`
   );
 
-  const perSt=9,maxStP=Math.max(0,Math.ceil(S.st.length/perSt)-1);
-  if(stPage>maxStP)stPage=maxStP;
-  put($('#stpg'),maxStP>0?`${B('stpg',-1,'◀',stPage<=0,'sm')}<span>${stPage+1}/${maxStP+1}</span>${B('stpg',1,'▶',stPage>=maxStP,'sm')}`:`<span class="lg">${S.st.length} unit terpasang</span>`);
+  // Panel Avatar Karakter Keluarga (Statis, ekspresi berubah dinamis sesuai kondisi!)
+  const rain=(S.wx==='hujan');
+  const momMood=(S.mom.love<35||S.dad.cheating)?'sad':S.stam<35?'tired':'happy';
+  const dadMood=(S.dad.cheating||S.mom.love<35)?'sad':rain?'tired':'happy';
+  const kidMood=S.faint?'tired':'happy';
+  let famHtml='';
+  if(!inh){
+    famHtml=
+      `<div class="avcard">
+        ${avatarSVG('mom',{mood:momMood,preg:S.mom.preg>0,rain,affair:!!S.mom.affair})}
+        <div><b>${S.mom.n}</b><div class="lg">Chinese · Harmonis ${Math.round(S.mom.love)}%${S.mom.preg>0?' · Hamil '+(9-S.mom.preg)+'/9':''}${S.mom.affair?' · 💋 Selingkuh':''}</div></div>
+      </div>`
+      +`<div class="avcard">
+        ${avatarSVG('dad',{mood:dadMood,rain,helm:true})}
+        <div><b>${S.dad.n}</b><div class="lg">Batak · Ngojek (80% setor)${S.dad.cheating?' · 💔 Selingkuh':''}</div></div>
+      </div>`
+      +`<div class="avcard main">
+        ${avatarSVG('kid',{mood:kidMood,age:ka,school:inSchool()})}
+        <div><b>${S.kidName}</b><div class="lg">Blasteran Batak-Chinese · Usia ${ka} thn (Pewaris 2014)</div></div>
+      </div>`;
+  }else{
+    famHtml=
+      `<div class="avcard main">
+        ${avatarSVG('kid',{mood:kidMood,age:ka,preg:S.preg>0,rain,school:inSchool(),affair:!!S.affair})}
+        <div><b>${S.kidName} (Kamu)</b><div class="lg">Cantik Blasteran Batak-Chinese · Usia ${ka} thn${S.preg>0?' · Hamil '+(9-S.preg)+'/9':''}${S.affair?' · 💋 Selingkuh':''}</div></div>
+      </div>`
+      +(S.pt?`<div class="avcard">
+        ${avatarSVG('dad',{mood:S.pt.love<35?'sad':'happy',rain,helm:!!S.mar})}
+        <div><b>${S.pt.n}</b><div class="lg">${S.mar?'Suami (Setor 80%)':'Pacar'} · Hubungan ${Math.round(S.pt.love)}%</div></div>
+      </div>`:'');
+  }
+  put($('#fam'),famHtml);
 
-  const visUnits=S.st.slice(stPage*perSt,(stPage+1)*perSt);
-  put($('#sts'),visUnits.length?visUnits.map((s,idx)=>{
-    const i=stPage*perSt+idx;
-    const c=s.c,k=K[s.k],lv=s.lv||0,noGm=(ownedGames(k.pf).length===0);
+  // Semua unit konsol tampil tanpa geser/paginasi, kartu statis anti salah pencet
+  put($('#sts'),S.st.length?S.st.map((s,i)=>{
+    const c=s.c,k=K[s.k],noGm=(ownedGames(k.pf).length===0);
     let b='';
     if(s.brk){
       b=`<div style="color:var(--bad)"><b>RUSAK</b> (${PT[k.pt].n})</div>${B('fix',i,'Perbaiki ('+(S.parts[k.pt]||0)+')',0,'sm')}`;
     }else if(!c){
       b=`<div class="r" style="justify-content:space-between"><span class="mt">${noGm?'<span style="color:var(--wr)">Beli game '+k.pf.toUpperCase()+'!</span>':'Kosong'}</span>${B('ed',i,editIdx===i?'Tutup':'Kelola',0,'sm')}</div>`;
       if(editIdx===i){
-        const nl=lv+1,nk=k.next?K[k.next]:null;
+        const nk=k.next?K[k.next]:null;
         b+=`<div class="upbox">`
-          +(nk&&nk.yr<=yr?B('upk',i,'Ke '+nk.n+' ('+fmt(Py(k.up,nk.yr))+')',0,'sm'):nk?`<span class="lg">${nk.n} rilis ${nk.yr}</span>`:'')
+          +(nk&&nk.yr<=yr?B('upk',i,'Ke '+nk.n+' ('+fmt(Py(k.up,nk.yr))+')',0,'sm'):nk?`<span class="lg">${nk.n} rilis ${nk.yr}</span>`:'<span class="lg">Seri Konsol Terbaru</span>')
           +(s.tv>=0?TV.map((tv,j)=>j>s.tv&&tv.yr<=yr?B('uptv',i+':'+j,'TV '+tv.n+' ('+fmt(Math.max(100000,Py(tv.p,tv.yr)-Math.round(Py(TV[s.tv].p,TV[s.tv].yr)*.5)))+')',0,'sm'):'').join(''):'')
-          +(nl<UPLV.length?B('uplv',i,'Up Lv'+nl+' ('+fmt(P(UPLV[nl].p))+')',0,'sm'):'<span class="lg">Upgrade Lv Max</span>')
           +B('sell',i,'Jual Second ('+fmt(unitVal(s))+')',0,'sm bad')
           +`</div>`;
       }
@@ -999,10 +1247,10 @@ function render(){
     }else{
       b=`<div>${c.n}</div><button data-a="coll" data-i="${i}" class="sm">Tagih ${fmt(bill(c)*mult())}</button>`;
     }
-    return `<div class="card ${s.brk?'brk':c?c.ph:''}"><div><b>${k.n}</b>${lv?' <span class="chip">Lv'+lv+'</span>':''}${s.tv>=0?' <span class="lg">+ '+TV[s.tv].n+'</span>':''}</div>${b}</div>`;
+    return `<div class="card ${s.brk?'brk':c?c.ph:''}"><div><b>${k.n}</b>${s.tv>=0?' <span class="lg">+ '+TV[s.tv].n+'</span>':''}</div>${b}</div>`;
   }).join(''):'<div class="mt">Belum ada unit konsol. Beli di tab Unit.</div>');
 
-  put($('#tb'),[['un','Unit'],['gm','Game'],['st','Stok'],['li','Listrik'],['hd','Keluarga'],['us','Usaha'],['bk','Bank'],['pg','Pegawai'],['kl','Kalender'],['jb','Kerja'],['hg','Harga'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
+  put($('#tb'),[['un','Unit'],['gm','Game'],['st','Stok'],['li','Listrik'],['hd','Keluarga'],['veh','Kendaraan & Kos'],['us','Usaha'],['bk','Bank'],['pg','Pegawai'],['kl','Kalender'],['jb','Kerja'],['hg','Harga'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
   put($('#side'),side());
 }
 
@@ -1014,7 +1262,7 @@ setInterval(()=>{
 },100);
 
 window.getState=()=>S;
-window.applyCloud=o=>{if(o&&o.st){S=migrate(o);_m=-1;rc=0;editIdx=-1;stPage=0;subPage=0;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}};
+window.applyCloud=o=>{if(o&&o.st){S=migrate(o);_m=-1;rc=0;editIdx=-1;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}};
 window.addEventListener('pagehide',save);
 render();
 </script>
