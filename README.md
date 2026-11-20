@@ -1,6 +1,6 @@
-# Juragan Internet & PLTS 2018
+# Juragan Energi Dunia 2000
 
-Game simulasi bisnis penyedia layanan Internet (FTTH / Fiber + Voucher Hotspot) dan Listrik Tenaga Surya (PLTS Mikrogrid Warga) di Indonesia, mulai tahun 2018. Satu halaman web tanpa build step.
+Game simulasi perjalanan dari hobi oprek listrik & baterai compact di tahun 2000, mulai menyuplai listrik tetangga pakai genset bensin, mengembangkan alat pemanen surya generasi demi generasi (1.000+ riset bertahap), hingga menjadi satu-satunya pemasok listrik termurah di dunia untuk 300 juta bangunan lintas benua.
 
 ## Isi repo
 - `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)
@@ -27,8 +27,3 @@ lalu buka http://localhost:8000
 1. Push semua file ke repo.
 2. Settings > Pages > Deploy from a branch > `main` / root.
 3. Buka `https://USERNAME.github.io/NAMA-REPO/`.
-
-## Cara kerja simpanan
-- Simpanan lokal selalu aktif (browser).
-- Setelah login Google, progres juga disimpan di dokumen `saves/{uid}` tiap akhir bulan game, atau lewat tombol "Simpan ke cloud".
-- Saat login, yang lebih baru (lokal atau cloud) yang dipakai.
