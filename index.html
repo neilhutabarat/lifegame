@@ -78,7 +78,6 @@ const UPLV=[
   {n:'Lv 3 (VIP Sofa / Monitor Gaming)',p:1800000,m:1.45}
 ];
 const GM=[
-  // PC (req: tier minimum PC 1..6)
   {id:'cs16',pf:'pc',yr:2008,req:1,n:'Counter-Strike 1.6 Anthology (Ori)',p:150000},
   {id:'wc3',pf:'pc',yr:2008,req:1,n:'Warcraft III + Frozen Throne (Ori)',p:200000},
   {id:'gtasapc',pf:'pc',yr:2008,req:1,n:'GTA San Andreas PC (Ori)',p:250000},
@@ -101,13 +100,11 @@ const GM=[
   {id:'elden',pf:'pc',yr:2022,req:5,n:'Elden Ring PC (Ori)',p:650000},
   {id:'bg3',pf:'pc',yr:2023,req:6,n:"Baldur's Gate 3 PC (Ori)",p:700000},
   {id:'wukong',pf:'pc',yr:2024,req:6,n:'Black Myth: Wukong PC (Ori)',p:700000},
-  // PS1
   {id:'we02',pf:'ps1',yr:2008,n:'Winning Eleven 2002 PS1 (Ori)',p:150000},
   {id:'ctr',pf:'ps1',yr:2008,n:'Crash Team Racing PS1 (Ori)',p:150000},
   {id:'tk3',pf:'ps1',yr:2008,n:'Tekken 3 PS1 (Ori)',p:180000},
   {id:'hmbtn',pf:'ps1',yr:2008,n:'Harvest Moon: Back to Nature (Ori)',p:180000},
   {id:'vig8',pf:'ps1',yr:2008,n:'Vigilante 8: 2nd Offense (Ori)',p:150000},
-  // PS2
   {id:'weps2',pf:'ps2',yr:2008,n:'Winning Eleven / PES PS2 (Ori)',p:350000},
   {id:'gtasaps2',pf:'ps2',yr:2008,n:'GTA San Andreas PS2 (Ori)',p:350000},
   {id:'gow2',pf:'ps2',yr:2008,n:'God of War II PS2 (Ori)',p:400000},
@@ -115,7 +112,6 @@ const GM=[
   {id:'downhill',pf:'ps2',yr:2008,n:'Downhill Domination PS2 (Ori)',p:320000},
   {id:'re4',pf:'ps2',yr:2008,n:'Resident Evil 4 PS2 (Ori)',p:380000},
   {id:'gh3',pf:'ps2',yr:2008,n:'Guitar Hero III PS2 (Ori)',p:450000},
-  // PS3
   {id:'pesps3',pf:'ps3',yr:2008,n:'PES 2008/2009 PS3 Blu-ray (Ori)',p:550000},
   {id:'gta4ps3',pf:'ps3',yr:2008,n:'GTA IV PS3 Blu-ray (Ori)',p:600000},
   {id:'mgs4',pf:'ps3',yr:2008,n:'Metal Gear Solid 4 PS3 (Ori)',p:600000},
@@ -123,7 +119,6 @@ const GM=[
   {id:'gow3',pf:'ps3',yr:2010,n:'God of War III PS3 (Ori)',p:600000},
   {id:'tlou',pf:'ps3',yr:2013,n:'The Last of Us PS3 (Ori)',p:650000},
   {id:'gtavps3',pf:'ps3',yr:2013,n:'GTA V PS3 (Ori)',p:680000},
-  // PS4
   {id:'fifa14ps4',pf:'ps4',yr:2013,n:'FIFA 14 PS4 (Ori)',p:650000},
   {id:'pes15ps4',pf:'ps4',yr:2014,n:'PES 2015 PS4 (Ori)',p:650000},
   {id:'bbps4',pf:'ps4',yr:2015,n:'Bloodborne PS4 (Ori)',p:680000},
@@ -131,30 +126,25 @@ const GM=[
   {id:'gowps4',pf:'ps4',yr:2018,n:'God of War PS4 (Ori)',p:730000},
   {id:'spidey4',pf:'ps4',yr:2018,n:"Marvel's Spider-Man PS4 (Ori)",p:730000},
   {id:'gotps4',pf:'ps4',yr:2020,n:'Ghost of Tsushima PS4 (Ori)',p:780000},
-  // PS5
   {id:'miles5',pf:'ps5',yr:2020,n:'Spider-Man: Miles Morales PS5 (Ori)',p:730000},
   {id:'ds5',pf:'ps5',yr:2020,n:"Demon's Souls Remake PS5 (Ori)",p:950000},
   {id:'gowr5',pf:'ps5',yr:2022,n:'God of War Ragnarok PS5 (Ori)',p:980000},
   {id:'fc24ps5',pf:'ps5',yr:2023,n:'EA Sports FC 24 PS5 (Ori)',p:1000000},
   {id:'spidey2',pf:'ps5',yr:2023,n:"Marvel's Spider-Man 2 PS5 (Ori)",p:1030000},
   {id:'gta6ps5',pf:'ps5',yr:2026,n:'Grand Theft Auto VI PS5 (Ori)',p:1150000},
-  // Xbox Original
   {id:'halo1',pf:'xb1',yr:2008,n:'Halo: Combat Evolved Xbox (Ori)',p:300000},
   {id:'halo2',pf:'xb1',yr:2008,n:'Halo 2 Xbox (Ori)',p:350000},
   {id:'fable',pf:'xb1',yr:2008,n:'Fable Xbox (Ori)',p:320000},
   {id:'forza1',pf:'xb1',yr:2008,n:'Forza Motorsport Xbox (Ori)',p:320000},
-  // Xbox 360
   {id:'halo3',pf:'xb360',yr:2008,n:'Halo 3 Xbox 360 (Ori)',p:520000},
   {id:'gow2x',pf:'xb360',yr:2008,n:'Gears of War 2 Xbox 360 (Ori)',p:550000},
   {id:'fm3',pf:'xb360',yr:2009,n:'Forza Motorsport 3 Xbox 360 (Ori)',p:550000},
   {id:'rdrx',pf:'xb360',yr:2010,n:'Red Dead Redemption Xbox 360 (Ori)',p:580000},
   {id:'halo4',pf:'xb360',yr:2012,n:'Halo 4 Xbox 360 (Ori)',p:600000},
-  // Xbox One
   {id:'fm5',pf:'xbone',yr:2013,n:'Forza Motorsport 5 Xbox One (Ori)',p:650000},
   {id:'hmcc',pf:'xbone',yr:2014,n:'Halo: Master Chief Collection (Ori)',p:680000},
   {id:'gears4',pf:'xbone',yr:2016,n:'Gears of War 4 Xbox One (Ori)',p:700000},
   {id:'fh4',pf:'xbone',yr:2018,n:'Forza Horizon 4 Xbox One (Ori)',p:750000},
-  // Xbox Series X
   {id:'haloinf',pf:'xbsx',yr:2021,n:'Halo Infinite Xbox Series X (Ori)',p:850000},
   {id:'fh5',pf:'xbsx',yr:2021,n:'Forza Horizon 5 Xbox Series X (Ori)',p:850000},
   {id:'starf',pf:'xbsx',yr:2023,n:'Starfield Xbox Series X (Ori)',p:950000},
@@ -315,6 +305,7 @@ function migrate(o){
   Object.keys(PT).forEach(k=>{if(o.parts[k]===undefined)o.parts[k]=0});
   if(o.solBat===undefined)o.solBat=0;
   if(o.solCap===undefined)o.solCap=o.sol>0?o.sol*5:0;
+  if(o.sol>0&&o.solCap===0)o.solCap=o.sol*5;
   if(!o.wx)o.wx='cerah';
   if(!Array.isArray(o.emps)){
     o.emps=[];
@@ -382,16 +373,24 @@ function updateWeather(){
   S.wx=rainy?(r<.4?'cerah':r<.75?'mendung':'hujan'):(r<.65?'cerah':r<.9?'mendung':'hujan');
 }
 
+function solarStats(){
+  const h=Math.floor(S.T/60)%24;
+  let w=S.open?100:0;S.st.forEach(s=>{if(s.c)w+=sw(s)});
+  const load=w/1000;
+  let gen=0;
+  if(S.sol>0&&h>=6&&h<17){
+    const wm=S.wx==='cerah'?1:S.wx==='mendung'?.45:.18;
+    gen=S.sol*2.5*wm;
+  }
+  return {load,gen,net:gen-load};
+}
+
 function power(h){
   if(h%4===0)updateWeather();
-  let w=S.open?100:0;S.st.forEach(s=>{if(s.c)w+=sw(s)});
-  let load=w/1000,gen=0;
-  if(S.sol>0&&h>=6&&h<17){
-    const wm=S.wx==='cerah'?1:S.wx==='mendung'?.4:.15;
-    gen=S.sol*.75*wm;
-  }
-  const direct=Math.min(load,gen);load-=direct;
-  const surplus=gen-direct;
+  const st=solarStats();
+  let load=st.load;
+  const direct=Math.min(load,st.gen);load-=direct;
+  const surplus=st.gen-direct;
   if(surplus>0&&S.solCap>0)S.solBat=Math.min(S.solCap,S.solBat+surplus);
   if(load>0&&S.solBat>0){const fb=Math.min(load,S.solBat);S.solBat-=fb;load-=fb}
   if(load<=0){S.out=0;return}
@@ -412,12 +411,10 @@ function dayEnd(){
     const hrs=shiftHours(e);
     const over=Math.max(0,hrs-12);
     const salFactor=e.sal<stdSal*.8?1.5:e.sal>=stdSal*1.2?.75:1;
-    // Naik jenuh harian (~2.6%/hari di 12 jam; makin lama shift makin cepat jenuh)
     e.burn=Math.min(100,e.burn+(2.6+over*.65)*salFactor);
-    // Risiko sakit realistis: sangat jarang di 12 jam (0.35%/hari), naik jika >12 jam atau jenuh tinggi
     const sickChance=.0035+over*.0032+(e.burn>75?.012:e.burn>50?.004:0);
     if(Math.random()<sickChance){
-      e.sick=1+Math.floor(Math.random()*2); // 1-2 hari
+      e.sick=1+Math.floor(Math.random()*2);
       log(e.n+' sedang sakit ('+e.sick+' hari). Kamu harus menggantikan jaga shift-nya!');
       snd('warn');
     }
@@ -446,7 +443,6 @@ function monthEnd(){
     if(--S.propLn.left<=0){S.propLn=null;log('Cicilan ruko LUNAS!')}
   }
   if(S.b>0){const i=Math.round(S.b*.0033);S.b+=i;inc+=i}
-  // Deposito: bunga naik tiap bulan mengendap
   if(S.dep.length){
     let depInt=0;
     S.dep.forEach(d=>{
@@ -512,13 +508,11 @@ function step(){
     S.st.forEach(s=>{
       if(s.brk)return;
       const kc=K[s.k],gms=ownedGames(kc.pf);
-      // Konsol wajib punya game ori; PC bisa browsing walau belum ada game!
       if(kc.c!=='pc'&&gms.length===0)return;
       const gBonus=kc.c==='pc'?(gms.length?1+Math.min(.55,gms.length*.08):.7):(1+Math.min(.5,(gms.length-1)*.1));
       if(Math.random()<.3*wt*(.5+S[kc.c==='pc'?'rw':'rr']/5)*dm(s.k)*gBonus*(S.bC?2:1)/60){
         let act='Browsing',req=1;
         if(kc.c==='pc'){
-          // 40% browsing jika ada game, 100% browsing jika belum ada game
           if(gms.length>0&&Math.random()>=.38){
             const g=gms[Math.random()*gms.length|0];act=g.n.replace(' (Ori)','');req=g.req||1;
           }else{
@@ -658,8 +652,30 @@ const A={
   sp(i){if(buy(P(i==='gas'?65000:45000)))S.sup[i]+=5},
   tok(n){if(buy(P(n*1000)+2500)){S.kwh+=+n;S.out=0}},
   gen(){if(!S.gen&&buy(4500000))S.gen=true},
-  sol(){if(buy(70e6)){S.sol++;if(S.solCap===0)S.solCap=5;log('Pasang panel surya '+S.sol+' kWp di atap (tidak makan slot).')}},
-  bat(k){const map={5:4e6,10:7.5e6,25:17e6};if(buy(P(map[k]))){S.solCap+=+k;log('Upgrade kapasitas baterai surya +'+k+' kWh.')}},
+  sol(){
+    if(buy(70e6)){
+      S.sol++;
+      if(S.solCap===0){S.solCap=5;S.solBat=2.5}
+      log('Pasang panel surya '+S.sol+' kWp di atap (daya maks '+(S.sol*2.5).toFixed(1)+' kW, baterai terisi '+S.solBat.toFixed(1)+' kWh).');
+    }
+  },
+  bat(k){
+    const map={5:4e6,10:7.5e6,25:17e6},add=+k;
+    if(buy(P(map[k]))){
+      S.solCap+=add;
+      S.solBat=Math.min(S.solCap,S.solBat+add*.5);
+      log('Upgrade kapasitas baterai +'+add+' kWh (terisi '+S.solBat.toFixed(1)+'/'+S.solCap+' kWh).');
+    }
+  },
+  chgbat(){
+    if(S.solCap<=0)return log('Pasang panel surya / baterai dulu.');
+    const need=S.solCap-S.solBat;
+    if(need<.1)return log('Baterai surya sudah penuh.');
+    if(S.kwh<=0)return log('Token PLN kosong untuk mengisi baterai.');
+    const fill=Math.min(need,S.kwh);
+    S.kwh-=fill;S.solBat+=fill;
+    log('Isi baterai surya '+fill.toFixed(1)+' kWh dari token PLN.');
+  },
   mv(i){
     if(i==='r'&&S.cap<30&&buy(5e6)){S.cap=30;S.rent=2.5e6}
     if(i==='b'&&S.cap<80&&buy(600e6)){S.cap=80;S.rent=0;S.propLn=null;log('Beli ruko tunai 80 slot!')}
@@ -781,15 +797,18 @@ function side(){
     +R('Air galon ('+S.sup.gal.toFixed(1)+')','dipakai es teh dan kopi','sp','gal','+5 '+fmt(P(45000)));
   }
   if(t==='li'){
-    const wm=S.wx==='cerah'?'100%':S.wx==='mendung'?'40%':'15%';
-    h=`<div class="lg">Token PLN: ${S.kwh.toFixed(1)} kWh (${fmt(P(1000))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''}<br>Cuaca: ${wxIcon()} (serapan surya ${wm}) · Baterai surya: ${S.solBat.toFixed(1)}/${S.solCap} kWh (GRATIS)</div>`
+    const wm=S.wx==='cerah'?'100%':S.wx==='mendung'?'45%':'18%';
+    const ss=solarStats();
+    const batSt=S.solCap<=0?'Belum ada':ss.net>0?`<b style="color:var(--ok)">⚡ Ngecas +${ss.net.toFixed(2)} kWh/jam</b>`:ss.net<0&&S.solBat>0?`<b style="color:var(--wr)">🔋 Dipakai ${ss.net.toFixed(2)} kWh/jam</b>`:'Siaga';
+    h=`<div class="lg">Token PLN: ${S.kwh.toFixed(1)} kWh (${fmt(P(1000))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''}<br>Beban warnet: <b>${ss.load.toFixed(2)} kW</b> · Produksi surya: <b>${ss.gen.toFixed(2)} kW</b> (${wxIcon()} ${wm}, jam 06–17)<br>Baterai surya: <b>${S.solBat.toFixed(1)}/${S.solCap} kWh</b> (GRATIS) · Status: ${batSt}</div>`
     +[50,100,250].map(n=>R('Token '+n+' kWh','','tok',n,fmt(P(n*1000)+2500))).join('')
     +R('Genset','otomatis menyala saat token & baterai habis, bensin Rp 5.000/jam','gen','',S.gen?'Terpasang':fmt(4500000),S.gen)
-    +'<h2>Panel Surya (Atap - Gratis Listrik)</h2>'
-    +R('Panel surya ('+S.sol+' kWp)','tidak memakan slot ruang usaha, menyerap jam 06–17 sesuai cuaca','sol','',fmt(70e6))
-    +R('Upgrade baterai +5 kWh','kapasitas saat ini '+S.solCap+' kWh','bat',5,fmt(P(4e6)))
-    +R('Upgrade baterai +10 kWh','simpan daya surya untuk malam/hujan','bat',10,fmt(P(7.5e6)))
-    +R('Upgrade baterai +25 kWh','cadangan besar untuk warnet 24 jam','bat',25,fmt(P(17e6)));
+    +'<h2>Panel Surya & Baterai (Gratis Listrik)</h2>'
+    +R('Panel surya ('+S.sol+' kWp)','tidak makan slot usaha · menghasilkan hingga '+(S.sol*2.5).toFixed(1)+' kW saat cerah (jam 06–17)','sol','',fmt(70e6))
+    +R('Isi baterai dari Token PLN','jika mendung/malam & ingin isi baterai manual','chgbat','',S.solCap>0&&S.solBat<S.solCap?'Isi Penuh':'Penuh / N/A',S.solCap<=0||S.solBat>=S.solCap||S.kwh<=0)
+    +R('Upgrade baterai +5 kWh','kapasitas saat ini '+S.solCap+' kWh (langsung terisi 50%)','bat',5,fmt(P(4e6)))
+    +R('Upgrade baterai +10 kWh','simpan daya surya untuk malam/hujan (terisi 50%)','bat',10,fmt(P(7.5e6)))
+    +R('Upgrade baterai +25 kWh','cadangan besar untuk warnet 24 jam (terisi 50%)','bat',25,fmt(P(17e6)));
   }
   if(t==='us'){
     h=R('Garasi rumah','kapasitas 10 slot',0)
@@ -877,11 +896,12 @@ function side(){
 
 function render(){
   const dt=curDate(),yr=curYear(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
-  const tx=taxInfo(S.inc),sk=sickEmps().length;
+  const tx=taxInfo(S.inc),sk=sickEmps().length,ss=solarStats();
   const st=S.busy>0?['KERJA '+Math.ceil(S.busy/60)+'j','var(--wr)']:S.out?['PADAM','var(--bad)']:S.faint?['PINGSAN','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:S.open?['BUKA','var(--ok)']:['TUTUP','var(--mt)'];
+  const chgTag=S.solCap>0?(ss.net>0&&S.solBat<S.solCap?' ⚡':''):'';
   put($('#hd'),
     `<div class="r"><b>${fmt(S.m)}</b><span class="lg">rekening ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span>Usia ${age()}</span><span class="chip" style="color:${st[1]}">${st[0]}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}${sk?`<span class="chip" style="color:var(--wr)">${sk} Karyawan Sakit</span>`:''}</div>`
-    +`<div class="r lg"><span>Rep warnet ★${S.rw.toFixed(1)}</span><span>Rep rental ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)} kWh${S.solCap?' · Bat '+S.solBat.toFixed(1)+'/'+S.solCap:''}</span><span>${wxIcon()}</span><span>Slot ${used()}/${S.cap}</span><span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>Harga x${fx().toFixed(2)}</span></div>`
+    +`<div class="r lg"><span>Rep warnet ★${S.rw.toFixed(1)}</span><span>Rep rental ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)} kWh${S.solCap?' · Bat '+S.solBat.toFixed(1)+'/'+S.solCap+chgTag:''}</span><span>${wxIcon()}</span><span>Slot ${used()}/${S.cap}</span><span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>Harga x${fx().toFixed(2)}</span></div>`
     +`<div class="bar"><i style="width:${S.stam}%;background:${S.stam<25?'var(--bad)':'var(--ac)'}"></i></div>`
   );
   put($('#ctl'),
