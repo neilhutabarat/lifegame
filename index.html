@@ -22,7 +22,7 @@ button:disabled{opacity:.4;cursor:default}
 button.sm{padding:3px 7px;font-size:12px;border-radius:6px}
 button.bad{border-color:var(--bad);color:var(--bad)}
 input{width:76px;padding:3px 6px}
-main{flex:1;min-height:0;padding:10px 12px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1260px;width:100%;margin:auto;overflow:hidden}
+main{flex:1;min-height:0;padding:10px 12px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1280px;width:100%;margin:auto;overflow:hidden}
 @media(min-width:860px){main{grid-template-columns:1.05fr 1fr}}
 main>section{display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .shd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px;flex-shrink:0}
@@ -61,65 +61,62 @@ const put=(e,h)=>{if(e._h!==h){e._h=h;e.innerHTML=h}};
 
 const START_YEAR=2018, BIRTH_YEAR=2002;
 
-// Teknologi Daya Serap Panel Surya (2018+)
+// Teknologi Daya Serap Panel Surya (Harga ramah mulai modal awal 2018+)
 const SOL_TECH=[
-  {lv:0,n:'Polycrystalline 270Wp (Standar 2018)',mult:1.0,p:0,yr:2018},
-  {lv:1,n:'Monocrystalline PERC 380Wp (Efisiensi 1.6x)',mult:1.6,p:18000000,yr:2018},
-  {lv:2,n:'Half-Cut Multi-Busbar 450Wp (Efisiensi 2.4x)',mult:2.4,p:42000000,yr:2019},
-  {lv:3,n:'Bifacial Dual-Glass 550Wp (Efisiensi 3.6x)',mult:3.6,p:90000000,yr:2020},
-  {lv:4,n:'N-Type TOPCon Cell 620Wp (Efisiensi 5.2x)',mult:5.2,p:180000000,yr:2022},
-  {lv:5,n:'HJT Heterojunction MPPT (Efisiensi 7.5x)',mult:7.5,p:350000000,yr:2023},
-  {lv:6,n:'Perovskite-Silicon Tandem (Efisiensi 11x)',mult:11.0,p:680000000,yr:2025}
+  {lv:0,n:'Polycrystalline 300Wp (Standar 2018)',mult:1.0,p:0,yr:2018},
+  {lv:1,n:'Monocrystalline PERC 400Wp (Efisiensi 1.8x)',mult:1.8,p:6500000,yr:2018},
+  {lv:2,n:'Half-Cut Multi-Busbar 480Wp (Efisiensi 2.8x)',mult:2.8,p:16000000,yr:2019},
+  {lv:3,n:'Bifacial Dual-Glass 580Wp (Efisiensi 4.2x)',mult:4.2,p:35000000,yr:2020},
+  {lv:4,n:'N-Type TOPCon Cell 650Wp (Efisiensi 6.5x)',mult:6.5,p:75000000,yr:2022},
+  {lv:5,n:'HJT Heterojunction MPPT (Efisiensi 9.5x)',mult:9.5,p:150000000,yr:2023},
+  {lv:6,n:'Perovskite-Silicon Tandem (Efisiensi 14x)',mult:14.0,p:300000000,yr:2025}
 ];
 
-// Teknologi Kecepatan Charging (2018+)
+// Teknologi Kecepatan Charging (Kapasitas daya realistis untuk PLTS rumah & harga terjangkau)
 const CHG=[
-  {w:18,n:'Quick Charge 18W',p:0,yr:2018},
-  {w:33,n:'Fast Charge 33W',p:650000,yr:2018},
-  {w:65,n:'SuperVOOC / Dart 65W',p:1800000,yr:2019},
-  {w:120,n:'HyperCharge 120W',p:4200000,yr:2020},
-  {w:240,n:'Max Flash Charge 240W',p:8500000,yr:2022},
-  {w:500,n:'MPPT Solar Controller 500W',p:16000000,yr:2018},
-  {w:1200,n:'MPPT Fast Array 1.2 kW',p:34000000,yr:2019},
-  {w:3000,n:'GaN High-Voltage Charger 3 kW',p:68000000,yr:2021},
-  {w:7500,n:'Industrial Supercharger 7.5 kW',p:135000000,yr:2023},
-  {w:15000,n:'Megacharger Grid 15 kW',p:260000000,yr:2025}
+  {w:250,n:'PWM Solar Controller 250W',p:0,yr:2018},
+  {w:600,n:'MPPT Fast Controller 600W',p:850000,yr:2018},
+  {w:1200,n:'MPPT Turbo Array 1.2 kW',p:2200000,yr:2018},
+  {w:2500,n:'Hybrid MPPT Super 2.5 kW',p:5500000,yr:2019},
+  {w:5000,n:'GaN High-Voltage Charger 5 kW',p:12000000,yr:2020},
+  {w:10000,n:'Industrial HyperCharge 10 kW',p:26000000,yr:2022},
+  {w:20000,n:'Megacharger Grid 20 kW',p:55000000,yr:2024}
 ];
 
-// Jaringan Distribusi Listrik Warga (PLTS Pascabayar)
+// Jaringan Distribusi Listrik Warga (PLTS Pascabayar & Token Prabayar)
 const GRID_TIER=[
   {lv:0,n:'Belum ada jaringan listrik warga',max:0,p:0,yr:2018},
-  {lv:1,n:'Kabel Tetangga Sebelah (Maks 1 Rumah)',max:1,p:1500000,yr:2018},
-  {lv:2,n:'Jaringan Kabel 1 Gang (Maks 5 Rumah)',max:5,p:6500000,yr:2018},
-  {lv:3,n:'Tiang & Panel Distribusi 1 RT (Maks 15 Rumah)',max:15,p:18000000,yr:2018},
-  {lv:4,n:'Inverter Grid & Trafo 1 RW (Maks 40 Rumah)',max:40,p:48000000,yr:2019},
-  {lv:5,n:'Gardu Mikrogrid Desa (Maks 100 Rumah)',max:100,p:120000000,yr:2021}
+  {lv:1,n:'Kabel Tetangga Sebelah (Maks 2 Rumah)',max:2,p:1200000,yr:2018},
+  {lv:2,n:'Jaringan Kabel 1 Gang (Maks 6 Rumah)',max:6,p:4500000,yr:2018},
+  {lv:3,n:'Tiang & Panel Distribusi 1 RT (Maks 18 Rumah)',max:18,p:14000000,yr:2018},
+  {lv:4,n:'Inverter Grid & Trafo 1 RW (Maks 45 Rumah)',max:45,p:36000000,yr:2019},
+  {lv:5,n:'Gardu Mikrogrid Desa (Maks 120 Rumah)',max:120,p:90000000,yr:2021}
 ];
 
 // Infrastruktur Jaringan Internet (2018+)
 const ISP_INFRA=[
   {lv:0,n:'Belum ada jaringan internet',max:0,p:0,yr:2018},
-  {lv:1,n:'ODP Mini Tiang 8-Port (RT-RW Fiber)',max:8,p:6500000,yr:2018},
-  {lv:2,n:'OLT EPON 2-PON + ODP Kampung (24 Rumah)',max:24,p:18000000,yr:2018},
-  {lv:3,n:'OLT GPON 4-PON + Mikrotik CCR (64 Rumah)',max:64,p:45000000,yr:2019},
-  {lv:4,n:'OLT GPON 8-PON + ODC Kecamatan (160 Rumah)',max:160,p:110000000,yr:2021},
-  {lv:5,n:'Core Router 10G + Ring Backbone (400 Rumah)',max:400,p:280000000,yr:2023}
+  {lv:1,n:'ODP Mini Tiang 8-Port + Voucher Hotspot',max:8,p:5500000,yr:2018},
+  {lv:2,n:'OLT EPON 2-PON + ODP Kampung (24 Rumah)',max:24,p:15000000,yr:2018},
+  {lv:3,n:'OLT GPON 4-PON + Mikrotik CCR (64 Rumah)',max:64,p:38000000,yr:2019},
+  {lv:4,n:'OLT GPON 8-PON + ODC Kecamatan (160 Rumah)',max:160,p:95000000,yr:2021},
+  {lv:5,n:'Core Router 10G + Ring Backbone (400 Rumah)',max:400,p:240000000,yr:2023}
 ];
 
 // Jalur Bandwidth Induk (Bisa langganan multi-jalur / dobel!)
 const ISP_UP=[
-  {id:1,n:'Dedicated FO 30 Mbps',mbps:30,cost:3200000,yr:2018},
-  {id:2,n:'Dedicated FO 50 Mbps',mbps:50,cost:4800000,yr:2018},
-  {id:3,n:'Metro-E 100 Mbps',mbps:100,cost:8500000,yr:2018},
-  {id:4,n:'Metro-E 200 Mbps',mbps:200,cost:15500000,yr:2018},
-  {id:5,n:'Metro-E 300 Mbps',mbps:300,cost:21000000,yr:2019},
-  {id:6,n:'Metro-E 500 Mbps',mbps:500,cost:32000000,yr:2020},
-  {id:7,n:'Backbone 1 Gbps (1000 Mbps)',mbps:1000,cost:52000000,yr:2020},
-  {id:8,n:'Backbone 2.5 Gbps',mbps:2500,cost:105000000,yr:2022},
-  {id:9,n:'Backbone 10 Gbps',mbps:10000,cost:260000000,yr:2024}
+  {id:1,n:'Dedicated FO 30 Mbps',mbps:30,cost:3000000,yr:2018},
+  {id:2,n:'Dedicated FO 50 Mbps',mbps:50,cost:4500000,yr:2018},
+  {id:3,n:'Metro-E 100 Mbps',mbps:100,cost:8000000,yr:2018},
+  {id:4,n:'Metro-E 200 Mbps',mbps:200,cost:14500000,yr:2018},
+  {id:5,n:'Metro-E 300 Mbps',mbps:300,cost:20000000,yr:2019},
+  {id:6,n:'Metro-E 500 Mbps',mbps:500,cost:30000000,yr:2020},
+  {id:7,n:'Backbone 1 Gbps (1000 Mbps)',mbps:1000,cost:48000000,yr:2020},
+  {id:8,n:'Backbone 2.5 Gbps',mbps:2500,cost:98000000,yr:2022},
+  {id:9,n:'Backbone 10 Gbps',mbps:10000,cost:240000000,yr:2024}
 ];
 
-// Paket Internet Warga (Variasi lengkap 2018+)
+// Paket Internet Warga (2018+)
 const ISP_PKG=[
   {id:0,n:'Paket 5 Mbps (Hemat Pelajar)',mbps:5,fee:150000,yr:2018},
   {id:1,n:'Paket 10 Mbps (Fiber Home)',mbps:10,fee:220000,yr:2018},
@@ -136,10 +133,10 @@ const ISP_PKG=[
 ];
 
 const HOUSE_TYPES=[
-  {t:'900VA (Keluarga)',baseKw:.32,varKw:.22},
-  {t:'1300VA (Kulkas + TV)',baseKw:.52,varKw:.35},
-  {t:'2200VA (AC + Mesin Cuci)',baseKw:.90,varKw:.55},
-  {t:'3500VA (2 AC + Usaha)',baseKw:1.40,varKw:.80}
+  {t:'900VA (Keluarga)',baseKw:.28,varKw:.18},
+  {t:'1300VA (Kulkas + TV)',baseKw:.45,varKw:.28},
+  {t:'2200VA (AC + Mesin Cuci)',baseKw:.80,varKw:.45},
+  {t:'3500VA (2 AC + Usaha)',baseKw:1.25,varKw:.65}
 ];
 const OWNERS=['Pak RT','Bu Siti','Mas Andi','Bu Tini','Pak Haji','Pak Budi','Bu Rina','Kang Dedi','Pak Joko','Bu Dewi','Mas Bayu','Pak Hendra','Bu Yanti','Pak Slamet','Mas Fajar','Bu Ningsih','Pak Wahyu','Bu Lestari','Mas Dimas','Bu Ratna'];
 const EMPNM=['Andi','Riko','Bambang','Dedi','Wawan','Yusuf','Rian','Bagas','Ilham','Reza','Surya','Hadi'];
@@ -231,7 +228,7 @@ function usedSellVal(basePrice,boughtDay){
   const ratio=Math.max(.25,.85-ageYrs*.06);
   return Math.round(basePrice*ratio/1000)*1000;
 }
-function solSellVal(item){return usedSellVal(25e6,item?item.day:0)}
+function solSellVal(item){return usedSellVal(12e6,item?item.day:0)}
 function solAvgAgeMo(){
   if(!S.solList.length)return 0;
   const tot=S.solList.reduce((a,x)=>a+Math.max(0,day()-(x.day||0)),0);
@@ -241,7 +238,11 @@ function solAvgAgeMo(){
 function makeHouse(idx,hasNet,hasPlts){
   const ht=HOUSE_TYPES[Math.min(HOUSE_TYPES.length-1,Math.floor(Math.random()*(2+Math.min(2,Math.floor(idx/5)))))];
   const nm=OWNERS[idx%OWNERS.length]+(idx>=OWNERS.length?' #'+(idx+1):'');
-  return {id:Date.now()+Math.random(),n:nm,t:ht.t,net:!!hasNet,plts:!!hasPlts,baseKw:ht.baseKw,varKw:ht.varKw,usedKwh:0,outHrs:0};
+  // Tanggal jatuh tempo tagihan bulanan tersebar (1..28) agar kas masuk hampir tiap hari!
+  const billDay=((idx*5+curDate().getDate())%28)+1;
+  // Pelanggan PLTS otomatis punya saldo token prabayar awal ~10 kWh
+  const tokenBal=hasPlts?10:0;
+  return {id:Date.now()+Math.random(),n:nm,t:ht.t,net:!!hasNet,plts:!!hasPlts,billDay,baseKw:ht.baseKw,varKw:ht.varKw,usedKwh:0,tokenBal,outHrs:0};
 }
 
 function fresh(){
@@ -249,32 +250,39 @@ function fresh(){
     m:10000000,b:190000000,T:420,stam:100,open:true,faint:false,
     kwh:100,solList:[],solTech:0,solBat:0,solCap:0,chgLv:0,acChgLv:-1,acChgOn:false,wx:'cerah',
     grid:{lv:0,on:false,rate:1000,sat:85},
-    isp:{infra:0,lines:{},pkg:1,fault:0,sat:85},
+    isp:{infra:0,lines:{},pkg:1,fault:0,sat:85,vouchOn:true},
     houses:[],
     emps:[],empSeq:1,
     dep:[],ln:null,
     rec:[],hv:'b',mute:false,cf:-999,
     bC:0,bI:0,spd:1,pause:false,tab:'net',
-    log:['1 Jan 2018 (Usia 16 thn, Modal Rp 200 jt). Bangun jaringan Internet di tab Internet atau pasang PLTS Warga di tab Listrik PLTS!'],
-    inc:0,exp:0,yrInc:0
+    log:['1 Jan 2018 (Usia 16 thn, Modal Rp 200 jt). Pasang Internet (tagihan tersebar + voucher harian) atau PLTS Warga (prabayar & pascabayar)!'],
+    inc:0,exp:0,yrInc:0,moNet:0,moPlts:0
   };
 }
 function migrate(o){
   if(!Array.isArray(o.solList))o.solList=[];
   if(!Array.isArray(o.houses))o.houses=[];
+  o.houses.forEach((hs,idx)=>{
+    if(hs.billDay===undefined)hs.billDay=((idx*5+3)%28)+1;
+    if(hs.tokenBal===undefined)hs.tokenBal=hs.plts?8:0;
+  });
   if(!Array.isArray(o.emps))o.emps=[];
   if(!Array.isArray(o.dep))o.dep=[];
   if(!Array.isArray(o.rec))o.rec=[];
   if(!o.grid)o.grid={lv:0,on:false,rate:1000,sat:85};
-  if(!o.isp)o.isp={infra:0,lines:{},pkg:1,fault:0,sat:85};
+  if(!o.isp)o.isp={infra:0,lines:{},pkg:1,fault:0,sat:85,vouchOn:true};
+  if(o.isp.vouchOn===undefined)o.isp.vouchOn=true;
   if(!o.isp.lines){
     o.isp.lines={};
-    // Migrasi dari format lama single-line jika ada
     if(o.isp.up===1)o.isp.lines[1]=1;
     else if(o.isp.up===2)o.isp.lines[3]=1;
     else if(o.isp.up===3)o.isp.lines[5]=1;
     else if(o.isp.up>=4)o.isp.lines[7]=1;
   }
+  if(o.moNet===undefined)o.moNet=0;
+  if(o.moPlts===undefined)o.moPlts=0;
+  if(![1,4,8,16,64,128,256,512].includes(o.spd))o.spd=1;
   return o;
 }
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -299,7 +307,6 @@ function snd(t){
   }catch(e){}
 }
 
-const dstr=()=>{const dt=curDate();return HARI[dt.getDay()]+', '+dt.getDate()+' '+BLN[dt.getMonth()]+' '+dt.getFullYear()+' '+clock()};
 const drain=()=>4.2/(1+(empOnDuty()?1.4*activeEmps().length:0));
 
 function updateWeather(){
@@ -353,7 +360,8 @@ function ispStats(){
   });
   const pkg=ISP_PKG[S.isp.pkg||0]||ISP_PKG[0];
   const netHouses=S.houses.filter(x=>x.net);
-  const bwUsed=netHouses.length*pkg.mbps*.25; // rasio sharing 1:4
+  const vouchBw=(inf.lv>0&&S.isp.vouchOn&&totalUpMbps>0)?Math.min(totalUpMbps*.25,2+inf.lv*2):0;
+  const bwUsed=netHouses.length*pkg.mbps*.25+vouchBw;
   const congested=(totalUpMbps>0&&bwUsed>totalUpMbps);
   const rev=netHouses.length*Py(pkg.fee,pkg.yr);
   return {inf,totalUpMbps,totalUpCost,lineCount,pkg,netHouses,bwUsed,congested,rev};
@@ -378,6 +386,15 @@ function power(h){
       if(S.solBat>=need){
         S.solBat-=need;
         hs.usedKwh=(hs.usedKwh||0)+need;
+        hs.tokenBal=(hs.tokenBal||0)-need;
+        // Token listrik prabayar warga otomatis beli isi ulang saat saldo kWh meteran mereka habis!
+        if(hs.tokenBal<=0){
+          const topupKwh=15+Math.floor(Math.random()*25); // 15-39 kWh
+          const payAmt=Math.round(topupKwh*(S.grid.rate||1000)*mult());
+          hs.tokenBal+=topupKwh;
+          S.m+=payAmt;S.inc+=payAmt;S.moPlts=(S.moPlts||0)+payAmt;
+          if(S.spd<=64)log(hs.n+' isi ulang token PLTS +'+topupKwh+' kWh ('+fmt(payAmt)+').');
+        }
       }else if(S.solBat>0){
         hs.usedKwh=(hs.usedKwh||0)+S.solBat;
         S.solBat=0;
@@ -419,6 +436,12 @@ function dayEnd(){
         log(drop.n+' berhenti langganan Internet karena jalur bandwidth induk belum aktif.');
       }
     }else{
+      // Pemasukan Harian Voucher Wi-Fi Hotspot
+      if(S.isp.vouchOn&&!is.congested&&S.isp.fault===0){
+        const buyers=(3+is.inf.lv*4+Math.floor(Math.random()*5))*(S.bC?2:1);
+        const vRev=Math.round(buyers*P(3000)*mult());
+        S.m+=vRev;S.inc+=vRev;S.moNet=(S.moNet||0)+vRev;
+      }
       if(S.isp.fault>0){
         if(empOnDuty()){
           S.isp.fault=0;log('Teknisi memperbaiki gangguan kabel/ODP Internet.');
@@ -440,11 +463,11 @@ function dayEnd(){
       }else if(S.isp.fault===0){
         S.isp.sat=Math.min(100,(S.isp.sat||85)+2);
         const maxAdd=S.bC?3:1;
-        if(is.netHouses.length<is.inf.max&&S.isp.sat>=50&&Math.random()<(S.bC?.85:.55)){
+        if(is.netHouses.length<is.inf.max&&S.isp.sat>=50&&Math.random()<(S.bC?.85:.6)){
           for(let k=0;k<maxAdd&&S.houses.filter(x=>x.net).length<is.inf.max;k++){
             const existing=S.houses.find(x=>!x.net);
             if(existing){existing.net=true;log(existing.n+' menambah layanan Internet Fiber!')}
-            else{const nh=makeHouse(S.houses.length,true,false);S.houses.push(nh);log('Pelanggan baru Internet: '+nh.n+' bergabung!')}
+            else{const nh=makeHouse(S.houses.length,true,false);S.houses.push(nh);log('Pelanggan baru Internet: '+nh.n+' (jatuh tempo tgl '+nh.billDay+').')}
           }
         }
       }
@@ -473,12 +496,41 @@ function dayEnd(){
         log(drop.n+' berhenti langganan listrik karena tarifmu lebih mahal dari PLN!');
       }
     }else if(gs.pltsHouses.length<gs.tier.max&&gs.discPct>=15&&S.solBat>=.5){
-      const chance=Math.min(.85,(S.bC?.5:.2)+(gs.discPct/100));
+      const chance=Math.min(.85,(S.bC?.55:.25)+(gs.discPct/100));
       if(Math.random()<chance){
         const existing=S.houses.find(x=>!x.plts);
-        if(existing){existing.plts=true;log(existing.n+' ikut berlangganan Listrik PLTS!')}
+        if(existing){existing.plts=true;existing.tokenBal=10;log(existing.n+' ikut berlangganan Listrik PLTS!')}
         else{const nh=makeHouse(S.houses.length,false,true);S.houses.push(nh);log('Pelanggan baru Listrik PLTS: '+nh.n+' ['+nh.t+'] bergabung!')}
       }
+    }
+  }
+
+  // Penagihan Harian Berdasarkan Tanggal Jatuh Tempo Tiap Rumah (1..28)
+  const todayDate=curDate().getDate();
+  if(todayDate<=28){
+    let dueNet=0,duePlts=0,dueCnt=0;
+    const pkgFee=Py(is.pkg.fee,is.pkg.yr);
+    S.houses.forEach(hs=>{
+      if(hs.billDay===todayDate){
+        let sub=0;
+        if(hs.net&&is.totalUpMbps>0){
+          const nf=Math.round(pkgFee*mult());
+          sub+=nf;dueNet+=nf;
+        }
+        if(hs.plts&&(hs.usedKwh||0)>0){
+          const pf=Math.round(hs.usedKwh*gs.rate*mult());
+          sub+=pf;duePlts+=pf;
+          hs.usedKwh=0;
+        }
+        if(sub>0)dueCnt++;
+      }
+    });
+    if(dueNet+duePlts>0){
+      S.b+=(dueNet+duePlts);S.inc+=(dueNet+duePlts);
+      S.moNet=(S.moNet||0)+dueNet;
+      S.moPlts=(S.moPlts||0)+duePlts;
+      snd('coin');
+      if(S.spd<=128)log('Tgl '+todayDate+': '+dueCnt+' rumah bayar tagihan ('+fmt(dueNet+duePlts)+').');
     }
   }
 
@@ -503,19 +555,6 @@ function monthEnd(){
 
   const is=ispStats();
   if(is.totalUpCost>0)pay(is.totalUpCost);
-  const netRev=Math.round(is.rev*mult());
-  if(netRev>0&&is.totalUpMbps>0){
-    S.b+=netRev;inc+=netRev;
-    log('Tagihan Internet ('+is.netHouses.length+' rumah) masuk: '+fmt(netRev)+'.');
-  }
-
-  const gs=gridStats();
-  const pltsRev=Math.round(gs.estBill*mult());
-  if(pltsRev>0){
-    S.b+=pltsRev;inc+=pltsRev;
-    log('Tagihan Listrik PLTS ('+gs.pltsHouses.length+' rumah, '+gs.totalUsedKwh.toFixed(1)+' kWh) masuk: '+fmt(pltsRev)+'.');
-  }
-  S.houses.forEach(hs=>hs.usedKwh=0);
 
   if(S.b>0){const i=Math.round(S.b*.0033);S.b+=i;inc+=i}
   if(S.dep.length){
@@ -528,15 +567,15 @@ function monthEnd(){
     if(depInt>0){S.b+=depInt;inc+=depInt;log('Bunga deposito masuk '+fmt(depInt)+'.')}
   }
 
-  const omzet=netRev+pltsRev;
+  const omzet=(S.moNet||0)+(S.moPlts||0);
   const tx=taxInfo(omzet);
   if(tx.amt>0){pay(tx.amt);log('Bayar pajak ('+tx.lbl+'): '+fmt(tx.amt)+'.')}
   S.yrInc=(S.yrInc||0)+omzet;
   if(dt.getMonth()===0)S.yrInc=0;
 
-  (S.rec=S.rec||[]).push({y:prev.getFullYear(),m:prev.getMonth(),net:netRev,plts:pltsRev,o:inc-omzet,x:S.exp});
-  log('Rekap '+BLN[prev.getMonth()]+' '+prev.getFullYear()+': Masuk '+fmt(inc)+', Keluar '+fmt(S.exp)+'.');
-  snd('month');S.inc=0;S.exp=0;save();
+  (S.rec=S.rec||[]).push({y:prev.getFullYear(),m:prev.getMonth(),net:S.moNet||0,plts:S.moPlts||0,o:inc,x:S.exp});
+  log('Rekap '+BLN[prev.getMonth()]+' '+prev.getFullYear()+': Omzet '+fmt(omzet)+', Keluar '+fmt(S.exp)+'.');
+  snd('month');S.inc=0;S.exp=0;S.moNet=0;S.moPlts=0;save();
 }
 
 function step(){
@@ -547,16 +586,31 @@ function step(){
     if(curDate().getDate()===1)monthEnd();
   }
   const onD=empOnDuty();
+  const sleeping=(h>=22||h<6);
   const hasActiveOps=(S.isp.infra>0||S.grid.lv>0);
-  if(hasActiveOps&&!onD&&!inSchool())S.stam-=drain()/60;
-  else if(onD)S.stam=Math.min(100,S.stam+(inSchool()?0:4/60));
-  else S.stam=Math.min(100,S.stam+10/60);
+
+  if(sleeping){
+    // Jam 22:00 - 06:00 otomatis tidur istirahat sehingga stamina pulih penuh tiap pagi
+    S.stam=Math.min(100,S.stam+20/60);
+  }else if(onD){
+    // Ada teknisi jaga: stamina kamu 0% berkurang (malah pulih pelan)
+    S.stam=Math.min(100,S.stam+4/60);
+  }else if(hasActiveOps&&!inSchool()){
+    S.stam-=drain()/60;
+    // Auto-ngopi jika stamina di bawah 30% dan uang cukup
+    if(S.stam<30&&S.T-S.cf>=90&&have()>=15000){
+      spend(15000);S.stam=Math.min(100,S.stam+35);S.cf=S.T;
+      if(S.spd<=64)log('Stamina rendah, otomatis beli kopi (+35).');
+    }
+  }else{
+    S.stam=Math.min(100,S.stam+10/60);
+  }
 
   if(S.stam<=0){
     S.stam=0;S.faint=true;
-    if(!onD){snd('warn');log('Kamu kecapekan! Kepuasan pelanggan turun jika tidak ada teknisi jaga.')}
+    if(!onD&&S.spd<=64){snd('warn');log('Kamu kecapekan! Rekrut teknisi agar stamina tetap penuh.')}
   }
-  if(S.faint&&S.stam>=40){S.faint=false;log('Stamina kembali pulih.')}
+  if(S.faint&&S.stam>=40){S.faint=false}
   if(mi===0)power(h);
 }
 
@@ -599,6 +653,10 @@ const A={
     const pk=ISP_PKG[+id];if(!pk||pk.yr>curYear())return;
     S.isp.pkg=+id;log('Paket internet warga diubah ke '+pk.n+'.');
   },
+  togvouch(){
+    S.isp.vouchOn=!S.isp.vouchOn;
+    log('Voucher Wi-Fi Hotspot harian: '+(S.isp.vouchOn?'ON':'OFF'));
+  },
   ispfix(){
     if(!S.isp.fault)return;
     if(!buy(P(200000)))return;
@@ -609,9 +667,9 @@ const A={
   tok(n){if(buy(P(n*1467)+2500))S.kwh+=+n},
   sol(q){
     const qty=Math.max(1,+q||1);
-    if(buy(25e6*qty)){
+    if(buy(12e6*qty)){
       for(let i=0;i<qty;i++)S.solList.push({day:day()});
-      if(S.solCap===0)S.solCap=5*qty;
+      if(S.solCap===0)S.solCap=10*qty;
       log('Pasang +'+qty+' Panel Surya (total '+S.solList.length+' unit).');
     }
   },
@@ -649,7 +707,7 @@ const A={
   },
   togac(){if(S.acChgLv>=0)S.acChgOn=!S.acChgOn},
   bat(k){
-    const map={5:4.5e6,10:8.5e6,25:19e6,50:35e6},add=+k;
+    const map={10:3.5e6,25:7.5e6,50:14e6,100:26e6},add=+k;
     if(buy(P(map[k]))){
       S.solCap+=add;
       log('Upgrade kapasitas baterai +'+add+' kWh (total '+S.solCap+' kWh).');
@@ -665,9 +723,9 @@ const A={
       S.grid.on=true;
       S.grid.rate=Math.round(P(1467)*.7/10)*10;
       const existing=S.houses.find(x=>!x.plts);
-      if(existing)existing.plts=true;
+      if(existing){existing.plts=true;existing.tokenBal=10}
       else S.houses.push(makeHouse(S.houses.length,false,true));
-      log('Jaringan listrik warga aktif! Rumah pertama mulai berlangganan pascabayar.');
+      log('Jaringan listrik warga aktif! Rumah pertama mulai berlangganan (pascabayar & isi ulang token).');
     }else{
       log('Upgrade jaringan PLTS warga ke '+gt.n+' (maks '+gt.max+' rumah).');
     }
@@ -754,11 +812,11 @@ function side(){
   if(t==='net'){
     const is=ispStats(),nxtInf=ISP_INFRA[(S.isp.infra||0)+1];
     const st=subTab||'bw';
-    const tabs=`<div class="subtabs">${[['bw','Bandwidth Induk ('+is.lineCount+' jalur)'],['pkg','Paket Internet Warga'],['inf','Infrastruktur OLT/ODP']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
+    const tabs=`<div class="subtabs">${[['bw','Bandwidth Induk ('+is.lineCount+' jalur)'],['pkg','Paket Internet Warga'],['inf','Infrastruktur & Hotspot']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
     const box=`<div class="box">
       <div class="r"><b>${is.inf.n}</b><span class="chip" style="color:${S.isp.fault?'var(--bad)':'var(--ok)'}">${S.isp.fault?'GANGGUAN':is.inf.lv?'AKTIF':'BELUM BUKA'}</span></div>
-      <div class="lg">Pelanggan Internet: <b>${is.netHouses.length}/${is.inf.max} rumah</b> · Kepuasan: <b>${S.isp.sat||85}%</b> · Biaya Induk: <b>${fmt(is.totalUpCost)}/bln</b></div>
-      <div class="lg">Bandwidth terpakai: <b>${is.bwUsed.toFixed(1)} / ${fmtBw(is.totalUpMbps)}</b>${is.congested?' <b style="color:var(--bad)">⚠️ OVERLOAD / LEMOT!</b>':''} · Tagihan: <b style="color:var(--ok)">${fmt(is.rev*mult())}/bln</b></div>
+      <div class="lg">Pelanggan Internet: <b>${is.netHouses.length}/${is.inf.max} rumah</b> · Puas: <b>${S.isp.sat||85}%</b> · Biaya Induk: <b>${fmt(is.totalUpCost)}/bln</b></div>
+      <div class="lg">Bandwidth terpakai: <b>${is.bwUsed.toFixed(1)} / ${fmtBw(is.totalUpMbps)}</b>${is.congested?' <b style="color:var(--bad)">⚠️ OVERLOAD!</b>':''} · Tagihan: <b style="color:var(--ok)">${fmt(is.rev*mult())}/bln</b></div>
     </div>`;
     let rows=[];
     if(S.isp.fault)rows.push(R('Gangguan Jaringan Fiber/ODP!','pelanggan komplain (teknisi jaga otomatis perbaiki)','ispfix','','Perbaiki '+fmt(P(200000))));
@@ -776,6 +834,7 @@ function side(){
       rows.push(nxtInf
         ?R('Upgrade: '+nxtInf.n,'kapasitas maksimal '+nxtInf.max+' rumah · rilis '+nxtInf.yr,'ispinf','',nxtInf.yr<=yr?fmt(Py(nxtInf.p,nxtInf.yr)):'Rilis '+nxtInf.yr,nxtInf.yr>yr)
         :R('Infrastruktur Fiber Maksimal','kapasitas hingga 400 rumah tercapai',0));
+      rows.push(R('Voucher Wi-Fi Hotspot Harian ('+(S.isp.vouchOn?'ON':'OFF')+')','pemasukan kas harian dari warga/pelajar sekitar · tarif '+fmt(P(3000))+'/voucher','togvouch','',S.isp.vouchOn?'Matikan':'Aktifkan'));
     }
     const pg=paginate(rows,4);
     h=`<div>${box}${tabs}${pg.slice.join('')}</div>${pg.nav}`;
@@ -789,20 +848,20 @@ function side(){
     const curChg=CHG[S.chgLv||0],nxtChg=CHG[(S.chgLv||0)+1];
     const curAc=S.acChgLv>=0?CHG[S.acChgLv]:null,nxtAc=CHG[(S.acChgLv??-1)+1];
     const nxtGrid=GRID_TIER[(S.grid.lv||0)+1];
-    const chgSt=S.solCap<=0?'Belum ada baterai':ss.solarChargeRate>0?`<b style="color:var(--ok)">☀️ +${Math.round(ss.solarChargeRate*1000)} Wh/j</b>`:ss.acChargeRate>0?`<b style="color:var(--wr)">🔌 +${Math.round(ss.acChargeRate*1000)} Wh/j</b>`:'Siaga';
+    const chgSt=S.solCap<=0?'Belum ada baterai':ss.solarChargeRate>0?`<b style="color:var(--ok)">☀️ +${(ss.solarChargeRate).toFixed(2)} kWh/j</b>`:ss.acChargeRate>0?`<b style="color:var(--wr)">🔌 +${(ss.acChargeRate).toFixed(2)} kWh/j</b>`:'Siaga';
     const tabs=`<div class="subtabs">${[['sol','Panel & Daya Serap'],['chg','Charging & Baterai'],['wrg','Jual ke Warga ('+gs.pltsHouses.length+'/'+gs.tier.max+')']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
     const box=`<div class="box"><div class="lg">Baterai: <b>${fmtBat(S.solBat)} / ${S.solCap} kWh</b> · ${chgSt} (${wxIcon()} ${wm}) · Token PLN: <b>${S.kwh.toFixed(1)} kWh</b></div></div>`;
 
     if(st==='sol'){
       const cnt=S.solList.length,avgMo=solAvgAgeMo(),oneVal=cnt?solSellVal(S.solList[0]):0;
       h=`<div>${box}${tabs}`
-        +`<div class="row"><span>Panel Surya Terpasang: <b>${cnt} unit</b><br><span class="lg">rata-rata usia ${avgMo} bln · daya cas total ${fmtW(ss.effSolarW)} saat cerah</span></span><span>${B('sol',1,'+1 ('+fmt(25e6)+')',0,'sm')} ${B('sol',5,'+5 ('+fmt(125e6)+')',0,'sm')}</span></div>`
+        +`<div class="row"><span>Panel Surya Terpasang: <b>${cnt} unit</b><br><span class="lg">rata-rata usia ${avgMo} bln · daya cas total ${fmtW(ss.effSolarW)} saat cerah</span></span><span>${B('sol',1,'+1 ('+fmt(12e6)+')',0,'sm')} ${B('sol',5,'+5 ('+fmt(60e6)+')',0,'sm')}</span></div>`
         +(cnt?`<div class="row"><span>Jual Second Panel Surya<br><span class="lg">nilai susut usia · unit tertua ${fmt(oneVal)}/unit</span></span><span>${B('sellsol',1,'Jual 1 ('+fmt(oneVal)+')',0,'sm bad')} ${cnt>=5?B('sellsol',5,'Jual 5',0,'sm bad'):''} ${cnt>1?B('sellsol','all','Jual Semua',0,'sm bad'):''}</span></div>`:'')
         +`<div class="subh">Riset Teknologi Daya Serap Panel Surya</div>`
         +R('Teknologi Aktif: '+curTech.n,'pengali daya serap matahari: '+curTech.mult+'x',0)
         +(nxtTech
           ?R('Riset: '+nxtTech.n,'daya serap & isi baterai naik jadi '+nxtTech.mult+'x · rilis '+nxtTech.yr,'upsoltech','',nxtTech.yr<=yr?fmt(Py(nxtTech.p,nxtTech.yr)):'Rilis '+nxtTech.yr,nxtTech.yr>yr)
-          :R('Teknologi Sel Surya Maksimal','efisiensi tertinggi 11x tercapai',0))
+          :R('Teknologi Sel Surya Maksimal','efisiensi tertinggi 14x tercapai',0))
         +`</div>`;
     }else if(st==='chg'){
       h=`<div>${box}${tabs}`
@@ -811,11 +870,11 @@ function side(){
           ?R('Charger Surya: '+curChg.n,'upgrade ke '+nxtChg.n+' ('+fmtW(nxtChg.w)+'/panel x '+curTech.mult+'x)','upchg','',nxtChg.yr<=yr?fmt(Py(nxtChg.p,nxtChg.yr)):'Rilis '+nxtChg.yr,nxtChg.yr>yr)
           :R('Charger Surya: '+curChg.n,'Kecepatan charging maksimal tercapai',0))
         +`<div class="subh">Kapasitas Baterai Penyimpanan</div>`
-        +`<div class="row"><span>Kapasitas saat ini: <b>${S.solCap} kWh</b></span><span>${[[5,4.5e6],[10,8.5e6],[25,19e6],[50,35e6]].map(([k,pr])=>B('bat',k,'+'+k+'kWh ('+fmt(P(pr))+')',0,'sm')).join(' ')}</span></div>`
+        +`<div class="row"><span>Kapasitas saat ini: <b>${S.solCap} kWh</b></span><span>${[[10,3.5e6],[25,7.5e6],[50,14e6],[100,26e6]].map(([k,pr])=>B('bat',k,'+'+k+'kWh ('+fmt(P(pr))+')',0,'sm')).join(' ')}</span></div>`
         +`<div class="subh">Charger Listrik AC Terpisah (Pakai Token PLN)</div>`
         +(curAc
           ?`<div class="row"><span>Charger AC ${fmtW(curAc.w)} (${S.acChgOn?'ON':'OFF'}) · Token ${S.kwh.toFixed(0)} kWh<br><span class="lg">isi baterai dari token PLN ${fmtW(curAc.w)}/jam</span></span><span>${B('togac','',S.acChgOn?'Matikan':'Nyalakan',0,'sm')} ${nxtAc&&nxtAc.yr<=yr?B('upac','','Up '+fmtW(nxtAc.w)+' ('+fmt(Py(nxtAc.p,nxtAc.yr))+')',0,'sm'):''} ${B('tok',100,'+100 kWh Token',0,'sm')}</span></div>`
-          :R('Beli Charger Listrik AC 18W','charger terpisah untuk isi baterai dari token PLN','upac','',fmt(350000)))
+          :R('Beli Charger Listrik AC 250W','charger terpisah untuk isi baterai dari token PLN','upac','',fmt(350000)))
         +`</div>`;
     }else{
       const pctColor=gs.discPct>=20?'var(--ok)':gs.discPct>=0?'var(--wr)':'var(--bad)';
@@ -823,12 +882,12 @@ function side(){
       h=`<div>${box}${tabs}`
         +`<div class="box">
           <div class="r"><b>${gs.tier.n}</b><span class="chip" style="color:${S.grid.on?'var(--ok)':'var(--mt)'}">${S.grid.on?'MENGALIR':'OFF'}</span>${B('toggrid','',S.grid.on?'Matikan':'Salurkan',gs.tier.lv<=0,'sm '+(S.grid.on?'on':''))}</div>
-          <div class="lg">Rumah: <b>${gs.pltsHouses.length}/${gs.tier.max}</b> · Kepuasan: <b>${S.grid.sat||85}%</b> · Sedot: <b>~${gs.estHourlyKwh.toFixed(2)} kWh/j</b> · Tagihan: <b style="color:var(--ok)">${fmt(gs.estBill*mult())}</b></div>
+          <div class="lg">Rumah: <b>${gs.pltsHouses.length}/${gs.tier.max}</b> · Puas: <b>${S.grid.sat||85}%</b> · Sedot: <b>~${gs.estHourlyKwh.toFixed(2)} kWh/j</b> · Meteran berjalan: <b style="color:var(--ok)">${fmt(gs.estBill*mult())}</b></div>
           <div class="row"><span>Tarif: <b>${fmt(gs.rate)}/kWh</b> (<b style="color:${pctColor}">${pctText}</b>)</span><span>${B('gridrate',-50,'-50',0,'sm')} <input type="number" data-grate="1" value="${gs.rate}" style="width:66px"> ${B('gridrate',50,'+50',0,'sm')} ${[30,25].map(pc=>B('gridpreset',pc,'-'+pc+'%',0,'sm')).join(' ')}</span></div>
         </div>`
         +(nxtGrid
           ?R('Upgrade Jaringan: '+nxtGrid.n,'maks '+nxtGrid.max+' rumah · rilis '+nxtGrid.yr,'gridup','',nxtGrid.yr<=yr?fmt(Py(nxtGrid.p,nxtGrid.yr)):'Rilis '+nxtGrid.yr,nxtGrid.yr>yr)
-          :R('Jaringan PLTS Warga Maksimal','kapasitas 100 rumah tercapai',0))
+          :R('Jaringan PLTS Warga Maksimal','kapasitas 120 rumah tercapai',0))
         +`</div>`;
     }
   }
@@ -844,8 +903,8 @@ function side(){
       </div>`;
     });
     const pg=paginate(eCards,3);
-    h=`<div><div class="row"><span>Teknisi Lapangan: <b>${S.emps.length}</b> (normal 12j · standar ${fmt(stdSal)}/bln)</span>${B('hi','','+ Rekrut Teknisi',0,'sm')}</div>`
-      +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada teknisi. Rekrut agar gangguan jaringan otomatis ditangani & staminamu hemat.</div>')
+    h=`<div><div class="row"><span>Teknisi Lapangan: <b>${S.emps.length}</b> (jaga = stamina kamu 100% aman!)</span>${B('hi','','+ Rekrut Teknisi',0,'sm')}</div>`
+      +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada teknisi. Rekrut agar staminamu tidak berkurang & aman ngebut di speed tinggi!</div>')
       +`</div>${pg.nav}`;
   }
 
@@ -884,15 +943,15 @@ function side(){
   }
 
   if(t==='rh'){
-    const v=S.hv||'b',rec=S.rec||[],is=ispStats(),gs=gridStats();
-    const cur={y:curYear(),m:curDate().getMonth(),net:Math.round(is.rev*mult()),plts:Math.round(gs.estBill*mult()),o:0,x:S.exp};
+    const v=S.hv||'b',rec=S.rec||[];
+    const cur={y:curYear(),m:curDate().getMonth(),net:S.moNet||0,plts:S.moPlts||0,o:0,x:S.exp};
     const sum=a=>a.reduce((z,r)=>({net:z.net+r.net,plts:z.plts+r.plts,o:z.o+r.o,x:z.x+r.x}),{net:0,plts:0,o:0,x:0});
     const row=(l,r)=>{
       const profit=r.net+r.plts+r.o-r.x;
       return `<div class="row"><span>${l}<br><span class="lg">Internet ${fmt(r.net)} · PLTS ${fmt(r.plts)} · Bunga ${fmt(r.o)} · Keluar ${fmt(r.x)}</span></span><b style="color:${profit<0?'var(--bad)':'var(--ok)'}">${fmt(profit)}</b></div>`;
     };
     let rows=[];
-    if(v==='b')rows=[row('Bulan berjalan (estimasi)',cur)].concat(rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)));
+    if(v==='b')rows=[row('Bulan berjalan (real-time)',cur)].concat(rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)));
     if(v==='t'){const ys={},yc=curYear();rec.forEach(r=>(ys[r.y]=ys[r.y]||[]).push(r));if(!ys[yc])ys[yc]=[];rows=Object.keys(ys).sort().reverse().map(y=>row('Tahun '+y+(+y===yc?' (berjalan)':''),sum(ys[y].concat(+y===yc?[cur]:[]))))}
     const pg=paginate(rows,5);
     h=`<div><div class="subtabs">${[['b','Bulanan'],['t','Tahunan']].map(x=>B('hv',x[0],x[1],0,'sm '+(v===x[0]?'on':''))).join('')}</div>${pg.slice.join('')}</div>${pg.nav}`;
@@ -907,9 +966,9 @@ function side(){
 function render(){
   const dt=curDate(),yr=curYear(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
   const is=ispStats(),gs=gridStats(),ss=solarStats(),sk=sickEmps().length;
-  const estOmzet=Math.round((is.rev+gs.estBill)*mult());
-  const tx=taxInfo(estOmzet);
-  const st=S.faint?['KECAPEKAN','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:['OPERASIONAL','var(--ok)'];
+  const tx=taxInfo((S.moNet||0)+(S.moPlts||0));
+  const h=Math.floor(S.T/60)%24;
+  const st=(h>=22||h<6)?['TIDUR (22-06)','var(--ac)']:S.faint?['KECAPEKAN','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:['OPERASIONAL','var(--ok)'];
   const chgTag=S.solCap>0&&S.solBat<S.solCap?(ss.solarChargeRate>0?' ⚡'+fmtW(ss.effSolarW):ss.acChargeRate>0?' 🔌'+fmtW(ss.acWatt):''):'';
 
   put($('#hd'),
@@ -920,7 +979,7 @@ function render(){
 
   put($('#ctl'),
     `<button data-a="pause" class="sm ${S.pause?'on':''}">${S.pause?'Lanjut':'Jeda'}</button>`
-    +[1,4,8,16,64].map(x=>`<button data-a="spd" data-i="${x}" class="sm ${S.spd===x?'on':''}">${x}x</button>`).join('')
+    +[1,4,16,64,128,256,512].map(x=>`<button data-a="spd" data-i="${x}" class="sm ${S.spd===x?'on':''}">${x}x</button>`).join('')
     +`<button data-a="cof" class="sm">Ngopi +35</button>`
     +`<button data-a="bI" class="sm ${S.bI?'on':''}">Cuan x2</button>`
     +`<button data-a="bC" class="sm ${S.bC?'on':''}">Ramai x2</button>`
@@ -938,9 +997,9 @@ function render(){
     const pltsBill=hs.plts?Math.round((hs.usedKwh||0)*gs.rate):0;
     const tot=Math.round((netBill+pltsBill)*mult());
     return `<div class="card ${cls} ${(hs.net&&S.isp.fault)?'err':''}">
-      <div class="r" style="justify-content:space-between"><b>${hs.n}</b><span class="lg">${hs.t}</span></div>
+      <div class="r" style="justify-content:space-between"><b>${hs.n}</b><span class="lg">Tgl ${hs.billDay||1}</span></div>
       <div class="r">${hs.net?`<span class="chip" style="color:var(--ac)">🌐 ${fmtBw(is.pkg.mbps)}</span>`:''}${hs.plts?`<span class="chip" style="color:var(--el)">⚡ ${(hs.usedKwh||0).toFixed(1)} kWh</span>`:''}</div>
-      <div class="r" style="justify-content:space-between;margin-top:2px"><b>${fmt(tot)}<span class="lg">/bln</span></b><span class="lg">${hs.net&&hs.plts?'Bundling':hs.net?'Internet':'PLTS'}</span></div>
+      <div class="r" style="justify-content:space-between;margin-top:2px"><b>${fmt(tot)}</b><span class="lg">${hs.net&&hs.plts?'Bundling':hs.net?'Internet':'PLTS'}</span></div>
     </div>`;
   }).join(''):'<div class="box"><div class="mt">Belum ada pelanggan rumah.<br>1. Buka tab <b>Internet</b> untuk pasang ODP & tambah jalur Bandwidth Induk, atau<br>2. Buka tab <b>Listrik PLTS</b> untuk pasang Panel Surya, Baterai, & Kabel Warga.</div></div>');
 

@@ -1,6 +1,6 @@
 # Juragan Internet & PLTS 2018
 
-Game simulasi bisnis penyedia layanan Internet (FTTH / Fiber) dan Listrik Tenaga Surya (PLTS Mikrogrid Warga) di Indonesia, mulai tahun 2018. Satu halaman web tanpa build step.
+Game simulasi bisnis penyedia layanan Internet (FTTH / Fiber + Voucher Hotspot) dan Listrik Tenaga Surya (PLTS Mikrogrid Warga) di Indonesia, mulai tahun 2018. Satu halaman web tanpa build step.
 
 ## Isi repo
 - `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)
