@@ -85,25 +85,24 @@ const put=(e,h)=>{if(e._h!==h){e._h=h;e.innerHTML=h}};
 
 const START_YEAR=2000;
 
-// 1. Generator Bensin/Solar Awal (Tahun 2000+)
+// 1. Generator Bensin/Solar Awal (Tahun 2000+) - Dibuat hemat BBM supaya tetap menguntungkan!
 const GENS=[
   {id:0,n:'Belum ada generator',kw:0,fuelL:0,p:0},
-  {id:1,n:'Genset Bensin Portable 2.5 kW (Rakitan)',kw:2.5,fuelL:1.1,p:1800000},
-  {id:2,n:'Genset Bensin Twin-Cyl 8 kW',kw:8,fuelL:3.2,p:5500000},
-  {id:3,n:'Generator Diesel Komunal 25 kW',kw:25,fuelL:8.5,p:16000000},
-  {id:4,n:'Gardu Turbin Diesel 80 kW',kw:80,fuelL:24,p:45000000}
+  {id:1,n:'Genset Bensin Portable 5 kW (Irit)',kw:5,fuelL:0.6,p:1800000},
+  {id:2,n:'Genset Bensin Twin-Cyl 18 kW',kw:18,fuelL:1.8,p:5500000},
+  {id:3,n:'Generator Diesel Komunal 60 kW',kw:60,fuelL:5.0,p:16000000},
+  {id:4,n:'Gardu Turbin Diesel 200 kW',kw:200,fuelL:14,p:45000000}
 ];
 
-// 2. Kategori Bangunan Pelanggan (1 hingga 300 Juta Bangunan!)
+// 2. Kategori Bangunan Pelanggan (1 hingga 300 Juta Bangunan)
 const SECTORS=[
   {id:'rmh',n:'Rumah Tangga',cls:'c0',kwPer:0.45,max:120000000,unlockCap:1},
   {id:'ruko',n:'Ruko & Minimarket',cls:'c1',kwPer:2.8,max:80000000,unlockCap:15},
   {id:'pabrik',n:'Pabrik & Kawasan Industri',cls:'c2',kwPer:45,max:65000000,unlockCap:250},
   {id:'mega',n:'Data Center & Pencakar Langit',cls:'c3',kwPer:420,max:35000000,unlockCap:5000}
 ];
-// Total maksimal seluruh sektor = 120jt + 80jt + 65jt + 35jt = 300.000.000 bangunan!
 
-// 3. Jaringan Distribusi & Transmisi (Bertahap dari 1 rumah -> 300 juta bangunan global)
+// 3. Jaringan Distribusi & Transmisi
 const GRID_TIER=[
   {lv:0,n:'Belum ada jaringan distribusi',max:0,p:0},
   {lv:1,n:'Kabel Tetangga Sebelah (Maks 3 Bangunan)',max:3,p:400000},
@@ -120,7 +119,7 @@ const GRID_TIER=[
   {lv:12,n:'Superkonduktor Global (300 Juta Bangunan)',max:300000000,p:4.8e12}
 ];
 
-// 4. Stasiun Pemanen Surya Lintas Belahan Bumi (Baterai utama terisi 24 jam nonstop!)
+// 4. Stasiun Pemanen Surya Lintas Belahan Bumi
 const ZONES=[
   {id:'idn',n:'Indonesia (WIB/WITA)',lat:'0° Khatulistiwa',sunStart:6,sunEnd:17,p:0},
   {id:'mea',n:'Timur Tengah & Sahara',lat:'25° LU (Gurun)',sunStart:10,sunEnd:21,p:150000000},
@@ -129,7 +128,7 @@ const ZONES=[
   {id:'pac',n:'Pasifik & Australia',lat:'25° LS',sunStart:2,sunEnd:13,p:12e9}
 ];
 
-// 5. Negara-negara yang mengajukan izin sambung listrik termurah di dunia
+// 5. Negara-negara Mitra
 const COUNTRIES=[
   {id:'sg',n:'Singapura',bld:1200000,maxRate:1100,p:250000000},
   {id:'my',n:'Malaysia & Brunei',bld:6500000,maxRate:950,p:900000000},
@@ -146,7 +145,7 @@ const BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','De
 const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 const INF=[3.72,11.5,12.55,10.03,5.06,6.4,17.11,6.6,6.59,11.06,2.78,6.96,3.79,4.3,8.38,8.36,3.35,3.02,3.61,3.13,2.72,1.68,1.87,5.51,2.61,1.57,2.9];
 
-const KEY='juragan_energi_2000_v1';
+const KEY='juragan_energi_2000_v2';
 let S,rc=0,cardPage=0,subTab='',subPage=0;
 
 const day=()=>Math.floor(S.T/1440);
@@ -162,36 +161,31 @@ const fx=()=>{
 };
 const P=n=>Math.round(n*fx()/50)*50;
 
-// Sistem Riset Bertahap > 1.000x (4 cabang x 300+ level = 1.200+ riset bertahap!)
-// 1. Riset Baterai Compact -> Baterai Inti (lv 0..350)
+// Sistem Riset Bertahap > 1.350x Riset
 function batTechInfo(lv){
-  const cap=Math.round(2*Math.pow(1.072,lv)*10)/10; // dari 2 kWh (compact) -> ratusan GWh
+  const cap=Math.round(10*Math.pow(1.072,lv)*10)/10;
   const cost=Math.round(350000*Math.pow(1.068,lv)/1000)*1000;
   const names=['Baterai Aki Compact Rakitan','Sel Lithium-Ion Compact','Baterai LiFePO4 Modular','Solid-State Compact Cell','Graphene Super-Battery','Quantum Core Storage'];
   const nm=names[Math.min(names.length-1,Math.floor(lv/55))]+' Lv.'+(lv+1);
   return {lv,cap,cost,nm};
 }
-// 2. Riset Alat Pemanen Surya (lv 0..350) - mulai terbuka setelah riset dasar
 function harvTechInfo(lv){
-  // lv 0 = belum punya alat pemanen surya (pakai bensin dulu)
   if(lv<=0)return {lv:0,kw:0,cost:1500000,nm:'Belum Diriset (Masih Pakai Bensin)'};
-  const kw=Math.round(1.5*Math.pow(1.074,lv-1)*100)/100; // per unit: 1.5 kW -> puluhan GW per unit!
+  const kw=Math.round(2.5*Math.pow(1.074,lv-1)*100)/100;
   const cost=Math.round(1500000*Math.pow(1.069,lv-1)/1000)*1000;
   const names=['Pemanen Surya Silikon Awal','Panel Monocrystalline Rakitan','Konsentrator Lensa Fresnel','Sel Multi-Junction MPPT','Kolektor Perovskite-Quantum','Pemanen Foton Spektrum Penuh'];
   const nm=names[Math.min(names.length-1,Math.floor((lv-1)/55))]+' Gen-'+lv;
   return {lv,kw,cost,nm};
 }
-// 3. Riset Teknologi Charging & Transfer Daya (lv 0..350)
 function chgTechInfo(lv){
-  const kw=Math.round(0.35*Math.pow(1.075,lv)*100)/100; // 350W -> GW charging
+  const kw=Math.round(0.8*Math.pow(1.075,lv)*100)/100;
   const cost=Math.round(250000*Math.pow(1.067,lv)/1000)*1000;
-  const names=['Regulator Cas 350W','Pulse Fast Charger','MPPT Smart Controller','GaN High-Speed Charger','Superconducting Busbar','Zero-Loss Quantum Transfer'];
+  const names=['Regulator Cas 800W','Pulse Fast Charger','MPPT Smart Controller','GaN High-Speed Charger','Superconducting Busbar','Zero-Loss Quantum Transfer'];
   const nm=names[Math.min(names.length-1,Math.floor(lv/55))]+' Lv.'+(lv+1);
   return {lv,kw,cost,nm};
 }
-// 4. Riset Efisiensi & Anti-Rugi Daya (lv 0..300)
 function effTechInfo(lv){
-  const mult=Math.round((1+lv*0.04+Math.pow(lv,1.35)*0.015)*100)/100;
+  const mult=Math.round((1+lv*0.05+Math.pow(lv,1.35)*0.018)*100)/100;
   const cost=Math.round(450000*Math.pow(1.068,lv)/1000)*1000;
   return {lv,mult,cost,nm:'Riset Efisiensi Foton & Termal Lv.'+(lv+1)};
 }
@@ -208,23 +202,23 @@ function harvUnitSellVal(item){
 }
 
 function fresh(){
-  // Tahun 2000, mulai dari kesukaan oprek listrik & baterai compact (modal Rp 15 juta)
+  // Modal awal Rp 1 Milyar (Rp 50 jt kas + Rp 950 jt rekening), mulai tahun 2000!
   S={
-    m:3000000,b:12000000,T:420,stam:100,
+    m:50000000,b:950000000,T:420,stam:100,
     genLv:0,fuel:0,
     batLv:0,batKwh:0,
     harvLv:0,harvUnits:[],
     chgLv:0,effLv:0,
     zones:{idn:1},
-    grid:{lv:0,on:false,rate:320,sat:85},
+    grid:{lv:0,on:false,rate:350,sat:85},
     sec:{rmh:0,ruko:0,pabrik:0,mega:0},
     sampleHouses:[],
     countries:{},
     emps:[],empSeq:1,
     dep:[],ln:null,
     rec:[],hv:'b',mute:false,cf:-999,
-    bC:0,bI:0,spd:1,pause:false,tab:'gen',
-    log:['1 Jan 2000. Berawal dari hobi oprek listrik & baterai compact! Beli genset bensin & bensin dulu untuk mulai jual listrik ke tetangga.'],
+    bC:0,bI:0,spd:1,pause:false,tab:'res',
+    log:['1 Jan 2000. Modal awal Rp 1 Milyar siap dipakai! Langsung gas riset teknologi, pasang alat pemanen surya, dan perluas jaringan ke warga!'],
     inc:0,exp:0,yrInc:0,moRev:0,totalKwhSold:0
   };
 }
@@ -235,7 +229,7 @@ function migrate(o){
   if(!Array.isArray(o.dep))o.dep=[];
   if(!Array.isArray(o.rec))o.rec=[];
   if(!o.zones)o.zones={idn:1};
-  if(!o.grid)o.grid={lv:0,on:false,rate:320,sat:85};
+  if(!o.grid)o.grid={lv:0,on:false,rate:350,sat:85};
   if(!o.sec)o.sec={rmh:0,ruko:0,pabrik:0,mega:0};
   if(!o.countries)o.countries={};
   return o;
@@ -296,20 +290,16 @@ function energyStats(){
   const eff=effTechInfo(S.effLv||0);
   const gen=GENS[S.genLv||0];
 
-  // Daya serap alat pemanen surya yang terpasang
   let rawSolarKw=0;
   S.harvUnits.forEach(u=>{rawSolarKw+=harvTechInfo(u.gen||1).kw});
   const sunRatio=zoneSolarRatio(h);
   const solarAvailKw=rawSolarKw*eff.mult*sunRatio;
 
-  // Kecepatan charging ke baterai compact/inti dibatasi oleh teknologi charger & jumlah pemanen
   const maxChgKw=chg.kw*Math.max(1,S.harvUnits.length)*eff.mult;
   const solarChargeKw=Math.min(solarAvailKw,maxChgKw);
 
-  // Daya genset bensin (jika bensin tersedia)
   const genKw=(gen.kw>0&&S.fuel>0)?gen.kw:0;
 
-  // Total beban seluruh bangunan + negara mitra
   const tod=(h>=17&&h<23)?1.3:(h>=6&&h<17)?0.95:0.65;
   let demandKw=0;
   SECTORS.forEach(sc=>{demandKw+=(S.sec[sc.id]||0)*sc.kwPer*tod});
@@ -317,9 +307,8 @@ function energyStats(){
     if(S.countries[ct.id])demandKw+=ct.bld*0.85*tod;
   });
 
-  // Tarif kompetitor (PLN & listrik global)
   const plnRate=P(450);
-  const rate=S.grid.rate||320;
+  const rate=S.grid.rate||350;
   const discPct=((plnRate-rate)/plnRate)*100;
 
   return {bat,chg,eff,gen,rawSolarKw,sunRatio,solarAvailKw,solarChargeKw,genKw,demandKw,plnRate,rate,discPct};
@@ -327,11 +316,9 @@ function energyStats(){
 
 function power(h){
   const es=energyStats();
-  // 1. Isi baterai dari pemanen surya
   if(es.solarChargeKw>0&&S.batKwh<es.bat.cap){
     S.batKwh=Math.min(es.bat.cap,S.batKwh+es.solarChargeKw);
   }
-  // 2. Genset bensin menyala otomatis jika baterai kurang untuk kebutuhan atau untuk mengisi baterai awal
   let genSupplied=0;
   if(es.gen.kw>0&&S.fuel>0){
     const needGen=(S.grid.on&&es.demandKw>S.batKwh)?Math.min(es.gen.kw,es.demandKw):(!S.grid.on&&S.batKwh<es.bat.cap)?Math.min(es.gen.kw,es.bat.cap-S.batKwh):0;
@@ -349,7 +336,6 @@ function power(h){
     }
   }
 
-  // 3. Salurkan listrik ke pelanggan (rumah, pabrik, hingga negara mitra)
   if(S.grid.on&&es.demandKw>0){
     let need=es.demandKw;
     const fromGen=Math.min(need,genSupplied);
@@ -363,7 +349,6 @@ function power(h){
       const rev=Math.round(supplied*es.rate*mult());
       S.b+=rev;S.inc+=rev;S.moRev=(S.moRev||0)+rev;
       S.totalKwhSold=(S.totalKwhSold||0)+supplied;
-      // Update meteran sampel kartu billing
       S.sampleHouses.forEach(sh=>{
         const u=sh.kw*0.9;
         sh.usedKwh=(sh.usedKwh||0)+u;
@@ -381,7 +366,6 @@ function power(h){
 function addBuildings(secId,count){
   if(count<=0)return;
   S.sec[secId]=(S.sec[secId]||0)+count;
-  // Tambahkan sampel kartu billing jika belum mencapai 18 sampel visual
   const sc=SECTORS.find(x=>x.id===secId);
   while(S.sampleHouses.length<18&&S.sampleHouses.length<totalBuildings()){
     const idx=S.sampleHouses.length;
@@ -420,8 +404,7 @@ function dayEnd(){
       }
     }else if(totBld<tier.max&&es.discPct>=5&&(S.batKwh>0||es.genKw>0)){
       const room=tier.max-totBld;
-      // Pertumbuhan proporsional dengan kapasitas grid agar bisa mencapai 300 juta bangunan
-      const growth=Math.min(room,Math.max(1,Math.ceil(tier.max*0.08*(S.bC?2.5:1)*(1+es.discPct/60))));
+      const growth=Math.min(room,Math.max(1,Math.ceil(tier.max*0.1*(S.bC?2.5:1)*(1+es.discPct/50))));
       let rem=growth;
       SECTORS.forEach(sc=>{
         if(rem<=0)return;
@@ -519,41 +502,65 @@ const A={
     log('Jual second '+g.n+' dapat '+fmt(v)+'.');
   },
   buyfuel(liters){
-    const L=+liters,cost=P(L*1500); // harga bensin tahun 2000 ~Rp 1.150-1.500/L (ikut inflasi)
+    const L=+liters,cost=P(L*1200);
     if(!buy(cost))return;
     S.fuel=(S.fuel||0)+L;
     log('Isi bensin/solar +'+L+' Liter (stok: '+S.fuel.toFixed(1)+' L).');
   },
 
-  // Riset Bertahap (> 1.000x Riset)
-  rbat(){
-    const nx=batTechInfo((S.batLv||0)+1);
-    if(!buy(nx.cost))return;
-    S.batLv=nx.lv;
-    log('Riset Baterai Compact berhasil: '+nx.nm+' (kapasitas '+fmtKwh(nx.cap)+')!');
+  // Riset Bertahap (> 1.350x Riset) - Mendukung +1x dan +5x riset sekaligus!
+  rbat(q){
+    const times=Math.max(1,+q||1);let done=0;
+    for(let i=0;i<times;i++){
+      const nx=batTechInfo((S.batLv||0)+1);
+      if(!buy(nx.cost))break;
+      S.batLv=nx.lv;done++;
+    }
+    if(done>0){
+      const cur=batTechInfo(S.batLv);
+      log('Riset Baterai +'+done+'x: '+cur.nm+' (kapasitas '+fmtKwh(cur.cap)+')!');
+    }
   },
-  rharv(){
-    const nx=harvTechInfo((S.harvLv||0)+1);
-    if(!buy(nx.cost))return;
-    S.harvLv=nx.lv;
-    log('Riset Alat Pemanen Surya berhasil: '+nx.nm+' ('+fmtW(nx.kw)+'/unit)!');
+  rharv(q){
+    const times=Math.max(1,+q||1);let done=0;
+    for(let i=0;i<times;i++){
+      const nx=harvTechInfo((S.harvLv||0)+1);
+      if(!buy(nx.cost))break;
+      S.harvLv=nx.lv;done++;
+    }
+    if(done>0){
+      const cur=harvTechInfo(S.harvLv);
+      log('Riset Pemanen Surya +'+done+'x: '+cur.nm+' ('+fmtW(cur.kw)+'/unit)!');
+    }
   },
-  rchg(){
-    const nx=chgTechInfo((S.chgLv||0)+1);
-    if(!buy(nx.cost))return;
-    S.chgLv=nx.lv;
-    log('Riset Teknologi Charging berhasil: '+nx.nm+' ('+fmtW(nx.kw)+')!');
+  rchg(q){
+    const times=Math.max(1,+q||1);let done=0;
+    for(let i=0;i<times;i++){
+      const nx=chgTechInfo((S.chgLv||0)+1);
+      if(!buy(nx.cost))break;
+      S.chgLv=nx.lv;done++;
+    }
+    if(done>0){
+      const cur=chgTechInfo(S.chgLv);
+      log('Riset Charging +'+done+'x: '+cur.nm+' ('+fmtW(cur.kw)+')!');
+    }
   },
-  reff(){
-    const nx=effTechInfo((S.effLv||0)+1);
-    if(!buy(nx.cost))return;
-    S.effLv=nx.lv;
-    log('Riset Efisiensi berhasil: '+nx.nm+' ('+nx.mult+'x)!');
+  reff(q){
+    const times=Math.max(1,+q||1);let done=0;
+    for(let i=0;i<times;i++){
+      const nx=effTechInfo((S.effLv||0)+1);
+      if(!buy(nx.cost))break;
+      S.effLv=nx.lv;done++;
+    }
+    if(done>0){
+      const cur=effTechInfo(S.effLv);
+      log('Riset Efisiensi +'+done+'x: '+cur.nm+' ('+cur.mult+'x)!');
+    }
   },
 
   // Produksi, Pemasangan & Jual Second Alat Pemanen Surya
   buyharv(q){
-    if((S.harvLv||0)<=0)return log('Riset dulu Alat Pemanen Surya Gen-1 di sub-tab Riset!');
+    if((S.harvLv||0)<=0)return log('Riset dulu Alat Pemanen Surya Gen-1 di tab Riset!');
     const qty=Math.max(1,+q||1);
     const unitCost=harvUnitBuyCost(S.harvLv);
     if(!buy(unitCost*qty))return;
@@ -597,7 +604,7 @@ const A={
     S.grid.lv=nl;
     if(nl===1){
       S.grid.on=true;
-      S.grid.rate=Math.round(P(450)*0.72/10)*10;
+      S.grid.rate=Math.round(P(450)*0.78/10)*10;
       addBuildings('rmh',1);
       log('Kabel listrik pertama tersambung ke rumah tetangga!');
     }else{
@@ -609,7 +616,7 @@ const A={
     S.grid.on=!S.grid.on;
     log('Penyaluran listrik ke pelanggan: '+(S.grid.on?'ON (Mengalir)':'OFF'));
   },
-  gridrate(d){S.grid.rate=Math.max(20,(S.grid.rate||320)+(+d))},
+  gridrate(d){S.grid.rate=Math.max(20,(S.grid.rate||350)+(+d))},
   gridpreset(pct){
     const pln=P(450);
     S.grid.rate=Math.max(20,Math.round(pln*(1-(+pct)/100)/10)*10);
@@ -618,7 +625,7 @@ const A={
   // Ekspansi Antarnegara
   buycountry(id){
     const ct=COUNTRIES.find(x=>x.id===id);if(!ct||S.countries[id])return;
-    const rate=S.grid.rate||320;
+    const rate=S.grid.rate||350;
     if(rate>P(ct.maxRate))return log('Tarifmu terlalu mahal untuk '+ct.n+'! Turunkan tarif di bawah '+fmt(P(ct.maxRate))+'/kWh.');
     if(!buy(ct.p))return;
     S.countries[id]=1;
@@ -692,23 +699,6 @@ function paginate(items,perPage){
 function side(){
   const t=S.tab;let h='';
 
-  if(t==='gen'){
-    const es=energyStats(),nxtGen=GENS[(S.genLv||0)+1];
-    const fuelPrice=P(1500);
-    h=`<div><div class="box">
-      <div class="r"><b>${es.gen.n}</b><span class="chip" style="color:${es.genKw>0?'var(--ok)':'var(--mt)'}">${es.genKw>0?es.genKw+' kW AKTIF':'OFF / BENSIN HABIS'}</span></div>
-      <div class="lg">Stok Bensin/Solar: <b>${(S.fuel||0).toFixed(1)} Liter</b> · Konsumsi penuh: <b>${es.gen.fuelL} L/jam</b> · Harga BBM: <b>${fmt(fuelPrice)}/L</b></div>
-    </div>`
-    +`<div class="row"><span>Beli Bensin / Solar</span><span>${[10,50,250,1000].map(L=>B('buyfuel',L,'+'+L+'L ('+fmt(fuelPrice*L)+')',0,'sm')).join(' ')}</span></div>`
-    +(nxtGen
-      ?R('Upgrade Generator: '+nxtGen.n,'daya '+nxtGen.kw+' kW · konsumsi '+nxtGen.fuelL+' L/jam','upgen','',fmt(P(nxtGen.p)))
-      :R('Generator Bensin/Diesel Maksimal','sudah saatnya beralih ke Alat Pemanen Surya!',0))
-    +((S.genLv||0)>0
-      ?R('Jual Second Generator','jual mesin bensin jika sudah beralih ke tenaga surya','sellgen','',fmt(Math.round(P(es.gen.p)*0.65)))
-      :'')
-    +`</div>`;
-  }
-
   if(t==='res'){
     const es=energyStats();
     const totRes=(S.batLv||0)+(S.harvLv||0)+(S.chgLv||0)+(S.effLv||0);
@@ -716,11 +706,11 @@ function side(){
     const nxHarv=harvTechInfo((S.harvLv||0)+1);
     const nxChg=chgTechInfo((S.chgLv||0)+1);
     const nxEff=effTechInfo((S.effLv||0)+1);
-    h=`<div><div class="box"><div class="r"><b>Lab Pengembangan Teknologi (Total Riset: ${totRes} / 1.350+)</b></div><div class="lg">Kembangkan bertahap mulai dari baterai compact rakitan hingga pemanen energi surya skala global.</div></div>`
-      +R('1. '+nxBat.nm,'kapasitas baterai: '+fmtKwh(es.bat.cap)+' → <b>'+fmtKwh(nxBat.cap)+'</b>','rbat','',fmt(nxBat.cost))
-      +R('2. '+nxHarv.nm,'daya alat pemanen: '+fmtW(es.harvLv?harvTechInfo(S.harvLv).kw:0)+' → <b>'+fmtW(nxHarv.kw)+'</b>/unit','rharv','',fmt(nxHarv.cost))
-      +R('3. '+nxChg.nm,'kecepatan cas: '+fmtW(es.chg.kw)+' → <b>'+fmtW(nxChg.kw)+'</b>/unit','rchg','',fmt(nxChg.cost))
-      +R('4. '+nxEff.nm,'pengali serap surya: '+es.eff.mult+'x → <b>'+nxEff.mult+'x</b>','reff','',fmt(nxEff.cost))
+    h=`<div><div class="box"><div class="r"><b>Lab Pengembangan Teknologi (Total Riset: ${totRes} / 1.350+)</b></div><div class="lg">Kembangkan bertahap mulai dari baterai compact hingga pemanen energi surya global.</div></div>`
+      +`<div class="row"><span>1. ${nxBat.nm}<br><span class="lg">kapasitas baterai: ${fmtKwh(es.bat.cap)} → <b>${fmtKwh(nxBat.cap)}</b></span></span><span>${B('rbat',1,'+1 ('+fmt(nxBat.cost)+')',0,'sm')} ${B('rbat',5,'+5x',0,'sm')}</span></div>`
+      +`<div class="row"><span>2. ${nxHarv.nm}<br><span class="lg">daya pemanen: ${fmtW(es.harvLv?harvTechInfo(S.harvLv).kw:0)} → <b>${fmtW(nxHarv.kw)}</b>/unit</span></span><span>${B('rharv',1,'+1 ('+fmt(nxHarv.cost)+')',0,'sm')} ${B('rharv',5,'+5x',0,'sm')}</span></div>`
+      +`<div class="row"><span>3. ${nxChg.nm}<br><span class="lg">kecepatan cas: ${fmtW(es.chg.kw)} → <b>${fmtW(nxChg.kw)}</b>/unit</span></span><span>${B('rchg',1,'+1 ('+fmt(nxChg.cost)+')',0,'sm')} ${B('rchg',5,'+5x',0,'sm')}</span></div>`
+      +`<div class="row"><span>4. ${nxEff.nm}<br><span class="lg">pengali serap surya: ${es.eff.mult}x → <b>${nxEff.mult}x</b></span></span><span>${B('reff',1,'+1 ('+fmt(nxEff.cost)+')',0,'sm')} ${B('reff',5,'+5x',0,'sm')}</span></div>`
       +`</div>`;
   }
 
@@ -762,7 +752,7 @@ function side(){
       h=`<div>${tabs}<div class="box">
         <div class="r"><b>${tier.n}</b><span class="chip" style="color:${S.grid.on?'var(--ok)':'var(--mt)'}">${S.grid.on?'MENGALIR':'OFF'}</span>${B('toggrid','',S.grid.on?'Matikan':'Salurkan',tier.lv<=0,'sm '+(S.grid.on?'on':''))}</div>
         <div class="lg">Bangunan: <b>${fmtNum(totBld)} / ${fmtNum(tier.max)}</b> · Sedot: <b>${fmtW(es.demandKw*1000)}</b> · Pangsa vs PLN: <b>${plnShare>=100?'🏆 PLN KALAH!':plnShare.toFixed(2)+'%'}</b></div>
-        <div class="row"><span>Tarif: <b>${fmt(es.rate)}/kWh</b> (<b style="color:${pctColor}">${pctText}</b>)</span><span>${B('gridrate',-25,'-25',0,'sm')} <input type="number" data-grate="1" value="${es.rate}" style="width:62px"> ${B('gridrate',25,'+25',0,'sm')} ${[30,50].map(pc=>B('gridpreset',pc,'-'+pc+'%',0,'sm')).join(' ')}</span></div>
+        <div class="row"><span>Tarif: <b>${fmt(es.rate)}/kWh</b> (<b style="color:${pctColor}">${pctText}</b>)</span><span>${B('gridrate',-25,'-25',0,'sm')} <input type="number" data-grate="1" value="${es.rate}" style="width:62px"> ${B('gridrate',25,'+25',0,'sm')} ${[20,30].map(pc=>B('gridpreset',pc,'-'+pc+'%',0,'sm')).join(' ')}</span></div>
       </div>`
       +(nxtTier
         ?R('Perluas Jaringan: '+nxtTier.n,'kapasitas maksimal '+fmtNum(nxtTier.max)+' bangunan','gridup','',fmt(nxtTier.p))
@@ -776,6 +766,23 @@ function side(){
       const pg=paginate(rows,4);
       h=`<div>${tabs}<div class="lg" style="margin-bottom:4px">Negara lain akan mengizinkan jaringanmu masuk jika tarifmu lebih murah dari standar negara mereka.</div>${pg.slice.join('')}</div>${pg.nav}`;
     }
+  }
+
+  if(t==='gen'){
+    const es=energyStats(),nxtGen=GENS[(S.genLv||0)+1];
+    const fuelPrice=P(1200);
+    h=`<div><div class="box">
+      <div class="r"><b>${es.gen.n}</b><span class="chip" style="color:${es.genKw>0?'var(--ok)':'var(--mt)'}">${es.genKw>0?es.genKw+' kW AKTIF':'OFF / BENSIN HABIS'}</span></div>
+      <div class="lg">Stok Bensin/Solar: <b>${(S.fuel||0).toFixed(1)} Liter</b> · Konsumsi penuh: <b>${es.gen.fuelL} L/jam</b> · Harga BBM: <b>${fmt(fuelPrice)}/L</b></div>
+    </div>`
+    +`<div class="row"><span>Beli Bensin / Solar</span><span>${[50,250,1000,5000].map(L=>B('buyfuel',L,'+'+L+'L ('+fmt(fuelPrice*L)+')',0,'sm')).join(' ')}</span></div>`
+    +(nxtGen
+      ?R('Upgrade Generator: '+nxtGen.n,'daya '+nxtGen.kw+' kW · konsumsi '+nxtGen.fuelL+' L/jam','upgen','',fmt(P(nxtGen.p)))
+      :R('Generator Bensin/Diesel Maksimal','sudah siap diperkuat dengan Alat Pemanen Surya!',0))
+    +((S.genLv||0)>0
+      ?R('Jual Second Generator','jual mesin bensin jika sudah full tenaga surya','sellgen','',fmt(Math.round(P(es.gen.p)*0.65)))
+      :'')
+    +`</div>`;
   }
 
   if(t==='pg'){
@@ -800,14 +807,14 @@ function side(){
     if(st==='dp'){
       const dRows=S.dep.map((d,idx)=>R('Deposito '+fmt(d.amt),'umur '+d.mo+' bln · bunga '+(depRate(d.mo)*100).toFixed(1)+'% ('+fmt(d.amt*depRate(d.mo))+'/bln)','cldep',idx,'Cairkan'));
       const pg=paginate(dRows,3);
-      h=`<div>${tabs}<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo Bank (bunga 4%/thn)</span>${B('dep',1000000,'Setor 1jt',0,'sm')}${B('wd',1000000,'Tarik 1jt',0,'sm')}</div>`
-        +`<div class="row"><span>Buka Deposito (bunga naik +0,1%/bln)</span><span>${[5e6,25e6,100e6,1e9].map(n=>B('mkdep',n,fmt(n),S.b<n,'sm')).join(' ')}</span></div>`
+      h=`<div>${tabs}<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo Bank (bunga 4%/thn)</span>${B('dep',50000000,'Setor 50jt',0,'sm')}${B('wd',50000000,'Tarik 50jt',0,'sm')}</div>`
+        +`<div class="row"><span>Buka Deposito (bunga naik +0,1%/bln)</span><span>${[50e6,200e6,500e6,2e9].map(n=>B('mkdep',n,fmt(n),S.b<n,'sm')).join(' ')}</span></div>`
         +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada deposito aktif.</div>')
         +`</div>${pg.nav}`;
     }else{
       h=`<div>${tabs}`
         +(S.ln?R('Cicilan bank berjalan',fmt(S.ln.pay)+'/bln · sisa '+S.ln.left+' bln'):'')
-        +[10e6,50e6,250e6,1e9].map(n=>R('Pinjaman '+fmt(n),'bunga 15%/thn, 12 bulan','ln',n,'Ajukan',!!S.ln)).join('')
+        +[100e6,500e6,2e9,10e9].map(n=>R('Pinjaman '+fmt(n),'bunga 15%/thn, 12 bulan','ln',n,'Ajukan',!!S.ln)).join('')
         +`</div>`;
     }
   }
@@ -854,7 +861,6 @@ function render(){
     +`<button data-a="mute" class="sm">${S.mute?'Suara: Off':'Suara: On'}</button>`
   );
 
-  // Kiri: Ringkasan 4 Sektor Skala Besar + Kartu Billing Pelanggan
   const secCards=SECTORS.map(sc=>{
     const cnt=S.sec[sc.id]||0;
     const kwTot=cnt*sc.kwPer;
@@ -875,7 +881,7 @@ function render(){
   put($('#stpg'),maxCP>0?`${B('cpg',-1,'◀',cardPage<=0,'sm')}<span>${cardPage+1}/${maxCP+1}</span>${B('cpg',1,'▶',cardPage>=maxCP,'sm')}`:`<span class="lg">${fmtNum(totBld)} bangunan</span>`);
   put($('#sts'),allCards.slice(cardPage*perCard,(cardPage+1)*perCard).join(''));
 
-  put($('#tb'),[['gen','Genset & BBM'],['res','Riset (1000+)'],['sol','Pemanen Surya'],['grid','Jaringan & Negara'],['pg','Teknisi'],['bk','Bank'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
+  put($('#tb'),[['res','Riset (1000+)'],['sol','Pemanen Surya'],['grid','Jaringan & Negara'],['gen','Genset & BBM'],['pg','Teknisi'],['bk','Bank'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
   put($('#side'),side());
 }
 
