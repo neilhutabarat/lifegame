@@ -272,6 +272,7 @@ const curDate=()=>new Date(2008,0,1+day());
 const curYear=()=>curDate().getFullYear();
 const age=()=>curYear()-2008+15;
 const clock=()=>String(Math.floor(S.T/60)%24).padStart(2,'0')+':'+String(S.T%60).padStart(2,'0');
+const fmtBat=kwh=>kwh<1?Math.round(kwh*1000)+' Wh':kwh.toFixed(2)+' kWh';
 
 function holName(y,m,d){
   if(m===0&&d===1)return 'Tahun Baru Masehi';
@@ -344,7 +345,7 @@ function fresh(){
     m:500000,b:19500000,T:420,stam:100,rw:3,rr:3,open:false,faint:false,st:[],
     stock:Object.fromEntries(I.map(i=>[i.id,0])),sup:{gas:0,gal:0},eq:{},
     games:{},parts:{pc_kb:1,stik_ps2:2,stik_ps3:0,stik_ps4:0,stik_ps5:0,stik_xb:0,stik_xb360:0,stik_xbone:0},
-    q:[],kwh:0,out:0,gen:false,genDay:0,solList:[],solBat:0,solCap:0,chgLv:0,acChgLv:-1,acChgOn:false,wx:'cerah',
+    q:[],kwh:0,out:0,gen:false,genDay:0,solList:[],solBat:0,solCap:0,solBatUse:false,chgLv:0,acChgLv:-1,acChgOn:false,wx:'cerah',
     cap:10,rent:0,emps:[],empSeq:1,
     isp:{infra:0,up:0,pkg:0,subs:0,fault:0,sat:80},
     dep:[],ln:null,propLn:null,v:{},as:{},pt:null,mar:0,kids:0,preg:0,kb:0,busy:0,jp:0,
@@ -359,6 +360,7 @@ function migrate(o){
   if(!o.parts)o.parts={pc_kb:1,stik_ps2:2};
   Object.keys(PT).forEach(k=>{if(o.parts[k]===undefined)o.parts[k]=0});
   if(o.solBat===undefined)o.solBat=0;
+  if(o.solBatUse===undefined)o.solBatUse=false;
   if(!Array.isArray(o.solList)){
     o.solList=[];
     const cnt=o.sol||0;
@@ -447,31 +449,36 @@ function solarStats(){
   const sunOn=(solCnt>0&&h>=6&&h<17);
   const directGen=sunOn?(solCnt*2.2*wm):0;
   const chgWatt=CHG[S.chgLv||0].w;
-  const solarChargeRate=(sunOn&&S.solCap>0&&S.solBat<S.solCap)?((chgWatt*wm)/1000):0;
+  const totalSolarW=chgWatt*solCnt;
+  const solarChargeRate=(sunOn&&S.solCap>0&&S.solBat<S.solCap)?((totalSolarW*wm)/1000):0;
   const acWatt=(S.acChgLv>=0&&S.acChgOn)?CHG[S.acChgLv].w:0;
   const acChargeRate=(acWatt>0&&S.solCap>0&&S.solBat<S.solCap&&S.kwh>0)?(acWatt/1000):0;
-  return {load,directGen,solarChargeRate,acChargeRate,chgWatt,acWatt,wm,sunOn};
+  return {load,directGen,solarChargeRate,acChargeRate,chgWatt,totalSolarW,acWatt,wm,sunOn};
 }
 
 function power(h){
   if(h%4===0)updateWeather();
   const st=solarStats();
+  // 1. Solar langsung mengurangi beban warnet siang hari
   let load=Math.max(0,st.load-st.directGen);
+  // 2. Charging baterai dari matahari (gratis, sesuai watt charger x jumlah panel & cuaca)
   if(st.solarChargeRate>0&&S.solCap>0){
     S.solBat=Math.min(S.solCap,S.solBat+st.solarChargeRate);
   }
+  // 3. Charging baterai dari Charger AC terpisah (memakai token PLN)
   if(st.acChargeRate>0&&S.solCap>0&&S.kwh>0){
     const room=S.solCap-S.solBat;
     const draw=Math.min(room,st.acChargeRate,S.kwh);
     S.kwh-=draw;S.solBat+=draw;
   }
-  if(load>0&&S.solBat>0){
+  // 4. Baterai HANYA dipakai untuk beban warnet jika mode "Pakai Daya Baterai" diaktifkan!
+  if(S.solBatUse&&load>0&&S.solBat>0){
     const fb=Math.min(load,S.solBat);S.solBat-=fb;load-=fb;
   }
   if(load<=0){S.out=0;return}
   if(S.kwh>=load){S.kwh-=load;S.out=0}
   else if(S.gen){spend(P(5000));S.out=0}
-  else{if(!S.out)log('Token listrik & baterai surya habis! Warnet padam.');snd('warn');S.out=1}
+  else{if(!S.out)log('Token listrik habis! Warnet padam.'+(S.solBat>0&&!S.solBatUse?' (Mode Pakai Baterai masih OFF)':''));snd('warn');S.out=1}
 }
 
 function ispStats(){
@@ -798,15 +805,20 @@ const A={
     const map={1:1.2e6,5:4.5e6,10:8e6,25:18e6},add=+k;
     if(buy(P(map[k]))){
       S.solCap+=add;
-      log('Upgrade kapasitas baterai surya +'+add+' kWh (total '+S.solCap+' kWh). Isi dari matahari siang hari atau Charger AC.');
+      log('Upgrade kapasitas baterai surya +'+add+' kWh (total '+S.solCap+' kWh). Daya tersimpan aman sampai mode Pakai Daya Baterai dinyalakan.');
     }
+  },
+  togbat(){
+    if(S.solCap<=0)return log('Belum punya baterai surya.');
+    S.solBatUse=!S.solBatUse;
+    log('Mode Pakai Daya Baterai: '+(S.solBatUse?'ON (baterai dipakai untuk listrik warnet)':'OFF (baterai disimpan/hanya mengisi)'));
   },
   upchg(){
     const nl=(S.chgLv||0)+1;if(nl>=CHG.length)return;
     const ch=CHG[nl];
     if(ch.yr>curYear())return log(ch.n+' baru rilis tahun '+ch.yr+'.');
     if(!buy(Py(ch.p,ch.yr)))return;
-    S.chgLv=nl;log('Upgrade Charger Surya ke '+ch.n+' ('+ch.w+'W)!');
+    S.chgLv=nl;log('Upgrade Charger Surya ke '+ch.n+' ('+ch.w+'W/panel)!');
   },
   upac(){
     const nl=(S.acChgLv??-1)+1;if(nl>=CHG.length)return;
@@ -968,8 +980,8 @@ function side(){
     const ss=solarStats();
     const curChg=CHG[S.chgLv||0],nxtChg=CHG[(S.chgLv||0)+1];
     const curAc=S.acChgLv>=0?CHG[S.acChgLv]:null,nxtAc=CHG[(S.acChgLv??-1)+1];
-    const chgSt=S.solCap<=0?'Belum ada baterai':ss.solarChargeRate>0?`<b style="color:var(--ok)">☀️ Ngecas +${(ss.solarChargeRate*1000).toFixed(0)} Wh/jam</b>`:ss.acChargeRate>0?`<b style="color:var(--wr)">🔌 Ngecas AC +${(ss.acChargeRate*1000).toFixed(0)} Wh/jam</b>`:'Tidak mengecas';
-    h=`<div class="lg">Token PLN: <b>${S.kwh.toFixed(1)} kWh</b> (${fmt(P(1000))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''}<br>Beban warnet: <b>${ss.load.toFixed(2)} kW</b> · Suplai surya siang: <b>${ss.directGen.toFixed(2)} kW</b> (${wxIcon()} ${wm}, jam 06–17)<br>Baterai surya: <b>${S.solBat.toFixed(2)}/${S.solCap} kWh</b> · ${chgSt}</div>`
+    const chgSt=S.solCap<=0?'Belum ada baterai':ss.solarChargeRate>0?`<b style="color:var(--ok)">☀️ Ngecas +${Math.round(ss.solarChargeRate*1000)} Wh/jam</b>`:ss.acChargeRate>0?`<b style="color:var(--wr)">🔌 Ngecas AC +${Math.round(ss.acChargeRate*1000)} Wh/jam</b>`:'Siaga (menunggu matahari 06–17)';
+    h=`<div class="lg">Token PLN: <b>${S.kwh.toFixed(1)} kWh</b> (${fmt(P(1000))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''}<br>Beban warnet: <b>${ss.load.toFixed(2)} kW</b> · Suplai surya siang: <b>${ss.directGen.toFixed(2)} kW</b> (${wxIcon()} ${wm}, jam 06–17)<br>Baterai surya: <b>${fmtBat(S.solBat)} / ${S.solCap} kWh</b> · ${chgSt}</div>`
     +[50,100,250].map(n=>R('Token '+n+' kWh','','tok',n,fmt(P(n*1000)+2500))).join('')
     +(S.gen
       ?`<div class="row"><span>Genset Cadangan (Terpasang)<br><span class="lg">otomatis menyala saat token & baterai habis · usia ${Math.floor((day()-(S.genDay||0))/30)} bln</span></span><span>${B('sellgen','','Jual Second ('+fmt(genSellVal())+')',0,'sm bad')}</span></div>`
@@ -978,14 +990,15 @@ function side(){
     +R('Beli Panel Surya ('+S.solList.length+' unit)','tidak makan slot · suplai beban siang & isi baterai dari matahari','sol','',fmt(70e6))
     +S.solList.map((sp,idx)=>`<div class="row"><span>Panel Surya #${idx+1}<br><span class="lg">usia pemakaian ${Math.floor((day()-sp.day)/30)} bln</span></span><span>${B('sellsol',idx,'Jual Second ('+fmt(solSellVal(sp))+')',0,'sm bad')}</span></div>`).join('')
     +(nxtChg
-      ?R('Charger Surya: '+curChg.n+' ('+curChg.w+'W)',nxtChg.yr<=yr?'Upgrade ke '+nxtChg.n+' ('+nxtChg.w+'W)':'Teknologi '+nxtChg.w+'W rilis tahun '+nxtChg.yr,'upchg','',nxtChg.yr<=yr?fmt(Py(nxtChg.p,nxtChg.yr)):'Rilis '+nxtChg.yr,nxtChg.yr>yr)
-      :R('Charger Surya: '+curChg.n+' ('+curChg.w+'W)','Kecepatan charging maksimal tercapai',0))
+      ?R('Charger Surya: '+curChg.n+' ('+curChg.w+'W/panel)',nxtChg.yr<=yr?'Upgrade ke '+nxtChg.n+' ('+nxtChg.w+'W/panel)':'Teknologi '+nxtChg.w+'W rilis tahun '+nxtChg.yr,'upchg','',nxtChg.yr<=yr?fmt(Py(nxtChg.p,nxtChg.yr)):'Rilis '+nxtChg.yr,nxtChg.yr>yr)
+      :R('Charger Surya: '+curChg.n+' ('+curChg.w+'W/panel)','Kecepatan charging maksimal tercapai',0))
     +'<h2>Charger Listrik AC (Terpisah - Pakai Token PLN)</h2>'
     +(curAc
       ?`<div class="row"><span>Charger AC ${curAc.w}W (${S.acChgOn?'AKTIF':'MATI'})<br><span class="lg">mengisi baterai memakai token PLN ${curAc.w} Wh/jam</span></span><span>${B('togac','',S.acChgOn?'Matikan':'Nyalakan',0,'sm')} ${nxtAc&&nxtAc.yr<=yr?B('upac','','Up '+nxtAc.w+'W ('+fmt(Py(nxtAc.p,nxtAc.yr))+')',0,'sm'):''}</span></div>`
       :R('Beli Charger Listrik AC 5W','charger terpisah untuk isi baterai dari token PLN','upac','',fmt(250000)))
-    +'<h2>Kapasitas Baterai Surya</h2>'
-    +R('Tambah baterai +1 kWh','kapasitas saat ini '+S.solCap+' kWh (mulai dari 0, cas dari matahari/AC)','bat',1,fmt(P(1.2e6)))
+    +'<h2>Baterai Surya (Mode Pakai & Kapasitas)</h2>'
+    +`<div class="row"><span>Pakai Daya Baterai untuk Warnet: <b>${S.solBatUse?'ON (Dipakai)':'OFF (Disimpan)'}</b><br><span class="lg">${S.solBatUse?'Daya baterai otomatis dipakai menyalakan warnet':'Baterai tidak akan kesedot warnet, murni menabung daya'}</span></span><span>${B('togbat','',S.solBatUse?'Matikan (Simpan)':'Aktifkan (Pakai)',S.solCap<=0,S.solBatUse?'on':'')}</span></div>`
+    +R('Tambah baterai +1 kWh','kapasitas saat ini '+S.solCap+' kWh','bat',1,fmt(P(1.2e6)))
     +R('Tambah baterai +5 kWh','kapasitas saat ini '+S.solCap+' kWh','bat',5,fmt(P(4.5e6)))
     +R('Tambah baterai +10 kWh','simpan daya surya untuk malam/hujan','bat',10,fmt(P(8e6)))
     +R('Tambah baterai +25 kWh','cadangan besar untuk warnet 24 jam','bat',25,fmt(P(18e6)));
@@ -1097,10 +1110,11 @@ function render(){
   const dt=curDate(),yr=curYear(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
   const is=ispStats(),tx=taxInfo(S.inc+is.rev),sk=sickEmps().length,ss=solarStats();
   const st=S.busy>0?['KERJA '+Math.ceil(S.busy/60)+'j','var(--wr)']:S.out?['PADAM','var(--bad)']:S.faint?['PINGSAN','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:S.open?['BUKA','var(--ok)']:['TUTUP','var(--mt)'];
-  const chgTag=S.solCap>0&&S.solBat<S.solCap?(ss.solarChargeRate>0?' ⚡'+ss.chgWatt+'W':ss.acChargeRate>0?' 🔌'+ss.acWatt+'W':''):'';
+  const chgTag=S.solCap>0&&S.solBat<S.solCap?(ss.solarChargeRate>0?' ⚡'+ss.totalSolarW+'W':ss.acChargeRate>0?' 🔌'+ss.acWatt+'W':''):'';
+  const batModeTag=S.solCap>0?(S.solBatUse?' [Pakai]':' [Simpan]'):'';
   put($('#hd'),
     `<div class="r"><b>${fmt(S.m)}</b><span class="lg">rekening ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span>Usia ${age()}</span><span class="chip" style="color:${st[1]}">${st[0]}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}${sk?`<span class="chip" style="color:var(--wr)">${sk} Karyawan Sakit</span>`:''}${S.isp.fault?`<span class="chip" style="color:var(--bad)">ISP Gangguan</span>`:''}</div>`
-    +`<div class="r lg"><span>Rep warnet ★${S.rw.toFixed(1)}</span><span>Rep rental ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)} kWh${S.solCap?' · Bat '+S.solBat.toFixed(2)+'/'+S.solCap+chgTag:''}</span><span>${wxIcon()}</span><span>Slot ${used()}/${S.cap}</span>${is.inf.lv?`<span>ISP ${S.isp.subs}/${is.inf.max} rmh</span>`:''}<span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>Harga x${fx().toFixed(2)}</span></div>`
+    +`<div class="r lg"><span>Rep warnet ★${S.rw.toFixed(1)}</span><span>Rep rental ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)} kWh${S.solCap?' · Bat '+fmtBat(S.solBat)+'/'+S.solCap+'kWh'+chgTag+batModeTag:''}</span><span>${wxIcon()}</span><span>Slot ${used()}/${S.cap}</span>${is.inf.lv?`<span>ISP ${S.isp.subs}/${is.inf.max} rmh</span>`:''}<span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>Harga x${fx().toFixed(2)}</span></div>`
     +`<div class="bar"><i style="width:${S.stam}%;background:${S.stam<25?'var(--bad)':'var(--ac)'}"></i></div>`
   );
   put($('#ctl'),
