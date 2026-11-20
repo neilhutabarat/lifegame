@@ -61,7 +61,7 @@ const put=(e,h)=>{if(e._h!==h){e._h=h;e.innerHTML=h}};
 
 const START_YEAR=2018, BIRTH_YEAR=2002;
 
-// Teknologi Daya Serap Panel Surya (Harga ramah mulai modal awal 2018+)
+// Teknologi Daya Serap Panel Surya
 const SOL_TECH=[
   {lv:0,n:'Polycrystalline 300Wp (Standar 2018)',mult:1.0,p:0,yr:2018},
   {lv:1,n:'Monocrystalline PERC 400Wp (Efisiensi 1.8x)',mult:1.8,p:6500000,yr:2018},
@@ -72,7 +72,7 @@ const SOL_TECH=[
   {lv:6,n:'Perovskite-Silicon Tandem (Efisiensi 14x)',mult:14.0,p:300000000,yr:2025}
 ];
 
-// Teknologi Kecepatan Charging (Kapasitas daya realistis untuk PLTS rumah & harga terjangkau)
+// Teknologi Kecepatan Charging
 const CHG=[
   {w:250,n:'PWM Solar Controller 250W',p:0,yr:2018},
   {w:600,n:'MPPT Fast Controller 600W',p:850000,yr:2018},
@@ -83,24 +83,27 @@ const CHG=[
   {w:20000,n:'Megacharger Grid 20 kW',p:55000000,yr:2024}
 ];
 
-// Jaringan Distribusi Listrik Warga (PLTS Pascabayar & Token Prabayar)
+// Jaringan Distribusi Listrik Warga (Diperluas hingga skala Kabupaten/Kota!)
 const GRID_TIER=[
   {lv:0,n:'Belum ada jaringan listrik warga',max:0,p:0,yr:2018},
   {lv:1,n:'Kabel Tetangga Sebelah (Maks 2 Rumah)',max:2,p:1200000,yr:2018},
   {lv:2,n:'Jaringan Kabel 1 Gang (Maks 6 Rumah)',max:6,p:4500000,yr:2018},
   {lv:3,n:'Tiang & Panel Distribusi 1 RT (Maks 18 Rumah)',max:18,p:14000000,yr:2018},
   {lv:4,n:'Inverter Grid & Trafo 1 RW (Maks 45 Rumah)',max:45,p:36000000,yr:2019},
-  {lv:5,n:'Gardu Mikrogrid Desa (Maks 120 Rumah)',max:120,p:90000000,yr:2021}
+  {lv:5,n:'Gardu Mikrogrid Desa (Maks 120 Rumah)',max:120,p:90000000,yr:2020},
+  {lv:6,n:'Gardu Induk Kecamatan (Maks 350 Rumah)',max:350,p:240000000,yr:2022},
+  {lv:7,n:'Jaringan Smart Grid Kota (Maks 1.000 Rumah)',max:1000,p:650000000,yr:2024}
 ];
 
-// Infrastruktur Jaringan Internet (2018+)
+// Infrastruktur Jaringan Internet (Diperluas hingga skala Kota!)
 const ISP_INFRA=[
   {lv:0,n:'Belum ada jaringan internet',max:0,p:0,yr:2018},
   {lv:1,n:'ODP Mini Tiang 8-Port + Voucher Hotspot',max:8,p:5500000,yr:2018},
   {lv:2,n:'OLT EPON 2-PON + ODP Kampung (24 Rumah)',max:24,p:15000000,yr:2018},
   {lv:3,n:'OLT GPON 4-PON + Mikrotik CCR (64 Rumah)',max:64,p:38000000,yr:2019},
-  {lv:4,n:'OLT GPON 8-PON + ODC Kecamatan (160 Rumah)',max:160,p:95000000,yr:2021},
-  {lv:5,n:'Core Router 10G + Ring Backbone (400 Rumah)',max:400,p:240000000,yr:2023}
+  {lv:4,n:'OLT GPON 8-PON + ODC Kecamatan (160 Rumah)',max:160,p:95000000,yr:2020},
+  {lv:5,n:'Core Router 10G + Ring Backbone (400 Rumah)',max:400,p:240000000,yr:2022},
+  {lv:6,n:'Data Center POP + Metro Fiber (1.000 Rumah)',max:1000,p:620000000,yr:2024}
 ];
 
 // Jalur Bandwidth Induk (Bisa langganan multi-jalur / dobel!)
@@ -116,7 +119,7 @@ const ISP_UP=[
   {id:9,n:'Backbone 10 Gbps',mbps:10000,cost:240000000,yr:2024}
 ];
 
-// Paket Internet Warga (2018+)
+// Paket Internet Warga
 const ISP_PKG=[
   {id:0,n:'Paket 5 Mbps (Hemat Pelajar)',mbps:5,fee:150000,yr:2018},
   {id:1,n:'Paket 10 Mbps (Fiber Home)',mbps:10,fee:220000,yr:2018},
@@ -238,9 +241,7 @@ function solAvgAgeMo(){
 function makeHouse(idx,hasNet,hasPlts){
   const ht=HOUSE_TYPES[Math.min(HOUSE_TYPES.length-1,Math.floor(Math.random()*(2+Math.min(2,Math.floor(idx/5)))))];
   const nm=OWNERS[idx%OWNERS.length]+(idx>=OWNERS.length?' #'+(idx+1):'');
-  // Tanggal jatuh tempo tagihan bulanan tersebar (1..28) agar kas masuk hampir tiap hari!
   const billDay=((idx*5+curDate().getDate())%28)+1;
-  // Pelanggan PLTS otomatis punya saldo token prabayar awal ~10 kWh
   const tokenBal=hasPlts?10:0;
   return {id:Date.now()+Math.random(),n:nm,t:ht.t,net:!!hasNet,plts:!!hasPlts,billDay,baseKw:ht.baseKw,varKw:ht.varKw,usedKwh:0,tokenBal,outHrs:0};
 }
@@ -387,9 +388,8 @@ function power(h){
         S.solBat-=need;
         hs.usedKwh=(hs.usedKwh||0)+need;
         hs.tokenBal=(hs.tokenBal||0)-need;
-        // Token listrik prabayar warga otomatis beli isi ulang saat saldo kWh meteran mereka habis!
         if(hs.tokenBal<=0){
-          const topupKwh=15+Math.floor(Math.random()*25); // 15-39 kWh
+          const topupKwh=15+Math.floor(Math.random()*25);
           const payAmt=Math.round(topupKwh*(S.grid.rate||1000)*mult());
           hs.tokenBal+=topupKwh;
           S.m+=payAmt;S.inc+=payAmt;S.moPlts=(S.moPlts||0)+payAmt;
@@ -407,9 +407,9 @@ function power(h){
 }
 
 function dayEnd(){
-  const stdSal=P(1800000);
+  // Karyawan tidak memiliki tingkat jenuh; hanya memulihkan status libur harian jika ada
   S.emps.forEach(e=>{
-    if(e.off>0){e.off--;return}
+    if(e.off>0)e.off--;
     if(e.sick>0){
       e.sick--;
       if(e.sick===0)log(e.n+' sudah sembuh dan kembali bertugas.');
@@ -417,12 +417,11 @@ function dayEnd(){
     }
     const hrs=shiftHours(e);
     const over=Math.max(0,hrs-12);
-    const salFactor=e.sal<stdSal*.8?1.45:e.sal>=stdSal*1.2?.75:1;
-    e.burn=Math.min(100,e.burn+(2.6+over*.65)*salFactor);
-    const sickChance=.0035+over*.0032+(e.burn>75?.012:e.burn>50?.004:0);
+    // Risiko sakit tetap sangat rendah & realistis (hanya meningkat jika dipaksa lembur >12 jam)
+    const sickChance=.0025+over*.003;
     if(Math.random()<sickChance){
       e.sick=1+Math.floor(Math.random()*2);
-      log(e.n+' sakit ('+e.sick+' hari). Kamu harus turun tangan menggantikan!');
+      log(e.n+' sakit ('+e.sick+' hari). Kamu menggantikan shift-nya sementara.');
       snd('warn');
     }
   });
@@ -436,7 +435,6 @@ function dayEnd(){
         log(drop.n+' berhenti langganan Internet karena jalur bandwidth induk belum aktif.');
       }
     }else{
-      // Pemasukan Harian Voucher Wi-Fi Hotspot
       if(S.isp.vouchOn&&!is.congested&&S.isp.fault===0){
         const buyers=(3+is.inf.lv*4+Math.floor(Math.random()*5))*(S.bC?2:1);
         const vRev=Math.round(buyers*P(3000)*mult());
@@ -462,8 +460,8 @@ function dayEnd(){
         }
       }else if(S.isp.fault===0){
         S.isp.sat=Math.min(100,(S.isp.sat||85)+2);
-        const maxAdd=S.bC?3:1;
-        if(is.netHouses.length<is.inf.max&&S.isp.sat>=50&&Math.random()<(S.bC?.85:.6)){
+        const maxAdd=S.bC?4:2;
+        if(is.netHouses.length<is.inf.max&&S.isp.sat>=50&&Math.random()<(S.bC?.9:.65)){
           for(let k=0;k<maxAdd&&S.houses.filter(x=>x.net).length<is.inf.max;k++){
             const existing=S.houses.find(x=>!x.net);
             if(existing){existing.net=true;log(existing.n+' menambah layanan Internet Fiber!')}
@@ -495,17 +493,19 @@ function dayEnd(){
         drop.plts=false;
         log(drop.n+' berhenti langganan listrik karena tarifmu lebih mahal dari PLN!');
       }
-    }else if(gs.pltsHouses.length<gs.tier.max&&gs.discPct>=15&&S.solBat>=.5){
-      const chance=Math.min(.85,(S.bC?.55:.25)+(gs.discPct/100));
+    }else if(gs.pltsHouses.length<gs.tier.max&&gs.discPct>=12&&S.solBat>=.5){
+      const maxAdd=S.bC?3:1;
+      const chance=Math.min(.9,(S.bC?.6:.3)+(gs.discPct/100));
       if(Math.random()<chance){
-        const existing=S.houses.find(x=>!x.plts);
-        if(existing){existing.plts=true;existing.tokenBal=10;log(existing.n+' ikut berlangganan Listrik PLTS!')}
-        else{const nh=makeHouse(S.houses.length,false,true);S.houses.push(nh);log('Pelanggan baru Listrik PLTS: '+nh.n+' ['+nh.t+'] bergabung!')}
+        for(let k=0;k<maxAdd&&S.houses.filter(x=>x.plts).length<gs.tier.max;k++){
+          const existing=S.houses.find(x=>!x.plts);
+          if(existing){existing.plts=true;existing.tokenBal=10;log(existing.n+' ikut berlangganan Listrik PLTS!')}
+          else{const nh=makeHouse(S.houses.length,false,true);S.houses.push(nh);log('Pelanggan baru Listrik PLTS: '+nh.n+' ['+nh.t+'] bergabung!')}
+        }
       }
     }
   }
 
-  // Penagihan Harian Berdasarkan Tanggal Jatuh Tempo Tiap Rumah (1..28)
   const todayDate=curDate().getDate();
   if(todayDate<=28){
     let dueNet=0,duePlts=0,dueCnt=0;
@@ -590,14 +590,11 @@ function step(){
   const hasActiveOps=(S.isp.infra>0||S.grid.lv>0);
 
   if(sleeping){
-    // Jam 22:00 - 06:00 otomatis tidur istirahat sehingga stamina pulih penuh tiap pagi
     S.stam=Math.min(100,S.stam+20/60);
   }else if(onD){
-    // Ada teknisi jaga: stamina kamu 0% berkurang (malah pulih pelan)
     S.stam=Math.min(100,S.stam+4/60);
   }else if(hasActiveOps&&!inSchool()){
     S.stam-=drain()/60;
-    // Auto-ngopi jika stamina di bawah 30% dan uang cukup
     if(S.stam<30&&S.T-S.cf>=90&&have()>=15000){
       spend(15000);S.stam=Math.min(100,S.stam+35);S.cf=S.T;
       if(S.spd<=64)log('Stamina rendah, otomatis beli kopi (+35).');
@@ -725,7 +722,7 @@ const A={
       const existing=S.houses.find(x=>!x.plts);
       if(existing){existing.plts=true;existing.tokenBal=10}
       else S.houses.push(makeHouse(S.houses.length,false,true));
-      log('Jaringan listrik warga aktif! Rumah pertama mulai berlangganan (pascabayar & isi ulang token).');
+      log('Jaringan listrik warga aktif! Rumah pertama mulai berlangganan.');
     }else{
       log('Upgrade jaringan PLTS warga ke '+gt.n+' (maks '+gt.max+' rumah).');
     }
@@ -745,7 +742,7 @@ const A={
   hi(){
     const id=S.empSeq++,n=EMPNM[(id-1)%EMPNM.length]+' #'+id;
     const st=S.emps.length%2===0?8:20,en=(st+12)%24;
-    S.emps.push({id,n,start:st,end:en,sal:P(1800000),burn:0,sick:0,off:0,offMo:-1});
+    S.emps.push({id,n,start:st,end:en,sal:P(1800000),sick:0,off:0,offMo:-1});
     log('Rekrut teknisi '+n+' (shift '+String(st).padStart(2,'0')+':00–'+String(en).padStart(2,'0')+':00).');
   },
   fi(id){S.emps=S.emps.filter(e=>e.id!==+id)},
@@ -757,8 +754,8 @@ const A={
     const cm=(curYear()-START_YEAR)*12+curDate().getMonth();
     if(e.offMo===cm)return log(e.n+' sudah dapat jatah libur bulan ini.');
     if(e.sick>0)return log(e.n+' sedang sakit.');
-    e.off=1;e.burn=0;e.offMo=cm;
-    log(e.n+' diberi libur 1 hari! Tingkat jenuhnya pulih 100% (0%).');
+    e.off=1;e.offMo=cm;
+    log(e.n+' diberi libur 1 hari.');
   },
 
   // Bank
@@ -833,7 +830,7 @@ function side(){
     }else{
       rows.push(nxtInf
         ?R('Upgrade: '+nxtInf.n,'kapasitas maksimal '+nxtInf.max+' rumah · rilis '+nxtInf.yr,'ispinf','',nxtInf.yr<=yr?fmt(Py(nxtInf.p,nxtInf.yr)):'Rilis '+nxtInf.yr,nxtInf.yr>yr)
-        :R('Infrastruktur Fiber Maksimal','kapasitas hingga 400 rumah tercapai',0));
+        :R('Infrastruktur Fiber Maksimal','kapasitas hingga 1.000 rumah tercapai',0));
       rows.push(R('Voucher Wi-Fi Hotspot Harian ('+(S.isp.vouchOn?'ON':'OFF')+')','pemasukan kas harian dari warga/pelajar sekitar · tarif '+fmt(P(3000))+'/voucher','togvouch','',S.isp.vouchOn?'Matikan':'Aktifkan'));
     }
     const pg=paginate(rows,4);
@@ -887,7 +884,7 @@ function side(){
         </div>`
         +(nxtGrid
           ?R('Upgrade Jaringan: '+nxtGrid.n,'maks '+nxtGrid.max+' rumah · rilis '+nxtGrid.yr,'gridup','',nxtGrid.yr<=yr?fmt(Py(nxtGrid.p,nxtGrid.yr)):'Rilis '+nxtGrid.yr,nxtGrid.yr>yr)
-          :R('Jaringan PLTS Warga Maksimal','kapasitas 120 rumah tercapai',0))
+          :R('Jaringan PLTS Warga Maksimal','kapasitas 1.000 rumah tercapai',0))
         +`</div>`;
     }
   }
@@ -898,8 +895,8 @@ function side(){
       const hrs=shiftHours(e),st=e.sick>0?`<b style="color:var(--bad)">SAKIT (${e.sick}h) - Kamu ganti!</b>`:e.off>0?'<b style="color:var(--ok)">LIBUR</b>':empWorkingNow(e)?'<b style="color:var(--ok)">Sedang jaga</b>':'Off shift';
       const usedOff=e.offMo===cm;
       return `<div class="box">
-        <div class="r"><b>${e.n}</b><span class="lg">${st} · Jenuh ${Math.round(e.burn)}% · ${padH(e.start)}–${padH(e.end)} (${hrs}j${hrs>12?' ⚠️':''})</span>${B('fi',e.id,'Pecat',0,'sm bad')}</div>
-        <div class="row"><span class="lg">Shift:</span><span>${B('es',e.id+':-1','-Msk',0,'sm')} ${B('es',e.id+':1','+Msk',0,'sm')} ${B('ee',e.id+':-1','-Plg',0,'sm')} ${B('ee',e.id+':1','+Plg',0,'sm')}</span><span class="lg">Gaji ${fmt(e.sal)}</span><span>${B('esal',e.id+':-100000','-100rb',0,'sm')} ${B('esal',e.id+':100000','+100rb',0,'sm')} ${B('eoff',e.id,usedOff?'Sudah Libur':'Libur (0%)',usedOff||e.sick>0,'sm')}</span></div>
+        <div class="r"><b>${e.n}</b><span class="lg">${st} · Shift ${padH(e.start)}–${padH(e.end)} (${hrs}j${hrs>12?' ⚠️':''})</span>${B('fi',e.id,'Pecat',0,'sm bad')}</div>
+        <div class="row"><span class="lg">Shift:</span><span>${B('es',e.id+':-1','-Msk',0,'sm')} ${B('es',e.id+':1','+Msk',0,'sm')} ${B('ee',e.id+':-1','-Plg',0,'sm')} ${B('ee',e.id+':1','+Plg',0,'sm')}</span><span class="lg">Gaji ${fmt(e.sal)}</span><span>${B('esal',e.id+':-100000','-100rb',0,'sm')} ${B('esal',e.id+':100000','+100rb',0,'sm')} ${B('eoff',e.id,usedOff?'Sudah Libur':'Beri Libur',usedOff||e.sick>0,'sm')}</span></div>
       </div>`;
     });
     const pg=paginate(eCards,3);
