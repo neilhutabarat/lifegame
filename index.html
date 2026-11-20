@@ -10,9 +10,9 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--sf);z-index:10}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sf);border-bottom:1px solid var(--bd);padding:8px 12px}
-.r{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.r{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
 .r b{font-size:17px}.mt,.lg{color:var(--mt)}.lg{font-size:12px}
-.bar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden;margin-top:5px}
 .bar i{display:block;height:100%;background:var(--ac)}
 .chip{padding:1px 8px;border-radius:99px;border:1px solid var(--bd);font-size:12px}
 .ctl{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px}
@@ -22,16 +22,16 @@ button:disabled{opacity:.4;cursor:default}
 button.sm{padding:3px 7px;font-size:12px;border-radius:6px}
 button.bad{border-color:var(--bad);color:var(--bad)}
 input{width:90px;padding:4px 6px}
-main{padding:0 12px 24px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1100px;margin:auto}
+main{padding:0 12px 24px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1160px;margin:auto}
 @media(min-width:860px){main{grid-template-columns:1fr 1fr}}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt);margin:8px 0 6px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:8px;min-height:84px;display:flex;flex-direction:column;gap:4px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt);margin:10px 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:8px;min-height:86px;display:flex;flex-direction:column;gap:4px}
 .card.p{border-color:var(--ac)}.card.d{border-color:var(--wr)}.card.brk{border-color:var(--bad)}
 .upbox{margin-top:4px;padding-top:6px;border-top:1px dashed var(--bd);display:flex;flex-direction:column;gap:4px}
-.row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd)}
+.row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd)}
 .row:last-child{border:0}
-.box{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:12px}
+.box{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:10px}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}.tabs button{padding:4px 8px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;margin:8px 0}
 .cal div{padding:4px 2px;border-radius:6px;font-size:12px;border:1px solid transparent}
@@ -48,41 +48,127 @@ const fmt=n=>(n<0?'-':'')+'Rp '+Math.abs(Math.round(n)).toLocaleString('id-ID');
 const put=(e,h)=>{if(e._h!==h){e._h=h;e.innerHTML=h}};
 
 const K={
-  pc1:{n:'PC Pentium 4 + CRT',r:3000,p:2800000,c:'pc',pf:'pc',w:300,pt:'pc_kb',next:'pc2',up:3200000},
-  pc2:{n:'PC Core 2 Duo + LCD 17"',r:4500,p:5500000,c:'pc',pf:'pc',w:250,pt:'pc_kb'},
-  ps1:{n:'PS1',r:2000,p:400000,c:'ps',pf:'ps1',w:20,tv:1,pt:'stik_ps2',next:'ps2',up:850000},
-  ps2:{n:'PS2',r:3500,p:1100000,c:'ps',pf:'ps2',w:35,tv:1,pt:'stik_ps2',next:'ps3',up:5000000},
-  ps3:{n:'PS3',r:8000,p:5800000,c:'ps',pf:'ps3',w:200,tv:1,pt:'stik_ps3'}
+  pc1:{n:'PC Pentium 4 + CRT',r:3000,p:2800000,yr:2008,tier:1,c:'pc',pf:'pc',w:300,pt:'pc_kb',next:'pc2',up:3200000},
+  pc2:{n:'PC Core 2 Duo + LCD 17"',r:4500,p:5500000,yr:2008,tier:2,c:'pc',pf:'pc',w:250,pt:'pc_kb',next:'pc3',up:3000000},
+  pc3:{n:'PC Core i3 + GT 240',r:6000,p:7000000,yr:2010,tier:3,c:'pc',pf:'pc',w:260,pt:'pc_kb',next:'pc4',up:4500000},
+  pc4:{n:'PC Core i5 Haswell + GTX 750 Ti',r:8500,p:9800000,yr:2014,tier:4,c:'pc',pf:'pc',w:280,pt:'pc_kb',next:'pc5',up:7500000},
+  pc5:{n:'PC Core i5 Gen-8 + GTX 1060',r:12500,p:15000000,yr:2018,tier:5,c:'pc',pf:'pc',w:320,pt:'pc_kb',next:'pc6',up:9500000},
+  pc6:{n:'PC Core i5 Gen-12 + RTX 3060',r:18000,p:21000000,yr:2022,tier:6,c:'pc',pf:'pc',w:380,pt:'pc_kb'},
+  ps1:{n:'PS1',r:2000,p:400000,yr:2008,c:'ps',pf:'ps1',w:20,tv:1,pt:'stik_ps2',next:'ps2',up:850000},
+  ps2:{n:'PS2',r:3500,p:1100000,yr:2008,c:'ps',pf:'ps2',w:35,tv:1,pt:'stik_ps2',next:'ps3',up:4900000},
+  ps3:{n:'PS3',r:8000,p:5800000,yr:2008,c:'ps',pf:'ps3',w:200,tv:1,pt:'stik_ps3',next:'ps4',up:3800000},
+  ps4:{n:'PS4',r:11000,p:6500000,yr:2013,c:'ps',pf:'ps4',w:150,tv:1,pt:'stik_ps4',next:'ps5',up:5800000},
+  ps5:{n:'PS5',r:17000,p:9500000,yr:2020,c:'ps',pf:'ps5',w:210,tv:1,pt:'stik_ps5'},
+  xb1:{n:'Xbox Original',r:3000,p:1000000,yr:2008,c:'ps',pf:'xb1',w:70,tv:1,pt:'stik_xb',next:'xb360',up:3500000},
+  xb360:{n:'Xbox 360',r:7500,p:4200000,yr:2008,c:'ps',pf:'xb360',w:170,tv:1,pt:'stik_xb360',next:'xbone',up:3800000},
+  xbone:{n:'Xbox One',r:10500,p:6200000,yr:2013,c:'ps',pf:'xbone',w:120,tv:1,pt:'stik_xbone',next:'xbsx',up:5500000},
+  xbsx:{n:'Xbox Series X',r:16500,p:9000000,yr:2020,c:'ps',pf:'xbsx',w:190,tv:1,pt:'stik_xbone'}
 };
-const TV=[{n:'Tabung 14"',p:700000,w:60,q:0},{n:'Tabung 21"',p:1400000,w:90,q:.03},{n:'LCD 32"',p:6500000,w:120,q:.06}];
+const TV=[
+  {n:'Tabung 14"',p:700000,yr:2008,w:60,q:0},
+  {n:'Tabung 21"',p:1400000,yr:2008,w:90,q:.03},
+  {n:'LCD 32"',p:6500000,yr:2008,w:120,q:.06},
+  {n:'LED 43" FHD',p:5800000,yr:2014,w:85,q:.09},
+  {n:'Smart TV 4K 55"',p:8500000,yr:2019,w:110,q:.12}
+];
 const UPLV=[
   {n:'Standar',p:0,m:1},
   {n:'Lv 1 (Headset/Stik Ori & Kursi Nyaman)',p:450000,m:1.15},
   {n:'Lv 2 (RAM/Pendingin & Meja Luas)',p:950000,m:1.30},
-  {n:'Lv 3 (VIP Sofa/VGA Kencang)',p:1800000,m:1.45}
+  {n:'Lv 3 (VIP Sofa / Monitor Gaming)',p:1800000,m:1.45}
 ];
 const GM=[
-  {id:'cs16',pf:'pc',n:'Counter-Strike 1.6 Anthology (Ori)',p:150000},
-  {id:'wc3',pf:'pc',n:'Warcraft III + Frozen Throne (Ori)',p:200000},
-  {id:'gtasapc',pf:'pc',n:'GTA San Andreas PC (Ori)',p:250000},
-  {id:'pes08pc',pf:'pc',n:'PES 2008 PC (Ori)',p:300000},
-  {id:'cod4',pf:'pc',n:'Call of Duty 4: Modern Warfare (Ori)',p:350000},
-  {id:'we02',pf:'ps1',n:'Winning Eleven 2002 PS1 (Ori)',p:150000},
-  {id:'ctr',pf:'ps1',n:'Crash Team Racing PS1 (Ori)',p:150000},
-  {id:'tk3',pf:'ps1',n:'Tekken 3 PS1 (Ori)',p:180000},
-  {id:'weps2',pf:'ps2',n:'Winning Eleven / PES PS2 (Ori)',p:350000},
-  {id:'gtasaps2',pf:'ps2',n:'GTA San Andreas PS2 (Ori)',p:350000},
-  {id:'gow2',pf:'ps2',n:'God of War II PS2 (Ori)',p:400000},
-  {id:'naruto',pf:'ps2',n:'Naruto Ultimate Ninja 3 PS2 (Ori)',p:350000},
-  {id:'pesps3',pf:'ps3',n:'PES 2008/2009 PS3 Blu-ray (Ori)',p:550000},
-  {id:'gta4',pf:'ps3',n:'GTA IV PS3 Blu-ray (Ori)',p:600000},
-  {id:'mgs4',pf:'ps3',n:'Metal Gear Solid 4 PS3 (Ori)',p:600000},
-  {id:'gt5p',pf:'ps3',n:'Gran Turismo 5 Prologue PS3 (Ori)',p:500000}
+  // PC (req: tier minimum PC 1..6)
+  {id:'cs16',pf:'pc',yr:2008,req:1,n:'Counter-Strike 1.6 Anthology (Ori)',p:150000},
+  {id:'wc3',pf:'pc',yr:2008,req:1,n:'Warcraft III + Frozen Throne (Ori)',p:200000},
+  {id:'gtasapc',pf:'pc',yr:2008,req:1,n:'GTA San Andreas PC (Ori)',p:250000},
+  {id:'hl2',pf:'pc',yr:2008,req:1,n:'Half-Life 2 Orange Box (Ori)',p:250000},
+  {id:'nfsug2',pf:'pc',yr:2008,req:1,n:'Need for Speed: Most Wanted (Ori)',p:220000},
+  {id:'pes08pc',pf:'pc',yr:2008,req:2,n:'PES 2008 PC (Ori)',p:300000},
+  {id:'cod4',pf:'pc',yr:2008,req:2,n:'Call of Duty 4: Modern Warfare (Ori)',p:350000},
+  {id:'l4d',pf:'pc',yr:2008,req:2,n:'Left 4 Dead (Ori)',p:300000},
+  {id:'crysis',pf:'pc',yr:2008,req:3,n:'Crysis (Ori - Berat!)',p:400000},
+  {id:'pb',pf:'pc',yr:2009,req:2,n:'Point Blank Warnet License',p:200000},
+  {id:'gta4pc',pf:'pc',yr:2008,req:3,n:'GTA IV PC (Ori)',p:450000},
+  {id:'skyrim',pf:'pc',yr:2011,req:3,n:'The Elder Scrolls V: Skyrim (Ori)',p:500000},
+  {id:'csgo',pf:'pc',yr:2012,req:3,n:'CS:GO Prime & Dota 2 Cafe Pack',p:250000},
+  {id:'gtavpc',pf:'pc',yr:2015,req:4,n:'GTA V PC (Ori)',p:550000},
+  {id:'witcher3',pf:'pc',yr:2015,req:4,n:'The Witcher 3: Wild Hunt (Ori)',p:500000},
+  {id:'pubg',pf:'pc',yr:2017,req:4,n:'PUBG: Battlegrounds PC (Ori)',p:350000},
+  {id:'rdr2pc',pf:'pc',yr:2019,req:5,n:'Red Dead Redemption 2 PC (Ori)',p:650000},
+  {id:'val',pf:'pc',yr:2020,req:4,n:'Valorant iCafe License',p:300000},
+  {id:'cp2077',pf:'pc',yr:2020,req:5,n:'Cyberpunk 2077 PC (Ori)',p:700000},
+  {id:'elden',pf:'pc',yr:2022,req:5,n:'Elden Ring PC (Ori)',p:650000},
+  {id:'bg3',pf:'pc',yr:2023,req:6,n:"Baldur's Gate 3 PC (Ori)",p:700000},
+  {id:'wukong',pf:'pc',yr:2024,req:6,n:'Black Myth: Wukong PC (Ori)',p:700000},
+  // PS1
+  {id:'we02',pf:'ps1',yr:2008,n:'Winning Eleven 2002 PS1 (Ori)',p:150000},
+  {id:'ctr',pf:'ps1',yr:2008,n:'Crash Team Racing PS1 (Ori)',p:150000},
+  {id:'tk3',pf:'ps1',yr:2008,n:'Tekken 3 PS1 (Ori)',p:180000},
+  {id:'hmbtn',pf:'ps1',yr:2008,n:'Harvest Moon: Back to Nature (Ori)',p:180000},
+  {id:'vig8',pf:'ps1',yr:2008,n:'Vigilante 8: 2nd Offense (Ori)',p:150000},
+  // PS2
+  {id:'weps2',pf:'ps2',yr:2008,n:'Winning Eleven / PES PS2 (Ori)',p:350000},
+  {id:'gtasaps2',pf:'ps2',yr:2008,n:'GTA San Andreas PS2 (Ori)',p:350000},
+  {id:'gow2',pf:'ps2',yr:2008,n:'God of War II PS2 (Ori)',p:400000},
+  {id:'naruto',pf:'ps2',yr:2008,n:'Naruto Ultimate Ninja 3 PS2 (Ori)',p:350000},
+  {id:'downhill',pf:'ps2',yr:2008,n:'Downhill Domination PS2 (Ori)',p:320000},
+  {id:'re4',pf:'ps2',yr:2008,n:'Resident Evil 4 PS2 (Ori)',p:380000},
+  {id:'gh3',pf:'ps2',yr:2008,n:'Guitar Hero III PS2 (Ori)',p:450000},
+  // PS3
+  {id:'pesps3',pf:'ps3',yr:2008,n:'PES 2008/2009 PS3 Blu-ray (Ori)',p:550000},
+  {id:'gta4ps3',pf:'ps3',yr:2008,n:'GTA IV PS3 Blu-ray (Ori)',p:600000},
+  {id:'mgs4',pf:'ps3',yr:2008,n:'Metal Gear Solid 4 PS3 (Ori)',p:600000},
+  {id:'uc2',pf:'ps3',yr:2009,n:'Uncharted 2: Among Thieves (Ori)',p:580000},
+  {id:'gow3',pf:'ps3',yr:2010,n:'God of War III PS3 (Ori)',p:600000},
+  {id:'tlou',pf:'ps3',yr:2013,n:'The Last of Us PS3 (Ori)',p:650000},
+  {id:'gtavps3',pf:'ps3',yr:2013,n:'GTA V PS3 (Ori)',p:680000},
+  // PS4
+  {id:'fifa14ps4',pf:'ps4',yr:2013,n:'FIFA 14 PS4 (Ori)',p:650000},
+  {id:'pes15ps4',pf:'ps4',yr:2014,n:'PES 2015 PS4 (Ori)',p:650000},
+  {id:'bbps4',pf:'ps4',yr:2015,n:'Bloodborne PS4 (Ori)',p:680000},
+  {id:'uc4',pf:'ps4',yr:2016,n:'Uncharted 4 PS4 (Ori)',p:700000},
+  {id:'gowps4',pf:'ps4',yr:2018,n:'God of War PS4 (Ori)',p:730000},
+  {id:'spidey4',pf:'ps4',yr:2018,n:"Marvel's Spider-Man PS4 (Ori)",p:730000},
+  {id:'gotps4',pf:'ps4',yr:2020,n:'Ghost of Tsushima PS4 (Ori)',p:780000},
+  // PS5
+  {id:'miles5',pf:'ps5',yr:2020,n:'Spider-Man: Miles Morales PS5 (Ori)',p:730000},
+  {id:'ds5',pf:'ps5',yr:2020,n:"Demon's Souls Remake PS5 (Ori)",p:950000},
+  {id:'gowr5',pf:'ps5',yr:2022,n:'God of War Ragnarok PS5 (Ori)',p:980000},
+  {id:'fc24ps5',pf:'ps5',yr:2023,n:'EA Sports FC 24 PS5 (Ori)',p:1000000},
+  {id:'spidey2',pf:'ps5',yr:2023,n:"Marvel's Spider-Man 2 PS5 (Ori)",p:1030000},
+  {id:'gta6ps5',pf:'ps5',yr:2026,n:'Grand Theft Auto VI PS5 (Ori)',p:1150000},
+  // Xbox Original
+  {id:'halo1',pf:'xb1',yr:2008,n:'Halo: Combat Evolved Xbox (Ori)',p:300000},
+  {id:'halo2',pf:'xb1',yr:2008,n:'Halo 2 Xbox (Ori)',p:350000},
+  {id:'fable',pf:'xb1',yr:2008,n:'Fable Xbox (Ori)',p:320000},
+  {id:'forza1',pf:'xb1',yr:2008,n:'Forza Motorsport Xbox (Ori)',p:320000},
+  // Xbox 360
+  {id:'halo3',pf:'xb360',yr:2008,n:'Halo 3 Xbox 360 (Ori)',p:520000},
+  {id:'gow2x',pf:'xb360',yr:2008,n:'Gears of War 2 Xbox 360 (Ori)',p:550000},
+  {id:'fm3',pf:'xb360',yr:2009,n:'Forza Motorsport 3 Xbox 360 (Ori)',p:550000},
+  {id:'rdrx',pf:'xb360',yr:2010,n:'Red Dead Redemption Xbox 360 (Ori)',p:580000},
+  {id:'halo4',pf:'xb360',yr:2012,n:'Halo 4 Xbox 360 (Ori)',p:600000},
+  // Xbox One
+  {id:'fm5',pf:'xbone',yr:2013,n:'Forza Motorsport 5 Xbox One (Ori)',p:650000},
+  {id:'hmcc',pf:'xbone',yr:2014,n:'Halo: Master Chief Collection (Ori)',p:680000},
+  {id:'gears4',pf:'xbone',yr:2016,n:'Gears of War 4 Xbox One (Ori)',p:700000},
+  {id:'fh4',pf:'xbone',yr:2018,n:'Forza Horizon 4 Xbox One (Ori)',p:750000},
+  // Xbox Series X
+  {id:'haloinf',pf:'xbsx',yr:2021,n:'Halo Infinite Xbox Series X (Ori)',p:850000},
+  {id:'fh5',pf:'xbsx',yr:2021,n:'Forza Horizon 5 Xbox Series X (Ori)',p:850000},
+  {id:'starf',pf:'xbsx',yr:2023,n:'Starfield Xbox Series X (Ori)',p:950000},
+  {id:'indyx',pf:'xbsx',yr:2024,n:'Indiana Jones & Great Circle (Ori)',p:980000}
 ];
 const PT={
-  stik_ps2:{n:'Stik PS1/PS2 Original',p:85000},
-  stik_ps3:{n:'Stik PS3 DualShock 3 Ori',p:450000},
-  pc_kb:{n:'Mouse & Keyboard PC',p:120000}
+  pc_kb:{n:'Mouse & Keyboard PC',p:120000,yr:2008},
+  stik_ps2:{n:'Stik PS1/PS2 Ori',p:85000,yr:2008},
+  stik_ps3:{n:'Stik PS3 DualShock 3 Ori',p:450000,yr:2008},
+  stik_ps4:{n:'Stik PS4 DualShock 4 Ori',p:650000,yr:2013},
+  stik_ps5:{n:'Stik PS5 DualSense Ori',p:1100000,yr:2020},
+  stik_xb:{n:'Stik Xbox Original Ori',p:180000,yr:2008},
+  stik_xb360:{n:'Stik Xbox 360 Ori',p:420000,yr:2008},
+  stik_xbone:{n:'Stik Xbox One/Series Ori',p:850000,yr:2013}
 };
 const I=[
   {id:'indomie',n:'Indomie goreng + telur',p:5000,c:2500,w:5,eq:'kom',g:.04},
@@ -112,6 +198,7 @@ const AS=[
 const BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 const NM=['Budi','Rizky','Dimas','Putri','Agus','Siti','Fajar','Dewi','Bayu','Nina','Joko','Rani','Eko','Tika'];
+const EMPNM=['Andi','Riko','Bambang','Dedi','Wawan','Yusuf','Rian','Bagas','Ilham','Reza','Surya','Hadi'];
 const J=[
   {n:'Les privat (mengajar)',age:16,h:2,pay:60000,st:12,e:0},
   {n:'Servis PC panggilan',age:17,h:2,pay:100000,st:12,e:0},
@@ -146,8 +233,10 @@ let S,rc=0,editIdx=-1;
 
 const day=()=>Math.floor(S.T/1440);
 const curDate=()=>new Date(2008,0,1+day());
-const age=()=>curDate().getFullYear()-2008+15;
+const curYear=()=>curDate().getFullYear();
+const age=()=>curYear()-2008+15;
 const clock=()=>String(Math.floor(S.T/60)%24).padStart(2,'0')+':'+String(S.T%60).padStart(2,'0');
+
 function holName(y,m,d){
   if(m===0&&d===1)return 'Tahun Baru Masehi';
   if(m===4&&d===1&&y>=2014)return 'Hari Buruh';
@@ -166,21 +255,33 @@ function inSchool(){
   const end=schoolEnd(),h=Math.floor(S.T/60)%24;
   return end>0&&h>=7&&h<end;
 }
-function empOnDuty(){
-  if(S.emp<=0)return false;
-  if(S.emp24)return true;
-  const h=Math.floor(S.T/60)%24,a=S.empStart,b=S.empEnd;
-  if(a===b)return true;
-  return a<b?(h>=a&&h<b):(h>=a||h<b);
-}
 
 let _m=-1,_f=1;
+const fxAt=yr=>{
+  let f=1,y=Math.max(0,yr-2008);
+  for(let i=0;i<y;i++)f*=1+(INF[i]!==undefined?INF[i]:3)/100;
+  return f;
+};
 const fx=()=>{
   const dt=curDate(),m=(dt.getFullYear()-2008)*12+dt.getMonth();
   if(m!==_m){_m=m;let f=1,y=Math.floor(m/12);for(let i=0;i<y;i++)f*=1+(INF[i]!==undefined?INF[i]:3)/100;f*=1+(INF[y]!==undefined?INF[y]:3)/100*(m%12)/12;_f=f}
   return _f;
 };
 const P=n=>Math.round(n*fx()/50)*50;
+const Py=(n,yr)=>Math.round(n*(fx()/fxAt(yr||2008))/50)*50;
+
+const shiftHours=e=>{const d=(e.end-e.start+24)%24;return d===0?24:d};
+function empWorkingNow(e){
+  if(e.sick>0||e.off>0)return false;
+  const h=Math.floor(S.T/60)%24;
+  if(e.start===e.end)return true;
+  return e.start<e.end?(h>=e.start&&h<e.end):(h>=e.start||h<e.end);
+}
+const activeEmps=()=>S.emps.filter(empWorkingNow);
+const empOnDuty=()=>activeEmps().length>0;
+const sickEmps=()=>S.emps.filter(e=>e.sick>0);
+
+function depRate(mo){return Math.min(.015,.005+mo*.001)}
 
 function taxInfo(omzetBulan){
   const dt=curDate(),y=dt.getFullYear(),m=dt.getMonth();
@@ -198,29 +299,36 @@ function fresh(){
   S={
     m:500000,b:19500000,T:420,stam:100,rw:3,rr:3,open:false,faint:false,st:[],
     stock:Object.fromEntries(I.map(i=>[i.id,0])),sup:{gas:0,gal:0},eq:{},
-    games:{},parts:{stik_ps2:2,stik_ps3:0,pc_kb:1},
+    games:{},parts:{pc_kb:1,stik_ps2:2,stik_ps3:0,stik_ps4:0,stik_ps5:0,stik_xb:0,stik_xb360:0,stik_xbone:0},
     q:[],kwh:0,out:0,gen:false,sol:0,solBat:0,solCap:0,wx:'cerah',
-    cap:10,rent:0,emp:0,empStart:8,empEnd:20,emp24:false,
-    ln:null,propLn:null,v:{},as:{},pt:null,mar:0,kids:0,preg:0,kb:0,busy:0,jp:0,
+    cap:10,rent:0,emps:[],empSeq:1,
+    dep:[],ln:null,propLn:null,v:{},as:{},pt:null,mar:0,kids:0,preg:0,kb:0,busy:0,jp:0,
     hist:[],rec:[],cm:0,hm:0,hv:'p',mute:false,dt:-9999,
     bC:0,bI:0,spd:1,pause:false,tab:'un',pr,cf:-999,
-    log:['Tahun 2008. Beli unit di tab Unit, game original di tab Game, dan token di tab Listrik.'],
+    log:['Tahun 2008. Beli PC (bisa browsing & game) atau konsol PS/Xbox di tab Unit, game ori di tab Game, dan token di tab Listrik.'],
     inc:0,exp:0,yrInc:0
   };
 }
 function migrate(o){
   if(!o.games)o.games={};
-  if(!o.parts)o.parts={stik_ps2:2,stik_ps3:0,pc_kb:1};
+  if(!o.parts)o.parts={pc_kb:1,stik_ps2:2};
+  Object.keys(PT).forEach(k=>{if(o.parts[k]===undefined)o.parts[k]=0});
   if(o.solBat===undefined)o.solBat=0;
   if(o.solCap===undefined)o.solCap=o.sol>0?o.sol*5:0;
   if(!o.wx)o.wx='cerah';
-  if(o.empStart===undefined)o.empStart=8;
-  if(o.empEnd===undefined)o.empEnd=20;
-  if(o.emp24===undefined)o.emp24=false;
+  if(!Array.isArray(o.emps)){
+    o.emps=[];
+    const cnt=o.emp||0;
+    for(let i=0;i<cnt;i++)o.emps.push({id:i+1,n:EMPNM[i%EMPNM.length],start:8,end:20,sal:900000,burn:0,sick:0,off:0,offMo:-1});
+  }
+  if(!o.empSeq)o.empSeq=o.emps.length+1;
+  if(!Array.isArray(o.dep))o.dep=[];
   if(o.propLn===undefined)o.propLn=null;
   if(o.yrInc===undefined)o.yrInc=0;
   if(o.bI>1)o.bI=o.bI>o.T?1:0;
   if(o.bC>1)o.bC=o.bC>o.T?1:0;
+  if(![1,4,8,16,64].includes(o.spd))o.spd=1;
+  Object.keys(K).forEach(k=>{if(o.pr[k]===undefined)o.pr[k]=K[k].r});
   o.st.forEach(s=>{if(s.lv===undefined)s.lv=0;if(s.brk===undefined)s.brk=false});
   return o;
 }
@@ -228,7 +336,7 @@ try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||!S.st)fresh();else migrate(S);
 
 const save=()=>{S.sv=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.cloudSave)window.cloudSave()};
-const log=m=>{S.log.unshift(clock()+' '+m);S.log.length=Math.min(S.log.length,16)};
+const log=m=>{S.log.unshift(clock()+' '+m);S.log.length=Math.min(S.log.length,18)};
 const have=()=>S.m+S.b,used=()=>S.st.length;
 const spend=n=>{const t=Math.min(Math.max(S.m,0),n);S.m-=t;S.b-=n-t;S.exp+=n};
 const buy=n=>{if(have()<n){log('Uang kurang ('+fmt(n)+').');snd('warn');return 0}spend(n);snd('buy');return 1};
@@ -252,10 +360,14 @@ const bill=c=>Math.round(c.r*(c.lm||1)*c.used/60/100)*100+c.o.reduce((a,i)=>a+i.
 const sw=s=>K[s.k].w+(s.tv>=0?TV[s.tv].w:0);
 const rep=(c,d)=>{const f=c==='pc'?'rw':'rr';S[f]=Math.min(5,Math.max(1,S[f]+d))};
 const red=()=>Math.min(.3,AS.reduce((a,x)=>a+(S.as[x.id]?x.r:0),0));
-const drain=()=>5*(1+(S.mar?.2:0)+(S.preg?.3:0)+S.kids*.1)/(1+(empOnDuty()?1.2*S.emp:0))*(1-red());
-const dm=k=>Math.min(1.6,Math.max(.15,1.7-.7*S.pr[k]/(K[k].r*fx())));
-const pfGames=pf=>GM.filter(g=>g.pf===pf&&S.games[g.id]).length;
-const unitVal=s=>{const c=K[s.k];let v=c.p+(s.tv>=0?TV[s.tv].p:0);for(let i=1;i<=(s.lv||0);i++)v+=UPLV[i].p;return Math.round(v*.6)};
+const drain=()=>5*(1+(S.mar?.2:0)+(S.preg?.3:0)+S.kids*.1)/(1+(empOnDuty()?1.2*activeEmps().length:0))*(1-red());
+const dm=k=>Math.min(1.6,Math.max(.15,1.7-.7*S.pr[k]/Py(K[k].r,K[k].yr)));
+const ownedGames=pf=>GM.filter(g=>g.pf===pf&&S.games[g.id]);
+const unitVal=s=>{
+  const c=K[s.k];let v=Py(c.p,c.yr)+(s.tv>=0?Py(TV[s.tv].p,TV[s.tv].yr):0);
+  for(let i=1;i<=(s.lv||0);i++)v+=P(UPLV[i].p);
+  return Math.round(v*.6);
+};
 
 function order(c){
   const a=I.filter(i=>(!i.eq||S.eq[i.eq])&&S.stock[i.id]>0&&S.sup.gas>=(i.g||0)&&S.sup.gal>=(i.l||0));
@@ -273,14 +385,12 @@ function updateWeather(){
 function power(h){
   if(h%4===0)updateWeather();
   let w=S.open?100:0;S.st.forEach(s=>{if(s.c)w+=sw(s)});
-  let load=w/1000;
-  let gen=0;
+  let load=w/1000,gen=0;
   if(S.sol>0&&h>=6&&h<17){
     const wm=S.wx==='cerah'?1:S.wx==='mendung'?.4:.15;
     gen=S.sol*.75*wm;
   }
-  const direct=Math.min(load,gen);
-  load-=direct;
+  const direct=Math.min(load,gen);load-=direct;
   const surplus=gen-direct;
   if(surplus>0&&S.solCap>0)S.solBat=Math.min(S.solCap,S.solBat+surplus);
   if(load>0&&S.solBat>0){const fb=Math.min(load,S.solBat);S.solBat-=fb;load-=fb}
@@ -290,12 +400,39 @@ function power(h){
   else{if(!S.out)log('Token listrik & baterai surya habis! Warnet padam.');snd('warn');S.out=1}
 }
 
+function dayEnd(){
+  const stdSal=P(900000);
+  S.emps.forEach(e=>{
+    if(e.off>0){e.off--;return}
+    if(e.sick>0){
+      e.sick--;
+      if(e.sick===0)log(e.n+' sudah sembuh dan siap kerja lagi.');
+      return;
+    }
+    const hrs=shiftHours(e);
+    const over=Math.max(0,hrs-12);
+    const salFactor=e.sal<stdSal*.8?1.5:e.sal>=stdSal*1.2?.75:1;
+    // Naik jenuh harian (~2.6%/hari di 12 jam; makin lama shift makin cepat jenuh)
+    e.burn=Math.min(100,e.burn+(2.6+over*.65)*salFactor);
+    // Risiko sakit realistis: sangat jarang di 12 jam (0.35%/hari), naik jika >12 jam atau jenuh tinggi
+    const sickChance=.0035+over*.0032+(e.burn>75?.012:e.burn>50?.004:0);
+    if(Math.random()<sickChance){
+      e.sick=1+Math.floor(Math.random()*2); // 1-2 hari
+      log(e.n+' sedang sakit ('+e.sick+' hari). Kamu harus menggantikan jaga shift-nya!');
+      snd('warn');
+    }
+  });
+}
+
 function monthEnd(){
   let inc=0,out=0;
   const pay=n=>{if(n>0){spend(n);out+=n}};
   const dt=curDate(),prev=new Date(dt.getFullYear(),dt.getMonth()-1,1);
   const a=age(),mo=(dt.getFullYear()-2008)*12+dt.getMonth();
-  pay(P(600000));pay(S.emp*P(900000));pay(P(S.rent));
+  pay(P(600000));
+  const totalGaji=S.emps.reduce((z,e)=>z+e.sal,0);
+  pay(totalGaji);
+  pay(P(S.rent));
   if(a>=18)pay(P(1500000+S.kids*1000000+(S.mar?500000:0)+(S.kb?50000:0)));
   else{const j=P(500000);S.b+=j;inc+=j}
   if(S.ln){
@@ -309,6 +446,16 @@ function monthEnd(){
     if(--S.propLn.left<=0){S.propLn=null;log('Cicilan ruko LUNAS!')}
   }
   if(S.b>0){const i=Math.round(S.b*.0033);S.b+=i;inc+=i}
+  // Deposito: bunga naik tiap bulan mengendap
+  if(S.dep.length){
+    let depInt=0;
+    S.dep.forEach(d=>{
+      const r=depRate(d.mo);
+      const gain=Math.round(d.amt*r);
+      depInt+=gain;d.mo++;
+    });
+    if(depInt>0){S.b+=depInt;inc+=depInt;log('Bunga deposito masuk '+fmt(depInt)+' (bunga bulan depan naik!).')}
+  }
   V.forEach(v=>{if(S.v[v.id]){const g=P((v.a+Math.random()*(v.b-v.a))*(.6+(S.rw+S.rr)/10)-v.u);S.b+=g;inc+=g}});
   const tx=taxInfo(S.inc);
   if(tx.amt>0){pay(tx.amt);log('Bayar pajak ('+tx.lbl+'): '+fmt(tx.amt)+'.')}
@@ -338,43 +485,65 @@ function monthEnd(){
 function step(){
   S.T++;
   const h=Math.floor(S.T/60)%24,mi=S.T%60;
-  if(S.T%1440===0&&curDate().getDate()===1&&day()>0)monthEnd();
-  if(inSchool()&&S.open&&!empOnDuty()){
-    S.open=false;log('Jam sekolah mulai! Warnet tutup sampai pulang sekolah.');
+  if(S.T%1440===0&&day()>0){
+    dayEnd();
+    if(curDate().getDate()===1)monthEnd();
   }
   const onD=empOnDuty();
+  if(inSchool()&&S.open&&!onD){
+    S.open=false;log('Jam sekolah mulai & tidak ada karyawan jaga! Warnet tutup sementara.');
+  }
   if(S.open&&!onD)S.stam-=drain()/60;
   else if(S.open&&onD)S.stam=Math.min(100,S.stam+(inSchool()?0:3/60));
   else S.stam=Math.min(100,S.stam+10/60);
   if(S.stam<=0){
     S.stam=0;S.faint=true;
     if(!onD){S.open=false;snd('warn');log('Kamu pingsan kecapekan! Warnet tutup paksa.')}
-    else log('Kamu kecapekan, untung ada pegawai yang jaga warnet.');
+    else log('Kamu kecapekan, untung ada karyawan yang jaga.');
   }
   if(S.faint&&S.stam>=40){S.faint=false;log('Badan sudah segar.')}
   if(mi===0)power(h);
   if(S.busy>0&&--S.busy===0){S.m+=S.jp;S.inc+=S.jp;log('Pulang kerja, dapat '+fmt(S.jp)+'.')}
   if(S.out)return;
+
   if(S.open){
     const holM=isHol()?1.35:1;
     const wt=(h>=15&&h<23?1:h>=8&&h<15?.55:h>=23||h<3?.45:.15)*holM;
     S.st.forEach(s=>{
       if(s.brk)return;
-      const kc=K[s.k],gc=pfGames(kc.pf);
-      if(gc<=0)return;
-      const gBonus=1+Math.min(.5,(gc-1)*.12);
+      const kc=K[s.k],gms=ownedGames(kc.pf);
+      // Konsol wajib punya game ori; PC bisa browsing walau belum ada game!
+      if(kc.c!=='pc'&&gms.length===0)return;
+      const gBonus=kc.c==='pc'?(gms.length?1+Math.min(.55,gms.length*.08):.7):(1+Math.min(.5,(gms.length-1)*.1));
       if(Math.random()<.3*wt*(.5+S[kc.c==='pc'?'rw':'rr']/5)*dm(s.k)*gBonus*(S.bC?2:1)/60){
+        let act='Browsing',req=1;
+        if(kc.c==='pc'){
+          // 40% browsing jika ada game, 100% browsing jika belum ada game
+          if(gms.length>0&&Math.random()>=.38){
+            const g=gms[Math.random()*gms.length|0];act=g.n.replace(' (Ori)','');req=g.req||1;
+          }else{
+            act=['Browsing','Ngetik Tugas','Facebook/Sosmed','YouTube/Streaming'][Math.random()*4|0];
+          }
+        }else{
+          const g=gms[Math.random()*gms.length|0];act=g.n.replace(' (Ori)','');
+        }
         snd('bell');
-        S.q.push({n:NM[Math.random()*NM.length|0],pf:kc.pf,cat:kc.c,want:60+Math.random()*180|0,used:0,wait:0,o:[],ph:'q'});
+        S.q.push({n:NM[Math.random()*NM.length|0],pf:kc.pf,cat:kc.c,act,req,want:60+Math.random()*180|0,used:0,wait:0,o:[],ph:'q'});
       }
     });
   }
   for(const c of S.q.slice()){
     c.wait++;
-    const s=S.st.find(x=>!x.c&&!x.brk&&K[x.k].pf===c.pf&&pfGames(K[x.k].pf)>0);
+    const s=S.st.find(x=>!x.c&&!x.brk&&K[x.k].pf===c.pf&&(K[x.k].c==='pc'||ownedGames(K[x.k].pf).length>0));
     if(s){
-      s.c=c;c.k=s.k;c.r=S.pr[s.k];c.lm=UPLV[s.lv||0].m;c.q=(s.tv>=0?TV[s.tv].q:0)+(s.lv||0)*.015;c.ph='p';
+      const kc=K[s.k];
+      const heavy=(kc.c==='pc'&&c.req>(kc.tier||1));
+      s.c=c;c.k=s.k;c.r=S.pr[s.k];c.lm=UPLV[s.lv||0].m;c.heavy=heavy;
+      if(heavy)c.want=Math.max(30,Math.round(c.want*.65));
+      c.q=(s.tv>=0?TV[s.tv].q:0)+(s.lv||0)*.015-(heavy?.09:0);
+      c.ph='p';
       S.q.splice(S.q.indexOf(c),1);
+      if(heavy)log(c.n+' mengeluh '+c.act+' berat/lag di '+kc.n+'! Perlu upgrade PC.');
     }else if(c.wait>75){
       S.q.splice(S.q.indexOf(c),1);rep(c.cat,-.05);log(c.n+' bosan antre, pulang.');
     }
@@ -388,17 +557,17 @@ function step(){
         const pId=K[s.k].pt;
         if((S.parts[pId]||0)>0){
           S.parts[pId]--;
-          log(PT[pId].n+' di '+K[s.k].n+' rusak, otomatis diganti stok cadangan (sisa '+S.parts[pId]+').');
+          log(PT[pId].n+' di '+K[s.k].n+' rusak, diganti stok cadangan (sisa '+S.parts[pId]+').');
         }else{
           s.brk=true;c.ph='d';collect(i);
-          log(PT[pId].n+' di '+K[s.k].n+' RUSAK! Stok cadangan habis, beli di tab Game.');
+          log(PT[pId].n+' di '+K[s.k].n+' RUSAK! Stok habis, beli di tab Game.');
           snd('warn');return;
         }
       }
       if(c.used>=c.want){c.ph='d';collect(i)}
     }else{
       c.dw=(c.dw||0)+1;
-      if(onD&&Math.random()<Math.min(1,.25*S.emp))collect(i);
+      if(onD&&Math.random()<Math.min(1,.25*activeEmps().length))collect(i);
       else if(c.dw>120){log(c.n+' kabur tanpa bayar '+fmt(bill(c))+'!');rep(c.cat,-.1);s.c=null}
     }
   });
@@ -408,14 +577,14 @@ function collect(i){
   const s=S.st[i],c=s&&s.c;if(!c||c.ph!=='d')return;
   const b=bill(c)*mult();S.m+=b;S.inc+=b;rep(c.cat,.03+(c.q||0));
   S.cm=(S.cm||0)+1;S.hm=(S.hm||0)+c.used;
-  (S.hist=S.hist||[]).unshift({n:c.n,u:K[c.k].n,m:c.used,b:b,d:dstr(),o:c.o.length});
+  (S.hist=S.hist||[]).unshift({n:c.n,u:K[c.k].n+' ('+(c.act||'Main')+')',m:c.used,b:b,d:dstr(),o:c.o.length});
   S.hist.length=Math.min(S.hist.length,60);snd('coin');s.c=null;
 }
 
 const A={
   tog(){
     if(S.faint&&!empOnDuty())return log('Masih lemas, istirahat dulu.');
-    if(inSchool()&&!empOnDuty())return log('Sedang jam sekolah (selesai jam '+schoolEnd()+':00). Rekrut pegawai jika ingin buka.');
+    if(inSchool()&&!empOnDuty())return log('Sedang jam sekolah (selesai jam '+schoolEnd()+':00). Rekrut/atur shift karyawan jika ingin buka.');
     if(!S.st.length)return log('Belum ada unit untuk disewakan.');
     S.open=!S.open;log(S.open?'Warnet BUKA.':'Warnet TUTUP.');
   },
@@ -430,11 +599,14 @@ const A={
   coll(i){if(S.busy>0&&!empOnDuty())return log('Lagi kerja di luar.');collect(+i)},
   bu(v){
     const[k,j]=v.split(':'),c=K[k],t=j!=null?TV[j]:null;
+    if(c.yr>curYear())return log(c.n+' belum rilis (rilis '+c.yr+').');
+    if(t&&t.yr>curYear())return log('TV ini belum rilis.');
     if(used()>=S.cap)return log('Ruangan penuh.');
-    if(!buy(c.p+(t?t.p:0)))return;
+    const cost=Py(c.p,c.yr)+(t?Py(t.p,t.yr):0);
+    if(!buy(cost))return;
     S.st.push({k,tv:t?+j:-1,lv:0,brk:false,c:null});
     log('Beli '+c.n+(t?' + TV '+t.n:'')+'.');
-    if(!pfGames(c.pf))log('Jangan lupa beli game original untuk '+c.pf.toUpperCase()+' di tab Game!');
+    if(c.c!=='pc'&&!ownedGames(c.pf).length)log('Beli game ori untuk '+c.pf.toUpperCase()+' di tab Game agar bisa disewakan!');
   },
   ed(i){editIdx=editIdx===+i?-1:+i},
   sell(i){
@@ -445,12 +617,15 @@ const A={
   upk(i){
     const s=S.st[+i];if(!s||s.c)return;
     const c=K[s.k];if(!c.next)return;
-    if(!buy(c.up))return;
-    s.k=c.next;log('Upgrade unit jadi '+K[s.k].n+'!');
+    const nk=K[c.next];
+    if(nk.yr>curYear())return log(nk.n+' baru rilis tahun '+nk.yr+'.');
+    if(!buy(Py(c.up,nk.yr)))return;
+    s.k=c.next;log('Upgrade unit jadi '+nk.n+'!');
   },
   uptv(v){
     const[idx,j]=v.split(':'),s=S.st[+idx];if(!s||s.c||s.tv<0||+j<=s.tv)return;
-    const cost=TV[+j].p-Math.round(TV[s.tv].p*.5);
+    if(TV[+j].yr>curYear())return log('TV ini belum rilis.');
+    const cost=Math.max(100000,Py(TV[+j].p,TV[+j].yr)-Math.round(Py(TV[s.tv].p,TV[s.tv].yr)*.5));
     if(!buy(cost))return;
     s.tv=+j;log('Upgrade TV unit #'+(+idx+1)+' jadi '+TV[s.tv].n+'.');
   },
@@ -467,15 +642,19 @@ const A={
     S.parts[pId]--;s.brk=false;log(K[s.k].n+' sudah diperbaiki.');
   },
   bgm(id){
-    const g=GM.find(x=>x.id===id);if(!g||S.games[id])return;
-    if(buy(P(g.p))){S.games[id]=1;log('Beli game ori: '+g.n+'.')}
+    const g=GM.find(x=>x.id===id);if(!g||S.games[id]||g.yr>curYear())return;
+    if(buy(Py(g.p,g.yr))){S.games[id]=1;log('Beli game ori: '+g.n+'.')}
   },
   bpt(id){
-    const p=PT[id];if(!p)return;
-    if(buy(P(p.p))){S.parts[id]=(S.parts[id]||0)+1;log('Beli cadangan '+p.n+'.')}
+    const p=PT[id];if(!p||p.yr>curYear())return;
+    if(buy(Py(p.p,p.yr))){S.parts[id]=(S.parts[id]||0)+1;log('Beli cadangan '+p.n+'.')}
   },
   eq(i){if(S.eq[i])return;if(buy(EQ[i][1]))S.eq[i]=1},
-  bs(i){const it=I.find(x=>x.id===i);if(buy(P(it.c)*10))S.stock[i]+=10},
+  bs(v){
+    const[id,q]=v.split(':'),qty=Math.min(1000,Math.max(100,+q||100));
+    const it=I.find(x=>x.id===id);if(!it)return;
+    if(buy(P(it.c)*qty)){S.stock[id]+=qty;log('Beli stok '+it.n+' +'+qty+'.')}
+  },
   sp(i){if(buy(P(i==='gas'?65000:45000)))S.sup[i]+=5},
   tok(n){if(buy(P(n*1000)+2500)){S.kwh+=+n;S.out=0}},
   gen(){if(!S.gen&&buy(4500000))S.gen=true},
@@ -489,13 +668,36 @@ const A={
       if(buy(120e6)){S.cap=80;S.rent=0;S.propLn={pay:10800000,left:60};log('Kredit ruko disetujui! DP Rp 120 jt, cicilan Rp 10,8 jt/bln x 60 bln.')}
     }
   },
-  hi(){S.emp++},
-  fi(){if(S.emp>0)S.emp--},
-  es(d){S.emp24=false;S.empStart=(S.empStart+(+d)+24)%24},
-  ee(d){S.emp24=false;S.empEnd=(S.empEnd+(+d)+24)%24},
-  e24(){S.emp24=!S.emp24},
+  hi(){
+    const id=S.empSeq++,n=EMPNM[(id-1)%EMPNM.length]+' #'+id;
+    const st=S.emps.length%2===0?8:20,en=(st+12)%24;
+    S.emps.push({id,n,start:st,end:en,sal:P(900000),burn:0,sick:0,off:0,offMo:-1});
+    log('Rekrut '+n+' (shift '+String(st).padStart(2,'0')+':00–'+String(en).padStart(2,'0')+':00, gaji '+fmt(P(900000))+').');
+  },
+  fi(id){S.emps=S.emps.filter(e=>e.id!==+id)},
+  es(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.start=(e.start+(+d)+24)%24},
+  ee(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.end=(e.end+(+d)+24)%24},
+  esal(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.sal=Math.max(200000,e.sal+(+d))},
+  eoff(id){
+    const e=S.emps.find(x=>x.id===+id);if(!e)return;
+    const cm=(curYear()-2008)*12+curDate().getMonth();
+    if(e.offMo===cm)return log(e.n+' sudah dapat jatah libur bulan ini.');
+    if(e.sick>0)return log(e.n+' sedang sakit.');
+    e.off=1;e.burn=0;e.offMo=cm;
+    log(e.n+' diberi libur 1 hari! Tingkat jenuhnya pulih 100% (0%).');
+  },
   dep(n){const t=Math.min(+n,S.m);S.m-=t;S.b+=t},
   wd(n){const t=Math.min(+n,Math.max(S.b,0));S.b-=t;S.m+=t},
+  mkdep(n){
+    n=+n;if(S.b<n)return log('Saldo rekening kurang untuk deposito '+fmt(n)+'.');
+    S.b-=n;S.dep.push({id:Date.now()+Math.random(),amt:n,mo:0});
+    log('Buka deposito '+fmt(n)+' (bunga awal 0,5%/bln, naik +0,1% tiap bulan).');snd('buy');
+  },
+  cldep(idx){
+    const d=S.dep[+idx];if(!d)return;
+    S.b+=d.amt;S.dep.splice(+idx,1);snd('coin');
+    log('Cairkan deposito '+fmt(d.amt)+' ke rekening.');
+  },
   ln(n){
     if(age()<21)return log('Pinjaman bank butuh usia minimal 21 tahun.');
     if(S.ln)return log('Masih ada cicilan berjalan.');
@@ -519,11 +721,11 @@ const A={
     const j=J[i];if(S.busy>0)return log('Masih bekerja di luar.');
     if(age()<j.age)return log('Belum cukup umur untuk pekerjaan ini.');
     if(inSchool())return log('Sedang jam sekolah.');
-    if(S.open&&S.emp<Math.max(1,j.e))return log('Tutup warnet dulu, atau punya minimal '+Math.max(1,j.e)+' pegawai.');
+    if(S.open&&activeEmps().length<Math.max(1,j.e))return log('Tutup warnet dulu, atau pastikan ada minimal '+Math.max(1,j.e)+' karyawan sedang jaga.');
     if(S.stam<j.st+10)return log('Terlalu capek untuk kerja.');
     S.stam-=j.st;S.busy=j.h*60;S.jp=P(j.pay);log('Berangkat kerja: '+j.n+' ('+j.h+' jam).');
   },
-  mk(){Object.keys(K).forEach(k=>S.pr[k]=P(K[k].r));I.forEach(i=>S.pr[i.id]=P(i.p))},
+  mk(){Object.keys(K).forEach(k=>S.pr[k]=Py(K[k].r,K[k].yr));I.forEach(i=>S.pr[i.id]=P(i.p))},
   mute(){S.mute=!S.mute;if(!S.mute)snd('coin')},
   hv(i){S.hv=i},
   rst(){if(!rc){rc=1;return}rc=0;editIdx=-1;fresh();save()}
@@ -541,29 +743,40 @@ document.addEventListener('change',e=>{
 const R=(l,s,a,i,b,x)=>`<div class="row"><span>${l}<br><span class="lg">${s}</span></span>${a?`<button data-a="${a}" data-i="${i}" ${x?'disabled':''}>${b}</button>`:''}</div>`;
 const B=(a,i,t,x,cl='')=>`<button data-a="${a}" data-i="${i}" class="${cl}" ${x?'disabled':''}>${t}</button>`;
 const wxIcon=()=>S.wx==='cerah'?'☀️ Cerah':S.wx==='mendung'?'⛅ Mendung':'🌧️ Hujan';
+const padH=n=>String(n).padStart(2,'0')+':00';
 
 function side(){
-  const t=S.tab;let h='';
+  const t=S.tab,yr=curYear();let h='';
   if(t==='un'){
-    h=`<div class="lg">Terpakai ${used()}/${S.cap} slot (panel surya di atap, tidak makan slot). Upgrade & jual second langsung lewat tombol <b>Kelola</b> di kartu unit.</div>`
-    +Object.keys(K).map(k=>{
+    const availTV=TV.map((v,j)=>({...v,j})).filter(v=>v.yr<=yr);
+    h=`<div class="lg">Terpakai ${used()}/${S.cap} slot. Unit baru muncul sesuai tahun rilis aslinya (sekarang ${yr}). Upgrade & jual second langsung di tombol <b>Kelola</b> pada kartu unit.</div>`
+    +'<h2>Komputer Warnet (Browsing & Game)</h2>'
+    +Object.keys(K).filter(k=>K[k].c==='pc'&&K[k].yr<=yr).map(k=>{
       const c=K[k];
-      return c.tv
-        ?`<div class="row"><span>${c.n}<br><span class="lg">pasar ${fmt(P(c.r))}/jam · pilih TV</span></span><span>${TV.map((v,j)=>B('bu',k+':'+j,v.n+' '+fmt(c.p+v.p),0,'sm')).join(' ')}</span></div>`
-        :R(c.n,'pasar '+fmt(P(c.r))+'/jam · '+c.w+' W','bu',k,fmt(c.p));
+      return R(c.n+' (Tier '+c.tier+')','pasar '+fmt(Py(c.r,c.yr))+'/jam · '+c.w+' W · rilis '+c.yr,'bu',k,fmt(Py(c.p,c.yr)));
     }).join('')
+    +'<h2>Konsol PlayStation & Xbox</h2>'
+    +Object.keys(K).filter(k=>K[k].c==='ps'&&K[k].yr<=yr).map(k=>{
+      const c=K[k];
+      return `<div class="row"><span>${c.n}<br><span class="lg">pasar ${fmt(Py(c.r,c.yr))}/jam · rilis ${c.yr} · pilih TV</span></span><span>${availTV.map(v=>B('bu',k+':'+v.j,v.n+' '+fmt(Py(c.p,c.yr)+Py(v.p,v.yr)),0,'sm')).join(' ')}</span></div>`;
+    }).join('')
+    +'<h2>Peralatan Warung</h2>'
     +Object.keys(EQ).map(k=>R(EQ[k][0],'syarat jual makanan/minuman','eq',k,S.eq[k]?'Punya':fmt(EQ[k][1]),S.eq[k])).join('');
   }
   if(t==='gm'){
-    h='<div class="lg">Pelanggan hanya mau main jika kamu punya minimal 1 game original untuk platform tersebut. Makin banyak game, makin ramai.</div>'
-    +'<h2>Stok cadangan (stik & perangkat)</h2>'
-    +Object.keys(PT).map(id=>R(PT[id].n+' ('+(S.parts[id]||0)+')','otomatis mengganti jika ada perangkat rusak','bpt',id,'+1 '+fmt(P(PT[id].p)))).join('')
-    +['pc','ps1','ps2','ps3'].map(pf=>'<h2>Game Original '+pf.toUpperCase()+' ('+pfGames(pf)+' punya)</h2>'
-      +GM.filter(g=>g.pf===pf).map(g=>R(g.n,'harga ori sesuai tahun','bgm',g.id,S.games[g.id]?'Dimiliki':fmt(P(g.p)),S.games[g.id])).join('')
-    ).join('');
+    h='<div class="lg">Semua game & perangkat muncul sesuai tahun rilis aslinya ('+yr+'). PC tetap bisa untuk browsing walau belum beli game; konsol wajib punya minimal 1 game ori.</div>'
+    +'<h2>Stok Cadangan (Stik & Perangkat)</h2>'
+    +Object.keys(PT).filter(id=>PT[id].yr<=yr).map(id=>R(PT[id].n+' ('+(S.parts[id]||0)+')','otomatis mengganti saat rusak','bpt',id,'+1 '+fmt(Py(PT[id].p,PT[id].yr)))).join('')
+    +['pc','ps1','ps2','ps3','ps4','ps5','xb1','xb360','xbone','xbsx'].map(pf=>{
+      const list=GM.filter(g=>g.pf===pf&&g.yr<=yr);
+      if(!list.length)return '';
+      return '<h2>Game Ori '+pf.toUpperCase()+' ('+ownedGames(pf).length+'/'+list.length+')</h2>'
+        +list.map(g=>R(g.n+(g.req?' · PC Tier '+g.req+'+':''),'rilis '+g.yr+' · harga ori','bgm',g.id,S.games[g.id]?'Dimiliki':fmt(Py(g.p,g.yr)),S.games[g.id])).join('');
+    }).join('');
   }
   if(t==='st'){
-    h=I.map(i=>R(i.n+' ('+S.stock[i.id]+')','modal '+fmt(P(i.c))+(i.eq?' · butuh '+EQ[i.eq][0]:''),'bs',i.id,'+10 '+fmt(P(i.c)*10))).join('')
+    h='<div class="lg">Pembelian stok warung grosir: minimal +100, maksimal +1000 per transaksi.</div>'
+    +I.map(i=>`<div class="row"><span>${i.n} (stok ${S.stock[i.id]})<br><span class="lg">modal ${fmt(P(i.c))}/pcs${i.eq?' · butuh '+EQ[i.eq][0]:''}</span></span><span>${[100,250,500,1000].map(q=>B('bs',i.id+':'+q,'+'+q+' ('+fmt(P(i.c)*q)+')',0,'sm')).join(' ')}</span></div>`).join('')
     +R('Gas 3 kg ('+S.sup.gas.toFixed(1)+')','dipakai Indomie, kopi, gorengan','sp','gas','+5 '+fmt(P(65000)))
     +R('Air galon ('+S.sup.gal.toFixed(1)+')','dipakai es teh dan kopi','sp','gal','+5 '+fmt(P(45000)));
   }
@@ -589,21 +802,33 @@ function side(){
     +'<h2>Store aset</h2>'+AS.map(x=>R(x.n,'hemat stamina '+Math.round(x.r*100)+'%','ast',x.id,S.as[x.id]?'Punya':fmt(P(x.p)),S.as[x.id])).join('');
   }
   if(t==='bk'){
-    h=`<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo m-Banking (bunga 4%/thn)</span></div>`
+    h=`<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo m-Banking (bunga tabungan 4%/thn)</span></div>`
     +R('Setor tunai','','dep',1000000,'Setor 1 jt')
     +R('Tarik tunai','','wd',1000000,'Tarik 1 jt')
+    +'<h2>Deposito (Bunga Naik Tiap Bulan)</h2>'
+    +'<div class="lg">Bunga mulai 0,5%/bln dan naik +0,1% tiap bulan mengendap (maks 1,5%/bln). Bunga cair otomatis ke rekening tiap akhir bulan.</div>'
+    +`<div class="row"><span>Buka deposito baru</span><span>${[5e6,10e6,25e6,50e6,100e6].map(n=>B('mkdep',n,fmt(n),S.b<n,'sm')).join(' ')}</span></div>`
+    +(S.dep.length?S.dep.map((d,idx)=>R(fmt(d.amt),'umur '+d.mo+' bln · bunga bulan ini '+(depRate(d.mo)*100).toFixed(1)+'% ('+fmt(d.amt*depRate(d.mo))+')','cldep',idx,'Cairkan')).join(''):'<div class="lg">Belum ada deposito aktif.</div>')
+    +'<h2>Pinjaman & Cicilan</h2>'
     +(S.ln?R('Cicilan bank berjalan',fmt(S.ln.pay)+'/bln · sisa '+S.ln.left+' bln'):'')
     +(S.propLn?R('Cicilan ruko berjalan',fmt(S.propLn.pay)+'/bln · sisa '+S.propLn.left+' bln'):'')
     +[10e6,25e6,50e6,100e6].map(n=>R('Pinjaman '+fmt(n),'bunga 18%/thn, 12 bulan, usia min. 21','ln',n,'Ajukan',!!S.ln||age()<21)).join('');
   }
   if(t==='pg'){
-    const pad=n=>String(n).padStart(2,'0')+':00';
-    h=R('Operator ('+S.emp+')',fmt(P(900000))+'/bln (naik inflasi). Saat pegawai shift, warnet boleh buka 24 jam & tetap jalan saat kamu sekolah/kerja di luar.',0)
-    +`<div class="row">${B('hi','','Rekrut')}${B('fi','','Pecat',!S.emp)}</div>`
-    +'<h2>Atur Jam Kerja Karyawan</h2>'
-    +`<div class="row"><span>Jam masuk: <b>${S.emp24?'24 Jam':pad(S.empStart)}</b></span><span>${B('es',-1,'-1j',!S.emp,'sm')} ${B('es',1,'+1j',!S.emp,'sm')}</span></div>`
-    +`<div class="row"><span>Jam pulang: <b>${S.emp24?'24 Jam':pad(S.empEnd)}</b></span><span>${B('ee',-1,'-1j',!S.emp,'sm')} ${B('ee',1,'+1j',!S.emp,'sm')}</span></div>`
-    +`<div class="row"><span>Status shift sekarang: <b>${empOnDuty()?'Sedang jaga':'Tidak jaga'}</b></span>${B('e24','',S.emp24?'Mode 24 Jam: ON':'Set 24 Jam',!S.emp,S.emp24?'on':'')}</div>`;
+    const cm=(curYear()-2008)*12+curDate().getMonth(),stdSal=P(900000);
+    h=`<div class="lg">Normal jam kerja karyawan adalah <b>12 jam/hari</b>. Lebih dari 12 jam membuat jenuh lebih cepat & mudah sakit. Beri libur 1x/bulan untuk memulihkan jenuh 100%. Gaji standar saat ini: ${fmt(stdSal)}/bln.</div>`
+    +`<div class="row"><span>Total karyawan: <b>${S.emps.length}</b> (jaga sekarang: ${activeEmps().length})</span>${B('hi','','+ Rekrut Karyawan')}</div>`
+    +S.emps.map(e=>{
+      const hrs=shiftHours(e),st=e.sick>0?`<b style="color:var(--bad)">SAKIT (${e.sick} hari) - Kamu ganti!</b>`:e.off>0?'<b style="color:var(--ok)">LIBUR</b>':empWorkingNow(e)?'<b style="color:var(--ok)">Sedang jaga</b>':'Off shift';
+      const usedOff=e.offMo===cm;
+      return `<div class="box">
+        <div class="r"><b>${e.n}</b><span class="lg">${st}</span>${B('fi',e.id,'Pecat',0,'sm bad')}</div>
+        <div class="lg">Jenuh: <b>${Math.round(e.burn)}%</b> · Shift: <b>${padH(e.start)}–${padH(e.end)} (${hrs} jam${hrs>12?' ⚠️ lembur':''})</b></div>
+        <div class="bar"><i style="width:${e.burn}%;background:${e.burn>70?'var(--bad)':e.burn>40?'var(--wr)':'var(--ac)'}"></i></div>
+        <div class="row"><span class="lg">Masuk ${padH(e.start)}</span><span>${B('es',e.id+':-1','-1j',0,'sm')} ${B('es',e.id+':1','+1j',0,'sm')}</span><span class="lg">Pulang ${padH(e.end)}</span><span>${B('ee',e.id+':-1','-1j',0,'sm')} ${B('ee',e.id+':1','+1j',0,'sm')}</span></div>
+        <div class="row"><span class="lg">Gaji: <b>${fmt(e.sal)}</b>/bln</span><span>${B('esal',e.id+':-100000','-100rb',0,'sm')} ${B('esal',e.id+':100000','+100rb',0,'sm')} ${B('eoff',e.id,usedOff?'Sudah libur bln ini':'Beri Libur (Jenuh 0%)',usedOff||e.sick>0,'sm')}</span></div>
+      </div>`;
+    }).join('');
   }
   if(t==='kl'){
     const dt=curDate(),y=dt.getFullYear(),m=dt.getMonth(),td=dt.getDate();
@@ -622,8 +847,8 @@ function side(){
     +(list.length?list.map(x=>`<div class="lg">• ${x}</div>`).join(''):'<div class="lg">Tidak ada tanggal merah nasional selain hari Minggu.</div>');
   }
   if(t==='jb'){
-    h='<div class="lg">Kerja di luar memakai stamina dan waktu. Kalau warnet buka, perlu pegawai agar tetap jalan. Bayaran ikut naik karena inflasi.</div>'
-    +J.map((j,i)=>R(j.n,j.h+' jam · '+fmt(P(j.pay))+' · stamina -'+j.st+' · usia '+j.age+'+'+(j.e?' · '+j.e+' pegawai':''),'job',i,'Ambil',S.busy>0||age()<j.age||inSchool())).join('');
+    h='<div class="lg">Kerja di luar memakai stamina dan waktu. Kalau warnet buka, perlu karyawan yang sedang shift agar tetap jalan.</div>'
+    +J.map((j,i)=>R(j.n,j.h+' jam · '+fmt(P(j.pay))+' · stamina -'+j.st+' · usia '+j.age+'+'+(j.e?' · '+j.e+' karyawan jaga':''),'job',i,'Ambil',S.busy>0||age()<j.age||inSchool())).join('');
   }
   if(t==='hd'){
     const p=S.pt;
@@ -632,44 +857,44 @@ function side(){
     :R('Belum punya pasangan','mulai usia 18','fd','','Cari pasangan',age()<18));
   }
   if(t==='hg'){
-    h='<div class="lg">Harga terlalu tinggi dari pasar: pelanggan berkurang. Murah: ramai. Harga pasar naik tiap tahun mengikuti inflasi (angka BPS, perkiraan).</div>'
+    h='<div class="lg">Harga pasar naik tiap tahun mengikuti inflasi (angka BPS).</div>'
     +B('mk','','Samakan semua dengan harga pasar')
-    +Object.keys(K).map(k=>`<div class="row"><span>${K[k].n}<br><span class="lg">pasar ${fmt(P(K[k].r))}/jam</span></span><input type="number" data-p="${k}" value="${S.pr[k]}"></div>`).join('')
+    +Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>`<div class="row"><span>${K[k].n}<br><span class="lg">pasar ${fmt(Py(K[k].r,K[k].yr))}/jam</span></span><input type="number" data-p="${k}" value="${S.pr[k]}"></div>`).join('')
     +I.map(i=>`<div class="row"><span>${i.n}<br><span class="lg">pasar ${fmt(P(i.p))}</span></span><input type="number" data-p="${i.id}" value="${S.pr[i.id]}"></div>`).join('');
   }
   if(t==='rh'){
     const v=S.hv||'p',rec=S.rec||[],cur={w:S.inc,o:0,x:S.exp,c:S.cm||0,h:S.hm||0};
     const sum=a=>a.reduce((z,r)=>({w:z.w+r.w,o:z.o+r.o,x:z.x+r.x,c:z.c+r.c,h:z.h+r.h}),{w:0,o:0,x:0,c:0,h:0});
-    const row=(l,r)=>`<div class="row"><span>${l}<br><span class="lg">${r.c} pelanggan · ${Math.round(r.h/60)} jam main · warnet ${fmt(r.w)} · lain ${fmt(r.o)} · keluar ${fmt(r.x)}</span></span><b style="color:${r.w+r.o-r.x<0?'var(--bad)':'var(--ok)'}">${fmt(r.w+r.o-r.x)}</b></div>`;
+    const row=(l,r)=>`<div class="row"><span>${l}<br><span class="lg">${r.c} pelanggan · ${Math.round(r.h/60)} jam · warnet ${fmt(r.w)} · lain ${fmt(r.o)} · keluar ${fmt(r.x)}</span></span><b style="color:${r.w+r.o-r.x<0?'var(--bad)':'var(--ok)'}">${fmt(r.w+r.o-r.x)}</b></div>`;
     h='<div class="tabs">'+[['p','Pemain'],['b','Bulanan'],['t','Tahunan']].map(x=>B('hv',x[0],x[1],0,v===x[0]?'on':'')).join('')+'</div>';
     if(v==='p')h+=(S.hist||[]).map(x=>`<div class="row"><span>${x.n} · ${x.u}<br><span class="lg">${dur(x.m)} · ${x.o} pesanan · ${x.d}</span></span><b>${fmt(x.b)}</b></div>`).join('')||'<div class="lg">Belum ada pelanggan yang selesai main.</div>';
     if(v==='b')h+=row('Bulan berjalan',cur)+rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)).join('');
-    if(v==='t'){const ys={},yc=curDate().getFullYear();rec.forEach(r=>(ys[r.y]=ys[r.y]||[]).push(r));if(!ys[yc])ys[yc]=[];h+=Object.keys(ys).sort().reverse().map(y=>row('Tahun '+y+(+y===yc?' (berjalan)':''),sum(ys[y].concat(+y===yc?[cur]:[])))).join('')}
+    if(v==='t'){const ys={},yc=curYear();rec.forEach(r=>(ys[r.y]=ys[r.y]||[]).push(r));if(!ys[yc])ys[yc]=[];h+=Object.keys(ys).sort().reverse().map(y=>row('Tahun '+y+(+y===yc?' (berjalan)':''),sum(ys[y].concat(+y===yc?[cur]:[])))).join('')}
   }
   if(t==='lg')h=S.log.map(l=>`<div class="lg">${l}</div>`).join('')+`<p><button data-a="rst">${rc?'Yakin? Tap lagi':'Mulai ulang game'}</button></p>`;
   return h;
 }
 
 function render(){
-  const dt=curDate(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
-  const tx=taxInfo(S.inc);
+  const dt=curDate(),yr=curYear(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
+  const tx=taxInfo(S.inc),sk=sickEmps().length;
   const st=S.busy>0?['KERJA '+Math.ceil(S.busy/60)+'j','var(--wr)']:S.out?['PADAM','var(--bad)']:S.faint?['PINGSAN','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:S.open?['BUKA','var(--ok)']:['TUTUP','var(--mt)'];
   put($('#hd'),
-    `<div class="r"><b>${fmt(S.m)}</b><span class="lg">rekening ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${dt.getFullYear()}, ${clock()}</span><span>Usia ${age()}</span><span class="chip" style="color:${st[1]}">${st[0]}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}</div>`
+    `<div class="r"><b>${fmt(S.m)}</b><span class="lg">rekening ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span>Usia ${age()}</span><span class="chip" style="color:${st[1]}">${st[0]}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}${sk?`<span class="chip" style="color:var(--wr)">${sk} Karyawan Sakit</span>`:''}</div>`
     +`<div class="r lg"><span>Rep warnet ★${S.rw.toFixed(1)}</span><span>Rep rental ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)} kWh${S.solCap?' · Bat '+S.solBat.toFixed(1)+'/'+S.solCap:''}</span><span>${wxIcon()}</span><span>Slot ${used()}/${S.cap}</span><span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>Harga x${fx().toFixed(2)}</span></div>`
     +`<div class="bar"><i style="width:${S.stam}%;background:${S.stam<25?'var(--bad)':'var(--ac)'}"></i></div>`
   );
   put($('#ctl'),
     `<button data-a="tog" class="${S.open?'on':''}">${S.open?'Tutup':'Buka'}</button>`
     +`<button data-a="pause" class="${S.pause?'on':''}">${S.pause?'Lanjut':'Jeda'}</button>`
-    +[1,2,4,8,16,32,64].map(x=>`<button data-a="spd" data-i="${x}" class="${S.spd===x?'on':''}">${x}x</button>`).join('')
+    +[1,4,8,16,64].map(x=>`<button data-a="spd" data-i="${x}" class="${S.spd===x?'on':''}">${x}x</button>`).join('')
     +`<button data-a="cof">Ngopi +35</button>`
     +`<button data-a="bI" class="${S.bI?'on':''}">Cuan x2</button>`
     +`<button data-a="bC" class="${S.bC?'on':''}">Ramai x2</button>`
     +`<button data-a="mute">${S.mute?'Suara: mati':'Suara: nyala'}</button>`
   );
   put($('#sts'),S.st.length?S.st.map((s,i)=>{
-    const c=s.c,k=K[s.k],lv=s.lv||0,noGm=pfGames(k.pf)===0;
+    const c=s.c,k=K[s.k],lv=s.lv||0,noGm=(k.c!=='pc'&&ownedGames(k.pf).length===0);
     let b='';
     if(s.brk){
       b=`<div style="color:var(--bad)"><b>RUSAK</b> (${PT[k.pt].n})</div>${B('fix',i,'Perbaiki ('+(S.parts[k.pt]||0)+')',0,'sm')}`;
@@ -677,21 +902,21 @@ function render(){
       b=`<div class="mt">${noGm?'<span style="color:var(--wr)">Beli game '+k.pf.toUpperCase()+'!</span>':'Kosong'}</div>`
         +`<div class="r">${B('ed',i,editIdx===i?'Tutup':'Kelola',0,'sm')}</div>`;
       if(editIdx===i){
-        const nl=lv+1;
+        const nl=lv+1,nk=k.next?K[k.next]:null;
         b+=`<div class="upbox">`
-          +(k.next?B('upk',i,'Ke '+K[k.next].n+' ('+fmt(k.up)+')',0,'sm'):'')
-          +(s.tv>=0?TV.map((tv,j)=>j>s.tv?B('uptv',i+':'+j,'TV '+tv.n+' ('+fmt(tv.p-Math.round(TV[s.tv].p*.5))+')',0,'sm'):'').join(''):'')
+          +(nk&&nk.yr<=yr?B('upk',i,'Ke '+nk.n+' ('+fmt(Py(k.up,nk.yr))+')',0,'sm'):nk?`<span class="lg">${nk.n} rilis ${nk.yr}</span>`:'')
+          +(s.tv>=0?TV.map((tv,j)=>j>s.tv&&tv.yr<=yr?B('uptv',i+':'+j,'TV '+tv.n+' ('+fmt(Math.max(100000,Py(tv.p,tv.yr)-Math.round(Py(TV[s.tv].p,TV[s.tv].yr)*.5)))+')',0,'sm'):'').join(''):'')
           +(nl<UPLV.length?B('uplv',i,'Up Lv'+nl+' ('+fmt(P(UPLV[nl].p))+')',0,'sm'):'<span class="lg">Upgrade Lv Max</span>')
           +B('sell',i,'Jual Second ('+fmt(unitVal(s))+')',0,'sm bad')
           +`</div>`;
       }
     }else if(c.ph==='p'){
-      b=`<div>${c.n}</div><div class="bar"><i style="width:${c.used/c.want*100}%"></i></div><div>${fmt(bill(c)*mult())}</div><div class="lg">${dur(c.used)} · ${c.o.length} pesanan</div>`;
+      b=`<div>${c.n}</div><div class="lg">${c.act||'Main'}${c.heavy?' · <b style="color:var(--bad)">⚠️ Berat/Lag</b>':''}</div><div class="bar"><i style="width:${c.used/c.want*100}%"></i></div><div>${fmt(bill(c)*mult())}</div><div class="lg">${dur(c.used)} · ${c.o.length} pesanan</div>`;
     }else{
       b=`<div>${c.n}</div><button data-a="coll" data-i="${i}" class="sm">Tagih ${fmt(bill(c)*mult())}</button>`;
     }
     return `<div class="card ${s.brk?'brk':c?c.ph:''}"><div><b>${k.n}</b>${lv?' <span class="chip">Lv'+lv+'</span>':''}${s.tv>=0?' <span class="lg">+ TV '+TV[s.tv].n+'</span>':''}</div>${b}</div>`;
-  }).join(''):'<div class="mt">Garasi masih kosong. Beli unit di tab Unit & game ori di tab Game.</div>');
+  }).join(''):'<div class="mt">Garasi masih kosong. Beli PC/PS/Xbox di tab Unit & game ori di tab Game.</div>');
   put($('#tb'),[['un','Unit'],['gm','Game'],['st','Stok'],['li','Listrik'],['us','Usaha'],['bk','Bank'],['pg','Pegawai'],['kl','Kalender'],['jb','Kerja'],['hd','Hidup'],['hg','Harga'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
   put($('#side'),side());
 }

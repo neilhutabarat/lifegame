@@ -1,6 +1,6 @@
 # Warnet Juragan 2008
 
-Game simulasi bisnis warnet dan rental PS di Indonesia, mulai tahun 2008. Satu halaman web tanpa build step.
+Game simulasi bisnis warnet dan rental PS/Xbox di Indonesia, mulai tahun 2008. Satu halaman web tanpa build step.
 
 ## Isi repo
 - `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)
