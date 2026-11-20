@@ -1,6 +1,6 @@
-# Juragan Energi Dunia 2000
+# Juragan Rental PS 2002
 
-Game simulasi perjalanan dari hobi oprek listrik & baterai compact di tahun 2000, mulai menyuplai listrik tetangga pakai genset bensin, mengembangkan alat pemanen surya generasi demi generasi (1.000+ riset bertahap), hingga menjadi satu-satunya pemasok listrik termurah di dunia untuk 300 juta bangunan lintas benua.
+Game simulasi bisnis rental konsol PlayStation & Xbox dan warung camilan mulai tahun 2002. Mainkan sebagai orang tua sejak anak lahir (usia 0 tahun) dengan modal 10 unit PS1, kelola keuangan keluarga, konsumsi harian, dan nafkah suami, lalu wariskan bisnisnya ke anak saat berusia 12 tahun di tahun 2014.
 
 ## Isi repo
 - `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)

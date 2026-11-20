@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Juragan Energi Dunia 2000</title>
+<title>Juragan Rental PS 2002</title>
 <style>
-:root{--bg:#f4f1ea;--sf:#fff;--tx:#1d1d1b;--mt:#6b6a63;--bd:#dcd8cc;--ac:#0f766e;--ok:#15803d;--wr:#b45309;--bad:#b91c1c;--el:#2563eb;color-scheme:light}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;--el:#60a5fa;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;--el:#60a5fa;color-scheme:dark}
+:root{--bg:#f4f1ea;--sf:#fff;--tx:#1d1d1b;--mt:#6b6a63;--bd:#dcd8cc;--ac:#0f766e;--ok:#15803d;--wr:#b45309;--bad:#b91c1c;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141412;--sf:#201f1c;--tx:#efece3;--mt:#9a978b;--bd:#37352f;--ac:#2dd4bf;--ok:#4ade80;--wr:#fbbf24;--bad:#f87171;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:13.5px/1.36 system-ui,-apple-system,Segoe UI,sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .top{background:var(--sf);border-bottom:1px solid var(--bd);padding:6px 12px;flex-shrink:0}
@@ -21,27 +21,29 @@ button{cursor:pointer}button.on{background:var(--ac);color:var(--bg);border-colo
 button:disabled{opacity:.4;cursor:default}
 button.sm{padding:2.5px 6.5px;font-size:11.5px;border-radius:6px}
 button.bad{border-color:var(--bad);color:var(--bad)}
-input{width:72px;padding:3px 6px}
+input{width:76px;padding:3px 6px}
 main{flex:1;min-height:0;padding:8px 12px;display:grid;gap:12px;grid-template-columns:1fr;max-width:1320px;width:100%;margin:auto;overflow:hidden}
 @media(min-width:860px){main{grid-template-columns:1.05fr 1fr}}
 main>section{display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .shd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-shrink:0}
 h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt);margin:0}
 .subh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mt);margin:7px 0 3px;font-weight:700}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:6px;align-content:start}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px;align-content:start}
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column;gap:3px}
-.card.c0{border-left:3px solid var(--ac)}.card.c1{border-left:3px solid var(--el)}.card.c2{border-left:3px solid var(--wr)}.card.c3{border-left:3px solid var(--ok)}
+.card.p{border-color:var(--ac)}.card.d{border-color:var(--wr)}.card.brk{border-color:var(--bad)}
+.upbox{margin-top:3px;padding-top:4px;border-top:1px dashed var(--bd);display:flex;flex-direction:column;gap:3px}
 .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:4.5px 0;border-bottom:1px solid var(--bd)}
 .row:last-child{border:0}
 .box{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:6px 8px;margin-bottom:6px}
 .tabs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;flex-shrink:0}.tabs button{padding:3.5px 8px;font-size:12px}
 .subtabs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;flex-shrink:0}
 .pane{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;margin:5px 0}
+.cal div{padding:3px 2px;border-radius:5px;font-size:11.5px;border:1px solid transparent}
+.cal .ch{font-weight:700;color:var(--mt)}
+.cal .hol{color:var(--bad);font-weight:700}
+.cal .tod{border-color:var(--ac);background:var(--ac);color:var(--bg);font-weight:700}
 .pgnav{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--mt)}
-.lever{display:inline-flex;border:1px solid var(--bd);border-radius:7px;overflow:hidden;background:var(--bg)}
-.lever button{border:0;border-radius:0;padding:3px 8px;font-size:11.5px;background:transparent}
-.lever button.on{background:var(--ac);color:var(--bg)}
-.lever button.on.gen{background:var(--wr);color:#141412}
 @media(max-width:859px){body{height:auto;overflow:auto}main{overflow:visible}main>section{overflow:visible}.pane{overflow:visible}}
 </style></head><body>
 <div id="hd" class="top"></div>
@@ -50,190 +52,293 @@ h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mt
   <div id="auth" class="ctl"><span class="lg" id="authmsg">Simpanan: lokal</span><button id="login" class="sm" hidden>Masuk Google</button><button id="cloudsave" class="sm" hidden>Simpan Cloud</button><button id="logout" class="sm" hidden>Keluar</button></div>
 </div>
 <main>
-  <section><div class="shd"><h2>Billing Pelanggan & Sektor Bangunan</h2><div id="stpg" class="pgnav"></div></div><div id="sts" class="grid"></div></section>
+  <section><div class="shd"><h2>Ruang Rental PS & Xbox</h2><div id="stpg" class="pgnav"></div></div><div id="sts" class="grid"></div></section>
   <section><div id="tb" class="tabs"></div><div id="side" class="pane"></div></section>
 </main>
 <script>
 const $=s=>document.querySelector(s);
-const fmt=n=>{
-  const a=Math.abs(n),sg=n<0?'-':'';
-  if(a>=1e15)return sg+'Rp '+(a/1e15).toFixed(2)+' Kuad';
-  if(a>=1e12)return sg+'Rp '+(a/1e12).toFixed(2)+' T';
-  if(a>=1e9)return sg+'Rp '+(a/1e9).toFixed(2)+' M';
-  return sg+'Rp '+Math.round(a).toLocaleString('id-ID');
-};
-const fmtNum=n=>{
-  if(n>=1e6)return (n/1e6).toFixed(2)+' Jt';
-  if(n>=1e4)return (n/1e3).toFixed(1)+' Rb';
-  return Math.round(n).toLocaleString('id-ID');
-};
-const fmtKwh=k=>{
-  if(k>=1e9)return (k/1e9).toFixed(2)+' TWh';
-  if(k>=1e6)return (k/1e6).toFixed(2)+' GWh';
-  if(k>=1e3)return (k/1e3).toFixed(2)+' MWh';
-  if(k<1)return Math.round(k*1000)+' Wh';
-  return k.toFixed(2)+' kWh';
-};
-const fmtW=w=>{
-  if(w>=1e9)return (w/1e9).toFixed(2)+' GW';
-  if(w>=1e6)return (w/1e6).toFixed(2)+' MW';
-  if(w>=1e3)return (w/1e3).toFixed(2)+' kW';
-  return Math.round(w)+' W';
-};
+const fmt=n=>(n<0?'-':'')+'Rp '+Math.abs(Math.round(n)).toLocaleString('id-ID');
 const put=(e,h)=>{if(e._h!==h){e._h=h;e.innerHTML=h}};
 
-const START_YEAR=2000;
+const START_YEAR=2002; // Mulai awal 2002 (Usia anak 0 thn -> 2014 usia 12 thn diwariskan!)
 
-const GENS=[
-  {id:0,n:'Belum ada generator',kw:0,fuelL:0,p:0},
-  {id:1,n:'Genset Bensin Portable 5 kW (Irit)',kw:5,fuelL:0.6,p:1800000},
-  {id:2,n:'Genset Bensin Twin-Cyl 18 kW',kw:18,fuelL:1.8,p:5500000},
-  {id:3,n:'Generator Diesel Komunal 60 kW',kw:60,fuelL:5.0,p:16000000},
-  {id:4,n:'Gardu Turbin Diesel 200 kW',kw:200,fuelL:14,p:45000000}
+const K={
+  ps1:{n:'PS1',r:1500,p:450000,yr:2002,pf:'ps1',w:20,pt:'stik_ps1',next:'ps2',up:950000},
+  ps2:{n:'PS2',r:2500,p:1400000,yr:2002,pf:'ps2',w:35,pt:'stik_ps2',next:'ps3',up:4800000},
+  ps3:{n:'PS3',r:6000,p:5800000,yr:2007,pf:'ps3',w:200,pt:'stik_ps3',next:'ps4',up:3800000},
+  ps4:{n:'PS4',r:10000,p:6500000,yr:2013,pf:'ps4',w:150,pt:'stik_ps4',next:'ps5',up:5800000},
+  ps5:{n:'PS5',r:16000,p:9500000,yr:2020,pf:'ps5',w:210,pt:'stik_ps5'},
+  xb1:{n:'Xbox Original',r:2500,p:1300000,yr:2002,pf:'xb1',w:70,pt:'stik_xb',next:'xb360',up:3500000},
+  xb360:{n:'Xbox 360',r:5800,p:4400000,yr:2006,pf:'xb360',w:170,pt:'stik_xb360',next:'xbone',up:3800000},
+  xbone:{n:'Xbox One',r:9500,p:6200000,yr:2013,pf:'xbone',w:120,pt:'stik_xbone',next:'xbsx',up:5500000},
+  xbsx:{n:'Xbox Series X',r:15500,p:9000000,yr:2020,pf:'xbsx',w:190,pt:'stik_xbone'}
+};
+const TV=[
+  {n:'Tabung 14"',p:650000,yr:2002,w:60,q:0},
+  {n:'Tabung 21"',p:1350000,yr:2002,w:90,q:.03},
+  {n:'LCD 32"',p:6500000,yr:2007,w:120,q:.06},
+  {n:'LED 43" FHD',p:5800000,yr:2014,w:85,q:.09},
+  {n:'Smart TV 4K 55"',p:8500000,yr:2019,w:110,q:.12}
 ];
-
-const SECTORS=[
-  {id:'rmh',n:'Rumah Tangga',cls:'c0',kwPer:0.45,max:120000000,unlockCap:1},
-  {id:'ruko',n:'Ruko & Minimarket',cls:'c1',kwPer:2.8,max:80000000,unlockCap:15},
-  {id:'pabrik',n:'Pabrik & Kawasan Industri',cls:'c2',kwPer:45,max:65000000,unlockCap:250},
-  {id:'mega',n:'Data Center & Pencakar Langit',cls:'c3',kwPer:420,max:35000000,unlockCap:5000}
+const UPLV=[
+  {n:'Standar',p:0,m:1},
+  {n:'Lv 1 (Stik Ori & Karpet Tebal)',p:400000,m:1.15},
+  {n:'Lv 2 (Kipas Angin & Bantal Duduk)',p:850000,m:1.30},
+  {n:'Lv 3 (VIP Sofa & AC)',p:1700000,m:1.45}
 ];
-
-const GRID_TIER=[
-  {lv:0,n:'Belum ada jaringan distribusi',max:0,p:0},
-  {lv:1,n:'Kabel Tetangga Sebelah (Maks 3 Bangunan)',max:3,p:400000},
-  {lv:2,n:'Jaringan Gang Kampung (Maks 12 Bangunan)',max:12,p:1800000},
-  {lv:3,n:'Tiang Distribusi 1 RT (Maks 45 Bangunan)',max:45,p:6500000},
-  {lv:4,n:'Gardu Trafo 1 RW (Maks 180 Bangunan)',max:180,p:22000000},
-  {lv:5,n:'Jaringan Kecamatan (Maks 1.000 Bangunan)',max:1000,p:75000000},
-  {lv:6,n:'Gardu Induk Kota (Maks 10.000 Bangunan)',max:10000,p:280000000},
-  {lv:7,n:'Transmisi Provinsi (Maks 100.000 Bangunan)',max:100000,p:1.2e9},
-  {lv:8,n:'Grid Nasional (Kalahkan PLN - 2 Juta Bangunan)',max:2000000,p:6.5e9},
-  {lv:9,n:'Kabel Bawah Laut ASEAN (15 Juta Bangunan)',max:15000000,p:35e9},
-  {lv:10,n:'Supergrid Asia-Pasifik (60 Juta Bangunan)',max:60000000,p:180e9},
-  {lv:11,n:'HVDC Lintas Benua Eurasia (150 Juta Bangunan)',max:150000000,p:950e9},
-  {lv:12,n:'Superkonduktor Global (300 Juta Bangunan)',max:300000000,p:4.8e12}
+const GM=[
+  // PS1 (2002+)
+  {id:'we02',pf:'ps1',yr:2002,n:'Winning Eleven 2002 PS1 (Ori)',p:150000},
+  {id:'ctr',pf:'ps1',yr:2002,n:'Crash Team Racing PS1 (Ori)',p:150000},
+  {id:'tk3',pf:'ps1',yr:2002,n:'Tekken 3 PS1 (Ori)',p:180000},
+  {id:'hmbtn',pf:'ps1',yr:2002,n:'Harvest Moon: Back to Nature (Ori)',p:180000},
+  {id:'vig8',pf:'ps1',yr:2002,n:'Vigilante 8: 2nd Offense (Ori)',p:150000},
+  {id:'pepsi',pf:'ps1',yr:2002,n:'Pepsiman PS1 (Ori)',p:140000},
+  // PS2 (2002+)
+  {id:'gta3',pf:'ps2',yr:2002,n:'GTA III PS2 (Ori)',p:350000},
+  {id:'gtavc',pf:'ps2',yr:2002,n:'GTA Vice City PS2 (Ori)',p:380000},
+  {id:'we7',pf:'ps2',yr:2003,n:'Winning Eleven 7 PS2 (Ori)',p:350000},
+  {id:'gtasaps2',pf:'ps2',yr:2004,n:'GTA San Andreas PS2 (Ori)',p:400000},
+  {id:'re4',pf:'ps2',yr:2005,n:'Resident Evil 4 PS2 (Ori)',p:380000},
+  {id:'gow2',pf:'ps2',yr:2007,n:'God of War II PS2 (Ori)',p:400000},
+  {id:'naruto',pf:'ps2',yr:2007,n:'Naruto Ultimate Ninja 3 PS2 (Ori)',p:350000},
+  {id:'downhill',pf:'ps2',yr:2003,n:'Downhill Domination PS2 (Ori)',p:320000},
+  // PS3 (2007+)
+  {id:'pesps3',pf:'ps3',yr:2007,n:'PES 2008 PS3 Blu-ray (Ori)',p:550000},
+  {id:'gta4ps3',pf:'ps3',yr:2008,n:'GTA IV PS3 Blu-ray (Ori)',p:600000},
+  {id:'mgs4',pf:'ps3',yr:2008,n:'Metal Gear Solid 4 PS3 (Ori)',p:600000},
+  {id:'gow3',pf:'ps3',yr:2010,n:'God of War III PS3 (Ori)',p:600000},
+  {id:'tlou',pf:'ps3',yr:2013,n:'The Last of Us PS3 (Ori)',p:650000},
+  {id:'gtavps3',pf:'ps3',yr:2013,n:'GTA V PS3 (Ori)',p:680000},
+  // PS4 (2013+)
+  {id:'fifa14ps4',pf:'ps4',yr:2013,n:'FIFA 14 PS4 (Ori)',p:650000},
+  {id:'pes15ps4',pf:'ps4',yr:2014,n:'PES 2015 PS4 (Ori)',p:650000},
+  {id:'uc4',pf:'ps4',yr:2016,n:'Uncharted 4 PS4 (Ori)',p:700000},
+  {id:'gowps4',pf:'ps4',yr:2018,n:'God of War PS4 (Ori)',p:730000},
+  {id:'spidey4',pf:'ps4',yr:2018,n:"Marvel's Spider-Man PS4 (Ori)",p:730000},
+  // PS5 (2020+)
+  {id:'miles5',pf:'ps5',yr:2020,n:'Spider-Man: Miles Morales PS5 (Ori)',p:730000},
+  {id:'gowr5',pf:'ps5',yr:2022,n:'God of War Ragnarok PS5 (Ori)',p:980000},
+  {id:'fc24ps5',pf:'ps5',yr:2023,n:'EA Sports FC 24 PS5 (Ori)',p:1000000},
+  {id:'gta6ps5',pf:'ps5',yr:2026,n:'Grand Theft Auto VI PS5 (Ori)',p:1150000},
+  // Xbox Original (2002+)
+  {id:'halo1',pf:'xb1',yr:2002,n:'Halo: Combat Evolved Xbox (Ori)',p:300000},
+  {id:'halo2',pf:'xb1',yr:2004,n:'Halo 2 Xbox (Ori)',p:350000},
+  {id:'fable',pf:'xb1',yr:2004,n:'Fable Xbox (Ori)',p:320000},
+  // Xbox 360 (2006+)
+  {id:'gow1x',pf:'xb360',yr:2006,n:'Gears of War Xbox 360 (Ori)',p:520000},
+  {id:'halo3',pf:'xb360',yr:2007,n:'Halo 3 Xbox 360 (Ori)',p:520000},
+  {id:'rdrx',pf:'xb360',yr:2010,n:'Red Dead Redemption Xbox 360 (Ori)',p:580000},
+  // Xbox One (2013+)
+  {id:'fm5',pf:'xbone',yr:2013,n:'Forza Motorsport 5 Xbox One (Ori)',p:650000},
+  {id:'fh4',pf:'xbone',yr:2018,n:'Forza Horizon 4 Xbox One (Ori)',p:750000},
+  // Xbox Series X (2020+)
+  {id:'fh5',pf:'xbsx',yr:2021,n:'Forza Horizon 5 Xbox Series X (Ori)',p:850000},
+  {id:'starf',pf:'xbsx',yr:2023,n:'Starfield Xbox Series X (Ori)',p:950000}
 ];
-
-const ZONES=[
-  {id:'idn',n:'Indonesia (WIB/WITA)',lat:'0° Khatulistiwa',sunStart:6,sunEnd:17,p:0},
-  {id:'mea',n:'Timur Tengah & Sahara',lat:'25° LU (Gurun)',sunStart:10,sunEnd:21,p:150000000},
-  {id:'eur',n:'Eropa & Afrika Barat',lat:'45° LU',sunStart:13,sunEnd:24,p:650000000},
-  {id:'ame',n:'Amerika Utara & Selatan',lat:'35° LU/LS',sunStart:19,sunEnd:6,p:2.8e9},
-  {id:'pac',n:'Pasifik & Australia',lat:'25° LS',sunStart:2,sunEnd:13,p:12e9}
+const PT={
+  stik_ps1:{n:'Stik PS1 Ori',p:65000,yr:2002},
+  stik_ps2:{n:'Stik PS2 DualShock 2 Ori',p:95000,yr:2002},
+  stik_ps3:{n:'Stik PS3 DualShock 3 Ori',p:450000,yr:2007},
+  stik_ps4:{n:'Stik PS4 DualShock 4 Ori',p:650000,yr:2013},
+  stik_ps5:{n:'Stik PS5 DualSense Ori',p:1100000,yr:2020},
+  stik_xb:{n:'Stik Xbox Original Ori',p:180000,yr:2002},
+  stik_xb360:{n:'Stik Xbox 360 Ori',p:420000,yr:2006},
+  stik_xbone:{n:'Stik Xbox One/Series Ori',p:850000,yr:2013}
+};
+const I=[
+  {id:'indomie',n:'Indomie goreng + telur',p:3500,c:1700,w:5,eq:'kom',g:.04},
+  {id:'esteh',n:'Es teh manis',p:1500,c:500,w:5,eq:'kul',l:.04},
+  {id:'kopi',n:'Kopi sachet',p:2000,c:850,w:4,eq:'kom',g:.02,l:.03},
+  {id:'tehbotol',n:'Teh Botol Sosro',p:2500,c:1600,w:3,eq:'kul'},
+  {id:'aqua',n:'Aqua 600ml',p:2000,c:1200,w:3,eq:'kul'},
+  {id:'gorengan',n:'Gorengan',p:800,c:350,w:5,eq:'kom',g:.03},
+  {id:'chitato',n:'Chitato',p:3500,c:2600,w:2}
 ];
-
-const COUNTRIES=[
-  {id:'sg',n:'Singapura',bld:1200000,maxRate:1100,p:250000000},
-  {id:'my',n:'Malaysia & Brunei',bld:6500000,maxRate:950,p:900000000},
-  {id:'th',n:'Thailand & Vietnam',bld:18000000,maxRate:850,p:3.2e9},
-  {id:'jp',n:'Jepang & Korea Selatan',bld:35000000,maxRate:780,p:14e9},
-  {id:'in',n:'India & Asia Selatan',bld:65000000,maxRate:680,p:55e9},
-  {id:'eu',n:'Uni Eropa & Inggris',bld:75000000,maxRate:600,p:220e9},
-  {id:'us',n:'Amerika Serikat & Kanada',bld:99300000,maxRate:520,p:850e9}
+const EQ={kom:['Kompor gas',220000],kul:['Kulkas',1600000]};
+const V=[
+  {id:'pulsa',n:'Counter pulsa & voucher HP',p:25e6,a:1.4e6,b:2.8e6,u:4e5},
+  {id:'fc',n:'Fotokopi dan ATK',p:40e6,a:1.8e6,b:3.6e6,u:7e5},
+  {id:'laundry',n:'Laundry kiloan',p:38e6,a:2.2e6,b:4.2e6,u:9e5},
+  {id:'wm',n:'Warung makan',p:55e6,a:2.8e6,b:5.5e6,u:1.3e6},
+  {id:'toko',n:'Toko kelontong',p:75e6,a:3.6e6,b:7.2e6,u:1.8e6},
+  {id:'bengkel',n:'Bengkel motor (jasa servis)',p:110e6,a:4.5e6,b:9e6,u:2e6}
 ];
-
-const OWNERS=['Pak RT','Bu Siti','Mas Andi','Bu Tini','Pak Haji','Pak Budi','Bu Rina','Kang Dedi','Pak Joko','Bu Dewi','Mas Bayu','Pak Hendra','Bu Yanti','Pak Slamet','Mas Fajar','Bu Ningsih'];
-const EMPNM=['Andi','Riko','Bambang','Dedi','Wawan','Yusuf','Rian','Bagas','Ilham','Reza','Surya','Hadi'];
+const AS=[
+  {id:'hp',n:'Nokia 3310 / 6300',p:1.8e6,r:.03},
+  {id:'mtr',n:'Honda Supra X',p:12.5e6,r:.05},
+  {id:'avz',n:'Toyota Avanza',p:115e6,r:.1},
+  {id:'jazz',n:'Honda Jazz',p:175e6,r:.12}
+];
 const BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-const INF=[3.72,11.5,12.55,10.03,5.06,6.4,17.11,6.6,6.59,11.06,2.78,6.96,3.79,4.3,8.38,8.36,3.35,3.02,3.61,3.13,2.72,1.68,1.87,5.51,2.61,1.57,2.9];
-
-const KEY='juragan_energi_2000_v2';
-let S,rc=0,cardPage=0,subTab='',subPage=0;
+const NM=['Budi','Rizky','Dimas','Putri','Agus','Siti','Fajar','Dewi','Bayu','Nina','Joko','Rani','Eko','Tika'];
+const EMPNM=['Andi','Riko','Bambang','Dedi','Wawan','Yusuf','Rian','Bagas','Ilham','Reza','Surya','Hadi'];
+const J=[
+  {n:'Les privat (mengajar)',age:15,h:2,pay:50000,st:12,e:0},
+  {n:'Servis stik & konsol panggilan',age:16,h:2,pay:85000,st:12,e:0},
+  {n:'Kasir minimarket (shift)',age:18,h:8,pay:65000,st:30,e:0},
+  {n:'Pegawai kantoran paruh waktu',age:19,h:6,pay:100000,st:22,e:1},
+  {n:'Konsultan usaha',age:22,h:4,pay:400000,st:15,e:2}
+];
+const HOL={
+  '2002-1-1':'Tahun Baru Masehi','2002-2-12':'Imlek','2002-2-23':'Idul Adha','2002-3-15':'Tahun Baru Islam','2002-3-29':'Wafat Isa Almasih','2002-4-13':'Nyepi','2002-5-9':'Kenaikan Isa Almasih','2002-5-24':'Maulid Nabi','2002-5-26':'Waisak','2002-8-17':'HUT RI','2002-10-4':'Isra Miraj','2002-12-6':'Idul Fitri','2002-12-7':'Idul Fitri','2002-12-25':'Natal',
+  '2003-2-1':'Imlek','2003-2-12':'Idul Adha','2003-3-4':'Tahun Baru Islam','2003-4-2':'Nyepi','2003-4-18':'Wafat Isa Almasih','2003-5-14':'Maulid Nabi','2003-5-16':'Waisak','2003-5-29':'Kenaikan Isa Almasih','2003-9-24':'Isra Miraj','2003-11-25':'Idul Fitri','2003-11-26':'Idul Fitri',
+  '2004-1-22':'Imlek','2004-2-2':'Idul Adha','2004-2-22':'Tahun Baru Islam','2004-3-22':'Nyepi','2004-4-9':'Wafat Isa Almasih','2004-5-2':'Maulid Nabi','2004-5-20':'Kenaikan Isa Almasih','2004-6-3':'Waisak','2004-9-12':'Isra Miraj','2004-11-14':'Idul Fitri','2004-11-15':'Idul Fitri',
+  '2005-1-21':'Idul Adha','2005-2-9':'Imlek','2005-2-10':'Tahun Baru Islam','2005-3-11':'Nyepi','2005-3-25':'Wafat Isa Almasih','2005-4-21':'Maulid Nabi','2005-5-5':'Kenaikan Isa Almasih','2005-5-24':'Waisak','2005-9-1':'Isra Miraj','2005-11-3':'Idul Fitri','2005-11-4':'Idul Fitri',
+  '2006-1-10':'Idul Adha','2006-1-29':'Imlek','2006-1-31':'Tahun Baru Islam','2006-3-30':'Nyepi','2006-4-10':'Maulid Nabi','2006-4-14':'Wafat Isa Almasih','2006-5-13':'Waisak','2006-5-25':'Kenaikan Isa Almasih','2006-8-21':'Isra Miraj','2006-10-24':'Idul Fitri','2006-10-25':'Idul Fitri','2006-12-31':'Idul Adha',
+  '2007-1-20':'Tahun Baru Islam','2007-2-18':'Imlek','2007-3-19':'Nyepi','2007-3-31':'Maulid Nabi','2007-4-6':'Wafat Isa Almasih','2007-5-17':'Kenaikan Isa Almasih','2007-6-1':'Waisak','2007-8-11':'Isra Miraj','2007-10-13':'Idul Fitri','2007-10-14':'Idul Fitri','2007-12-20':'Idul Adha',
+  '2008-1-10':'Tahun Baru Islam','2008-2-7':'Imlek','2008-3-7':'Nyepi','2008-3-20':'Maulid Nabi','2008-3-21':'Wafat Isa Almasih','2008-5-1':'Kenaikan Isa Almasih','2008-5-20':'Waisak','2008-7-30':'Isra Miraj','2008-10-1':'Idul Fitri','2008-10-2':'Idul Fitri','2008-12-8':'Idul Adha','2008-12-29':'Tahun Baru Islam',
+  '2009-1-26':'Imlek','2009-3-9':'Maulid Nabi','2009-3-26':'Nyepi','2009-4-10':'Wafat Isa Almasih','2009-5-9':'Waisak','2009-5-21':'Kenaikan Isa Almasih','2009-7-20':'Isra Miraj','2009-9-21':'Idul Fitri','2009-9-22':'Idul Fitri','2009-11-27':'Idul Adha','2009-12-18':'Tahun Baru Islam',
+  '2010-2-14':'Imlek','2010-2-26':'Maulid Nabi','2010-3-16':'Nyepi','2010-4-2':'Wafat Isa Almasih','2010-5-13':'Kenaikan Isa Almasih','2010-5-28':'Waisak','2010-7-10':'Isra Miraj','2010-9-10':'Idul Fitri','2010-9-11':'Idul Fitri','2010-11-17':'Idul Adha','2010-12-7':'Tahun Baru Islam',
+  '2011-2-3':'Imlek','2011-2-15':'Maulid Nabi','2011-3-5':'Nyepi','2011-4-22':'Wafat Isa Almasih','2011-5-17':'Waisak','2011-6-2':'Kenaikan Isa Almasih','2011-6-29':'Isra Miraj','2011-8-30':'Idul Fitri','2011-8-31':'Idul Fitri','2011-11-6':'Idul Adha','2011-11-27':'Tahun Baru Islam',
+  '2012-1-23':'Imlek','2012-2-5':'Maulid Nabi','2012-3-23':'Nyepi','2012-4-6':'Wafat Isa Almasih','2012-5-6':'Waisak','2012-5-17':'Kenaikan Isa Almasih','2012-6-17':'Isra Miraj','2012-8-19':'Idul Fitri','2012-8-20':'Idul Fitri','2012-10-26':'Idul Adha','2012-11-15':'Tahun Baru Islam',
+  '2013-1-24':'Maulid Nabi','2013-2-10':'Imlek','2013-3-12':'Nyepi','2013-3-29':'Wafat Isa Almasih','2013-5-9':'Kenaikan Isa Almasih','2013-5-25':'Waisak','2013-6-6':'Isra Miraj','2013-8-8':'Idul Fitri','2013-8-9':'Idul Fitri','2013-10-15':'Idul Adha','2013-11-5':'Tahun Baru Islam',
+  '2014-1-14':'Maulid Nabi','2014-1-31':'Imlek','2014-3-31':'Nyepi','2014-4-18':'Wafat Isa Almasih','2014-5-15':'Waisak','2014-5-27':'Isra Miraj','2014-5-29':'Kenaikan Isa Almasih','2014-7-28':'Idul Fitri','2014-7-29':'Idul Fitri','2014-10-5':'Idul Adha','2014-10-25':'Tahun Baru Islam',
+  '2015-1-3':'Maulid Nabi','2015-2-19':'Imlek','2015-3-21':'Nyepi','2015-4-3':'Wafat Isa Almasih','2015-5-14':'Kenaikan Isa Almasih','2015-5-16':'Isra Miraj','2015-6-2':'Waisak','2015-7-17':'Idul Fitri','2015-7-18':'Idul Fitri','2015-9-24':'Idul Adha','2015-10-14':'Tahun Baru Islam','2015-12-24':'Maulid Nabi',
+  '2016-2-8':'Imlek','2016-3-9':'Nyepi','2016-3-25':'Wafat Isa Almasih','2016-5-5':'Kenaikan Isa Almasih','2016-5-6':'Isra Miraj','2016-5-22':'Waisak','2016-7-6':'Idul Fitri','2016-7-7':'Idul Fitri','2016-9-12':'Idul Adha','2016-10-2':'Tahun Baru Islam','2016-12-12':'Maulid Nabi',
+  '2017-1-28':'Imlek','2017-3-28':'Nyepi','2017-4-14':'Wafat Isa Almasih','2017-4-24':'Isra Miraj','2017-5-11':'Waisak','2017-5-25':'Kenaikan Isa Almasih','2017-6-25':'Idul Fitri','2017-6-26':'Idul Fitri','2017-9-1':'Idul Adha','2017-9-21':'Tahun Baru Islam','2017-12-1':'Maulid Nabi',
+  '2018-2-16':'Imlek','2018-3-17':'Nyepi','2018-3-30':'Wafat Isa Almasih','2018-4-14':'Isra Miraj','2018-5-10':'Kenaikan Isa Almasih','2018-5-29':'Waisak','2018-6-15':'Idul Fitri','2018-6-16':'Idul Fitri','2018-8-22':'Idul Adha','2018-9-11':'Tahun Baru Islam','2018-11-20':'Maulid Nabi',
+  '2019-2-5':'Imlek','2019-3-7':'Nyepi','2019-4-3':'Isra Miraj','2019-4-19':'Wafat Isa Almasih','2019-5-19':'Waisak','2019-5-30':'Kenaikan Isa Almasih','2019-6-5':'Idul Fitri','2019-6-6':'Idul Fitri','2019-8-11':'Idul Adha','2019-9-1':'Tahun Baru Islam','2019-11-9':'Maulid Nabi',
+  '2020-1-25':'Imlek','2020-3-22':'Isra Miraj','2020-3-25':'Nyepi','2020-4-10':'Wafat Isa Almasih','2020-5-7':'Waisak','2020-5-21':'Kenaikan Isa Almasih','2020-5-24':'Idul Fitri','2020-5-25':'Idul Fitri','2020-7-31':'Idul Adha','2020-8-20':'Tahun Baru Islam','2020-10-29':'Maulid Nabi',
+  '2021-2-12':'Imlek','2021-3-11':'Isra Miraj','2021-3-14':'Nyepi','2021-4-2':'Wafat Isa Almasih','2021-5-13':'Idul Fitri & Kenaikan','2021-5-14':'Idul Fitri','2021-5-26':'Waisak','2021-7-20':'Idul Adha','2021-8-10':'Tahun Baru Islam','2021-10-19':'Maulid Nabi',
+  '2022-2-1':'Imlek','2022-2-28':'Isra Miraj','2022-3-3':'Nyepi','2022-4-15':'Wafat Isa Almasih','2022-5-2':'Idul Fitri','2022-5-3':'Idul Fitri','2022-5-16':'Waisak','2022-5-26':'Kenaikan Isa Almasih','2022-7-9':'Idul Adha','2022-7-30':'Tahun Baru Islam','2022-10-8':'Maulid Nabi',
+  '2023-1-22':'Imlek','2023-2-18':'Isra Miraj','2023-3-22':'Nyepi','2023-4-7':'Wafat Isa Almasih','2023-4-22':'Idul Fitri','2023-4-23':'Idul Fitri','2023-5-18':'Kenaikan Isa Almasih','2023-6-4':'Waisak','2023-6-29':'Idul Adha','2023-7-19':'Tahun Baru Islam','2023-9-28':'Maulid Nabi',
+  '2024-2-8':'Isra Miraj','2024-2-10':'Imlek','2024-3-11':'Nyepi','2024-3-29':'Wafat Isa Almasih','2024-4-10':'Idul Fitri','2024-4-11':'Idul Fitri','2024-5-9':'Kenaikan Isa Almasih','2024-5-23':'Waisak','2024-6-17':'Idul Adha','2024-7-7':'Tahun Baru Islam','2024-9-16':'Maulid Nabi',
+  '2025-1-27':'Isra Miraj','2025-1-29':'Imlek','2025-3-29':'Nyepi','2025-3-31':'Idul Fitri','2025-4-1':'Idul Fitri','2025-4-18':'Wafat Isa Almasih','2025-5-12':'Waisak','2025-5-29':'Kenaikan Isa Almasih','2025-6-6':'Idul Adha','2025-6-27':'Tahun Baru Islam','2025-9-5':'Maulid Nabi',
+  '2026-1-16':'Isra Miraj','2026-2-17':'Imlek','2026-3-19':'Nyepi','2026-3-21':'Idul Fitri','2026-3-22':'Idul Fitri','2026-4-3':'Wafat Isa Almasih','2026-5-14':'Kenaikan Isa Almasih','2026-5-27':'Idul Adha','2026-5-31':'Waisak','2026-6-16':'Tahun Baru Islam','2026-8-25':'Maulid Nabi'
+};
+// Inflasi 2002..2026+
+const INF=[10.03,5.06,6.4,17.11,6.6,6.59,11.06,2.78,6.96,3.79,4.3,8.38,8.36,3.35,3.02,3.61,3.13,2.72,1.68,1.87,5.51,2.61,1.57,2.9,2.8];
+const KEY='rental_ps_2002_warisan_v1';
+let S,rc=0,editIdx=-1,stPage=0,subTab='',subPage=0;
 
 const day=()=>Math.floor(S.T/1440);
 const curDate=()=>new Date(START_YEAR,0,1+day());
 const curYear=()=>curDate().getFullYear();
+const kidAge=()=>curYear()-START_YEAR; // 2002 = usia 0, 2014 = usia 12 (diwariskan ke aku!)
+const isInherited=()=>kidAge()>=12;    // true mulai tahun 2014 (usia 12)
 const clock=()=>String(Math.floor(S.T/60)%24).padStart(2,'0')+':'+String(S.T%60).padStart(2,'0');
 
+function holName(y,m,d){
+  if(m===0&&d===1)return 'Tahun Baru Masehi';
+  if(m===4&&d===1&&y>=2014)return 'Hari Buruh';
+  if(m===5&&d===1&&y>=2017)return 'Hari Lahir Pancasila';
+  if(m===7&&d===17)return 'HUT RI';
+  if(m===11&&d===25)return 'Hari Raya Natal';
+  return HOL[y+'-'+(m+1)+'-'+d]||'';
+}
+const isHol=dt=>{const d=dt||curDate();return d.getDay()===0||!!holName(d.getFullYear(),d.getMonth(),d.getDate())};
+function schoolEnd(dt){
+  const d=dt||curDate(),dow=d.getDay();
+  // Setelah diwariskan (usia 12..17 tahun) ada jadwal sekolah; usia 18+ lulus; sebelum 2014 main sebagai orang tua (tidak sekolah)
+  if(!isInherited()||kidAge()>=18||isHol(d))return 0;
+  return dow===5?12:dow===6?13:14;
+}
+function inSchool(){
+  const end=schoolEnd(),h=Math.floor(S.T/60)%24;
+  return end>0&&h>=7&&h<end;
+}
+
 let _m=-1,_f=1;
+const fxAt=yr=>{
+  let f=1,y=Math.max(0,yr-START_YEAR);
+  for(let i=0;i<y;i++)f*=1+(INF[i]!==undefined?INF[i]:3)/100;
+  return f;
+};
 const fx=()=>{
   const dt=curDate(),m=(dt.getFullYear()-START_YEAR)*12+dt.getMonth();
   if(m!==_m){_m=m;let f=1,y=Math.floor(m/12);for(let i=0;i<y;i++)f*=1+(INF[i]!==undefined?INF[i]:3)/100;f*=1+(INF[y]!==undefined?INF[y]:3)/100*(m%12)/12;_f=f}
   return _f;
 };
 const P=n=>Math.round(n*fx()/50)*50;
+const Py=(n,yr)=>Math.round(n*(fx()/fxAt(yr||START_YEAR))/50)*50;
 
-function batTechInfo(lv){
-  const cap=Math.round(10*Math.pow(1.072,lv)*10)/10;
-  const cost=Math.round(350000*Math.pow(1.068,lv)/1000)*1000;
-  const names=['Baterai Aki Compact Rakitan','Sel Lithium-Ion Compact','Baterai LiFePO4 Modular','Solid-State Compact Cell','Graphene Super-Battery','Quantum Core Storage'];
-  const nm=names[Math.min(names.length-1,Math.floor(lv/55))]+' Lv.'+(lv+1);
-  return {lv,cap,cost,nm};
+const shiftHours=e=>{const d=(e.end-e.start+24)%24;return d===0?24:d};
+function empWorkingNow(e){
+  if(e.sick>0||e.off>0)return false;
+  const h=Math.floor(S.T/60)%24;
+  if(e.start===e.end)return true;
+  return e.start<e.end?(h>=e.start&&h<e.end):(h>=e.start||h<e.end);
 }
-function harvTechInfo(lv){
-  if(lv<=0)return {lv:0,kw:0,cost:1500000,nm:'Belum Diriset (Masih Pakai Bensin)'};
-  const kw=Math.round(2.5*Math.pow(1.074,lv-1)*100)/100;
-  const cost=Math.round(1500000*Math.pow(1.069,lv-1)/1000)*1000;
-  const names=['Pemanen Surya Silikon Awal','Panel Monocrystalline Rakitan','Konsentrator Lensa Fresnel','Sel Multi-Junction MPPT','Kolektor Perovskite-Quantum','Pemanen Foton Spektrum Penuh'];
-  const nm=names[Math.min(names.length-1,Math.floor((lv-1)/55))]+' Gen-'+lv;
-  return {lv,kw,cost,nm};
-}
-function chgTechInfo(lv){
-  const kw=Math.round(0.8*Math.pow(1.075,lv)*100)/100;
-  const cost=Math.round(250000*Math.pow(1.067,lv)/1000)*1000;
-  const names=['Regulator Cas 800W','Pulse Fast Charger','MPPT Smart Controller','GaN High-Speed Charger','Superconducting Busbar','Zero-Loss Quantum Transfer'];
-  const nm=names[Math.min(names.length-1,Math.floor(lv/55))]+' Lv.'+(lv+1);
-  return {lv,kw,cost,nm};
-}
-function effTechInfo(lv){
-  const mult=Math.round((1+lv*0.05+Math.pow(lv,1.35)*0.018)*100)/100;
-  const cost=Math.round(450000*Math.pow(1.068,lv)/1000)*1000;
-  return {lv,mult,cost,nm:'Riset Efisiensi Foton & Termal Lv.'+(lv+1)};
+const activeEmps=()=>S.emps.filter(empWorkingNow);
+const empOnDuty=()=>activeEmps().length>0;
+const sickEmps=()=>S.emps.filter(e=>e.sick>0);
+
+function depRate(mo){return Math.min(.015,.005+mo*.001)}
+
+function taxInfo(omzetBulan){
+  const dt=curDate(),y=dt.getFullYear(),m=dt.getMonth();
+  if(y<2013||(y===2013&&m<6))return {rate:.015,amt:Math.round(omzetBulan*.015),lbl:'Norma 1,5%'};
+  if(y<2018||(y===2018&&m<6))return {rate:.01,amt:Math.round(omzetBulan*.01),lbl:'PP 46/2013 1%'};
+  if(y<2022)return {rate:.005,amt:Math.round(omzetBulan*.005),lbl:'PP 23/2018 0,5%'};
+  const prev=S.yrInc||0,tot=prev+omzetBulan;
+  if(tot<=500e6)return {rate:0,amt:0,lbl:'UU HPP 0% (≤500jt)'};
+  const kena=prev>=500e6?omzetBulan:(tot-500e6);
+  return {rate:.005,amt:Math.round(kena*.005),lbl:'UU HPP 0,5%'};
 }
 
-function harvUnitBuyCost(lv){
-  if(lv<=0)return 0;
-  return Math.round(2200000*Math.pow(1.058,lv-1)/1000)*1000;
+// Konsumsi Harian Keluarga (naik sesuai inflasi & usia anak)
+function dailyFoodCost(){
+  const ka=kidAge();
+  const base=!isInherited()?(25000+ka*1500):(ka<18?15000:35000);
+  return P(base);
 }
-function harvUnitSellVal(item){
-  const base=harvUnitBuyCost(item.gen||1);
-  const ageYrs=Math.max(0,(day()-(item.day||0))/360);
-  const ratio=Math.max(.30,.85-ageYrs*.05);
-  return Math.round(base*ratio/1000)*1000;
+function monthlyLivingCost(){
+  const ka=kidAge();
+  if(!isInherited()){
+    // Era orang tua (2002-2013): biaya listrik/air rumah + kebutuhan bayi/anak sekolah
+    return P(450000+ka*65000+(S.kb?35000:0));
+  }
+  // Era anak mengelola (2014+): usia 12-17 masih ikut ortu (biaya ringan), usia 18+ mandiri penuh
+  if(ka<18)return P(250000);
+  return P(1400000+(S.mar?500000:0)+(S.kids||0)*900000+(S.kb?50000:0));
 }
 
 function fresh(){
-  // srcMode: 'bat' (via Baterai Utama) | 'gen' (via Genset Bensin/Solar) | 'auto' (Otomatis Baterai + Backup Genset)
+  const pr={};Object.keys(K).forEach(k=>pr[k]=K[k].r);I.forEach(i=>pr[i.id]=i.p);
+  // Modal awal 10 unit PS1 + TV Tabung 14", 2 game ori PS1, 5 stik PS1 cadangan, token listrik 150 kWh, modal kas Rp 3 juta + tabungan Rp 7 juta
+  const st=[];
+  for(let i=0;i<10;i++)st.push({k:'ps1',tv:0,lv:0,brk:false,c:null});
   S={
-    m:50000000,b:950000000,T:420,stam:100,
-    genLv:0,fuel:0,
-    batLv:0,batKwh:0,
-    harvLv:0,harvUnits:[],
-    chgLv:0,effLv:0,
-    zones:{idn:1},
-    grid:{lv:0,on:false,srcMode:'bat',rate:350,sat:85},
-    sec:{rmh:0,ruko:0,pabrik:0,mega:0},
-    sampleHouses:[],
-    countries:{},
-    emps:[],empSeq:1,
-    dep:[],ln:null,
-    rec:[],hv:'b',mute:false,cf:-999,
-    bC:0,bI:0,spd:1,pause:false,tab:'res',
-    log:['1 Jan 2000. Modal awal Rp 1 Milyar siap dipakai! Atur tuas sumber daya (Via Baterai / Via Genset / Auto) di bar kontrol atau tab Jaringan.'],
-    inc:0,exp:0,yrInc:0,moRev:0,totalKwhSold:0
+    m:3000000,b:7000000,T:480,stam:100,rr:3.2,open:true,faint:false,st,
+    stock:Object.fromEntries(I.map(i=>[i.id,0])),sup:{gas:0,gal:0},eq:{},
+    games:{we02:1,ctr:1},parts:{stik_ps1:5,stik_ps2:0,stik_ps3:0,stik_ps4:0,stik_ps5:0,stik_xb:0,stik_xb360:0,stik_xbone:0},
+    q:[],kwh:150,out:0,gen:false,
+    cap:15,rent:0,emps:[],empSeq:1,
+    husband:{n:'Suami (Ayah)',sal:2200000,jl:0},
+    handedOver:false,
+    dep:[],ln:null,propLn:null,v:{},as:{},pt:null,mar:0,kids:0,preg:0,kb:0,busy:0,jp:0,
+    hist:[],rec:[],cm:0,hm:0,hv:'p',mute:false,dt:-9999,
+    bC:0,bI:0,spd:1,pause:false,tab:'un',pr,cf:-999,
+    log:[
+      '1 Jan 2002 (Usia anak 0 thn). Kamu bermain sebagai Orang Tua mengelola modal 10 unit PS1 + TV Tabung!',
+      'Nafkah 80% gaji suami masuk tiap akhir bulan, dan ada konsumsi harian keluarga. Tahun 2014 (usia 12) rental ini diwariskan ke kamu!'
+    ],
+    inc:0,exp:0,yrInc:0,moFood:0,moNafkah:0
   };
 }
 function migrate(o){
-  if(!Array.isArray(o.harvUnits))o.harvUnits=[];
-  if(!Array.isArray(o.sampleHouses))o.sampleHouses=[];
+  if(!o.games)o.games={we02:1,ctr:1};
+  if(!o.parts)o.parts={stik_ps1:5};
+  Object.keys(PT).forEach(k=>{if(o.parts[k]===undefined)o.parts[k]=0});
   if(!Array.isArray(o.emps))o.emps=[];
   if(!Array.isArray(o.dep))o.dep=[];
   if(!Array.isArray(o.rec))o.rec=[];
-  if(!o.zones)o.zones={idn:1};
-  if(!o.grid)o.grid={lv:0,on:false,srcMode:'bat',rate:350,sat:85};
-  if(!o.grid.srcMode)o.grid.srcMode='bat';
-  if(!o.sec)o.sec={rmh:0,ruko:0,pabrik:0,mega:0};
-  if(!o.countries)o.countries={};
+  if(!o.husband)o.husband={n:'Suami (Ayah)',sal:2200000,jl:0};
+  if(o.handedOver===undefined)o.handedOver=false;
+  if(o.moFood===undefined)o.moFood=0;
+  if(o.moNafkah===undefined)o.moNafkah=0;
+  if(![1,4,16,64,128,256,512].includes(o.spd))o.spd=1;
+  o.st.forEach(s=>{if(s.lv===undefined)s.lv=0;if(s.brk===undefined)s.brk=false});
   return o;
 }
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||S.T===undefined)fresh();else migrate(S);
+if(!S||!S.st)fresh();else migrate(S);
 
 const save=()=>{S.sv=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.cloudSave)window.cloudSave()};
-const log=m=>{S.log.unshift(clock()+' '+m);S.log.length=Math.min(S.log.length,16)};
-const have=()=>S.m+S.b;
+const log=m=>{S.log.unshift(clock()+' '+m);S.log.length=Math.min(S.log.length,18)};
+const have=()=>S.m+S.b,used=()=>S.st.length;
 const spend=n=>{const t=Math.min(Math.max(S.m,0),n);S.m-=t;S.b-=n-t;S.exp+=n};
 const buy=n=>{if(have()<n){log('Uang kurang ('+fmt(n)+').');snd('warn');return 0}spend(n);snd('buy');return 1};
 const mult=()=>S.bI?2:1;
@@ -250,208 +355,150 @@ function snd(t){
   }catch(e){}
 }
 
-const shiftHours=e=>{const d=(e.end-e.start+24)%24;return d===0?24:d};
-function empWorkingNow(e){
-  if(e.sick>0||e.off>0)return false;
-  const h=Math.floor(S.T/60)%24;
-  if(e.start===e.end)return true;
-  return e.start<e.end?(h>=e.start&&h<e.end):(h>=e.start||h<e.end);
-}
-const activeEmps=()=>S.emps.filter(empWorkingNow);
-const empOnDuty=()=>activeEmps().length>0;
+const dstr=()=>{const dt=curDate();return HARI[dt.getDay()]+', '+dt.getDate()+' '+BLN[dt.getMonth()]+' '+dt.getFullYear()+' '+clock()};
+const dur=m=>Math.floor(m/60)+'j '+(m%60)+'m';
+const bill=c=>Math.round(c.r*(c.lm||1)*c.used/60/100)*100+c.o.reduce((a,i)=>a+i.p,0);
+const sw=s=>K[s.k].w+(s.tv>=0?TV[s.tv].w:0);
+const rep=d=>{S.rr=Math.min(5,Math.max(1,S.rr+d))};
+const red=()=>Math.min(.3,AS.reduce((a,x)=>a+(S.as[x.id]?x.r:0),0));
+const drain=()=>3.8*(1+(S.mar?.2:0)+(S.preg?.3:0)+(S.kids||0)*.1)/(1+(empOnDuty()?1.5*activeEmps().length:0))*(1-red());
+const dm=k=>Math.min(1.6,Math.max(.15,1.7-.7*S.pr[k]/Py(K[k].r,K[k].yr)));
+const ownedGames=pf=>GM.filter(g=>g.pf===pf&&S.games[g.id]);
+const unitVal=s=>{
+  const c=K[s.k];let v=Py(c.p,c.yr)+(s.tv>=0?Py(TV[s.tv].p,TV[s.tv].yr):0);
+  for(let i=1;i<=(s.lv||0);i++)v+=P(UPLV[i].p);
+  return Math.round(v*.6);
+};
 
-function depRate(mo){return Math.min(.015,.005+mo*.001)}
-
-function totalBuildings(){
-  return (S.sec.rmh||0)+(S.sec.ruko||0)+(S.sec.pabrik||0)+(S.sec.mega||0);
-}
-
-function zoneSolarRatio(h){
-  const active=ZONES.filter(z=>S.zones[z.id]);
-  if(!active.length)return 0;
-  let sunCount=0;
-  active.forEach(z=>{
-    const lit=z.sunStart<z.sunEnd?(h>=z.sunStart&&h<z.sunEnd):(h>=z.sunStart||h<z.sunEnd);
-    if(lit)sunCount++;
-  });
-  return sunCount/active.length;
+function order(c){
+  const a=I.filter(i=>(!i.eq||S.eq[i.eq])&&S.stock[i.id]>0&&S.sup.gas>=(i.g||0)&&S.sup.gal>=(i.l||0));
+  if(!a.length)return;
+  let r=Math.random()*a.reduce((x,i)=>x+i.w,0),it;for(it of a){r-=it.w;if(r<=0)break}
+  S.stock[it.id]--;S.sup.gas-=it.g||0;S.sup.gal-=it.l||0;c.o.push({n:it.n,p:S.pr[it.id]});
 }
 
-function energyStats(){
-  const h=Math.floor(S.T/60)%24;
-  const bat=batTechInfo(S.batLv||0);
-  const chg=chgTechInfo(S.chgLv||0);
-  const eff=effTechInfo(S.effLv||0);
-  const gen=GENS[S.genLv||0];
-
-  let rawSolarKw=0;
-  S.harvUnits.forEach(u=>{rawSolarKw+=harvTechInfo(u.gen||1).kw});
-  const sunRatio=zoneSolarRatio(h);
-  const solarAvailKw=rawSolarKw*eff.mult*sunRatio;
-
-  const maxChgKw=chg.kw*Math.max(1,S.harvUnits.length)*eff.mult;
-  const solarChargeKw=Math.min(solarAvailKw,maxChgKw);
-
-  const genKw=(gen.kw>0&&S.fuel>0)?gen.kw:0;
-
-  const tod=(h>=17&&h<23)?1.3:(h>=6&&h<17)?0.95:0.65;
-  let demandKw=0;
-  SECTORS.forEach(sc=>{demandKw+=(S.sec[sc.id]||0)*sc.kwPer*tod});
-  COUNTRIES.forEach(ct=>{
-    if(S.countries[ct.id])demandKw+=ct.bld*0.85*tod;
-  });
-
-  const plnRate=P(450);
-  const rate=S.grid.rate||350;
-  const discPct=((plnRate-rate)/plnRate)*100;
-
-  return {bat,chg,eff,gen,rawSolarKw,sunRatio,solarAvailKw,solarChargeKw,genKw,demandKw,plnRate,rate,discPct};
-}
-
-function power(h){
-  const es=energyStats();
-  const mode=S.grid.srcMode||'bat';
-
-  // 1. Isi baterai dari pemanen surya
-  if(es.solarChargeKw>0&&S.batKwh<es.bat.cap){
-    S.batKwh=Math.min(es.bat.cap,S.batKwh+es.solarChargeKw);
-  }
-
-  // 2. Hitung pasokan berdasarkan posisi tuas sumber daya:
-  // 'bat'  = Murni via Baterai Utama (genset mati / tidak dipakai)
-  // 'gen'  = Murni via Genset Bensin/Solar (baterai tidak disedot, murni menabung daya surya!)
-  // 'auto' = Via Baterai dulu, jika kurang otomatis dibantu Genset
-  if(S.grid.on&&es.demandKw>0){
-    let need=es.demandKw;
-    let fromBat=0,fromGen=0;
-
-    if(mode==='bat'||mode==='auto'){
-      fromBat=Math.min(need,S.batKwh);
-      S.batKwh-=fromBat;
-      need-=fromBat;
-    }
-
-    if((mode==='gen'||(mode==='auto'&&need>0))&&es.gen.kw>0&&S.fuel>0){
-      const wantGen=Math.min(need,es.gen.kw);
-      const ratio=wantGen/es.gen.kw;
-      const fuelUse=es.gen.fuelL*Math.max(.35,ratio);
-      if(S.fuel>=fuelUse){
-        S.fuel-=fuelUse;
-        fromGen=wantGen;
-      }else{
-        fromGen=wantGen*(S.fuel/fuelUse);
-        S.fuel=0;
-      }
-      need-=fromGen;
-    }
-
-    const supplied=fromBat+fromGen;
-    if(supplied>0){
-      const rev=Math.round(supplied*es.rate*mult());
-      S.b+=rev;S.inc+=rev;S.moRev=(S.moRev||0)+rev;
-      S.totalKwhSold=(S.totalKwhSold||0)+supplied;
-      S.sampleHouses.forEach(sh=>{
-        const u=sh.kw*0.9;
-        sh.usedKwh=(sh.usedKwh||0)+u;
-        sh.bill=(sh.bill||0)+Math.round(u*es.rate*mult());
-      });
-    }
-    if(need>es.demandKw*0.15){
-      S.grid.sat=Math.max(10,(S.grid.sat||85)-2);
-    }else{
-      S.grid.sat=Math.min(100,(S.grid.sat||85)+1);
-    }
-  }
-}
-
-function addBuildings(secId,count){
-  if(count<=0)return;
-  S.sec[secId]=(S.sec[secId]||0)+count;
-  const sc=SECTORS.find(x=>x.id===secId);
-  while(S.sampleHouses.length<18&&S.sampleHouses.length<totalBuildings()){
-    const idx=S.sampleHouses.length;
-    const nm=sc.id==='rmh'?(OWNERS[idx%OWNERS.length]+' #'+(idx+1)):(sc.n+' #'+(idx+1));
-    S.sampleHouses.push({n:nm,sec:sc.n,cls:sc.cls,kw:sc.kwPer,usedKwh:0,bill:0});
-  }
+function power(){
+  let w=S.open?80:0;S.st.forEach(s=>{if(s.c)w+=sw(s)});
+  const load=w/1000;
+  if(load<=0){S.out=0;return}
+  if(S.kwh>=load){S.kwh-=load;S.out=0}
+  else if(S.gen){spend(P(4500));S.out=0}
+  else{if(!S.out)log('Token listrik habis! Rental padam.');snd('warn');S.out=1}
 }
 
 function dayEnd(){
+  // 1. Konsumsi Harian (dipotong setiap hari!)
+  const food=dailyFoodCost();
+  spend(food);
+  S.moFood=(S.moFood||0)+food;
+  if(S.spd<=64)log('Konsumsi harian: -'+fmt(food)+'.');
+
+  // 2. Karyawan (tidak ada tingkat jenuh; hanya memulihkan libur & cek sakit realistis)
   S.emps.forEach(e=>{
     if(e.off>0)e.off--;
     if(e.sick>0){
       e.sick--;
-      if(e.sick===0)log(e.n+' sudah sembuh dan kembali bertugas.');
+      if(e.sick===0)log(e.n+' sudah sembuh dan siap kerja lagi.');
       return;
     }
     const hrs=shiftHours(e);
     const over=Math.max(0,hrs-12);
     if(Math.random()<(.002+over*.003)){
       e.sick=1+Math.floor(Math.random()*2);
-      log(e.n+' sakit ('+e.sick+' hari).');
+      log(e.n+' sakit ('+e.sick+' hari). Kamu menggantikan shift-nya.');
+      snd('warn');
     }
   });
-
-  const es=energyStats();
-  const tier=GRID_TIER[S.grid.lv||0];
-  const totBld=totalBuildings();
-  const mode=S.grid.srcMode||'bat';
-  const hasPower=(mode==='bat'&&S.batKwh>0)||(mode==='gen'&&es.genKw>0)||(mode==='auto'&&(S.batKwh>0||es.genKw>0));
-
-  if(tier.lv>0&&S.grid.on){
-    if(es.discPct<0){
-      S.grid.sat=Math.max(5,(S.grid.sat||85)-10);
-      if(totBld>0){
-        const drop=Math.max(1,Math.floor(totBld*0.05));
-        SECTORS.forEach(sc=>{S.sec[sc.id]=Math.max(0,(S.sec[sc.id]||0)-Math.ceil(drop/4))});
-        log('Tarif lebih mahal dari kompetitor! Sebagian pelanggan berhenti.');
-      }
-    }else if(totBld<tier.max&&es.discPct>=5&&hasPower){
-      const room=tier.max-totBld;
-      const growth=Math.min(room,Math.max(1,Math.ceil(tier.max*0.1*(S.bC?2.5:1)*(1+es.discPct/50))));
-      let rem=growth;
-      SECTORS.forEach(sc=>{
-        if(rem<=0)return;
-        if(tier.max>=sc.unlockCap&&(S.sec[sc.id]||0)<sc.max){
-          const take=Math.min(rem,sc.max-(S.sec[sc.id]||0),Math.max(1,Math.ceil(growth*0.4)));
-          addBuildings(sc.id,take);
-          rem-=take;
-        }
-      });
-      if(S.spd<=64&&growth>0)log('+'+fmtNum(growth)+' bangunan baru tersambung ke jaringan listrikmu!');
-    }
-  }
 }
 
 function monthEnd(){
+  let inc=0;
+  const pay=n=>{if(n>0)spend(n)};
   const dt=curDate(),prev=new Date(dt.getFullYear(),dt.getMonth()-1,1);
-  const totalGaji=S.emps.reduce((z,e)=>z+e.sal,0);
-  if(totalGaji>0)spend(totalGaji);
+  const y=dt.getFullYear(),mo=(y-START_YEAR)*12+dt.getMonth();
 
+  // Cek momen pewarisan bisnis di awal tahun 2014 (Usia 12 tahun!)
+  if(y>=2014&&!S.handedOver){
+    S.handedOver=true;
+    log('🎉 TAHUN 2014 (Usia 12 Tahun): Orang tuamu resmi mewariskan bisnis Rental PS ini kepadamu!');
+    snd('month');
+  }
+
+  // Biaya rutin bulanan (gaji pegawai, sewa tempat, biaya hidup)
+  const totalGaji=S.emps.reduce((z,e)=>z+e.sal,0);
+  pay(totalGaji);
+  pay(P(S.rent));
+  pay(monthlyLivingCost());
+
+  // Cicilan bank & ruko
   if(S.ln){
-    if(have()>=S.ln.pay)spend(S.ln.pay);
-    else{spend(Math.round(S.ln.pay*1.02));log('Cicilan bank telat, kena denda 2%.')}
+    if(have()>=S.ln.pay)pay(S.ln.pay);
+    else{spend(Math.round(S.ln.pay*1.02));rep(-.1);log('Cicilan bank telat, kena denda 2%.')}
     if(--S.ln.left<=0)S.ln=null;
   }
-
-  let bankInt=0;
-  if(S.b>0){bankInt=Math.round(S.b*.0033);S.b+=bankInt}
-  if(S.dep.length){
-    S.dep.forEach(d=>{
-      const r=depRate(d.mo);
-      const g=Math.round(d.amt*r);
-      S.b+=g;bankInt+=g;d.mo++;
-    });
+  if(S.propLn){
+    if(have()>=S.propLn.pay)pay(S.propLn.pay);
+    else{spend(Math.round(S.propLn.pay*1.02));log('Cicilan ruko telat, kena denda 2%.')}
+    if(--S.propLn.left<=0){S.propLn=null;log('Cicilan ruko LUNAS!')}
   }
 
-  const omzet=S.moRev||0;
-  const tax=Math.round(omzet*0.005);
-  if(tax>0)spend(tax);
+  // Nafkah Suami = 80% gaji suami!
+  // Sebelum 2014: dari Suami (Ayah) untuk rumah tangga; Setelah 2014 (jika sudah menikah): dari Suamimu sendiri
+  let nafkah=0;
+  if(!isInherited()&&S.husband){
+    if(dt.getMonth()===0&&mo>0){
+      const infRate=INF[Math.floor(mo/12)-1]!==undefined?INF[Math.floor(mo/12)-1]:4;
+      S.husband.sal=Math.round(S.husband.sal*(1+infRate/100)*(.98+Math.random()*.08));
+    }
+    nafkah=Math.round(S.husband.sal*0.80);
+    S.b+=nafkah;inc+=nafkah;
+    log('Nafkah suami (80% gaji): +'+fmt(nafkah)+'.');
+  }else if(isInherited()&&S.mar&&S.pt){
+    if(dt.getMonth()===0){
+      const infRate=INF[Math.floor(mo/12)-1]!==undefined?INF[Math.floor(mo/12)-1]:4;
+      S.pt.sal=Math.round(S.pt.sal*(1+infRate/100)*(.98+Math.random()*.08));
+    }
+    nafkah=Math.round(S.pt.sal*0.80);
+    S.b+=nafkah;inc+=nafkah;
+    log('Nafkah suami (80% gaji): +'+fmt(nafkah)+'.');
+  }
 
-  (S.rec=S.rec||[]).push({y:prev.getFullYear(),m:prev.getMonth(),rev:omzet,o:bankInt,x:S.exp});
-  log('Rekap '+BLN[prev.getMonth()]+' '+prev.getFullYear()+': Omzet Listrik '+fmt(omzet)+', Keluar '+fmt(S.exp)+'.');
-  snd('month');S.inc=0;S.exp=0;S.moRev=0;
-  S.sampleHouses.forEach(sh=>{sh.usedKwh=0;sh.bill=0});
-  save();
+  // Bunga tabungan & deposito
+  if(S.b>0){const i=Math.round(S.b*.0033);S.b+=i;inc+=i}
+  if(S.dep.length){
+    let depInt=0;
+    S.dep.forEach(d=>{
+      const r=depRate(d.mo);
+      depInt+=Math.round(d.amt*r);
+      d.mo++;
+    });
+    if(depInt>0){S.b+=depInt;inc+=depInt;log('Bunga deposito masuk '+fmt(depInt)+'.')}
+  }
+
+  // Usaha sampingan
+  V.forEach(v=>{if(S.v[v.id]){const g=P((v.a+Math.random()*(v.b-v.a))*(.6+S.rr/5)-v.u);S.b+=g;inc+=g}});
+
+  // Pajak sesuai tahun
+  const tx=taxInfo(S.inc);
+  if(tx.amt>0){pay(tx.amt);log('Bayar pajak ('+tx.lbl+'): '+fmt(tx.amt)+'.')}
+  S.yrInc=(S.yrInc||0)+S.inc;
+  if(dt.getMonth()===0)S.yrInc=0;
+
+  if(S.pt&&isInherited()){
+    S.pt.love=Math.max(0,S.pt.love-(S.stam<30?6:1));
+    if(S.mar){
+      if(S.pt.love<15){pay(5000000);S.mar=0;S.pt=null;S.preg=0;log('Rumah tangga retak, kalian bercerai.')}
+    }else if(S.pt.love<=0){S.pt=null;log('Pacar memutuskan hubungan.')}
+  }
+  if(S.mar&&isInherited()){
+    if(S.preg>0){if(--S.preg===0){S.kids=(S.kids||0)+1;pay(3000000);log('Anak lahir! Biaya persalinan Rp 3 juta.')}}
+    else if((S.kids||0)<3&&Math.random()<(S.kb?.015:.08)){S.preg=9;log('Kamu hamil.')}
+  }
+
+  (S.rec=S.rec||[]).push({y:prev.getFullYear(),m:prev.getMonth(),w:S.inc,o:inc,x:S.exp,c:S.cm||0,h:S.hm||0});
+  S.cm=0;S.hm=0;
+  log('Rekap '+BLN[prev.getMonth()]+' '+prev.getFullYear()+': Rental '+fmt(S.inc)+', Nafkah/Lain '+fmt(inc)+', Keluar '+fmt(S.exp)+' (termasuk makan '+fmt(S.moFood||0)+').');
+  snd('month');S.inc=0;S.exp=0;S.moFood=0;save();
 }
 
 function step(){
@@ -463,197 +510,194 @@ function step(){
   }
   const onD=empOnDuty();
   const sleeping=(h>=22||h<6);
+
+  if(inSchool()&&S.open&&!onD){
+    S.open=false;log('Jam sekolah mulai! Rental tutup sementara sampai pulang sekolah.');
+  }
+
   if(sleeping||onD){
-    S.stam=Math.min(100,S.stam+15/60);
+    S.stam=Math.min(100,S.stam+16/60);
+  }else if(S.open){
+    S.stam-=drain()/60;
+    if(S.stam<30&&S.T-S.cf>=90&&have()>=10000){
+      spend(10000);S.stam=Math.min(100,S.stam+35);S.cf=S.T;
+      if(S.spd<=64)log('Stamina rendah, otomatis ngopi (+35).');
+    }
   }else{
-    S.stam=Math.max(20,S.stam-1.5/60);
-    if(S.stam<35&&S.T-S.cf>=90&&have()>=10000){
-      spend(10000);S.stam=Math.min(100,S.stam+40);S.cf=S.T;
+    S.stam=Math.min(100,S.stam+10/60);
+  }
+
+  if(S.stam<=0){
+    S.stam=0;S.faint=true;
+    if(!onD){S.open=false;snd('warn');log('Kecapekan! Rental tutup sementara.')}
+  }
+  if(S.faint&&S.stam>=40){S.faint=false}
+  if(mi===0)power();
+  if(S.busy>0&&--S.busy===0){S.m+=S.jp;S.inc+=S.jp;log('Pulang kerja, dapat '+fmt(S.jp)+'.')}
+  if(S.out)return;
+
+  if(S.open){
+    const holM=isHol()?1.35:1;
+    const wt=(h>=15&&h<23?1:h>=8&&h<15?.6:h>=23||h<3?.4:.15)*holM;
+    S.st.forEach(s=>{
+      if(s.brk)return;
+      const kc=K[s.k],gms=ownedGames(kc.pf);
+      if(gms.length===0)return;
+      const gBonus=1+Math.min(.5,(gms.length-1)*.1);
+      if(Math.random()<.34*wt*(.5+S.rr/5)*dm(s.k)*gBonus*(S.bC?2:1)/60){
+        const g=gms[Math.random()*gms.length|0];
+        snd('bell');
+        S.q.push({n:NM[Math.random()*NM.length|0],pf:kc.pf,act:g.n.replace(' (Ori)',''),want:60+Math.random()*180|0,used:0,wait:0,o:[],ph:'q'});
+      }
+    });
+  }
+  for(const c of S.q.slice()){
+    c.wait++;
+    const s=S.st.find(x=>!x.c&&!x.brk&&K[x.k].pf===c.pf&&ownedGames(K[x.k].pf).length>0);
+    if(s){
+      s.c=c;c.k=s.k;c.r=S.pr[s.k];c.lm=UPLV[s.lv||0].m;
+      c.q=(s.tv>=0?TV[s.tv].q:0)+(s.lv||0)*.015;
+      c.ph='p';
+      S.q.splice(S.q.indexOf(c),1);
+    }else if(c.wait>75){
+      S.q.splice(S.q.indexOf(c),1);rep(-.04);
     }
   }
-  if(mi===0)power(h);
+  S.st.forEach((s,i)=>{
+    const c=s.c;if(!c)return;
+    if(c.ph==='p'){
+      c.used++;
+      if(Math.random()<1/45)order(c);
+      if(Math.random()<.00022){
+        const pId=K[s.k].pt;
+        if((S.parts[pId]||0)>0){
+          S.parts[pId]--;
+          if(S.spd<=64)log(PT[pId].n+' di '+K[s.k].n+' rusak, otomatis diganti stok cadangan (sisa '+S.parts[pId]+').');
+        }else{
+          s.brk=true;c.ph='d';collect(i);
+          log(PT[pId].n+' di '+K[s.k].n+' RUSAK! Stok cadangan habis, beli di tab Game.');
+          snd('warn');return;
+        }
+      }
+      if(c.used>=c.want){c.ph='d';collect(i)}
+    }else{
+      c.dw=(c.dw||0)+1;
+      if(onD&&Math.random()<Math.min(1,.3*activeEmps().length))collect(i);
+      else if(c.dw>120){log(c.n+' kabur tanpa bayar '+fmt(bill(c))+'!');rep(-.1);s.c=null}
+    }
+  });
+}
+
+function collect(i){
+  const s=S.st[i],c=s&&s.c;if(!c||c.ph!=='d')return;
+  const b=bill(c)*mult();S.m+=b;S.inc+=b;rep(.03+(c.q||0));
+  S.cm=(S.cm||0)+1;S.hm=(S.hm||0)+c.used;
+  (S.hist=S.hist||[]).unshift({n:c.n,u:K[c.k].n+' ('+(c.act||'Main')+')',m:c.used,b:b,d:dstr(),o:c.o.length});
+  S.hist.length=Math.min(S.hist.length,60);snd('coin');s.c=null;
 }
 
 const A={
+  tog(){
+    if(S.faint&&!empOnDuty())return log('Masih lemas, istirahat dulu.');
+    if(inSchool()&&!empOnDuty())return log('Sedang jam sekolah (selesai jam '+schoolEnd()+':00). Rekrut karyawan jika ingin tetap buka.');
+    if(!S.st.length)return log('Belum ada unit untuk disewakan.');
+    S.open=!S.open;log(S.open?'Rental PS BUKA.':'Rental PS TUTUP.');
+  },
   pause(){S.pause=!S.pause},
   spd(i){S.spd=+i},
   tab(i){S.tab=i;subTab='';subPage=0},
   stab(i){subTab=i;subPage=0},
   spg(d){subPage=Math.max(0,subPage+(+d))},
-  cpg(d){cardPage=Math.max(0,cardPage+(+d))},
+  stpg(d){stPage=Math.max(0,stPage+(+d))},
   cof(){
-    if(S.T-S.cf<60||S.stam>=100)return log('Stamina masih bugar.');
+    if(S.T-S.cf<60||S.stam>=100)return log('Stamina masih segar.');
     if(!buy(10000))return;
-    S.stam=Math.min(100,S.stam+40);S.cf=S.T;log('Ngopi dulu, stamina +40.');
+    S.stam=Math.min(100,S.stam+35);S.cf=S.T;log('Ngopi dulu, stamina +35.');
   },
-  bI(){S.bI=S.bI?0:1},
-  bC(){S.bC=S.bC?0:1},
-  mute(){S.mute=!S.mute;if(!S.mute)snd('coin')},
-
-  // Tuas Sumber Daya (Via Baterai / Via Genset / Auto)
-  src(m){
-    S.grid.srcMode=m;
-    const lbl=m==='bat'?'Via Baterai Utama (genset hemat BBM)':m==='gen'?'Via Genset Bensin/Solar (baterai surya menabung daya)':'Auto (Baterai Utama + Backup Genset)';
-    log('Tuas sumber daya dipindah ke: '+lbl+'.');
-  },
-
-  // Generator Bensin & Bahan Bakar
-  upgen(){
-    const nl=(S.genLv||0)+1;if(nl>=GENS.length)return;
-    const g=GENS[nl];
-    if(!buy(P(g.p)))return;
-    S.genLv=nl;log('Beli generator: '+g.n+' ('+g.kw+' kW).');
-  },
-  sellgen(){
-    if((S.genLv||0)<=0)return;
-    const g=GENS[S.genLv];
-    const v=Math.round(P(g.p)*0.65);
-    S.m+=v;S.genLv=0;snd('coin');
-    log('Jual second '+g.n+' dapat '+fmt(v)+'.');
-  },
-  buyfuel(liters){
-    const L=+liters,cost=P(L*1200);
+  coll(i){if(S.busy>0&&!empOnDuty())return log('Lagi kerja di luar.');collect(+i)},
+  bu(v){
+    const[k,j]=v.split(':'),c=K[k],t=j!=null?TV[j]:null;
+    if(c.yr>curYear())return log(c.n+' baru rilis tahun '+c.yr+'.');
+    if(t&&t.yr>curYear())return log('TV ini belum rilis.');
+    if(used()>=S.cap)return log('Ruangan penuh.');
+    const cost=Py(c.p,c.yr)+(t?Py(t.p,t.yr):0);
     if(!buy(cost))return;
-    S.fuel=(S.fuel||0)+L;
-    log('Isi bensin/solar +'+L+' Liter (stok: '+S.fuel.toFixed(1)+' L).');
+    S.st.push({k,tv:t?+j:-1,lv:0,brk:false,c:null});
+    log('Beli '+c.n+(t?' + TV '+t.n:'')+'.');
+    if(!ownedGames(c.pf).length)log('Beli game ori untuk '+c.pf.toUpperCase()+' di tab Game!');
   },
-
-  // Riset Bertahap
-  rbat(q){
-    const times=Math.max(1,+q||1);let done=0;
-    for(let i=0;i<times;i++){
-      const nx=batTechInfo((S.batLv||0)+1);
-      if(!buy(nx.cost))break;
-      S.batLv=nx.lv;done++;
-    }
-    if(done>0){
-      const cur=batTechInfo(S.batLv);
-      log('Riset Baterai +'+done+'x: '+cur.nm+' (kapasitas '+fmtKwh(cur.cap)+')!');
-    }
+  ed(i){editIdx=editIdx===+i?-1:+i},
+  sell(i){
+    const s=S.st[+i];if(!s||s.c)return log('Tunggu pelanggan selesai main dulu.');
+    const v=unitVal(s);S.m+=v;S.st.splice(+i,1);editIdx=-1;snd('coin');
+    log('Jual second '+K[s.k].n+' dapat '+fmt(v)+'.');
   },
-  rharv(q){
-    const times=Math.max(1,+q||1);let done=0;
-    for(let i=0;i<times;i++){
-      const nx=harvTechInfo((S.harvLv||0)+1);
-      if(!buy(nx.cost))break;
-      S.harvLv=nx.lv;done++;
-    }
-    if(done>0){
-      const cur=harvTechInfo(S.harvLv);
-      log('Riset Pemanen Surya +'+done+'x: '+cur.nm+' ('+fmtW(cur.kw)+'/unit)!');
-    }
+  upk(i){
+    const s=S.st[+i];if(!s||s.c)return;
+    const c=K[s.k];if(!c.next)return;
+    const nk=K[c.next];
+    if(nk.yr>curYear())return log(nk.n+' baru rilis tahun '+nk.yr+'.');
+    if(!buy(Py(c.up,nk.yr)))return;
+    s.k=c.next;log('Upgrade unit jadi '+nk.n+'!');
   },
-  rchg(q){
-    const times=Math.max(1,+q||1);let done=0;
-    for(let i=0;i<times;i++){
-      const nx=chgTechInfo((S.chgLv||0)+1);
-      if(!buy(nx.cost))break;
-      S.chgLv=nx.lv;done++;
-    }
-    if(done>0){
-      const cur=chgTechInfo(S.chgLv);
-      log('Riset Charging +'+done+'x: '+cur.nm+' ('+fmtW(cur.kw)+')!');
-    }
+  uptv(v){
+    const[idx,j]=v.split(':'),s=S.st[+idx];if(!s||s.c||s.tv<0||+j<=s.tv)return;
+    if(TV[+j].yr>curYear())return log('TV ini belum rilis.');
+    const cost=Math.max(100000,Py(TV[+j].p,TV[+j].yr)-Math.round(Py(TV[s.tv].p,TV[s.tv].yr)*.5));
+    if(!buy(cost))return;
+    s.tv=+j;log('Upgrade TV unit #'+(+idx+1)+' jadi '+TV[s.tv].n+'.');
   },
-  reff(q){
-    const times=Math.max(1,+q||1);let done=0;
-    for(let i=0;i<times;i++){
-      const nx=effTechInfo((S.effLv||0)+1);
-      if(!buy(nx.cost))break;
-      S.effLv=nx.lv;done++;
-    }
-    if(done>0){
-      const cur=effTechInfo(S.effLv);
-      log('Riset Efisiensi +'+done+'x: '+cur.nm+' ('+cur.mult+'x)!');
-    }
+  uplv(i){
+    const s=S.st[+i];if(!s||s.c)return;
+    const nl=(s.lv||0)+1;if(nl>=UPLV.length)return;
+    if(!buy(P(UPLV[nl].p)))return;
+    s.lv=nl;log('Upgrade unit #'+(+i+1)+' ke '+UPLV[nl].n+'.');
   },
-
-  // Produksi, Pemasangan & Jual Second Alat Pemanen Surya
-  buyharv(q){
-    if((S.harvLv||0)<=0)return log('Riset dulu Alat Pemanen Surya Gen-1 di tab Riset!');
-    const qty=Math.max(1,+q||1);
-    const unitCost=harvUnitBuyCost(S.harvLv);
-    if(!buy(unitCost*qty))return;
-    for(let i=0;i<qty;i++)S.harvUnits.push({gen:S.harvLv,day:day()});
-    log('Pasang +'+qty+' unit '+harvTechInfo(S.harvLv).nm+' (total '+S.harvUnits.length+' unit).');
+  fix(i){
+    const s=S.st[+i];if(!s||!s.brk)return;
+    const pId=K[s.k].pt;
+    if((S.parts[pId]||0)<=0)return log('Stok '+PT[pId].n+' kosong! Beli dulu di tab Game.');
+    S.parts[pId]--;s.brk=false;log(K[s.k].n+' sudah diperbaiki.');
   },
-  sellharv(mode){
-    if(!S.harvUnits.length)return;
-    let tot=0,sold=0;
-    if(mode==='old'){
-      const minGen=Math.min(...S.harvUnits.map(x=>x.gen));
-      if(minGen>=S.harvLv)return log('Semua alatmu sudah generasi terbaru.');
-      const keep=[];
-      S.harvUnits.forEach(u=>{
-        if(u.gen===minGen){tot+=harvUnitSellVal(u);sold++}
-        else keep.push(u);
-      });
-      S.harvUnits=keep;
-    }else{
-      const qty=mode==='all'?S.harvUnits.length:Math.min(S.harvUnits.length,+mode||1);
-      for(let i=0;i<qty;i++)tot+=harvUnitSellVal(S.harvUnits.shift());
-      sold=qty;
-    }
-    S.m+=tot;snd('coin');
-    log('Jual second '+sold+' alat pemanen surya dapat '+fmt(tot)+'.');
+  bgm(id){
+    const g=GM.find(x=>x.id===id);if(!g||S.games[id]||g.yr>curYear())return;
+    if(buy(Py(g.p,g.yr))){S.games[id]=1;log('Beli game ori: '+g.n+'.')}
   },
-
-  // Belahan Bumi (24 Jam Matahari)
-  buyzone(id){
-    const z=ZONES.find(x=>x.id===id);if(!z||S.zones[id])return;
-    if(!buy(z.p))return;
-    S.zones[id]=1;
-    log('Stasiun Pemanen Surya di '+z.n+' aktif! Cakupan matahari global meningkat.');
+  bpt(v){
+    const[id,q]=v.split(':'),qty=Math.max(1,+q||1);
+    const p=PT[id];if(!p||p.yr>curYear())return;
+    if(buy(Py(p.p,p.yr)*qty)){S.parts[id]=(S.parts[id]||0)+qty;log('Beli cadangan '+p.n+' +'+qty+'.')}
   },
-
-  // Jaringan & Tarif Listrik
-  gridup(){
-    const nl=(S.grid.lv||0)+1;if(nl>=GRID_TIER.length)return;
-    const gt=GRID_TIER[nl];
-    if(!buy(gt.p))return;
-    S.grid.lv=nl;
-    if(nl===1){
-      S.grid.on=true;
-      S.grid.rate=Math.round(P(450)*0.78/10)*10;
-      addBuildings('rmh',1);
-      log('Kabel listrik pertama tersambung ke rumah tetangga!');
-    }else{
-      log('Upgrade jaringan ke '+gt.n+' (kapasitas '+fmtNum(gt.max)+' bangunan).');
+  eq(i){if(S.eq[i])return;if(buy(EQ[i][1]))S.eq[i]=1},
+  bs(v){
+    const[id,q]=v.split(':'),qty=Math.min(1000,Math.max(100,+q||100));
+    const it=I.find(x=>x.id===id);if(!it)return;
+    if(buy(P(it.c)*qty)){S.stock[id]+=qty;log('Beli stok '+it.n+' +'+qty+'.')}
+  },
+  sp(v){
+    const[id,q]=v.split(':'),qty=Math.max(5,+q||5);
+    const base=id==='gas'?12000:8000;
+    if(buy(P(base)*qty)){S.sup[id]+=qty;log('Beli '+(id==='gas'?'Gas 3 kg':'Air galon')+' +'+qty+'.')}
+  },
+  tok(n){if(buy(P(n*900)+2500)){S.kwh+=+n;S.out=0}},
+  gen(){if(!S.gen&&buy(4000000))S.gen=true},
+  mv(i){
+    if(i==='r'&&S.cap<35&&buy(4e6)){S.cap=35;S.rent=2e6}
+    if(i==='b'&&S.cap<80&&buy(450e6)){S.cap=80;S.rent=0;S.propLn=null;log('Beli ruko tunai 80 slot!')}
+    if(i==='bc'&&S.cap<80&&!S.propLn){
+      if(buy(90e6)){S.cap=80;S.rent=0;S.propLn={pay:8200000,left:60};log('Kredit ruko disetujui! DP Rp 90 jt, cicilan Rp 8,2 jt/bln x 60 bln.')}
     }
   },
-  toggrid(){
-    if((S.grid.lv||0)<=0)return log('Pasang kabel distribusi pertama dulu.');
-    S.grid.on=!S.grid.on;
-    log('Saklar utama penyaluran listrik: '+(S.grid.on?'ON (Mengalir)':'OFF'));
-  },
-  gridrate(d){S.grid.rate=Math.max(20,(S.grid.rate||350)+(+d))},
-  gridpreset(pct){
-    const pln=P(450);
-    S.grid.rate=Math.max(20,Math.round(pln*(1-(+pct)/100)/10)*10);
-  },
-
-  // Ekspansi Antarnegara
-  buycountry(id){
-    const ct=COUNTRIES.find(x=>x.id===id);if(!ct||S.countries[id])return;
-    const rate=S.grid.rate||350;
-    if(rate>P(ct.maxRate))return log('Tarifmu terlalu mahal untuk '+ct.n+'! Turunkan tarif di bawah '+fmt(P(ct.maxRate))+'/kWh.');
-    if(!buy(ct.p))return;
-    S.countries[id]=1;
-    addBuildings('mega',Math.min(ct.bld,2500000));
-    log('Izin resmi disetujui! Jaringan listrikmu kini menyuplai negara '+ct.n+'!');
-  },
-
-  // Teknisi / Karyawan
   hi(){
     const id=S.empSeq++,n=EMPNM[(id-1)%EMPNM.length]+' #'+id;
     const st=S.emps.length%2===0?8:20,en=(st+12)%24;
-    S.emps.push({id,n,start:st,end:en,sal:P(1200000),sick:0,off:0,offMo:-1});
-    log('Rekrut teknisi '+n+' (shift '+String(st).padStart(2,'0')+':00–'+String(en).padStart(2,'0')+':00).');
+    S.emps.push({id,n,start:st,end:en,sal:P(850000),sick:0,off:0,offMo:-1});
+    log('Rekrut '+n+' (shift '+String(st).padStart(2,'0')+':00–'+String(en).padStart(2,'0')+':00).');
   },
   fi(id){S.emps=S.emps.filter(e=>e.id!==+id)},
   es(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.start=(e.start+(+d)+24)%24},
   ee(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.end=(e.end+(+d)+24)%24},
-  esal(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.sal=Math.max(400000,e.sal+(+d))},
+  esal(v){const[id,d]=v.split(':'),e=S.emps.find(x=>x.id===+id);if(e)e.sal=Math.max(200000,e.sal+(+d))},
   eoff(id){
     const e=S.emps.find(x=>x.id===+id);if(!e)return;
     const cm=(curYear()-START_YEAR)*12+curDate().getMonth();
@@ -662,8 +706,6 @@ const A={
     e.off=1;e.offMo=cm;
     log(e.n+' diberi libur 1 hari.');
   },
-
-  // Bank
   dep(n){const t=Math.min(+n,S.m);S.m-=t;S.b+=t},
   wd(n){const t=Math.min(+n,Math.max(S.b,0));S.b-=t;S.m+=t},
   mkdep(n){
@@ -678,11 +720,34 @@ const A={
   },
   ln(n){
     if(S.ln)return log('Masih ada cicilan berjalan.');
-    n=+n;const r=.15/12;S.ln={pay:Math.round(n*r/(1-Math.pow(1+r,-12))),left:12};S.b+=n;log('Pinjaman cair '+fmt(n)+'.');
+    n=+n;const r=.16/12;S.ln={pay:Math.round(n*r/(1-Math.pow(1+r,-12))),left:12};S.b+=n;log('Pinjaman cair '+fmt(n)+'.');
   },
-
+  fd(){
+    if(!isInherited()||kidAge()<18||S.pt)return;
+    const x=Math.random(),s=x<.35?[2e6,3.5e6,'sederhana']:x<.85?[4.5e6,8e6,'biasa']:[18e6,45e6,'mapan'];
+    S.pt={n:['Andre','Hendra','Kevin','Rudi','Tommy'][Math.random()*5|0],sal:Math.round(s[0]+Math.random()*(s[1]-s[0])),cls:s[2],love:25};
+  },
+  date(){if(!S.pt||!buy(100000))return;S.stam=Math.max(10,S.stam-4);S.pt.love=Math.min(100,S.pt.love+6+Math.random()*6)},
+  qt(){if(!S.pt||S.T-S.dt<1440)return;S.dt=S.T;S.pt.love=Math.min(100,S.pt.love+4)},
+  mr(){if(!S.pt||S.mar||kidAge()<19||S.pt.love<60||!buy(10e6))return;S.mar=1;log('Kalian menikah! Mulai bulan depan dapat nafkah 80% gaji suami.')},
+  bk(){if(!S.pt)return;if(S.mar)spend(5e6);S.mar=0;S.pt=null;S.preg=0},
+  kb(){S.kb=S.kb?0:1},
+  ven(i){const v=V.find(x=>x.id===i);if(S.v[i])return;if(buy(P(v.p)))S.v[i]=1},
+  ast(i){const x=AS.find(y=>y.id===i);if(!S.as[i]&&buy(P(x.p)))S.as[i]=1},
+  bI(){S.bI=S.bI?0:1},
+  bC(){S.bC=S.bC?0:1},
+  job(i){
+    const j=J[i];if(S.busy>0)return log('Masih bekerja di luar.');
+    if(isInherited()&&kidAge()<j.age)return log('Belum cukup umur untuk pekerjaan ini.');
+    if(inSchool())return log('Sedang jam sekolah.');
+    if(S.open&&activeEmps().length<Math.max(1,j.e))return log('Tutup rental dulu, atau pastikan ada karyawan jaga.');
+    if(S.stam<j.st+10)return log('Terlalu capek untuk kerja.');
+    S.stam-=j.st;S.busy=j.h*60;S.jp=P(j.pay);log('Berangkat kerja: '+j.n+' ('+j.h+' jam).');
+  },
+  mk(){Object.keys(K).forEach(k=>S.pr[k]=Py(K[k].r,K[k].yr));I.forEach(i=>S.pr[i.id]=P(i.p))},
+  mute(){S.mute=!S.mute;if(!S.mute)snd('coin')},
   hv(i){S.hv=i;subPage=0},
-  rst(){if(!rc){rc=1;return}rc=0;cardPage=0;subTab='';subPage=0;fresh();save()}
+  rst(){if(!rc){rc=1;return}rc=0;editIdx=-1;stPage=0;subTab='';subPage=0;fresh();save()}
 };
 
 document.addEventListener('pointerup',e=>{
@@ -691,21 +756,12 @@ document.addEventListener('pointerup',e=>{
   A[b.dataset.a](b.dataset.i);snd('click');render();
 });
 document.addEventListener('change',e=>{
-  if(e.target.dataset.grate)S.grid.rate=Math.max(20,Math.round(+e.target.value||0));
+  const k=e.target.dataset.p;if(k)S.pr[k]=Math.max(0,Math.round(+e.target.value||0));
 });
 
 const R=(l,s,a,i,b,x)=>`<div class="row"><span>${l}<br><span class="lg">${s}</span></span>${a?`<button data-a="${a}" data-i="${i}" class="sm" ${x?'disabled':''}>${b}</button>`:''}</div>`;
 const B=(a,i,t,x,cl='')=>`<button data-a="${a}" data-i="${i}" class="${cl}" ${x?'disabled':''}>${t}</button>`;
 const padH=n=>String(n).padStart(2,'0')+':00';
-
-function leverHTML(){
-  const m=S.grid.srcMode||'bat';
-  return `<div class="lever" title="Tuas Sumber Daya Listrik">
-    <button data-a="src" data-i="bat" class="${m==='bat'?'on':''}">🔋 Via Baterai</button>
-    <button data-a="src" data-i="gen" class="${m==='gen'?'on gen':''}">⛽ Via Genset</button>
-    <button data-a="src" data-i="auto" class="${m==='auto'?'on':''}">⚡ Auto</button>
-  </div>`;
-}
 
 function paginate(items,perPage){
   const maxP=Math.max(0,Math.ceil(items.length/perPage)-1);
@@ -716,99 +772,123 @@ function paginate(items,perPage){
 }
 
 function side(){
-  const t=S.tab;let h='';
+  const t=S.tab,yr=curYear();let h='';
 
-  if(t==='res'){
-    const es=energyStats();
-    const totRes=(S.batLv||0)+(S.harvLv||0)+(S.chgLv||0)+(S.effLv||0);
-    const nxBat=batTechInfo((S.batLv||0)+1);
-    const nxHarv=harvTechInfo((S.harvLv||0)+1);
-    const nxChg=chgTechInfo((S.chgLv||0)+1);
-    const nxEff=effTechInfo((S.effLv||0)+1);
-    h=`<div><div class="box"><div class="r"><b>Lab Pengembangan Teknologi (Total Riset: ${totRes} / 1.350+)</b></div><div class="lg">Kembangkan bertahap mulai dari baterai compact hingga pemanen energi surya global.</div></div>`
-      +`<div class="row"><span>1. ${nxBat.nm}<br><span class="lg">kapasitas baterai: ${fmtKwh(es.bat.cap)} → <b>${fmtKwh(nxBat.cap)}</b></span></span><span>${B('rbat',1,'+1 ('+fmt(nxBat.cost)+')',0,'sm')} ${B('rbat',5,'+5x',0,'sm')}</span></div>`
-      +`<div class="row"><span>2. ${nxHarv.nm}<br><span class="lg">daya pemanen: ${fmtW(es.harvLv?harvTechInfo(S.harvLv).kw:0)} → <b>${fmtW(nxHarv.kw)}</b>/unit</span></span><span>${B('rharv',1,'+1 ('+fmt(nxHarv.cost)+')',0,'sm')} ${B('rharv',5,'+5x',0,'sm')}</span></div>`
-      +`<div class="row"><span>3. ${nxChg.nm}<br><span class="lg">kecepatan cas: ${fmtW(es.chg.kw)} → <b>${fmtW(nxChg.kw)}</b>/unit</span></span><span>${B('rchg',1,'+1 ('+fmt(nxChg.cost)+')',0,'sm')} ${B('rchg',5,'+5x',0,'sm')}</span></div>`
-      +`<div class="row"><span>4. ${nxEff.nm}<br><span class="lg">pengali serap surya: ${es.eff.mult}x → <b>${nxEff.mult}x</b></span></span><span>${B('reff',1,'+1 ('+fmt(nxEff.cost)+')',0,'sm')} ${B('reff',5,'+5x',0,'sm')}</span></div>`
-      +`</div>`;
-  }
-
-  if(t==='sol'){
-    const st=subTab||'unit';
-    const es=energyStats(),cnt=S.harvUnits.length,curGen=S.harvLv||0;
-    const minGen=cnt?Math.min(...S.harvUnits.map(x=>x.gen)):0;
-    const oldCnt=cnt?S.harvUnits.filter(x=>x.gen<curGen).length:0;
-    const unitCost=harvUnitBuyCost(curGen);
-    const tabs=`<div class="subtabs">${[['unit','Alat Pemanen ('+cnt+')'],['world','Belahan Bumi ('+Object.keys(S.zones).length+'/5)']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
-    const box=`<div class="box"><div class="lg">Baterai Utama: <b>${fmtKwh(S.batKwh)} / ${fmtKwh(es.bat.cap)}</b> · Matahari Aktif: <b>${Math.round(es.sunRatio*100)}%</b> · Cas masuk: <b style="color:var(--ok)">+${fmtKwh(es.solarChargeKw)}/jam</b></div></div>`;
-
-    if(st==='unit'){
-      h=`<div>${tabs}${box}`
-        +(curGen>0
-          ?`<div class="row"><span>Pasang ${harvTechInfo(curGen).nm}<br><span class="lg">harga ${fmt(unitCost)}/unit · daya ${fmtW(harvTechInfo(curGen).kw)}/unit</span></span><span>${[1,5,25].map(q=>B('buyharv',q,'+'+q+' ('+fmt(unitCost*q)+')',0,'sm')).join(' ')}</span></div>`
-          :`<div class="box"><div class="mt">Belum ada cetak biru Alat Pemanen Surya. Buka tab <b>Riset (1000+)</b> dan lakukan riset #2 (Alat Pemanen Surya Gen-1) terlebih dahulu!</div></div>`)
-        +(cnt>0
-          ?`<div class="row"><span>Jual Second Alat Pemanen<br><span class="lg">${oldCnt>0?oldCnt+' unit generasi lama (Gen-'+minGen+') siap dijual':'Semua '+cnt+' unit generasi terbaru'}</span></span><span>${oldCnt>0?B('sellharv','old','Jual Generasi Lama ('+oldCnt+')',0,'sm bad')+' ':''}${B('sellharv',1,'Jual 1',0,'sm bad')} ${cnt>1?B('sellharv','all','Jual Semua',0,'sm bad'):''}</span></div>`
-          :'')
-        +`</div>`;
-    }else{
-      h=`<div>${tabs}${box}<div class="lg" style="margin-bottom:4px">Pasang stasiun pemanen di berbagai belahan bumi agar baterai utama selalu terisi 24 jam nonstop!</div>`
-        +ZONES.map(z=>R(z.n+' ('+z.lat+')','jam aktif matahari (WIB): '+padH(z.sunStart)+'–'+padH(z.sunEnd),'buyzone',z.id,S.zones[z.id]?'Terpasang':fmt(z.p),!!S.zones[z.id])).join('')
-        +`</div>`;
-    }
-  }
-
-  if(t==='grid'){
-    const st=subTab||'tarif';
-    const es=energyStats(),tier=GRID_TIER[S.grid.lv||0],nxtTier=GRID_TIER[(S.grid.lv||0)+1];
-    const totBld=totalBuildings();
-    const plnShare=Math.min(100,(totBld/2000000)*100);
-    const pctColor=es.discPct>=20?'var(--ok)':es.discPct>=0?'var(--wr)':'var(--bad)';
-    const pctText=es.discPct>0?`${es.discPct.toFixed(1)}% lebih murah dari PLN/Global`:`${Math.abs(es.discPct).toFixed(1)}% lebih mahal`;
-    const tabs=`<div class="subtabs">${[['tarif','Jaringan & Tuas Daya'],['negara','Ekspansi Negara ('+Object.keys(S.countries).length+'/'+COUNTRIES.length+')']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
-
-    if(st==='tarif'){
-      h=`<div>${tabs}<div class="box">
-        <div class="r"><b>${tier.n}</b><span class="chip" style="color:${S.grid.on?'var(--ok)':'var(--mt)'}">${S.grid.on?'MENGALIR':'OFF'}</span>${B('toggrid','',S.grid.on?'Matikan':'Salurkan',tier.lv<=0,'sm '+(S.grid.on?'on':''))}</div>
-        <div class="row"><span>Tuas Sumber Daya Utama:<br><span class="lg">${(S.grid.srcMode||'bat')==='bat'?'Menyedot Baterai Utama (genset mati)':(S.grid.srcMode||'bat')==='gen'?'Menyedot Genset BBM (baterai surya menabung)': 'Otomatis pakai Baterai + Backup Genset'}</span></span>${leverHTML()}</div>
-        <div class="lg">Bangunan: <b>${fmtNum(totBld)} / ${fmtNum(tier.max)}</b> · Sedot: <b>${fmtW(es.demandKw*1000)}</b> · Pangsa vs PLN: <b>${plnShare>=100?'🏆 PLN KALAH!':plnShare.toFixed(2)+'%'}</b></div>
-        <div class="row"><span>Tarif: <b>${fmt(es.rate)}/kWh</b> (<b style="color:${pctColor}">${pctText}</b>)</span><span>${B('gridrate',-25,'-25',0,'sm')} <input type="number" data-grate="1" value="${es.rate}" style="width:62px"> ${B('gridrate',25,'+25',0,'sm')} ${[20,30].map(pc=>B('gridpreset',pc,'-'+pc+'%',0,'sm')).join(' ')}</span></div>
-      </div>`
-      +(nxtTier
-        ?R('Perluas Jaringan: '+nxtTier.n,'kapasitas maksimal '+fmtNum(nxtTier.max)+' bangunan','gridup','',fmt(nxtTier.p))
-        :R('Jaringan Global Maksimal','kapasitas hingga 300.000.000 bangunan tercapai!',0))
-      +`</div>`;
-    }else{
-      const rows=COUNTRIES.map(ct=>{
-        const maxR=P(ct.maxRate);
-        return R(ct.n+' (+'+fmtNum(ct.bld)+' bangunan)','syarat tarif ≤ '+fmt(maxR)+'/kWh · izin ekspansi','buycountry',ct.id,S.countries[ct.id]?'Tersambung':fmt(ct.p),!!S.countries[ct.id]);
+  if(t==='un'){
+    const st=subTab||'ps';
+    const availTV=TV.map((v,j)=>({...v,j})).filter(v=>v.yr<=yr);
+    const tabs=`<div class="subtabs">${[['ps','PlayStation & Xbox'],['eq','Peralatan Warung']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
+    let rows=[];
+    if(st==='ps'){
+      rows=Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>{
+        const c=K[k];
+        return `<div class="row"><span>${c.n}<br><span class="lg">pasar ${fmt(Py(c.r,c.yr))}/jam · rilis ${c.yr}</span></span><span>${availTV.map(v=>B('bu',k+':'+v.j,v.n+' '+fmt(Py(c.p,c.yr)+Py(v.p,v.yr)),0,'sm')).join(' ')}</span></div>`;
       });
-      const pg=paginate(rows,4);
-      h=`<div>${tabs}<div class="lg" style="margin-bottom:4px">Negara lain akan mengizinkan jaringanmu masuk jika tarifmu lebih murah dari standar negara mereka.</div>${pg.slice.join('')}</div>${pg.nav}`;
+    }else{
+      rows=Object.keys(EQ).map(k=>R(EQ[k][0],'syarat jual makanan/minuman','eq',k,S.eq[k]?'Punya':fmt(EQ[k][1]),S.eq[k]));
     }
+    const pg=paginate(rows,5);
+    h=`<div>${tabs}<div class="lg">Slot ruangan: <b>${used()}/${S.cap}</b> (tahun ${yr}). Upgrade & jual second lewat tombol <b>Kelola</b> di kartu konsol.</div>${pg.slice.join('')}</div>${pg.nav}`;
   }
 
-  if(t==='gen'){
-    const es=energyStats(),nxtGen=GENS[(S.genLv||0)+1];
-    const fuelPrice=P(1200);
-    const m=S.grid.srcMode||'bat';
+  if(t==='gm'){
+    const pfs=['part','ps1','ps2','ps3','ps4','ps5','xb1','xb360','xbone','xbsx'].filter(pf=>pf==='part'||GM.some(g=>g.pf===pf&&g.yr<=yr));
+    const st=pfs.includes(subTab)?subTab:'part';
+    const tabs=`<div class="subtabs">${pfs.map(pf=>B('stab',pf,pf==='part'?'Stik Cadangan':pf.toUpperCase(),0,'sm '+(st===pf?'on':''))).join('')}</div>`;
+    let rows=[];
+    if(st==='part'){
+      rows=Object.keys(PT).filter(id=>PT[id].yr<=yr).map(id=>{
+        const p=PT[id],pr=Py(p.p,p.yr);
+        return `<div class="row"><span>${p.n} (stok ${S.parts[id]||0})<br><span class="lg">${fmt(pr)}/pcs · otomatis mengganti saat rusak</span></span><span>${[1,100,500,1000].map(q=>B('bpt',id+':'+q,'+'+q+' ('+fmt(pr*q)+')',0,'sm')).join(' ')}</span></div>`;
+      });
+    }else{
+      rows=GM.filter(g=>g.pf===st&&g.yr<=yr).map(g=>R(g.n,'rilis '+g.yr+' · harga ori','bgm',g.id,S.games[g.id]?'Dimiliki':fmt(Py(g.p,g.yr)),S.games[g.id]));
+    }
+    const pg=paginate(rows,5);
+    h=`<div>${tabs}${pg.slice.join('')}</div>${pg.nav}`;
+  }
+
+  if(t==='st'){
+    const rows=I.map(i=>`<div class="row"><span>${i.n} (stok ${S.stock[i.id]})<br><span class="lg">modal ${fmt(P(i.c))}/pcs${i.eq?' · butuh '+EQ[i.eq][0]:''}</span></span><span>${[100,250,500,1000].map(q=>B('bs',i.id+':'+q,'+'+q+' ('+fmt(P(i.c)*q)+')',0,'sm')).join(' ')}</span></div>`)
+    .concat([
+      `<div class="row"><span>Gas 3 kg (stok ${S.sup.gas.toFixed(1)})<br><span class="lg">${fmt(P(12000))}/tabung · Indomie, kopi, gorengan</span></span><span>${[5,500,1000].map(q=>B('sp','gas:'+q,'+'+q+' ('+fmt(P(12000)*q)+')',0,'sm')).join(' ')}</span></div>`,
+      `<div class="row"><span>Air galon (stok ${S.sup.gal.toFixed(1)})<br><span class="lg">${fmt(P(8000))}/galon · es teh dan kopi</span></span><span>${[5,500,1000].map(q=>B('sp','gal:'+q,'+'+q+' ('+fmt(P(8000)*q)+')',0,'sm')).join(' ')}</span></div>`
+    ]);
+    const pg=paginate(rows,5);
+    h=`<div>${pg.slice.join('')}</div>${pg.nav}`;
+  }
+
+  if(t==='li'){
+    h=`<div><div class="box"><div class="lg">Sisa Token PLN: <b>${S.kwh.toFixed(1)} kWh</b> (${fmt(P(900))}/kWh + admin Rp 2.500)${S.out?' · <b style="color:var(--bad)">PADAM</b>':''}</div></div>`
+      +[50,100,250,500].map(n=>R('Token '+n+' kWh','','tok',n,fmt(P(n*900)+2500))).join('')
+      +R('Genset Cadangan','otomatis menyala saat token habis, bensin '+fmt(P(4500))+'/jam','gen','',S.gen?'Terpasang':fmt(4000000),S.gen)
+      +`</div>`;
+  }
+
+  if(t==='hd'){
+    const ka=kidAge(),inh=isInherited();
+    const naAmt=!inh?Math.round(S.husband.sal*0.80):(S.mar&&S.pt?Math.round(S.pt.sal*0.80):0);
     h=`<div><div class="box">
-      <div class="r"><b>${es.gen.n}</b><span class="chip" style="color:${es.genKw>0?'var(--ok)':'var(--mt)'}">${es.genKw>0?es.genKw+' kW SIAP':'OFF / BENSIN HABIS'}</span>${leverHTML()}</div>
-      <div class="lg">Stok Bensin/Solar: <b>${(S.fuel||0).toFixed(1)} Liter</b> · Konsumsi penuh: <b>${es.gen.fuelL} L/jam</b> · Harga BBM: <b>${fmt(fuelPrice)}/L</b></div>
-      <div class="lg">Status Tuas: <b>${m==='gen'?'Genset sedang memasok jaringan':m==='auto'?'Genset siaga backup baterai':'Genset dimatikan (fokus via baterai)'}</b></div>
-    </div>`
-    +`<div class="row"><span>Beli Bensin / Solar</span><span>${[50,250,1000,5000].map(L=>B('buyfuel',L,'+'+L+'L ('+fmt(fuelPrice*L)+')',0,'sm')).join(' ')}</span></div>`
-    +(nxtGen
-      ?R('Upgrade Generator: '+nxtGen.n,'daya '+nxtGen.kw+' kW · konsumsi '+nxtGen.fuelL+' L/jam','upgen','',fmt(P(nxtGen.p)))
-      :R('Generator Bensin/Diesel Maksimal','sudah siap diperkuat dengan Alat Pemanen Surya!',0))
-    +((S.genLv||0)>0
-      ?R('Jual Second Generator','jual mesin bensin jika sudah full tenaga surya','sellgen','',fmt(Math.round(P(es.gen.p)*0.65)))
-      :'')
-    +`</div>`;
+      <div class="r"><b>${inh?'Peran: Kamu (Usia '+ka+' thn - Pemilik Warisan)':'Peran: Orang Tua (Usia Anak '+ka+' thn)'}</b><span class="chip" style="color:${inh?'var(--ok)':'var(--ac)'}">${inh?'Sudah Diwariskan (2014+)':'Menuju Warisan 2014 ('+(12-ka)+' thn lagi)'}</span></div>
+      <div class="lg">Konsumsi harian keluarga: <b style="color:var(--bad)">-${fmt(dailyFoodCost())}/hari</b> · Biaya bulanan rumah: <b>${fmt(monthlyLivingCost())}/bln</b></div>
+      <div class="lg">Nafkah suami (80% gaji): <b style="color:var(--ok)">+${fmt(naAmt)}/bln</b>${!inh?' ('+S.husband.n+', gaji '+fmt(S.husband.sal)+')':''}</div>
+    </div>`;
+    if(!inh){
+      h+=`<div class="lg">Rawat dan besarkan bisnis 10 PS1 ini bersama suami. Tepat tahun <b>2014</b> saat anak berusia <b>12 tahun</b>, seluruh usaha dan tabungan akan diserahkan kepadanya!</div>`
+        +R('Pakai KB Keluarga','menjaga pengeluaran anak tetap stabil','kb','',S.kb?'KB Aktif':'Aktifkan KB');
+    }else{
+      const p=S.pt;
+      h+=(p
+        ?R(p.n+(S.mar?' (suami)':' (pacar)'),'tipe '+p.cls+' · gaji ±'+fmt(p.sal)+' · hubungan '+Math.round(p.love)+(S.mar?' · nafkah 80% gaji':''),'bk','','Putus/cerai')
+          +`<div class="row">${B('date','','Kencan 100rb',0,'sm')}${B('qt','','Waktu bersama',0,'sm')}${B('mr','','Nikah 10jt (19+, hub 60)',S.mar||ka<19,'sm')}${B('kb','',S.kb?'KB aktif':'KB 50rb/bln',0,'sm')}</div>`
+        :R('Belum punya pasangan','bisa cari pasangan mulai usia 18 tahun','fd','','Cari pasangan',ka<18));
+    }
+    h+=`</div>`;
+  }
+
+  if(t==='us'){
+    const st=subTab||'rk';
+    const tabs=`<div class="subtabs">${[['rk','Ruko & Mode'],['vn','Usaha Sampingan'],['as','Aset Pribadi']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
+    let rows=[];
+    if(st==='rk'){
+      rows=[
+        R('Garasi rumah','kapasitas 15 slot',0),
+        R('Sewa ruko','35 slot · sewa Rp 2 jt/bln + deposit Rp 4 jt','mv','r',S.cap>=35?'Aktif':fmt(4e6),S.cap>=35),
+        R('Beli ruko (Tunai)','80 slot, bebas sewa selamanya','mv','b',S.cap>=80?'Punya':fmt(450e6),S.cap>=80),
+        R('Beli ruko (Kredit/Cicilan)','80 slot · DP Rp 90 jt + Rp 8,2 jt/bln x 60 bln','mv','bc',S.propLn?'Cicilan '+S.propLn.left+' bln':S.cap>=80?'Punya':'DP '+fmt(90e6),S.cap>=80||!!S.propLn),
+        R('Mode Cuan x2 (Gratis)','tagihan pelanggan dobel, bebas ON/OFF','bI','',S.bI?'ON':'OFF'),
+        R('Mode Ramai x2 (Gratis)','pelanggan datang dobel, bebas ON/OFF','bC','',S.bC?'ON':'OFF')
+      ];
+    }else if(st==='vn'){
+      rows=V.map(v=>R(v.n,'untung ±'+fmt(P((v.a+v.b)/2-v.u))+'/bln','ven',v.id,S.v[v.id]?'Aktif':fmt(P(v.p)),S.v[v.id]));
+    }else{
+      rows=AS.map(x=>R(x.n,'hemat stamina '+Math.round(x.r*100)+'%','ast',x.id,S.as[x.id]?'Punya':fmt(P(x.p)),S.as[x.id]));
+    }
+    const pg=paginate(rows,5);
+    h=`<div>${tabs}${pg.slice.join('')}</div>${pg.nav}`;
+  }
+
+  if(t==='bk'){
+    const st=subTab||'dp';
+    const tabs=`<div class="subtabs">${[['dp','Tabungan & Deposito'],['ln','Pinjaman Bank']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
+    if(st==='dp'){
+      const dRows=S.dep.map((d,idx)=>R('Deposito '+fmt(d.amt),'umur '+d.mo+' bln · bunga '+(depRate(d.mo)*100).toFixed(1)+'% ('+fmt(d.amt*depRate(d.mo))+'/bln)','cldep',idx,'Cairkan'));
+      const pg=paginate(dRows,3);
+      h=`<div>${tabs}<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo Bank (bunga 4%/thn)</span>${B('dep',1000000,'Setor 1jt',0,'sm')}${B('wd',1000000,'Tarik 1jt',0,'sm')}</div>`
+        +`<div class="row"><span>Buka Deposito (bunga naik +0,1%/bln)</span><span>${[5e6,15e6,50e6,150e6].map(n=>B('mkdep',n,fmt(n),S.b<n,'sm')).join(' ')}</span></div>`
+        +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada deposito aktif.</div>')
+        +`</div>${pg.nav}`;
+    }else{
+      h=`<div>${tabs}`
+        +(S.ln?R('Cicilan bank berjalan',fmt(S.ln.pay)+'/bln · sisa '+S.ln.left+' bln'):'')
+        +(S.propLn?R('Cicilan ruko berjalan',fmt(S.propLn.pay)+'/bln · sisa '+S.propLn.left+' bln'):'')
+        +[10e6,25e6,50e6,100e6].map(n=>R('Pinjaman '+fmt(n),'bunga 16%/thn, 12 bulan','ln',n,'Ajukan',!!S.ln)).join('')
+        +`</div>`;
+    }
   }
 
   if(t==='pg'){
-    const cm=(curYear()-START_YEAR)*12+curDate().getMonth(),stdSal=P(1200000);
+    const cm=(curYear()-START_YEAR)*12+curDate().getMonth(),stdSal=P(850000);
     const eCards=S.emps.map(e=>{
       const hrs=shiftHours(e),st=e.sick>0?`<b style="color:var(--bad)">SAKIT (${e.sick}h)</b>`:e.off>0?'<b style="color:var(--ok)">LIBUR</b>':empWorkingNow(e)?'<b style="color:var(--ok)">Jaga</b>':'Off';
       const usedOff=e.offMo===cm;
@@ -818,42 +898,49 @@ function side(){
       </div>`;
     });
     const pg=paginate(eCards,3);
-    h=`<div><div class="row"><span>Operator & Teknisi: <b>${S.emps.length}</b> (gaji standar ${fmt(stdSal)}/bln)</span>${B('hi','','+ Rekrut',0,'sm')}</div>`
-      +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada teknisi. Rekrut untuk membantu operasional jaringan.</div>')
+    h=`<div><div class="row"><span>Karyawan: <b>${S.emps.length}</b> (jaga = stamina kamu 100% aman · standar ${fmt(stdSal)}/bln)</span>${B('hi','','+ Rekrut',0,'sm')}</div>`
+      +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada karyawan. Rekrut agar rental tetap buka saat sekolah/kerja!</div>')
       +`</div>${pg.nav}`;
   }
 
-  if(t==='bk'){
-    const st=subTab||'dp';
-    const tabs=`<div class="subtabs">${[['dp','Tabungan & Deposito'],['ln','Pinjaman Bank']].map(x=>B('stab',x[0],x[1],0,'sm '+(st===x[0]?'on':''))).join('')}</div>`;
-    if(st==='dp'){
-      const dRows=S.dep.map((d,idx)=>R('Deposito '+fmt(d.amt),'umur '+d.mo+' bln · bunga '+(depRate(d.mo)*100).toFixed(1)+'% ('+fmt(d.amt*depRate(d.mo))+'/bln)','cldep',idx,'Cairkan'));
-      const pg=paginate(dRows,3);
-      h=`<div>${tabs}<div class="r"><b>${fmt(S.b)}</b><span class="lg">saldo Bank (bunga 4%/thn)</span>${B('dep',50000000,'Setor 50jt',0,'sm')}${B('wd',50000000,'Tarik 50jt',0,'sm')}</div>`
-        +`<div class="row"><span>Buka Deposito (bunga naik +0,1%/bln)</span><span>${[50e6,200e6,500e6,2e9].map(n=>B('mkdep',n,fmt(n),S.b<n,'sm')).join(' ')}</span></div>`
-        +(pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada deposito aktif.</div>')
-        +`</div>${pg.nav}`;
-    }else{
-      h=`<div>${tabs}`
-        +(S.ln?R('Cicilan bank berjalan',fmt(S.ln.pay)+'/bln · sisa '+S.ln.left+' bln'):'')
-        +[100e6,500e6,2e9,10e9].map(n=>R('Pinjaman '+fmt(n),'bunga 15%/thn, 12 bulan','ln',n,'Ajukan',!!S.ln)).join('')
-        +`</div>`;
+  if(t==='kl'){
+    const dt=curDate(),y=dt.getFullYear(),m=dt.getMonth(),td=dt.getDate();
+    const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+    let cells=HARI.map(x=>`<div class="ch">${x}</div>`).join('')+'<div></div>'.repeat(first);
+    const list=[];
+    for(let d=1;d<=days;d++){
+      const hn=holName(y,m,d),dow=(first+d-1)%7,red=(dow===0||!!hn);
+      if(hn)list.push(d+' '+BLN[m]+': '+hn);
+      cells+=`<div class="${red?'hol':''} ${d===td?'tod':''}">${d}</div>`;
     }
+    const se=schoolEnd();
+    h=`<div><div class="r"><b>${BLN[m]} ${y}</b><span class="lg">${!isInherited()?'Era Orang Tua (Anak usia '+kidAge()+' thn)':kidAge()<18?(se?'Sekolah hari ini: 07:00–'+se+':00':'Hari ini libur sekolah!'):'Sudah lulus sekolah'}</span></div>`
+      +`<div class="cal">${cells}</div>`
+      +`<div class="lg"><b>Libur Nasional:</b> ${list.length?list.join(' · '):'Tidak ada selain hari Minggu.'}</div></div>`;
+  }
+
+  if(t==='jb'){
+    h=`<div><div class="lg">Kerja di luar memakai stamina & waktu. Jika rental buka, pastikan ada karyawan jaga.</div>`
+      +J.map((j,i)=>R(j.n,j.h+'j · '+fmt(P(j.pay))+' · stam -'+j.st+(isInherited()?' · usia '+j.age+'+':'')+(j.e?' · '+j.e+' kry':''),'job',i,'Ambil',S.busy>0||(isInherited()&&kidAge()<j.age)||inSchool())).join('')+`</div>`;
+  }
+
+  if(t==='hg'){
+    const rows=Object.keys(K).filter(k=>K[k].yr<=yr).map(k=>`<div class="row"><span>${K[k].n} <span class="lg">(pasar ${fmt(Py(K[k].r,K[k].yr))}/j)</span></span><input type="number" data-p="${k}" value="${S.pr[k]}"></div>`)
+      .concat(I.map(i=>`<div class="row"><span>${i.n} <span class="lg">(pasar ${fmt(P(i.p))})</span></span><input type="number" data-p="${i.id}" value="${S.pr[i.id]}"></div>`));
+    const pg=paginate(rows,5);
+    h=`<div><div class="row"><span class="lg">Harga pasar naik tiap tahun sesuai inflasi.</span>${B('mk','','Samakan Pasar',0,'sm')}</div>${pg.slice.join('')}</div>${pg.nav}`;
   }
 
   if(t==='rh'){
-    const v=S.hv||'b',rec=S.rec||[];
-    const cur={y:curYear(),m:curDate().getMonth(),rev:S.moRev||0,o:0,x:S.exp};
-    const sum=a=>a.reduce((z,r)=>({rev:z.rev+r.rev,o:z.o+r.o,x:z.x+r.x}),{rev:0,o:0,x:0});
-    const row=(l,r)=>{
-      const profit=r.rev+r.o-r.x;
-      return `<div class="row"><span>${l}<br><span class="lg">Listrik ${fmt(r.rev)} · Bunga ${fmt(r.o)} · Keluar ${fmt(r.x)}</span></span><b style="color:${profit<0?'var(--bad)':'var(--ok)'}">${fmt(profit)}</b></div>`;
-    };
+    const v=S.hv||'p',rec=S.rec||[],cur={w:S.inc,o:0,x:S.exp,c:S.cm||0,h:S.hm||0};
+    const sum=a=>a.reduce((z,r)=>({w:z.w+r.w,o:z.o+r.o,x:z.x+r.x,c:z.c+r.c,h:z.h+r.h}),{w:0,o:0,x:0,c:0,h:0});
+    const row=(l,r)=>`<div class="row"><span>${l}<br><span class="lg">${r.c} plg · ${Math.round(r.h/60)}j · rental ${fmt(r.w)} · nafkah/lain ${fmt(r.o)} · keluar ${fmt(r.x)}</span></span><b style="color:${r.w+r.o-r.x<0?'var(--bad)':'var(--ok)'}">${fmt(r.w+r.o-r.x)}</b></div>`;
     let rows=[];
-    if(v==='b')rows=[row('Bulan berjalan (real-time)',cur)].concat(rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)));
+    if(v==='p')rows=(S.hist||[]).map(x=>`<div class="row"><span>${x.n} · ${x.u}<br><span class="lg">${dur(x.m)} · ${x.o} psn · ${x.d}</span></span><b>${fmt(x.b)}</b></div>`);
+    if(v==='b')rows=[row('Bulan berjalan',cur)].concat(rec.slice().reverse().map(r=>row(BLN[r.m]+' '+r.y,r)));
     if(v==='t'){const ys={},yc=curYear();rec.forEach(r=>(ys[r.y]=ys[r.y]||[]).push(r));if(!ys[yc])ys[yc]=[];rows=Object.keys(ys).sort().reverse().map(y=>row('Tahun '+y+(+y===yc?' (berjalan)':''),sum(ys[y].concat(+y===yc?[cur]:[]))))}
     const pg=paginate(rows,5);
-    h=`<div><div class="subtabs">${[['b','Bulanan'],['t','Tahunan']].map(x=>B('hv',x[0],x[1],0,'sm '+(v===x[0]?'on':''))).join('')}</div>${pg.slice.join('')}</div>${pg.nav}`;
+    h=`<div><div class="subtabs">${[['p','Pemain'],['b','Bulanan'],['t','Tahunan']].map(x=>B('hv',x[0],x[1],0,'sm '+(v===x[0]?'on':''))).join('')}</div>${pg.slice.length?pg.slice.join(''):'<div class="lg">Belum ada riwayat.</div>'}</div>${pg.nav}`;
   }
 
   if(t==='lg'){
@@ -863,48 +950,59 @@ function side(){
 }
 
 function render(){
-  const dt=curDate(),yr=curYear(),es=energyStats(),totBld=totalBuildings();
+  const dt=curDate(),yr=curYear(),hn=holName(dt.getFullYear(),dt.getMonth(),dt.getDate());
+  const tx=taxInfo(S.inc),sk=sickEmps().length,ka=kidAge(),inh=isInherited();
   const h=Math.floor(S.T/60)%24;
-  const st=(h>=22||h<6)?['ISTIRAHAT (22-06)','var(--ac)']:S.grid.on?['MENYALURKAN','var(--ok)']:['SIAGA','var(--mt)'];
-  const plnPct=Math.min(100,(totBld/2000000)*100);
+  const st=S.busy>0?['KERJA '+Math.ceil(S.busy/60)+'j','var(--wr)']:S.out?['PADAM','var(--bad)']:S.faint?['CAPEK','var(--bad)']:inSchool()&&!empOnDuty()?['SEKOLAH (s/d '+schoolEnd()+':00)','var(--wr)']:S.open?['BUKA','var(--ok)']:['TUTUP','var(--mt)'];
+  const roleTag=inh?'Pemilik (Usia '+ka+' thn)':'Orang Tua (Anak '+ka+' thn)';
 
   put($('#hd'),
-    `<div class="r"><b>${fmt(S.m)}</b><span class="lg">bank ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span class="chip" style="color:${st[1]}">${st[0]}</span><span class="chip" style="color:var(--ac)">Bangunan: ${fmtNum(totBld)} / 300 Jt</span><span class="chip" style="color:${plnPct>=100?'var(--ok)':'var(--wr)'}">${plnPct>=100?'🏆 PLN KALAH':'vs PLN: '+plnPct.toFixed(1)+'%'}</span></div>`
-    +`<div class="r lg"><span>Baterai: <b>${fmtKwh(S.batKwh)} / ${fmtKwh(es.bat.cap)}</b></span><span>Cas Surya: <b style="color:var(--ok)">+${fmtKwh(es.solarChargeKw)}/j</b> (${Math.round(es.sunRatio*100)}% zona)</span><span>BBM Genset: <b>${(S.fuel||0).toFixed(1)} L</b></span><span>Pemanen: <b>${S.harvUnits.length} unit</b> (Gen-${S.harvLv||0})</span><span>Tarif: <b>${fmt(es.rate)}/kWh</b></span></div>`
-    +`<div class="bar"><i style="width:${Math.min(100,(S.batKwh/Math.max(1,es.bat.cap))*100)}%"></i></div>`
+    `<div class="r"><b>${fmt(S.m)}</b><span class="lg">bank ${fmt(S.b)}</span><span>${HARI[dt.getDay()]}, ${dt.getDate()} ${BLN[dt.getMonth()]} ${yr}, ${clock()}</span><span class="chip" style="color:${inh?'var(--ok)':'var(--ac)'}">${roleTag}</span><span class="chip" style="color:${st[1]}">${st[0]}</span>${hn?`<span class="chip" style="color:var(--bad)">Libur: ${hn}</span>`:''}${sk?`<span class="chip" style="color:var(--wr)">${sk} Sakit</span>`:''}</div>`
+    +`<div class="r lg"><span>Rep ★${S.rr.toFixed(1)}</span><span>Antre ${S.q.length}</span><span>Token ${S.kwh.toFixed(0)}kWh</span><span>Slot ${used()}/${S.cap}</span><span>Makan -${fmt(dailyFoodCost())}/hr</span><span>Pajak: <b>${fmt(tx.amt)}</b> (${tx.lbl})</span><span>x${fx().toFixed(2)}</span></div>`
+    +`<div class="bar"><i style="width:${S.stam}%;background:${S.stam<25?'var(--bad)':'var(--ac)'}"></i></div>`
   );
 
   put($('#ctl'),
-    `<button data-a="pause" class="sm ${S.pause?'on':''}">${S.pause?'Lanjut':'Jeda'}</button>`
+    `<button data-a="tog" class="sm ${S.open?'on':''}">${S.open?'Tutup':'Buka'}</button>`
+    +`<button data-a="pause" class="sm ${S.pause?'on':''}">${S.pause?'Lanjut':'Jeda'}</button>`
     +[1,4,16,64,128,256,512].map(x=>`<button data-a="spd" data-i="${x}" class="sm ${S.spd===x?'on':''}">${x}x</button>`).join('')
-    +leverHTML()
-    +`<button data-a="cof" class="sm">Ngopi +40</button>`
+    +`<button data-a="cof" class="sm">Ngopi +35</button>`
     +`<button data-a="bI" class="sm ${S.bI?'on':''}">Cuan x2</button>`
     +`<button data-a="bC" class="sm ${S.bC?'on':''}">Ramai x2</button>`
     +`<button data-a="mute" class="sm">${S.mute?'Suara: Off':'Suara: On'}</button>`
   );
 
-  const secCards=SECTORS.map(sc=>{
-    const cnt=S.sec[sc.id]||0;
-    const kwTot=cnt*sc.kwPer;
-    return `<div class="card ${sc.cls}">
-      <div class="r" style="justify-content:space-between"><b>${sc.n}</b><span class="chip">${fmtNum(cnt)}</span></div>
-      <div class="lg">Beban sektor: <b>${fmtW(kwTot*1000)}</b></div>
-      <div class="lg">Target maks: ${fmtNum(sc.max)}</div>
-    </div>`;
-  });
+  const perSt=9,maxStP=Math.max(0,Math.ceil(S.st.length/perSt)-1);
+  if(stPage>maxStP)stPage=maxStP;
+  put($('#stpg'),maxStP>0?`${B('stpg',-1,'◀',stPage<=0,'sm')}<span>${stPage+1}/${maxStP+1}</span>${B('stpg',1,'▶',stPage>=maxStP,'sm')}`:`<span class="lg">${S.st.length} unit terpasang</span>`);
 
-  const allCards=secCards.concat(S.sampleHouses.map(sh=>`<div class="card ${sh.cls}">
-    <div class="r" style="justify-content:space-between"><b>${sh.n}</b><span class="lg">${sh.sec}</span></div>
-    <div class="r"><span class="chip" style="color:var(--el)">⚡ ${fmtKwh(sh.usedKwh||0)}</span><b>${fmt(sh.bill||0)}</b></div>
-  </div>`));
+  const visUnits=S.st.slice(stPage*perSt,(stPage+1)*perSt);
+  put($('#sts'),visUnits.length?visUnits.map((s,idx)=>{
+    const i=stPage*perSt+idx;
+    const c=s.c,k=K[s.k],lv=s.lv||0,noGm=(ownedGames(k.pf).length===0);
+    let b='';
+    if(s.brk){
+      b=`<div style="color:var(--bad)"><b>RUSAK</b> (${PT[k.pt].n})</div>${B('fix',i,'Perbaiki ('+(S.parts[k.pt]||0)+')',0,'sm')}`;
+    }else if(!c){
+      b=`<div class="r" style="justify-content:space-between"><span class="mt">${noGm?'<span style="color:var(--wr)">Beli game '+k.pf.toUpperCase()+'!</span>':'Kosong'}</span>${B('ed',i,editIdx===i?'Tutup':'Kelola',0,'sm')}</div>`;
+      if(editIdx===i){
+        const nl=lv+1,nk=k.next?K[k.next]:null;
+        b+=`<div class="upbox">`
+          +(nk&&nk.yr<=yr?B('upk',i,'Ke '+nk.n+' ('+fmt(Py(k.up,nk.yr))+')',0,'sm'):nk?`<span class="lg">${nk.n} rilis ${nk.yr}</span>`:'')
+          +(s.tv>=0?TV.map((tv,j)=>j>s.tv&&tv.yr<=yr?B('uptv',i+':'+j,'TV '+tv.n+' ('+fmt(Math.max(100000,Py(tv.p,tv.yr)-Math.round(Py(TV[s.tv].p,TV[s.tv].yr)*.5)))+')',0,'sm'):'').join(''):'')
+          +(nl<UPLV.length?B('uplv',i,'Up Lv'+nl+' ('+fmt(P(UPLV[nl].p))+')',0,'sm'):'<span class="lg">Upgrade Lv Max</span>')
+          +B('sell',i,'Jual Second ('+fmt(unitVal(s))+')',0,'sm bad')
+          +`</div>`;
+      }
+    }else if(c.ph==='p'){
+      b=`<div>${c.n} · <span class="lg">${c.act||'Main'}</span></div><div class="bar"><i style="width:${c.used/c.want*100}%"></i></div><div class="r" style="justify-content:space-between"><b>${fmt(bill(c)*mult())}</b><span class="lg">${dur(c.used)}</span></div>`;
+    }else{
+      b=`<div>${c.n}</div><button data-a="coll" data-i="${i}" class="sm">Tagih ${fmt(bill(c)*mult())}</button>`;
+    }
+    return `<div class="card ${s.brk?'brk':c?c.ph:''}"><div><b>${k.n}</b>${lv?' <span class="chip">Lv'+lv+'</span>':''}${s.tv>=0?' <span class="lg">+ '+TV[s.tv].n+'</span>':''}</div>${b}</div>`;
+  }).join(''):'<div class="mt">Belum ada unit konsol. Beli di tab Unit.</div>');
 
-  const perCard=9,maxCP=Math.max(0,Math.ceil(allCards.length/perCard)-1);
-  if(cardPage>maxCP)cardPage=maxCP;
-  put($('#stpg'),maxCP>0?`${B('cpg',-1,'◀',cardPage<=0,'sm')}<span>${cardPage+1}/${maxCP+1}</span>${B('cpg',1,'▶',cardPage>=maxCP,'sm')}`:`<span class="lg">${fmtNum(totBld)} bangunan</span>`);
-  put($('#sts'),allCards.slice(cardPage*perCard,(cardPage+1)*perCard).join(''));
-
-  put($('#tb'),[['res','Riset (1000+)'],['sol','Pemanen Surya'],['grid','Jaringan & Negara'],['gen','Genset & BBM'],['pg','Teknisi'],['bk','Bank'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
+  put($('#tb'),[['un','Unit'],['gm','Game'],['st','Stok'],['li','Listrik'],['hd','Keluarga'],['us','Usaha'],['bk','Bank'],['pg','Pegawai'],['kl','Kalender'],['jb','Kerja'],['hg','Harga'],['rh','Riwayat'],['lg','Catatan']].map(x=>`<button data-a="tab" data-i="${x[0]}" class="${S.tab===x[0]?'on':''}">${x[1]}</button>`).join(''));
   put($('#side'),side());
 }
 
@@ -916,7 +1014,7 @@ setInterval(()=>{
 },100);
 
 window.getState=()=>S;
-window.applyCloud=o=>{if(o&&o.T!==undefined){S=migrate(o);_m=-1;rc=0;cardPage=0;subPage=0;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}};
+window.applyCloud=o=>{if(o&&o.st){S=migrate(o);_m=-1;rc=0;editIdx=-1;stPage=0;subPage=0;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}};
 window.addEventListener('pagehide',save);
 render();
 </script>
