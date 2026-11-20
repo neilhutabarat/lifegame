@@ -8,7 +8,7 @@ const msg=t=>{$('authmsg').textContent=t};
 let cfg=null;
 try{cfg=(await import('./firebase-config.js')).firebaseConfig}catch(e){}
 if(!cfg||String(cfg.apiKey).startsWith('ISI_')){
-  msg('Simpanan: lokal (Firebase belum diisi di firebase-config.js)');
+  msg('Simpanan: lokal (browser)');
 }else{
   const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
   let user=null,timer=0;

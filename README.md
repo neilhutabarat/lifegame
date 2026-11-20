@@ -1,6 +1,6 @@
-# Warnet Juragan 2008
+# Juragan Internet & PLTS 2018
 
-Game simulasi bisnis warnet, rental PS/Xbox, penyedia internet (RT-RW Net / Fiber), dan PLTS mikrogrid warga di Indonesia, mulai tahun 2008. Satu halaman web tanpa build step.
+Game simulasi bisnis penyedia layanan Internet (FTTH / Fiber) dan Listrik Tenaga Surya (PLTS Mikrogrid Warga) di Indonesia, mulai tahun 2018. Satu halaman web tanpa build step.
 
 ## Isi repo
 - `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)
@@ -32,7 +32,3 @@ lalu buka http://localhost:8000
 - Simpanan lokal selalu aktif (browser).
 - Setelah login Google, progres juga disimpan di dokumen `saves/{uid}` tiap akhir bulan game, atau lewat tombol "Simpan ke cloud".
 - Saat login, yang lebih baru (lokal atau cloud) yang dipakai.
-
-## Catatan
-- Config Firebase di sisi klien bukan rahasia. Keamanan data ada di `firestore.rules`. Jangan pernah commit service account key.
-- Angka inflasi 2008 sampai 2025 adalah perkiraan dari data BPS. Cocokkan dengan sumber resmi bila perlu.
