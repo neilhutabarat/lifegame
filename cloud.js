@@ -47,25 +47,28 @@ const CloudSync = {
   },
 
   async pushToCloud(stateObj, force = false) {
-    if (!navigator.onLine || !this.init()) return { ok: false };
+    if (!navigator.onLine || !this.init()) return { ok: false, reason: 'offline' };
     const now = Date.now();
     if (!force && now - this.lastCloudPush < 8000) return { ok: true, skipped: true };
     try {
       this.lastCloudPush = now;
       await this.db.collection('rental_simulator_saves').doc(this.syncId).set({
-        syncId: this.syncId, rentalName: stateObj.rentalName || 'Rental Oneilverse', updatedAt: now, payload: JSON.stringify(stateObj)
+        syncId: this.syncId,
+        rentalName: stateObj.rentalName || 'Rental Oneilverse',
+        updatedAt: now,
+        payload: JSON.stringify(stateObj)
       }, { merge: true });
       return { ok: true };
-    } catch (err) { return { ok: false }; }
+    } catch (err) { return { ok: false, reason: err.message }; }
   },
 
   async pullFromCloud() {
-    if (!navigator.onLine || !this.init()) return { ok: false };
+    if (!navigator.onLine || !this.init()) return { ok: false, reason: 'offline' };
     try {
       const snap = await this.db.collection('rental_simulator_saves').doc(this.syncId).get();
       if (!snap.exists) return { ok: false, reason: 'not_found' };
       const data = snap.data();
       return { ok: true, state: JSON.parse(data.payload), updatedAt: data.updatedAt || 0 };
-    } catch (err) { return { ok: false }; }
+    } catch (err) { return { ok: false, reason: err.message }; }
   }
 };

@@ -10,65 +10,71 @@
 
 <header>
   <div class="brand-box">
-    <div class="brand-title" onclick="openEditRentalNameModal()" title="Klik untuk ubah nama rental">
+    <div class="brand-title" onclick="openEditRentalNameModal()" title="Klik untuk ubah nama usaha">
       🎮 <span id="rentalTitleDisplay">Rental Room Oneilverse</span> ✏️
     </div>
     <div class="brand-sub">
       <span>Rental Simulator by Oneilverse</span>
-      <span class="badge" id="syncBadge" onclick="openModeSelectModal()" style="cursor:pointer;" title="Klik untuk ganti mode modal">🛠️ Dev 100Jt • Realistis</span>
+      <span class="badge" onclick="openModeSelectModal()" style="cursor:pointer;">⚙️ Ganti Mode Modal</span>
     </div>
   </div>
 
   <div class="hud-group">
-    <div class="stat"><span class="lbl">Waktu:</span><b id="hudDateTime">1/1/2020 • 08:00</b></div>
+    <div class="stat"><span class="lbl">Kalender:</span><b id="hudDateTime">Rabu, 1/1/2020 • 08:00</b></div>
     <div class="speed-controls">
       <button id="btnPause" class="speed-btn paused" onclick="togglePause()" title="Pause">⏸️</button>
       <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
       <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
       <button class="speed-btn" data-speed="4" onclick="setSpeed(4)">4x</button>
     </div>
-    <div class="stat"><span class="lbl">Dompet Pribadi (MCash):</span><b id="hudWallet" style="color:#60a5fa;">Rp 5.000.000</b></div>
+    <div class="stat"><span class="lbl">Dompet MCash:</span><b id="hudWallet" style="color:#60a5fa;">Rp 0</b></div>
     <div class="stat"><span class="lbl">Kas Kasir:</span><b id="hudDrawer" style="color:#34d399;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">Saldo Bisnis:</span><b id="hudPpob" style="color:#fbbf24;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">Saldo PPOB:</span><b id="hudPpob" style="color:#fbbf24;">Rp 0</b></div>
     <div class="stat"><span class="lbl">PLN:</span><b id="hudKwh">60.0 kWh</b></div>
-    <button onclick="openCloudSyncModal()" title="Sinkronisasi Firestore">☁️ Cloud</button>
+    <div class="stat"><b id="hudRep">⭐ 4.50</b></div>
+    <button onclick="openCloudSyncModal()">☁️ Cloud</button>
+    <button id="btnToggleShop" class="success" onclick="toggleShopManual()">🟢 BUKA</button>
   </div>
 </header>
 
 <div class="main-layout">
+  <!-- KOLOM 1: INFO SISTEM & CATATAN AKTIVITAS -->
   <div class="col">
     <div class="card">
-      <h2>👥 Pengunjung Otomatis <span id="queueCount" class="badge">0/5</span></h2>
-      <div style="font-size:0.72rem;color:var(--muted);">
-        Pelanggan datang, otomatis masuk ke room kosong, bayar di depan sesuai paket durasi, lalu dibersihkan karyawan setelah selesai.
+      <h2>📊 Ringkasan Operasional</h2>
+      <div style="font-size:0.74rem;color:var(--muted);line-height:1.45;">
+        • <b>5 Room Awal Kosong:</b> Bebas isi PS1–PS5, PC, Kasur Pasangan, atau Pekerja Hiburan.<br>
+        • <b>Otomatis:</b> Pengunjung masuk ke room siap pakai, bayar di depan, beli kondom/jajanan etalase, dan karyawan membersihkan room 15 menit setelah selesai.
       </div>
-      <div id="queueList" style="display:flex;flex-direction:column;gap:7px;min-height:120px;"></div>
     </div>
 
     <div class="card">
-      <h2>📢 Catatan Aktivitas</h2>
+      <h2>📢 Catatan Aktivitas & Keuangan</h2>
       <div id="logBox" class="log-box"></div>
     </div>
   </div>
 
+  <!-- KOLOM 2: 5 ROOM SERBAGUNA -->
   <div class="col">
     <div class="card">
       <h2>
-        <span>🚪 Room Rental & Room Pasangan</span>
-        <span style="font-size:0.71rem;color:var(--muted);">5 Unit Awal • Auto-Cleaning 15 Mnt</span>
+        <span>🚪 Daftar Room Usaha (5 Unit Awal)</span>
+        <span style="font-size:0.71rem;color:var(--muted);">Klik "⚙️ Isi / Atur Room" pada tiap room</span>
       </h2>
       <div id="boothsGrid" class="booths-grid"></div>
     </div>
   </div>
 
+  <!-- KOLOM 3: PUSAT BISNIS, HR, WIFI, BANK, AKTIVITAS LUAR & HIDUP -->
   <div class="col">
     <div class="card">
       <h2>📱 Pusat Bisnis & Kehidupan</h2>
       <div class="nav-tabs">
         <button class="nav-btn active" onclick="switchMainTab('toko', this)">🛒 Store</button>
-        <button class="nav-btn" onclick="switchMainTab('karyawan', this)">🧑‍💼 HR</button>
+        <button class="nav-btn" onclick="switchMainTab('hr', this)">🧑‍💼 HR</button>
         <button class="nav-btn" onclick="switchMainTab('wifi', this)">📶 Wi-Fi</button>
-        <button class="nav-btn" onclick="switchMainTab('bank', this)">🏦 Bank/PPOB</button>
+        <button class="nav-btn" onclick="switchMainTab('bank', this)">🏦 Bank</button>
+        <button class="nav-btn" onclick="switchMainTab('luar', this)">🛵 Luar</button>
         <button class="nav-btn" onclick="switchMainTab('life', this)">👩🏻 Hidup</button>
       </div>
       <div id="rightPanelContent" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
@@ -76,6 +82,7 @@
   </div>
 </div>
 
+<!-- CUSTOM IN-GAME MODAL -->
 <div id="customModalBackdrop" class="modal-backdrop">
   <div class="modal">
     <h3 id="customModalTitle" style="margin:0;color:var(--accent);font-size:0.98rem;">Judul</h3>
@@ -84,10 +91,11 @@
   </div>
 </div>
 
+<!-- MODAL TOKO GAME PER-UNIT -->
 <div id="unitGamesModal" class="modal-backdrop">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;color:var(--accent);">💿 Instalasi Game Resmi</h3>
+      <h3 style="margin:0;color:var(--accent);">💿 Instalasi Game Resmi (Per-Unit)</h3>
       <button onclick="document.getElementById('unitGamesModal').style.display='none'">✖ Tutup</button>
     </div>
     <div id="unitGamesHeader" style="background:#090e1a;padding:8px;border-radius:8px;font-size:0.8rem;"></div>
