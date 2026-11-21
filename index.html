@@ -1,929 +1,109 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Rental PS Life Simulator - Bang Jago</title>
-<style>
-  :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --panel-2: #273549;
-    --border: #334155;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --accent: #f59e0b;
-    --green: #10b981;
-    --red: #ef4444;
-    --blue: #3b82f6;
-  }
-  * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  header {
-    background: #0b1120;
-    border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .brand { font-weight: 800; font-size: 1.15rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-  .hud { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .stat {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-  .stat span { color: var(--muted); font-weight: 400; margin-right: 4px; }
-  .main {
-    display: grid;
-    grid-template-columns: 280px 1fr 310px;
-    gap: 14px;
-    padding: 14px;
-    flex: 1;
-  }
-  @media (max-width: 1050px) {
-    .main { grid-template-columns: 1fr; }
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .card h2 {
-    margin: 0;
-    font-size: 0.98rem;
-    color: var(--accent);
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  canvas {
-    width: 100%;
-    height: 240px;
-    background: #172033;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-  }
-  .booths-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
-    gap: 10px;
-  }
-  .booth {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 11px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: 0.15s;
-  }
-  .booth.active { border-color: var(--green); }
-  .booth.broken { border-color: var(--red); }
-  .booth-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem; }
-  .badge {
-    font-size: 0.72rem;
-    padding: 2px 7px;
-    border-radius: 99px;
-    background: #334155;
-  }
-  .badge.ok { background: rgba(16,185,129,0.2); color: #34d399; }
-  .badge.busy { background: rgba(59,130,246,0.2); color: #60a5fa; }
-  .badge.warn { background: rgba(239,68,68,0.2); color: #f87171; }
-  button {
-    background: #334155;
-    color: var(--text);
-    border: 1px solid #475569;
-    padding: 7px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: 600;
-    transition: 0.15s;
-  }
-  button:hover:not(:disabled) { background: #475569; }
-  button:disabled { opacity: 0.45; cursor: not-allowed; }
-  button.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); }
-  button.primary:hover:not(:disabled) { background: #fbbf24; }
-  button.success { background: var(--green); color: #06281e; border-color: var(--green); }
-  button.danger { background: var(--red); color: #fff; border-color: var(--red); }
-  .queue-item {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 9px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    font-size: 0.83rem;
-  }
-  .queue-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tab-btn { flex: 1; text-align: center; padding: 6px; font-size: 0.78rem; }
-  .tab-btn.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
-  .list-item {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 8px 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-  }
-  .log-box {
-    max-height: 155px;
-    overflow-y: auto;
-    font-size: 0.79rem;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    background: #0b1120;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-  }
-  .log-entry { color: #cbd5e1; border-bottom: 1px dashed #1e293b; padding-bottom: 3px; }
-  .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.72);
-    display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
-  }
-  .modal {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
-    max-width: 440px; width: 100%; padding: 18px; display: flex; flex-direction: column; gap: 12px;
-  }
-  .progress-bar { height: 6px; background: #0f172a; border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--green); transition: width 0.2s; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rental Simulator by Oneilverse</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <header>
-  <div class="brand">🎮 RENTAL PS BANG JAGO <span style="font-size:0.75rem;color:#94a3b8;font-weight:500;">v1.0</span></div>
-  <div class="hud">
-    <div class="stat"><span>Hari:</span><b id="hudDay">1</b> (<span id="hudClock" style="color:#f8fafc;font-weight:700;">08:00</span>)</div>
-    <div class="stat"><span>Kas Laci:</span><b id="hudCash" style="color:#34d399;">Rp 350.000</b></div>
-    <div class="stat"><span>Saldo QRIS:</span><b id="hudQris" style="color:#60a5fa;">Rp 0</b></div>
-    <div class="stat"><span>Token PLN:</span><b id="hudPower">100%</b></div>
-    <div class="stat"><span>Energi:</span><b id="hudEnergy">100%</b></div>
-    <div class="stat"><span>Sewa Kios (H-7):</span><b id="hudRent" style="color:#fbbf24;">Rp 500.000</b></div>
+  <div class="brand-box">
+    <div class="brand-title" onclick="editRentalName()" title="Klik untuk ganti nama rental">
+      🎮 <span id="rentalTitleDisplay">Rental PS & PC Oneilverse</span> ✏️
+    </div>
+    <div class="brand-sub">Rental Simulator by Oneilverse • Start Era 2020</div>
+  </div>
+
+  <div class="hud-group">
+    <div class="stat"><span class="lbl">Waktu:</span><b id="hudDateTime">1/1/2020 • 08:00</b></div>
+    <div class="speed-controls" title="1 jam in-game = 1 menit nyata (1x)">
+      <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
+      <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
+      <button class="speed-btn" data-speed="4" onclick="setSpeed(4)">4x</button>
+      <button class="speed-btn" data-speed="8" onclick="setSpeed(8)">8x</button>
+    </div>
+    <div class="stat"><span class="lbl">Laci Kasir:</span><b id="hudDrawer" style="color:#34d399;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">Bank:</span><b id="hudBank" style="color:#60a5fa;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">QRIS:</span><b id="hudQris" style="color:#a78bfa;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">PLN:</span><b id="hudKwh" style="color:#fbbf24;">45.0 kWh</b></div>
+    <div class="stat"><b id="hudRep">⭐ 4.20</b></div>
+    <div class="stat"><b id="hudAge">👩🏻 18 Thn</b></div>
+    <button id="btnVip2x" onclick="toggleVip2x()">🔒 Aktifkan 2x Boost</button>
     <button id="btnToggleShop" class="success" onclick="toggleShop()">🟢 BUKA RENTAL</button>
   </div>
 </header>
 
-<div class="main">
+<div class="main-layout">
   <!-- KOLOM KIRI: ANTREAN & LOG -->
-  <div style="display:flex;flex-direction:column;gap:14px;">
+  <div class="col">
     <div class="card">
-      <h2>👥 Antrean Pelanggan <span id="queueCount" class="badge">0/4</span></h2>
-      <div style="font-size:0.78rem;color:var(--muted);">Klik pelanggan di bawah, lalu pilih <b>Bilik Kosong</b> di tengah.</div>
-      <div id="queueList" style="display:flex;flex-direction:column;gap:8px;min-height:140px;"></div>
+      <h2>👥 Antrean Pelanggan <span id="queueCount" class="badge">0/5</span></h2>
+      <div style="font-size:0.73rem;color:var(--muted);">
+        Pelanggan mencari <b>game spesifik</b>. Klik pelanggan lalu dudukkan di bilik yang sudah terpasang game tersebut.
+      </div>
+      <div id="queueList" style="display:flex;flex-direction:column;gap:7px;min-height:130px;"></div>
     </div>
 
     <div class="card">
-      <h2>📒 Buku Kasbon & Reputasi</h2>
-      <div style="font-size:0.82rem;display:flex;justify-content:space-between;">
-        <span>Rating Rental:</span>
-        <b id="hudRating" style="color:#fbbf24;">⭐ 4.2 / 5.0</b>
-      </div>
-      <div style="font-size:0.82rem;display:flex;justify-content:space-between;">
-        <span>Total Piutang Kasbon:</span>
-        <b id="hudKasbon" style="color:#f87171;">Rp 0</b>
-      </div>
-      <button onclick="collectKasbon()" id="btnCollectKasbon" disabled>💸 Tagih Semua Kasbon</button>
-    </div>
-
-    <div class="card">
-      <h2>📢 Catatan Harian</h2>
+      <h2>📢 Log Aktivitas & Kejadian</h2>
       <div id="logBox" class="log-box"></div>
     </div>
   </div>
 
-  <!-- KOLOM TENGAH: LANTAI RENTAL & BILIK PS -->
-  <div style="display:flex;flex-direction:column;gap:14px;">
+  <!-- KOLOM TENGAH: DAFTAR BILIK KONSOL & PC -->
+  <div class="col">
     <div class="card">
       <h2>
-        <span>🕹️ Lantai Rental PS (Tampilan Visual)</span>
-        <span id="weatherBadge" class="badge">☀️ Cerah</span>
+        <span>🕹️ Bilik Rental Aktif (PS1–PS5, Switch, Xbox, PC)</span>
+        <span style="font-size:0.74rem;color:var(--muted);">Klik "💿 Game" di tiap bilik untuk beli game</span>
       </h2>
-      <canvas id="rentalCanvas" width="760" height="240"></canvas>
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <div style="font-size:0.8rem;color:var(--muted);">
-          Stok Warung: 🍜 Pop Mie: <b id="stockPopmie" style="color:#fff;">5</b> | 🧊 Es Teh: <b id="stockEsteh" style="color:#fff;">6</b> | 🎮 Stik Cadangan: <b id="stockStick" style="color:#fff;">2</b>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button id="btnGenset" onclick="toggleGenset()" style="display:none;" class="danger">⚡ Nyalakan Genset</button>
-          <button onclick="hideSchoolKids()" id="btnHideKids" style="display:none;" class="primary">🚨 Sembunyikan Anak Sekolah!</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>📺 Daftar Bilik Konsol <span id="boothCount" class="badge">2 Bilik</span></h2>
       <div id="boothsGrid" class="booths-grid"></div>
     </div>
   </div>
 
-  <!-- KOLOM KANAN: SMARTPHONE & KELILING KAMPUNG -->
-  <div class="card">
-    <h2>📱 HP Bang Jago & Kampung</h2>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('toko', this)">🛒 TokoOren</button>
-      <button class="tab-btn" onclick="switchTab('upgrade', this)">⬆️ Upgrade</button>
-      <button class="tab-btn" onclick="switchTab('kampung', this)">🛵 Kampung</button>
+  <!-- KOLOM KANAN: STORE, WIFI, BANK/PPOB, LIFE SIM -->
+  <div class="col">
+    <div class="card">
+      <h2>📱 Menu Manajemen & Kehidupan</h2>
+      <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchMainTab('toko', this)">🛒 Store</button>
+        <button class="nav-btn" onclick="switchMainTab('wifi', this)">📶 Wi-Fi</button>
+        <button class="nav-btn" onclick="switchMainTab('bank', this)">🏦 Bank/Kios</button>
+        <button class="nav-btn" onclick="switchMainTab('life', this)">👩🏻 Hidup</button>
+      </div>
+      <div id="rightPanelContent" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
     </div>
-    <div id="phoneContent" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
   </div>
 </div>
 
-<!-- MODAL KASIR / PEMBAYARAN -->
-<div id="checkoutModal" class="modal-backdrop">
+<!-- MODAL KASIR PECAHAN UANG RUPIAH -->
+<div id="cashierModal" class="modal-backdrop">
   <div class="modal">
-    <h3 style="margin:0;color:var(--accent);">💵 Pembayaran Sesi Rental</h3>
-    <div id="checkoutDetails" style="font-size:0.88rem;line-height:1.5;"></div>
-    <div id="checkoutActions" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <h3 style="margin:0;color:var(--accent);">💵 Kasir Manual — Susun Pecahan Kembalian</h3>
+    <div id="cashierSummary" style="font-size:0.84rem;line-height:1.5;background:#0b1120;padding:10px;border-radius:9px;"></div>
+    <div style="font-size:0.75rem;color:var(--muted);">
+      Susun pecahan uang kembalian dengan tepat! Salah hitung bisa bikin laci tekor atau reputasi turun.
+    </div>
+    <div id="denomGrid" class="denom-grid"></div>
+    <button class="success" onclick="submitCashierChange()">✅ Serahkan Uang Kembalian</button>
   </div>
 </div>
 
-<script>
-const state = {
-  day: 1,
-  minutes: 8 * 60, // 08:00
-  isOpen: false,
-  cash: 350000,
-  qris: 0,
-  power: 100,
-  energy: 100,
-  rating: 4.2,
-  kasbon: 0,
-  rentCost: 500000,
-  weather: 'Cerah',
-  blackout: false,
-  gensetOn: false,
-  satpolRaid: false,
-  selectedCustomerId: null,
-  activeTab: 'toko',
-  stock: { popmie: 5, esteh: 6, stick: 2 },
-  upgrades: { qris: false, ac: false, wifi: false, sofa: false, genset: false },
-  booths: [
-    { id: 1, tier: 'PS2 + TV Tabung', rate: 3000, customer: null, timeLeft: 0, totalTime: 0, stickHp: 100, snackOrder: null },
-    { id: 2, tier: 'PS3 + TV LED 32"', rate: 5000, customer: null, timeLeft: 0, totalTime: 0, stickHp: 100, snackOrder: null }
-  ],
-  queue: [],
-  pendingCheckout: null
-};
+<!-- MODAL BELI & INSTALL GAME PER-UNIT -->
+<div id="unitGamesModal" class="modal-backdrop">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;color:var(--accent);">💿 Toko Game Resmi (Per-Unit)</h3>
+      <button onclick="document.getElementById('unitGamesModal').style.display='none'">✖ Tutup</button>
+    </div>
+    <div id="unitGamesHeader" style="background:#0b1120;padding:8px;border-radius:8px;font-size:0.82rem;"></div>
+    <div id="unitGamesList" class="scroll-area" style="max-height:360px;"></div>
+  </div>
+</div>
 
-const CUSTOMER_TYPES = [
-  { type: 'Bocil SD', icon: '🧒', isSchoolKid: true, minHours: 1, maxHours: 2, payMethod: 'cash', patience: 100 },
-  { type: 'Anak SMP Bolos', icon: '🎒', isSchoolKid: true, minHours: 2, maxHours: 3, payMethod: 'cash', patience: 90 },
-  { type: 'Mahasiswa', icon: '🎓', isSchoolKid: false, minHours: 2, maxHours: 4, payMethod: 'qris', patience: 110 },
-  { type: 'Bapak-bapak PES', icon: '👨🏻', isSchoolKid: false, minHours: 1, maxHours: 3, payMethod: 'cash', patience: 100 },
-  { type: 'Abang Ojol', icon: '🛵', isSchoolKid: false, minHours: 1, maxHours: 2, payMethod: 'kasbon', patience: 105 }
-];
-
-const BOOTH_TIERS = [
-  { name: 'PS2 + TV Tabung', rate: 3000, cost: 250000 },
-  { name: 'PS3 + TV LED 32"', rate: 5000, cost: 450000 },
-  { name: 'PS4 Slim + TV 43"', rate: 8000, cost: 900000 },
-  { name: 'PS5 + Smart TV 4K', rate: 15000, cost: 1800000 }
-];
-
-function fmtRp(n) {
-  return 'Rp ' + Math.round(n).toLocaleString('id-ID');
-}
-
-function addLog(msg) {
-  const box = document.getElementById('logBox');
-  const div = document.createElement('div');
-  div.className = 'log-entry';
-  const h = String(Math.floor(state.minutes / 60)).padStart(2, '0');
-  const m = String(state.minutes % 60).padStart(2, '0');
-  div.innerHTML = `<span style="color:#64748b">[${h}:${m}]</span> ${msg}`;
-  box.prepend(div);
-}
-
-function toggleShop() {
-  if (!state.isOpen && state.energy < 15) {
-    addLog('⚠️ Energi terlalu lelah! Tidur atau makan dulu.');
-    return;
-  }
-  state.isOpen = !state.isOpen;
-  const btn = document.getElementById('btnToggleShop');
-  if (state.isOpen) {
-    btn.textContent = '🔴 TUTUP RENTAL';
-    btn.className = 'danger';
-    addLog('🟢 Pintu rolling door dibuka! Siap terima pelanggan.');
-  } else {
-    btn.textContent = '🟢 BUKA RENTAL';
-    btn.className = 'success';
-    state.queue = [];
-    state.selectedCustomerId = null;
-    addLog('🔴 Rental ditutup sementara.');
-  }
-  renderAll();
-}
-
-function spawnCustomer() {
-  if (!state.isOpen || state.queue.length >= 4) return;
-  const hour = Math.floor(state.minutes / 60);
-  if (hour >= 23 || hour < 8) return;
-
-  const tpl = CUSTOMER_TYPES[Math.floor(Math.random() * CUSTOMER_TYPES.length)];
-  const hours = Math.floor(Math.random() * (tpl.maxHours - tpl.minHours + 1)) + tpl.minHours;
-  const cust = {
-    id: Date.now() + Math.random(),
-    ...tpl,
-    hours,
-    patienceLeft: tpl.patience
-  };
-  state.queue.push(cust);
-  addLog(`${cust.icon} <b>${cust.type}</b> datang mau main ${cust.hours} jam.`);
-}
-
-function selectCustomer(id) {
-  state.selectedCustomerId = (state.selectedCustomerId === id) ? null : id;
-  renderAll();
-}
-
-function assignCustomerToBooth(boothId) {
-  const booth = state.booths.find(b => b.id === boothId);
-  if (!booth || booth.customer || booth.stickHp <= 0) return;
-  if (state.blackout && !state.gensetOn) {
-    addLog('⚡ Lagi mati lampu PLN! Nyalakan genset atau tunggu listrik nyala.');
-    return;
-  }
-  const custIdx = state.queue.findIndex(c => c.id === state.selectedCustomerId);
-  if (custIdx === -1) {
-    addLog('👆 Pilih pelanggan di antrean kiri dulu, bro!');
-    return;
-  }
-  const cust = state.queue.splice(custIdx, 1)[0];
-  state.selectedCustomerId = null;
-  booth.customer = cust;
-  booth.totalTime = cust.hours * 60;
-  booth.timeLeft = cust.hours * 60;
-  booth.snackOrder = null;
-  state.energy = Math.max(0, state.energy - 2);
-  addLog(`🎮 ${cust.icon} ${cust.type} mulai main di <b>Bilik #${booth.id}</b> (${cust.hours} jam).`);
-  renderAll();
-}
-
-function serveSnack(boothId) {
-  const booth = state.booths.find(b => b.id === boothId);
-  if (!booth || !booth.snackOrder) return;
-  if (booth.snackOrder === 'Pop Mie' && state.stock.popmie > 0) {
-    state.stock.popmie--;
-    booth.customer.extraBill = (booth.customer.extraBill || 0) + 8000;
-    addLog(`🍜 Antar Pop Mie ke Bilik #${booth.id} (+Rp 8.000 tagihan).`);
-    booth.snackOrder = null;
-  } else if (booth.snackOrder === 'Es Teh' && state.stock.esteh > 0) {
-    state.stock.esteh--;
-    booth.customer.extraBill = (booth.customer.extraBill || 0) + 4000;
-    addLog(`🧊 Antar Es Teh ke Bilik #${booth.id} (+Rp 4.000 tagihan).`);
-    booth.snackOrder = null;
-  } else {
-    addLog(`❌ Stok ${booth.snackOrder} habis! Beli di TokoOren dulu.`);
-  }
-  renderAll();
-}
-
-function repairStick(boothId) {
-  const booth = state.booths.find(b => b.id === boothId);
-  if (!booth) return;
-  if (state.stock.stick <= 0) {
-    addLog('❌ Stok stik cadangan habis! Belanja di TokoOren dulu.');
-    return;
-  }
-  state.stock.stick--;
-  booth.stickHp = 100;
-  addLog(`🔧 Stik Bilik #${booth.id} diganti baru & normal lagi!`);
-  renderAll();
-}
-
-function openCheckout(booth) {
-  const cust = booth.customer;
-  const rentalFee = booth.rate * cust.hours;
-  const snackFee = cust.extraBill || 0;
-  const total = rentalFee + snackFee;
-  state.pendingCheckout = { boothId: booth.id, cust, total };
-
-  const modal = document.getElementById('checkoutModal');
-  const details = document.getElementById('checkoutDetails');
-  const actions = document.getElementById('checkoutActions');
-
-  details.innerHTML = `
-    Pelanggan: <b>${cust.icon} ${cust.type}</b> (Bilik #${booth.id})<br>
-    Sewa PS (${cust.hours} jam): <b>${fmtRp(rentalFee)}</b><br>
-    Jajan Warung: <b>${fmtRp(snackFee)}</b><br>
-    <hr style="border-color:#334155;">
-    Total Tagihan: <b style="font-size:1.1rem;color:#34d399;">${fmtRp(total)}</b>
-  `;
-
-  actions.innerHTML = '';
-  const btnCash = document.createElement('button');
-  btnCash.className = 'success';
-  btnCash.textContent = `💵 Terima Tunai (${fmtRp(total)})`;
-  btnCash.onclick = () => finishCheckout('cash');
-  actions.appendChild(btnCash);
-
-  if (state.upgrades.qris) {
-    const btnQris = document.createElement('button');
-    btnQris.className = 'primary';
-    btnQris.textContent = `📱 Terima QRIS Soundbox (${fmtRp(total)})`;
-    btnQris.onclick = () => finishCheckout('qris');
-    actions.appendChild(btnQris);
-  }
-
-  const btnKasbon = document.createElement('button');
-  btnKasbon.textContent = `📒 Catat di Buku Kasbon`;
-  btnKasbon.onclick = () => finishCheckout('kasbon');
-  actions.appendChild(btnKasbon);
-
-  modal.style.display = 'flex';
-}
-
-function finishCheckout(method) {
-  const p = state.pendingCheckout;
-  if (!p) return;
-  const booth = state.booths.find(b => b.id === p.boothId);
-  if (method === 'cash') {
-    state.cash += p.total;
-    addLog(`💵 Pembayaran tunai ${fmtRp(p.total)} dari ${p.cust.type}.`);
-  } else if (method === 'qris') {
-    state.qris += p.total;
-    addLog(`🔊 "Pembayaran QRIS sebesar ${fmtRp(p.total)} diterima!"`);
-  } else {
-    state.kasbon += p.total;
-    addLog(`📒 ${p.cust.type} ngebon ${fmtRp(p.total)}. Jangan lupa ditagih!`);
-  }
-  state.rating = Math.min(5.0, +(state.rating + 0.05).toFixed(2));
-  booth.customer = null;
-  booth.timeLeft = 0;
-  booth.snackOrder = null;
-  state.pendingCheckout = null;
-  document.getElementById('checkoutModal').style.display = 'none';
-  renderAll();
-}
-
-function collectKasbon() {
-  if (state.kasbon <= 0) return;
-  const collected = state.kasbon;
-  state.cash += collected;
-  state.kasbon = 0;
-  addLog(`💸 Berhasil nagih semua piutang kasbon sebesar <b>${fmtRp(collected)}</b>!`);
-  renderAll();
-}
-
-function toggleGenset() {
-  if (!state.upgrades.genset) return;
-  state.gensetOn = !state.gensetOn;
-  addLog(state.gensetOn ? '⚡ Genset dinyalakan! Rental tetap jalan.' : '🔇 Genset dimatikan.');
-  renderAll();
-}
-
-function hideSchoolKids() {
-  let hidden = 0;
-  state.booths.forEach(b => {
-    if (b.customer && b.customer.isSchoolKid) {
-      b.customer = null;
-      b.timeLeft = 0;
-      hidden++;
-    }
-  });
-  state.queue = state.queue.filter(c => !c.isSchoolKid);
-  state.satpolRaid = false;
-  document.getElementById('btnHideKids').style.display = 'none';
-  addLog(`🤫 ${hidden} anak sekolah berhasil disuruh ngumpet lewat pintu belakang! Aman dari Satpol PP.`);
-  renderAll();
-}
-
-function switchTab(tab, el) {
-  state.activeTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  renderPhone();
-}
-
-function buyItem(type) {
-  if (type === 'popmie' && state.cash >= 25000) {
-    state.cash -= 25000; state.stock.popmie += 6;
-    addLog('📦 Kurir mengantar 1 dus Pop Mie (6 cup).');
-  } else if (type === 'esteh' && state.cash >= 15000) {
-    state.cash -= 15000; state.stock.esteh += 10;
-    addLog('📦 Bahan Es Teh Manis (10 porsi) tiba.');
-  } else if (type === 'stick' && state.cash >= 60000) {
-    state.cash -= 60000; state.stock.stick += 2;
-    addLog('📦 2 Stik PS KW Super cadangan tiba.');
-  } else if (type === 'token' && state.cash >= 50000) {
-    state.cash -= 50000; state.power = Math.min(100, state.power + 50);
-    addLog('⚡ Token Listrik PLN +50% berhasil diisi.');
-  } else if (type === 'kopi' && state.cash >= 10000) {
-    state.cash -= 10000; state.energy = Math.min(100, state.energy + 35);
-    addLog('☕ Ngopi hitam dulu! Energi +35%.');
-  } else {
-    addLog('❌ Kas laci tidak cukup!');
-  }
-  renderAll();
-}
-
-function buyUpgrade(key, cost, label) {
-  if (state.cash < cost) {
-    addLog('❌ Kas laci tidak cukup untuk upgrade ini!');
-    return;
-  }
-  state.cash -= cost;
-  if (key === 'newBooth') {
-    const id = state.booths.length + 1;
-    state.booths.push({ id, tier: 'PS2 + TV Tabung', rate: 3000, customer: null, timeLeft: 0, totalTime: 0, stickHp: 100, snackOrder: null });
-    addLog(`🎉 Bilik baru #${id} berhasil dipasang!`);
-  } else {
-    state.upgrades[key] = true;
-    state.rating = Math.min(5.0, +(state.rating + 0.2).toFixed(2));
-    addLog(`⬆️ Upgrade <b>${label}</b> terpasang! Rating rental naik.`);
-  }
-  renderAll();
-}
-
-function upgradeBoothTier(boothId) {
-  const booth = state.booths.find(b => b.id === boothId);
-  const idx = BOOTH_TIERS.findIndex(t => t.name === booth.tier);
-  if (idx === -1 || idx >= BOOTH_TIERS.length - 1) return;
-  const next = BOOTH_TIERS[idx + 1];
-  if (state.cash < next.cost) {
-    addLog('❌ Kas laci kurang buat upgrade konsol ini!');
-    return;
-  }
-  state.cash -= next.cost;
-  booth.tier = next.name;
-  booth.rate = next.rate;
-  addLog(`🚀 Bilik #${booth.id} di-upgrade jadi <b>${next.name}</b> (${fmtRp(next.rate)}/jam)!`);
-  renderAll();
-}
-
-function doSideJob(job) {
-  if (state.isOpen) {
-    addLog('⚠️ Tutup rental dulu kalau mau keliling kampung!');
-    return;
-  }
-  if (job === 'ojek') {
-    if (state.energy < 20) return addLog('😴 Terlalu capek buat narik ojek.');
-    state.energy -= 20;
-    state.minutes += 90;
-    const earn = 25000 + Math.floor(Math.random() * 20000);
-    state.cash += earn;
-    addLog(`🛵 Narik OjekKampung keliling desa, dapat ongkos <b>${fmtRp(earn)}</b>.`);
-  } else if (job === 'mancing') {
-    if (state.energy < 15) return addLog('😴 Terlalu capek buat mancing.');
-    state.energy -= 15;
-    state.minutes += 120;
-    const fish = 15000 + Math.floor(Math.random() * 25000);
-    state.cash += fish;
-    addLog(`🎣 Mancing di empang Mang Ujang, ikan dijual laku <b>${fmtRp(fish)}</b>.`);
-  } else if (job === 'sleep') {
-    state.day += 1;
-    state.minutes = 8 * 60;
-    state.energy = 100;
-    state.blackout = false;
-    state.gensetOn = false;
-    state.weather = ['Cerah', 'Mendung', 'Hujan Deras'][Math.floor(Math.random() * 3)];
-    addLog(`🌅 Selamat pagi Hari ke-${state.day}! Cuaca hari ini: <b>${state.weather}</b>.`);
-    if (state.day % 7 === 0) {
-      if (state.cash >= state.rentCost) {
-        state.cash -= state.rentCost;
-        addLog(`🏠 Tagihan sewa ruko mingguan (${fmtRp(state.rentCost)}) lunas terbayar!`);
-      } else {
-        addLog(`🚨 Uang sewa ruko kurang! Pemilik ruko kasih peringatan keras.`);
-      }
-    }
-  }
-  renderAll();
-}
-
-// Game Loop (1 detik nyata = 5 menit di game)
-setInterval(() => {
-  if (!state.isOpen && state.booths.every(b => !b.customer)) return;
-
-  state.minutes += 5;
-  if (state.minutes >= 24 * 60) {
-    state.minutes = 0;
-    state.day += 1;
-  }
-
-  // Konsumsi listrik
-  const activeCount = state.booths.filter(b => b.customer).length;
-  if (activeCount > 0 && !state.blackout) {
-    state.power = Math.max(0, +(state.power - 0.35 * activeCount).toFixed(1));
-    if (state.power <= 0) {
-      addLog('🔌 Token listrik habis! Rental gelap gulita, isi token di TokoOren.');
-      state.booths.forEach(b => { if (b.customer) { b.customer = null; b.timeLeft = 0; } });
-    }
-  }
-
-  // Event acak: mati lampu / razia Satpol PP
-  if (state.isOpen && Math.random() < 0.03 && !state.blackout) {
-    state.blackout = true;
-    addLog('⚡ MATI LAMPU PLN! Pelanggan panik!');
-    if (state.upgrades.genset) {
-      document.getElementById('btnGenset').style.display = 'inline-block';
-    }
-  } else if (state.blackout && Math.random() < 0.15) {
-    state.blackout = false;
-    state.gensetOn = false;
-    document.getElementById('btnGenset').style.display = 'none';
-    addLog('💡 Listrik PLN sudah menyala kembali!');
-  }
-
-  const hour = Math.floor(state.minutes / 60);
-  if (state.isOpen && hour >= 9 && hour <= 12 && !state.satpolRaid && Math.random() < 0.03) {
-    const hasKids = state.booths.some(b => b.customer && b.customer.isSchoolKid) || state.queue.some(c => c.isSchoolKid);
-    if (hasKids) {
-      state.satpolRaid = true;
-      document.getElementById('btnHideKids').style.display = 'inline-block';
-      addLog('🚨 <b>RAZIA SATPOL PP!</b> Cepat sembunyikan anak sekolah sebelum kena denda Rp 100.000!');
-      setTimeout(() => {
-        if (state.satpolRaid) {
-          state.satpolRaid = false;
-          document.getElementById('btnHideKids').style.display = 'none';
-          state.cash = Math.max(0, state.cash - 100000);
-          state.rating = Math.max(1.0, +(state.rating - 0.5).toFixed(2));
-          state.booths.forEach(b => { if (b.customer && b.customer.isSchoolKid) { b.customer = null; b.timeLeft = 0; } });
-          addLog('🚓 Telat! Satpol PP menggerebek anak bolos. Kena denda Rp 100.000!');
-          renderAll();
-        }
-      }, 9000);
-    }
-  }
-
-  // Pelanggan datang
-  if (Math.random() < 0.28) spawnCustomer();
-
-  // Kesabaran antrean
-  state.queue.forEach(c => c.patienceLeft -= 6);
-  const left = state.queue.filter(c => c.patienceLeft <= 0);
-  if (left.length > 0) {
-    state.queue = state.queue.filter(c => c.patienceLeft > 0);
-    state.rating = Math.max(1.0, +(state.rating - 0.1).toFixed(2));
-    addLog(`😤 ${left[0].type} kelamaan nunggu antrean dan pulang.`);
-  }
-
-  // Update sesi bilik
-  state.booths.forEach(b => {
-    if (b.customer && (!state.blackout || state.gensetOn)) {
-      b.timeLeft -= 5;
-      b.stickHp = Math.max(0, b.stickHp - (Math.random() < 0.25 ? 4 : 0));
-      if (!b.snackOrder && Math.random() < 0.12) {
-        b.snackOrder = Math.random() < 0.5 ? 'Pop Mie' : 'Es Teh';
-        addLog(`🙋 Bilik #${b.id} (${b.customer.type}) pesan <b>${b.snackOrder}</b>!`);
-      }
-      if (b.stickHp <= 0) {
-        addLog(`💥 Stik di Bilik #${b.id} rusak (analog drift parah)! Segera ganti stik.`);
-      }
-      if (b.timeLeft <= 0 && !state.pendingCheckout) {
-        openCheckout(b);
-      }
-    }
-  });
-
-  renderAll();
-}, 1000);
-
-function renderBooths() {
-  const grid = document.getElementById('boothsGrid');
-  grid.innerHTML = '';
-  state.booths.forEach(b => {
-    const div = document.createElement('div');
-    div.className = 'booth' + (b.customer ? ' active' : '') + (b.stickHp <= 0 ? ' broken' : '');
-    const pct = b.totalTime ? Math.max(0, Math.round((b.timeLeft / b.totalTime) * 100)) : 0;
-    const tierIdx = BOOTH_TIERS.findIndex(t => t.name === b.tier);
-    const nextTier = BOOTH_TIERS[tierIdx + 1];
-
-    div.innerHTML = `
-      <div class="booth-header">
-        <span>Bilik #${b.id}</span>
-        <span class="badge ${b.stickHp <= 0 ? 'warn' : (b.customer ? 'busy' : 'ok')}">
-          ${b.stickHp <= 0 ? 'Stik Rusak' : (b.customer ? 'Dipakai' : 'Kosong')}
-        </span>
-      </div>
-      <div style="font-size:0.78rem;color:var(--muted);">${b.tier} • <b>${fmtRp(b.rate)}/jam</b></div>
-      <div style="font-size:0.76rem;">Kondisi Stik: <b>${b.stickHp}%</b></div>
-      ${b.customer ? `
-        <div style="background:#0f172a;padding:7px;border-radius:8px;font-size:0.8rem;">
-          <div>${b.customer.icon} <b>${b.customer.type}</b></div>
-          <div style="color:#94a3b8;font-size:0.74rem;">Sisa waktu: ${Math.max(0, b.timeLeft)} mnt</div>
-          <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:${pct}%"></div></div>
-        </div>
-      ` : `
-        <button class="primary" onclick="assignCustomerToBooth(${b.id})" ${(!state.selectedCustomerId || b.stickHp <= 0) ? 'disabled' : ''}>
-          ➕ Dudukkan Pelanggan
-        </button>
-      `}
-      ${b.snackOrder ? `<button class="success" onclick="serveSnack(${b.id})">🍜 Antar ${b.snackOrder}</button>` : ''}
-      ${b.stickHp < 50 ? `<button class="danger" onclick="repairStick(${b.id})">🔧 Ganti Stik Baru</button>` : ''}
-      ${(!b.customer && nextTier) ? `<button onclick="upgradeBoothTier(${b.id})" style="font-size:0.74rem;">⬆️ Upgrade ke ${nextTier.name.split(' ')[0]} (${fmtRp(nextTier.cost)})</button>` : ''}
-    `;
-    grid.appendChild(div);
-  });
-}
-
-function renderQueue() {
-  const list = document.getElementById('queueList');
-  document.getElementById('queueCount').textContent = `${state.queue.length}/4`;
-  list.innerHTML = '';
-  if (state.queue.length === 0) {
-    list.innerHTML = `<div style="color:#64748b;font-size:0.8rem;text-align:center;padding:20px 0;">Belum ada pelanggan antre...</div>`;
-    return;
-  }
-  state.queue.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'queue-item' + (state.selectedCustomerId === c.id ? ' selected' : '');
-    div.style.cursor = 'pointer';
-    div.onclick = () => selectCustomer(c.id);
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;font-weight:700;">
-        <span>${c.icon} ${c.type}</span>
-        <span style="color:var(--accent);">${c.hours} Jam</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);">
-        <span>Sabar: ${Math.max(0, c.patienceLeft)}%</span>
-        <span>${state.selectedCustomerId === c.id ? '✅ Terpilih' : 'Klik untuk pilih'}</span>
-      </div>
-    `;
-    list.appendChild(div);
-  });
-}
-
-function renderPhone() {
-  const box = document.getElementById('phoneContent');
-  box.innerHTML = '';
-  if (state.activeTab === 'toko') {
-    const items = [
-      { id: 'popmie', name: '🍜 1 Dus Pop Mie (6 cup)', price: 25000 },
-      { id: 'esteh', name: '🧊 Bahan Es Teh (10 gelas)', price: 15000 },
-      { id: 'stick', name: '🎮 2x Stik PS Cadangan', price: 60000 },
-      { id: 'token', name: '⚡ Token Listrik PLN (+50%)', price: 50000 },
-      { id: 'kopi', name: '☕ Kopi Hitam (+35% Energi)', price: 10000 }
-    ];
-    items.forEach(it => {
-      box.innerHTML += `
-        <div class="list-item">
-          <div><b>${it.name}</b><br><span style="color:#34d399;">${fmtRp(it.price)}</span></div>
-          <button onclick="buyItem('${it.id}')">Beli</button>
-        </div>`;
-    });
-  } else if (state.activeTab === 'upgrade') {
-    const ups = [
-      { key: 'qris', label: '📱 QRIS Soundbox (Terima Non-Tunai)', cost: 150000, done: state.upgrades.qris },
-      { key: 'wifi', label: '📶 Wi-Fi Kencang (Pelanggan Betah)', cost: 250000, done: state.upgrades.wifi },
-      { key: 'ac', label: '❄️ AC Ruangan (Rating Naik)', cost: 500000, done: state.upgrades.ac },
-      { key: 'genset', label: '⚡ Genset Anti Mati Lampu', cost: 400000, done: state.upgrades.genset },
-      { key: 'newBooth', label: '📺 Tambah 1 Bilik PS2 Baru', cost: 300000, done: state.booths.length >= 6 }
-    ];
-    ups.forEach(u => {
-      box.innerHTML += `
-        <div class="list-item">
-          <div><b>${u.label}</b><br><span style="color:#fbbf24;">${fmtRp(u.cost)}</span></div>
-          <button ${u.done ? 'disabled' : ''} onclick="buyUpgrade('${u.key}', ${u.cost}, '${u.label}')">
-            ${u.done ? '✅ Aktif' : 'Pasang'}
-          </button>
-        </div>`;
-    });
-  } else {
-    box.innerHTML = `
-      <div class="list-item">
-        <div><b>🛵 Narik OjekKampung</b><br><span style="color:var(--muted);">Butuh tutup rental • -20% Energi</span></div>
-        <button onclick="doSideJob('ojek')">Narik</button>
-      </div>
-      <div class="list-item">
-        <div><b>🎣 Mancing di Empang</b><br><span style="color:var(--muted);">Butuh tutup rental • -15% Energi</span></div>
-        <button onclick="doSideJob('mancing')">Mancing</button>
-      </div>
-      <div class="list-item">
-        <div><b>🛏️ Tidur & Ganti Hari</b><br><span style="color:var(--muted);">Pulihkan Energi 100% (Hari ke-${state.day + 1})</span></div>
-        <button class="primary" onclick="doSideJob('sleep')">Tidur</button>
-      </div>
-    `;
-  }
-}
-
-function drawCanvas() {
-  const c = document.getElementById('rentalCanvas');
-  const ctx = c.getContext('2d');
-  ctx.clearRect(0, 0, c.width, c.height);
-
-  // Lantai keramik
-  ctx.fillStyle = (state.blackout && !state.gensetOn) ? '#090d16' : '#1e293b';
-  ctx.fillRect(0, 0, c.width, c.height);
-
-  // Dinding & poster PES
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 0, c.width, 46);
-  ctx.fillStyle = '#f59e0b';
-  ctx.font = 'bold 14px sans-serif';
-  ctx.fillText('🏆 RENTAL PS BANG JAGO - DILARANG BANTING STIK!', 18, 28);
-
-  // Meja Kasir & Warung Pop Mie di kiri
-  ctx.fillStyle = '#78350f';
-  ctx.fillRect(18, 70, 120, 145);
-  ctx.fillStyle = '#fef3c7';
-  ctx.font = 'bold 12px sans-serif';
-  ctx.fillText('KASIR & POP MIE', 26, 92);
-  ctx.font = '26px sans-serif';
-  ctx.fillText('🧑🏻', 62, 135);
-  ctx.font = '11px sans-serif';
-  ctx.fillStyle = '#fde68a';
-  ctx.fillText('Bang Jago', 50, 154);
-
-  // Gambar Bilik PS
-  state.booths.forEach((b, idx) => {
-    const x = 165 + (idx % 3) * 195;
-    const y = idx < 3 ? 62 : 152;
-    ctx.fillStyle = b.customer ? '#1e3a5f' : '#273549';
-    ctx.strokeStyle = b.stickHp <= 0 ? '#ef4444' : (b.customer ? '#10b981' : '#475569');
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(x, y, 180, 76, 8);
-    ctx.fill();
-    ctx.stroke();
-
-    // TV Screen
-    ctx.fillStyle = (b.customer && (!state.blackout || state.gensetOn)) ? '#38bdf8' : '#0f172a';
-    ctx.fillRect(x + 12, y + 12, 46, 30);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText(`Bilik #${b.id}`, x + 68, y + 24);
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px sans-serif';
-    ctx.fillText(b.tier.split('+')[0], x + 68, y + 39);
-
-    if (b.customer) {
-      ctx.font = '20px sans-serif';
-      ctx.fillText(b.customer.icon, x + 22, y + 66);
-      ctx.fillStyle = '#34d399';
-      ctx.font = '10px sans-serif';
-      ctx.fillText(`${b.customer.type}`, x + 52, y + 62);
-    } else {
-      ctx.fillStyle = '#64748b';
-      ctx.font = '10px sans-serif';
-      ctx.fillText('Sofa Kosong', x + 52, y + 62);
-    }
-  });
-
-  if (state.blackout && !state.gensetOn) {
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.fillStyle = '#ef4444';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText('⚡ MATI LAMPU PLN! NYALAKAN GENSET ⚡', 175, 130);
-  }
-}
-
-function renderAll() {
-  const h = String(Math.floor(state.minutes / 60)).padStart(2, '0');
-  const m = String(state.minutes % 60).padStart(2, '0');
-  document.getElementById('hudDay').textContent = state.day;
-  document.getElementById('hudClock').textContent = `${h}:${m}`;
-  document.getElementById('hudCash').textContent = fmtRp(state.cash);
-  document.getElementById('hudQris').textContent = fmtRp(state.qris);
-  document.getElementById('hudPower').textContent = `${Math.round(state.power)}%`;
-  document.getElementById('hudEnergy').textContent = `${Math.round(state.energy)}%`;
-  document.getElementById('hudRating').textContent = `⭐ ${state.rating.toFixed(1)} / 5.0`;
-  document.getElementById('hudKasbon').textContent = fmtRp(state.kasbon);
-  document.getElementById('btnCollectKasbon').disabled = state.kasbon <= 0;
-  document.getElementById('stockPopmie').textContent = state.stock.popmie;
-  document.getElementById('stockEsteh').textContent = state.stock.esteh;
-  document.getElementById('stockStick').textContent = state.stock.stick;
-  document.getElementById('boothCount').textContent = `${state.booths.length} Bilik`;
-  document.getElementById('weatherBadge').textContent = (state.weather === 'Hujan Deras' ? '🌧️ ' : (state.weather === 'Mendung' ? '⛅ ' : '☀️ ')) + state.weather;
-
-  renderQueue();
-  renderBooths();
-  renderPhone();
-  drawCanvas();
-}
-
-addLog('🎮 Selamat datang di Rental PS Bang Jago! Klik <b>BUKA RENTAL</b> di kanan atas untuk mulai.');
-renderAll();
-</script>
+<script src="data.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
