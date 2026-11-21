@@ -54,7 +54,8 @@ const CloudSync = {
       this.lastCloudPush = now;
       await this.db.collection('rental_simulator_saves').doc(this.syncId).set({
         syncId: this.syncId,
-        rentalName: stateObj.rentalName || 'Rental Oneilverse',
+        rentalName: stateObj.rentalName || 'Rental Life by Oneilverse',
+        version: 'v1.0',
         updatedAt: now,
         payload: JSON.stringify(stateObj)
       }, { merge: true });
