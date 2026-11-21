@@ -1,29 +1,7 @@
-# Juragan Rental PS 2002
+# Rental PS Life Simulator - Bang Jago (v1.0)
 
-Game simulasi bisnis rental konsol PlayStation & Xbox dan warung camilan mulai tahun 2002. Mainkan sebagai Ibu (Chinese) & Suami/Ayah (Batak, tukang ojek) sejak anak perempuan mereka lahir (usia 0 tahun) dengan modal 10 unit PS1, lalu wariskan bisnisnya ke sang anak perempuan (blasteran Batak-Chinese) saat berusia 12 tahun di tahun 2014.
+Game simulasi manajemen rental PS lokal Indonesia yang dapat langsung dijalankan di browser atau di-deploy ke GitHub Pages.
 
-## Isi repo
-- `index.html`: game (simpanan lokal di browser tetap jalan tanpa Firebase)
-- `cloud.js`: login Google dan simpan ke Firestore
-- `firebase-config.js`: isi config Firebase kamu di sini
-- `firestore.rules`: aturan keamanan Firestore
-
-## Pasang Firestore (sekali saja)
-1. Buka Firebase Console, buat proyek.
-2. Build > Authentication > Sign-in method > aktifkan **Google**.
-3. Build > Firestore Database > Create database (production mode).
-4. Tab Rules: tempel isi `firestore.rules`, lalu Publish.
-5. Project settings > Your apps > tambah **Web app**, salin config ke `firebase-config.js`.
-6. Authentication > Settings > Authorized domains: tambahkan `USERNAME.github.io` (dan `localhost` untuk uji lokal).
-
-## Jalankan lokal
-Modul ES tidak jalan dari `file://`, jadi pakai server kecil:
-
-    python3 -m http.server 8000
-
-lalu buka http://localhost:8000
-
-## Pasang di GitHub Pages
-1. Push semua file ke repo.
-2. Settings > Pages > Deploy from a branch > `main` / root.
-3. Buka `https://USERNAME.github.io/NAMA-REPO/`.
+## Cara Menjalankan
+1. Buka file `index.html` langsung di browser, **atau**
+2. Upload isi folder ini (`index.html` dan `README.md`) ke repository GitHub, lalu aktifkan **Settings > Pages > Deploy from branch (main)**.
