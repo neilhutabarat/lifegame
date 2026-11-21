@@ -1,46 +1,100 @@
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// CLOUD SYNC MODULE (OFFLINE LOCALSTORAGE + FIREBASE FIRESTORE v10 COMPAT)
+// Mendukung pindah perangkat Laptop <-> HP menggunakan Sync ID + Auto-Sync saat Online
 
-const $=id=>document.getElementById(id);
-const msg=t=>{$('authmsg').textContent=t};
+const CLOUD_CFG_KEY = 'oneilverse_fb_config_v1';
+const CLOUD_ID_KEY = 'oneilverse_sync_id_v1';
 
-let cfg=null;
-try{cfg=(await import('./firebase-config.js')).firebaseConfig}catch(e){}
-if(!cfg||String(cfg.apiKey).startsWith('ISI_')){
-  msg('Simpanan: lokal (browser)');
-}else{
-  const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
-  let user=null,timer=0;
-  const push=()=>{
-    if(!user)return;
-    clearTimeout(timer);
-    timer=setTimeout(async()=>{
-      try{
-        await setDoc(doc(db,'saves',user.uid),{state:JSON.stringify(window.getState()),savedAt:Date.now()});
-        msg('Tersimpan di cloud '+new Date().toLocaleTimeString('id-ID'));
-      }catch(e){msg('Gagal simpan ke cloud: '+(e.code||e.message))}
-    },1500);
-  };
-  window.cloudSave=push;
-  $('login').hidden=false;
-  $('login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>msg('Gagal masuk: '+(e.code||e.message)));
-  $('logout').onclick=()=>signOut(auth);
-  $('cloudsave').onclick=push;
-  onAuthStateChanged(auth,async u=>{
-    user=u;
-    $('login').hidden=!!u;$('logout').hidden=!u;$('cloudsave').hidden=!u;
-    if(!u){msg('Simpanan: lokal (browser)');return}
-    try{
-      const snap=await getDoc(doc(db,'saves',u.uid));
-      const local=window.getState();
-      if(snap.exists()&&snap.data().savedAt>(local.sv||0)){
-        window.applyCloud(JSON.parse(snap.data().state));
-        msg('Masuk sebagai '+(u.displayName||u.email)+'. Simpanan cloud dimuat.');
-      }else{
-        msg('Masuk sebagai '+(u.displayName||u.email)+'.');
-        push();
+const CloudSync = {
+  db: null,
+  initialized: false,
+  syncId: localStorage.getItem(CLOUD_ID_KEY) || 'oneil_default',
+  lastCloudPush: 0,
+
+  getConfig() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CLOUD_CFG_KEY) || 'null');
+      if (saved && saved.apiKey && saved.projectId) return saved;
+    } catch (e) {}
+    if (window.DEFAULT_FIREBASE_CONFIG && window.DEFAULT_FIREBASE_CONFIG.apiKey) {
+      return window.DEFAULT_FIREBASE_CONFIG;
+    }
+    return null;
+  },
+
+  init() {
+    if (this.initialized) return true;
+    const cfg = this.getConfig();
+    if (!cfg || !cfg.apiKey || !cfg.projectId || typeof firebase === 'undefined') {
+      return false;
+    }
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(cfg);
       }
-    }catch(e){msg('Gagal membaca cloud: '+(e.code||e.message))}
-  });
-}
+      this.db = firebase.firestore();
+      this.initialized = true;
+      return true;
+    } catch (err) {
+      console.warn('Firestore init error:', err);
+      return false;
+    }
+  },
+
+  setSyncId(newId) {
+    const clean = (newId || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+    if (clean.length >= 4) {
+      this.syncId = clean;
+      localStorage.setItem(CLOUD_ID_KEY, clean);
+      return true;
+    }
+    return false;
+  },
+
+  saveCustomConfig(cfgObj) {
+    localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cfgObj));
+    this.initialized = false;
+    return this.init();
+  },
+
+  async pushToCloud(stateObj, force = false) {
+    if (!navigator.onLine) return { ok: false, reason: 'offline' };
+    if (!this.init()) return { ok: false, reason: 'unconfigured' };
+
+    const now = Date.now();
+    if (!force && now - this.lastCloudPush < 8000) {
+      return { ok: true, skipped: true };
+    }
+
+    try {
+      this.lastCloudPush = now;
+      const serialized = JSON.stringify(stateObj);
+      await this.db.collection('rental_simulator_saves').doc(this.syncId).set({
+        syncId: this.syncId,
+        rentalName: stateObj.rentalName || 'Rental Oneilverse',
+        updatedAt: now,
+        payload: serialized
+      }, { merge: true });
+      return { ok: true, updatedAt: now };
+    } catch (err) {
+      console.warn('Cloud push failed:', err);
+      return { ok: false, reason: err.message || 'error' };
+    }
+  },
+
+  async pullFromCloud() {
+    if (!navigator.onLine) return { ok: false, reason: 'offline' };
+    if (!this.init()) return { ok: false, reason: 'unconfigured' };
+
+    try {
+      const snap = await this.db.collection('rental_simulator_saves').doc(this.syncId).get();
+      if (!snap.exists) return { ok: false, reason: 'not_found' };
+      const data = snap.data();
+      if (!data || !data.payload) return { ok: false, reason: 'empty' };
+      const parsed = JSON.parse(data.payload);
+      return { ok: true, state: parsed, updatedAt: data.updatedAt || 0 };
+    } catch (err) {
+      console.warn('Cloud pull failed:', err);
+      return { ok: false, reason: err.message || 'error' };
+    }
+  }
+};

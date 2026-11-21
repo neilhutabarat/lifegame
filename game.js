@@ -1248,29 +1248,125 @@ function sleepNextDay() {
   saveGame(); renderAll(true);
 }
 
-// ==================== OFFLINE + FIRESTORE HYBRID SAVE ====================
-function saveGame() {
+
+// ==================== FIRESTORE CLOUD SYNC + OFFLINE HYBRID ====================
+async function saveGame(forceCloud = false) {
   try {
+    state.lastSavedAt = Date.now();
     const payload = JSON.stringify(state);
     localStorage.setItem(STORAGE_KEY, payload);
-    if (navigator.onLine) {
-      // Jika Firebase Firestore tersedia di window (dari firebase-config.js / cloud.js), sinkronkan otomatis
-      if (window.db && typeof window.db.collection === 'function') {
-        window.db.collection('rental_saves').doc('player_default').set({
-          updatedAt: Date.now(),
-          data: payload
-        }).catch(() => {});
-        state.syncStatus = 'Online • Tersinkron Firestore';
-      } else {
-        state.syncStatus = 'Online • Auto-Save Aktif';
-      }
-    } else {
-      state.syncStatus = 'Offline • Tersimpan di Perangkat';
+
+    if (!navigator.onLine) {
+      state.syncStatus = `Offline • Lokal (${CloudSync.syncId})`;
+      updateHudOnly();
+      return;
     }
+
+    const res = await CloudSync.pushToCloud(state, forceCloud);
+    if (res.ok) {
+      state.syncStatus = `☁️ Firestore (${CloudSync.syncId})`;
+    } else if (res.reason === 'unconfigured') {
+      state.syncStatus = `Online • Lokal (Set Cloud)`;
+    } else {
+      state.syncStatus = `Offline/Pending (${CloudSync.syncId})`;
+    }
+    updateHudOnly();
   } catch (e) {}
 }
 
-function loadGame() {
+async function syncPullNow() {
+  addLog(`☁️ Mengambil data dari Firestore untuk Sync ID: <b>${CloudSync.syncId}</b>...`);
+  const res = await CloudSync.pullFromCloud();
+  if (!res.ok) {
+    if (res.reason === 'unconfigured') addLog('⚠️ Konfigurasi Firebase belum diisi! Isi dulu di menu Cloud Sync.');
+    else if (res.reason === 'not_found') addLog(`ℹ️ Belum ada data cloud untuk Sync ID <b>${CloudSync.syncId}</b>. Menyimpan progres saat ini ke cloud...`), await saveGame(true);
+    else if (res.reason === 'offline') addLog('📴 Perangkat sedang offline.');
+    else addLog(`❌ Gagal tarik data cloud: ${res.reason}`);
+    return;
+  }
+
+  Object.assign(state, res.state);
+  state.activeCheckout = null;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  state.syncStatus = `☁️ Firestore (${CloudSync.syncId})`;
+  addLog(`✅ Berhasil sinkron dari Firestore! Progres <b>${state.rentalName}</b> (${state.day}/${state.month}/${state.year}) dimuat.`);
+  closeCustomModal();
+  renderAll(true);
+}
+
+function openCloudSyncModal() {
+  const cfg = CloudSync.getConfig() || { apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' };
+  const isReady = CloudSync.init();
+
+  showCustomModal(
+    '☁️ Cloud Save Firestore (Laptop ↔ HP)',
+    `<div style="font-size:0.78rem;background:#090e1a;padding:8px;border-radius:8px;line-height:1.45;">
+      Status Koneksi: <b style="color:${isReady ? '#34d399' : '#fbbf24'};">${isReady ? 'Terhubung ke Firebase Firestore' : 'Belum Dikonfigurasi (Mode Lokal)'}</b><br>
+      Gunakan <b>Sync ID</b> yang sama di Laptop & HP agar progres otomatis berpindah.
+    </div>
+
+    <label style="font-size:0.76rem;color:var(--muted);">1. Sync ID / Kode Pemain (Min. 4 huruf/angka):</label>
+    <div style="display:flex;gap:6px;">
+      <input type="text" id="inpSyncId" value="${CloudSync.syncId}" placeholder="contoh: oneil_master" />
+      <button class="primary" onclick="applyNewSyncId()">Set ID</button>
+    </div>
+
+    <div class="grid-2" style="margin-top:2px;">
+      <button class="success" onclick="saveGame(true);addLog('☁️ Progres di-upload ke Firestore!');closeCustomModal();">⬆️ Simpan ke Cloud</button>
+      <button class="purple" onclick="syncPullNow()">⬇️ Muat dari Cloud</button>
+    </div>
+
+    <details style="margin-top:4px;font-size:0.76rem;">
+      <summary style="cursor:pointer;color:var(--accent);font-weight:700;">⚙️ Pengaturan Firebase Config (Isi Sekali Saja)</summary>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:6px;">
+        <input type="text" id="fbApiKey" value="${cfg.apiKey || ''}" placeholder="apiKey (AIzaSy...)" />
+        <input type="text" id="fbAuthDomain" value="${cfg.authDomain || ''}" placeholder="authDomain (project-id.firebaseapp.com)" />
+        <input type="text" id="fbProjectId" value="${cfg.projectId || ''}" placeholder="projectId (project-id)" />
+        <input type="text" id="fbStorageBucket" value="${cfg.storageBucket || ''}" placeholder="storageBucket (project-id.appspot.com)" />
+        <input type="text" id="fbSenderId" value="${cfg.messagingSenderId || ''}" placeholder="messagingSenderId" />
+        <input type="text" id="fbAppId" value="${cfg.appId || ''}" placeholder="appId (1:xxx:web:xxx)" />
+        <button class="primary" onclick="saveFirebaseConfigFromUI()">💾 Simpan Config & Hubungkan Firestore</button>
+      </div>
+    </details>`,
+    `<button onclick="closeCustomModal()">Tutup</button>`
+  );
+}
+
+function applyNewSyncId() {
+  const val = document.getElementById('inpSyncId').value;
+  if (CloudSync.setSyncId(val)) {
+    addLog(`🆔 Sync ID diubah ke <b>${CloudSync.syncId}</b>.`);
+    openCloudSyncModal();
+    updateHudOnly();
+  } else {
+    addLog('⚠️ Sync ID minimal 4 karakter (huruf/angka).');
+  }
+}
+
+function saveFirebaseConfigFromUI() {
+  const newCfg = {
+    apiKey: document.getElementById('fbApiKey').value.trim(),
+    authDomain: document.getElementById('fbAuthDomain').value.trim(),
+    projectId: document.getElementById('fbProjectId').value.trim(),
+    storageBucket: document.getElementById('fbStorageBucket').value.trim(),
+    messagingSenderId: document.getElementById('fbSenderId').value.trim(),
+    appId: document.getElementById('fbAppId').value.trim()
+  };
+  if (!newCfg.apiKey || !newCfg.projectId) {
+    addLog('⚠️ apiKey dan projectId wajib diisi!');
+    return;
+  }
+  const ok = CloudSync.saveCustomConfig(newCfg);
+  if (ok) {
+    addLog('✅ Firebase Firestore berhasil terhubung!');
+    saveGame(true);
+    openCloudSyncModal();
+  } else {
+    addLog('❌ Gagal menghubungkan Firebase. Periksa kembali config.');
+  }
+}
+
+function loadGameLocal() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
@@ -1278,13 +1374,10 @@ function loadGame() {
     Object.assign(state, saved);
     state.activeCheckout = null;
     return true;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
 }
-
-window.addEventListener('online', () => { saveGame(); updateHudOnly(); });
-window.addEventListener('offline', () => { saveGame(); updateHudOnly(); });
+window.addEventListener('online', () => { saveGame(true); });
+window.addEventListener('offline', () => { saveGame(false); });
 
 // ==================== RENDER FUNCTIONS ====================
 function addLog(msg) {
@@ -1659,13 +1752,35 @@ function renderAll(includeRight = true) {
   if (includeRight) renderRightPanel();
 }
 
-// BOOTSTRAP
-const hadSave = loadGame();
-if (!hadSave) {
-  initStarterRooms();
-  addLog('🎮 Selamat datang di <b>Rental Simulator by Oneilverse</b>!');
-  openModeSelectModal();
-} else {
-  addLog(`💾 Progres dimuat (${state.syncStatus}).`);
-}
-renderAll(true);
+// BOOTSTRAP (OFFLINE LOAD + AUTO CLOUD CHECK)
+(async function bootstrapGame() {
+  CloudSync.init();
+  const hadLocal = loadGameLocal();
+  if (!hadLocal) {
+    initStarterRooms();
+    addLog('🎮 Selamat datang di <b>Rental Simulator by Oneilverse</b>!');
+    openModeSelectModal();
+  } else {
+    addLog('💾 Progres lokal dimuat.');
+  }
+  renderAll(true);
+
+  // Jika online & Firestore aktif, cek apakah data di Cloud lebih baru (misal habis main di HP/Laptop lain)
+  if (navigator.onLine && CloudSync.init()) {
+    const cloudRes = await CloudSync.pullFromCloud();
+    if (cloudRes.ok && cloudRes.state) {
+      const localTime = state.lastSavedAt || 0;
+      if (cloudRes.updatedAt > localTime + 5000) {
+        Object.assign(state, cloudRes.state);
+        state.activeCheckout = null;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        addLog(`☁️ Progres terbaru dari perangkat lain (<b>${CloudSync.syncId}</b>) otomatis disinkronkan!`);
+        renderAll(true);
+      } else {
+        saveGame(true);
+      }
+    } else if (hadLocal) {
+      saveGame(true);
+    }
+  }
+})();

@@ -1,8 +1,8 @@
-// Isi dengan config dari Firebase Console > Project settings > Your apps (Web).
-// Config ini boleh publik. Yang menjaga data adalah firestore.rules.
-export const firebaseConfig = {
-  apiKey: "ISI_API_KEY",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  appId: "ISI_APP_ID"
+window.DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAIjDzsKm3UxsAzzWSBqTcIWvRc62E862s",
+  authDomain: "rental-life-by-oneilverse.firebaseapp.com",
+  projectId: "rental-life-by-oneilverse",
+  storageBucket: "rental-life-by-oneilverse.firebasestorage.app",
+  messagingSenderId: "498035402023",
+  appId: "1:498035402023:web:6c862c8d7465d4a0eab502"
 };
