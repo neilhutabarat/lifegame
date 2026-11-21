@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Rental Simulator by Oneilverse</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -10,67 +10,71 @@
 
 <header>
   <div class="brand-box">
-    <div class="brand-title" onclick="editRentalName()" title="Klik untuk ganti nama rental">
-      🎮 <span id="rentalTitleDisplay">Rental PS & PC Oneilverse</span> ✏️
+    <div class="brand-title" onclick="openEditRentalNameModal()" title="Klik untuk ubah nama rental">
+      🎮 <span id="rentalTitleDisplay">Rental Room Oneilverse</span> ✏️
     </div>
-    <div class="brand-sub">Rental Simulator by Oneilverse • Start Era 2020</div>
+    <div class="brand-sub">
+      <span>Rental Simulator by Oneilverse</span>
+      <span class="badge" id="syncBadge" onclick="openModeSelectModal()" style="cursor:pointer;">🛠️ Dev 100Jt • Offline</span>
+    </div>
   </div>
 
   <div class="hud-group">
     <div class="stat"><span class="lbl">Waktu:</span><b id="hudDateTime">1/1/2020 • 08:00</b></div>
-    <div class="speed-controls" title="1 jam in-game = 1 menit nyata (1x)">
+    <div class="speed-controls">
+      <button id="btnPause" class="speed-btn paused" onclick="togglePause()" title="Pause">⏸️</button>
       <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
       <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
       <button class="speed-btn" data-speed="4" onclick="setSpeed(4)">4x</button>
       <button class="speed-btn" data-speed="8" onclick="setSpeed(8)">8x</button>
     </div>
-    <div class="stat"><span class="lbl">Laci Kasir:</span><b id="hudDrawer" style="color:#34d399;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">Bank:</span><b id="hudBank" style="color:#60a5fa;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">QRIS:</span><b id="hudQris" style="color:#a78bfa;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">PLN:</span><b id="hudKwh" style="color:#fbbf24;">45.0 kWh</b></div>
-    <div class="stat"><b id="hudRep">⭐ 4.20</b></div>
-    <div class="stat"><b id="hudAge">👩🏻 18 Thn</b></div>
-    <button id="btnVip2x" onclick="toggleVip2x()">🔒 Aktifkan 2x Boost</button>
-    <button id="btnToggleShop" class="success" onclick="toggleShop()">🟢 BUKA RENTAL</button>
+    <div class="stat"><span class="lbl">Laci:</span><b id="hudDrawer" style="color:#34d399;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">M-Bank:</span><b id="hudBank" style="color:#60a5fa;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">Saldo Bisnis:</span><b id="hudPpob" style="color:#fbbf24;">Rp 0</b></div>
+    <div class="stat"><span class="lbl">PLN:</span><b id="hudKwh">60.0 kWh</b></div>
+    <div class="stat"><b id="hudRep">⭐ 4.30</b></div>
+    <button id="btnVip2x" onclick="openVip2xModal()">🔒 2x Boost</button>
+    <button id="btnToggleShop" class="success" onclick="toggleShop()">🟢 BUKA</button>
   </div>
 </header>
 
 <div class="main-layout">
-  <!-- KOLOM KIRI: ANTREAN & LOG -->
-  <div class="col">
+  <!-- SECTION 1: ANTREAN & LOG -->
+  <div class="mobile-section" data-mob="queue">
     <div class="card">
-      <h2>👥 Antrean Pelanggan <span id="queueCount" class="badge">0/5</span></h2>
-      <div style="font-size:0.73rem;color:var(--muted);">
-        Pelanggan mencari <b>game spesifik</b>. Klik pelanggan lalu dudukkan di bilik yang sudah terpasang game tersebut.
+      <h2>👥 Pengunjung & Antrean <span id="queueCount" class="badge">0/5</span></h2>
+      <div style="font-size:0.72rem;color:var(--muted);">
+        Klik pengunjung lalu pilih Room. Jika game belum ada, mereka bisa main game lain atau merekomendasikan game tanpa menurunkan reputasi.
       </div>
-      <div id="queueList" style="display:flex;flex-direction:column;gap:7px;min-height:130px;"></div>
+      <div id="queueList" style="display:flex;flex-direction:column;gap:7px;min-height:120px;"></div>
     </div>
 
     <div class="card">
-      <h2>📢 Log Aktivitas & Kejadian</h2>
+      <h2>📢 Catatan Aktivitas</h2>
       <div id="logBox" class="log-box"></div>
     </div>
   </div>
 
-  <!-- KOLOM TENGAH: DAFTAR BILIK KONSOL & PC -->
-  <div class="col">
+  <!-- SECTION 2: ROOM RENTAL -->
+  <div class="mobile-section active-mobile" data-mob="rooms">
     <div class="card">
       <h2>
-        <span>🕹️ Bilik Rental Aktif (PS1–PS5, Switch, Xbox, PC)</span>
-        <span style="font-size:0.74rem;color:var(--muted);">Klik "💿 Game" di tiap bilik untuk beli game</span>
+        <span>🚪 Room Rental (PS1–PS5, Switch, Xbox, PC)</span>
+        <span style="font-size:0.71rem;color:var(--muted);">Atur AC/Kipas/CCTV & Diskon di Billing</span>
       </h2>
       <div id="boothsGrid" class="booths-grid"></div>
     </div>
   </div>
 
-  <!-- KOLOM KANAN: STORE, WIFI, BANK/PPOB, LIFE SIM -->
-  <div class="col">
+  <!-- SECTION 3: STORE, SEWA/PENGINAPAN, WIFI, BANK/PPOB, LIFE -->
+  <div class="mobile-section" data-mob="menu">
     <div class="card">
-      <h2>📱 Menu Manajemen & Kehidupan</h2>
+      <h2>📱 Pusat Bisnis & Kehidupan</h2>
       <div class="nav-tabs">
         <button class="nav-btn active" onclick="switchMainTab('toko', this)">🛒 Store</button>
+        <button class="nav-btn" onclick="switchMainTab('sewa', this)">🏨 Sewa/Inap</button>
         <button class="nav-btn" onclick="switchMainTab('wifi', this)">📶 Wi-Fi</button>
-        <button class="nav-btn" onclick="switchMainTab('bank', this)">🏦 Bank/Kios</button>
+        <button class="nav-btn" onclick="switchMainTab('bank', this)">🏦 Bank/PPOB</button>
         <button class="nav-btn" onclick="switchMainTab('life', this)">👩🏻 Hidup</button>
       </div>
       <div id="rightPanelContent" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
@@ -78,28 +82,41 @@
   </div>
 </div>
 
-<!-- MODAL KASIR PECAHAN UANG RUPIAH -->
-<div id="cashierModal" class="modal-backdrop">
+<!-- BOTTOM NAV KHUSUS HP / MOBILE -->
+<nav class="mobile-bottom-nav">
+  <button class="mob-nav-btn" onclick="switchMobileView('queue', this)">👥 Antrean & Log</button>
+  <button class="mob-nav-btn active" onclick="switchMobileView('rooms', this)">🚪 Room Rental</button>
+  <button class="mob-nav-btn" onclick="switchMobileView('menu', this)">📱 Bisnis & Hidup</button>
+</nav>
+
+<!-- CUSTOM IN-GAME MODAL (PENGGANTI POP-UP BROWSER) -->
+<div id="customModalBackdrop" class="modal-backdrop">
   <div class="modal">
-    <h3 style="margin:0;color:var(--accent);">💵 Kasir Manual — Susun Pecahan Kembalian</h3>
-    <div id="cashierSummary" style="font-size:0.84rem;line-height:1.5;background:#0b1120;padding:10px;border-radius:9px;"></div>
-    <div style="font-size:0.75rem;color:var(--muted);">
-      Susun pecahan uang kembalian dengan tepat! Salah hitung bisa bikin laci tekor atau reputasi turun.
-    </div>
-    <div id="denomGrid" class="denom-grid"></div>
-    <button class="success" onclick="submitCashierChange()">✅ Serahkan Uang Kembalian</button>
+    <h3 id="customModalTitle" style="margin:0;color:var(--accent);font-size:0.98rem;">Judul</h3>
+    <div id="customModalBody" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div id="customModalFooter" style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;"></div>
   </div>
 </div>
 
-<!-- MODAL BELI & INSTALL GAME PER-UNIT -->
+<!-- MODAL KASIR PECAHAN RUPIAH -->
+<div id="cashierModal" class="modal-backdrop">
+  <div class="modal">
+    <h3 style="margin:0;color:var(--accent);">💵 Kasir — Susun Pecahan Kembalian</h3>
+    <div id="cashierSummary" style="font-size:0.82rem;line-height:1.5;background:#090e1a;padding:9px;border-radius:8px;"></div>
+    <div id="denomGrid" class="denom-grid"></div>
+    <button class="success" onclick="submitCashierChange()">✅ Serahkan Kembalian</button>
+  </div>
+</div>
+
+<!-- MODAL TOKO GAME PER-UNIT -->
 <div id="unitGamesModal" class="modal-backdrop">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;color:var(--accent);">💿 Toko Game Resmi (Per-Unit)</h3>
+      <h3 style="margin:0;color:var(--accent);">💿 Instalasi Game Resmi (Per-Unit)</h3>
       <button onclick="document.getElementById('unitGamesModal').style.display='none'">✖ Tutup</button>
     </div>
-    <div id="unitGamesHeader" style="background:#0b1120;padding:8px;border-radius:8px;font-size:0.82rem;"></div>
-    <div id="unitGamesList" class="scroll-area" style="max-height:360px;"></div>
+    <div id="unitGamesHeader" style="background:#090e1a;padding:8px;border-radius:8px;font-size:0.8rem;"></div>
+    <div id="unitGamesList" class="scroll-area" style="max-height:350px;"></div>
   </div>
 </div>
 

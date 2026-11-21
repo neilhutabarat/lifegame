@@ -1,16 +1,20 @@
-# Rental Simulator by Oneilverse (v2.0)
+# Rental Simulator by Oneilverse (v3.0)
 
-Game simulasi bisnis & kehidupan (*Life & Tycoon Simulator*) super-realistis bertema usaha Rental PS, PC Gaming, Warung & PPOB di Indonesia mulai **Januari 2020**.
+Game simulasi bisnis & kehidupan (*Life & Tycoon Simulator*) multi-usaha dari **Rental PS/PC, Sewa PS Harian ke Rumah, Wi-Fi Hotspot, Agen Pulsa/E-Wallet (PPOB), hingga Penginapan/Kos-kosan** mulai **Januari 2020** di Indonesia.
 
 ## Cara Deploy ke GitHub Pages
-1. Ekstrak seluruh isi file ZIP ini (`index.html`, `style.css`, `data.js`, `game.js`, `README.md`).
-2. Upload semua file tersebut ke root repository GitHub kamu (timpa `index.html` dan `README.md` lama).
-3. Pastikan **Settings > Pages** aktif pada branch `main` folder `/ (root)`.
+1. Ekstrak seluruh isi ZIP ini (`index.html`, `style.css`, `data.js`, `game.js`, `README.md`).
+2. Upload & timpa ke root repository GitHub kamu (tetap biarkan `firebase-config.js`, `cloud.js`, `firestore.rules` jika ada — sistem save v3.0 otomatis tersimpan offline di `localStorage` dan melakukan sinkronisasi ke Firestore saat terhubung ke internet!).
+3. Buka **Settings > Pages** untuk memastikan GitHub Pages aktif.
 
-## Fitur Utama
-- **Start Tahun 2020 & Kronologi Asli:** Harga PS1, PS2, PS3, PS4, Nintendo Switch, Xbox One, PC Rakitan, hingga rilis PS5 (Nov 2020) dan Starlink (Mei 2024) mengikuti tahun kalender asli.
-- **Sistem Game Per-Unit & Storage Asli:** PS kosong tanpa game! Beli CD/Kaset untuk PS1 (50 game legendaris) & PS2 (30 game legendaris), atau install game digital/BD sesuai kapasitas HDD/SSD asli (GB) untuk PS3, PS4, PS5, dan PC.
-- **Kasir Pecahan Uang Rupiah Realistis:** Hitung kembalian manual pecahan Rp 100 s/d Rp 100.000 saat jaga sendiri (pelanggan jujur vs pendiam vs licik), atau rekrut karyawan agar otomatis.
-- **Token Listrik kWh, Wi-Fi Voucher RT/RW Net & PPOB:** Beli token PLN dalam satuan kWh, pilih ISP (IndiHome, Biznet, MyRepublic, Starlink), jual voucher Wi-Fi buatanmu sendiri, serta jual pulsa & top-up e-wallet (GoPay, OVO, DANA, ShopeePay, LinkAja).
-- **Life Simulator (Usia 18 Tahun, Cewek):** Kelola tabungan Bank, beli/perluas ruko, pacaran, menikah dengan pesta variatif, fitur HB, KB, dan Kondom.
-- **Speed Mode (1x, 2x, 4x, 8x) & VIP 2x Boost:** 1 jam in-game = 1 menit nyata (1 hari = 24 menit di 1x) + mode VIP Pengali 2x.
+## Pembaruan Utama v3.0
+1. **Perbaikan Scroll & UI Responsif HP:** Menghentikan *re-render* destruktif tiap detik sehingga scroll daftar belanja & room mulus tanpa lompat ke atas, dilengkapi navigasi bawah khusus mobile.
+2. **Tombol Pause (`⏸️`) & Speed (`1x`, `2x`, `4x`, `8x`):** Jeda waktu kapan saja di sebelah tombol `1x`.
+3. **Mode Developer (Modal Rp 100 Juta) vs Mode Rilis Pemain (Modal Rp 30 Juta):** Pilih mode saat mulai atau melalui menu pengaturan untuk menguji keseimbangan ekonomi rilis.
+4. **Custom In-Game Modal (Tanpa Pop-up Browser):** Semua dialog (edit nama rental, diskon/tarif gratis di tiap billing room, atur voucher Wi-Fi, konfirmasi VIP 2x) menggunakan modal HTML/CSS internal yang ramah aplikasi HP/WebView.
+5. **Pemisahan Saldo M-Banking Pribadi vs Deposit Saldo Bisnis PPOB + Biaya Admin Operator:** Transfer & top up e-wallet (GoPay, OVO, DANA, ShopeePay, LinkAja, Token PLN) memotong Deposit Saldo Bisnis, sementara uang pokok + margin keuntungan/admin masuk ke Laci Kasir.
+6. **TV LCD & LED Terbaik Tahun 2020+ (Tanpa TV Tabung):** Katalog TV LCD & LED/UHD/QLED merk asli (TCL, Coocaa, Polytron, Sharp, LG, Samsung, Sony) dari termurah hingga termahal.
+7. **Sistem Room Rental (AC, Kipas Angin, CCTV) & Ekspansi Penginapan/Kos:** Pasang kipas angin, AC, dan CCTV di setiap room rental, serta buka unit bisnis **Kos-kosan / Penginapan Harian** bertahap.
+8. **Pelanggan Tanpa Penalti Reputasi & Rekomendasi Game:** Jika game favorit pelanggan belum tersedia, pelanggan dapat memilih main game lain yang ada atau pulang dengan sopan sambil merekomendasikan game tersebut (akan menjadi **Pelanggan Tetap** jika dibelikan).
+9. **Sewa PS Bawa Pulang (Rental Harian):** Aktifkan layanan sewa PS harian menggunakan stok konsol & TV di gudang (di luar room) atau slot sewa khusus.
+10. **Hybrid Offline + Firestore Auto-Sync:** Seluruh progres otomatis tersimpan di penyimpanan lokal (`localStorage`) saat offline dan otomatis tersinkronisasi ke Firestore ketika online.

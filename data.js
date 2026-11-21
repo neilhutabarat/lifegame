@@ -1,40 +1,40 @@
-// DATABASE HISTORIS & HARGA REALISTIS INDONESIA (MULAI JANUARI 2020)
+// DATABASE REALISTIS INDONESIA (MULAI JANUARI 2020) - RENTAL SIMULATOR BY ONEILVERSE
 
 const DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 100];
 
 const CONSOLE_CATALOG = [
   // PS1
-  { id: 'ps1_fat', platform: 'PS1', name: 'PlayStation 1 Fat (Refurbish Ori)', year: 2020, month: 1, price: 450000, watt: 30, storageGB: 0, media: 'disc', defaultRate: 2000 },
-  { id: 'ps1_slim', platform: 'PS1', name: 'PSOne Slim Putih + 2 Stik Ori', year: 2020, month: 1, price: 650000, watt: 25, storageGB: 0, media: 'disc', defaultRate: 2500 },
+  { id: 'ps1_fat', platform: 'PS1', name: 'PlayStation 1 Fat (Refurbish Ori)', year: 2020, month: 1, price: 450000, watt: 30, storageGB: 0, media: 'disc', defaultRate: 2000, dailyRentRate: 25000 },
+  { id: 'ps1_slim', platform: 'PS1', name: 'PSOne Slim Putih + 2 Stik Ori', year: 2020, month: 1, price: 650000, watt: 25, storageGB: 0, media: 'disc', defaultRate: 2500, dailyRentRate: 30000 },
   // PS2
-  { id: 'ps2_fat', platform: 'PS2', name: 'PS2 Fat NA + Harddisk 80GB', year: 2020, month: 1, price: 850000, watt: 50, storageGB: 0, media: 'disc', defaultRate: 3000 },
-  { id: 'ps2_slim', platform: 'PS2', name: 'PS2 Slim Seri 90006', year: 2020, month: 1, price: 1100000, watt: 35, storageGB: 0, media: 'disc', defaultRate: 3500 },
+  { id: 'ps2_fat', platform: 'PS2', name: 'PS2 Fat NA + Harddisk 80GB', year: 2020, month: 1, price: 850000, watt: 50, storageGB: 0, media: 'disc', defaultRate: 3000, dailyRentRate: 40000 },
+  { id: 'ps2_slim', platform: 'PS2', name: 'PS2 Slim Seri 90006', year: 2020, month: 1, price: 1100000, watt: 35, storageGB: 0, media: 'disc', defaultRate: 3500, dailyRentRate: 45000 },
   // PS3
-  { id: 'ps3_slim_320', platform: 'PS3', name: 'PS3 Slim 320GB OFW/HEN', year: 2020, month: 1, price: 1850000, watt: 110, storageGB: 290, media: 'storage', defaultRate: 5000 },
-  { id: 'ps3_ss_500', platform: 'PS3', name: 'PS3 Super Slim 500GB', year: 2020, month: 1, price: 2250000, watt: 95, storageGB: 460, media: 'storage', defaultRate: 5000 },
+  { id: 'ps3_slim_320', platform: 'PS3', name: 'PS3 Slim 320GB OFW/HEN', year: 2020, month: 1, price: 1850000, watt: 110, storageGB: 290, media: 'storage', defaultRate: 5000, dailyRentRate: 65000 },
+  { id: 'ps3_ss_500', platform: 'PS3', name: 'PS3 Super Slim 500GB', year: 2020, month: 1, price: 2250000, watt: 95, storageGB: 460, media: 'storage', defaultRate: 5000, dailyRentRate: 70000 },
   // PS4
-  { id: 'ps4_fat_500', platform: 'PS4', name: 'PS4 Fat 500GB CUH-1206', year: 2020, month: 1, price: 3400000, watt: 140, storageGB: 408, media: 'storage', defaultRate: 8000 },
-  { id: 'ps4_slim_500', platform: 'PS4', name: 'PS4 Slim 500GB Garansi Sony', year: 2020, month: 1, price: 4100000, watt: 110, storageGB: 408, media: 'storage', defaultRate: 8000 },
-  { id: 'ps4_slim_1tb', platform: 'PS4', name: 'PS4 Slim 1TB Garansi Sony', year: 2020, month: 1, price: 4700000, watt: 110, storageGB: 860, media: 'storage', defaultRate: 9000 },
-  { id: 'ps4_pro_1tb', platform: 'PS4', name: 'PS4 Pro 1TB 4K HDR', year: 2020, month: 1, price: 5600000, watt: 165, storageGB: 860, media: 'storage', defaultRate: 10000 },
-  // PS5 (Rilis November 2020!)
-  { id: 'ps5_digital', platform: 'PS5', name: 'PS5 Digital Edition 825GB', year: 2020, month: 11, price: 11500000, watt: 180, storageGB: 667, media: 'storage', defaultRate: 15000 },
-  { id: 'ps5_disc', platform: 'PS5', name: 'PS5 Disc Edition 825GB', year: 2020, month: 11, price: 13500000, watt: 200, storageGB: 667, media: 'storage', defaultRate: 16000 },
-  { id: 'ps5_slim_1tb', platform: 'PS5', name: 'PS5 Slim 1TB Resmi Sony ID', year: 2023, month: 11, price: 9699000, watt: 190, storageGB: 848, media: 'storage', defaultRate: 15000 },
-  // Nintendo & Xbox
-  { id: 'switch_lite', platform: 'Switch', name: 'Nintendo Switch Lite (32GB)', year: 2020, month: 1, price: 3100000, watt: 18, storageGB: 26, media: 'storage', defaultRate: 7000 },
-  { id: 'switch_v2', platform: 'Switch', name: 'Nintendo Switch V2 Neon (32GB)', year: 2020, month: 1, price: 4650000, watt: 35, storageGB: 26, media: 'storage', defaultRate: 9000 },
-  { id: 'switch_oled', platform: 'Switch', name: 'Nintendo Switch OLED (64GB)', year: 2021, month: 10, price: 5400000, watt: 35, storageGB: 54, media: 'storage', defaultRate: 10000 },
-  { id: 'xbox_one_s', platform: 'Xbox', name: 'Xbox One S 1TB All-Digital', year: 2020, month: 1, price: 3600000, watt: 90, storageGB: 780, media: 'storage', defaultRate: 8000 },
-  { id: 'xbox_series_s', platform: 'Xbox', name: 'Xbox Series S 512GB', year: 2020, month: 11, price: 5400000, watt: 85, storageGB: 364, media: 'storage', defaultRate: 11000 },
-  { id: 'xbox_series_x', platform: 'Xbox', name: 'Xbox Series X 1TB', year: 2020, month: 11, price: 9500000, watt: 170, storageGB: 802, media: 'storage', defaultRate: 15000 }
+  { id: 'ps4_fat_500', platform: 'PS4', name: 'PS4 Fat 500GB CUH-1206', year: 2020, month: 1, price: 3400000, watt: 140, storageGB: 408, media: 'storage', defaultRate: 8000, dailyRentRate: 110000 },
+  { id: 'ps4_slim_500', platform: 'PS4', name: 'PS4 Slim 500GB Garansi Sony', year: 2020, month: 1, price: 4100000, watt: 110, storageGB: 408, media: 'storage', defaultRate: 8000, dailyRentRate: 120000 },
+  { id: 'ps4_slim_1tb', platform: 'PS4', name: 'PS4 Slim 1TB Garansi Sony', year: 2020, month: 1, price: 4700000, watt: 110, storageGB: 860, media: 'storage', defaultRate: 9000, dailyRentRate: 135000 },
+  { id: 'ps4_pro_1tb', platform: 'PS4', name: 'PS4 Pro 1TB 4K HDR', year: 2020, month: 1, price: 5600000, watt: 165, storageGB: 860, media: 'storage', defaultRate: 10000, dailyRentRate: 150000 },
+  // PS5 (Rilis November 2020)
+  { id: 'ps5_digital', platform: 'PS5', name: 'PS5 Digital Edition 825GB', year: 2020, month: 11, price: 11500000, watt: 180, storageGB: 667, media: 'storage', defaultRate: 15000, dailyRentRate: 230000 },
+  { id: 'ps5_disc', platform: 'PS5', name: 'PS5 Disc Edition 825GB', year: 2020, month: 11, price: 13500000, watt: 200, storageGB: 667, media: 'storage', defaultRate: 16000, dailyRentRate: 250000 },
+  { id: 'ps5_slim_1tb', platform: 'PS5', name: 'PS5 Slim 1TB Resmi Sony ID', year: 2023, month: 11, price: 9699000, watt: 190, storageGB: 848, media: 'storage', defaultRate: 15000, dailyRentRate: 220000 },
+  // Switch & Xbox
+  { id: 'switch_lite', platform: 'Switch', name: 'Nintendo Switch Lite (32GB)', year: 2020, month: 1, price: 3100000, watt: 18, storageGB: 26, media: 'storage', defaultRate: 7000, dailyRentRate: 85000 },
+  { id: 'switch_v2', platform: 'Switch', name: 'Nintendo Switch V2 Neon (32GB)', year: 2020, month: 1, price: 4650000, watt: 35, storageGB: 26, media: 'storage', defaultRate: 9000, dailyRentRate: 110000 },
+  { id: 'switch_oled', platform: 'Switch', name: 'Nintendo Switch OLED (64GB)', year: 2021, month: 10, price: 5400000, watt: 35, storageGB: 54, media: 'storage', defaultRate: 10000, dailyRentRate: 125000 },
+  { id: 'xbox_one_s', platform: 'Xbox', name: 'Xbox One S 1TB All-Digital', year: 2020, month: 1, price: 3600000, watt: 90, storageGB: 780, media: 'storage', defaultRate: 8000, dailyRentRate: 100000 },
+  { id: 'xbox_series_s', platform: 'Xbox', name: 'Xbox Series S 512GB', year: 2020, month: 11, price: 5400000, watt: 85, storageGB: 364, media: 'storage', defaultRate: 11000, dailyRentRate: 140000 },
+  { id: 'xbox_series_x', platform: 'Xbox', name: 'Xbox Series X 1TB', year: 2020, month: 11, price: 9500000, watt: 170, storageGB: 802, media: 'storage', defaultRate: 15000, dailyRentRate: 220000 }
 ];
 
 const PC_CATALOG = [
-  { id: 'pc_entry_2020', platform: 'PC', name: 'PC Rakitan Warnet 2020 (i3-9100F, GTX 1650 4GB, RAM 8GB, SSD 240GB)', year: 2020, month: 1, price: 6800000, watt: 220, storageGB: 220, media: 'storage', defaultRate: 6000, tier: 1 },
-  { id: 'pc_mid_2020', platform: 'PC', name: 'PC Gaming Mid 2020 (Ryzen 5 3600, GTX 1660 Super 6GB, RAM 16GB, SSD 512GB)', year: 2020, month: 1, price: 11200000, watt: 300, storageGB: 470, media: 'storage', defaultRate: 9000, tier: 2 },
-  { id: 'pc_high_2021', platform: 'PC', name: 'PC Sultan RTX 2021 (i5-11400F, RTX 3060 12GB, RAM 16GB, NVMe 1TB)', year: 2021, month: 3, price: 17500000, watt: 420, storageGB: 930, media: 'storage', defaultRate: 13000, tier: 3 },
-  { id: 'pc_ultra_2023', platform: 'PC', name: 'PC Pro Esports 2023 (i7-13700F, RTX 4070 12GB, RAM 32GB, NVMe 2TB)', year: 2023, month: 5, price: 26500000, watt: 520, storageGB: 1860, media: 'storage', defaultRate: 18000, tier: 4 }
+  { id: 'pc_entry_2020', platform: 'PC', name: 'PC Rakitan Warnet 2020 (i3-9100F, GTX 1650 4GB, RAM 8GB, SSD 240GB)', year: 2020, month: 1, price: 6800000, watt: 220, storageGB: 220, media: 'storage', defaultRate: 6000, dailyRentRate: 0 },
+  { id: 'pc_mid_2020', platform: 'PC', name: 'PC Gaming Mid 2020 (Ryzen 5 3600, GTX 1660 Super 6GB, RAM 16GB, SSD 512GB)', year: 2020, month: 1, price: 11200000, watt: 300, storageGB: 470, media: 'storage', defaultRate: 9000, dailyRentRate: 0 },
+  { id: 'pc_high_2021', platform: 'PC', name: 'PC Sultan RTX 2021 (i5-11400F, RTX 3060 12GB, RAM 16GB, NVMe 1TB)', year: 2021, month: 3, price: 17500000, watt: 420, storageGB: 930, media: 'storage', defaultRate: 13000, dailyRentRate: 0 },
+  { id: 'pc_ultra_2023', platform: 'PC', name: 'PC Pro Esports 2023 (i7-13700F, RTX 4070 12GB, RAM 32GB, NVMe 2TB)', year: 2023, month: 5, price: 26500000, watt: 520, storageGB: 1860, media: 'storage', defaultRate: 18000, dailyRentRate: 0 }
 ];
 
 const PC_PARTS_UPGRADE = [
@@ -45,20 +45,22 @@ const PC_PARTS_UPGRADE = [
   { id: 'up_monitor144', name: 'Upgrade Monitor 24" 144Hz IPS', price: 2300000, bonusRate: 1500, addGB: 0 }
 ];
 
+// HANYA TV LCD & LED/UHD/QLED TERBAIK TAHUN 2020+ (TANPA TV TABUNG!) - DIURUTKAN TERMURAH KE TERMAHAL
 const TV_CATALOG = [
-  { id: 'tv_tabung_21', name: 'TV Tabung Sharp Alexander 21"', type: 'Tabung', inch: 21, year: 2020, price: 450000, watt: 75, bonusRate: 0 },
-  { id: 'tv_tabung_29', name: 'TV Tabung Polytron 29" Flat', type: 'Tabung', inch: 29, year: 2020, price: 750000, watt: 95, bonusRate: 0 },
-  { id: 'tv_lcd_32', name: 'TV LCD LG 32" HD Ready (Second)', type: 'LCD', inch: 32, year: 2020, price: 1350000, watt: 65, bonusRate: 500 },
-  { id: 'tv_led_32_tcl', name: 'TV LED TCL 32" HD 32D3000', type: 'LED', inch: 32, year: 2020, price: 1899000, watt: 45, bonusRate: 500 },
-  { id: 'tv_led_32_sam', name: 'TV LED Samsung 32" HD T4001', type: 'LED', inch: 32, year: 2020, price: 2299000, watt: 48, bonusRate: 1000 },
-  { id: 'tv_led_40_poly', name: 'TV LED Polytron 40" Full HD', type: 'LED', inch: 40, year: 2020, price: 2899000, watt: 60, bonusRate: 1000 },
-  { id: 'tv_uhd_43_tcl', name: 'Smart TV UHD 4K TCL 43" 43A8', type: 'UHD 4K', inch: 43, year: 2020, price: 3899000, watt: 75, bonusRate: 2000 },
-  { id: 'tv_uhd_43_sam', name: 'Smart TV UHD 4K Samsung 43" TU7000', type: 'UHD 4K', inch: 43, year: 2020, price: 4799000, watt: 85, bonusRate: 2500 },
-  { id: 'tv_uhd_50_lg', name: 'Smart TV UHD 4K LG 50" UN7300', type: 'UHD 4K', inch: 50, year: 2020, price: 6200000, watt: 105, bonusRate: 3000 },
-  { id: 'tv_qled_55_sam', name: 'Smart TV QLED 4K Samsung 55" 120Hz', type: 'QLED 4K', inch: 55, year: 2021, price: 11500000, watt: 130, bonusRate: 4500 }
+  { id: 'tv_lcd_24_poly', name: 'TV LCD/LED Polytron 24" HD PLD24D123 (Entry)', type: 'LCD/LED', inch: 24, year: 2020, price: 1199000, watt: 35, bonusRate: 0 },
+  { id: 'tv_lcd_32_lg', name: 'TV LCD LG 32" 32LK500BPTA HD Ready', type: 'LCD', inch: 32, year: 2020, price: 1650000, watt: 55, bonusRate: 500 },
+  { id: 'tv_led_32_tcl', name: 'TV LED TCL 32" 32D3000A HD', type: 'LED', inch: 32, year: 2020, price: 1849000, watt: 45, bonusRate: 500 },
+  { id: 'tv_led_32_sharp', name: 'TV LED Sharp Aquos 32" 2T-C32BA1i', type: 'LED', inch: 32, year: 2020, price: 2099000, watt: 45, bonusRate: 1000 },
+  { id: 'tv_led_32_sam', name: 'TV LED Samsung 32" UA32T4001', type: 'LED', inch: 32, year: 2020, price: 2299000, watt: 48, bonusRate: 1000 },
+  { id: 'tv_led_40_coocaa', name: 'Smart TV LED Coocaa 40" 40S6G Full HD', type: 'LED FHD', inch: 40, year: 2020, price: 2799000, watt: 60, bonusRate: 1500 },
+  { id: 'tv_led_43_tcl', name: 'Smart TV LED UHD 4K TCL 43" 43A8', type: 'LED 4K', inch: 43, year: 2020, price: 3899000, watt: 75, bonusRate: 2000 },
+  { id: 'tv_led_43_sam', name: 'Smart TV LED Crystal UHD 4K Samsung 43" TU7000', type: 'LED 4K', inch: 43, year: 2020, price: 4799000, watt: 85, bonusRate: 2500 },
+  { id: 'tv_led_50_lg', name: 'Smart TV LED UHD 4K LG 50" 50UN7300PTC', type: 'LED 4K', inch: 50, year: 2020, price: 6299000, watt: 105, bonusRate: 3000 },
+  { id: 'tv_led_55_sony', name: 'Smart TV LED 4K HDR Sony Bravia 55" KD-55X7500H', type: 'LED 4K HDR', inch: 55, year: 2020, price: 8999000, watt: 120, bonusRate: 4000 },
+  { id: 'tv_qled_65_sam', name: 'Smart TV QLED 4K 120Hz Samsung 65" Q80T (Flagship)', type: 'QLED 4K', inch: 65, year: 2020, price: 18500000, watt: 165, bonusRate: 6000 }
 ];
 
-// 50 GAME PS1 TERKENAL DI INDONESIA (Harga CD Ori / Kopab Kolektor 2020)
+// 50 GAME PS1 TERKENAL DI INDONESIA
 const PS1_GAMES = [
   "Harvest Moon: Back to Nature", "Crash Team Racing (CTR)", "Winning Eleven 3 Final Ver", "Winning Eleven 2002",
   "Tekken 3", "Pepsiman", "Vigilante 8: 2nd Offense", "Twisted Metal 4", "Nascar Rumble", "Super Shot Soccer",
@@ -97,16 +99,15 @@ const PS2_GAMES = [
   sizeGB: 0
 }));
 
-// GAME ORIGINAL PS3, PS4, PS5, SWITCH, XBOX, PC (Ukuran GB Asli & Harga Asli di Indonesia)
+// GAME ORIGINAL PS3, PS4, PS5, SWITCH, XBOX, PC
 const MODERN_GAMES = [
-  // PS3
   { id: 'ps3_pes18', platform: 'PS3', title: 'PES 2018 (Update Transfer)', year: 2020, price: 220000, sizeGB: 14 },
   { id: 'ps3_gta5', platform: 'PS3', title: 'Grand Theft Auto V', year: 2020, price: 250000, sizeGB: 18 },
   { id: 'ps3_tlou', platform: 'PS3', title: 'The Last of Us', year: 2020, price: 210000, sizeGB: 26 },
   { id: 'ps3_gow3', platform: 'PS3', title: 'God of War III', year: 2020, price: 190000, sizeGB: 35 },
   { id: 'ps3_rdr', platform: 'PS3', title: 'Red Dead Redemption', year: 2020, price: 200000, sizeGB: 10 },
   { id: 'ps3_naruto', platform: 'PS3', title: 'Naruto Storm Revolution', year: 2020, price: 185000, sizeGB: 8 },
-  { id: 'ps3_minecraft', platform: 'PS3', title: 'Minecraft PlayStation 3 Edition', year: 2020, price: 175000, sizeGB: 2 },
+  { id: 'ps3_minecraft', platform: 'PS3', title: 'Minecraft PS3 Edition', year: 2020, price: 175000, sizeGB: 2 },
   // PS4
   { id: 'ps4_pes20', platform: 'PS4', title: 'eFootball PES 2020', year: 2020, price: 480000, sizeGB: 42 },
   { id: 'ps4_pes21', platform: 'PS4', title: 'eFootball PES 2021 Season Update', year: 2020, price: 420000, sizeGB: 44 },
@@ -127,7 +128,7 @@ const MODERN_GAMES = [
   { id: 'ps5_gow_rag', platform: 'PS5', title: 'God of War Ragnarök', year: 2022, price: 879000, sizeGB: 84 },
   { id: 'ps5_tekken8', platform: 'PS5', title: 'Tekken 8', year: 2024, price: 949000, sizeGB: 82 },
   { id: 'ps5_gta5', platform: 'PS5', title: 'GTA V PS5 Expanded', year: 2022, price: 499000, sizeGB: 96 },
-  // Nintendo Switch
+  // Switch
   { id: 'sw_mk8', platform: 'Switch', title: 'Mario Kart 8 Deluxe', year: 2020, price: 720000, sizeGB: 7 },
   { id: 'sw_acnh', platform: 'Switch', title: 'Animal Crossing: New Horizons', year: 2020, price: 740000, sizeGB: 7 },
   { id: 'sw_smash', platform: 'Switch', title: 'Super Smash Bros. Ultimate', year: 2020, price: 750000, sizeGB: 16 },
@@ -136,9 +137,9 @@ const MODERN_GAMES = [
   { id: 'xb_forza4', platform: 'Xbox', title: 'Forza Horizon 4', year: 2020, price: 550000, sizeGB: 75 },
   { id: 'xb_fifa21', platform: 'Xbox', title: 'FIFA 21 Xbox', year: 2020, price: 650000, sizeGB: 45 },
   { id: 'xb_halo', platform: 'Xbox', title: 'Halo: The Master Chief Collection', year: 2020, price: 480000, sizeGB: 110 },
-  // PC Gaming
-  { id: 'pc_valorant', platform: 'PC', title: 'Valorant (Free + Topup Bundle)', year: 2020, price: 50000, sizeGB: 28 },
-  { id: 'pc_pb', platform: 'PC', title: 'Point Blank Zepetto (License Warnet)', year: 2020, price: 100000, sizeGB: 12 },
+  // PC
+  { id: 'pc_valorant', platform: 'PC', title: 'Valorant (Bundle Warnet)', year: 2020, price: 50000, sizeGB: 28 },
+  { id: 'pc_pb', platform: 'PC', title: 'Point Blank Zepetto', year: 2020, price: 100000, sizeGB: 12 },
   { id: 'pc_dota2', platform: 'PC', title: 'Dota 2 Steam', year: 2020, price: 50000, sizeGB: 45 },
   { id: 'pc_csgo', platform: 'PC', title: 'Counter-Strike: Global Offensive', year: 2020, price: 215000, sizeGB: 32 },
   { id: 'pc_gta5', platform: 'PC', title: 'GTA V Steam Original', year: 2020, price: 300000, sizeGB: 105 },
@@ -159,21 +160,35 @@ const WIFI_PROVIDERS = [
 ];
 
 const KIOS_TIERS = [
-  { level: 1, name: 'Kios Kontrakan Petak (3x4m)', maxUnits: 3, monthlyRent: 850000, buyPrice: 35000000 },
-  { level: 2, name: 'Ruko Mini Pinggir Jalan (4x6m)', maxUnits: 6, monthlyRent: 1650000, buyPrice: 75000000 },
-  { level: 3, name: 'Ruko 2 Lantai Gaming Center (5x10m)', maxUnits: 10, monthlyRent: 3200000, buyPrice: 160000000 },
-  { level: 4, name: 'Esports Arena & Cafe Oneilverse', maxUnits: 16, monthlyRent: 6000000, buyPrice: 350000000 }
+  { level: 1, name: 'Ruko Sekat 3 Room (3x5m)', maxRooms: 3, monthlyRent: 900000, buyPrice: 38000000 },
+  { level: 2, name: 'Ruko 6 Room Private (5x8m)', maxRooms: 6, monthlyRent: 1800000, buyPrice: 80000000 },
+  { level: 3, name: 'Ruko 2 Lantai 10 Room VIP (6x12m)', maxRooms: 10, monthlyRent: 3400000, buyPrice: 170000000 },
+  { level: 4, name: 'Oneilverse Gaming Tower & Penginapan', maxRooms: 16, monthlyRent: 6500000, buyPrice: 360000000 }
 ];
 
+// KATALOG PPOB REALISTIS INDONESIA (ADMIN SESUAI OPERATOR / E-WALLET)
 const PPOB_PRODUCTS = [
-  { id: 'pulsa_10', name: 'Pulsa All Operator 10.000', modal: 10200, jual: 12000 },
-  { id: 'pulsa_25', name: 'Pulsa All Operator 25.000', modal: 24800, jual: 27000 },
-  { id: 'pulsa_50', name: 'Pulsa All Operator 50.000', modal: 49500, jual: 52000 },
-  { id: 'gopay_20', name: 'Top Up GoPay 20.000', modal: 20500, jual: 22500 },
-  { id: 'ovo_50', name: 'Top Up OVO 50.000', modal: 50500, jual: 53000 },
-  { id: 'dana_50', name: 'Top Up DANA 50.000', modal: 50500, jual: 53000 },
-  { id: 'shopeepay_50', name: 'Top Up ShopeePay 50.000', modal: 50500, jual: 53000 },
-  { id: 'linkaja_25', name: 'Top Up LinkAja 25.000', modal: 25500, jual: 27500 }
+  { id: 'dana_50', name: 'Top Up DANA 50.000', nominal: 50000, adminProvider: 0, hargaJual: 52000 },
+  { id: 'dana_100', name: 'Top Up DANA 100.000', nominal: 100000, adminProvider: 0, hargaJual: 102000 },
+  { id: 'gopay_50', name: 'Top Up GoPay 50.000', nominal: 50000, adminProvider: 1000, hargaJual: 52500 },
+  { id: 'ovo_50', name: 'Top Up OVO 50.000', nominal: 50000, adminProvider: 1000, hargaJual: 52500 },
+  { id: 'shopeepay_50', name: 'Top Up ShopeePay 50.000', nominal: 50000, adminProvider: 0, hargaJual: 52000 },
+  { id: 'linkaja_50', name: 'Top Up LinkAja 50.000', nominal: 50000, adminProvider: 1000, hargaJual: 52500 },
+  { id: 'pln_50', name: 'Token PLN 50.000', nominal: 50000, adminProvider: 1500, hargaJual: 53000 },
+  { id: 'pln_100', name: 'Token PLN 100.000', nominal: 100000, adminProvider: 1500, hargaJual: 103000 },
+  { id: 'pulsa_tsel_25', name: 'Pulsa Telkomsel 25.000', nominal: 25200, adminProvider: 0, hargaJual: 27000 },
+  { id: 'pulsa_xl_25', name: 'Pulsa XL/Axis 25.000', nominal: 24900, adminProvider: 0, hargaJual: 27000 },
+  { id: 'tf_bri', name: 'Transfer Antar Bank (BRI/BCA/Mandiri)', nominal: 200000, adminProvider: 2500, hargaJual: 205000 },
+  { id: 'tf_seabank', name: 'Transfer SeaBank / Bank Jago (Gratis Admin Bank)', nominal: 150000, adminProvider: 0, hargaJual: 153000 }
+];
+
+// UNIT BISNIS EKSPANSI BERTAHAP (JASA SEWA & PENGINAPAN)
+const EXPANSION_BUSINESSES = [
+  { id: 'biz_powerbank', name: 'Sewa Powerbank & Charger Station', unlockCost: 1500000, dailyIncomeRange: [40000, 90000], desc: 'Sewa powerbank untuk pengunjung room & warga sekitar.' },
+  { id: 'biz_kamera', name: 'Sewa Kamera DSLR / Mirrorless & Tripod', unlockCost: 6500000, dailyIncomeRange: [120000, 250000], desc: 'Jasa sewa kamera harian untuk mahasiswa & konten kreator.' },
+  { id: 'biz_motor', name: 'Sewa Motor Harian (2 Unit Beat/Vario)', unlockCost: 24000000, dailyIncomeRange: [180000, 320000], desc: 'Penyewaan motor harian untuk pekerja & wisatawan lokal.' },
+  { id: 'biz_kos', name: 'Kos-kosan & Penginapan Harian (4 Kamar AC)', unlockCost: 65000000, dailyIncomeRange: [350000, 750000], desc: 'Bisnis penginapan harian / transit & kos bulanan di lantai atas!' },
+  { id: 'biz_guesthouse', name: 'Guest House & Penginapan Keluarga Oneilverse', unlockCost: 140000000, dailyIncomeRange: [800000, 1650000], desc: 'Penginapan full fasilitas AC, Wi-Fi kencang, dan sarapan.' }
 ];
 
 const PARTNERS_LIST = [
