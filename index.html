@@ -15,7 +15,7 @@
     </div>
     <div class="brand-sub">
       <span>Rental Simulator by Oneilverse</span>
-      <span class="badge" id="syncBadge" onclick="openModeSelectModal()" style="cursor:pointer;">🛠️ Dev 100Jt • Offline</span>
+      <span class="badge" id="syncBadge" onclick="openModeSelectModal()" style="cursor:pointer;" title="Klik untuk ganti mode modal">🛠️ Dev 100Jt • Offline</span>
     </div>
   </div>
 
@@ -40,8 +40,8 @@
 </header>
 
 <div class="main-layout">
-  <!-- SECTION 1: ANTREAN & LOG -->
-  <div class="mobile-section" data-mob="queue">
+  <!-- KOLOM 1: ANTREAN & LOG -->
+  <div class="col">
     <div class="card">
       <h2>👥 Pengunjung & Antrean <span id="queueCount" class="badge">0/5</span></h2>
       <div style="font-size:0.72rem;color:var(--muted);">
@@ -56,8 +56,8 @@
     </div>
   </div>
 
-  <!-- SECTION 2: ROOM RENTAL -->
-  <div class="mobile-section active-mobile" data-mob="rooms">
+  <!-- KOLOM 2: ROOM RENTAL -->
+  <div class="col">
     <div class="card">
       <h2>
         <span>🚪 Room Rental (PS1–PS5, Switch, Xbox, PC)</span>
@@ -67,8 +67,8 @@
     </div>
   </div>
 
-  <!-- SECTION 3: STORE, SEWA/PENGINAPAN, WIFI, BANK/PPOB, LIFE -->
-  <div class="mobile-section" data-mob="menu">
+  <!-- KOLOM 3: STORE, SEWA/PENGINAPAN, WIFI, BANK/PPOB, LIFE -->
+  <div class="col">
     <div class="card">
       <h2>📱 Pusat Bisnis & Kehidupan</h2>
       <div class="nav-tabs">
@@ -83,16 +83,9 @@
   </div>
 </div>
 
-<!-- BOTTOM NAV KHUSUS HP / MOBILE -->
-<nav class="mobile-bottom-nav">
-  <button class="mob-nav-btn" onclick="switchMobileView('queue', this)">👥 Antrean & Log</button>
-  <button class="mob-nav-btn active" onclick="switchMobileView('rooms', this)">🚪 Room Rental</button>
-  <button class="mob-nav-btn" onclick="switchMobileView('menu', this)">📱 Bisnis & Hidup</button>
-</nav>
-
-<!-- CUSTOM IN-GAME MODAL (PENGGANTI POP-UP BROWSER) -->
-<div id="customModalBackdrop" class="modal-backdrop">
-  <div class="modal">
+<!-- CUSTOM IN-GAME MODAL -->
+<div id="customModalBackdrop" class="modal-backdrop" style="display:flex;">
+  <div class="modal" id="customModalBox">
     <h3 id="customModalTitle" style="margin:0;color:var(--accent);font-size:0.98rem;">Judul</h3>
     <div id="customModalBody" style="display:flex;flex-direction:column;gap:8px;"></div>
     <div id="customModalFooter" style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;"></div>

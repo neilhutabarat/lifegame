@@ -178,20 +178,18 @@ function applyGameMode(mode) {
   initStarterRooms();
 
   if (mode === 'dev') {
-    // Mode Developer: Modal utama Rp 100.000.000
     setDrawerExact(2000000);
     state.mbankingBalance = 96000000;
     state.businessPpobBalance = 2000000;
     addLog('🛠️ <b>Mode Developer Aktif</b> — Total Modal Utama: <b>Rp 100.000.000</b>.');
   } else {
-    // Mode Rilis Pemain: Modal utama Rp 30.000.000
     setDrawerExact(1500000);
     state.mbankingBalance = 27500000;
     state.businessPpobBalance = 1000000;
-    addLog('🚀 <b>Mode Rilis Pemain Aktif</b> — Total Modal Awal: <b>Rp 30.000.000</b> untuk sewa tempat, konsol, TV, game & saldo bisnis.');
+    addLog('🚀 <b>Mode Rilis Pemain Aktif</b> — Total Modal Awal: <b>Rp 30.000.000</b>.');
   }
   closeCustomModal();
-  saveGame();
+  saveGame(true);
   renderAll(true);
 }
 
@@ -1762,10 +1760,10 @@ function renderAll(includeRight = true) {
     openModeSelectModal();
   } else {
     addLog('💾 Progres lokal dimuat.');
+    closeCustomModal();
   }
   renderAll(true);
 
-  // Jika online & Firestore aktif, cek apakah data di Cloud lebih baru (misal habis main di HP/Laptop lain)
   if (navigator.onLine && CloudSync.init()) {
     const cloudRes = await CloudSync.pullFromCloud();
     if (cloudRes.ok && cloudRes.state) {

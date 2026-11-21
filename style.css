@@ -21,13 +21,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 64px; /* ruang bottom nav mobile */
-}
-@media (min-width: 1024px) {
-  body { padding-bottom: 0; }
 }
 
-/* HEADER */
 header {
   background: #060912;
   border-bottom: 1px solid var(--border);
@@ -74,26 +69,18 @@ header {
 .speed-btn.active { background: var(--accent); color: #090e1a; }
 .speed-btn.paused.active { background: var(--red); color: #fff; }
 
-/* LAYOUT UTAMA */
 .main-layout {
   display: grid;
-  grid-template-columns: 295px 1fr 390px;
+  grid-template-columns: 290px 1fr 370px;
   gap: 12px;
   padding: 12px;
   flex: 1;
 }
-@media (max-width: 1023px) {
-  .main-layout {
-    display: block;
-    padding: 10px;
-  }
-  .mobile-section { display: none; }
-  .mobile-section.active-mobile { display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 1100px) {
+  .main-layout { grid-template-columns: 1fr; }
 }
-@media (min-width: 1024px) {
-  .mobile-section { display: flex; flex-direction: column; gap: 12px; }
-  .mobile-bottom-nav { display: none !important; }
-}
+
+.col { display: flex; flex-direction: column; gap: 12px; }
 
 .card {
   background: var(--panel);
@@ -147,10 +134,9 @@ button.pink { background: var(--pink); color: #fff; border-color: var(--pink); }
 .badge.busy { background: rgba(59,130,246,0.2); color: #60a5fa; }
 .badge.warn { background: rgba(239,68,68,0.2); color: #f87171; }
 
-/* ROOM CARDS */
 .booths-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
   gap: 10px;
 }
 .booth {
@@ -172,7 +158,6 @@ button.pink { background: var(--pink); color: #fff; border-color: var(--pink); }
 .games-pill-wrap { display: flex; flex-wrap: wrap; gap: 3px; max-height: 48px; overflow-y: auto; }
 .game-pill { font-size: 0.65rem; background: #090e1a; border: 1px solid #334155; padding: 1px 5px; border-radius: 5px; color: #cbd5e1; }
 
-/* ANTREAN */
 .queue-item {
   background: var(--panel-2);
   border: 1px solid var(--border);
@@ -186,7 +171,6 @@ button.pink { background: var(--pink); color: #fff; border-color: var(--pink); }
 }
 .queue-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
-/* NAV & SCROLL */
 .nav-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .nav-btn { padding: 6px 2px; font-size: 0.7rem; text-align: center; }
 .nav-btn.active { background: var(--accent); color: #090e1a; border-color: var(--accent); }
@@ -231,11 +215,10 @@ button.pink { background: var(--pink); color: #fff; border-color: var(--pink); }
 .progress-bar { height: 5px; background: #060912; border-radius: 99px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--green); }
 
-/* CUSTOM IN-GAME MODALS (NO BROWSER POPUP!) */
 .modal-backdrop {
-  position: fixed; inset: 0; background: rgba(3, 6, 14, 0.82);
-  display: none; align-items: center; justify-content: center; z-index: 80; padding: 14px;
-  backdrop-filter: blur(3px);
+  position: fixed; inset: 0; background: rgba(3, 6, 14, 0.88);
+  display: none; align-items: center; justify-content: center; z-index: 90; padding: 14px;
+  backdrop-filter: blur(4px);
 }
 .modal {
   background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
@@ -254,16 +237,3 @@ input, select {
 }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-
-/* MOBILE BOTTOM NAVIGATION */
-.mobile-bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: #060912; border-top: 1px solid var(--border);
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  z-index: 50; padding: 6px 8px; gap: 6px;
-}
-.mob-nav-btn {
-  background: var(--panel); border: 1px solid var(--border);
-  padding: 8px 4px; border-radius: 9px; font-size: 0.76rem; color: var(--muted);
-}
-.mob-nav-btn.active { background: var(--accent); color: #090e1a; border-color: var(--accent); font-weight: 800; }
