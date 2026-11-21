@@ -1,6 +1,3 @@
-// CLOUD SYNC MODULE (OFFLINE LOCALSTORAGE + FIREBASE FIRESTORE v10 COMPAT)
-// Mendukung pindah perangkat Laptop <-> HP menggunakan Sync ID + Auto-Sync saat Online
-
 const CLOUD_CFG_KEY = 'oneilverse_fb_config_v1';
 const CLOUD_ID_KEY = 'oneilverse_sync_id_v1';
 
@@ -24,20 +21,13 @@ const CloudSync = {
   init() {
     if (this.initialized) return true;
     const cfg = this.getConfig();
-    if (!cfg || !cfg.apiKey || !cfg.projectId || typeof firebase === 'undefined') {
-      return false;
-    }
+    if (!cfg || !cfg.apiKey || !cfg.projectId || typeof firebase === 'undefined') return false;
     try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(cfg);
-      }
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
       this.db = firebase.firestore();
       this.initialized = true;
       return true;
-    } catch (err) {
-      console.warn('Firestore init error:', err);
-      return false;
-    }
+    } catch (err) { return false; }
   },
 
   setSyncId(newId) {
@@ -57,44 +47,25 @@ const CloudSync = {
   },
 
   async pushToCloud(stateObj, force = false) {
-    if (!navigator.onLine) return { ok: false, reason: 'offline' };
-    if (!this.init()) return { ok: false, reason: 'unconfigured' };
-
+    if (!navigator.onLine || !this.init()) return { ok: false };
     const now = Date.now();
-    if (!force && now - this.lastCloudPush < 8000) {
-      return { ok: true, skipped: true };
-    }
-
+    if (!force && now - this.lastCloudPush < 8000) return { ok: true, skipped: true };
     try {
       this.lastCloudPush = now;
-      const serialized = JSON.stringify(stateObj);
       await this.db.collection('rental_simulator_saves').doc(this.syncId).set({
-        syncId: this.syncId,
-        rentalName: stateObj.rentalName || 'Rental Oneilverse',
-        updatedAt: now,
-        payload: serialized
+        syncId: this.syncId, rentalName: stateObj.rentalName || 'Rental Oneilverse', updatedAt: now, payload: JSON.stringify(stateObj)
       }, { merge: true });
-      return { ok: true, updatedAt: now };
-    } catch (err) {
-      console.warn('Cloud push failed:', err);
-      return { ok: false, reason: err.message || 'error' };
-    }
+      return { ok: true };
+    } catch (err) { return { ok: false }; }
   },
 
   async pullFromCloud() {
-    if (!navigator.onLine) return { ok: false, reason: 'offline' };
-    if (!this.init()) return { ok: false, reason: 'unconfigured' };
-
+    if (!navigator.onLine || !this.init()) return { ok: false };
     try {
       const snap = await this.db.collection('rental_simulator_saves').doc(this.syncId).get();
       if (!snap.exists) return { ok: false, reason: 'not_found' };
       const data = snap.data();
-      if (!data || !data.payload) return { ok: false, reason: 'empty' };
-      const parsed = JSON.parse(data.payload);
-      return { ok: true, state: parsed, updatedAt: data.updatedAt || 0 };
-    } catch (err) {
-      console.warn('Cloud pull failed:', err);
-      return { ok: false, reason: err.message || 'error' };
-    }
+      return { ok: true, state: JSON.parse(data.payload), updatedAt: data.updatedAt || 0 };
+    } catch (err) { return { ok: false }; }
   }
 };
