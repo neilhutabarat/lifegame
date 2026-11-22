@@ -878,29 +878,69 @@ function saveBillingRateConfig() {
 }
 
 function triggerManualPatchAll(silent = false) {
+  state.pendingGamePatches = state.pendingGamePatches || {};
+  state.installedGames = state.installedGames || { go_pb: true, go_dn: true, go_ayo: true };
   const pendingIds = Object.keys(state.pendingGamePatches);
-  const sampleGame = pendingIds.length > 0
-    ? GAME_DISC_CATALOG.find(g => g.id === pendingIds[0])
-    : GAME_DISC_CATALOG.find(g => g.type === 'online' && state.installedGames[g.id]);
+  const sampleGame = (pendingIds.length > 0 && GAME_DISC_CATALOG.find(g => g.id === pendingIds[0]))
+    || GAME_DISC_CATALOG.find(g => g.type === 'online' && state.installedGames[g.id])
+    || GAME_DISC_CATALOG.find(g => g.type === 'online');
   if (!sampleGame) return;
   const totalMb = (pendingIds.length > 0 ? state.pendingGamePatches[pendingIds[0]] : sampleGame.patchMb) || 320;
   let count = 0;
+  let busyCount = 0;
   state.slots.forEach(s => {
-    if (s.cpu && s.monitor && !s.occupied && !s.updatingPatch) {
+    if (s.cpu && s.monitor) {
+      if (!s.occupied && !s.updatingPatch) {
+        s.updatingPatch = true;
+        s.updatingGameId = sampleGame.id;
+        s.updatingGameTitle = sampleGame.title;
+        s.patchDoneMb = 0;
+        s.patchTotalMb = totalMb;
+        count++;
+      } else if (s.occupied) {
+        busyCount++;
+      }
+    }
+  });
+  if (count > 0) {
+    playSfx('click');
+    addLog(`🔄 Memulai download & update patch <b>${sampleGame.title} (${totalMb} MB)</b> di <b>${count} PC</b> yang idle!`);
+    if (typeof window.renderRoomBoard === 'function') window.renderRoomBoard(true);
+    saveGame();
+  } else if (!silent) {
+    playSfx('click');
+    if (busyCount > 0) {
+      showCustomModal(
+        '🔄 Update Patch Game Online',
+        `<div class="spec-line">Semua <b>${busyCount} PC</b> yang terpasang saat ini sedang dipakai oleh pelanggan.</div>
+         <div class="spec-line">Kamu bisa menunggu pelanggan selesai, menutup warnet dulu, atau paksa update di semua PC yang sudah idle nanti.</div>`,
+        `<button type="button" onclick="closeCustomModal()">Tunggu Selesai</button>
+         <button type="button" class="amber" onclick="forcePatchAllBusyPcs('${sampleGame.id}', ${totalMb})">⚡ Hentikan Sesi &amp; Update Sekarang</button>`
+      );
+    } else {
+      addLog('ℹ️ Belum ada PC yang dirakit (atau semua PC sudah sedang proses update).');
+    }
+  }
+}
+
+function forcePatchAllBusyPcs(gameId, totalMb) {
+  const g = GAME_DISC_CATALOG.find(x => x.id === gameId) || GAME_DISC_CATALOG[0];
+  let count = 0;
+  state.slots.forEach(s => {
+    if (s.cpu && s.monitor && !s.updatingPatch) {
+      s.occupied = false;
       s.updatingPatch = true;
-      s.updatingGameId = sampleGame.id;
-      s.updatingGameTitle = sampleGame.title;
+      s.updatingGameId = g.id;
+      s.updatingGameTitle = g.title;
       s.patchDoneMb = 0;
-      s.patchTotalMb = totalMb;
+      s.patchTotalMb = totalMb || g.patchMb || 250;
       count++;
     }
   });
-  if (count > 0 && !silent) {
-    addLog(`🔄 Memulai download & update patch <b>${sampleGame.title} (${totalMb} MB)</b> di <b>${count} PC</b> yang sedang idle!`);
-    renderAll();
-  } else if (count === 0 && !silent) {
-    addLog(`ℹ️ Tidak ada PC idle untuk di-update (Tutup warnet dulu atau tunggu PC selesai dipakai).`);
-  }
+  closeCustomModal();
+  addLog(`🔄 Memulai update patch <b>${g.title}</b> di <b>${count} PC</b>!`);
+  saveGame();
+  renderAll();
 }
 
 // ==================== DRAWER TABS ====================
