@@ -356,9 +356,8 @@ input, select {
   .speed-btn { padding: 2px 5px; font-size: 0.64rem; }
   .quick-actions-pill { padding: 3px 6px; gap: 4px; }
   .quick-actions-pill button { padding: 4px 6px; font-size: 0.68rem; }
-  .hud-row-stats { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
-  .hud-row-stats::-webkit-scrollbar { display: none; }
-  .stat-chip { flex: 0 0 auto; font-size: 0.67rem; padding: 3px 8px; }
+  .hud-row-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .stat-chip { font-size: 0.62rem; padding: 3px 6px; justify-content: center; overflow: hidden; text-overflow: ellipsis; }
   .live-toast-bar { bottom: 92px; font-size: 0.67rem; padding: 4px 10px; max-width: 92vw; }
   .floating-dock-bottom { bottom: 6px; padding: 5px 6px; gap: 4px; border-radius: 14px; }
   .dock-btn { min-width: 52px; padding: 4px 7px; }

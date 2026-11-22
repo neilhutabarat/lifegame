@@ -113,36 +113,16 @@
     ctx.beginPath(); ctx.arc(x, y - 16, 9, 0, Math.PI * 2); ctx.fill();
   }
 
-  function drawTvScreen(x, y, w, h, slot, t) {
+  function drawTvScreen(x, y, w, h, slot) {
     if (typeof state !== 'undefined' && (state.plnBlackout || state.kwh <= 0)) {
       roundRect(x, y, w, h, 4, '#111827', '#374151', 2);
       return;
     }
-    if (!slot.occupied) {
-      roundRect(x, y, w, h, 4, '#1e3a8a', '#0f172a', 2);
-      ctx.fillStyle = '#93c5fd';
-      ctx.font = '800 8px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(slot.console ? slot.console.platform : 'TV', x + w / 2, y + h / 2 + 3);
-      return;
-    }
-    const title = (slot.installedGame ? slot.installedGame.title : 'PES').toLowerCase();
-    if (title.includes('winning') || title.includes('pes') || title.includes('fc') || title.includes('fifa')) {
-      roundRect(x, y, w, h, 4, '#16a34a', '#0f172a', 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
-      ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
-      const bx = x + w / 2 + Math.sin(t * 4) * (w * 0.25);
-      const by = y + h / 2 + Math.cos(t * 3) * (h * 0.2);
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx, by, 2.2, 0, Math.PI * 2); ctx.fill();
-    } else if (title.includes('racing') || title.includes('need') || title.includes('downhill')) {
-      roundRect(x, y, w, h, 4, '#38bdf8', '#0f172a', 2);
-      ctx.fillStyle = '#475569'; ctx.fillRect(x + 6, y + h / 2, w - 12, h / 2 - 2);
-      ctx.fillStyle = '#ef4444'; ctx.fillRect(x + w / 2 + Math.sin(t * 5) * 9 - 5, y + h - 8, 10, 5);
-    } else {
-      roundRect(x, y, w, h, 4, '#7c3aed', '#0f172a', 2);
-      ctx.fillStyle = '#fde047'; ctx.fillRect(x + 12 + Math.sin(t * 7) * 5, y + 9, 6, 11);
-      ctx.fillStyle = '#f43f5e'; ctx.fillRect(x + w - 18 + Math.cos(t * 7) * 5, y + 9, 6, 11);
-    }
+    roundRect(x, y, w, h, 4, slot.occupied ? '#15803d' : '#1e3a8a', '#0f172a', 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(slot.console ? slot.console.platform : 'TV', x + w / 2, y + h / 2 + 3);
   }
 
   function getSlotCoords(i) {
@@ -230,7 +210,8 @@
       const dx = w.tx - w.x, dy = w.ty - w.y;
       const dist = Math.hypot(dx, dy);
       if (dist > 3) {
-        const speed = 155 * dt;
+        const spdMult = typeof state !== 'undefined' ? (state.speed || 1) : 1;
+        const speed = 155 * spdMult * dt;
         w.x += (dx / dist) * Math.min(speed, dist);
         w.y += (dy / dist) * Math.min(speed, dist);
         w.isWalking = true;
@@ -433,28 +414,10 @@
     container.appendChild(canvas);
     ctx = canvas.getContext('2d');
 
-    canvas.addEventListener('pointerdown', (e) => {
-      isDragging = true;
-      downPos = { x: e.clientX, y: e.clientY };
-      lastPos = { x: e.clientX, y: e.clientY };
+    // Terkunci penuh agar tidak bergeser ke samping saat buka laci atau scroll di HP
+    canvas.addEventListener('pointerup', (e) => {
+      handleCanvasTap(e.clientX, e.clientY);
     });
-    window.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      panX += e.clientX - lastPos.x;
-      panY += e.clientY - lastPos.y;
-      lastPos = { x: e.clientX, y: e.clientY };
-    });
-    window.addEventListener('pointerup', (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) < 8) {
-        handleCanvasTap(e.clientX, e.clientY);
-      }
-    });
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      zoom = Math.max(0.6, Math.min(2.2, zoom - e.deltaY * 0.001));
-    }, { passive: false });
 
     initialized = true;
     requestAnimationFrame(renderFrame);

@@ -753,8 +753,8 @@ function mainLoop(now) {
   const dt = now - lastFrameTime;
   lastFrameTime = now;
   if (!state.paused) {
-    // 1x: 1 jam (60 menit game) = 30.000 ms -> 1 menit game = 500 ms
-    const msPerGameMin = 500 / (state.speed || 1);
+    // 1x baru = 4x lama (125 ms per menit game), 2x = 8x lama, dst.
+    const msPerGameMin = 125 / (state.speed || 1);
     tickAccumulatorMs += dt;
     let steps = 0;
     while (tickAccumulatorMs >= msPerGameMin && steps < 15) {
@@ -1048,9 +1048,18 @@ function renderRightPanel() {
       <div class="card" style="padding:8px;">
         <b>📦 Gudang Perangkat Belum Dipasang / Dilepas (${state.warehouseConsoles.length} PS, ${state.warehouseTvs.length} TV, ${state.warehouseCoolings.length} Kipas/AC)</b>
         <div class="spec-line">Tap unit/slot langsung di layar 3D atau buka tab 20 Slot untuk memasang perangkat dari gudang ini.</div>
-        ${state.warehouseConsoles.map(c => `<div class="item-row"><span>🎮 ${c.name} (Kondisi ${c.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
-        ${state.warehouseTvs.map(t => `<div class="item-row"><span>📺 ${t.name} (Kondisi ${t.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
-        ${state.warehouseCoolings.map(cl => `<div class="item-row"><span>❄️ ${cl.name}</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+        ${state.warehouseConsoles.map((c, i) => {
+          const sellPrice = Math.round(getPriceFrom2010(c.basePrice2010) * 0.65 * ((c.cond || 100) / 100));
+          return `<div class="item-row"><span>🎮 ${c.name} (${c.cond}%)</span><button class="amber" onclick="sellSecondhandHardware('console',${i})">Jual ${fmtRp(sellPrice)}</button></div>`;
+        }).join('')}
+        ${state.warehouseTvs.map((t, i) => {
+          const sellPrice = Math.round(getPriceFrom2010(t.basePrice2010) * 0.65 * ((t.cond || 100) / 100));
+          return `<div class="item-row"><span>📺 ${t.name} (${t.cond}%)</span><button class="amber" onclick="sellSecondhandHardware('tv',${i})">Jual ${fmtRp(sellPrice)}</button></div>`;
+        }).join('')}
+        ${state.warehouseCoolings.map((cl, i) => {
+          const sellPrice = Math.round(getPriceFrom2010(cl.basePrice2010) * 0.65);
+          return `<div class="item-row"><span>❄️ ${cl.name}</span><button class="amber" onclick="sellSecondhandHardware('cooling',${i})">Jual ${fmtRp(sellPrice)}</button></div>`;
+        }).join('')}
       </div>
     `;
     return;
@@ -1559,24 +1568,58 @@ function takeBankLoan(amount) {
   renderAll();
 }
 
+function sellSecondhandHardware(kind, idx) {
+  let item, price = 0;
+  if (kind === 'console' && state.warehouseConsoles[idx]) {
+    item = state.warehouseConsoles.splice(idx, 1)[0];
+    price = Math.round(getPriceFrom2010(item.basePrice2010) * 0.65 * ((item.cond || 100) / 100));
+  } else if (kind === 'tv' && state.warehouseTvs[idx]) {
+    item = state.warehouseTvs.splice(idx, 1)[0];
+    price = Math.round(getPriceFrom2010(item.basePrice2010) * 0.65 * ((item.cond || 100) / 100));
+  } else if (kind === 'cooling' && state.warehouseCoolings[idx]) {
+    item = state.warehouseCoolings.splice(idx, 1)[0];
+    price = Math.round(getPriceFrom2010(item.basePrice2010) * 0.65);
+  }
+  if (!item) return;
+  state.laciCash += price;
+  playSfx('cash');
+  addLog(`💸 Menjual unit second <b>${item.name}</b> seharga <b style="color:var(--green)">+${fmtRp(price)}</b> ke Laci.`);
+  saveGame();
+  renderAll();
+}
+
 function openBankTransferModal() {
   showCustomModal(
-    '🏦 Pemindahan Kas (Laci ⇄ Bank ⇄ Dompet)',
-    `<div class="spec-line">Laci Kasir: <b>${fmtRp(state.laciCash)}</b> • Bank: <b>${fmtRp(state.personalBank)}</b> • Dompet: <b>${fmtRp(state.handWallet)}</b></div>
+    '🏦 Kelola & Tarik Uang (Laci ⇄ Bank ⇄ Dompet)',
+    `<div class="spec-line">Laci: <b>${fmtRp(state.laciCash)}</b> • Bank: <b>${fmtRp(state.personalBank)}</b> • Dompet: <b>${fmtRp(state.handWallet)}</b></div>
      <div class="grid-2">
-       <button class="primary" onclick="transferFunds('laci_to_bank', 1000000)">Laci → Bank (1 Jt)</button>
-       <button class="primary" onclick="transferFunds('bank_to_laci', 1000000)">Bank → Laci (1 Jt)</button>
-       <button class="primary" onclick="transferFunds('bank_to_wallet', 500000)">Bank → Dompet (500rb)</button>
-       <button class="primary" onclick="transferFunds('laci_all_bank', 0)">Setor Semua Laci ke Bank</button>
-     </div>`
+       <div><label class="spec-line">Dari</label><select id="tfFrom"><option value="laci">Laci Kasir</option><option value="bank">Bank</option><option value="wallet">Dompet</option></select></div>
+       <div><label class="spec-line">Ke</label><select id="tfTo"><option value="bank">Bank</option><option value="laci">Laci Kasir</option><option value="wallet">Dompet</option></select></div>
+     </div>
+     <div><label class="spec-line">Nominal (Rp)</label><input type="number" id="tfAmt" value="100000" min="1000" step="1000" /></div>
+     <div class="grid-3">
+       <button onclick="document.getElementById('tfAmt').value=10000">10rb</button>
+       <button onclick="document.getElementById('tfAmt').value=50000">50rb</button>
+       <button onclick="document.getElementById('tfAmt').value=100000">100rb</button>
+       <button onclick="document.getElementById('tfAmt').value=500000">500rb</button>
+       <button onclick="document.getElementById('tfAmt').value=1000000">1 Juta</button>
+       <button class="amber" onclick="transferCustomFunds(true)">Tarik Semua</button>
+     </div>`,
+    `<button onclick="closeCustomModal()">Tutup</button><button class="primary" onclick="transferCustomFunds(false)">💸 Pindahkan Uang</button>`
   );
 }
 
-function transferFunds(mode, amt) {
-  if (mode === 'laci_to_bank' && state.laciCash >= amt) { state.laciCash -= amt; state.personalBank += amt; }
-  else if (mode === 'bank_to_laci' && state.personalBank >= amt) { state.personalBank -= amt; state.laciCash += amt; }
-  else if (mode === 'bank_to_wallet' && state.personalBank >= amt) { state.personalBank -= amt; state.handWallet += amt; }
-  else if (mode === 'laci_all_bank' && state.laciCash > 0) { state.personalBank += state.laciCash; state.laciCash = 0; }
+function transferCustomFunds(all) {
+  const from = document.getElementById('tfFrom').value;
+  const to = document.getElementById('tfTo').value;
+  if (from === to) return;
+  const keyMap = { laci: 'laciCash', bank: 'personalBank', wallet: 'handWallet' };
+  const avail = state[keyMap[from]] || 0;
+  const amt = all ? avail : Math.min(avail, Math.max(0, Number(document.getElementById('tfAmt').value) || 0));
+  if (amt <= 0) return;
+  state[keyMap[from]] -= amt;
+  state[keyMap[to]] += amt;
+  playSfx('cash');
   saveGame();
   openBankTransferModal();
   renderAll();
