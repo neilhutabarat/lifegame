@@ -1,385 +1,597 @@
-/* world3d.js — Fullscreen 3D Rental PS Simulator (ala Warung Life Simulator) untuk ID Simulator by Oneilverse.
-   - Fullscreen 3D viewport + HUD mengambang + tombol buka Menu / Catatan / Mode Klasik
-   - Kontrol jalan karakter (WASD / Panah + Joystick sentuh di HP) & kamera mengikuti karakter */
+// ==================== 3D RENTAL PS TYCOON ENGINE (20 SLOT: 10 LUAR SEJEJER + 10 ROOM VIP + RUANG TUNGGU) ====================
+// Otomatis bergerak (Tycoon Camera: Orbit + Zoom + Fullscreen toggle) dengan Karakter Kecil 3D Berwajah Unik (Non-Lego!)
+
 (function () {
   'use strict';
-  if (window.__ONEIL_3D_INIT) return;
-  window.__ONEIL_3D_INIT = true;
 
-  function loadThree(cb) {
-    if (window.THREE) return cb();
-    var s = document.createElement('script');
-    s.src = 'https://unpkg.com/three@0.160.0/build/three.min.js';
-    s.onload = cb;
-    document.head.appendChild(s);
+  const THREE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  let scene, camera, renderer, clock;
+  let initialized = false, isFullscreen = false;
+  let camAngleH = 0.55, camAngleV = 0.68, camDist = 24;
+  let camTarget = { x: 0, y: 0, z: 0 };
+  let isDragging = false, prevMouse = { x: 0, y: 0 };
+
+  const slotMeshes = []; // 20 slots (0..9 = Luar Sejejer, 10..19 = VIP Room)
+  const actorMap = new Map();
+  const dirtMeshes = [];
+  let floorMat, wallMat;
+
+  // Buat tekstur wajah unik (mata, alis, hidung, mulut ekspresif, pipi) supaya BUKAN seperti Lego kotak!
+  function createUniqueFaceTexture(seed, skinHex, mood = 'happy') {
+    const cv = document.createElement('canvas');
+    cv.width = 256; cv.height = 128;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = skinHex || '#f1c6a7';
+    ctx.fillRect(0, 0, 256, 128);
+
+    // Pipi merona halus
+    ctx.fillStyle = 'rgba(244, 114, 182, 0.22)';
+    ctx.beginPath(); ctx.arc(102, 78, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(154, 78, 10, 0, Math.PI * 2); ctx.fill();
+
+    // Variasi bentuk alis & mata berdasarkan seed
+    const eyeStyle = seed % 3;
+    const browTilt = (seed % 2 === 0) ? -2 : 2;
+
+    // Alis
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(98, 46 + browTilt); ctx.lineTo(116, 46 - browTilt); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(140, 46 - browTilt); ctx.lineTo(158, 46 + browTilt); ctx.stroke();
+
+    // Bagian putih mata (sclera)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(107, 58, 9, eyeStyle === 1 ? 5 : 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(149, 58, 9, eyeStyle === 1 ? 5 : 7, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Iris & Pupil
+    const irisColors = ['#1e293b', '#451a03', '#0f172a', '#1d4ed8', '#065f46'];
+    ctx.fillStyle = irisColors[seed % irisColors.length];
+    ctx.beginPath(); ctx.arc(107, 58, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(149, 58, 4.5, 0, Math.PI * 2); ctx.fill();
+
+    // Pantulan cahaya mata (catchlight)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(109, 56, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(151, 56, 1.6, 0, Math.PI * 2); ctx.fill();
+
+    // Hidung
+    ctx.strokeStyle = 'rgba(120, 53, 15, 0.45)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(128, 58); ctx.lineTo(125, 72); ctx.lineTo(131, 74); ctx.stroke();
+
+    // Mulut sesuai ekspresi
+    ctx.strokeStyle = '#7f1d1d';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    if (mood === 'annoyed') {
+      ctx.arc(128, 96, 9, Math.PI * 1.15, Math.PI * 1.85);
+    } else if (mood === 'focus') {
+      ctx.moveTo(120, 88); ctx.lineTo(136, 88);
+    } else {
+      ctx.arc(128, 84, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+    }
+    ctx.stroke();
+
+    const tex = new THREE.CanvasTexture(cv);
+    tex.needsUpdate = true;
+    return tex;
   }
 
-  function buildFullscreenUI() {
-    if (document.getElementById('w3d-fs')) return;
-    var root = document.createElement('div');
-    root.id = 'w3d-fs';
-    root.style.cssText = 'position:fixed;inset:0;z-index:900;background:#070b16;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;';
-    root.innerHTML =
-      '<div id="w3d-canvas" style="position:absolute;inset:0;touch-action:none;"></div>' +
-      // Top HUD
-      '<div style="position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;pointer-events:none;">' +
-        '<div style="pointer-events:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-radius:14px;background:rgba(15,23,42,.78);backdrop-filter:blur(10px);color:#f8fafc;border:1px solid rgba(255,255,255,.12);font-size:12px;font-weight:700;">' +
-          '<span>🎮 Rental PS</span>' +
-          '<span id="w3d-time" style="color:#93c5fd;">--</span>' +
-          '<span id="w3d-cash" style="color:#4ade80;">Rp 0</span>' +
-          '<span id="w3d-laci" style="color:#c084fc;">Laci: Rp 0</span>' +
-        '</div>' +
-        '<div style="pointer-events:auto;display:flex;gap:6px;flex-wrap:wrap;">' +
-          '<button id="w3d-spawn" type="button" style="padding:8px 12px;border-radius:12px;border:0;background:#22c55e;color:#04210f;font-weight:800;font-size:12px;cursor:pointer;">+ Tamu</button>' +
-          '<button id="w3d-menu" type="button" style="padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.85);color:#fff;font-weight:800;font-size:12px;cursor:pointer;">📱 Menu &amp; Usaha</button>' +
-          '<button id="w3d-classic" type="button" style="padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.85);color:#cbd5e1;font-weight:700;font-size:12px;cursor:pointer;">Tutup 3D</button>' +
-        '</div>' +
-      '</div>' +
-      // Bottom-left D-pad / Mobile controls + hint
-      '<div style="position:absolute;left:14px;bottom:14px;display:flex;flex-direction:column;align-items:center;gap:4px;user-select:none;">' +
-        '<button data-mv="up" type="button" style="width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.72);color:#fff;font-size:16px;font-weight:800;">▲</button>' +
-        '<div style="display:flex;gap:4px;">' +
-          '<button data-mv="left" type="button" style="width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.72);color:#fff;font-size:16px;font-weight:800;">◀</button>' +
-          '<button data-mv="down" type="button" style="width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.72);color:#fff;font-size:16px;font-weight:800;">▼</button>' +
-          '<button data-mv="right" type="button" style="width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.72);color:#fff;font-size:16px;font-weight:800;">▶</button>' +
-        '</div>' +
-        '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">WASD / Panah · Seret layar putar kamera</div>' +
-      '</div>' +
-      // Bottom-right quick action
-      '<div style="position:absolute;right:14px;bottom:14px;">' +
-        '<button id="w3d-act" type="button" style="padding:12px 18px;border-radius:999px;border:0;background:#3b82f6;color:#fff;font-weight:800;font-size:13px;box-shadow:0 8px 24px rgba(59,130,246,.45);cursor:pointer;">🕹️ Kelola Rental</button>' +
-      '</div>';
-    document.body.appendChild(root);
+  // Buat karakter 3D organik (Kepala bulat berwajah unik + gaya rambut + tubuh bulat + tangan/kaki animasi)
+  function createCharacter3D(seed, skinHex, shirtColor, pantsColor, roleBadge) {
+    const group = new THREE.Group();
 
-    document.getElementById('w3d-classic').onclick = function () {
-      root.style.display = 'none';
-      if (!document.getElementById('w3d-reopen')) {
-        var b = document.createElement('button');
-        b.id = 'w3d-reopen'; b.type = 'button';
-        b.textContent = '🎮 Masuk Mode 3D';
-        b.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:950;padding:10px 16px;border-radius:999px;border:0;background:#2563eb;color:#fff;font-weight:800;font-size:12px;box-shadow:0 8px 24px rgba(37,99,235,.45);cursor:pointer;';
-        b.onclick = function () { root.style.display = 'block'; b.style.display = 'none'; };
-        document.body.appendChild(b);
-      } else {
-        document.getElementById('w3d-reopen').style.display = 'block';
-      }
-    };
-    document.getElementById('w3d-menu').onclick = function () {
-      document.getElementById('w3d-classic').click();
-    };
-    document.getElementById('w3d-act').onclick = function () {
-      document.getElementById('w3d-classic').click();
-      var cw = document.getElementById('centerWorkspace');
-      if (cw) cw.scrollIntoView({ behavior: 'smooth' });
-    };
+    // Kepala bulat (Sphere) dengan tekstur wajah unik
+    const faceTex = createUniqueFaceTexture(seed, skinHex, 'happy');
+    const headGeo = new THREE.SphereGeometry(0.28, 20, 16);
+    const headMat = new THREE.MeshLambertMaterial({ map: faceTex });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.28;
+    // Putar sphere agar wajah menghadap +Z
+    head.rotation.y = -Math.PI / 2;
+    group.add(head);
+
+    // Gaya rambut 3D bervariasi (bukan kepala polos)
+    const hairColors = [0x0f172a, 0x27272a, 0x451a03, 0x78350f, 0x1e1b4b];
+    const hairMat = new THREE.MeshLambertMaterial({ color: hairColors[seed % hairColors.length] });
+    const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.295, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
+    hairCap.position.y = 1.30;
+    group.add(hairCap);
+
+    if (seed % 3 === 0) {
+      // Jambul / Spiky hair
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.22, 8), hairMat);
+      spike.position.set(0, 1.60, 0.06);
+      spike.rotation.x = 0.3;
+      group.add(spike);
+    } else if (seed % 3 === 1) {
+      // Topi / Pony
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.05, 12), hairMat);
+      brim.position.set(0, 1.44, 0.12);
+      group.add(brim);
+    }
+
+    // Badan (Cylinder membulat)
+    const bodyMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.24, 0.56, 14), bodyMat);
+    body.position.y = 0.78;
+    group.add(body);
+
+    // Lengan Kiri & Kanan
+    const limbSkinMat = new THREE.MeshLambertMaterial({ color: skinHex || '#f1c6a7' });
+    const armGeo = new THREE.CylinderGeometry(0.065, 0.06, 0.42, 10);
+    const armL = new THREE.Mesh(armGeo, limbSkinMat);
+    armL.position.set(-0.28, 0.78, 0);
+    const armR = new THREE.Mesh(armGeo, limbSkinMat);
+    armR.position.set(0.28, 0.78, 0);
+    group.add(armL, armR);
+
+    // Kaki Kiri & Kanan
+    const legMat = new THREE.MeshLambertMaterial({ color: pantsColor || 0x1e293b });
+    const legGeo = new THREE.CylinderGeometry(0.08, 0.075, 0.48, 10);
+    const legL = new THREE.Mesh(legGeo, legMat);
+    legL.position.set(-0.11, 0.26, 0);
+    const legR = new THREE.Mesh(legGeo, legMat);
+    legR.position.set(0.11, 0.26, 0);
+    group.add(legL, legR);
+
+    group.userData = { head, armL, armR, legL, legR, seed, roleBadge, walkPhase: (seed % 10) * 0.6 };
+    return group;
   }
 
-  function start3D() {
-    buildFullscreenUI();
-    var wrap = document.getElementById('w3d-canvas');
-    if (!wrap || wrap.dataset.ready) return;
-    wrap.dataset.ready = '1';
+  // Buat Canvas Texture animasi layar TV saat sedang dimainkan (Sepakbola WE/PES, Balapan CTR/Downhill/GT, atau Fighting Tekken/SmackDown)
+  function createTvScreenCanvas() {
+    const cv = document.createElement('canvas');
+    cv.width = 128; cv.height = 80;
+    const ctx = cv.getContext('2d');
+    const tex = new THREE.CanvasTexture(cv);
+    return { cv, ctx, tex };
+  }
 
-    var T = window.THREE;
-    var scene = new T.Scene();
-    scene.background = new T.Color(0x0d1324);
+  function drawAnimatedGameOnTv(scr, timeSec, slotData) {
+    const { ctx, cv, tex } = scr;
+    if (!slotData || !slotData.console || !slotData.tv) {
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      tex.needsUpdate = true;
+      return;
+    }
+    if (!slotData.occupied) {
+      // Standby Blue/PlayStation Menu Screen
+      const g = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+      g.addColorStop(0, '#0f172a');
+      g.addColorStop(1, slotData.installedGame ? '#1e3a8a' : '#31102f');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px Arial';
+      ctx.fillText(slotData.console.platform + ' READY', 28, 36);
+      ctx.fillStyle = slotData.installedGame ? '#4ade80' : '#f87171';
+      ctx.font = '9px Arial';
+      ctx.fillText(slotData.installedGame ? slotData.installedGame.title.slice(0, 16) : 'NO DISC / GAME', 16, 54);
+      tex.needsUpdate = true;
+      return;
+    }
 
-    var camera = new T.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 100);
-    var camYaw = 0.25, camPitch = 0.42, camDist = 7.5;
+    // Sedang dimainkan pelanggan -> Animasi game nyata!
+    const gameTitle = (slotData.installedGame ? slotData.installedGame.title : 'PES').toLowerCase();
+    if (gameTitle.includes('winning') || gameTitle.includes('pes') || gameTitle.includes('fc') || gameTitle.includes('fifa') || gameTitle.includes('soccer')) {
+      // Lapangan Sepak Bola WE / PES
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(0, 0, 128, 80);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.strokeRect(6, 6, 116, 68);
+      ctx.beginPath(); ctx.arc(64, 40, 14, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(64, 6); ctx.lineTo(64, 74); ctx.stroke();
+      // Pemain & Bola bergerak
+      const bx = 64 + Math.sin(timeSec * 3.2) * 38;
+      const by = 40 + Math.cos(timeSec * 2.5) * 22;
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(bx - 10, by - 4, 5, 8);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(bx + 6, by - 3, 5, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (gameTitle.includes('racing') || gameTitle.includes('need') || gameTitle.includes('downhill') || gameTitle.includes('turismo') || gameTitle.includes('nascar')) {
+      // Game Balapan 3D Perspektif
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 128, 38);
+      ctx.fillStyle = '#166534';
+      ctx.fillRect(0, 38, 128, 42);
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      const curve = Math.sin(timeSec * 2) * 18;
+      ctx.moveTo(54 + curve, 38); ctx.lineTo(74 + curve, 38);
+      ctx.lineTo(112, 80); ctx.lineTo(16, 80); ctx.fill();
+      // Mobil pemain
+      const cx = 64 + Math.sin(timeSec * 4) * 14;
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(cx - 10, 62, 20, 11);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(cx - 8, 64, 4, 3); ctx.fillRect(cx + 4, 64, 4, 3);
+    } else {
+      // Game Action / Fighting (Tekken / SmackDown / GTA / God of War)
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(0, 0, 128, 56);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(0, 56, 128, 24);
+      // Health bars
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(8, 8, 46, 6);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(74, 8, 46, 6);
+      // 2 Fighter bergerak
+      const f1x = 46 + Math.sin(timeSec * 6) * 8;
+      const f2x = 78 + Math.cos(timeSec * 6) * 8;
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(f1x, 32, 10, 24);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(f2x, 32, 10, 24);
+    }
+    tex.needsUpdate = true;
+  }
 
-    var renderer = new T.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  function buildRentalWorld() {
+    const container = document.getElementById('studio3dViewport');
+    if (!container || typeof THREE === 'undefined') return;
+    container.innerHTML = '';
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090d16);
+
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / Math.max(1, container.clientHeight), 0.1, 200);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = T.PCFSoftShadowMap;
-    wrap.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
-    // Camera drag & zoom
-    var dragging = false, lx = 0, ly = 0;
-    renderer.domElement.addEventListener('pointerdown', function (e) { dragging = true; lx = e.clientX; ly = e.clientY; });
-    window.addEventListener('pointerup', function () { dragging = false; });
-    window.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      camYaw -= (e.clientX - lx) * 0.007;
-      camPitch = Math.max(0.15, Math.min(1.15, camPitch + (e.clientY - ly) * 0.007));
-      lx = e.clientX; ly = e.clientY;
+    clock = new THREE.Clock();
+
+    // Pencahayaan
+    const amb = new THREE.AmbientLight(0xffffff, 0.72);
+    scene.add(amb);
+    const dir = new THREE.DirectionalLight(0xfffbeb, 0.85);
+    dir.position.set(12, 24, 14);
+    scene.add(dir);
+
+    // Lantai Utama Toko (Lebar 24m x Panjang 18m)
+    floorMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(24, 18), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(24, 24, 0x334155, 0x1e293b);
+    grid.position.y = 0.01;
+    scene.add(grid);
+
+    // Dinding Belakang & Samping
+    wallMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(24, 3.2, 0.25), wallMat);
+    backWall.position.set(0, 1.6, -9);
+    scene.add(backWall);
+
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 18), wallMat);
+    leftWall.position.set(-12, 1.6, 0);
+    scene.add(leftWall);
+
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 18), wallMat);
+    rightWall.position.set(12, 1.6, 0);
+    scene.add(rightWall);
+
+    // Meja Kasir & Etalase Stik/Makanan/Pulsa (di depan kiri)
+    const cashierGroup = new THREE.Group();
+    const desk = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.05, 1.3), new THREE.MeshLambertMaterial({ color: 0x1d4ed8 }));
+    desk.position.set(0, 0.525, 0);
+    cashierGroup.add(desk);
+    const glassCase = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 0.8), new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45 }));
+    glassCase.position.set(0.8, 1.35, 0);
+    cashierGroup.add(glassCase);
+    cashierGroup.position.set(-7.5, 0, 6.2);
+    scene.add(cashierGroup);
+
+    // Ruang Tunggu Antrean (Benches di depan kanan dekat pintu masuk)
+    const benchMat = new THREE.MeshLambertMaterial({ color: 0x475569 });
+    for (let b = 0; b < 2; b++) {
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.42, 0.8), benchMat);
+      bench.position.set(5.5, 0.21, 5.5 + b * 1.6);
+      scene.add(bench);
+    }
+
+    // Noda Kotoran Lantai (muncul kalau kebersihan turun)
+    dirtMeshes.length = 0;
+    const dirtMat = new THREE.MeshBasicMaterial({ color: 0x451a03, transparent: true, opacity: 0.65 });
+    for (let d = 0; d < 14; d++) {
+      const dm = new THREE.Mesh(new THREE.CircleGeometry(0.35 + (d % 3) * 0.15, 10), dirtMat);
+      dm.rotation.x = -Math.PI / 2;
+      dm.position.set(-8 + (d * 1.3) % 16, 0.02, -5 + ((d * 2.7) % 11));
+      dm.visible = false;
+      scene.add(dm);
+      dirtMeshes.push(dm);
+    }
+
+    // ==================== 20 SLOT RENTAL PS ====================
+    // Slot 0..9 (Unit #1-#10): Sejejer di Luar (Area Kiri-Tengah, 2 baris x 5 unit)
+    // Slot 10..19 (Room #11-#20): 10 Room VIP Tertutup (Area Kanan & Belakang, per room per pelanggan dengan sekat dinding!)
+    slotMeshes.length = 0;
+
+    for (let i = 0; i < 20; i++) {
+      const isRoom = i >= 10;
+      const g = new THREE.Group();
+      let sx, sz;
+      if (!isRoom) {
+        // 10 Unit Luar Sejejer (2 baris @ 5 unit)
+        const row = Math.floor(i / 5);
+        const col = i % 5;
+        sx = -9.6 + col * 2.1;
+        sz = -5.5 + row * 4.2;
+      } else {
+        // 10 Room Tertutup (2 baris @ 5 room di sisi kanan)
+        const rIdx = i - 10;
+        const row = Math.floor(rIdx / 5);
+        const col = rIdx % 5;
+        sx = 1.6 + col * 2.25;
+        sz = -6.0 + row * 4.8;
+      }
+      g.position.set(sx, 0, sz);
+
+      // Sekat Room VIP jika i >= 10
+      if (isRoom) {
+        const partMat = new THREE.MeshLambertMaterial({ color: 0x334155, transparent: true, opacity: 0.55 });
+        const wL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.1, 2.3), partMat);
+        wL.position.set(-1.05, 1.05, 0);
+        const wR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.1, 2.3), partMat);
+        wR.position.set(1.05, 1.05, 0);
+        const wB = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.1, 0.1), partMat);
+        wB.position.set(0, 1.05, -1.15);
+        g.add(wL, wR, wB);
+      }
+
+      // Meja TV
+      const table = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.55, 0.65), new THREE.MeshLambertMaterial({ color: 0x3b2f2f }));
+      table.position.set(0, 0.275, -0.7);
+      g.add(table);
+
+      // Kursi / Sofa Pelanggan
+      const chairMat = new THREE.MeshLambertMaterial({ color: isRoom ? 0x4f46e5 : 0x334155 });
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.35, 0.7), chairMat);
+      seat.position.set(0, 0.175, 0.55);
+      g.add(seat);
+
+      // Mesh TV (Hanya tampil jika slot punya TV terpasang)
+      const tvScreen = createTvScreenCanvas();
+      const tvGroup = new THREE.Group();
+      const tvFrame = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.78, 0.12), new THREE.MeshLambertMaterial({ color: 0x0f172a }));
+      tvFrame.position.set(0, 0.96, -0.72);
+      const tvPanel = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.68), new THREE.MeshBasicMaterial({ map: tvScreen.tex }));
+      tvPanel.position.set(0, 0.96, -0.65);
+      tvGroup.add(tvFrame, tvPanel);
+      g.add(tvGroup);
+
+      // Mesh Konsol PS (di atas meja di bawah TV)
+      const psMesh = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.32), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
+      psMesh.position.set(0.42, 0.62, -0.62);
+      g.add(psMesh);
+
+      // Mesh Kipas Angin (Baling-baling berputar)
+      const fanGroup = new THREE.Group();
+      const fanPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3), new THREE.MeshLambertMaterial({ color: 0x94a3b8 }));
+      fanPole.position.set(-0.75, 0.65, -0.8);
+      const fanBlade = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.08, 0.04), new THREE.MeshLambertMaterial({ color: 0x38bdf8 }));
+      fanBlade.position.set(-0.75, 1.35, -0.72);
+      fanGroup.add(fanPole, fanBlade);
+      fanGroup.visible = false;
+      g.add(fanGroup);
+
+      // Mesh Unit AC Split (di dinding atas belakang TV)
+      const acMesh = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.28, 0.24), new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+      acMesh.position.set(0, 1.88, -0.95);
+      acMesh.visible = false;
+      g.add(acMesh);
+
+      scene.add(g);
+      slotMeshes.push({ group: g, tvGroup, tvScreen, psMesh, fanGroup, fanBlade, acMesh, sx, sz });
+    }
+
+    // Event Kamera Orbit & Zoom
+    const dom = renderer.domElement;
+    dom.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      prevMouse = { x: e.clientX, y: e.clientY };
     });
-    renderer.domElement.addEventListener('wheel', function (e) {
+    window.addEventListener('pointerup', () => { isDragging = false; });
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouse.x;
+      const dy = e.clientY - prevMouse.y;
+      prevMouse = { x: e.clientX, y: e.clientY };
+      camAngleH -= dx * 0.007;
+      camAngleV = Math.max(0.25, Math.min(1.38, camAngleV + dy * 0.006));
+    });
+    dom.addEventListener('wheel', (e) => {
       e.preventDefault();
-      camDist = Math.max(4, Math.min(18, camDist + e.deltaY * 0.01));
+      camDist = Math.max(8, Math.min(36, camDist + e.deltaY * 0.015));
     }, { passive: false });
 
-    // Lights
-    var amb = new T.AmbientLight(0xcbd5e1, 0.78);
-    scene.add(amb);
-    var sun = new T.DirectionalLight(0xfffbeb, 1.15);
-    sun.position.set(8, 14, 6);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
-    scene.add(sun);
-
-    var roomLight = new T.PointLight(0x93c5fd, 0.85, 24);
-    roomLight.position.set(0, 4.2, 0);
-    scene.add(roomLight);
-
-    // Floor & Walls
-    var floor = new T.Mesh(new T.BoxGeometry(14, 0.2, 10), new T.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.65 }));
-    floor.position.y = -0.1; floor.receiveShadow = true; scene.add(floor);
-    var grid = new T.GridHelper(14, 14, 0x334155, 0x263244);
-    grid.position.y = 0.01; scene.add(grid);
-
-    var wallMat = new T.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85 });
-    var backWall = new T.Mesh(new T.BoxGeometry(14, 4.2, 0.2), wallMat);
-    backWall.position.set(0, 2.1, -4.9); backWall.receiveShadow = true; scene.add(backWall);
-    var leftWall = new T.Mesh(new T.BoxGeometry(0.2, 4.2, 10), wallMat);
-    leftWall.position.set(-6.9, 2.1, 0); scene.add(leftWall);
-
-    // Neon Sign
-    var signMesh = new T.Mesh(
-      new T.BoxGeometry(4.4, 0.65, 0.12),
-      new T.MeshStandardMaterial({ color: 0x2563eb, emissive: 0x1d4ed8, emissiveIntensity: 0.95 })
-    );
-    signMesh.position.set(0, 3.3, -4.75); scene.add(signMesh);
-
-    // Cashier Desk
-    var desk = new T.Mesh(new T.BoxGeometry(2.2, 1.0, 1.1), new T.MeshStandardMaterial({ color: 0x475569, roughness: 0.5 }));
-    desk.position.set(4.8, 0.5, 2.6); desk.castShadow = true; desk.receiveShadow = true; scene.add(desk);
-    var monitor = new T.Mesh(new T.BoxGeometry(0.7, 0.45, 0.08), new T.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0284c7, emissiveIntensity: 0.6 }));
-    monitor.position.set(4.8, 1.25, 2.6); scene.add(monitor);
-
-    function makeChar(shirtColor, pantsColor) {
-      var g = new T.Group();
-      var skin = new T.MeshStandardMaterial({ color: 0xf1c27d });
-      var shirt = new T.MeshStandardMaterial({ color: shirtColor });
-      var pants = new T.MeshStandardMaterial({ color: pantsColor });
-      var hair = new T.MeshStandardMaterial({ color: 0x1e1b18 });
-
-      var body = new T.Mesh(new T.BoxGeometry(0.46, 0.56, 0.26), shirt);
-      body.position.y = 0.96; body.castShadow = true; g.add(body);
-      var head = new T.Mesh(new T.BoxGeometry(0.34, 0.34, 0.34), skin);
-      head.position.y = 1.44; head.castShadow = true; g.add(head);
-      var cap = new T.Mesh(new T.BoxGeometry(0.36, 0.12, 0.36), hair);
-      cap.position.y = 1.62; g.add(cap);
-
-      var legL = new T.Mesh(new T.BoxGeometry(0.18, 0.62, 0.18), pants);
-      legL.position.set(-0.12, 0.34, 0); legL.castShadow = true;
-      var legR = legL.clone(); legR.position.x = 0.12;
-      g.add(legL, legR);
-
-      var armL = new T.Mesh(new T.BoxGeometry(0.14, 0.48, 0.14), shirt);
-      armL.position.set(-0.32, 0.96, 0); armL.castShadow = true;
-      var armR = armL.clone(); armR.position.x = 0.32;
-      g.add(armL, armR);
-
-      g.userData = { legL: legL, legR: legR, armL: armL, armR: armR, body: body };
-      return g;
-    }
-
-    // Controllable Player Character
-    var player = makeChar(0x2563eb, 0x0f172a);
-    player.position.set(1.5, 0, 2.2);
-    scene.add(player);
-
-    // Input state (Keyboard + Mobile D-pad)
-    var keys = { up: false, down: false, left: false, right: false };
-    window.addEventListener('keydown', function (e) {
-      if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.up = true;
-      if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.down = true;
-      if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = true;
-      if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = true;
-    });
-    window.addEventListener('keyup', function (e) {
-      if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.up = false;
-      if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.down = false;
-      if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = false;
-      if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = false;
-    });
-    document.querySelectorAll('[data-mv]').forEach(function (btn) {
-      var dir = btn.getAttribute('data-mv');
-      btn.addEventListener('pointerdown', function (e) { e.preventDefault(); keys[dir] = true; });
-      btn.addEventListener('pointerup', function () { keys[dir] = false; });
-      btn.addEventListener('pointerleave', function () { keys[dir] = false; });
-    });
-
-    // 5 PS Stations
-    var stations = [];
-    var xs = [-5.0, -2.5, 0.0, 2.5, 5.0];
-    xs.forEach(function (x, idx) {
-      var tbl = new T.Mesh(new T.BoxGeometry(1.6, 0.55, 0.65), new T.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 }));
-      tbl.position.set(x, 0.275, -4.1); tbl.castShadow = true; tbl.receiveShadow = true; scene.add(tbl);
-
-      var ps = new T.Mesh(new T.BoxGeometry(0.42, 0.1, 0.32), new T.MeshStandardMaterial({ color: 0x020617, roughness: 0.35 }));
-      ps.position.set(x - 0.42, 0.6, -4.05); scene.add(ps);
-
-      var ledMat = new T.MeshBasicMaterial({ color: 0xef4444 });
-      var led = new T.Mesh(new T.BoxGeometry(0.12, 0.03, 0.04), ledMat);
-      led.position.set(x - 0.42, 0.64, -3.88); scene.add(led);
-
-      var cv = document.createElement('canvas'); cv.width = 160; cv.height = 96;
-      var ctx = cv.getContext('2d');
-      var tex = new T.CanvasTexture(cv);
-      var scrMat = new T.MeshBasicMaterial({ map: tex });
-      var tv = new T.Mesh(new T.BoxGeometry(1.42, 0.84, 0.08), new T.MeshStandardMaterial({ color: 0x090d16 }));
-      tv.position.set(x, 1.15, -4.25); tv.castShadow = true; scene.add(tv);
-
-      var screen = new T.Mesh(new T.PlaneGeometry(1.32, 0.74), scrMat);
-      screen.position.set(x, 1.15, -4.205); scene.add(screen);
-
-      var glow = new T.PointLight(0x38bdf8, 0, 3.8);
-      glow.position.set(x, 1.2, -3.6); scene.add(glow);
-
-      var sofa = new T.Mesh(new T.BoxGeometry(1.45, 0.42, 0.72), new T.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.8 }));
-      sofa.position.set(x, 0.21, -2.5); sofa.castShadow = true; sofa.receiveShadow = true; scene.add(sofa);
-      var back = new T.Mesh(new T.BoxGeometry(1.45, 0.5, 0.16), new T.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.8 }));
-      back.position.set(x, 0.55, -2.22); scene.add(back);
-
-      stations.push({
-        id: idx, x: x, busy: false, cv: cv, ctx: ctx, tex: tex,
-        ledMat: ledMat, glow: glow, ballX: 40 + idx * 15, ballY: 40, vx: 2.2, vy: 1.7, score: 0
-      });
-    });
-
-    // NPCs
-    var npcs = [];
-    var shirtPalette = [0x10b981, 0xf59e0b, 0xec4899, 0x8b5cf6, 0x06b6d4, 0xef4444];
-    function spawnCustomer() {
-      var free = stations.filter(function (s) { return !s.busy; });
-      if (!free.length) return;
-      var st = free[Math.floor(Math.random() * free.length)];
-      st.busy = true;
-      var mesh = makeChar(shirtPalette[Math.floor(Math.random() * shirtPalette.length)], 0x1e293b);
-      mesh.position.set(-5.8, 0, 4.2);
-      scene.add(mesh);
-      npcs.push({ mesh: mesh, station: st, state: 'walkToSeat', timer: 7 + Math.random() * 6, walkT: 0 });
-    }
-    document.getElementById('w3d-spawn').onclick = spawnCustomer;
-    spawnCustomer();
-    setTimeout(spawnCustomer, 900);
-
-    function drawTv(st) {
-      var c = st.ctx, w = st.cv.width, h = st.cv.height;
-      if (!st.busy) {
-        c.fillStyle = '#070b14'; c.fillRect(0, 0, w, h);
-        st.ledMat.color.setHex(0xef4444); st.glow.intensity = 0; st.tex.needsUpdate = true;
-        return;
-      }
-      st.ledMat.color.setHex(0x22c55e); st.glow.intensity = 0.85;
-      c.fillStyle = '#064e3b'; c.fillRect(0, 0, w, h);
-      c.strokeStyle = '#34d399'; c.lineWidth = 2; c.strokeRect(6, 6, w - 12, h - 12);
-      c.beginPath(); c.moveTo(w / 2, 6); c.lineTo(w / 2, h - 6); c.stroke();
-      c.beginPath(); c.arc(w / 2, h / 2, 14, 0, Math.PI * 2); c.stroke();
-      st.ballX += st.vx; st.ballY += st.vy;
-      if (st.ballX < 14 || st.ballX > w - 14) { st.vx *= -1; st.score++; }
-      if (st.ballY < 14 || st.ballY > h - 14) st.vy *= -1;
-      c.fillStyle = '#38bdf8'; c.fillRect(18, st.ballY - 10, 6, 20);
-      c.fillStyle = '#fb7185'; c.fillRect(w - 24, h - st.ballY - 10, 6, 20);
-      c.fillStyle = '#fef08a'; c.beginPath(); c.arc(st.ballX, st.ballY, 4.5, 0, Math.PI * 2); c.fill();
-      c.fillStyle = '#ffffff'; c.font = 'bold 10px monospace';
-      c.fillText('P1 ' + (st.score % 9) + ' - ' + ((st.score + 1) % 7) + ' P2', 46, 17);
-      st.tex.needsUpdate = true;
-    }
-
-    function syncHud() {
-      var t = document.getElementById('hudDateTime'), h = document.getElementById('hudHand'), l = document.getElementById('hudLaci');
-      if (t) document.getElementById('w3d-time').textContent = t.textContent;
-      if (h) document.getElementById('w3d-cash').textContent = h.textContent;
-      if (l) document.getElementById('w3d-laci').textContent = 'Laci: ' + l.textContent;
-      var m = t && /(\d{2}):(\d{2})/.exec(t.textContent || '');
-      if (m) {
-        var hr = parseInt(m[1], 10), night = hr < 6 || hr >= 18;
-        amb.intensity = night ? 0.45 : 0.85;
-        sun.intensity = night ? 0.25 : 1.15;
-        roomLight.intensity = night ? 1.25 : 0.6;
-        scene.background.setHex(night ? 0x070b16 : 0x142038);
-      }
-    }
-
-    var clock = new T.Clock(), pWalk = 0;
-    function animate() {
-      requestAnimationFrame(animate);
-      var dt = Math.min(clock.getDelta(), 0.05), elapsed = clock.elapsedTime;
-      syncHud();
-      stations.forEach(drawTv);
-
-      // Player movement relative to camera yaw
-      var mx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-      var mz = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
-      if (mx !== 0 || mz !== 0) {
-        var ang = Math.atan2(mx, mz) + camYaw;
-        player.position.x = Math.max(-6.2, Math.min(6.2, player.position.x + Math.sin(ang) * dt * 3.6));
-        player.position.z = Math.max(-3.2, Math.min(4.4, player.position.z + Math.cos(ang) * dt * 3.6));
-        player.rotation.y = ang;
-        pWalk += dt * 11;
-        player.userData.legL.rotation.x = Math.sin(pWalk) * 0.65;
-        player.userData.legR.rotation.x = -Math.sin(pWalk) * 0.65;
-        player.userData.armL.rotation.x = -Math.sin(pWalk) * 0.5;
-        player.userData.armR.rotation.x = Math.sin(pWalk) * 0.5;
-      } else {
-        player.userData.legL.rotation.x = 0; player.userData.legR.rotation.x = 0;
-        player.userData.armL.rotation.x = Math.sin(elapsed * 2) * 0.06;
-        player.userData.armR.rotation.x = -Math.sin(elapsed * 2) * 0.06;
-      }
-
-      // Third-person camera follow player
-      var tx = player.position.x, ty = 1.2, tz = player.position.z;
-      camera.position.x = tx + camDist * Math.sin(camYaw) * Math.cos(camPitch);
-      camera.position.y = ty + camDist * Math.sin(camPitch);
-      camera.position.z = tz + camDist * Math.cos(camYaw) * Math.cos(camPitch);
-      camera.lookAt(tx, ty, tz);
-
-      // NPCs
-      for (var i = npcs.length - 1; i >= 0; i--) {
-        var n = npcs[i], m = n.mesh, u = m.userData, gx = 0, gz = 0;
-        if (n.state === 'walkToSeat') {
-          gx = n.station.x; gz = -2.5;
-          var dx = gx - m.position.x, dz = gz - m.position.z, d = Math.hypot(dx, dz);
-          if (d > 0.12) {
-            m.position.x += (dx / d) * dt * 2.4; m.position.z += (dz / d) * dt * 2.4;
-            m.rotation.y = Math.atan2(dx, dz); n.walkT += dt * 9;
-            u.legL.rotation.x = Math.sin(n.walkT) * 0.6; u.legR.rotation.x = -Math.sin(n.walkT) * 0.6;
-            u.armL.rotation.x = -Math.sin(n.walkT) * 0.45; u.armR.rotation.x = Math.sin(n.walkT) * 0.45;
-          } else {
-            n.state = 'playing'; m.position.set(n.station.x, 0, -2.55); m.rotation.y = Math.PI;
-            u.legL.rotation.x = -1.2; u.legR.rotation.x = -1.2;
-          }
-        } else if (n.state === 'playing') {
-          n.timer -= dt;
-          u.armL.rotation.x = -0.9 + Math.sin(elapsed * 10 + i) * 0.12;
-          u.armR.rotation.x = -0.9 + Math.cos(elapsed * 10 + i) * 0.12;
-          if (n.timer <= 0) { n.state = 'walkToPay'; n.station.busy = false; u.legL.rotation.x = 0; u.legR.rotation.x = 0; }
-        } else if (n.state === 'walkToPay') {
-          gx = 4.0; gz = 2.6;
-          var dx2 = gx - m.position.x, dz2 = gz - m.position.z, d2 = Math.hypot(dx2, dz2);
-          if (d2 > 0.15) {
-            m.position.x += (dx2 / d2) * dt * 2.4; m.position.z += (dz2 / d2) * dt * 2.4;
-            m.rotation.y = Math.atan2(dx2, dz2); n.walkT += dt * 9;
-            u.legL.rotation.x = Math.sin(n.walkT) * 0.6; u.legR.rotation.x = -Math.sin(n.walkT) * 0.6;
-          } else n.state = 'walkExit';
-        } else if (n.state === 'walkExit') {
-          gx = -5.8; gz = 4.2;
-          var dx3 = gx - m.position.x, dz3 = gz - m.position.z, d3 = Math.hypot(dx3, dz3);
-          if (d3 > 0.2) {
-            m.position.x += (dx3 / d3) * dt * 2.4; m.position.z += (dz3 / d3) * dt * 2.4;
-            m.rotation.y = Math.atan2(dx3, dz3); n.walkT += dt * 9;
-            u.legL.rotation.x = Math.sin(n.walkT) * 0.6; u.legR.rotation.x = -Math.sin(n.walkT) * 0.6;
-          } else { scene.remove(m); npcs.splice(i, 1); setTimeout(spawnCustomer, 1500); }
-        }
-      }
-
-      renderer.render(scene, camera);
-    }
+    window.addEventListener('resize', onResize);
+    initialized = true;
     animate();
+  }
 
-    window.addEventListener('resize', function () {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+  function onResize() {
+    const container = document.getElementById('studio3dViewport');
+    if (!container || !renderer || !camera) return;
+    camera.aspect = container.clientWidth / Math.max(1, container.clientHeight);
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  }
+
+  // Sinkronisasi state game ke dunia 3D setiap frame
+  function syncWorldWithState(timeSec, dt) {
+    if (typeof state === 'undefined' || !state.slots) return;
+
+    // Update warna lantai & dinding sesuai level renovasi
+    const rLv = (typeof RENOV_LEVELS !== 'undefined' && RENOV_LEVELS[state.renovLevel - 1]) || null;
+    if (rLv && floorMat && wallMat) {
+      floorMat.color.set(rLv.floorColor);
+      wallMat.color.set(rLv.wallColor);
+    }
+
+    // Update noda kotoran lantai berdasarkan state.cleanliness
+    const dirtyCount = Math.max(0, Math.floor(((100 - (state.cleanliness || 100)) / 100) * dirtMeshes.length));
+    dirtMeshes.forEach((dm, idx) => { dm.visible = idx < dirtyCount; });
+
+    const activeActorIds = new Set();
+
+    // 1. Karakter Utama (Owner) - jika sedang sekolah (usia < 18, Senin-Sabtu 07:00-13:00, bukan hari libur), tidak di kasir
+    const atSchool = typeof isPlayerAtSchool === 'function' ? isPlayerAtSchool() : false;
+    if (!atSchool) {
+      const pid = 'player_main';
+      activeActorIds.add(pid);
+      let pMesh = actorMap.get(pid);
+      if (!pMesh) {
+        const eth = (typeof ETHNICITIES !== 'undefined' && ETHNICITIES.find(e => e.id === state.player.ethnicity)) || { skin: '#f1c6a7' };
+        pMesh = createCharacter3D(7, eth.skin, 0x2563eb, 0x0f172a, 'OWNER');
+        scene.add(pMesh);
+        actorMap.set(pid, pMesh);
+      }
+      // Berdiri/bergerak halus di sekitar meja kasir
+      pMesh.position.set(-7.5 + Math.sin(timeSec * 0.8) * 0.6, 0, 5.1);
+      pMesh.rotation.y = Math.sin(timeSec * 0.5) * 0.3;
+    }
+
+    // 2. Karyawan yang sedang dalam jam kerja
+    (state.employees || []).forEach((emp, idx) => {
+      const onDuty = typeof isEmployeeOnDuty === 'function' ? isEmployeeOnDuty(emp) : true;
+      if (!onDuty) return;
+      const eid = 'emp_' + emp.id;
+      activeActorIds.add(eid);
+      let eMesh = actorMap.get(eid);
+      if (!eMesh) {
+        eMesh = createCharacter3D(100 + idx * 13, '#ecc0a1', 0x10b981, 0x1e293b, 'STAFF');
+        scene.add(eMesh);
+        actorMap.set(eid, eMesh);
+      }
+      // Jika punya tugas bersih-bersih, keliling menyapu lantai; jika jaga/servis, di sekitar kasir/tengah
+      if (emp.tasks && emp.tasks.includes('clean')) {
+        const wx = Math.sin(timeSec * 0.5 + idx) * 6.5;
+        const wz = Math.cos(timeSec * 0.35 + idx) * 4.5;
+        eMesh.position.set(wx, 0, wz);
+        eMesh.rotation.y = timeSec * 0.5 + Math.PI / 2;
+        eMesh.userData.armR.rotation.x = Math.sin(timeSec * 8) * 0.5;
+        eMesh.userData.legL.rotation.x = Math.sin(timeSec * 6) * 0.4;
+        eMesh.userData.legR.rotation.x = -Math.sin(timeSec * 6) * 0.4;
+      } else {
+        eMesh.position.set(-6.0 + idx * 1.1, 0, 5.3);
+        eMesh.rotation.y = 0;
+      }
     });
+
+    // 3. 20 Slot Rental PS (Hardware & Pelanggan yang sedang bermain)
+    state.slots.forEach((slot, i) => {
+      const sm = slotMeshes[i];
+      if (!sm) return;
+      sm.tvGroup.visible = !!slot.tv;
+      sm.psMesh.visible = !!slot.console;
+      if (slot.console) {
+        const pColor = slot.console.platform === 'PS1' ? 0xcbd5e1 : slot.console.platform === 'PS5' ? 0xf8fafc : 0x1e293b;
+        sm.psMesh.material.color.setHex(pColor);
+      }
+      sm.fanGroup.visible = !!(slot.cooling && slot.cooling.type === 'fan');
+      sm.acMesh.visible = !!(slot.cooling && slot.cooling.type === 'ac');
+      if (sm.fanGroup.visible && !state.plnBlackout && state.kwh > 0) {
+        sm.fanBlade.rotation.z += dt * 14;
+      }
+
+      drawAnimatedGameOnTv(sm.tvScreen, timeSec + i * 1.7, (!state.plnBlackout && state.kwh > 0) ? slot : null);
+
+      if (slot.occupied) {
+        const cid = 'cust_slot_' + i;
+        activeActorIds.add(cid);
+        let cMesh = actorMap.get(cid);
+        if (!cMesh) {
+          const skinList = ['#fce7d6', '#f1c6a7', '#e2ae8b', '#ecc0a1'];
+          const shirtList = [0xef4444, 0xf59e0b, 0x8b5cf6, 0x06b6d4, 0xec4899, 0x3b82f6];
+          const seed = (slot.customerSeed || (i * 17 + 5));
+          cMesh = createCharacter3D(seed, skinList[seed % skinList.length], shirtList[seed % shirtList.length], 0x1e293b, 'GUEST');
+          scene.add(cMesh);
+          actorMap.set(cid, cMesh);
+        }
+        // Duduk menghadap TV (-Z) sambil menggerakkan tangan main stik PS
+        cMesh.position.set(sm.sx, -0.12, sm.sz + 0.45);
+        cMesh.rotation.y = Math.PI;
+        cMesh.userData.armL.rotation.x = -0.6 + Math.sin(timeSec * 10 + i) * 0.15;
+        cMesh.userData.armR.rotation.x = -0.6 + Math.cos(timeSec * 10 + i) * 0.15;
+        cMesh.userData.head.rotation.y = -Math.PI / 2 + Math.sin(timeSec * 2 + i) * 0.12;
+      }
+    });
+
+    // 4. Pelanggan di Ruang Tunggu Antrean (state.waitingQueue)
+    (state.waitingQueue || []).forEach((wq, idx) => {
+      const wid = 'wait_' + wq.id;
+      activeActorIds.add(wid);
+      let wMesh = actorMap.get(wid);
+      if (!wMesh) {
+        const shirtList = [0x14b8a6, 0xf97316, 0x6366f1, 0xe11d48];
+        wMesh = createCharacter3D(wq.seed || (idx + 31), '#f1c6a7', shirtList[idx % shirtList.length], 0x334155, 'QUEUE');
+        scene.add(wMesh);
+        actorMap.set(wid, wMesh);
+      }
+      const row = Math.floor(idx / 4);
+      const col = idx % 4;
+      wMesh.position.set(4.1 + col * 0.95, 0, 5.4 + row * 1.55);
+      wMesh.rotation.y = Math.PI;
+    });
+
+    // Hapus aktor yang sudah keluar
+    for (const [id, mesh] of actorMap.entries()) {
+      if (!activeActorIds.has(id)) {
+        scene.remove(mesh);
+        actorMap.delete(id);
+      }
+    }
   }
 
-  function boot() {
-    loadThree(start3D);
+  function animate() {
+    requestAnimationFrame(animate);
+    if (!renderer || !scene || !camera) return;
+    const dt = clock ? clock.getDelta() : 0.016;
+    const elapsed = clock ? clock.getElapsedTime() : 0;
+
+    syncWorldWithState(elapsed, dt);
+
+    camera.position.x = camTarget.x + camDist * Math.sin(camAngleV) * Math.sin(camAngleH);
+    camera.position.y = camTarget.y + camDist * Math.cos(camAngleV);
+    camera.position.z = camTarget.z + camDist * Math.sin(camAngleV) * Math.cos(camAngleH);
+    camera.lookAt(camTarget.x, camTarget.y, camTarget.z);
+
+    renderer.render(scene, camera);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+
+  window.toggleStudio3dFullscreen = function () {
+    const card = document.getElementById('studio3dCard');
+    if (!card) return;
+    isFullscreen = !isFullscreen;
+    card.classList.toggle('studio3d-fullscreen', isFullscreen);
+    const btn = document.getElementById('btn3dFs');
+    if (btn) btn.textContent = isFullscreen ? '↙️ Kecilkan 3D' : '⛶ Fullscreen 3D';
+    setTimeout(onResize, 60);
+  };
+
+  window.resetStudio3dCamera = function () {
+    camAngleH = 0.55; camAngleV = 0.68; camDist = 24;
+  };
+
+  window.initRental3D = function () {
+    if (initialized) { onResize(); return; }
+    if (typeof THREE !== 'undefined') {
+      buildRentalWorld();
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = THREE_CDN;
+    s.onload = buildRentalWorld;
+    document.head.appendChild(s);
+  };
 })();

@@ -1,115 +1,223 @@
-// ID SIMULATOR BY ONEILVERSE - V1.0 FULL REALISM & BUG-FREE ENGINE
-const STORAGE_KEY = 'oneilverse_id_simulator_v1_0_full';
+// ==================== ENGINE UTAMA RENTAL PS & LIFE SIMULATOR (2010 - SEKARANG) ====================
+const STORAGE_KEY = 'oneilverse_rental_ps_sim_2010_v2';
 const THEME_KEY = 'oneilverse_theme_v1';
 
+function createEmptySlots20() {
+  const arr = [];
+  for (let i = 1; i <= 20; i++) {
+    arr.push({
+      id: i,
+      isRoom: i >= 11, // 1..10 = Luar Sejejer, 11..20 = Room VIP Tertutup
+      name: i <= 10 ? `Unit Luar #${i}` : `Room VIP #${i - 10} (Slot #${i})`,
+      console: null,       // Object dari gudang konsol
+      tv: null,            // Object dari gudang TV
+      cooling: null,       // Kipas / AC
+      controller: null,    // { platform, quality: 'new'|'serviced', durability: 100, maxDurability: 100 }
+      memCard: null,       // { platform, name }
+      installedGame: null, // Untuk versi kaset fisik (1 kaset) atau game aktif
+      digitalGames: [],    // Untuk PS3/4/5 Digital (array id game)
+      occupied: false,
+      customerName: '',
+      customerSeed: 1,
+      minutesLeft: 0,
+      hourlyRate: 3000
+    });
+  }
+  return arr;
+}
+
 const state = {
-  version: 'v1.0',
-  gameMode: 'dev',
-  cityId: 'jkt',
+  version: 'v2.0',
+  cityId: 'jbi',
   paused: false,
   speed: 1,
 
-  // Waktu & Kalender Asli
-  year: 2019,
+  // Kalender Asli Mulai Jumat, 1 Januari 2010
+  year: 2010,
   month: 1,
   day: 1,
-  dayOfWeek: 2,
+  dayOfWeek: 5, // 1 Jan 2010 = Jumat
   totalDays: 1,
   hour: 8,
   minute: 0,
 
-  // 4 Pos Keuangan
+  // Modal Awal 50 Juta dari Orang Tua (Dibagi ke Bank, Laci, Dompet & Saldo Pulsa)
+  laciCash: 5000000,
   handWallet: 1500000,
-  personalBank: 94500000,
-  laciCash: 2000000,
-  businessPpobBalance: 2000000,
+  personalBank: 42500000,
+  businessPpobBalance: 1000000,
 
-  // Listrik PLN & Lab R&D Baterai
-  kwh: 25.0,
+  // Listrik PLN & Kebersihan Tempat Usaha
+  kwh: 45.0,
   plnBlackout: false,
-  blackoutMinutesLeft: 0,
-  batteryLab: {
-    capacityMah: 5000,
-    currentWh: 18.5,
-    efficiencyPct: 50,
-    isLocked: false,
-    chargerTierIdx: 0,
-    chargerStepProgress: 0,
-    chargerStepTarget: 12,
-    nextStepName: CHARGER_STEPS[0]
+  cleanliness: 100,
+  renovLevel: 1,
+  rentalOpen: true,
+
+  // 20 Slot Modular (10 Luar Sejejer + 10 Room VIP) & Ruang Tunggu Antrean
+  slots: createEmptySlots20(),
+  waitingQueue: [],
+
+  // Gudang Perangkat yang Belum Dipasang / Dilepas dari Slot
+  warehouseConsoles: [],
+  warehouseTvs: [],
+  warehouseCoolings: [],
+
+  // Stok Stik & Memory Card di Kasir (Stik Baru, Stik Hasil Servis, Stik Rusak)
+  cashierSticksNew: { PS1: 2, PS2: 4, PS3: 0, PS4: 0, PS5: 0 },
+  cashierSticksServiced: { PS1: 0, PS2: 0, PS3: 0, PS4: 0, PS5: 0 },
+  cashierSticksBroken: { PS1: 0, PS2: 0, PS3: 0, PS4: 0, PS5: 0 },
+  cashierMemCards: { PS1: 1, PS2: 2 },
+
+  // Koleksi Kaset Game yang Dimiliki: { [gameId]: totalOwnedCopies }
+  ownedDiscs: {
+    'ps1_we2002': 1,
+    'ps1_ctr': 1,
+    'ps2_gta_sa': 1,
+    'ps2_we10_pes': 1,
+    'ps2_downhill': 1
   },
 
-  // Usaha & Rental (Rental hanya terbuka jika disewa!)
-  rentedBusinesses: [],
-  rentalUnlocked: false,
-  rentalOpen: false,
-  rooms: [],
+  // Stok Makanan & Minuman Kasir (dalam satuan Pcs, dibeli Per Dus dari Agen)
+  snackStockPcs: {
+    'sn_indomie_grg': 40,
+    'sn_teh_gelas': 24,
+    'sn_aqua_gelas': 48
+  },
+
+  // Karyawan Rental PS
   employees: [],
 
-  // Aset Pribadi (Punya kondisi, bahan bakar, usia pakai & bisa dijual kembali)
-  ownedGadgets: [],
-  ownedVehicles: [],
+  // Pinjaman Orang Tua (Maks 50jt, 52x mingguan tanpa bunga) & Pinjaman Bank (Usia 21+)
+  parentLoan: {
+    active: false,
+    remainingTotal: 0,
+    weeklyInstallment: 0,
+    weeksLeft: 0
+  },
+  bankLoan: {
+    active: false,
+    principal: 0,
+    remainingTotal: 0,
+    monthlyInstallment: 0,
+    monthsLeft: 0,
+    interestRatePct: 0
+  },
 
-  // Karakter Utama
+  // Otomotif & Gadget yang Dimiliki
+  ownedVehicles: [],
+  ownedGadgets: [],
+
+  // Karakter Utama (Dimulai minimal usia 8 tahun)
   player: {
-    name: 'Neila Aura',
-    gender: 'Perempuan',
+    name: 'Neil Aura',
+    gender: 'Laki-laki',
     religion: 'Islam',
     ethnicity: 'chinese',
-    birthYear: 2001,
-    age: 18,
+    birthDay: 15,
+    birthMonth: 5,
+    birthYear: 1998, // Usia 12 tahun di 2010 (masih sekolah, minimal usia 8 tahun = kelahiran <= 2002)
+    age: 12,
     energy: 100,
     hunger: 90,
-    hygiene: 95,
-    mood: 85,
-    hbBar: 20,
-    guiltBar: 0,
-    isSick: false,
+    mood: 90,
     bpjsTier: 'none',
-    hasPrivateToy: false,
-    charm: 35,
-    worshipDoneToday: [],
-    job: null,
-    college: {
-      enrolled: false,
-      majorId: null,
-      majorName: '',
-      semester: 1,
-      monthsInSemester: 0,
-      preClinicSemesters: 8,
-      totalSemesters: 12,
-      classesThisSem: 0,
-      requiredClassesPerSem: 6,
-      skedEarned: false,
-      graduated: false,
-      droppedOut: false
-    },
     partner: null,
-    affairPartner: null,
     relationship: 0,
-    affairRelationship: 0,
-    kbActive: false,
-    condomActive: false,
-    pregnant: false,
-    pregnantWeeks: 0,
-    babyFatherEthnicity: 'chinese',
+    married: false,
     childrenList: []
   },
 
-  mainTab: 'karier',
-  gadgetBrandFilter: 'Semua',
-  gadgetCatFilter: 'Semua',
-  vehCatFilter: 'Semua'
+  mainTab: 'slots',
+  slotSubFilter: 'all', // 'all' | 'outdoor' | 'vip'
+  discPlatformFilter: 'PS2',
+  discSearchQuery: '',
+  hwCategoryFilter: 'console'
 };
 
-function fmtRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+// Pasang 2 unit awal (1 PS1 di Slot #1 & 1 PS2 di Room VIP #11) supaya langsung terlihat hidup!
+function seedStarterUnits() {
+  const c1 = CONSOLE_CATALOG.find(x => x.id === 'ps1_one');
+  const c2 = CONSOLE_CATALOG.find(x => x.id === 'ps2_slim');
+  const tv1 = TV_CATALOG.find(x => x.id === 'tv_crt14');
+  const tv2 = TV_CATALOG.find(x => x.id === 'tv_crt21');
+  const fan1 = COOLING_CATALOG.find(x => x.id === 'fan_wall');
+  const g1 = GAME_DISC_CATALOG.find(x => x.id === 'ps1_we2002');
+  const g2 = GAME_DISC_CATALOG.find(x => x.id === 'ps2_gta_sa');
+
+  if (c1 && tv1 && state.slots[0]) {
+    state.slots[0].console = { ...c1, uid: 'c_init_1', cond: 100 };
+    state.slots[0].tv = { ...tv1, uid: 'tv_init_1', cond: 100 };
+    state.slots[0].controller = { platform: 'PS1', quality: 'new', durability: 100, maxDurability: 100 };
+    state.slots[0].memCard = { platform: 'PS1', name: 'Memory Card PS1 1MB' };
+    state.slots[0].installedGame = g1;
+  }
+  if (c2 && tv2 && state.slots[10]) {
+    state.slots[10].console = { ...c2, uid: 'c_init_2', cond: 100 };
+    state.slots[10].tv = { ...tv2, uid: 'tv_init_2', cond: 100 };
+    state.slots[10].cooling = { ...fan1, uid: 'cl_init_1' };
+    state.slots[10].controller = { platform: 'PS2', quality: 'new', durability: 100, maxDurability: 100 };
+    state.slots[10].memCard = { platform: 'PS2', name: 'Memory Card PS2 8MB' };
+    state.slots[10].installedGame = g2;
+  }
+}
+
+// ==================== HELPER HARGA & WAKTU SESUAI ZAMAN ====================
+function fmtRp(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
 function roundTo500(n) { return Math.max(500, Math.round(n / 500) * 500); }
 function getCity() { return INDONESIA_CITIES.find(c => c.id === state.cityId) || INDONESIA_CITIES[0]; }
 function getCurrentUmr() { return roundTo500(getCity().umr2024 * getEraMultiplier(state.year)); }
-function getEraPrice(base2024) { return roundTo500(base2024 * getEraMultiplier(state.year)); }
-function getMaxBatteryWh() { return (state.batteryLab.capacityMah * 3.7) / 1000; }
+function getPriceFrom2010(base2010) { return roundTo500(base2010 * get2010Multiplier(state.year)); }
 function getDaysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
 function computeDayOfWeek(y, m, d) { return new Date(y, m - 1, d).getDay(); }
+
+function isPlayerAtSchool() {
+  if (state.player.age >= 18) return false;
+  if (state.dayOfWeek === 0) return false; // Minggu libur
+  if (getHolidayName(state.year, state.month, state.day)) return false; // Tanggal merah libur
+  return state.hour >= 7 && state.hour < 13;
+}
+
+function isEmployeeOnDuty(emp) {
+  if (!emp) return false;
+  if (emp.workDays === 'mon_sat' && state.dayOfWeek === 0) return false;
+  const start = Number(emp.startHour) || 8;
+  const dur = Number(emp.durationHours) || 8;
+  const end = start + dur;
+  if (end <= 24) {
+    return state.hour >= start && state.hour < end;
+  }
+  return state.hour >= start || state.hour < (end % 24);
+}
+
+function getSlotHourlyRate(slot) {
+  if (!slot || !slot.console || !slot.tv) return 0;
+  const base2010 = (slot.console.baseRate2010 || 2500) + (slot.tv.rateBonus2010 || 0) + (slot.cooling ? (slot.cooling.rateBonus2010 || 0) : 0);
+  const vipMult = slot.isRoom ? 1.25 : 1.0;
+  const renovMult = (RENOV_LEVELS[state.renovLevel - 1] || RENOV_LEVELS[0]).rateMult;
+  return roundTo500(base2010 * vipMult * renovMult * get2010Multiplier(state.year));
+}
+
+function getUsedDiscCopies(gameId) {
+  let used = 0;
+  state.slots.forEach(s => {
+    if (s.console && s.console.mediaType === 'disc' && s.installedGame && s.installedGame.id === gameId) used++;
+  });
+  return used;
+}
+
+function isSlotReadyToPlay(slot) {
+  if (!slot || !slot.console || !slot.tv || !slot.controller) return { ok: false, reason: 'Belum lengkap (Wajib PS + TV + Stik)' };
+  if (slot.console.cond <= 0) return { ok: false, reason: 'Konsol PS Rusak' };
+  if (slot.tv.cond <= 0) return { ok: false, reason: 'TV Rusak' };
+  if (slot.controller.durability <= 0) return { ok: false, reason: 'Stik Rusak (Ganti dari Kasir)' };
+  if (slot.console.mediaType === 'disc') {
+    if (!slot.installedGame) return { ok: false, reason: 'Belum dipasang Kaset Game!' };
+  } else {
+    if (!slot.digitalGames || slot.digitalGames.length === 0) return { ok: false, reason: 'Belum di-install Game Internal!' };
+  }
+  return { ok: true, reason: 'Siap Dimainkan' };
+}
 
 function addLog(msg) {
   const box = document.getElementById('logBox');
@@ -120,10 +228,10 @@ function addLog(msg) {
   const mm = String(state.minute).padStart(2, '0');
   div.innerHTML = `<span style="color:var(--muted)">[${DAY_NAMES[state.dayOfWeek]}, ${state.day}/${state.month}/${state.year} ${hh}:${mm}]</span> ${msg}`;
   box.prepend(div);
-  if (box.children.length > 75) box.removeChild(box.lastChild);
+  if (box.children.length > 80) box.removeChild(box.lastChild);
 }
 
-// ==================== TEMA CLEAN LIGHT / DARK ====================
+// ==================== TEMA & MODAL ====================
 function toggleTheme() {
   document.body.classList.toggle('dark-theme');
   const isDark = document.body.classList.contains('dark-theme');
@@ -133,1092 +241,1468 @@ function toggleTheme() {
 }
 (function initTheme() {
   const saved = localStorage.getItem(THEME_KEY);
-  if (saved === 'dark') document.body.classList.add('dark-theme');
+  if (saved === 'light') document.body.classList.remove('dark-theme');
+  else document.body.classList.add('dark-theme');
 })();
 
-// ==================== CUSTOM MODAL & PEMBUATAN KARAKTER ====================
 function showCustomModal(title, body, footer) {
   document.getElementById('customModalTitle').innerHTML = title;
   document.getElementById('customModalBody').innerHTML = body;
-  document.getElementById('customModalFooter').innerHTML = footer || '';
+  document.getElementById('customModalFooter').innerHTML = footer || `<button onclick="closeCustomModal()">Tutup</button>`;
   document.getElementById('customModalBackdrop').style.display = 'flex';
 }
 function closeCustomModal() { document.getElementById('customModalBackdrop').style.display = 'none'; }
 
-function validateStartYearInput() {
-  const bYear = Number(document.getElementById('ccBYear').value) || 2001;
-  const minStart = Math.max(1980, bYear + 17);
-  const sInp = document.getElementById('ccStartYear');
-  sInp.min = minStart;
-  if (Number(sInp.value) < minStart) sInp.value = minStart;
-  document.getElementById('ccAgePreview').textContent = `Usia saat mulai: ${Number(sInp.value) - bYear} tahun (Minimal tahun mulai: ${minStart})`;
-}
-
+// ==================== PEMBUATAN KARAKTER (MULAI 2010, MINIMAL USIA 8 TAHUN, MODAL 50 JUTA) ====================
 function openCharacterCreationModal() {
-  const islands = [...new Set(INDONESIA_CITIES.map(c => c.island))];
-  const cityOptions = islands.map(isl =>
-    `<optgroup label="Pulau / Wilayah ${isl}">` +
-    INDONESIA_CITIES.filter(c => c.island === isl).map(c => `<option value="${c.id}">${c.name}</option>`).join('') +
-    `</optgroup>`
-  ).join('');
+  const cityOpts = INDONESIA_CITIES.map(c => `<option value="${c.id}" ${c.id === state.cityId ? 'selected' : ''}>${c.name}</option>`).join('');
+  const ethOpts = ETHNICITIES.map(e => `<option value="${e.id}">${e.name} — ${e.trait}</option>`).join('');
+  const relOpts = RELIGIONS_ID.map(r => `<option value="${r}">${r}</option>`).join('');
 
   showCustomModal(
-    '🇮🇩 Buat Karakter — ID Simulator by Oneilverse (v1.0)',
-    `<div class="grid-2">
-       <div><label style="font-size:0.71rem;color:var(--muted);">Nama Karakter:</label><input type="text" id="ccName" value="Neila Aura" /></div>
-       <div><label style="font-size:0.71rem;color:var(--muted);">Jenis Kelamin:</label><select id="ccGender"><option value="Perempuan">Perempuan</option><option value="Laki-laki">Laki-laki</option></select></div>
+    '🎮 Mulai Usaha Rental PS Baru (Tahun 2010 • Modal Rp 50.000.000)',
+    `<div class="spec-line">Orang tuamu memberikan modal mandiri <b>Rp 50.000.000</b> di tahun <b>2010</b> untuk menyewa ruko & mengelola usaha Rental PS. Jika usiamu masih di bawah 18 tahun (minimal 8 tahun), kamu tetap berangkat sekolah tiap pagi dan mendapat uang jajan ke Dompet!</div>
+     <div class="grid-2">
+       <div><label class="spec-line">Nama Lengkap</label><input id="ccName" value="${state.player.name}" /></div>
+       <div><label class="spec-line">Gender</label><select id="ccGender"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
      </div>
      <div class="grid-2">
-       <div><label style="font-size:0.71rem;color:var(--muted);">Agama (Jadwal Ibadah Realistis):</label><select id="ccReligion">${RELIGIONS_ID.map(r => `<option value="${r}">${r}</option>`).join('')}</select></div>
-       <div><label style="font-size:0.71rem;color:var(--muted);">Etnis / Keturunan:</label><select id="ccEthnicity">${ETHNICITIES.map(e => `<option value="${e.id}">${e.name}</option>`).join('')}</select></div>
+       <div><label class="spec-line">Agama</label><select id="ccRel">${relOpts}</select></div>
+       <div><label class="spec-line">Ras / Etnis</label><select id="ccEth">${ethOpts}</select></div>
      </div>
-     <div class="grid-2">
-       <div><label style="font-size:0.71rem;color:var(--muted);">Kota / Daerah (38 Provinsi Indonesia):</label><select id="ccCity">${cityOptions}</select></div>
-       <div><label style="font-size:0.71rem;color:var(--muted);">Tahun Kelahiran (Min. 1962):</label><input type="number" id="ccBYear" value="2001" min="1962" max="2009" oninput="validateStartYearInput()" /></div>
-     </div>
-     <div>
-       <label style="font-size:0.71rem;color:var(--muted);">Tahun Mulai Bermain (1980–2026, Usia Min. 17 Thn):</label>
-       <input type="number" id="ccStartYear" value="2019" min="1980" max="2026" oninput="validateStartYearInput()" />
-       <div id="ccAgePreview" style="font-size:0.7rem;color:var(--green);margin-top:3px;">Usia saat mulai: 18 tahun (Minimal tahun mulai: 2018)</div>
+     <div><label class="spec-line">Kota / Wilayah Tempat Usaha</label><select id="ccCity">${cityOpts}</select></div>
+     <div class="grid-3">
+       <div><label class="spec-line">Tgl Lahir</label><input type="number" id="ccBDay" min="1" max="31" value="15" /></div>
+       <div><label class="spec-line">Bln Lahir</label><input type="number" id="ccBMonth" min="1" max="12" value="5" /></div>
+       <div><label class="spec-line">Thn Lahir (Maks 2002 / Min 8 Thn)</label><input type="number" id="ccBYear" min="1965" max="2002" value="1998" /></div>
      </div>`,
-    `<button class="purple" onclick="finishCharacterSetup('dev')">🛠️ Mode Dev</button>
-     <button class="success" onclick="finishCharacterSetup('release')">🎮 Mode Rilis (Realistis)</button>`
+    `<button onclick="closeCustomModal()">Batal</button>
+     <button class="primary" onclick="confirmCharacterCreation()">🚀 Mulai Tahun 2010 (Modal 50 Juta)</button>`
   );
 }
 
-function finishCharacterSetup(mode) {
-  const name = document.getElementById('ccName').value.trim() || 'Warga Nusantara';
+function confirmCharacterCreation() {
+  const name = (document.getElementById('ccName').value || 'Neil Aura').trim();
   const gender = document.getElementById('ccGender').value;
-  const religion = document.getElementById('ccReligion').value;
-  const ethnicity = document.getElementById('ccEthnicity').value;
+  const religion = document.getElementById('ccRel').value;
+  const ethnicity = document.getElementById('ccEth').value;
   const cityId = document.getElementById('ccCity').value;
-  const bYear = Math.max(1962, Math.min(2009, Number(document.getElementById('ccBYear').value) || 2001));
-  const startYear = Math.max(1980, Math.max(bYear + 17, Math.min(2026, Number(document.getElementById('ccStartYear').value) || 2019)));
+  const bDay = Math.max(1, Math.min(31, Number(document.getElementById('ccBDay').value) || 15));
+  const bMonth = Math.max(1, Math.min(12, Number(document.getElementById('ccBMonth').value) || 5));
+  const bYear = Math.max(1965, Math.min(2002, Number(document.getElementById('ccBYear').value) || 1998));
 
-  state.gameMode = mode;
   state.cityId = cityId;
-  state.year = startYear;
-  state.month = 1; state.day = 1;
-  state.dayOfWeek = computeDayOfWeek(startYear, 1, 1);
-  state.totalDays = 1;
-  state.hour = 8; state.minute = 0;
+  state.year = 2010; state.month = 1; state.day = 1; state.dayOfWeek = 5;
+  state.hour = 8; state.minute = 0; state.totalDays = 1;
 
-  state.rentedBusinesses = [];
-  state.rentalUnlocked = false;
-  state.rentalOpen = false;
-  state.rooms = [];
-  for (let i = 1; i <= 5; i++) {
-    state.rooms.push({ id: i, mode: 'empty', rate: 0, customer: null, timeLeft: 0, totalTime: 0, cleaningTime: 0 });
-  }
-  state.ownedGadgets = [];
-  state.ownedVehicles = [];
-  state.kwh = 25.0;
+  // Total Modal Awal 50 Juta
+  state.laciCash = 5000000;
+  state.handWallet = 1500000;
+  state.personalBank = 42500000;
+  state.businessPpobBalance = 1000000;
+
+  state.kwh = 45.0;
   state.plnBlackout = false;
-  state.blackoutMinutesLeft = 0;
-  state.batteryLab = { capacityMah: 5000, currentWh: 18.5, efficiencyPct: 50, isLocked: false, chargerTierIdx: 0, chargerStepProgress: 0, chargerStepTarget: 12, nextStepName: CHARGER_STEPS[0] };
+  state.cleanliness = 100;
+  state.renovLevel = 1;
+  state.rentalOpen = true;
+  state.slots = createEmptySlots20();
+  state.waitingQueue = [];
+  state.warehouseConsoles = [];
+  state.warehouseTvs = [];
+  state.warehouseCoolings = [];
+  state.cashierSticksNew = { PS1: 2, PS2: 4, PS3: 0, PS4: 0, PS5: 0 };
+  state.cashierSticksServiced = { PS1: 0, PS2: 0, PS3: 0, PS4: 0, PS5: 0 };
+  state.cashierSticksBroken = { PS1: 0, PS2: 0, PS3: 0, PS4: 0, PS5: 0 };
+  state.cashierMemCards = { PS1: 1, PS2: 2 };
+  state.ownedDiscs = { 'ps1_we2002': 1, 'ps1_ctr': 1, 'ps2_gta_sa': 1, 'ps2_we10_pes': 1, 'ps2_downhill': 1 };
+  state.snackStockPcs = { 'sn_indomie_grg': 40, 'sn_teh_gelas': 24, 'sn_aqua_gelas': 48 };
+  state.employees = [];
+  state.parentLoan = { active: false, remainingTotal: 0, weeklyInstallment: 0, weeksLeft: 0 };
+  state.bankLoan = { active: false, principal: 0, remainingTotal: 0, monthlyInstallment: 0, monthsLeft: 0, interestRatePct: 0 };
+  state.ownedVehicles = [];
+  state.ownedGadgets = [];
 
   state.player = {
-    name, gender, religion, ethnicity, birthYear: bYear, age: startYear - bYear,
-    energy: 100, hunger: 90, hygiene: 95, mood: 85, hbBar: 20, guiltBar: 0,
-    isSick: false, bpjsTier: 'none', hasPrivateToy: false, charm: 35,
-    worshipDoneToday: [], job: null,
-    college: { enrolled: false, majorId: null, majorName: '', semester: 1, monthsInSemester: 0, preClinicSemesters: 8, totalSemesters: 12, classesThisSem: 0, requiredClassesPerSem: 6, skedEarned: false, graduated: false, droppedOut: false },
-    partner: null, affairPartner: null, relationship: 0, affairRelationship: 0,
-    kbActive: false, condomActive: false, pregnant: false, pregnantWeeks: 0, babyFatherEthnicity: ethnicity, childrenList: []
+    name, gender, religion, ethnicity,
+    birthDay: bDay, birthMonth: bMonth, birthYear: bYear,
+    age: 2010 - bYear,
+    energy: 100, hunger: 95, mood: 95,
+    bpjsTier: 'none', partner: null, relationship: 0, married: false, childrenList: []
   };
 
-  const mult = getEraMultiplier(startYear);
-  if (mode === 'dev') {
-    state.handWallet = roundTo500(2500000 * mult);
-    state.personalBank = roundTo500(95000000 * mult);
-    state.laciCash = roundTo500(2000000 * mult);
-    state.businessPpobBalance = roundTo500(1000000 * mult);
-  } else {
-    state.handWallet = roundTo500(1500000 * mult);
-    state.personalBank = roundTo500(12000000 * mult);
-    state.laciCash = 0;
-    state.businessPpobBalance = 0;
-  }
-
-  addLog(`🇮🇩 Selamat datang <b>${name}</b> (${gender}, ${state.player.age} thn) di <b>${getCity().name}</b> tahun <b>${startYear}</b>. UMR: <b>${fmtRp(getCurrentUmr())}</b>.`);
+  seedStarterUnits();
+  saveGame();
   closeCustomModal();
-  saveGame(true);
-  renderAll(true);
+  addLog(`🎉 Selamat datang <b>${name}</b> (Usia ${state.player.age} thn) di tahun 2010! Modal awal <b>Rp 50.000.000</b> siap dikelola.`);
+  renderAll();
 }
 
-// ==================== ENGINE WAKTU (ANTI-BUG DROPDOWN & ANTI-SCROLL JUMP!) ====================
-setInterval(() => {
-  if (state.paused) return;
-  advanceTimeMinutes(state.speed);
-  updateHudOnly();
-  // HANYA update angka/bar secara langsung by ID, JANGAN PERNAH panggil renderRightPanel() di dalam timer!
-  updateLiveElementsOnly();
-}, 1000);
+// ==================== SIMULASI WAKTU (1 JAM = 30 DETIK -> 1 MENIT GAME = 500 MS PADA 1X) ====================
+let tickAccumulatorMs = 0;
+let lastFrameTime = performance.now();
 
-setInterval(() => { saveGame(false); }, 10000);
-
-function togglePause() { state.paused = !state.paused; updateHudOnly(); }
-function setSpeed(s) { state.speed = s; state.paused = false; updateHudOnly(); }
-
-function advanceTimeMinutes(totalMins) {
-  for (let i = 0; i < totalMins; i++) {
-    tickOneMinute();
-  }
+function togglePause() {
+  state.paused = !state.paused;
+  renderHud();
 }
 
-function tickOneMinute() {
-  state.minute += 1;
+function setSpeed(spd) {
+  state.speed = spd;
+  state.paused = false;
+  document.querySelectorAll('.speed-btn[data-speed]').forEach(b => {
+    b.classList.toggle('active', Number(b.dataset.speed) === spd);
+  });
+  renderHud();
+}
+
+function stepOneGameMinute() {
+  state.minute++;
   if (state.minute >= 60) {
     state.minute = 0;
-    state.hour += 1;
-    onNewHour();
+    state.hour++;
+    onHourPassed();
   }
   if (state.hour >= 24) {
     state.hour = 0;
-    onNewDay();
+    onDayPassed();
   }
 
-  // Pemadaman bergilir acak sesekali
-  if (!state.plnBlackout && state.kwh > 0 && Math.random() < 0.0005) {
-    state.plnBlackout = true;
-    state.blackoutMinutesLeft = Math.floor(25 + Math.random() * 50);
-    addLog(`⚡⚠️ <b>MATI LAMPU PLN!</b> Baterai modifikasi (${state.batteryLab.capacityMah.toLocaleString('id-ID')} mAh) mengambil alih listrik.`);
-  }
-
-  let loadW = 45;
-  if (state.rentalUnlocked && state.rentalOpen) {
-    loadW += 65; // Laptop kasir
-    state.rooms.forEach(r => { if (r.customer) loadW += 220; });
-  }
-
-  const maxWh = getMaxBatteryWh();
-  if (!state.plnBlackout) {
-    state.kwh = Math.max(0, +(state.kwh - (loadW / 1000) / 60).toFixed(4));
-    if (state.batteryLab.currentWh < maxWh) {
-      const cWatt = CHARGER_TIERS[state.batteryLab.chargerTierIdx] || 5;
-      state.batteryLab.currentWh = Math.min(maxWh, state.batteryLab.currentWh + ((cWatt * 0.85) / 1000) / 60);
+  // 1. Konsumsi Listrik PLN per menit dari semua unit yang menyala
+  let totalWatt = 25; // Lampu ruko dasar
+  state.slots.forEach(s => {
+    if (s.occupied && !state.plnBlackout && state.kwh > 0) {
+      totalWatt += (s.console ? s.console.watt : 0) + (s.tv ? s.tv.watt : 0) + (s.cooling ? s.cooling.watt : 0);
+    } else if (s.console && s.tv && !state.plnBlackout && state.kwh > 0) {
+      totalWatt += 8; // Standby TV/PS
     }
-  } else {
-    state.blackoutMinutesLeft -= 1;
-    const effFactor = Math.max(0.15, 1.3 - (state.batteryLab.efficiencyPct / 100));
-    state.batteryLab.currentWh = Math.max(0, state.batteryLab.currentWh - ((loadW * effFactor) / 1000) / 60);
-    if (state.blackoutMinutesLeft <= 0) {
-      state.plnBlackout = false;
-      addLog('💡 <b>Listrik PLN kembali menyala!</b>');
+  });
+  const kwhUsedThisMin = (totalWatt / 1000) / 60;
+  if (state.kwh > 0) {
+    state.kwh = Math.max(0, +(state.kwh - kwhUsedThisMin).toFixed(4));
+    if (state.kwh <= 0) {
+      state.plnBlackout = true;
+      addLog('⚡ <b>TOKEN LISTRIK HABIS (0.0 kWh)!</b> Semua TV & PS mati mendadak. Segera isi Token PLN!');
     }
   }
 
-  // Makan otomatis jam makan jika ada uang di dompet
-  if (state.minute === 0 && (state.hour === 8 || state.hour === 13 || state.hour === 19)) {
-    const cost = roundTo500(18000 * getCity().costFactor * getEraMultiplier(state.year));
-    if (state.handWallet >= cost && state.player.hunger < 75) {
-      state.handWallet -= cost;
-      state.player.hunger = Math.min(100, state.player.hunger + 35);
-      addLog(`🍽️ Makan harian (${getCity().name}): <b>-${fmtRp(cost)}</b>.`);
+  // 2. Proses Slot yang Sedang Dimainkan Pelanggan
+  state.slots.forEach(s => {
+    if (!s.occupied) return;
+    if (state.plnBlackout || state.kwh <= 0) {
+      // Listrik mati -> pelanggan batal & keluar
+      s.occupied = false;
+      s.minutesLeft = 0;
+      return;
     }
-  }
+    s.minutesLeft--;
+    // Penurunan ketahanan stik & kebersihan
+    if (s.controller && Math.random() < 0.045) {
+      s.controller.durability = Math.max(0, +(s.controller.durability - 0.5).toFixed(1));
+      if (s.controller.durability <= 0) {
+        const plat = s.controller.platform;
+        state.cashierSticksBroken[plat] = (state.cashierSticksBroken[plat] || 0) + 1;
+        s.controller = null;
+        s.occupied = false;
+        s.minutesLeft = 0;
+        addLog(`🎮 Stik ${plat} di <b>${s.name}</b> RUSAK (0%) dan dipindahkan ke stok stik rusak di Kasir!`);
+        return;
+      }
+    }
+    // Pelanggan beli jajan / minuman dari stok kasir
+    if (Math.random() < 0.008) {
+      tryCustomerBuySnack(s.customerName || s.name);
+    }
+    // Waktu sewa selesai
+    if (s.minutesLeft <= 0) {
+      s.occupied = false;
+      s.minutesLeft = 0;
+      state.cleanliness = Math.max(0, +(state.cleanliness - 0.6).toFixed(1));
+    }
+  });
 
-  // Operasional Room Rental jika sudah disewa & dibuka
-  const powerOk = (!state.plnBlackout && state.kwh > 0) || (state.plnBlackout && state.batteryLab.currentWh > 0);
-  if (state.rentalUnlocked && state.rentalOpen && powerOk) {
-    state.rooms.forEach(r => {
-      if (r.cleaningTime > 0) r.cleaningTime -= 1;
-      if (r.customer) {
-        r.timeLeft -= 1;
-        if (r.timeLeft <= 0) {
-          const isCouple = r.mode === 'couple';
-          r.customer = null;
-          if (isCouple) r.cleaningTime = 15;
+  // 3. Karyawan yang Sedang Bertugas (Otomatis Bersih-bersih & Servis Stik Rusak)
+  state.employees.forEach(emp => {
+    if (!isEmployeeOnDuty(emp)) return;
+    if (emp.tasks.includes('clean') && state.cleanliness < 100) {
+      state.cleanliness = Math.min(100, +(state.cleanliness + 0.35).toFixed(1));
+    }
+    if (emp.tasks.includes('service') && Math.random() < 0.04) {
+      autoEmployeeServiceStick(emp.name);
+    }
+  });
+
+  // 4. Masukkan Pelanggan dari Ruang Tunggu ke Slot yang Kosong & Siap
+  if (state.waitingQueue.length > 0 && !state.plnBlackout && state.kwh > 0) {
+    // Cek apakah ada yang jaga kasir (Owner tidak sedang sekolah, atau ada karyawan tugas 'guard')
+    const hasGuard = !isPlayerAtSchool() || state.employees.some(e => isEmployeeOnDuty(e) && e.tasks.includes('guard'));
+    if (hasGuard) {
+      for (let i = 0; i < state.slots.length && state.waitingQueue.length > 0; i++) {
+        const sl = state.slots[i];
+        if (!sl.occupied && isSlotReadyToPlay(sl).ok) {
+          const guest = state.waitingQueue.shift();
+          seatCustomerAtSlot(sl, guest);
         }
       }
-    });
-    if (Math.random() < 0.08) {
-      const ready = state.rooms.filter(r => !r.customer && r.cleaningTime === 0 && r.mode !== 'empty');
-      if (ready.length > 0) {
-        const rm = ready[Math.floor(Math.random() * ready.length)];
-        const hrs = Math.floor(Math.random() * 3) + 1;
-        const pay = roundTo500(rm.rate * hrs);
-        rm.customer = { name: 'Tamu', hours: hrs };
-        rm.totalTime = hrs * 60; rm.timeLeft = hrs * 60;
-        state.laciCash += pay;
-        addLog(`💵 Tamu masuk <b>Room #${rm.id}</b> (${hrs} jam) bayar <b>+${fmtRp(pay)}</b> ke Laci.`);
-        renderMainWorkspace();
-      }
     }
   }
-}
 
-function onNewHour() {
-  state.player.energy = Math.max(0, state.player.energy - 2);
-  state.player.hunger = Math.max(0, state.player.hunger - 3);
-  state.player.hygiene = Math.max(0, state.player.hygiene - 2);
-  state.player.hbBar = Math.min(100, state.player.hbBar + 3);
-  if (state.player.guiltBar >= 50) state.player.mood = Math.max(0, state.player.mood - 2);
+  // 5. Kedatangan Pelanggan Baru (Hanya jika Rental BUKA & jam operasional 08:00 - 23:00)
+  if (state.rentalOpen && state.hour >= 8 && state.hour <= 23 && !state.plnBlackout && state.kwh > 0) {
+    const isHol = !!getHolidayName(state.year, state.month, state.day) || state.dayOfWeek === 0 || state.dayOfWeek === 6;
+    const cleanFactor = Math.max(0.2, state.cleanliness / 100);
+    const renovBonus = 1 + (state.renovLevel - 1) * 0.22;
+    const spawnChance = 0.055 * (isHol ? 1.55 : 1.0) * cleanFactor * renovBonus;
+    if (Math.random() < spawnChance && state.waitingQueue.length < 8) {
+      spawnIncomingCustomer();
+    }
+  }
 
-  if ((state.player.energy <= 0 || state.player.hunger <= 0) && !state.player.isSick) {
-    state.player.isSick = true;
-    addLog(`🤒⚠️ <b>KAMU JATUH SAKIT!</b> Stamina/makan habis. Segera berobat ke Klinik/RS di tab Hidup.`);
-    renderMainWorkspace();
+  // 6. Pelanggan Beli Pulsa di Konter Kasir
+  if (state.rentalOpen && state.hour >= 8 && state.hour <= 22 && Math.random() < 0.015) {
+    tryCustomerBuyPulsa();
   }
 }
 
-function onNewDay() {
-  state.day += 1;
-  state.totalDays += 1;
-  state.player.worshipDoneToday = [];
+const GUEST_NAMES = ['Budi', 'Rizky', 'Fajar', 'Deni', 'Agus', 'Hendra', 'Wahyu', 'Ilham', 'Tono', 'Bayu', 'Dimas', 'Reza', 'Aldi', 'Yudi', 'Rian', 'Eko'];
 
-  const maxDays = getDaysInMonth(state.year, state.month);
-  if (state.day > maxDays) {
+function spawnIncomingCustomer() {
+  const gName = GUEST_NAMES[Math.floor(Math.random() * GUEST_NAMES.length)];
+  const hrs = [1, 2, 2, 3, 4][Math.floor(Math.random() * 5)];
+  const guest = {
+    id: 'g_' + Date.now() + '_' + Math.floor(Math.random() * 999),
+    name: gName,
+    hours: hrs,
+    seed: Math.floor(Math.random() * 1000)
+  };
+  // Jika ada slot kosong dan ada penjaga kasir, langsung duduk; jika penuh, antre di Ruang Tunggu!
+  const hasGuard = !isPlayerAtSchool() || state.employees.some(e => isEmployeeOnDuty(e) && e.tasks.includes('guard'));
+  const readySlots = state.slots.filter(s => !s.occupied && isSlotReadyToPlay(s).ok);
+  if (hasGuard && readySlots.length > 0) {
+    const chosen = readySlots[Math.floor(Math.random() * readySlots.length)];
+    seatCustomerAtSlot(chosen, guest);
+  } else {
+    state.waitingQueue.push(guest);
+  }
+}
+
+function seatCustomerAtSlot(slot, guest) {
+  const rate = getSlotHourlyRate(slot);
+  const totalPay = rate * guest.hours;
+  slot.occupied = true;
+  slot.customerName = guest.name;
+  slot.customerSeed = guest.seed;
+  slot.minutesLeft = guest.hours * 60;
+  slot.hourlyRate = rate;
+  state.laciCash += totalPay;
+  const gTitle = slot.console.mediaType === 'disc'
+    ? (slot.installedGame ? slot.installedGame.title : 'Game')
+    : `${slot.digitalGames.length} Game Internal`;
+  addLog(`🎮 <b>${guest.name}</b> sewa <b>${slot.name}</b> (${slot.console.platform} • ${gTitle}) ${guest.hours} jam: <b style="color:var(--green)">+${fmtRp(totalPay)}</b> ke Laci.`);
+}
+
+function tryCustomerBuySnack(buyerName) {
+  const availKeys = Object.keys(state.snackStockPcs).filter(k => state.snackStockPcs[k] > 0);
+  if (!availKeys.length) return;
+  const k = availKeys[Math.floor(Math.random() * availKeys.length)];
+  const item = WHOLESALE_SNACK_CATALOG.find(x => x.id === k);
+  if (!item) return;
+  state.snackStockPcs[k]--;
+  const price = getPriceFrom2010(item.sellPcs2010);
+  state.laciCash += price;
+  state.cleanliness = Math.max(0, +(state.cleanliness - 0.4).toFixed(1));
+  addLog(`🍜 <b>${buyerName}</b> beli <b>${item.name}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b> ke Laci.`);
+}
+
+function tryCustomerBuyPulsa() {
+  const hasGuard = !isPlayerAtSchool() || state.employees.some(e => isEmployeeOnDuty(e) && e.tasks.includes('guard'));
+  if (!hasGuard) return;
+  const op = PPOB_OPERATORS[Math.floor(Math.random() * PPOB_OPERATORS.length)];
+  const nomBase = [5000, 10000, 20000, 25000, 50000][Math.floor(Math.random() * 5)];
+  const modal = nomBase;
+  const margin = getPriceFrom2010(1500);
+  if (state.businessPpobBalance < modal) return;
+  state.businessPpobBalance -= modal;
+  state.laciCash += (modal + margin);
+  addLog(`📱 Pelanggan beli Pulsa <b>${op.name} ${ nomBase.toLocaleString('id-ID') }</b>: Laba <b style="color:var(--green)">+${fmtRp(margin)}</b> (Total ${fmtRp(modal + margin)} ke Laci).`);
+}
+
+function autoEmployeeServiceStick(empName) {
+  const plats = Object.keys(state.cashierSticksBroken).filter(p => state.cashierSticksBroken[p] > 0);
+  if (!plats.length) return;
+  const p = plats[0];
+  state.cashierSticksBroken[p]--;
+  state.cashierSticksServiced[p] = (state.cashierSticksServiced[p] || 0) + 1;
+  addLog(`🔧 Karyawan <b>${empName}</b> selesai menyervis 1 Stik ${p} (Masuk ke Stok Stik Servis di Kasir, ketahanan 65%).`);
+  // Otomatis pasang ke slot yang kehilangan stik jika cocok
+  const needSlot = state.slots.find(s => s.console && s.console.platform === p && !s.controller);
+  if (needSlot && state.cashierSticksServiced[p] > 0) {
+    state.cashierSticksServiced[p]--;
+    needSlot.controller = { platform: p, quality: 'serviced', durability: 65, maxDurability: 65 };
+    addLog(`🎮 <b>${empName}</b> otomatis memasang Stik ${p} hasil servis ke <b>${needSlot.name}</b>.`);
+  }
+}
+
+function onHourPassed() {
+  // Jam 07:00 pagi (Senin-Sabtu, usia < 18, bukan hari libur): Berangkat sekolah & dapat uang jajan orang tua!
+  if (state.hour === 7 && isPlayerAtSchool()) {
+    const pocketMoney = getPriceFrom2010(15000);
+    state.handWallet += pocketMoney;
+    addLog(`🎒 Kamu berangkat sekolah (07:00–13:00). Orang tua memberi uang jajan <b style="color:var(--green)">+${fmtRp(pocketMoney)}</b> ke Dompet!`);
+  }
+  if (state.hour === 13 && state.player.age < 18 && state.dayOfWeek !== 0 && !getHolidayName(state.year, state.month, state.day)) {
+    addLog(`🏠 Kamu pulang sekolah dan kembali menjaga Rental PS.`);
+  }
+}
+
+function onDayPassed() {
+  state.totalDays++;
+  state.day++;
+  const maxD = getDaysInMonth(state.year, state.month);
+  if (state.day > maxD) {
     state.day = 1;
-    state.month += 1;
-    onNewMonth();
+    state.month++;
+    onMonthPassed();
   }
   if (state.month > 12) {
     state.month = 1;
-    state.year += 1;
-    state.player.age += 1;
-    state.ownedGadgets.forEach(g => { g.condition = Math.max(10, g.condition - 8); });
-    state.ownedVehicles.forEach(v => { v.condition = Math.max(10, v.condition - 5); });
-    addLog(`🎂 Tahun <b>${state.year}</b>! Usiamu sekarang <b>${state.player.age} tahun</b>.`);
+    state.year++;
+    addLog(`🎆 <b>SELAMAT TAHUN BARU ${state.year}!</b> Kurs USD kini Rp ${getUsdRate(state.year).toLocaleString('id-ID')}/USD.`);
   }
   state.dayOfWeek = computeDayOfWeek(state.year, state.month, state.day);
 
-  const hol = NATIONAL_HOLIDAYS[`${state.day}-${state.month}`];
-  if (hol) addLog(`🇮🇩 Hari Libur Nasional: <b>${hol.name}</b>.`);
+  // Cek Ulang Tahun Karakter Utama & Anak
+  if (state.day === state.player.birthDay && state.month === state.player.birthMonth) {
+    state.player.age++;
+    addLog(`🎂 <b>Selamat Ulang Tahun!</b> Usiamu kini <b>${state.player.age} tahun</b>.`);
+  }
+  (state.player.childrenList || []).forEach(ch => {
+    if (state.day === (ch.birthDay || 1) && state.month === (ch.birthMonth || 1)) {
+      ch.age++;
+      addLog(`🎈 Anakmu <b>${ch.name}</b> berulang tahun ke-<b>${ch.age}</b>!`);
+    }
+  });
 
-  state.rentedBusinesses.forEach(b => {
-    if (!b.isInteractiveRental) {
-      let profit = roundTo500(b.dailyProfitBase * getEraMultiplier(state.year) * getCity().costFactor);
-      if (b.id === 'biz_battery_shop') {
-        profit = roundTo500(profit * (1 + state.batteryLab.efficiencyPct / 100) * Math.max(1, state.batteryLab.capacityMah / 5000));
-      }
+  // Cek Hari Libur Nasional
+  const hol = getHolidayName(state.year, state.month, state.day);
+  if (hol) {
+    addLog(`🇮🇩 <b>HARI LIBUR NASIONAL: ${hol}!</b> Sekolah libur & pelanggan rental PS membludak!`);
+  }
+
+  // Biaya makan harian dari Dompet
+  const mealCost = getPriceFrom2010(18000);
+  if (state.handWallet >= mealCost) state.handWallet -= mealCost;
+  else if (state.laciCash >= mealCost) state.laciCash -= mealCost;
+
+  // Pendapatan harian mobil usaha Travel / Pick Up Kargo jika punya
+  state.ownedVehicles.forEach(v => {
+    if (v.commercialDaily2010 > 0 && v.fuelLiters >= 4) {
+      v.fuelLiters = Math.max(0, +(v.fuelLiters - 4).toFixed(1));
+      const profit = getPriceFrom2010(v.commercialDaily2010);
       state.personalBank += profit;
-      addLog(`🏢 Laba harian <b>${b.name}</b>: <b>+${fmtRp(profit)}</b> ke Bank Pribadi.`);
+      addLog(`🚚 Setoran usaha angkutan/travel <b>${v.name}</b>: <b style="color:var(--green)">+${fmtRp(profit)}</b> ke Bank.`);
     }
   });
 
-  if (state.player.pregnant) {
-    state.player.pregnantWeeks += 1;
-    if (state.player.pregnantWeeks >= 36) {
-      state.player.pregnant = false; state.player.pregnantWeeks = 0;
-      const desc = getMixedChildAppearance(state.player.ethnicity, state.player.babyFatherEthnicity);
-      state.player.childrenList.push({ name: `Anak ke-${state.player.childrenList.length + 1}`, appearance: desc, age: 0 });
-      addLog(`👶 Buah hati lahir sehat! Ciri fisik: <b>${desc}</b>.`);
+  // Pembayaran Gaji Karyawan Harian & Mingguan
+  state.employees.forEach(emp => {
+    if (emp.payPeriod === 'daily') payEmployeeSalary(emp, 'Harian');
+    else if (emp.payPeriod === 'weekly' && state.totalDays % 7 === 0) payEmployeeSalary(emp, 'Mingguan');
+  });
+
+  // Cicilan Pinjaman Orang Tua (Per Minggu / tiap 7 hari, 52x cicilan, 0% bunga)
+  if (state.parentLoan.active && state.totalDays % 7 === 0) {
+    const pay = Math.min(state.parentLoan.remainingTotal, state.parentLoan.weeklyInstallment);
+    if (deductFromAnyCash(pay)) {
+      state.parentLoan.remainingTotal -= pay;
+      state.parentLoan.weeksLeft = Math.max(0, state.parentLoan.weeksLeft - 1);
+      addLog(`👨‍👩‍👦 Bayar cicilan mingguan ke Orang Tua (0% bunga): <b>-${fmtRp(pay)}</b> (Sisa ${state.parentLoan.weeksLeft}x / ${fmtRp(state.parentLoan.remainingTotal)}).`);
+      if (state.parentLoan.remainingTotal <= 0 || state.parentLoan.weeksLeft <= 0) {
+        state.parentLoan.active = false;
+        addLog(`✅ <b>LUNAS!</b> Pinjaman ke Orang Tua sudah lunas sepenuhnya!`);
+      }
+    } else {
+      addLog(`⚠️ Uang tidak cukup untuk bayar cicilan mingguan ke Orang Tua (${fmtRp(pay)})!`);
     }
   }
+
+  saveGame();
 }
 
-function onNewMonth() {
-  if (state.player.job) {
-    state.personalBank += state.player.job.monthlySalary;
-    addLog(`💼 Gaji bulanan <b>${state.player.job.title}</b> cair: <b>+${fmtRp(state.player.job.monthlySalary)}</b>.`);
+function onMonthPassed() {
+  // 1. Bayar Sewa Ruko Tempat Usaha per bulan
+  const rentCost = getPriceFrom2010(1200000);
+  if (deductFromAnyCash(rentCost)) {
+    addLog(`🏢 Bayar sewa ruko Rental PS bulanan: <b>-${fmtRp(rentCost)}</b>.`);
+  } else {
+    addLog(`⚠️ Saldo kurang untuk bayar sewa ruko bulanan (${fmtRp(rentCost)})!`);
   }
 
-  const bpjs = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
-  if (bpjs && bpjs.monthly2024 > 0) {
-    const fee = getEraPrice(bpjs.monthly2024);
-    if (state.personalBank >= fee) {
-      state.personalBank -= fee;
-      addLog(`🏥 Iuran bulanan <b>${bpjs.name}</b> terpotong: <b>-${fmtRp(fee)}</b>.`);
-    } else {
-      state.player.bpjsTier = 'none';
-      addLog(`⚠️ Saldo Bank kurang untuk bayar BPJS! Kepesertaan BPJS dinonaktifkan.`);
-    }
-  }
-
-  state.rentedBusinesses.forEach(b => {
-    state.personalBank = Math.max(0, state.personalBank - b.monthlyRent);
+  // 2. Gaji Karyawan Bulanan + BPJS + Insentif
+  state.employees.forEach(emp => {
+    if (emp.payPeriod === 'monthly') payEmployeeSalary(emp, 'Bulanan');
   });
 
-  // PROGRES SEMESTER KULIAH REALISTIS (1 SEMESTER = 6 BULAN AKADEMIK)
-  const col = state.player.college;
-  if (col.enrolled && !col.graduated && !col.droppedOut) {
-    col.monthsInSemester += 1;
-    if (col.monthsInSemester >= 6) {
-      const attRatio = col.classesThisSem / col.requiredClassesPerSem;
-      if (attRatio < 0.5) {
-        col.droppedOut = true;
-        col.enrolled = false;
-        addLog(`❌🎓 <b>DROP OUT (DO)!</b> Kehadiran Semester ${col.semester} hanya ${Math.round(attRatio * 100)}% (wajib minimal 50%).`);
-      } else {
-        const maj = UNIVERSITY_MAJORS.find(m => m.id === col.majorId);
-        if (col.majorId === 'med' && col.semester === col.preClinicSemesters && !col.skedEarned) {
-          col.skedEarned = true;
-          addLog(`🎓 <b>LULUS SARJANA KEDOKTERAN (S.Ked)!</b> Mulai Semester 9 masuk tahap <b>KOAS (2 Tahun)</b> di RS.`);
-        }
-        if (col.semester >= col.totalSemesters) {
-          col.graduated = true;
-          col.enrolled = false;
-          if (maj && maj.degreePrefix && !state.player.name.startsWith(maj.degreePrefix)) {
-            state.player.name = maj.degreePrefix + state.player.name;
-          }
-          addLog(`🎓🎉 <b>WISUDA & SUMPAH PROFESI!</b> Lulus <b>${col.majorName}</b> (${state.player.name})!`);
-        } else {
-          const ukt = getEraPrice(maj.baseUkt2024);
-          if (state.personalBank >= ukt) {
-            state.personalBank -= ukt;
-            col.semester += 1;
-            col.monthsInSemester = 0;
-            col.classesThisSem = 0;
-            addLog(`📑 Naik ke <b>Semester ${col.semester}</b> (UKT -${fmtRp(ukt)}).`);
-          } else {
-            col.monthsInSemester = 6;
-            addLog(`⚠️ Menunggak UKT Semester ${col.semester + 1} (${fmtRp(ukt)})! Siapkan saldo Bank.`);
-          }
-        }
+  // 3. Cicilan Pinjaman Bank Bulanan
+  if (state.bankLoan.active) {
+    const pay = Math.min(state.bankLoan.remainingTotal, state.bankLoan.monthlyInstallment);
+    if (deductFromAnyCash(pay)) {
+      state.bankLoan.remainingTotal -= pay;
+      state.bankLoan.monthsLeft = Math.max(0, state.bankLoan.monthsLeft - 1);
+      addLog(`🏦 Bayar cicilan Kredit Bank: <b>-${fmtRp(pay)}</b> (Sisa ${state.bankLoan.monthsLeft} bln).`);
+      if (state.bankLoan.remainingTotal <= 0 || state.bankLoan.monthsLeft <= 0) {
+        state.bankLoan.active = false;
+        addLog(`✅ <b>LUNAS!</b> Pinjaman Kredit Bank telah lunas!`);
       }
     }
   }
 }
 
-// ==================== TIDUR & SKIP 1 BULAN AMAN ====================
-function sleepToMorning() {
-  state.player.energy = 100;
-  state.hour = 7;
-  state.minute = 0;
-  onNewDay();
-  addLog('🌅 Bangun pagi dalam keadaan segar (Stamina 100%).');
-  saveGame(true);
-  renderAll(true);
+function deductFromAnyCash(amount) {
+  if (state.laciCash >= amount) { state.laciCash -= amount; return true; }
+  if (state.personalBank >= amount) { state.personalBank -= amount; return true; }
+  if (state.handWallet >= amount) { state.handWallet -= amount; return true; }
+  return false;
 }
 
-function skipOneMonthSafe() {
-  // Simulasikan 30 hari dengan makan & istirahat normal supaya tidak jatuh sakit tiba-tiba
-  const daysToSkip = getDaysInMonth(state.year, state.month);
-  for (let i = 0; i < daysToSkip; i++) {
-    state.player.energy = Math.max(60, state.player.energy);
-    state.player.hunger = Math.max(60, state.player.hunger);
-    onNewDay();
+function payEmployeeSalary(emp, label) {
+  const bpjsCost = emp.hasBpjs ? getPriceFrom2010(55000) : 0;
+  const total = Number(emp.salaryAmount || 0) + Number(emp.incentive || 0) + (label === 'Bulanan' ? bpjsCost : 0);
+  if (deductFromAnyCash(total)) {
+    addLog(`👷 Bayar gaji ${label} <b>${emp.name}</b> (Pokok + Insentif${emp.hasBpjs ? ' + BPJS' : ''}): <b>-${fmtRp(total)}</b>.`);
+  } else {
+    addLog(`⚠️ Gagal bayar gaji <b>${emp.name}</b> (${fmtRp(total)}) karena kas habis!`);
   }
-  state.hour = 8; state.minute = 0;
-  addLog(`⏩ Waktu maju 1 bulan penuh (${state.day}/${state.month}/${state.year}).`);
-  saveGame(true);
-  renderAll(true);
 }
 
-// ==================== TRANSFER BANK / DOMPET / LACI ====================
-function openBankTransferModal() {
+// ==================== LOOP UTAMA ====================
+function mainLoop(now) {
+  const dt = now - lastFrameTime;
+  lastFrameTime = now;
+  if (!state.paused) {
+    // 1x: 1 jam (60 menit game) = 30.000 ms -> 1 menit game = 500 ms
+    const msPerGameMin = 500 / (state.speed || 1);
+    tickAccumulatorMs += dt;
+    let steps = 0;
+    while (tickAccumulatorMs >= msPerGameMin && steps < 15) {
+      tickAccumulatorMs -= msPerGameMin;
+      stepOneGameMinute();
+      steps++;
+    }
+    if (steps > 0) {
+      renderHud();
+      if (state.minute % 15 === 0) renderCenterAndRight();
+    }
+  }
+  requestAnimationFrame(mainLoop);
+}
+
+// ==================== RENDER HUD & WORKSPACE ====================
+function renderHud() {
+  const hh = String(state.hour).padStart(2, '0');
+  const mm = String(state.minute).padStart(2, '0');
+  const hol = getHolidayName(state.year, state.month, state.day);
+  const schoolBadge = isPlayerAtSchool() ? ' • 🎒 Di Sekolah' : '';
+  const holBadge = hol ? ` • 🔴 ${hol}` : '';
+  document.getElementById('hudDateTime').textContent = `${DAY_NAMES[state.dayOfWeek]}, ${state.day}/${state.month}/${state.year} • ${hh}:${mm}${schoolBadge}${holBadge}`;
+  document.getElementById('hudCityUmr').textContent = `${getCity().name} • $1 = Rp ${getUsdRate(state.year).toLocaleString('id-ID')}`;
+  document.getElementById('hudLaci').textContent = fmtRp(state.laciCash);
+  document.getElementById('hudHand').textContent = fmtRp(state.handWallet);
+  document.getElementById('hudBank').textContent = fmtRp(state.personalBank);
+  document.getElementById('hudPpob').textContent = fmtRp(state.businessPpobBalance);
+  document.getElementById('hudKwh').textContent = `${state.kwh.toFixed(1)} kWh`;
+  document.getElementById('hudClean').textContent = `${Math.round(state.cleanliness)}%`;
+
+  const btnPause = document.getElementById('btnPause');
+  if (btnPause) {
+    btnPause.classList.toggle('active', state.paused);
+    btnPause.classList.toggle('paused', state.paused);
+    btnPause.textContent = state.paused ? '▶️' : '⏸️';
+  }
+}
+
+function renderCenterWorkspace() {
+  const cw = document.getElementById('centerWorkspace');
+  if (!cw) return;
+
+  // Pastikan kartu Studio 3D hanya dibuat sekali agar WebGL canvas tidak ke-reset!
+  if (!document.getElementById('studio3dCard')) {
+    cw.innerHTML = `
+      <div class="card" id="studio3dCard">
+        <h2>
+          <span>🏢 Visual 3D Tempat Usaha Rental PS (10 Unit Luar + 10 Room VIP + Ruang Tunggu)</span>
+          <div style="display:flex;gap:5px;">
+            <button onclick="manualCleanShop()" title="Sapu & Bersihkan Sendiri">🧹 Bersihkan (<span id="lblCleanBtn">100%</span>)</button>
+            <button id="btnToggleOpen" class="success" onclick="toggleRentalOpenStatus()">🟢 BUKA</button>
+            <button onclick="resetStudio3dCamera()">🎥 Reset</button>
+            <button id="btn3dFs" class="primary" onclick="toggleStudio3dFullscreen()">⛶ Fullscreen 3D</button>
+          </div>
+        </h2>
+        <div id="studio3dStatusBanner" class="spec-line" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;"></div>
+        <div id="studio3dViewport" style="width:100%;height:340px;border-radius:10px;overflow:hidden;background:#090d16;border:1px solid var(--border);"></div>
+      </div>
+      <div class="card">
+        <h2>
+          <span>🪑 Ringkasan Cepat 20 Slot & Ruang Tunggu (<span id="lblQueueCount">0</span> Antre)</span>
+          <button onclick="spawnIncomingCustomer()">+ Panggil Tamu</button>
+        </h2>
+        <div id="quickSlotsGrid" class="booths-grid" style="max-height:260px;overflow-y:auto;"></div>
+      </div>
+    `;
+    if (typeof window.initRental3D === 'function') window.initRental3D();
+  }
+
+  // Update isi dinamis tanpa merusak canvas 3D
+  const btnOpen = document.getElementById('btnToggleOpen');
+  if (btnOpen) {
+    btnOpen.className = state.rentalOpen ? 'success' : 'danger';
+    btnOpen.textContent = state.rentalOpen ? '🟢 RENTAL BUKA' : '🔴 TUTUP (Habiskan Sisa Billing)';
+  }
+  const lblCl = document.getElementById('lblCleanBtn');
+  if (lblCl) lblCl.textContent = `${Math.round(state.cleanliness)}%`;
+
+  const banner = document.getElementById('studio3dStatusBanner');
+  if (banner) {
+    const activeCount = state.slots.filter(s => s.occupied).length;
+    const readyCount = state.slots.filter(s => isSlotReadyToPlay(s).ok).length;
+    const rName = (RENOV_LEVELS[state.renovLevel - 1] || RENOV_LEVELS[0]).name;
+    banner.innerHTML = `<span><b>Status:</b> ${activeCount}/${readyCount} Unit Main • Antrean Tunggu: <b>${state.waitingQueue.length} orang</b></span>
+                        <span><b>Interior:</b> ${rName}</span>`;
+  }
+
+  const qCount = document.getElementById('lblQueueCount');
+  if (qCount) qCount.textContent = state.waitingQueue.length;
+
+  const qGrid = document.getElementById('quickSlotsGrid');
+  if (qGrid) {
+    qGrid.innerHTML = state.slots.map(s => {
+      const st = isSlotReadyToPlay(s);
+      const badge = s.occupied
+        ? `<span class="badge busy">Main (${s.minutesLeft}m)</span>`
+        : st.ok ? `<span class="badge ok">Siap (${fmtRp(getSlotHourlyRate(s))}/j)</span>` : `<span class="badge warn">Belum Siap</span>`;
+      return `<div class="booth ${s.occupied ? 'active' : ''}">
+        <div class="booth-top"><span>${s.name}</span>${badge}</div>
+        <div class="spec-line">
+          PS: <b>${s.console ? s.console.name.slice(0, 22) : '-'}</b><br>
+          TV: <b>${s.tv ? s.tv.name.slice(0, 22) : '-'}</b> • ${s.cooling ? s.cooling.name.slice(0, 14) : 'Tanpa AC/Kipas'}<br>
+          Stik: <b>${s.controller ? `${s.controller.platform} (${s.controller.durability}%)` : 'Kosong'}</b> • Game: <b>${s.console && s.console.mediaType === 'digital' ? `${s.digitalGames.length} Digital` : (s.installedGame ? s.installedGame.title.slice(0, 16) : 'Kosong')}</b>
+        </div>
+        <button onclick="openSlotConfigModal(${s.id})">⚙️ Atur / Bongkar Pasang</button>
+      </div>`;
+    }).join('');
+  }
+}
+
+function toggleRentalOpenStatus() {
+  state.rentalOpen = !state.rentalOpen;
+  if (!state.rentalOpen) {
+    state.waitingQueue = [];
+    addLog('🔴 <b>Rental PS DITUTUP untuk pelanggan baru.</b> Pelanggan yang masih bermain dibiarkan sampai waktu billing-nya habis.');
+  } else {
+    addLog('🟢 <b>Rental PS DIBUKA!</b> Siap menerima pelanggan baru.');
+  }
+  renderCenterAndRight();
+}
+
+function manualCleanShop() {
+  state.cleanliness = 100;
+  addLog('🧹 Kamu menyapu & mengepel seluruh ruangan rental PS. Kebersihan kembali <b>100%</b>!');
+  renderHud();
+  renderCenterWorkspace();
+}
+
+// ==================== TAB NAVIGASI PANEL KANAN ====================
+function switchMainTab(tabId, btnEl) {
+  state.mainTab = tabId;
+  document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderRightPanel();
+}
+
+function renderCenterAndRight() {
+  renderCenterWorkspace();
+  renderRightPanel();
+}
+
+function renderAll() {
+  renderHud();
+  renderCenterAndRight();
+}
+
+function renderRightPanel() {
+  const box = document.getElementById('rightPanelContent');
+  if (!box) return;
+
+  if (state.mainTab === 'slots') {
+    const filtered = state.slots.filter(s =>
+      state.slotSubFilter === 'all' ? true : state.slotSubFilter === 'outdoor' ? !s.isRoom : s.isRoom
+    );
+    box.innerHTML = `
+      <div class="sub-tabs">
+        <button class="sub-btn ${state.slotSubFilter === 'all' ? 'active' : ''}" onclick="state.slotSubFilter='all';renderRightPanel()">Semua (20)</button>
+        <button class="sub-btn ${state.slotSubFilter === 'outdoor' ? 'active' : ''}" onclick="state.slotSubFilter='outdoor';renderRightPanel()">10 Unit Luar Sejejer</button>
+        <button class="sub-btn ${state.slotSubFilter === 'vip' ? 'active' : ''}" onclick="state.slotSubFilter='vip';renderRightPanel()">10 Room VIP Tertutup</button>
+      </div>
+      ${filtered.map(s => {
+        const st = isSlotReadyToPlay(s);
+        return `<div class="item-row" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b>${s.name}</b>
+            <span class="badge ${s.occupied ? 'busy' : st.ok ? 'ok' : 'warn'}">${s.occupied ? `Main: ${s.customerName} (${s.minutesLeft} mnt)` : st.reason}</span>
+          </div>
+          <div class="spec-line">
+            • Konsol: <b>${s.console ? s.console.name : 'Belum dipasang'}</b><br>
+            • TV: <b>${s.tv ? s.tv.name : 'Belum dipasang'}</b> | Pendingin: <b>${s.cooling ? s.cooling.name : 'Belum ada'}</b><br>
+            • Stik: <b>${s.controller ? `${s.controller.platform} (${s.controller.quality === 'new' ? 'Baru' : 'Servis'} • ${s.controller.durability}%)` : 'Belum dipasang'}</b> | MemCard: <b>${s.memCard ? s.memCard.name : '-'}</b><br>
+            • Game Terpasang: <b>${s.console && s.console.mediaType === 'digital' ? `${s.digitalGames.length} Game Digital` : (s.installedGame ? s.installedGame.title : 'Belum ada kaset')}</b>
+          </div>
+          <div style="display:flex;gap:5px;margin-top:4px;">
+            <button class="primary" style="flex:1" onclick="openSlotConfigModal(${s.id})">🔧 Pasang / Lepas Perangkat & Kaset</button>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'store_hw') {
+    const nextRenov = RENOV_LEVELS[state.renovLevel];
+    let itemsHtml = '';
+    if (state.hwCategoryFilter === 'console') {
+      itemsHtml = CONSOLE_CATALOG.map(c => {
+        const unlocked = state.year >= c.releaseYear;
+        const price = getPriceFrom2010(c.basePrice2010);
+        return `<div class="item-row">
+          <img class="prod-thumb" src="${c.img}" alt="${c.name}" />
+          <div style="flex:1">
+            <b>${c.name}</b> <span class="badge">${c.mediaType === 'disc' ? '💿 Kaset Fisik' : `💾 Digital ${c.storageGb}GB`}</span>
+            <div class="spec-line">Rilis: ${c.releaseYear} • Daya: ${c.watt}W • Tarif dasar: ${fmtRp(getPriceFrom2010(c.baseRate2010))}/jam</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('console','${c.id}')">${unlocked ? 'Beli' : `Thn ${c.releaseYear}`}</button>
+        </div>`;
+      }).join('');
+    } else if (state.hwCategoryFilter === 'tv') {
+      itemsHtml = TV_CATALOG.map(t => {
+        const unlocked = state.year >= t.releaseYear;
+        const price = getPriceFrom2010(t.basePrice2010);
+        return `<div class="item-row">
+          <img class="prod-thumb" src="${t.img}" alt="${t.name}" />
+          <div style="flex:1">
+            <b>${t.name}</b>
+            <div class="spec-line">Rilis: ${t.releaseYear} • Daya: ${t.watt}W • Bonus kenyamanan +${t.comfortBonus}</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('tv','${t.id}')">${unlocked ? 'Beli' : `Thn ${t.releaseYear}`}</button>
+        </div>`;
+      }).join('');
+    } else if (state.hwCategoryFilter === 'cooling') {
+      itemsHtml = COOLING_CATALOG.map(cl => {
+        const unlocked = state.year >= cl.releaseYear;
+        const price = getPriceFrom2010(cl.basePrice2010);
+        return `<div class="item-row">
+          <img class="prod-thumb" src="${cl.img}" alt="${cl.name}" />
+          <div style="flex:1">
+            <b>${cl.name}</b>
+            <div class="spec-line">Rilis: ${cl.releaseYear} • Daya: ${cl.watt}W • Bonus sejuk +${cl.comfortBonus}</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('cooling','${cl.id}')">${unlocked ? 'Beli' : `Thn ${cl.releaseYear}`}</button>
+        </div>`;
+      }).join('');
+    } else {
+      itemsHtml = ACCESSORY_CATALOG.map(ac => {
+        const unlocked = state.year >= ac.releaseYear;
+        const price = getPriceFrom2010(ac.basePrice2010);
+        return `<div class="item-row">
+          <img class="prod-thumb" src="${ac.img}" alt="${ac.name}" />
+          <div style="flex:1">
+            <b>${ac.name}</b>
+            <div class="spec-line">Masuk ke Stok Cadangan Kasir (${ac.platform})</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('acc','${ac.id}')">${unlocked ? 'Beli ke Kasir' : `Thn ${ac.releaseYear}`}</button>
+        </div>`;
+      }).join('');
+    }
+
+    box.innerHTML = `
+      <div class="item-row" style="background:var(--panel-3);">
+        <div>
+          <b>🧱 Renovasi Ruangan & Room VIP (Saat ini: Level ${state.renovLevel})</b>
+          <div class="spec-line">${nextRenov ? `Upgrade ke ${nextRenov.name} (Tarif sewa x${nextRenov.rateMult})` : 'Sudah Level Maksimal (Sultan Esports Arena)'}</div>
+        </div>
+        ${nextRenov ? `<button class="amber" onclick="upgradeRenovation()">Renov (${fmtRp(getPriceFrom2010(nextRenov.baseCost2010))})</button>` : '<span class="badge ok">MAX</span>'}
+      </div>
+      <div class="sub-tabs">
+        <button class="sub-btn ${state.hwCategoryFilter === 'console' ? 'active' : ''}" onclick="state.hwCategoryFilter='console';renderRightPanel()">🎮 Konsol PS1–PS5</button>
+        <button class="sub-btn ${state.hwCategoryFilter === 'tv' ? 'active' : ''}" onclick="state.hwCategoryFilter='tv';renderRightPanel()">📺 TV Tabung/LED</button>
+        <button class="sub-btn ${state.hwCategoryFilter === 'cooling' ? 'active' : ''}" onclick="state.hwCategoryFilter='cooling';renderRightPanel()">❄️ Kipas & AC</button>
+        <button class="sub-btn ${state.hwCategoryFilter === 'acc' ? 'active' : ''}" onclick="state.hwCategoryFilter='acc';renderRightPanel()">🕹️ Stik & MemCard</button>
+      </div>
+      ${itemsHtml}
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'discs') {
+    const q = (state.discSearchQuery || '').toLowerCase();
+    const list = GAME_DISC_CATALOG.filter(g =>
+      g.platform === state.discPlatformFilter &&
+      (!q || g.title.toLowerCase().includes(q) || g.genre.toLowerCase().includes(q))
+    );
+    box.innerHTML = `
+      <div class="sub-tabs">
+        ${['PS1', 'PS2', 'PS3', 'PS4', 'PS5'].map(p => `<button class="sub-btn ${state.discPlatformFilter === p ? 'active' : ''}" onclick="state.discPlatformFilter='${p}';renderRightPanel()">💿 ${p} (${GAME_DISC_CATALOG.filter(x => x.platform === p).length})</button>`).join('')}
+      </div>
+      <input placeholder="🔍 Cari dari 200+ judul game original (misal: Winning Eleven, GTA,CTR, Downhill)..." value="${state.discSearchQuery}" oninput="state.discSearchQuery=this.value;renderRightPanel()" />
+      <div class="spec-line">Aturan Realistis: 1 PS Kaset Fisik membutuhkan 1 Kaset Original yang bebas. Beli kaset ekstra jika ingin dipasang di banyak PS sekaligus!</div>
+      ${list.map(g => {
+        const owned = state.ownedDiscs[g.id] || 0;
+        const used = getUsedDiscCopies(g.id);
+        const unlocked = state.year >= g.releaseYear;
+        const price = getPriceFrom2010(g.basePrice2010);
+        return `<div class="item-row">
+          <img class="disc-thumb" src="${g.cover}" alt="${g.title}" />
+          <div style="flex:1">
+            <b>${g.title}</b> <span class="badge">${g.code}</span>
+            <div class="spec-line">${g.genre} • Hype: 🔥${g.hype} • Rilis ${g.releaseYear} • Punya: <b>${owned} kaset</b> (Terpakai: ${used})</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)} / kaset</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyGameDisc('${g.id}')">${unlocked ? '+ Beli Kaset' : `Thn ${g.releaseYear}`}</button>
+        </div>`;
+      }).join('')}
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'cashier_stik') {
+    box.innerHTML = `
+      <div class="card" style="padding:8px;">
+        <b>🕹️ Stok Stik Cadangan & Servis di Meja Kasir</b>
+        <div class="spec-line">Stik Baru tahan <b>100%</b>, sedangkan Stik Hasil Servis tahan <b>65%</b>. Stik rusak yang dicabut dari PS masuk ke sini untuk kamu servis sendiri atau diservis karyawan.</div>
+        ${['PS1', 'PS2', 'PS3', 'PS4', 'PS5'].map(p => `
+          <div class="item-row">
+            <div>
+              <b>Stik ${p}</b>
+              <div class="spec-line">Baru (100%): <b>${state.cashierSticksNew[p] || 0}</b> • Hasil Servis (65%): <b>${state.cashierSticksServiced[p] || 0}</b> • Rusak: <b style="color:var(--red)">${state.cashierSticksBroken[p] || 0}</b></div>
+            </div>
+            <button class="amber" ${(state.cashierSticksBroken[p] || 0) <= 0 ? 'disabled' : ''} onclick="manualServiceStick('${p}')">🔧 Servis Sendiri (1)</button>
+          </div>
+        `).join('')}
+      </div>
+      <div class="card" style="padding:8px;">
+        <b>📦 Gudang Perangkat Belum Dipasang / Dilepas (${state.warehouseConsoles.length} PS, ${state.warehouseTvs.length} TV, ${state.warehouseCoolings.length} Kipas/AC)</b>
+        <div class="spec-line">Pilih salah satu dari 20 Slot/Room untuk memasang perangkat dari gudang ini.</div>
+        ${state.warehouseConsoles.map((c, i) => `<div class="item-row"><span>🎮 ${c.name} (Kondisi ${c.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+        ${state.warehouseTvs.map((t, i) => `<div class="item-row"><span>📺 ${t.name} (Kondisi ${t.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+        ${state.warehouseCoolings.map((cl, i) => `<div class="item-row"><span>❄️ ${cl.name}</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+      </div>
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'agen_ppob') {
+    box.innerHTML = `
+      <div class="card" style="padding:8px;">
+        <b>📱 Konter Pulsa All Operator Indonesia (Saldo PPOB: ${fmtRp(state.businessPpobBalance)})</b>
+        <div class="spec-line">Operator aktif: ${PPOB_OPERATORS.map(o => o.name).join(', ')}. Pelanggan otomatis membeli pulsa selama saldo mencukupi!</div>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="primary" onclick="topUpPpobBalance(500000)">+ Isi Saldo Pulsa ${fmtRp(500000)}</button>
+          <button class="primary" onclick="topUpPpobBalance(2000000)">+ Isi Saldo ${fmtRp(2000000)}</button>
+        </div>
+      </div>
+      <div class="card" style="padding:8px;">
+        <b>📦 Agen Grosir Makanan & Minuman (Beli Per Dus Produk Asli Indonesia)</b>
+        <div class="spec-line">Beli per dus harga agen, dijual eceran per pcs ke pelanggan yang sedang main atau antre di ruang tunggu!</div>
+        ${WHOLESALE_SNACK_CATALOG.map(sn => {
+          const boxPrice = getPriceFrom2010(sn.boxPrice2010);
+          const sellPcs = getPriceFrom2010(sn.sellPcs2010);
+          const stock = state.snackStockPcs[sn.id] || 0;
+          return `<div class="item-row">
+            <img class="prod-thumb" src="${sn.img}" alt="${sn.name}" />
+            <div style="flex:1">
+              <b>${sn.name}</b> <span class="badge">Stok: ${stock} pcs</span>
+              <div class="spec-line">1 Dus isi ${sn.pcsPerBox} pcs • Harga Jual Ecer: ${fmtRp(sellPcs)}/pcs</div>
+              <div style="color:var(--green);font-weight:700;">Harga Agen: ${fmtRp(boxPrice)} / Dus</div>
+            </div>
+            <button class="primary" onclick="buyWholesaleSnackBox('${sn.id}')">+ Beli 1 Dus</button>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'employees') {
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b>👷 Daftar Karyawan Rental PS (${state.employees.length} orang)</b>
+        <button class="primary" onclick="openHireEmployeeModal()">+ Rekrut Karyawan Baru</button>
+      </div>
+      <div class="spec-line">Atur gaji (harian/mingguan/bulanan), BPJS, insentif, hari masuk, jam masuk, durasi kerja, serta tugas (Jaga Kasir, Bersih-bersih, Servis Stik).</div>
+      ${state.employees.length === 0 ? `<div class="item-row">Belum ada karyawan. Klik + Rekrut Karyawan Baru di atas.</div>` : ''}
+      ${state.employees.map((emp, idx) => {
+        const onDuty = isEmployeeOnDuty(emp);
+        return `<div class="item-row" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;justify-content:space-between;">
+            <b>${emp.name}</b>
+            <span class="badge ${onDuty ? 'ok' : 'warn'}">${onDuty ? '🟢 Sedang Bekerja' : '⚪ Di Luar Jam Kerja'}</span>
+          </div>
+          <div class="spec-line">
+            • Jadwal: <b>${emp.workDays === 'every_day' ? 'Setiap Hari' : 'Senin–Sabtu'}</b> • Jam Masuk: <b>${String(emp.startHour).padStart(2, '0')}:00</b> (${emp.durationHours} jam/hari)<br>
+            • Gaji (${emp.payPeriod}): <b>${fmtRp(emp.salaryAmount)}</b> + Insentif: <b>${fmtRp(emp.incentive)}</b> • BPJS: <b>${emp.hasBpjs ? 'Ya' : 'Tidak'}</b><br>
+            • Tugas: <b>${emp.tasks.join(', ').toUpperCase()}</b>
+          </div>
+          <button class="danger" onclick="fireEmployee(${idx})">Pecat Karyawan</button>
+        </div>`;
+      }).join('')}
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'finance') {
+    const bRate = getBankInterestRate(state.year);
+    const canBank = state.player.age >= 21;
+    box.innerHTML = `
+      <div class="card" style="padding:8px;">
+        <b>⚡ Beli Token Listrik PLN Prabayar (Sisa: ${state.kwh.toFixed(2)} kWh)</b>
+        <div class="spec-line">Tarif dasar listrik tahun ${state.year} + PPJ 4% (Sesuai dunia nyata: 20rb di 2010 dapat ~23.5 kWh, di 2024 dapat ~13.29 kWh).</div>
+        <div class="grid-2">
+          ${PLN_TOKEN_NOMINALS.map(nom => {
+            const info = calcPlnToken(nom, state.year);
+            return `<button onclick="buyPlnToken(${nom})">⚡ Token ${nom.toLocaleString('id-ID')}<br><small style="color:var(--green)">+${info.kwhReceived} kWh</small></button>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card" style="padding:8px;">
+        <b>👨‍👩‍👦 Pinjaman Orang Tua (Maks Rp 50.000.000 • 52x Cicilan Mingguan • Bunga 0%)</b>
+        <div class="spec-line">Tersedia sebelum maupun sesudah usia 21 tahun. Tanpa bunga, dicicil 52 minggu (1 tahun).</div>
+        ${state.parentLoan.active
+          ? `<div class="spec-line">Sisa Pinjaman: <b>${fmtRp(state.parentLoan.remainingTotal)}</b> (${state.parentLoan.weeksLeft} minggu lagi @ ${fmtRp(state.parentLoan.weeklyInstallment)}/mgg)</div>`
+          : `<div style="display:flex;gap:6px;"><button class="primary" onclick="takeParentLoan(20000000)">Pinjam 20 Juta</button><button class="primary" onclick="takeParentLoan(50000000)">Pinjam Maks 50 Juta</button></div>`}
+      </div>
+
+      <div class="card" style="padding:8px;">
+        <b>🏦 Kredit Usaha Bank (Wajib Usia Minimal 21 Tahun • Bunga Tahun ${state.year}: ${bRate}%/thn)</b>
+        <div class="spec-line">Usiamu saat ini: <b>${state.player.age} tahun</b>. ${canBank ? 'Kamu sudah memenuhi syarat usia 21+.' : 'Belum berusia 21 tahun (Gunakan Pinjaman Orang Tua dulu).'}</div>
+        ${state.bankLoan.active
+          ? `<div class="spec-line">Sisa Kredit Bank: <b>${fmtRp(state.bankLoan.remainingTotal)}</b> (${state.bankLoan.monthsLeft} bln @ ${fmtRp(state.bankLoan.monthlyInstallment)}/bln)</div>`
+          : `<div style="display:flex;gap:6px;">
+               <button class="primary" ${!canBank ? 'disabled' : ''} onclick="takeBankLoan(50000000)">Kredit 50 Juta (12 Bln)</button>
+               <button class="primary" ${!canBank ? 'disabled' : ''} onclick="takeBankLoan(150000000)">Kredit 150 Juta (24 Bln)</button>
+             </div>`}
+      </div>
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'automotive') {
+    const bbmPrice = getBbmPricePerLiter(state.year);
+    box.innerHTML = `
+      <div class="card" style="padding:8px;">
+        <b>⛽ Kendaraan & Gadget Milikmu (Harga Bensin Tahun ${state.year}: ${fmtRp(bbmPrice)}/Liter)</b>
+        ${state.ownedVehicles.length === 0 ? `<div class="spec-line">Belum punya motor/mobil.</div>` : ''}
+        ${state.ownedVehicles.map((v, idx) => `
+          <div class="item-row">
+            <div>
+              <b>${v.name}</b> <span class="badge">BBM: ${v.fuelLiters.toFixed(1)}/${v.tankCap}L</span>
+              <div class="spec-line">${v.commercialDaily2010 > 0 ? '🚚 Aktif menghasilkan uang travel/angkutan tiap hari selama bensin terisi!' : '🛵 Bisa dipakai jalan-jalan keliling kota'}</div>
+            </div>
+            <div style="display:flex;gap:4px;">
+              <button onclick="refuelVehicle(${idx})">⛽ Isi Full</button>
+              <button class="primary" onclick="rideVehicleTrip(${idx})">🛣️ Jalan</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <b>🛵 20 Pilihan Motor & 🚗 20 Pilihan Mobil (Sesuai Tahun Rilis) + 📱 HP/Laptop</b>
+      ${VEHICLE_CATALOG.map(v => {
+        const unlocked = state.year >= v.yearStart;
+        const price = getPriceFrom2010(v.price2010);
+        return `<div class="item-row">
+          <img class="prod-thumb" src="${v.img}" alt="${v.name}" />
+          <div style="flex:1">
+            <b>${v.name}</b> <span class="badge">${v.category}</span>
+            <div class="spec-line">Rilis: ${v.yearStart} • Tangki: ${v.tankCap}L ${v.commercialDaily2010 > 0 ? `• Hasil Usaha: +${fmtRp(getPriceFrom2010(v.commercialDaily2010))}/hari` : ''}</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyVehicle('${v.id}')">${unlocked ? 'Beli' : `Thn ${v.yearStart}`}</button>
+        </div>`;
+      }).join('')}
+      ${GADGET_CATALOG.map(g => {
+        const unlocked = state.year >= g.yearStart;
+        const price = getPriceFrom2010(g.price2010);
+        return `<div class="item-row">
+          <img class="prod-thumb" src="${g.img}" alt="${g.name}" />
+          <div style="flex:1">
+            <b>${g.name}</b> <span class="badge">${g.category}</span>
+            <div class="spec-line">${g.brand} • Rilis ${g.yearStart}</div>
+            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+          </div>
+          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyGadget('${g.id}')">${unlocked ? 'Beli' : `Thn ${g.yearStart}`}</button>
+        </div>`;
+      }).join('')}
+    `;
+    return;
+  }
+
+  if (state.mainTab === 'life') {
+    const p = state.player;
+    box.innerHTML = `
+      <div class="card" style="padding:8px;">
+        <b>👤 Profil Karakter & Siklus Kehidupan</b>
+        <div class="spec-line">
+          • Nama: <b>${p.name}</b> (${p.gender}) • Usia: <b>${p.age} tahun</b> (TTL: ${p.birthDay}/${p.birthMonth}/${p.birthYear})<br>
+          • Agama: <b>${p.religion}</b> • Etnis: <b>${p.ethnicity.toUpperCase()}</b><br>
+          • Status Pendidikan: <b>${p.age < 18 ? '🎒 Masih Sekolah (07:00–13:00 Senin–Sabtu, Dapat Uang Jajan)' : '🎓 Lulus Sekolah (Fokus Penuh Usaha)'}</b><br>
+          • Pasangan: <b>${p.partner ? `${p.partner.name} (${p.married ? 'Menikah' : 'Pacaran'})` : 'Belum ada'}</b>
+        </div>
+      </div>
+
+      <div class="card" style="padding:8px;">
+        <b>💍 Keluarga & Pewaris Usaha Rental PS (Wariskan ke Anak)</b>
+        <div class="spec-line">Setelah berusia minimal 18 tahun, kamu bisa menikah, memiliki anak, lalu <b>mewariskan seluruh usaha Rental PS, tabungan, & aset</b> kepada anakmu!</div>
+        ${!p.partner ? PARTNERS_LIST.filter(pt => pt.gender !== p.gender).map(pt => `
+          <div class="item-row">
+            <div><b>${pt.name}</b> (${pt.age} thn • ${pt.job})</div>
+            <button class="primary" ${p.age < 17 ? 'disabled' : ''} onclick="choosePartner('${pt.id}')">Kenalan & Pacaran</button>
+          </div>
+        `).join('') : `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${!p.married ? `<button class="primary" onclick="marryPartner()">💍 Menikah dengan ${p.partner.name}</button>` : `<button class="success" onclick="haveChildWithPartner()">👶 Program Punya Anak</button>`}
+          </div>
+        `}
+        ${(p.childrenList || []).map((ch, idx) => `
+          <div class="item-row">
+            <div><b>👶 ${ch.name}</b> (${ch.gender} • Usia ${ch.age} tahun • Lahir ${ch.birthYear})</div>
+            <button class="amber" ${ch.age < 8 ? 'disabled' : ''} onclick="inheritToChild(${idx})">${ch.age >= 8 ? '👑 Wariskan Usaha ke Anak Ini' : 'Min Usia 8 Thn'}</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+// ==================== MODAL KONFIGURASI SLOT (PASANG / LEPAS PS, TV, KIPAS/AC, STIK, MEMCARD, KASET) ====================
+function openSlotConfigModal(slotId) {
+  const slot = state.slots.find(s => s.id === slotId);
+  if (!slot) return;
+  const plat = slot.console ? slot.console.platform : null;
+  const availDiscs = plat ? GAME_DISC_CATALOG.filter(g => g.platform === plat && (state.ownedDiscs[g.id] || 0) > 0) : [];
+
   showCustomModal(
-    '🏦 Transfer Antar Pos Keuangan (4 Pos)',
-    `<div style="font-size:0.76rem;background:var(--panel-2);padding:8px;border-radius:8px;border:1px solid var(--border);line-height:1.5;">
-      👛 Dompet di Tangan: <b style="color:var(--green);">${fmtRp(state.handWallet)}</b><br>
-      🏦 Bank Pribadi: <b style="color:var(--accent);">${fmtRp(state.personalBank)}</b><br>
-      🗄️ Laci Kasir Usaha: <b style="color:var(--purple);">${fmtRp(state.laciCash)}</b>
-    </div>
-    <label style="font-size:0.73rem;color:var(--muted);">Nominal Transfer (Kelipatan Rp 500):</label>
-    <input type="number" id="tfAmtInp" value="500000" step="50000" />
-    <div class="grid-2">
-      <button class="success" onclick="doBankTransfer('bankToHand')">Bank ➡️ Dompet Tangan</button>
-      <button class="primary" onclick="doBankTransfer('handToBank')">Dompet ➡️ Bank Pribadi</button>
-      <button class="purple" onclick="doBankTransfer('laciToBank')">Laci ➡️ Bank Pribadi</button>
-      <button onclick="doBankTransfer('bankToLaci')">Bank ➡️ Laci Usaha</button>
-    </div>`,
-    `<button onclick="closeCustomModal()">Tutup</button>`
+    `🔧 Bongkar Pasang ${slot.name}`,
+    `<div class="spec-line">Kamu bebas melepas PS, TV, Kipas/AC, Stik, maupun mengganti Kaset Game di slot ini.</div>
+     <div class="item-row">
+       <div><b>🎮 Konsol PS:</b> ${slot.console ? slot.console.name : 'Kosong'}</div>
+       ${slot.console
+         ? `<button class="danger" onclick="detachFromSlot(${slot.id},'console')">Lepas PS</button>`
+         : `<select onchange="if(this.value)attachToSlot(${slot.id},'console',this.value)"><option value="">-- Pilih PS dari Gudang (${state.warehouseConsoles.length}) --</option>${state.warehouseConsoles.map((c, idx) => `<option value="${idx}">${c.name}</option>`).join('')}</select>`}
+     </div>
+     <div class="item-row">
+       <div><b>📺 TV:</b> ${slot.tv ? slot.tv.name : 'Kosong'}</div>
+       ${slot.tv
+         ? `<button class="danger" onclick="detachFromSlot(${slot.id},'tv')">Lepas TV</button>`
+         : `<select onchange="if(this.value)attachToSlot(${slot.id},'tv',this.value)"><option value="">-- Pilih TV dari Gudang (${state.warehouseTvs.length}) --</option>${state.warehouseTvs.map((t, idx) => `<option value="${idx}">${t.name}</option>`).join('')}</select>`}
+     </div>
+     <div class="item-row">
+       <div><b>❄️ Kipas / AC:</b> ${slot.cooling ? slot.cooling.name : 'Kosong'}</div>
+       ${slot.cooling
+         ? `<button class="danger" onclick="detachFromSlot(${slot.id},'cooling')">Lepas</button>`
+         : `<select onchange="if(this.value)attachToSlot(${slot.id},'cooling',this.value)"><option value="">-- Pilih Kipas/AC Gudang (${state.warehouseCoolings.length}) --</option>${state.warehouseCoolings.map((cl, idx) => `<option value="${idx}">${cl.name}</option>`).join('')}</select>`}
+     </div>
+     ${plat ? `
+       <div class="item-row">
+         <div><b>🕹️ Stik ${plat}:</b> ${slot.controller ? `${slot.controller.quality === 'new' ? 'Stik Baru' : 'Stik Servis'} (${slot.controller.durability}%)` : 'Kosong'}</div>
+         <div style="display:flex;gap:4px;">
+           <button class="primary" ${(state.cashierSticksNew[plat] || 0) <= 0 ? 'disabled' : ''} onclick="attachStickToSlot(${slot.id},'new')">Pasang Baru (${state.cashierSticksNew[plat] || 0})</button>
+           <button class="amber" ${(state.cashierSticksServiced[plat] || 0) <= 0 ? 'disabled' : ''} onclick="attachStickToSlot(${slot.id},'serviced')">Pasang Servis (${state.cashierSticksServiced[plat] || 0})</button>
+         </div>
+       </div>
+       <div class="item-row">
+         <div><b>💿 Game (${slot.console.mediaType === 'disc' ? 'Wajib 1 Kaset Fisik' : `Internal ${slot.console.storageGb}GB`}):</b><br>
+           <span class="spec-line">${slot.console.mediaType === 'disc' ? (slot.installedGame ? slot.installedGame.title : 'Belum ada kaset') : `${slot.digitalGames.length} game ter-install`}</span>
+         </div>
+         <select onchange="if(this.value)assignGameToSlot(${slot.id},this.value)">
+           <option value="">-- Pilih Kaset/Game ${plat} --</option>
+           ${availDiscs.map(g => {
+             const free = (state.ownedDiscs[g.id] || 0) - getUsedDiscCopies(g.id);
+             return `<option value="${g.id}">${g.title} (Sisa bebas: ${free})</option>`;
+           }).join('')}
+         </select>
+       </div>
+     ` : `<div class="spec-line">Pasang konsol PS terlebih dahulu untuk memilih Stik & Kaset Game.</div>`}`
   );
 }
 
-function doBankTransfer(dir) {
-  const amt = roundTo500(Math.max(0, Number(document.getElementById('tfAmtInp')?.value || 0)));
-  if (amt <= 0) return;
-  if (dir === 'bankToHand') {
-    if (state.personalBank < amt) return addLog('❌ Saldo Bank Pribadi kurang!');
-    state.personalBank -= amt; state.handWallet += amt;
-    addLog(`👛 Tarik tunai ke Dompet: <b>+${fmtRp(amt)}</b>.`);
-  } else if (dir === 'handToBank') {
-    if (state.handWallet < amt) return addLog('❌ Uang di Dompet kurang!');
-    state.handWallet -= amt; state.personalBank += amt;
-    addLog(`🏦 Setor Dompet ke Bank: <b>+${fmtRp(amt)}</b>.`);
-  } else if (dir === 'laciToBank') {
-    if (state.laciCash < amt) return addLog('❌ Uang di Laci kurang!');
-    state.laciCash -= amt; state.personalBank += amt;
-    addLog(`🏦 Setor Laci Usaha ke Bank: <b>+${fmtRp(amt)}</b>.`);
-  } else if (dir === 'bankToLaci') {
-    if (state.personalBank < amt) return addLog('❌ Saldo Bank Pribadi kurang!');
-    state.personalBank -= amt; state.laciCash += amt;
-    addLog(`🗄️ Suntik dana Bank ke Laci: <b>+${fmtRp(amt)}</b>.`);
+function attachToSlot(slotId, kind, warehouseIdx) {
+  const slot = state.slots.find(s => s.id === slotId);
+  const idx = Number(warehouseIdx);
+  if (!slot) return;
+  if (kind === 'console' && state.warehouseConsoles[idx]) {
+    slot.console = state.warehouseConsoles.splice(idx, 1)[0];
+    slot.installedGame = null;
+    slot.digitalGames = [];
+  } else if (kind === 'tv' && state.warehouseTvs[idx]) {
+    slot.tv = state.warehouseTvs.splice(idx, 1)[0];
+  } else if (kind === 'cooling' && state.warehouseCoolings[idx]) {
+    slot.cooling = state.warehouseCoolings.splice(idx, 1)[0];
   }
-  saveGame(true); updateHudOnly(); openBankTransferModal();
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderCenterAndRight();
 }
 
-// ==================== BPJS, KESEHATAN, PLN TOKEN & ASET ====================
-function setBpjsTier(val) {
-  state.player.bpjsTier = val;
-  const obj = BPJS_TIERS.find(b => b.id === val);
-  addLog(`🏥 Status BPJS Kesehatan diatur ke: <b>${obj ? obj.name : val}</b>.`);
-  saveGame(true);
-  renderMainWorkspace();
-}
-
-function visitClinicHospital() {
-  if (!state.player.isSick) return addLog('✅ Kondisi tubuhmu sedang sehat.');
-  const bpjs = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
-  const rawCost = getEraPrice(350000);
-  const finalCost = (bpjs && bpjs.coverPct === 100) ? 0 : rawCost;
-
-  if (finalCost > 0 && state.personalBank < finalCost && state.handWallet < finalCost) {
-    return addLog(`❌ Uang tidak cukup untuk berobat (${fmtRp(finalCost)})!`);
+function detachFromSlot(slotId, kind) {
+  const slot = state.slots.find(s => s.id === slotId);
+  if (!slot) return;
+  slot.occupied = false;
+  slot.minutesLeft = 0;
+  if (kind === 'console' && slot.console) {
+    state.warehouseConsoles.push(slot.console);
+    slot.console = null;
+    slot.installedGame = null;
+    slot.digitalGames = [];
+  } else if (kind === 'tv' && slot.tv) {
+    state.warehouseTvs.push(slot.tv);
+    slot.tv = null;
+  } else if (kind === 'cooling' && slot.cooling) {
+    state.warehouseCoolings.push(slot.cooling);
+    slot.cooling = null;
   }
-  if (finalCost > 0) {
-    if (state.personalBank >= finalCost) state.personalBank -= finalCost;
-    else state.handWallet -= finalCost;
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderCenterAndRight();
+}
+
+function attachStickToSlot(slotId, quality) {
+  const slot = state.slots.find(s => s.id === slotId);
+  if (!slot || !slot.console) return;
+  const plat = slot.console.platform;
+  const pool = quality === 'new' ? state.cashierSticksNew : state.cashierSticksServiced;
+  if ((pool[plat] || 0) <= 0) return;
+  // Kembalikan stik lama jika masih bagus
+  if (slot.controller && slot.controller.durability > 0) {
+    if (slot.controller.quality === 'new') state.cashierSticksNew[plat]++;
+    else state.cashierSticksServiced[plat]++;
   }
-  state.player.isSick = false;
-  state.player.energy = 75;
-  state.player.hunger = 70;
-  advanceTimeMinutes(120);
-  addLog(finalCost === 0
-    ? `🏥 Berobat di RS selesai & sembuh! Biaya <b>Rp 0 (Ditanggung ${bpjs.name})</b>.`
-    : `🏥 Berobat di Klinik selesai & sembuh! Biaya <b>-${fmtRp(finalCost)}</b>.`);
-  saveGame(true); renderAll(true);
+  pool[plat]--;
+  const maxD = quality === 'new' ? 100 : 65;
+  slot.controller = { platform: plat, quality, durability: maxD, maxDurability: maxD };
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderCenterAndRight();
 }
 
-function buyPlnToken(nominal2024) {
-  const info = calcPlnToken(nominal2024, state.year);
-  if (state.personalBank < info.totalPay && state.laciCash < info.totalPay) {
-    return addLog(`❌ Saldo Bank/Laci kurang untuk beli Token PLN (${fmtRp(info.totalPay)})!`);
-  }
-  if (state.laciCash >= info.totalPay) state.laciCash -= info.totalPay;
-  else state.personalBank -= info.totalPay;
-  state.kwh = +(state.kwh + info.kwhReceived).toFixed(2);
-  addLog(`⚡ Beli Token PLN ${fmtRp(info.nominal)} (Bayar ${fmtRp(info.totalPay)} incl. admin) ➔ Masuk <b>+${info.kwhReceived} kWh</b>!`);
-  saveGame(true); renderAll(true);
-}
-
-function upgradeBatteryMah() {
-  const add = state.batteryLab.capacityMah < 20000 ? 15000 : Math.round(state.batteryLab.capacityMah * 0.5);
-  const cost = getEraPrice(Math.max(1, Math.round(add / 5000)) * 85000 + 150000);
-  if (state.personalBank < cost) return addLog(`❌ Saldo Bank Pribadi kurang (${fmtRp(cost)})!`);
-  state.personalBank -= cost;
-  state.batteryLab.capacityMah += add;
-  state.batteryLab.isLocked = false;
-  state.batteryLab.efficiencyPct = Math.floor(1 + Math.random() * 100);
-  addLog(`🔋 Gabung modul baterai: Kapasitas kini <b>${state.batteryLab.capacityMah.toLocaleString('id-ID')} mAh</b> (Efisiensi: ${state.batteryLab.efficiencyPct}%).`);
-  saveGame(true); renderAll(true);
-}
-
-function researchBatteryEfficiency() {
-  if (state.batteryLab.isLocked) return;
-  const cost = getEraPrice(roundTo500(300000 + Math.random() * 200000));
-  if (state.personalBank < cost) return addLog(`❌ Saldo Bank Pribadi kurang (${fmtRp(cost)})!`);
-  state.personalBank -= cost;
-  state.batteryLab.efficiencyPct = Math.floor(1 + Math.random() * 100);
-  addLog(`🧪 Riset efisiensi (-${fmtRp(cost)}): <b>${state.batteryLab.efficiencyPct}%</b>!`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
-}
-
-function lockBatteryVersion() {
-  state.batteryLab.isLocked = true;
-  addLog(`🔒 Versi baterai <b>${state.batteryLab.capacityMah.toLocaleString('id-ID')} mAh (${state.batteryLab.efficiencyPct}%)</b> dikunci.`);
-  saveGame(true); renderRightPanel();
-}
-
-function researchChargerStep() {
-  if (state.batteryLab.chargerTierIdx >= CHARGER_TIERS.length - 1) return;
-  const cost = getEraPrice(roundTo500(300000 + Math.random() * 200000));
-  if (state.personalBank < cost) return addLog(`❌ Saldo Bank Pribadi kurang (${fmtRp(cost)})!`);
-  state.personalBank -= cost;
-  state.batteryLab.chargerStepProgress += 1;
-  state.batteryLab.nextStepName = CHARGER_STEPS[Math.floor(Math.random() * CHARGER_STEPS.length)];
-  if (state.batteryLab.chargerStepProgress >= state.batteryLab.chargerStepTarget) {
-    state.batteryLab.chargerTierIdx += 1;
-    state.batteryLab.chargerStepProgress = 0;
-    state.batteryLab.chargerStepTarget = Math.floor(10 + Math.random() * 21);
-    addLog(`⚡🎉 Riset Charger selesai! Kecepatan naik ke <b>${CHARGER_TIERS[state.batteryLab.chargerTierIdx]} Watt</b>!`);
+function assignGameToSlot(slotId, gameId) {
+  const slot = state.slots.find(s => s.id === slotId);
+  const game = GAME_DISC_CATALOG.find(g => g.id === gameId);
+  if (!slot || !slot.console || !game) return;
+  if (slot.console.mediaType === 'disc') {
+    const free = (state.ownedDiscs[gameId] || 0) - getUsedDiscCopies(gameId);
+    if (free <= 0) {
+      addLog(`⚠️ Kaset fisik <b>${game.title}</b> sedang terpakai semua di PS lain! Beli kaset tambahan di menu Kaset.`);
+      return;
+    }
+    slot.installedGame = game;
   } else {
-    addLog(`🔌 Riset 1 tahap charger (-${fmtRp(cost)}) • Progres ${state.batteryLab.chargerStepProgress}/${state.batteryLab.chargerStepTarget}.`);
+    if (!slot.digitalGames.includes(gameId)) slot.digitalGames.push(gameId);
+    slot.installedGame = game;
   }
-  saveGame(true); renderRightPanel(); updateHudOnly();
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderCenterAndRight();
+}
+
+// ==================== PEMBELIAN HARDWARE, KASET, SERVIS STIK, AGEN DUS, KARYAWAN & PINJAMAN ====================
+function buyHardwareItem(kind, id) {
+  let item, price;
+  if (kind === 'console') {
+    item = CONSOLE_CATALOG.find(x => x.id === id);
+    price = getPriceFrom2010(item.basePrice2010);
+    if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup untuk membeli konsol ini!');
+    state.warehouseConsoles.push({ ...item, uid: 'c_' + Date.now(), cond: 100 });
+  } else if (kind === 'tv') {
+    item = TV_CATALOG.find(x => x.id === id);
+    price = getPriceFrom2010(item.basePrice2010);
+    if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup untuk membeli TV ini!');
+    state.warehouseTvs.push({ ...item, uid: 'tv_' + Date.now(), cond: 100 });
+  } else if (kind === 'cooling') {
+    item = COOLING_CATALOG.find(x => x.id === id);
+    price = getPriceFrom2010(item.basePrice2010);
+    if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup untuk membeli Kipas/AC ini!');
+    state.warehouseCoolings.push({ ...item, uid: 'cl_' + Date.now() });
+  } else if (kind === 'acc') {
+    item = ACCESSORY_CATALOG.find(x => x.id === id);
+    price = getPriceFrom2010(item.basePrice2010);
+    if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup!');
+    if (item.kind === 'stik') state.cashierSticksNew[item.platform] = (state.cashierSticksNew[item.platform] || 0) + 1;
+    else state.cashierMemCards[item.platform] = (state.cashierMemCards[item.platform] || 0) + 1;
+  }
+  addLog(`🛒 Membeli <b>${item.name}</b> seharga <b>${fmtRp(price)}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function upgradeRenovation() {
+  const next = RENOV_LEVELS[state.renovLevel];
+  if (!next) return;
+  const cost = getPriceFrom2010(next.baseCost2010);
+  if (!deductFromAnyCash(cost)) return addLog('⚠️ Uang tidak cukup untuk renovasi!');
+  state.renovLevel = next.level;
+  addLog(`🧱 <b>RENOVASI BERHASIL!</b> Tempat usaha naik ke <b>${next.name}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function buyGameDisc(gameId) {
+  const g = GAME_DISC_CATALOG.find(x => x.id === gameId);
+  if (!g) return;
+  const price = getPriceFrom2010(g.basePrice2010);
+  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup membeli kaset game!');
+  state.ownedDiscs[gameId] = (state.ownedDiscs[gameId] || 0) + 1;
+  addLog(`💿 Membeli 1 Kaset Original <b>${g.title} (${g.platform})</b> seharga <b>${fmtRp(price)}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function manualServiceStick(plat) {
+  if ((state.cashierSticksBroken[plat] || 0) <= 0) return;
+  const partCost = getPriceFrom2010(8000); // Biaya karet/sparepart analog
+  if (!deductFromAnyCash(partCost)) return addLog('⚠️ Kurang biaya karet/part analog untuk servis stik!');
+  state.cashierSticksBroken[plat]--;
+  state.cashierSticksServiced[plat] = (state.cashierSticksServiced[plat] || 0) + 1;
+  addLog(`🔧 Kamu menyervis 1 Stik ${plat} (Biaya part ${fmtRp(partCost)}). Masuk ke Stok Stik Servis di Kasir (ketahanan 65%).`);
+  saveGame();
+  renderAll();
+}
+
+function buyWholesaleSnackBox(snackId) {
+  const sn = WHOLESALE_SNACK_CATALOG.find(x => x.id === snackId);
+  if (!sn) return;
+  const price = getPriceFrom2010(sn.boxPrice2010);
+  if (!deductFromAnyCash(price)) return addLog('⚠️ Saldo kurang untuk beli 1 dus di agen!');
+  state.snackStockPcs[snackId] = (state.snackStockPcs[snackId] || 0) + sn.pcsPerBox;
+  addLog(`📦 Beli 1 Dus <b>${sn.name}</b> (${sn.pcsPerBox} pcs) di Agen seharga <b>${fmtRp(price)}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function topUpPpobBalance(nom) {
+  if (!deductFromAnyCash(nom)) return addLog('⚠️ Uang Laci/Bank tidak cukup untuk isi deposit saldo pulsa!');
+  state.businessPpobBalance += nom;
+  addLog(`📱 Deposit Saldo Pulsa All Operator bertambah <b>+${fmtRp(nom)}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function buyPlnToken(nom) {
+  const info = calcPlnToken(nom, state.year);
+  if (!deductFromAnyCash(info.totalPay)) return addLog('⚠️ Uang tidak cukup untuk beli Token PLN!');
+  state.kwh = +(state.kwh + info.kwhReceived).toFixed(2);
+  state.plnBlackout = false;
+  addLog(`⚡ Isi Token PLN <b>${fmtRp(nom)}</b> (+Admin ${fmtRp(info.adminFee)}) berhasil: <b>+${info.kwhReceived} kWh</b>!`);
+  saveGame();
+  renderAll();
+}
+
+// ==================== REKRUT KARYAWAN LENGKAP ====================
+function openHireEmployeeModal() {
+  const umrNow = getCurrentUmr();
+  showCustomModal(
+    '👷 Rekrut Karyawan Rental PS',
+    `<div class="spec-line">UMR ${getCity().name} tahun ${state.year}: <b>${fmtRp(umrNow)}/bulan</b>. Tentukan sendiri jadwal & gaji karyawanmu:</div>
+     <div class="grid-2">
+       <div><label class="spec-line">Nama Karyawan</label><input id="empName" value="Andi Pratama" /></div>
+       <div><label class="spec-line">Skema Gaji</label><select id="empPeriod"><option value="daily">Harian</option><option value="weekly">Mingguan</option><option value="monthly" selected>Bulanan</option></select></div>
+     </div>
+     <div class="grid-2">
+       <div><label class="spec-line">Nominal Gaji Pokok (Rp)</label><input type="number" id="empSalary" value="${Math.round(umrNow * 0.6)}" /></div>
+       <div><label class="spec-line">Insentif / Bonus (Rp)</label><input type="number" id="empInc" value="100000" /></div>
+     </div>
+     <div class="grid-3">
+       <div><label class="spec-line">Hari Masuk</label><select id="empDays"><option value="mon_sat">Senin–Sabtu</option><option value="every_day">Setiap Hari</option></select></div>
+       <div><label class="spec-line">Jam Masuk (0-23)</label><input type="number" id="empStart" min="0" max="23" value="8" /></div>
+       <div><label class="spec-line">Durasi Kerja (Jam)</label><input type="number" id="empDur" min="4" max="16" value="8" /></div>
+     </div>
+     <div class="spec-line">
+       <label><input type="checkbox" id="empTaskGuard" checked style="width:auto"> Jaga Kasir & Layani Tamu</label><br>
+       <label><input type="checkbox" id="empTaskClean" checked style="width:auto"> Bersih-bersih Ruangan</label><br>
+       <label><input type="checkbox" id="empTaskService" checked style="width:auto"> Servis Stik & Konsol Rusak</label><br>
+       <label><input type="checkbox" id="empBpjs" checked style="width:auto"> Berikan Tunjangan BPJS Kesehatan</label>
+     </div>`,
+    `<button onclick="closeCustomModal()">Batal</button><button class="primary" onclick="confirmHireEmployee()">✅ Rekrut Karyawan</button>`
+  );
+}
+
+function confirmHireEmployee() {
+  const name = (document.getElementById('empName').value || 'Karyawan').trim();
+  const payPeriod = document.getElementById('empPeriod').value;
+  const salaryAmount = Math.max(10000, Number(document.getElementById('empSalary').value) || 500000);
+  const incentive = Math.max(0, Number(document.getElementById('empInc').value) || 0);
+  const workDays = document.getElementById('empDays').value;
+  const startHour = Math.max(0, Math.min(23, Number(document.getElementById('empStart').value) || 8));
+  const durationHours = Math.max(4, Math.min(16, Number(document.getElementById('empDur').value) || 8));
+  const tasks = [];
+  if (document.getElementById('empTaskGuard').checked) tasks.push('guard');
+  if (document.getElementById('empTaskClean').checked) tasks.push('clean');
+  if (document.getElementById('empTaskService').checked) tasks.push('service');
+  const hasBpjs = document.getElementById('empBpjs').checked;
+
+  state.employees.push({
+    id: Date.now(),
+    name, payPeriod, salaryAmount, incentive, workDays, startHour, durationHours, tasks, hasBpjs
+  });
+  closeCustomModal();
+  addLog(`👷 Merekrut karyawan baru <b>${name}</b> (Jam masuk ${String(startHour).padStart(2, '0')}:00 selama ${durationHours} jam, tugas: ${tasks.join('/')}).`);
+  saveGame();
+  renderAll();
+}
+
+function fireEmployee(idx) {
+  const emp = state.employees[idx];
+  if (!emp) return;
+  state.employees.splice(idx, 1);
+  addLog(`👷 Karyawan <b>${emp.name}</b> telah diberhentikan.`);
+  saveGame();
+  renderAll();
+}
+
+// ==================== PINJAMAN ORANG TUA (52x MINGGUAN 0% BUNGA) & BANK (USIA 21+) ====================
+function takeParentLoan(amount) {
+  if (state.parentLoan.active) return addLog('⚠️ Lunasi dulu pinjaman orang tua yang sedang berjalan!');
+  const maxLoan = 50000000;
+  const amt = Math.min(maxLoan, amount);
+  state.personalBank += amt;
+  state.parentLoan = {
+    active: true,
+    remainingTotal: amt,
+    weeklyInstallment: Math.ceil(amt / 52),
+    weeksLeft: 52
+  };
+  addLog(`👨‍👩‍👦 Orang tua meminjamkan modal tambahan <b>${fmtRp(amt)}</b> tanpa bunga (Cicilan 52x mingguan @ ${fmtRp(state.parentLoan.weeklyInstallment)}/minggu).`);
+  saveGame();
+  renderAll();
+}
+
+function takeBankLoan(amount) {
+  if (state.player.age < 21) return addLog('⚠️ Usia minimal pengajuan Kredit Bank adalah 21 tahun!');
+  if (state.bankLoan.active) return addLog('⚠️ Lunasi dulu kredit bank yang sedang berjalan!');
+  const rate = getBankInterestRate(state.year);
+  const months = amount > 60000000 ? 24 : 12;
+  const totalWithInterest = Math.round(amount * (1 + (rate / 100) * (months / 12)));
+  state.personalBank += amount;
+  state.bankLoan = {
+    active: true,
+    principal: amount,
+    remainingTotal: totalWithInterest,
+    monthlyInstallment: Math.ceil(totalWithInterest / months),
+    monthsLeft: months,
+    interestRatePct: rate
+  };
+  addLog(`🏦 Pengajuan Kredit Usaha Bank cair <b>+${fmtRp(amount)}</b> (Bunga ${rate}%/thn, cicilan ${months} bln @ ${fmtRp(state.bankLoan.monthlyInstallment)}/bln).`);
+  saveGame();
+  renderAll();
+}
+
+function openBankTransferModal() {
+  showCustomModal(
+    '🏦 Pemindahan Kas (Laci ⇄ Bank ⇄ Dompet)',
+    `<div class="spec-line">Laci Kasir: <b>${fmtRp(state.laciCash)}</b> • Bank: <b>${fmtRp(state.personalBank)}</b> • Dompet: <b>${fmtRp(state.handWallet)}</b></div>
+     <div class="grid-2">
+       <button class="primary" onclick="transferFunds('laci_to_bank', 1000000)">Laci → Bank (1 Jt)</button>
+       <button class="primary" onclick="transferFunds('bank_to_laci', 1000000)">Bank → Laci (1 Jt)</button>
+       <button class="primary" onclick="transferFunds('bank_to_wallet', 500000)">Bank → Dompet (500rb)</button>
+       <button class="primary" onclick="transferFunds('laci_all_bank', 0)">Setor Semua Laci ke Bank</button>
+     </div>`
+  );
+}
+
+function transferFunds(mode, amt) {
+  if (mode === 'laci_to_bank' && state.laciCash >= amt) { state.laciCash -= amt; state.personalBank += amt; }
+  else if (mode === 'bank_to_laci' && state.personalBank >= amt) { state.personalBank -= amt; state.laciCash += amt; }
+  else if (mode === 'bank_to_wallet' && state.personalBank >= amt) { state.personalBank -= amt; state.handWallet += amt; }
+  else if (mode === 'laci_all_bank' && state.laciCash > 0) { state.personalBank += state.laciCash; state.laciCash = 0; }
+  saveGame();
+  openBankTransferModal();
+  renderAll();
+}
+
+// ==================== OTOMOTIF, BENSIN, GADGET, KELUARGA & PEWARISAN ANAK ====================
+function buyVehicle(id) {
+  const v = VEHICLE_CATALOG.find(x => x.id === id);
+  if (!v) return;
+  const price = getPriceFrom2010(v.price2010);
+  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup untuk membeli kendaraan ini!');
+  state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap });
+  addLog(`🛵 Membeli <b>${v.name}</b> seharga <b>${fmtRp(price)}</b> (Tangki penuh ${v.tankCap}L).`);
+  saveGame();
+  renderAll();
+}
+
+function refuelVehicle(idx) {
+  const v = state.ownedVehicles[idx];
+  if (!v) return;
+  const need = Math.max(0, v.tankCap - v.fuelLiters);
+  if (need <= 0.1) return addLog('⛽ Tangki bensin sudah penuh!');
+  const cost = Math.round(need * getBbmPricePerLiter(state.year));
+  if (!deductFromAnyCash(cost)) return addLog('⚠️ Uang kurang untuk isi bensin!');
+  v.fuelLiters = v.tankCap;
+  addLog(`⛽ Isi bensin full <b>${v.name}</b> (${need.toFixed(1)}L): <b>-${fmtRp(cost)}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function rideVehicleTrip(idx) {
+  const v = state.ownedVehicles[idx];
+  if (!v || v.fuelLiters < 1) return addLog('⚠️ Bensin habis! Isi bensin dulu.');
+  v.fuelLiters = +(v.fuelLiters - 1).toFixed(1);
+  state.player.mood = Math.min(100, state.player.mood + 15);
+  addLog(`🛣️ Kamu berkeliling kota naik <b>${v.name}</b> (Bensin -1L, Mood naik!). Kamera tetap memantau Rental PS.`);
+  saveGame();
+  renderAll();
 }
 
 function buyGadget(id) {
   const g = GADGET_CATALOG.find(x => x.id === id);
   if (!g) return;
-  const price = getEraPrice(g.price);
-  if (state.personalBank < price) return addLog(`❌ Saldo Bank Pribadi kurang (${fmtRp(price)})!`);
-  state.personalBank -= price;
-  state.ownedGadgets.push({ uid: 'g_' + Date.now() + Math.random(), ...g, buyPrice: price, buyYear: state.year, condition: 100 });
-  state.player.charm = Math.min(100, state.player.charm + g.charm);
-  addLog(`📱 Membeli <b>${g.name}</b> (-${fmtRp(price)}).`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
+  const price = getPriceFrom2010(g.price2010);
+  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup untuk membeli gadget ini!');
+  state.ownedGadgets.push({ ...g, boughtYear: state.year });
+  addLog(`📱 Membeli gadget <b>${g.name}</b> seharga <b>${fmtRp(price)}</b>.`);
+  saveGame();
+  renderAll();
 }
 
-function sellGadget(uid) {
-  const idx = state.ownedGadgets.findIndex(x => x.uid === uid);
-  if (idx === -1) return;
-  const g = state.ownedGadgets.splice(idx, 1)[0];
-  const ageYears = Math.max(0, state.year - g.buyYear);
-  const resale = roundTo500(g.buyPrice * (g.condition / 100) * Math.max(0.2, 0.72 - ageYears * 0.1));
-  state.personalBank += resale;
-  addLog(`💰 Menjual bekas <b>${g.name}</b> (Kondisi ${g.condition}%): <b>+${fmtRp(resale)}</b>.`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
-}
-
-function buyVehicle(id) {
-  const v = VEHICLE_CATALOG.find(x => x.id === id);
-  if (!v) return;
-  const price = getEraPrice(v.price);
-  if (state.personalBank < price) return addLog(`❌ Saldo Bank Pribadi kurang (${fmtRp(price)})!`);
-  state.personalBank -= price;
-  state.ownedVehicles.push({ uid: 'v_' + Date.now() + Math.random(), ...v, buyPrice: price, buyYear: state.year, fuelPct: 100, condition: 100 });
-  addLog(`🛵 Membeli <b>${v.name}</b> (-${fmtRp(price)}).`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
-}
-
-function refuelVehicle(uid) {
-  const v = state.ownedVehicles.find(x => x.uid === uid);
-  if (!v || v.fuelPct >= 99) return;
-  const missingRatio = (100 - v.fuelPct) / 100;
-  const unitsNeeded = v.tankCap * missingRatio;
-  const cost = roundTo500(unitsNeeded * v.fuelCostPerUnit * getEraMultiplier(state.year));
-  if (state.handWallet < cost && state.personalBank < cost) return addLog(`❌ Uang kurang (${fmtRp(cost)})!`);
-  if (state.handWallet >= cost) state.handWallet -= cost;
-  else state.personalBank -= cost;
-  v.fuelPct = 100;
-  addLog(`${v.isEV ? '🔌 Cas penuh' : '⛽ Isi bensin full'} <b>${v.name}</b> (${unitsNeeded.toFixed(1)} ${v.isEV ? 'kWh' : 'L'}) <b>-${fmtRp(cost)}</b>.`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
-}
-
-function repairVehicle(uid) {
-  const v = state.ownedVehicles.find(x => x.uid === uid);
-  if (!v || v.condition >= 98) return;
-  const dmg = 100 - v.condition;
-  const cost = roundTo500((v.buyPrice * 0.004) * dmg);
-  if (state.personalBank < cost && state.handWallet < cost) return addLog(`❌ Uang kurang untuk servis (${fmtRp(cost)})!`);
-  if (state.personalBank >= cost) state.personalBank -= cost;
-  else state.handWallet -= cost;
-  v.condition = 100;
-  addLog(`🔧 Servis bengkel <b>${v.name}</b> selesai (Kondisi 100%) <b>-${fmtRp(cost)}</b>.`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
-}
-
-function sellVehicle(uid) {
-  const idx = state.ownedVehicles.findIndex(x => x.uid === uid);
-  if (idx === -1) return;
-  const v = state.ownedVehicles.splice(idx, 1)[0];
-  const ageYears = Math.max(0, state.year - v.buyYear);
-  const resale = roundTo500(v.buyPrice * (v.condition / 100) * Math.max(0.25, 0.78 - ageYears * 0.08));
-  state.personalBank += resale;
-  addLog(`💰 Menjual bekas <b>${v.name}</b>: <b>+${fmtRp(resale)}</b>.`);
-  saveGame(true); renderRightPanel(); updateHudOnly();
-}
-
-// ==================== KERJA (MINIMAL SKIP 8 JAM!), KULIAH, IBADAH & RELASI ====================
-function applyForJob(jobId) {
-  const job = CAREERS_CATALOG.find(j => j.id === jobId);
-  if (!job) return;
-  if (job.reqEdu === 'med' && (!state.player.college.graduated || state.player.college.majorId !== 'med')) return addLog('❌ Ditolak: Wajib lulus Pendidikan Dokter + KOAS (dr.)!');
-  if (job.reqEdu === 'it' && (!state.player.college.graduated || state.player.college.majorId !== 'it')) return addLog('❌ Ditolak: Wajib lulus S1 Teknik Informatika!');
-  if (job.reqEdu === 'bachelor' && !state.player.college.graduated) return addLog('❌ Ditolak: Wajib lulus Sarjana (S1)!');
-  if (job.reqItem === 'motor_and_hp') {
-    const hasMotor = state.ownedVehicles.some(v => v.category.includes('Motor'));
-    const hasHp = state.ownedGadgets.some(g => g.category === 'HP');
-    if (!hasMotor || !hasHp) return addLog('❌ Ditolak: Wajib memiliki Motor & HP sendiri!');
-  }
-  if (job.reqItem === 'laptop' && !state.ownedGadgets.some(g => g.category === 'Laptop')) return addLog('❌ Ditolak: Wajib memiliki Laptop sendiri!');
-
-  if (Math.random() > job.acceptChance) {
-    return addLog(`📄😔 <b>Lamaran Ditolak HRD</b> untuk posisi ${job.title}. Coba lagi di kesempatan lain.`);
-  }
-  const salary = roundTo500(getCurrentUmr() * job.umrMult);
-  state.player.job = { id: job.id, title: job.title, monthlySalary: salary };
-  addLog(`🎉💼 <b>DITERIMA KERJA!</b> Posisi: <b>${job.title}</b> (${fmtRp(salary)}/bln).`);
-  saveGame(true); renderAll(true);
-}
-
-function workDailyShift() {
-  if (state.player.isSick) return addLog('🤒 Kamu sedang sakit! Berobat dulu ke Klinik/RS.');
-  if (!state.player.job) return;
-  if (state.player.energy < 30) return addLog('😴 Stamina minimal 30% untuk masuk shift kerja 8 jam! Istirahat dulu.');
-
-  if (state.player.job.id === 'job_ojol' || state.player.job.id === 'job_kurir') {
-    const motor = state.ownedVehicles.find(v => v.category.includes('Motor'));
-    if (!motor) return addLog('❌ Kamu tidak punya motor untuk narik!');
-    if (motor.fuelPct < 20) return addLog(`⛽ ${motor.isEV ? 'Baterai' : 'Bensin'} motor ${motor.name} habis! Isi dulu di menu Aset.`);
-    if (motor.condition < 15) return addLog(`🔧 Motor ${motor.name} rusak parah! Servis bengkel dulu.`);
-    motor.fuelPct = Math.max(0, motor.fuelPct - 35);
-    motor.condition = Math.max(5, motor.condition - 6);
-  }
-
-  // LOGIKA REALISTIS: Masuk kerja minimal skip 8 jam (480 menit)!
-  state.player.energy = Math.max(0, state.player.energy - 14); // + 16 dari 8 jam tick = total ~30% stamina terpakai
-  advanceTimeMinutes(480);
-  const earn = roundTo500(state.player.job.monthlySalary / 22);
-  state.handWallet += earn;
-  addLog(`💼 Selesai shift kerja <b>8 jam</b> (${state.player.job.title}): <b>+${fmtRp(earn)}</b> masuk Dompet Tunai.`);
-  saveGame(true); renderAll(true);
-}
-
-function enrollUniversity(majId) {
-  const maj = UNIVERSITY_MAJORS.find(m => m.id === majId);
-  if (!maj) return;
-  const ukt = getEraPrice(maj.baseUkt2024);
-  if (state.personalBank < ukt) return addLog(`❌ Saldo Bank Pribadi kurang untuk UKT Semester 1 (${fmtRp(ukt)})!`);
-  state.personalBank -= ukt;
-  state.player.college = {
-    enrolled: true, majorId: maj.id, majorName: maj.name,
-    semester: 1, monthsInSemester: 0, preClinicSemesters: maj.preClinicSemesters, totalSemesters: maj.totalSemesters,
-    classesThisSem: 0, requiredClassesPerSem: 6, skedEarned: false, graduated: false, droppedOut: false
-  };
-  addLog(`🎓 Resmi kuliah di <b>${maj.name}</b> (1 Semester = 6 Bulan • UKT -${fmtRp(ukt)}).`);
-  saveGame(true); renderAll(true);
-}
-
-function attendCollegeSession(actLabel) {
-  if (state.player.isSick) return addLog('🤒 Kamu sedang sakit! Berobat dulu.');
-  const col = state.player.college;
-  if (!col.enrolled || col.graduated) return;
-  if (state.player.energy < 15) return addLog('😴 Stamina kurang untuk kuliah!');
-
-  state.player.energy = Math.max(0, state.player.energy - 12);
-  col.classesThisSem += 1;
-  advanceTimeMinutes(120);
-  addLog(`📚 Mengikuti <b>${actLabel}</b> (2 jam) • Kehadiran Sem ${col.semester}: <b>${col.classesThisSem}/${col.requiredClassesPerSem}</b>.`);
-  saveGame(true); renderAll(true);
-}
-
-function doWorshipNow() {
-  const w = getActiveWorshipWindow(state.player.religion, state.month, state.day, state.dayOfWeek, state.hour, state.minute, state.player.worshipDoneToday);
-  if (!w.canWorship) return;
-  state.player.worshipDoneToday.push(w.slotId);
-  state.player.guiltBar = Math.max(0, state.player.guiltBar - 20);
-  state.player.mood = Math.min(100, state.player.mood + 15);
-  advanceTimeMinutes(20);
-  addLog(`${w.label} selesai — Hati lebih tenang (-Beban Batin, +Mood).`);
-  saveGame(true); renderAll(true);
-}
-
-function approachPartner(partnerId) {
-  const pt = PARTNERS_LIST.find(p => p.id === partnerId);
+function choosePartner(id) {
+  const pt = PARTNERS_LIST.find(x => x.id === id);
   if (!pt) return;
-  if (pt.maritalStatus.includes('Orang')) {
-    state.player.affairPartner = { ...pt };
-    state.player.affairRelationship = 35;
-    addLog(`🔥 Menjalin hubungan rahasia dengan <b>${pt.name}</b> (${pt.maritalStatus}).`);
-  } else {
-    state.player.partner = { ...pt };
-    state.player.relationship = 35;
-    addLog(`💕 Mulai dekat & berpacaran dengan <b>${pt.name}</b>.`);
-  }
-  saveGame(true);
-  renderRightPanel();
+  state.player.partner = pt;
+  state.player.married = false;
+  addLog(`❤️ Kamu resmi berpacaran dengan <b>${pt.name}</b> (${pt.job}).`);
+  saveGame();
+  renderAll();
 }
 
-function endRelationship() {
+function marryPartner() {
+  if (!state.player.partner) return;
+  const cost = getPriceFrom2010(15000000);
+  if (!deductFromAnyCash(cost)) return addLog(`⚠️ Biaya resepsi pernikahan kurang (${fmtRp(cost)})!`);
+  state.player.married = true;
+  addLog(`💍 <b>SELAMAT MENEMPUH HIDUP BARU!</b> Kamu resmi menikah dengan <b>${state.player.partner.name}</b>!`);
+  saveGame();
+  renderAll();
+}
+
+function haveChildWithPartner() {
+  if (!state.player.married) return;
+  const isBoy = Math.random() < 0.5;
+  const cName = isBoy ? `Putra ${state.player.name.split(' ')[0]}` : `Putri ${state.player.name.split(' ')[0]}`;
+  state.player.childrenList.push({
+    name: cName,
+    gender: isBoy ? 'Laki-laki' : 'Perempuan',
+    age: 0,
+    birthDay: state.day,
+    birthMonth: state.month,
+    birthYear: state.year,
+    ethnicity: state.player.ethnicity
+  });
+  addLog(`👶 <b>KELAHIRAN ANAK!</b> Anakmu <b>${cName}</b> lahir dengan sehat! Saat berusia 8+ tahun nanti, usaha Rental PS bisa diwariskan kepadanya.`);
+  saveGame();
+  renderAll();
+}
+
+function inheritToChild(idx) {
+  const ch = state.player.childrenList[idx];
+  if (!ch || ch.age < 8) return;
+  const oldName = state.player.name;
+  state.player.name = ch.name;
+  state.player.gender = ch.gender;
+  state.player.age = ch.age;
+  state.player.birthDay = ch.birthDay || 1;
+  state.player.birthMonth = ch.birthMonth || 1;
+  state.player.birthYear = ch.birthYear;
   state.player.partner = null;
-  state.player.affairPartner = null;
-  state.player.relationship = 0;
-  state.player.affairRelationship = 0;
-  addLog('💔 Hubungan diakhiri.');
-  saveGame(true);
-  renderRightPanel();
+  state.player.married = false;
+  state.player.childrenList = [];
+  addLog(`👑 <b>ESTAFET GENERASI BARU!</b> Usaha Rental PS & seluruh aset keluarga resmi diwariskan dari <b>${oldName}</b> kepada anaknya: <b>${ch.name}</b> (Usia ${ch.age} tahun)!`);
+  saveGame();
+  renderAll();
 }
 
-function performIntimateAction(type, fee) {
-  const target = state.player.affairPartner || state.player.partner;
-  if (!target) return;
-  if (state.player.isSick) return addLog('🤒 Sedang sakit, tidak kuat melakukan aktivitas ini.');
-  if (state.player.energy < 15) return addLog('😴 Terlalu lelah!');
+// ==================== SAVE / LOAD & CLOUD SYNC ====================
+function saveGame() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (typeof CloudSync !== 'undefined') CloudSync.pushToCloud(state);
+  } catch (e) {}
+}
 
-  const cfg = {
-    kiss: { label: '💋 Ciuman & Pelukan Mesra', mins: 60, hb: -20, en: 6, hyg: 5 },
-    foreplay: { label: '🔥 Sentuhan Intim & Foreplay', mins: 60, hb: -40, en: 10, hyg: 10 },
-    woohoo: { label: '❤️ Bercinta Penuh Gairah', mins: 90, hb: -70, en: 15, hyg: 18 },
-    paid: { label: '💸🔥 Sesi Intim Berbayar (Pasang Tarif)', mins: 120, hb: -75, en: 18, hyg: 20 }
-  }[type];
-
-  if (!cfg) return;
-  advanceTimeMinutes(cfg.mins);
-  state.player.energy = Math.max(0, state.player.energy - cfg.en);
-  state.player.hygiene = Math.max(0, state.player.hygiene - cfg.hyg);
-  state.player.hbBar = Math.max(0, state.player.hbBar + cfg.hb);
-
-  if (fee > 0) {
-    state.personalBank += fee;
-    state.player.guiltBar = Math.min(100, state.player.guiltBar + 22);
-    addLog(`${cfg.label} dengan <b>${target.name}</b> (${cfg.mins} mnt) ➔ <b>+${fmtRp(fee)}</b> ke Bank Pribadi.`);
-  } else {
-    if (state.player.affairPartner) state.player.guiltBar = Math.min(100, state.player.guiltBar + 14);
-    addLog(`${cfg.label} bersama <b>${target.name}</b> (${cfg.mins} mnt) • HB Bar: ${state.player.hbBar}%.`);
-  }
-
-  if (type === 'woohoo' || type === 'paid') {
-    const prot = state.player.kbActive || state.player.condomActive;
-    if (state.player.condomActive) state.player.condomActive = false;
-    if (!prot && state.player.gender === 'Perempuan' && !state.player.pregnant && Math.random() < 0.4) {
-      state.player.pregnant = true; state.player.pregnantWeeks = 1;
-      state.player.babyFatherEthnicity = target.ethnicity;
-      addLog(`🤰 <b>Kamu positif hamil!</b> Ayah biologis: <b>${target.name}</b>.`);
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      seedStarterUnits();
+      return false;
     }
+    const parsed = JSON.parse(raw);
+    Object.assign(state, parsed);
+    if (!state.slots || state.slots.length !== 20) {
+      state.slots = createEmptySlots20();
+      seedStarterUnits();
+    }
+    return true;
+  } catch (e) {
+    seedStarterUnits();
+    return false;
   }
-  saveGame(true); renderAll(true);
-}
-
-function rentBusinessSpace(bizId) {
-  const biz = BUSINESS_TYPES_CATALOG.find(b => b.id === bizId);
-  if (!biz || state.rentedBusinesses.some(x => x.id === bizId)) return;
-  const rent = getEraPrice(biz.baseRent2024);
-  if (state.personalBank < rent) return addLog(`❌ Saldo Bank Pribadi kurang (${fmtRp(rent)})!`);
-  state.personalBank -= rent;
-  state.rentedBusinesses.push({ ...biz, monthlyRent: rent });
-  if (biz.isInteractiveRental) {
-    state.rentalUnlocked = true;
-    addLog(`🎮🏢 <b>Tempat Usaha Rental Resmi Disewa!</b> 5 Room usaha kini terbuka.`);
-  } else {
-    addLog(`🏢 Menyewa tempat untuk <b>${biz.name}</b> (-${fmtRp(rent)}/bln).`);
-  }
-  saveGame(true); renderAll(true);
-}
-
-function toggleRoomMode(roomId) {
-  const rm = state.rooms.find(x => x.id === roomId);
-  if (!rm) return;
-  rm.mode = (rm.mode === 'gaming' ? 'couple' : 'gaming');
-  rm.rate = getEraPrice(rm.mode === 'gaming' ? 8000 : 50000);
-  saveGame(true);
-  renderMainWorkspace();
-}
-
-function openSettingsResetModal() {
-  showCustomModal(
-    '⚙️ Settings & Mulai Ulang Permainan (v1.0)',
-    `<div style="font-size:0.78rem;color:var(--muted);">Ketik kata <b style="color:var(--red);">reset</b> untuk menghapus progres dan memulai karakter/tahun baru:</div>
-     <input type="text" id="inpResetWord" placeholder="Ketik: reset" oninput="document.getElementById('btnConfirmReset').disabled=(this.value.trim().toLowerCase()!=='reset')" />`,
-    `<button onclick="closeCustomModal()">Batal</button>
-     <button id="btnConfirmReset" class="danger" disabled onclick="localStorage.removeItem(STORAGE_KEY);openCharacterCreationModal();">🗑️ Mulai Ulang Game</button>`
-  );
 }
 
 function openCloudSyncModal() {
   showCustomModal(
-    '☁️ Sinkronisasi Firestore (Laptop ↔ HP)',
-    `<label style="font-size:0.74rem;color:var(--muted);">Sync ID:</label>
-     <div style="display:flex;gap:6px;"><input type="text" id="inpSyncId" value="${CloudSync.syncId}" /><button class="primary" onclick="if(CloudSync.setSyncId(document.getElementById('inpSyncId').value)){openCloudSyncModal();}">Set ID</button></div>
-     <div class="grid-2"><button class="success" onclick="saveGame(true);addLog('☁️ Tersimpan ke Firestore!');closeCustomModal();">⬆️ Simpan ke Cloud</button><button class="purple" onclick="syncPullNow()">⬇️ Muat dari Cloud</button></div>`,
-    `<button onclick="closeCustomModal()">Tutup</button>`
+    '☁️ Sinkronisasi Cloud Save (Oneilverse Cloud)',
+    `<div class="spec-line">Simpan atau muat progres usaha Rental PS kamu dari Cloud dengan ID Sinkronisasi:</div>
+     <input id="cloudSyncIdInp" value="${typeof CloudSync !== 'undefined' ? CloudSync.syncId : 'oneil_default'}" />`,
+    `<button onclick="closeCustomModal()">Tutup</button>
+     <button onclick="pullCloudSave()">⬇️ Muat dari Cloud</button>
+     <button class="primary" onclick="pushCloudSave()">⬆️ Simpan ke Cloud</button>`
   );
 }
 
-async function syncPullNow() {
-  const res = await CloudSync.pullFromCloud();
-  if (!res.ok) return addLog('⚠️ Data cloud belum ada atau offline.');
-  Object.assign(state, res.state);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  addLog(`✅ Progres dimuat dari Firestore (${CloudSync.syncId})!`);
-  closeCustomModal(); renderAll(true);
+async function pushCloudSave() {
+  const id = document.getElementById('cloudSyncIdInp').value;
+  if (typeof CloudSync !== 'undefined') {
+    CloudSync.setSyncId(id);
+    const res = await CloudSync.pushToCloud(state, true);
+    addLog(res.ok ? '☁️ Progres berhasil disimpan ke Cloud!' : '⚠️ Gagal simpan ke Cloud.');
+  }
+  closeCustomModal();
 }
 
-// ==================== LIVE TARGETED UPDATER (TANPA RESET SCROLL & TANPA TUTUP DROPDOWN!) ====================
-function updateLiveElementsOnly() {
-  const pl = state.player;
-  // Update bar di tab Hidup jika sedang terbuka
-  const elEn = document.getElementById('lifeEnergyVal');
-  if (elEn) {
-    elEn.textContent = pl.energy + '%';
-    document.getElementById('lifeEnergyBar').style.width = pl.energy + '%';
-    document.getElementById('lifeHungerVal').textContent = pl.hunger + '%';
-    document.getElementById('lifeHungerBar').style.width = pl.hunger + '%';
-    document.getElementById('lifeHbVal').textContent = pl.hbBar + '%';
-    document.getElementById('lifeHbBar').style.width = pl.hbBar + '%';
-    document.getElementById('lifeGuiltVal').textContent = pl.guiltBar + '%';
-    document.getElementById('lifeGuiltBar').style.width = pl.guiltBar + '%';
-
-    const worship = getActiveWorshipWindow(pl.religion, state.month, state.day, state.dayOfWeek, state.hour, state.minute, pl.worshipDoneToday);
-    const btnW = document.getElementById('btnWorship');
-    if (btnW) {
-      btnW.textContent = worship.label;
-      btnW.disabled = !worship.canWorship;
-      btnW.className = worship.canWorship ? 'success' : '';
-    }
-    const btnC = document.getElementById('btnClinic');
-    if (btnC) {
-      btnC.textContent = pl.isSick ? '🏥 BEROBAT SEKARANG' : '🏥 Cek Kesehatan';
-      btnC.className = pl.isSick ? 'danger' : '';
+async function pullCloudSave() {
+  const id = document.getElementById('cloudSyncIdInp').value;
+  if (typeof CloudSync !== 'undefined') {
+    CloudSync.setSyncId(id);
+    const res = await CloudSync.pullFromCloud();
+    if (res.ok && res.state) {
+      Object.assign(state, res.state);
+      saveGame();
+      renderAll();
+      addLog('☁️ Progres berhasil dimuat dari Cloud!');
     }
   }
-  // Update sisa kWh & baterai di tab PLN/Lab jika sedang terbuka
-  const elKwh = document.getElementById('plnKwhLive');
-  if (elKwh) {
-    elKwh.textContent = state.kwh.toFixed(2) + ' kWh';
+  closeCustomModal();
+}
+
+// ==================== INISIALISASI ====================
+window.addEventListener('DOMContentLoaded', () => {
+  const hadSave = loadGame();
+  renderAll();
+  addLog(`🎮 <b>Rental PS & Life Simulator (2010–Now)</b> siap! Kecepatan 1x: 1 Jam = 30 Detik (1 Hari = 12 Menit).`);
+  if (!hadSave) {
+    setTimeout(openCharacterCreationModal, 400);
   }
-}
-
-function switchMainTab(t, el) {
-  state.mainTab = t;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if (el) el.classList.add('active');
-  renderRightPanel();
-}
-
-function updateHudOnly() {
-  const hh = String(state.hour).padStart(2, '0');
-  const mm = String(state.minute).padStart(2, '0');
-  const hol = NATIONAL_HOLIDAYS[`${state.day}-${state.month}`];
-  document.getElementById('hudDateTime').textContent = `${DAY_NAMES[state.dayOfWeek]}, ${state.day}/${state.month}/${state.year} • ${hh}:${mm}${hol ? ' 🇮🇩' : ''}`;
-  document.getElementById('hudCityUmr').textContent = `${getCity().name} (UMR ${fmtRp(getCurrentUmr())})`;
-  document.getElementById('hudHand').textContent = fmtRp(state.handWallet);
-  document.getElementById('hudBank').textContent = fmtRp(state.personalBank);
-  document.getElementById('hudLaci').textContent = fmtRp(state.laciCash);
-  document.getElementById('hudKwh').textContent = state.plnBlackout ? '⚡ MATI LAMPU' : `${state.kwh.toFixed(1)} kWh`;
-
-  document.getElementById('btnPause').classList.toggle('active', state.paused);
-  document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
-    btn.classList.toggle('active', !state.paused && Number(btn.dataset.speed) === state.speed);
-  });
-}
-
-function renderMainWorkspace() {
-  const box = document.getElementById('centerWorkspace');
-  const col = state.player.college;
-  if (!state.rentalUnlocked) {
-    box.innerHTML = `
-      <div class="card">
-        <h2>🏙️ Ringkasan Kehidupan — ${state.player.name} (${state.player.age} Thn)</h2>
-        <div style="font-size:0.76rem;color:var(--muted);line-height:1.55;">
-          • <b>Domisili:</b> ${getCity().name} (${getCity().island}) • Tahun <b>${state.year}</b><br>
-          • <b>Kesehatan:</b> ${state.player.isSick ? '<span class="badge warn">🤒 SAKIT (Wajib Berobat)</span>' : '<span class="badge ok">✅ Sehat</span>'} • BPJS: <b>${BPJS_TIERS.find(b=>b.id===state.player.bpjsTier)?.name}</b><br>
-          • <b>Pekerjaan:</b> ${state.player.job ? `${state.player.job.title} (${fmtRp(state.player.job.monthlySalary)}/bln)` : 'Belum Bekerja'}<br>
-          • <b>Pendidikan:</b> ${col.enrolled ? `${col.majorName} — Sem ${col.semester}/${col.totalSemesters} (Bulan ${col.monthsInSemester}/6)` : (col.graduated ? '🎓 Lulus Wisuda' : 'Belum Kuliah')}<br>
-          • <b>Aset Dimiliki:</b> ${state.ownedGadgets.length} Gadget • ${state.ownedVehicles.length} Kendaraan • ${state.rentedBusinesses.length} Tempat Usaha
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-          <button class="primary" onclick="skipOneMonthSafe()">⏩ Lanjut 1 Bulan (Aman)</button>
-          <button onclick="sleepToMorning()">🛏️ Tidur Sampai Pagi</button>
-          <button class="success" onclick="openBankTransferModal()">🏦 Transfer Bank / Dompet</button>
-        </div>
-      </div>`;
-    return;
-  }
-
-  box.innerHTML = `
-    <div class="card">
-      <h2>
-        <span>🚪 Tempat Usaha Rental (5 Room • Billing Aktif)</span>
-        <button class="${state.rentalOpen?'danger':'success'}" onclick="state.rentalOpen=!state.rentalOpen;saveGame(true);renderMainWorkspace();">${state.rentalOpen?'🔴 TUTUP':'🟢 BUKA'}</button>
-      </h2>
-      <div class="booths-grid">
-        ${state.rooms.map(r => `
-          <div class="booth ${r.customer?'active':''}">
-            <div class="booth-top"><span>🚪 Room #${r.id}</span><span class="badge ok">${r.mode==='empty'?'Kosong':(r.customer?'Terisi':'Siap')}</span></div>
-            <div class="spec-line">${r.mode==='empty'?'Kosong (Belum diisi)':`${r.mode.toUpperCase()} • ${fmtRp(r.rate)}/jam`}</div>
-            <button class="primary" onclick="toggleRoomMode(${r.id})">⚙️ Ubah Jenis Room</button>
-          </div>
-        `).join('')}
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;">
-        <button onclick="sleepToMorning()">🛏️ Tidur Sampai Pagi</button>
-        <button class="success" onclick="openBankTransferModal()">🏦 Tarik Laci / Transfer</button>
-      </div>
-    </div>`;
-}
-
-function renderRightPanel() {
-  const box = document.getElementById('rightPanelContent');
-  // Simpan posisi scroll agar tidak lompat ke atas saat tombol di-klik!
-  const prevScrollEl = box.querySelector('.scroll-area');
-  const savedScroll = prevScrollEl ? prevScrollEl.scrollTop : 0;
-  box.innerHTML = '';
-
-  if (state.mainTab === 'karier') {
-    const availJobs = CAREERS_CATALOG.filter(j => state.year >= j.yearStart && (!j.yearEnd || state.year <= j.yearEnd));
-    box.innerHTML = `
-      ${state.player.job ? `<button class="success" onclick="workDailyShift()">💼 Masuk Kerja / Narik Shift 8 Jam (+Uang Tunai)</button>` : ''}
-      <div class="scroll-area">
-        ${availJobs.map(j => `
-          <div class="item-row">
-            <div><b>${j.title}</b> <span class="badge">~${fmtRp(roundTo500(getCurrentUmr()*j.umrMult))}/bln</span><br><span style="color:var(--muted);">${j.desc}</span></div>
-            <button class="primary" onclick="applyForJob('${j.id}')">${state.player.job?.id===j.id?'✅ Aktif':'Lamar'}</button>
-          </div>
-        `).join('')}
-      </div>`;
-
-  } else if (state.mainTab === 'usaha') {
-    const availBiz = BUSINESS_TYPES_CATALOG.filter(b => state.year >= b.yearStart && (!b.yearEnd || state.year <= b.yearEnd));
-    box.innerHTML = `
-      <div class="scroll-area">
-        ${availBiz.map(b => {
-          const owned = state.rentedBusinesses.some(x => x.id === b.id);
-          return `<div class="item-row"><div><b>${b.name}</b><br><span style="color:var(--muted);">${b.desc}</span><br><b style="color:var(--accent);">Sewa: ${fmtRp(getEraPrice(b.baseRent2024))}/bln</b></div><button class="${owned?'success':'primary'}" ${owned?'disabled':''} onclick="rentBusinessSpace('${b.id}')">${owned?'✅ Disewa':'Sewa'}</button></div>`;
-        }).join('')}
-      </div>`;
-
-  } else if (state.mainTab === 'gadget') {
-    const brands = ['Semua', 'Google Pixel', 'Apple', 'Samsung', 'Xiaomi', 'OPPO', 'Vivo', 'Realme', 'ASUS', 'Lenovo', 'Nokia', 'BlackBerry'];
-    const cats = ['Semua', 'HP', 'Tablet', 'Laptop', 'Smartwatch'];
-    const list = GADGET_CATALOG.filter(g => state.year >= g.yearStart && state.year <= g.yearEnd && (state.gadgetBrandFilter==='Semua'||g.brand===state.gadgetBrandFilter) && (state.gadgetCatFilter==='Semua'||g.category===state.gadgetCatFilter));
-    box.innerHTML = `
-      <div class="sub-tabs">${brands.map(br=>`<button class="sub-btn ${state.gadgetBrandFilter===br?'active':''}" onclick="state.gadgetBrandFilter='${br}';renderRightPanel();">${br}</button>`).join('')}</div>
-      <div class="sub-tabs">${cats.map(ct=>`<button class="sub-btn ${state.gadgetCatFilter===ct?'active':''}" onclick="state.gadgetCatFilter='${ct}';renderRightPanel();">${ct}</button>`).join('')}</div>
-      <div class="scroll-area">
-        ${list.length===0?`<div style="font-size:0.73rem;color:var(--muted);">Belum ada produk rilis pada tahun ${state.year} untuk filter ini.</div>`:''}
-        ${list.map(g => `<div class="item-row"><div><b>${g.name}</b> <span class="badge">${g.brand} • ${g.category}</span><br><b style="color:var(--accent);">${fmtRp(getEraPrice(g.price))}</b></div><button class="primary" onclick="buyGadget('${g.id}')">Beli</button></div>`).join('')}
-      </div>`;
-
-  } else if (state.mainTab === 'otomotif') {
-    const vCats = ['Semua', 'Motor Bensin', 'Motor Listrik', 'Mobil Bensin', 'Mobil Listrik'];
-    const list = VEHICLE_CATALOG.filter(v => state.year >= v.yearStart && state.year <= v.yearEnd && (state.vehCatFilter==='Semua'||v.category===state.vehCatFilter));
-    box.innerHTML = `
-      <div class="sub-tabs">${vCats.map(vc=>`<button class="sub-btn ${state.vehCatFilter===vc?'active':''}" onclick="state.vehCatFilter='${vc}';renderRightPanel();">${vc}</button>`).join('')}</div>
-      <div class="scroll-area">
-        ${list.length===0?`<div style="font-size:0.73rem;color:var(--muted);">Belum ada kendaraan kategori ini di tahun ${state.year}.</div>`:''}
-        ${list.map(v => `<div class="item-row"><div><b>${v.name}</b> <span class="badge">${v.category}</span><br><b style="color:var(--accent);">${fmtRp(getEraPrice(v.price))}</b></div><button class="primary" onclick="buyVehicle('${v.id}')">Beli</button></div>`).join('')}
-      </div>`;
-
-  } else if (state.mainTab === 'aset') {
-    box.innerHTML = `
-      <div class="scroll-area">
-        <div style="font-weight:700;font-size:0.75rem;">🛵 Garasi Kendaraan (Bensin/Cas, Servis & Jual Kembali):</div>
-        ${state.ownedVehicles.length===0?'<div style="font-size:0.72rem;color:var(--muted);">Belum punya kendaraan.</div>':''}
-        ${state.ownedVehicles.map(v => `
-          <div class="item-row" style="flex-direction:column;align-items:stretch;gap:5px;">
-            <div><b>${v.name}</b> (${v.category})<br><span style="color:var(--muted);">${v.isEV?'🔋 Baterai':'⛽ Bensin'}: <b>${v.fuelPct}%</b> • Kondisi Mesin: <b>${v.condition}%</b></span></div>
-            <div class="grid-3">
-              <button class="primary" onclick="refuelVehicle('${v.uid}')">${v.isEV?'🔌 Cas':'⛽ Bensin'}</button>
-              <button onclick="repairVehicle('${v.uid}')">🔧 Servis</button>
-              <button class="danger" onclick="sellVehicle('${v.uid}')">💰 Jual</button>
-            </div>
-          </div>
-        `).join('')}
-
-        <div style="font-weight:700;font-size:0.75rem;margin-top:6px;">📱 Koleksi Gadget (Usia Pakai & Jual Bekas):</div>
-        ${state.ownedGadgets.length===0?'<div style="font-size:0.72rem;color:var(--muted);">Belum punya gadget.</div>':''}
-        ${state.ownedGadgets.map(g => `
-          <div class="item-row">
-            <div><b>${g.name}</b><br><span style="color:var(--muted);">Kondisi: <b>${g.condition}%</b> • Beli thn ${g.buyYear}</span></div>
-            <button class="danger" onclick="sellGadget('${g.uid}')">💰 Jual</button>
-          </div>
-        `).join('')}
-      </div>`;
-
-  } else if (state.mainTab === 'kuliah') {
-    const col = state.player.college;
-    const maj = UNIVERSITY_MAJORS.find(m => m.id === col.majorId);
-    const isKoas = col.semester > col.preClinicSemesters;
-    const acts = maj ? (isKoas ? maj.koasActivities : maj.preActivities) : [];
-    box.innerHTML = `
-      <div class="item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-        <b>🎓 Pendidikan Tinggi Realistis (1 Semester = 6 Bulan)</b>
-        ${col.droppedOut?'<div class="badge warn">❌ DROP OUT (DO) karena kehadiran &lt; 50%</div>':''}
-        ${!col.enrolled && !col.graduated ? UNIVERSITY_MAJORS.map(m => `
-          <div class="item-row">
-            <div><b>${m.name}</b><br><span style="color:var(--accent);">UKT: ${fmtRp(getEraPrice(m.baseUkt2024))}/semester</span></div>
-            <button class="primary" onclick="enrollUniversity('${m.id}')">Daftar</button>
-          </div>
-        `).join('') : (col.graduated ? `<div class="badge ok">🎓 LULUS WISUDA (${col.majorName})</div>` : `
-          <div style="font-size:0.73rem;color:var(--muted);line-height:1.45;">
-            Jurusan: <b>${col.majorName}</b><br>
-            Tahap: <b>${isKoas ? '🏥 KOAS DOKTER MUDA (RS)' : '📚 Pre-Klinik / Sarjana'}</b><br>
-            Semester: <b>${col.semester} / ${col.totalSemesters}</b> (Bulan ke-${col.monthsInSemester}/6)<br>
-            Kehadiran Semester Ini: <b>${col.classesThisSem}/${col.requiredClassesPerSem} sesi</b> (Wajib ≥ 50% agar tidak DO)
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            ${acts.map(a => `<button class="success" onclick="attendCollegeSession('${a}')">▶ ${a} (+2 Jam)</button>`).join('')}
-          </div>
-        `)}
-      </div>`;
-
-  } else if (state.mainTab === 'pln') {
-    const lab = state.batteryLab;
-    const cWatt = CHARGER_TIERS[lab.chargerTierIdx];
-    box.innerHTML = `
-      <div class="scroll-area">
-        <div class="item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <b>⚡ Beli Token Listrik PLN Asli (Sisa: <span id="plnKwhLive">${state.kwh.toFixed(2)} kWh</span>)</b>
-          ${PLN_TOKEN_NOMINALS.map(nom => {
-            const tk = calcPlnToken(nom, state.year);
-            return `<div class="item-row"><div><b>Token ${fmtRp(tk.nominal)}</b><br><span style="color:var(--muted);">Bayar ${fmtRp(tk.totalPay)} ➔ Dapat <b>${tk.kwhReceived} kWh</b></span></div><button class="primary" onclick="buyPlnToken(${nom})">Beli</button></div>`;
-          }).join('')}
-        </div>
-        <div class="item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <b>🔋 Lab R&D Baterai & Charger (5W ➔ 480W)</b>
-          <div style="font-size:0.72rem;color:var(--muted);">Kapasitas: <b>${lab.capacityMah.toLocaleString('id-ID')} mAh</b> • Efisiensi: <b>${lab.efficiencyPct}%</b> (${lab.isLocked?'🔒 Kunci':'🔓 Bebas'}) • Charger: <b>${cWatt}W</b> (${lab.chargerStepProgress}/${lab.chargerStepTarget})</div>
-          <button class="primary" onclick="upgradeBatteryMah()">➕ Gabung Sel (+mAh)</button>
-          <div class="grid-2">
-            <button class="purple" ${lab.isLocked?'disabled':''} onclick="researchBatteryEfficiency()">🧪 Riset Efisiensi</button>
-            <button class="success" ${lab.isLocked?'disabled':''} onclick="lockBatteryVersion()">🔒 Kunci Versi</button>
-          </div>
-          <button class="amber" ${lab.chargerTierIdx>=CHARGER_TIERS.length-1?'disabled':''} onclick="researchChargerStep()">🔌 Riset Charger (${cWatt}W)</button>
-        </div>
-      </div>`;
-
-  } else if (state.mainTab === 'life') {
-    const pl = state.player;
-    const worship = getActiveWorshipWindow(pl.religion, state.month, state.day, state.dayOfWeek, state.hour, state.minute, pl.worshipDoneToday);
-    const validPartners = PARTNERS_LIST.filter(p => p.gender !== pl.gender);
-
-    box.innerHTML = `
-      <div class="scroll-area">
-        <div class="item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div style="display:flex;justify-content:space-between;">
-            <b>${pl.gender==='Perempuan'?'👩🏻':'👨🏻'} ${pl.name} (${pl.age} Thn)</b>
-            <span class="badge">${pl.religion} • ${ETHNICITIES.find(e=>e.id===pl.ethnicity)?.name.split(' ')[0]}</span>
-          </div>
-          <div class="sims-stats">
-            <div class="sim-bar-wrap"><span>⚡ Stamina: <b id="lifeEnergyVal">${pl.energy}%</b></span><div class="progress-bar"><div id="lifeEnergyBar" class="progress-fill" style="width:${pl.energy}%"></div></div></div>
-            <div class="sim-bar-wrap"><span>🍛 Kenyang: <b id="lifeHungerVal">${pl.hunger}%</b></span><div class="progress-bar"><div id="lifeHungerBar" class="progress-fill" style="width:${pl.hunger}%;background:var(--accent);"></div></div></div>
-            <div class="sim-bar-wrap"><span>🔥 HB Bar: <b id="lifeHbVal">${pl.hbBar}%</b></span><div class="progress-bar"><div id="lifeHbBar" class="progress-fill" style="width:${pl.hbBar}%;background:var(--pink);"></div></div></div>
-            <div class="sim-bar-wrap"><span>⚖️ Beban Batin: <b id="lifeGuiltVal">${pl.guiltBar}%</b></span><div class="progress-bar"><div id="lifeGuiltBar" class="progress-fill" style="width:${pl.guiltBar}%;background:var(--red);"></div></div></div>
-          </div>
-
-          <button id="btnWorship" class="${worship.canWorship?'success':''}" ${worship.canWorship?'':'disabled'} onclick="doWorshipNow()">${worship.label}</button>
-
-          <div class="grid-2">
-            <button id="btnClinic" class="${pl.isSick?'danger':''}" onclick="visitClinicHospital()">${pl.isSick?'🏥 BEROBAT SEKARANG':'🏥 Cek Kesehatan'}</button>
-            <select onchange="setBpjsTier(this.value)">
-              ${BPJS_TIERS.map(b => `<option value="${b.id}" ${pl.bpjsTier===b.id?'selected':''}>${b.name} (${fmtRp(getEraPrice(b.monthly2024))}/bln)</option>`).join('')}
-            </select>
-          </div>
-
-          <div class="grid-2">
-            <button class="${pl.kbActive?'success':''}" onclick="state.player.kbActive=!state.player.kbActive;saveGame(true);renderRightPanel();">${pl.kbActive?'💊 Pil KB: AKTIF':'💊 Aktifkan KB'}</button>
-            <button class="${pl.condomActive?'success':''}" onclick="state.player.condomActive=!state.player.condomActive;saveGame(true);renderRightPanel();">${pl.condomActive?'🛡️ Kondom: SIAP':'🛡️ Pakai Kondom'}</button>
-          </div>
-          ${pl.childrenList.length>0?`<div style="font-size:0.71rem;color:var(--green);">👶 Anak: ${pl.childrenList.map(c=>`${c.name} (${c.appearance})`).join('; ')}</div>`:''}
-        </div>
-
-        ${!pl.partner && !pl.affairPartner ? validPartners.map(pt => `
-          <div class="item-row">
-            <div><b>${pt.name}</b> (${pt.age} Thn) <span class="badge ${pt.maritalStatus.includes('Orang')?'warn':'ok'}">${pt.maritalStatus}</span><br><span style="color:var(--muted);">${ETHNICITIES.find(e=>e.id===pt.ethnicity)?.name} • ${pt.job}</span></div>
-            <button class="pink" onclick="approachPartner('${pt.id}')">Dekati</button>
-          </div>
-        `).join('') : `
-          <div class="item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-            <div><b>💑 Relasi: ${(pl.affairPartner||pl.partner).name}</b> (${(pl.affairPartner||pl.partner).age} Thn • ${(pl.affairPartner||pl.partner).maritalStatus})</div>
-            <div class="grid-2">
-              <button onclick="performIntimateAction('kiss', 0)">💋 Ciuman (+1 Jam)</button>
-              <button onclick="performIntimateAction('foreplay', 0)">🔥 Foreplay (+1 Jam)</button>
-              <button class="pink" onclick="performIntimateAction('woohoo', 0)">❤️ Bercinta (+1.5 Jam)</button>
-              <button class="amber" onclick="performIntimateAction('paid', getEraPrice(1500000))">💸 Pasang Tarif (+2 Jam)</button>
-            </div>
-            <button class="danger" onclick="endRelationship()">💔 Akhiri Hubungan</button>
-          </div>
-        `}
-      </div>`;
-  }
-
-  // Kembalikan posisi scroll agar tetap di posisi terakhir!
-  const newScrollEl = box.querySelector('.scroll-area');
-  if (newScrollEl) newScrollEl.scrollTop = savedScroll;
-}
-
-function saveGame(force = false) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); CloudSync.pushToCloud(state, force); } catch (e) {}
-}
-function loadGameLocal() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(state, JSON.parse(raw));
-    return true;
-  } catch (e) { return false; }
-}
-function renderAll(r) { updateHudOnly(); renderMainWorkspace(); if (r) renderRightPanel(); }
-
-(function boot() {
-  CloudSync.init();
-  const btn = document.getElementById('btnTheme');
-  if (btn) btn.textContent = document.body.classList.contains('dark-theme') ? '☀️ Terang' : '🌙 Gelap';
-  const had = loadGameLocal();
-  if (!had) openCharacterCreationModal();
-  else { closeCustomModal(); addLog(`💾 Progres <b>${state.player.name}</b> (${getCity().name}, ${state.year}) dimuat.`); }
-  renderAll(true);
-})();
+  requestAnimationFrame(mainLoop);
+});
