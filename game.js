@@ -252,12 +252,7 @@ function getUsedDiscCopies(gameId) {
 }
 
 function getAvailableDiscsForPlatform(plat) {
-  return GAME_DISC_CATALOG.filter(g => {
-    if (g.platform !== plat) return false;
-    const owned = state.ownedDiscs[g.id] || 0;
-    const used = getUsedDiscCopies(g.id);
-    return owned - used > 0;
-  });
+  return GAME_DISC_CATALOG.filter(g => g.platform === plat && (state.ownedDiscs[g.id] || 0) > 0);
 }
 
 function isSlotReadyToPlay(slot) {
@@ -265,12 +260,9 @@ function isSlotReadyToPlay(slot) {
   if (slot.console.cond <= 0) return { ok: false, reason: 'Konsol PS Rusak' };
   if (slot.tv.cond <= 0) return { ok: false, reason: 'TV Rusak' };
   if (slot.controller.durability <= 0) return { ok: false, reason: 'Stik Rusak (Ganti dari Kasir)' };
-  if (slot.console.mediaType === 'disc') {
-    if (!slot.installedGame && getAvailableDiscsForPlatform(slot.console.platform).length === 0) {
-      return { ok: false, reason: `Sediakan Kaset ${slot.console.platform} di Rak/PS!` };
-    }
-  } else {
-    if (!slot.digitalGames || slot.digitalGames.length === 0) return { ok: false, reason: 'Belum di-install Game Internal!' };
+  const avail = getAvailableDiscsForPlatform(slot.console.platform);
+  if (avail.length === 0) {
+    return { ok: false, reason: `Beli minimal 1 Kaset ${slot.console.platform} di Toko!` };
   }
   return { ok: true, reason: 'Siap Dimainkan' };
 }
@@ -409,15 +401,15 @@ let lastFrameTime = performance.now();
 
 function togglePause() {
   state.paused = !state.paused;
+  tickAccumulatorMs = 0;
   renderHud();
 }
 
 function setSpeed(spd) {
-  state.speed = spd;
+  state.speed = Number(spd) || 1;
   state.paused = false;
-  document.querySelectorAll('.speed-btn[data-speed]').forEach(b => {
-    b.classList.toggle('active', Number(b.dataset.speed) === spd);
-  });
+  tickAccumulatorMs = 0;
+  playSfx('click');
   renderHud();
 }
 
@@ -552,8 +544,8 @@ function spawnIncomingCustomer() {
 }
 
 function seatCustomerAtSlot(slot, guest) {
-  // Jika PS pakai kaset fisik dan belum ada kaset terpasang, pelanggan otomatis ambil kaset yang tersedia di rak ruangan!
-  if (slot.console && slot.console.mediaType === 'disc' && !slot.installedGame) {
+  // Pelanggan otomatis memilih sendiri game dari kaset/koleksi yang tersedia di toko!
+  if (slot.console) {
     const avail = getAvailableDiscsForPlatform(slot.console.platform);
     if (avail.length > 0) {
       slot.installedGame = avail[Math.floor(Math.random() * avail.length)];
@@ -564,14 +556,14 @@ function seatCustomerAtSlot(slot, guest) {
   slot.occupied = true;
   slot.customerName = guest.name;
   slot.customerSeed = guest.seed;
+  slot.totalMinutesBooked = guest.hours * 60;
   slot.minutesLeft = guest.hours * 60;
   slot.hourlyRate = rate;
+  slot.totalBillPaid = totalPay;
   state.laciCash += totalPay;
   playSfx('cash');
-  const gTitle = slot.console.mediaType === 'disc'
-    ? (slot.installedGame ? slot.installedGame.title : 'Game')
-    : `${slot.digitalGames.length} Game Internal`;
-  addLog(`🎮 <b>${guest.name}</b> sewa <b>${slot.name}</b> (${slot.console.platform} • ${gTitle}) ${guest.hours} jam: <b style="color:var(--green)">+${fmtRp(totalPay)}</b> ke Laci.`);
+  const gTitle = slot.installedGame ? slot.installedGame.title : slot.console.platform;
+  addLog(`🎮 <b>${guest.name}</b> main di <b>${slot.name}</b> (${gTitle}) ${guest.hours} jam: <b style="color:var(--green)">+${fmtRp(totalPay)}</b> ke Laci.`);
 }
 
 function tryCustomerBuySnack(buyerName) {
@@ -750,21 +742,22 @@ function payEmployeeSalary(emp, label) {
 
 // ==================== LOOP UTAMA ====================
 function mainLoop(now) {
-  const dt = now - lastFrameTime;
+  const dt = Math.min(250, Math.max(0, now - lastFrameTime));
   lastFrameTime = now;
   if (!state.paused) {
-    // 1x baru = 4x lama (125 ms per menit game), 2x = 8x lama, dst.
-    const msPerGameMin = 125 / (state.speed || 1);
+    const spd = Number(state.speed) || 1;
+    // 1x = 125ms/menit (4x lama), 2x = 62.5ms/menit (8x lama), 4x = 31.25ms/menit, 8x = 15.6ms/menit
+    const msPerGameMin = 125 / spd;
     tickAccumulatorMs += dt;
     let steps = 0;
-    while (tickAccumulatorMs >= msPerGameMin && steps < 15) {
+    while (tickAccumulatorMs >= msPerGameMin && steps < 30) {
       tickAccumulatorMs -= msPerGameMin;
       stepOneGameMinute();
       steps++;
     }
     if (steps > 0) {
       renderHud();
-      if (state.minute % 15 === 0) renderCenterAndRight();
+      if (typeof window.renderRoomBoard === 'function') window.renderRoomBoard(false);
     }
   }
   requestAnimationFrame(mainLoop);
@@ -801,10 +794,14 @@ function renderHud() {
     btnPause.classList.toggle('paused', state.paused);
     btnPause.textContent = state.paused ? '▶️' : '⏸️';
   }
+  const curSpd = Number(state.speed) || 1;
+  document.querySelectorAll('.speed-btn[data-speed]').forEach(b => {
+    b.classList.toggle('active', !state.paused && Number(b.dataset.speed) === curSpd);
+  });
 }
 
 function renderCenterWorkspace() {
-  if (typeof window.initRental3D === 'function') window.initRental3D();
+  if (typeof window.renderRoomBoard === 'function') window.renderRoomBoard(true);
 }
 
 function toggleRentalOpenStatus() {
@@ -1283,16 +1280,9 @@ function openSlotConfigModal(slotId) {
          </div>
        </div>
        <div class="item-row">
-         <div><b>💿 Game (${slot.console.mediaType === 'disc' ? 'Wajib 1 Kaset Fisik' : `Internal ${slot.console.storageGb}GB`}):</b><br>
-           <span class="spec-line">${slot.console.mediaType === 'disc' ? (slot.installedGame ? slot.installedGame.title : 'Belum ada kaset') : `${slot.digitalGames.length} game ter-install`}</span>
+         <div><b>💿 Koleksi Game ${plat}:</b><br>
+           <span class="spec-line">Tersedia <b>${availDiscs.length} judul game ${plat}</b> di toko. Pelanggan otomatis memilih sendiri game yang ingin dimainkan!</span>
          </div>
-         <select onchange="if(this.value)assignGameToSlot(${slot.id},this.value)">
-           <option value="">-- Pilih Kaset/Game ${plat} --</option>
-           ${availDiscs.map(g => {
-             const free = (state.ownedDiscs[g.id] || 0) - getUsedDiscCopies(g.id);
-             return `<option value="${g.id}">${g.title} (Sisa bebas: ${free})</option>`;
-           }).join('')}
-         </select>
        </div>
      ` : `<div class="spec-line">Pasang konsol PS terlebih dahulu untuk memilih Stik & Kaset Game.</div>`}`
   );
