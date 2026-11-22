@@ -139,17 +139,17 @@ const PERIPHERAL_CATALOG = [
   { id: 'gear_std', name: 'Set Mouse Optic + Keyboard + Headset Warnet (Logitech B100)', releaseYear: 2008, basePrice2010: 120000, img: makeItemIllus('gear', 'Set Gear Warnet', 'Mouse+KB+Headset', '#475569') }
 ];
 
-// ==================== PAKET LANGGANAN INTERNET (SPEEDY / INDIHOME / BIZNET) ====================
+// ==================== PAKET LANGGANAN INTERNET ASLI INDONESIA (TELKOM SPEEDY 2010 & INDIHOME/BIZNET) ====================
 const INTERNET_PLANS = [
-  { id: 'isp_1m', name: 'Telkom Speedy 1 Mbps (ADSL Copper)', mbps: 1, releaseYear: 2008, monthly2010: 295000, maxSmoothPcs: 5 },
-  { id: 'isp_2m', name: 'Telkom Speedy 2 Mbps Warnet', mbps: 2, releaseYear: 2010, monthly2010: 495000, maxSmoothPcs: 9 },
-  { id: 'isp_3m', name: 'Telkom Speedy 3 Mbps Multi-PC', mbps: 3, releaseYear: 2010, monthly2010: 695000, maxSmoothPcs: 14 },
-  { id: 'isp_5m', name: 'Telkom Speedy 5 Mbps Executive', mbps: 5, releaseYear: 2011, monthly2010: 990000, maxSmoothPcs: 20 },
-  { id: 'isp_10m', name: 'IndiHome Fiber Optic 10 Mbps', mbps: 10, releaseYear: 2015, monthly2010: 450000, maxSmoothPcs: 20 },
-  { id: 'isp_20m', name: 'IndiHome Fiber 20 Mbps', mbps: 20, releaseYear: 2016, monthly2010: 650000, maxSmoothPcs: 20 },
-  { id: 'isp_50m', name: 'IndiHome / Biznet Dedicated 50 Mbps', mbps: 50, releaseYear: 2018, monthly2010: 1100000, maxSmoothPcs: 20 },
-  { id: 'isp_100m', name: 'Biznet Metronet 100 Mbps iCafe', mbps: 100, releaseYear: 2020, monthly2010: 1500000, maxSmoothPcs: 20 },
-  { id: 'isp_250m', name: 'Biznet Dedicated GameNet 250 Mbps', mbps: 250, releaseYear: 2023, monthly2010: 2200000, maxSmoothPcs: 20 }
+  { id: 'isp_1m', name: 'Telkom Speedy Familia 1 Mbps Unlimited', mbps: 1, releaseYear: 2009, monthlyReal: 295000, maxSmoothPcs: 6 },
+  { id: 'isp_2m', name: 'Telkom Speedy Executive 2 Mbps', mbps: 2, releaseYear: 2010, monthlyReal: 495000, maxSmoothPcs: 11 },
+  { id: 'isp_3m', name: 'Telkom Speedy Biz 3 Mbps Warnet', mbps: 3, releaseYear: 2010, monthlyReal: 695000, maxSmoothPcs: 16 },
+  { id: 'isp_5m', name: 'Telkom Speedy Gold 5 Mbps', mbps: 5, releaseYear: 2012, monthlyReal: 990000, maxSmoothPcs: 20 },
+  { id: 'isp_10m', name: 'IndiHome Fiber Optic 10 Mbps', mbps: 10, releaseYear: 2015, monthlyReal: 385000, maxSmoothPcs: 20 },
+  { id: 'isp_20m', name: 'IndiHome Fiber 20 Mbps', mbps: 20, releaseYear: 2016, monthlyReal: 515000, maxSmoothPcs: 20 },
+  { id: 'isp_50m', name: 'IndiHome / Biznet 50 Mbps', mbps: 50, releaseYear: 2018, monthlyReal: 890000, maxSmoothPcs: 20 },
+  { id: 'isp_100m', name: 'Biznet Metronet 100 Mbps iCafe', mbps: 100, releaseYear: 2020, monthlyReal: 1250000, maxSmoothPcs: 20 },
+  { id: 'isp_250m', name: 'Biznet Dedicated GameNet 250 Mbps', mbps: 250, releaseYear: 2023, monthlyReal: 2100000, maxSmoothPcs: 20 }
 ];
 
 // ==================== UPGRADE PC SERVER KASIR (DISKLESS / AUTO-PATCH CACHE) ====================

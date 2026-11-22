@@ -6,8 +6,8 @@ function createEmptyWarnetSlots20() {
   for (let i = 1; i <= 20; i++) {
     arr.push({
       id: i,
-      isRoom: i >= 11, // 1..10 = Bilik PC Reguler Sejejer, 11..20 = Room VIP Tertutup (1 Room 1 PC)
-      name: i <= 10 ? `PC Reguler #${i}` : `Room VIP #${i - 10} (PC #${i})`,
+      isRoom: true, // Semua 20 ruangan adalah Room VIP (1 Room = 1 PC)
+      name: `Room VIP #${i}`,
       cpu: null,
       ram: null,
       vga: null,
@@ -15,19 +15,19 @@ function createEmptyWarnetSlots20() {
       os: null,
       monitor: null,
       cooling: null,
-      gear: null, // { name, quality: 'new'|'serviced', durability: 100, maxDurability: 100 }
+      gear: null,
       occupied: false,
       customerName: '',
       partyTag: '',
       activityLabel: '',
-      billingMode: 'paket', // 'paket' | 'meter'
+      billingMode: 'paket',
       packageName: '',
       packagePrice: 0,
+      snackBill: 0,
       totalSecondsBooked: 0,
       secondsLeft: 0,
       elapsedSeconds: 0,
-      hourlyRate: 3000,
-      // Status Update Patch Game setelah tutup / idle
+      hourlyRate: 5000,
       updatingPatch: false,
       updatingGameId: null,
       updatingGameTitle: '',
@@ -124,6 +124,15 @@ const state = {
 
   // Karyawan Warnet (Lengkap dengan Hari Senin-Minggu)
   employees: [],
+
+  // Status Ruko: Sewa Bulanan atau Cicil Beli Ruko Permanen
+  property: {
+    owned: false,
+    kprActive: false,
+    kprRemaining: 0,
+    kprMonthly: 0,
+    kprMonthsLeft: 0
+  },
 
   // Pinjaman Orang Tua (52x mingguan 0% bunga) & Kredit Bank (Usia 21+)
   parentLoan: { active: false, remainingTotal: 0, weeklyInstallment: 0, weeksLeft: 0 },
@@ -465,11 +474,24 @@ function stepOneGameMinute() {
         state.cashierGearBroken++;
         s.gear = null;
         s.occupied = false;
-        addLog(`🖱️ Mouse/Keyboard/Headset di <b>${s.name}</b> RUSAK (0%) dan masuk ke daftar servis di Kasir!`);
+        addLog(`🖱️ Mouse/Keyboard/Headset di <b>${s.name}</b> RUSAK (0%) dan masuk ke stok servis Kasir!`);
+        // Jika ada karyawan tugas servis/jaga & ada stok cadangan (Baru/Servis), langsung pasang otomatis!
+        const staffOn = state.employees.find(e => isEmployeeOnDuty(e) && (e.tasks.includes('service') || e.tasks.includes('guard')));
+        if (staffOn) {
+          if (state.cashierGearNew > 0) {
+            state.cashierGearNew--;
+            s.gear = { name: 'Set Gear Baru', quality: 'new', durability: 100, maxDurability: 100 };
+            addLog(`🔧 <b>${staffOn.name}</b> langsung memasang cadangan Gear Baru ke <b>${s.name}</b>!`);
+          } else if (state.cashierGearServiced > 0) {
+            state.cashierGearServiced--;
+            s.gear = { name: 'Set Gear Servis', quality: 'serviced', durability: 65, maxDurability: 65 };
+            addLog(`🔧 <b>${staffOn.name}</b> langsung memasang cadangan Gear Servis ke <b>${s.name}</b>!`);
+          }
+        }
       }
     }
     if (Math.random() < 0.01) {
-      tryCustomerBuyPopMieOrDrink(s.customerName || s.name);
+      tryCustomerBuyPopMieOrDrink(s);
     }
   });
 
@@ -593,6 +615,7 @@ function seatCustomerAtPc(slot, guest, silentLog = false) {
   slot.partyTag = guest.partyTag || '';
   slot.activityLabel = guest.forcedActivity || pickActivityForPc(slot);
   slot.hourlyRate = rate;
+  slot.snackBill = 0;
 
   if (guest.billingMode === 'paket' && state.customPackages.length > 0) {
     const pkt = state.customPackages[Math.floor(Math.random() * state.customPackages.length)];
@@ -620,7 +643,8 @@ function seatCustomerAtPc(slot, guest, silentLog = false) {
   }
 }
 
-function tryCustomerBuyPopMieOrDrink(buyerName) {
+function tryCustomerBuyPopMieOrDrink(slot) {
+  const buyerName = slot ? (slot.customerName || slot.name) : 'Tamu';
   const avail = WARNET_SUPPLY_CATALOG.filter(item => {
     if (item.kind === 'galon') return false;
     if ((state.snackStockPcs[item.id] || 0) <= 0) return false;
@@ -637,10 +661,11 @@ function tryCustomerBuyPopMieOrDrink(buyerName) {
   state.snackStockPcs[chosen.id]--;
   if (chosen.needsWater) state.waterGallonServings = Math.max(0, state.waterGallonServings - 1);
   const price = getPriceFrom2010(chosen.sellPcs2010);
+  if (slot) slot.snackBill = (slot.snackBill || 0) + price;
   state.laciCash += price;
   state.cleanliness = Math.max(0, +(state.cleanliness - 0.4).toFixed(1));
   playSfx('cash');
-  addLog(`🍜 <b>${buyerName}</b> beli <b>${chosen.name.split('(')[0]}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b> ke Laci${chosen.needsWater ? ` (Sisa air galon: ${state.waterGallonServings} cup)` : ''}.`);
+  addLog(`🍜 <b>${buyerName}</b> (${slot ? slot.name : 'Kasir'}) pesan <b>${chosen.name.split('(')[0]}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b> masuk Billing &amp; Laci.`);
 }
 
 function autoEmployeeServiceGear(empName) {
@@ -696,6 +721,13 @@ function onDayPassed() {
     if (state.day === (ch.birthDay || 1) && state.month === (ch.birthMonth || 1)) ch.age++;
   });
 
+  // Biaya makan & jajan harian variatif (dari Dompet / Bank, bukan Laci)
+  const mealBase = [15000, 22000, 30000, 38000, 45000][Math.floor(Math.random() * 5)];
+  const mealCost = getPriceFrom2010(mealBase);
+  if (deductFromAnyCash(mealCost)) {
+    addLog(`🍛 Biaya makan &amp; jajan harian: <b>-${fmtRp(mealCost)}</b>.`);
+  }
+
   // Gaji Karyawan Harian & Mingguan
   state.employees.forEach(emp => {
     if (emp.payPeriod === 'daily') payEmployeeSalary(emp, 'Harian');
@@ -716,12 +748,41 @@ function onDayPassed() {
 }
 
 function onMonthPassed() {
-  const rentCost = getPriceFrom2010(1200000);
-  const ispPlan = getInternetPlan();
-  const ispCost = getPriceFrom2010(ispPlan.monthly2010);
-  if (deductFromAnyCash(rentCost + ispCost)) {
-    addLog(`🏢 Bayar sewa ruko (${fmtRp(rentCost)}) & tagihan internet <b>${ispPlan.name}</b> (${fmtRp(ispCost)}).`);
+  // 1. Sewa Ruko atau Cicilan Beli Ruko Permanen
+  if (!state.property.owned) {
+    if (state.property.kprActive) {
+      const kPay = Math.min(state.property.kprRemaining, state.property.kprMonthly);
+      if (deductFromAnyCash(kPay)) {
+        state.property.kprRemaining -= kPay;
+        state.property.kprMonthsLeft = Math.max(0, state.property.kprMonthsLeft - 1);
+        addLog(`🏠 Bayar cicilan KPR Ruko Warnet: <b>-${fmtRp(kPay)}</b> (Sisa ${state.property.kprMonthsLeft} bln).`);
+        if (state.property.kprRemaining <= 0 || state.property.kprMonthsLeft <= 0) {
+          state.property.kprActive = false;
+          state.property.owned = true;
+          addLog('🎉 <b>LUNAS!</b> Ruko Warnet kini milikmu permanen (Bebas biaya sewa selamanya)!');
+        }
+      }
+    } else {
+      const rentCost = getPriceFrom2010(1500000);
+      if (deductFromAnyCash(rentCost)) addLog(`🏢 Bayar sewa ruko bulanan: <b>-${fmtRp(rentCost)}</b>.`);
+    }
   }
+
+  // 2. Tagihan Internet Asli Speedy / IndiHome
+  const ispPlan = getInternetPlan();
+  const ispCost = ispPlan.monthlyReal || 295000;
+  if (deductFromAnyCash(ispCost)) {
+    addLog(`🌐 Bayar tagihan internet <b>${ispPlan.name}</b>: <b>-${fmtRp(ispCost)}</b>.`);
+  }
+
+  // 3. Biaya Sekolah SPP (jika usia < 18) + Iuran Kebersihan/Keamanan & Pajak UMKM
+  if (state.player.age < 18) {
+    const spp = getPriceFrom2010(250000);
+    if (deductFromAnyCash(spp)) addLog(`🎒 Bayar SPP Sekolah bulanan: <b>-${fmtRp(spp)}</b>.`);
+  }
+  const rtTax = getPriceFrom2010(175000);
+  if (deductFromAnyCash(rtTax)) addLog(`🧾 Iuran kebersihan, keamanan &amp; pajak UMKM: <b>-${fmtRp(rtTax)}</b>.`);
+
   state.employees.forEach(emp => {
     if (emp.payPeriod === 'monthly') payEmployeeSalary(emp, 'Bulanan');
   });
@@ -735,10 +796,11 @@ function onMonthPassed() {
   }
 }
 
+// ATURAN KETAT: Pembelian & Tagihan TIDAK boleh mengambil dari Laci Kasir! Harus dari Bank atau Dompet.
 function deductFromAnyCash(amount) {
-  if (state.laciCash >= amount) { state.laciCash -= amount; return true; }
   if (state.personalBank >= amount) { state.personalBank -= amount; return true; }
   if (state.handWallet >= amount) { state.handWallet -= amount; return true; }
+  addLog(`⚠️ Saldo <b>Bank &amp; Dompet</b> kurang (${fmtRp(amount)})! Tarik uang dari <b>Laci Kasir</b> dulu.`);
   return false;
 }
 
@@ -1070,7 +1132,7 @@ function renderRightPanel() {
         <div class="spec-line">Makin tinggi Mbps internet, makin banyak PC bisa main game online tanpa lag & makin cepat proses Update Patch!</div>
         ${INTERNET_PLANS.filter(p => p.releaseYear <= state.year).map(p => `
           <div class="item-row">
-            <div><b>${p.name}</b><div class="spec-line">stabil s/d ${p.maxSmoothPcs} PC Online • ${fmtRp(getPriceFrom2010(p.monthly2010))}/bln</div></div>
+            <div><b>${p.name}</b><div class="spec-line">Stabil s/d ${p.maxSmoothPcs} PC Online • <b>${fmtRp(p.monthlyReal)}/bln</b> (Harga Asli)</div></div>
             <button type="button" class="${p.id === state.internetPlanId ? 'success' : 'primary'}" onclick="changeInternetPlan('${p.id}')">${p.id === state.internetPlanId ? 'Aktif' : 'Pasang'}</button>
           </div>
         `).join('')}
@@ -1193,15 +1255,36 @@ function renderRightPanel() {
         </div>
       </div>
       <div class="card">
-        <b>👨‍👩‍👦 Pinjaman Orang Tua (Maks 50 Juta • 52x Cicilan Mingguan • Bunga 0%)</b>
+        <b>🏢 Status Ruko Warnet (Semua 20 Room VIP)</b>
+        ${state.property && state.property.owned
+          ? `<div class="spec-line" style="color:var(--green)">✅ <b>Ruko Milik Sendiri Permanen!</b> Bebas biaya sewa bulanan selamanya.</div>`
+          : state.property && state.property.kprActive
+            ? `<div class="spec-line">Cicilan KPR Ruko: <b>${fmtRp(state.property.kprRemaining)}</b> (${state.property.kprMonthsLeft} bln @ ${fmtRp(state.property.kprMonthly)}/bln)</div>
+               <button type="button" class="success" onclick="payOffRukoKpr()">💸 Lunasi KPR Ruko Sekarang</button>`
+            : `<div class="spec-line">Saat ini masih Sewa Bulanan (${fmtRp(getPriceFrom2010(1500000))}/bln). Beli permanen atau cicil 36 bulan:</div>
+               <div style="display:flex;gap:6px;">
+                 <button type="button" class="primary" onclick="startRukoKpr()">🏠 Cicil KPR 36 Bln (${fmtRp(getPriceFrom2010(120000000))})</button>
+                 <button type="button" class="amber" onclick="buyRukoCash()">💵 Beli Cash</button>
+               </div>`}
+      </div>
+      <div class="card">
+        <b>👨‍👩‍👦 Pinjaman Orang Tua (Maks 50 Juta • 52x Mingguan • Bunga 0%)</b>
         ${state.parentLoan.active
-          ? `<div class="spec-line">Sisa: <b>${fmtRp(state.parentLoan.remainingTotal)}</b> (${state.parentLoan.weeksLeft} minggu lagi)</div>`
+          ? `<div class="spec-line">Sisa Hutang: <b>${fmtRp(state.parentLoan.remainingTotal)}</b> (${state.parentLoan.weeksLeft} mgg @ ${fmtRp(state.parentLoan.weeklyInstallment)})</div>
+             <div style="display:flex;gap:6px;">
+               <button type="button" class="primary" onclick="payParentLoanNow(false)">Cicil 1x</button>
+               <button type="button" class="success" onclick="payParentLoanNow(true)">✅ Lunasi Semua</button>
+             </div>`
           : `<div style="display:flex;gap:6px;"><button type="button" class="primary" onclick="takeParentLoan(20000000)">Pinjam 20 Jt</button><button type="button" class="primary" onclick="takeParentLoan(50000000)">Pinjam 50 Jt</button></div>`}
       </div>
       <div class="card">
         <b>🏦 Kredit Usaha Bank (Wajib Usia 21+ • Bunga ${bRate}%/thn)</b>
         ${state.bankLoan.active
-          ? `<div class="spec-line">Sisa: <b>${fmtRp(state.bankLoan.remainingTotal)}</b> (${state.bankLoan.monthsLeft} bln)</div>`
+          ? `<div class="spec-line">Sisa Hutang Bank: <b>${fmtRp(state.bankLoan.remainingTotal)}</b> (${state.bankLoan.monthsLeft} bln @ ${fmtRp(state.bankLoan.monthlyInstallment)})</div>
+             <div style="display:flex;gap:6px;">
+               <button type="button" class="primary" onclick="payBankLoanNow(false)">Cicil 1x</button>
+               <button type="button" class="success" onclick="payBankLoanNow(true)">✅ Lunasi Semua</button>
+             </div>`
           : `<div style="display:flex;gap:6px;"><button type="button" class="primary" ${!canBank ? 'disabled' : ''} onclick="takeBankLoan(50000000)">Kredit 50 Jt</button><button type="button" class="primary" ${!canBank ? 'disabled' : ''} onclick="takeBankLoan(150000000)">Kredit 150 Jt</button></div>`}
       </div>
     `;
@@ -1403,13 +1486,66 @@ function upgradeRenovation() {
 function changeInternetPlan(planId) {
   const p = INTERNET_PLANS.find(x => x.id === planId);
   if (!p) return;
-  const installFee = getPriceFrom2010(p.monthly2010);
-  if (!deductFromAnyCash(installFee)) return addLog('⚠️ Uang kurang untuk pasang paket internet ini!');
+  const installFee = p.monthlyReal || 295000;
+  if (!deductFromAnyCash(installFee)) return;
   state.internetPlanId = p.id;
   playSfx('cash');
-  addLog(`🌐 Paket internet warnet di-upgrade ke <b>${p.name} (${p.mbps} Mbps)</b>!`);
+  addLog(`🌐 Paket internet warnet di-upgrade ke <b>${p.name} (${p.mbps} Mbps)</b> — ${fmtRp(installFee)}/bln!`);
   saveGame();
   renderAll();
+}
+
+function startRukoKpr() {
+  const price = getPriceFrom2010(120000000);
+  const dp = Math.round(price * 0.2);
+  if (!deductFromAnyCash(dp)) return;
+  const rem = price - dp;
+  state.property = { owned: false, kprActive: true, kprRemaining: rem, kprMonthly: Math.ceil(rem / 36), kprMonthsLeft: 36 };
+  playSfx('cash');
+  addLog(`🏠 KPR Ruko Warnet disetujui! DP <b>-${fmtRp(dp)}</b>, cicilan 36 bln @ ${fmtRp(state.property.kprMonthly)}/bln.`);
+  saveGame(); renderAll();
+}
+
+function buyRukoCash() {
+  const price = getPriceFrom2010(120000000);
+  if (!deductFromAnyCash(price)) return;
+  state.property = { owned: true, kprActive: false, kprRemaining: 0, kprMonthly: 0, kprMonthsLeft: 0 };
+  playSfx('cash');
+  addLog(`🎉 Membeli Ruko Warnet secara tunai (${fmtRp(price)})! Bebas sewa selamanya!`);
+  saveGame(); renderAll();
+}
+
+function payOffRukoKpr() {
+  if (!state.property || !state.property.kprActive) return;
+  if (!deductFromAnyCash(state.property.kprRemaining)) return;
+  state.property = { owned: true, kprActive: false, kprRemaining: 0, kprMonthly: 0, kprMonthsLeft: 0 };
+  playSfx('cash');
+  addLog('🎉 KPR Ruko Warnet LUNAS sepenuhnya!');
+  saveGame(); renderAll();
+}
+
+function payParentLoanNow(all) {
+  if (!state.parentLoan.active) return;
+  const amt = all ? state.parentLoan.remainingTotal : Math.min(state.parentLoan.remainingTotal, state.parentLoan.weeklyInstallment);
+  if (!deductFromAnyCash(amt)) return;
+  state.parentLoan.remainingTotal -= amt;
+  state.parentLoan.weeksLeft = all ? 0 : Math.max(0, state.parentLoan.weeksLeft - 1);
+  if (state.parentLoan.remainingTotal <= 0) state.parentLoan.active = false;
+  playSfx('cash');
+  addLog(`👨‍👩‍👦 Bayar hutang ke Orang Tua: <b>-${fmtRp(amt)}</b>${!state.parentLoan.active ? ' (LUNAS!)' : ''}.`);
+  saveGame(); renderAll();
+}
+
+function payBankLoanNow(all) {
+  if (!state.bankLoan.active) return;
+  const amt = all ? state.bankLoan.remainingTotal : Math.min(state.bankLoan.remainingTotal, state.bankLoan.monthlyInstallment);
+  if (!deductFromAnyCash(amt)) return;
+  state.bankLoan.remainingTotal -= amt;
+  state.bankLoan.monthsLeft = all ? 0 : Math.max(0, state.bankLoan.monthsLeft - 1);
+  if (state.bankLoan.remainingTotal <= 0) state.bankLoan.active = false;
+  playSfx('cash');
+  addLog(`🏦 Bayar hutang Bank: <b>-${fmtRp(amt)}</b>${!state.bankLoan.active ? ' (LUNAS!)' : ''}.`);
+  saveGame(); renderAll();
 }
 
 function installOrBuyPcGame(gameId) {
