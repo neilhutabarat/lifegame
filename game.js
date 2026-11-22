@@ -251,13 +251,24 @@ function getUsedDiscCopies(gameId) {
   return used;
 }
 
+function getAvailableDiscsForPlatform(plat) {
+  return GAME_DISC_CATALOG.filter(g => {
+    if (g.platform !== plat) return false;
+    const owned = state.ownedDiscs[g.id] || 0;
+    const used = getUsedDiscCopies(g.id);
+    return owned - used > 0;
+  });
+}
+
 function isSlotReadyToPlay(slot) {
   if (!slot || !slot.console || !slot.tv || !slot.controller) return { ok: false, reason: 'Belum lengkap (Wajib PS + TV + Stik)' };
   if (slot.console.cond <= 0) return { ok: false, reason: 'Konsol PS Rusak' };
   if (slot.tv.cond <= 0) return { ok: false, reason: 'TV Rusak' };
   if (slot.controller.durability <= 0) return { ok: false, reason: 'Stik Rusak (Ganti dari Kasir)' };
   if (slot.console.mediaType === 'disc') {
-    if (!slot.installedGame) return { ok: false, reason: 'Belum dipasang Kaset Game!' };
+    if (!slot.installedGame && getAvailableDiscsForPlatform(slot.console.platform).length === 0) {
+      return { ok: false, reason: `Sediakan Kaset ${slot.console.platform} di Rak/PS!` };
+    }
   } else {
     if (!slot.digitalGames || slot.digitalGames.length === 0) return { ok: false, reason: 'Belum di-install Game Internal!' };
   }
@@ -541,6 +552,13 @@ function spawnIncomingCustomer() {
 }
 
 function seatCustomerAtSlot(slot, guest) {
+  // Jika PS pakai kaset fisik dan belum ada kaset terpasang, pelanggan otomatis ambil kaset yang tersedia di rak ruangan!
+  if (slot.console && slot.console.mediaType === 'disc' && !slot.installedGame) {
+    const avail = getAvailableDiscsForPlatform(slot.console.platform);
+    if (avail.length > 0) {
+      slot.installedGame = avail[Math.floor(Math.random() * avail.length)];
+    }
+  }
   const rate = getSlotHourlyRate(slot);
   const totalPay = rate * guest.hours;
   slot.occupied = true;
