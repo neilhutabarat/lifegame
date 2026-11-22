@@ -8,67 +8,84 @@
 </head>
 <body class="dark-theme">
 
-<header>
-  <div class="brand-box">
-    <div class="brand-title">🎮 Rental PS & Life Simulator 2010+</div>
-    <div class="brand-sub">
-      <span>Oneilverse Tycoon Edition</span>
-      <span class="badge" onclick="openCharacterCreationModal()" style="cursor:pointer;">👤 Karakter Baru / Reset</span>
-      <span class="badge" id="btnTheme" onclick="toggleTheme()" style="cursor:pointer;">☀️ Terang</span>
+<!-- 100% FULLSCREEN 3D WORLD VIEWPORT -->
+<div id="studio3dViewport"></div>
+
+<!-- FLOATING TOP HUD (RINGKAS ALA GAME MOBILE TYCOON) -->
+<header class="floating-hud-top">
+  <div class="hud-row-main">
+    <div class="brand-pill" onclick="openCharacterCreationModal()" title="Buat Karakter Baru / Reset">
+      <span>🎮</span>
+      <div>
+        <b id="hudPlayerBadge">Rental PS 2010</b>
+        <small id="hudCityUmr">Kota Jambi • $1 = Rp 9.090</small>
+      </div>
+    </div>
+
+    <div class="time-pill">
+      <b id="hudDateTime">Jumat, 1/1/2010 • 08:00</b>
+      <div class="speed-controls">
+        <button id="btnPause" class="speed-btn" onclick="togglePause()">⏸️</button>
+        <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
+        <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
+        <button class="speed-btn" data-speed="4" onclick="setSpeed(4)">4x</button>
+        <button class="speed-btn" data-speed="8" onclick="setSpeed(8)">8x</button>
+      </div>
+    </div>
+
+    <div class="quick-actions-pill">
+      <button id="btnToggleOpen" class="success" onclick="toggleRentalOpenStatus()">🟢 BUKA</button>
+      <button onclick="manualCleanShop()" title="Sapu & Pel Ruangan">🧹 <span id="hudClean">100%</span></button>
+      <button onclick="resetStudio3dCamera()" title="Reset Kamera 3D">🎥</button>
+      <button onclick="openCloudSyncModal()" title="Cloud Save">☁️</button>
     </div>
   </div>
 
-  <div class="hud-group">
-    <div class="stat"><span class="lbl">Kalender:</span><b id="hudDateTime">Jumat, 1/1/2010 • 08:00</b></div>
-    <div class="stat"><span class="lbl">Wilayah & Kurs:</span><b id="hudCityUmr">DKI Jakarta • $1 = Rp 9.090</b></div>
-    <div class="speed-controls" title="1x: 1 Jam = 30 Detik (1 Hari = 12 Menit)">
-      <button id="btnPause" class="speed-btn" onclick="togglePause()">⏸️</button>
-      <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
-      <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
-      <button class="speed-btn" data-speed="4" onclick="setSpeed(4)">4x</button>
-      <button class="speed-btn" data-speed="8" onclick="setSpeed(8)">8x</button>
-    </div>
-    <div class="stat"><span class="lbl">Laci:</span><b id="hudLaci" style="color:#c084fc;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">Dompet:</span><b id="hudHand" style="color:#4ade80;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">Bank:</span><b id="hudBank" style="color:#38bdf8;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">Pulsa:</span><b id="hudPpob" style="color:#fbbf24;">Rp 0</b></div>
-    <div class="stat"><span class="lbl">PLN:</span><b id="hudKwh">35.0 kWh</b></div>
-    <div class="stat"><span class="lbl">Bersih:</span><b id="hudClean">100%</b></div>
-    <button onclick="openBankTransferModal()">🏦 Kas & Pinjaman</button>
-    <button onclick="openCloudSyncModal()">☁️ Cloud</button>
+  <div class="hud-row-stats">
+    <div class="stat-chip" onclick="openBankTransferModal()"><span>Laci:</span><b id="hudLaci" style="color:#c084fc;">Rp 0</b></div>
+    <div class="stat-chip" onclick="openBankTransferModal()"><span>Dompet:</span><b id="hudHand" style="color:#4ade80;">Rp 0</b></div>
+    <div class="stat-chip" onclick="openBankTransferModal()"><span>Bank:</span><b id="hudBank" style="color:#38bdf8;">Rp 0</b></div>
+    <div class="stat-chip" onclick="openDrawerTab('agen_ppob')"><span>Pulsa:</span><b id="hudPpob" style="color:#fbbf24;">Rp 0</b></div>
+    <div class="stat-chip" onclick="openDrawerTab('finance')"><span>PLN:</span><b id="hudKwh">45.0 kWh</b></div>
+    <div class="stat-chip" onclick="spawnIncomingCustomer()"><b style="color:#38bdf8;">+ Tamu (<span id="lblQueueCount">0</span> Antre)</b></div>
   </div>
 </header>
 
-<div class="main-layout">
-  <div class="col col-left">
-    <div class="card">
-      <h2>📢 Aktivitas Rental, Pelanggan & Kehidupan</h2>
-      <div id="logBox" class="log-box"></div>
-    </div>
-  </div>
+<!-- FLOATING TOAST / TICKER AKTIVITAS TERBARU (DI ATAS DOCK BAWAH) -->
+<div id="liveToastBar" class="live-toast-bar" onclick="openDrawerTab('logs')">
+  📢 Tap objek 3D di ruangan untuk mengatur unit, atau tap menu di bawah.
+</div>
 
-  <div class="col col-center" id="centerWorkspace"></div>
+<!-- FLOATING BOTTOM DOCK (TOMBOL MENU MUNCUL SAAT DI-TAP) -->
+<nav class="floating-dock-bottom">
+  <button class="dock-btn" data-tab="slots" onclick="openDrawerTab('slots')"><span>🎮</span><small>20 Slot</small></button>
+  <button class="dock-btn" data-tab="store_hw" onclick="openDrawerTab('store_hw')"><span>🛒</span><small>Toko PS</small></button>
+  <button class="dock-btn" data-tab="discs" onclick="openDrawerTab('discs')"><span>💿</span><small>Kaset</small></button>
+  <button class="dock-btn" data-tab="cashier_stik" onclick="openDrawerTab('cashier_stik')"><span>🔧</span><small>Stik/Kasir</small></button>
+  <button class="dock-btn" data-tab="agen_ppob" onclick="openDrawerTab('agen_ppob')"><span>📦</span><small>Agen/Pulsa</small></button>
+  <button class="dock-btn" data-tab="employees" onclick="openDrawerTab('employees')"><span>👷</span><small>Karyawan</small></button>
+  <button class="dock-btn" data-tab="finance" onclick="openDrawerTab('finance')"><span>🏦</span><small>Bank/PLN</small></button>
+  <button class="dock-btn" data-tab="automotive" onclick="openDrawerTab('automotive')"><span>🛵</span><small>Motor/HP</small></button>
+  <button class="dock-btn" data-tab="life" onclick="openDrawerTab('life')"><span>🧬</span><small>Hidup</small></button>
+  <button class="dock-btn" data-tab="logs" onclick="openDrawerTab('logs')"><span>📜</span><small>Catatan</small></button>
+</nav>
 
-  <div class="col col-right">
-    <div class="card">
-      <h2>📱 Manajemen Rental PS & Kehidupan</h2>
-      <div class="nav-tabs">
-        <button class="nav-btn active" onclick="switchMainTab('slots', this)">🎮 20 Slot/Room</button>
-        <button class="nav-btn" onclick="switchMainTab('store_hw', this)">🛒 Toko PS & TV</button>
-        <button class="nav-btn" onclick="switchMainTab('discs', this)">💿 200+ Kaset Game</button>
-        <button class="nav-btn" onclick="switchMainTab('cashier_stik', this)">🔧 Stik & Gudang</button>
-        <button class="nav-btn" onclick="switchMainTab('agen_ppob', this)">📦 Agen Dus & Pulsa</button>
-        <button class="nav-btn" onclick="switchMainTab('employees', this)">👷 Karyawan</button>
-        <button class="nav-btn" onclick="switchMainTab('finance', this)">🏦 Pinjaman & PLN</button>
-        <button class="nav-btn" onclick="switchMainTab('automotive', this)">🛵 Motor/Mobil/HP</button>
-        <button class="nav-btn" onclick="switchMainTab('life', this)">🧬 Hidup & Warisan</button>
-      </div>
-      <div id="rightPanelContent" class="right-panel-scroll"></div>
+<!-- SLIDE-UP DRAWER MENU (HANYA MUNCUL SAAT TOMBOL DOCK DI-TAP!) -->
+<div id="appDrawerBackdrop" class="drawer-backdrop" onclick="if(event.target===this)closeDrawer()">
+  <div class="drawer-sheet">
+    <div class="drawer-header">
+      <h2 id="drawerTitle">📱 Menu Manajemen</h2>
+      <button class="drawer-close" onclick="closeDrawer()">✕ Tutup</button>
     </div>
+    <div id="rightPanelContent" class="drawer-body"></div>
   </div>
 </div>
 
-<div id="customModalBackdrop" class="modal-backdrop">
+<!-- HIDDEN LOG STORAGE FOR HISTORY -->
+<div id="logBox" style="display:none;"></div>
+
+<!-- MODAL POPUP (KONFIGURASI SLOT / BUAT KARAKTER / TRANSFER) -->
+<div id="customModalBackdrop" class="modal-backdrop" onclick="if(event.target===this)closeCustomModal()">
   <div class="modal">
     <h3 id="customModalTitle" style="margin:0;color:var(--accent);font-size:1rem;">Judul</h3>
     <div id="customModalBody" style="display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow-y:auto;"></div>

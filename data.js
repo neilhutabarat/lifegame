@@ -170,55 +170,55 @@ function getHolidayName(year, month, day) {
   return null;
 }
 
-// ==================== KATALOG KONSOL PS1 - PS5 (VERSI KASET FISIK & VERSI DIGITAL INTERNAL) ====================
+// ==================== KATALOG KONSOL PS1 - PS5 (VERSI KASET FISIK & VERSI DIGITAL INTERNAL + FOTO ASLI) ====================
 const CONSOLE_CATALOG = [
-  { id: 'ps1_fat', platform: 'PS1', name: 'PlayStation 1 (PSX SCPH-7501) CD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 1995, basePrice2010: 450000, watt: 18, baseRate2010: 2000, img: makeHardwareSvg('ps1', 'PS1 Original', 'Kaset CD Fisik') },
-  { id: 'ps1_one', platform: 'PS1', name: 'PSOne Slim Original CD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2000, basePrice2010: 550000, watt: 15, baseRate2010: 2500, img: makeHardwareSvg('ps1', 'PSOne Slim', 'Kaset CD Fisik') },
-  { id: 'ps2_fat', platform: 'PS2', name: 'PlayStation 2 Fat (SCPH-50000) DVD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2001, basePrice2010: 1150000, watt: 45, baseRate2010: 3000, img: makeHardwareSvg('ps2', 'PS2 Fat DVD', 'Kaset DVD Fisik') },
-  { id: 'ps2_slim', platform: 'PS2', name: 'PlayStation 2 Slim (SCPH-90006) DVD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2007, basePrice2010: 1350000, watt: 35, baseRate2010: 3500, img: makeHardwareSvg('ps2', 'PS2 Slim 90006', 'Kaset DVD Fisik') },
-  { id: 'ps3_fat_disc', platform: 'PS3', name: 'PS3 Fat Blu-Ray Fisik (80GB)', mediaType: 'disc', storageGb: 80, releaseYear: 2007, basePrice2010: 3400000, watt: 160, baseRate2010: 6000, img: makeHardwareSvg('ps3', 'PS3 Fat BD Fisik', 'Pakai Kaset BD') },
-  { id: 'ps3_slim_disc', platform: 'PS3', name: 'PS3 Slim Versi Kaset BD Fisik (160GB)', mediaType: 'disc', storageGb: 160, releaseYear: 2009, basePrice2010: 3800000, watt: 95, baseRate2010: 7000, img: makeHardwareSvg('ps3', 'PS3 Slim Fisik', 'Pakai Kaset BD') },
-  { id: 'ps3_slim_dig120', platform: 'PS3', name: 'PS3 Slim Digital Internal 120GB', mediaType: 'digital', storageGb: 120, releaseYear: 2009, basePrice2010: 3950000, watt: 95, baseRate2010: 7000, img: makeHardwareSvg('ps3', 'PS3 Digital 120GB', 'Tanpa Kaset (Internal)') },
-  { id: 'ps3_slim_dig250', platform: 'PS3', name: 'PS3 Slim Digital Internal 250GB', mediaType: 'digital', storageGb: 250, releaseYear: 2010, basePrice2010: 4300000, watt: 90, baseRate2010: 7500, img: makeHardwareSvg('ps3', 'PS3 Digital 250GB', 'Tanpa Kaset (Internal)') },
-  { id: 'ps3_sslim_dig500', platform: 'PS3', name: 'PS3 Super Slim Digital Internal 500GB', mediaType: 'digital', storageGb: 500, releaseYear: 2012, basePrice2010: 4600000, watt: 80, baseRate2010: 8000, img: makeHardwareSvg('ps3', 'PS3 SuperSlim 500GB', 'Digital Internal 500GB') },
-  { id: 'ps4_fat_disc', platform: 'PS4', name: 'PS4 Fat Blu-Ray Fisik (500GB)', mediaType: 'disc', storageGb: 500, releaseYear: 2013, basePrice2010: 5200000, watt: 140, baseRate2010: 10000, img: makeHardwareSvg('ps4', 'PS4 Fat BD Fisik', 'Pakai Kaset BD PS4') },
-  { id: 'ps4_slim_disc', platform: 'PS4', name: 'PS4 Slim Versi Kaset BD Fisik (500GB)', mediaType: 'disc', storageGb: 500, releaseYear: 2016, basePrice2010: 4800000, watt: 110, baseRate2010: 11000, img: makeHardwareSvg('ps4', 'PS4 Slim BD Fisik', 'Pakai Kaset BD PS4') },
-  { id: 'ps4_slim_dig500', platform: 'PS4', name: 'PS4 Slim Digital Internal 500GB', mediaType: 'digital', storageGb: 500, releaseYear: 2016, basePrice2010: 4900000, watt: 110, baseRate2010: 11000, img: makeHardwareSvg('ps4', 'PS4 Digital 500GB', 'Game Internal 500GB') },
-  { id: 'ps4_slim_dig1tb', platform: 'PS4', name: 'PS4 Slim Digital Internal 1TB (1000GB)', mediaType: 'digital', storageGb: 1000, releaseYear: 2016, basePrice2010: 5400000, watt: 110, baseRate2010: 12000, img: makeHardwareSvg('ps4', 'PS4 Digital 1TB', 'Game Internal 1000GB') },
-  { id: 'ps4_pro_dig2tb', platform: 'PS4', name: 'PS4 Pro 4K Digital Internal 2TB', mediaType: 'digital', storageGb: 2000, releaseYear: 2017, basePrice2010: 6500000, watt: 155, baseRate2010: 14000, img: makeHardwareSvg('ps4', 'PS4 Pro 4K 2TB', 'Game Internal 2000GB') },
-  { id: 'ps5_disc', platform: 'PS5', name: 'PlayStation 5 Disc Edition (Kaset BD Fisik)', mediaType: 'disc', storageGb: 825, releaseYear: 2020, basePrice2010: 7800000, watt: 200, baseRate2010: 18000, img: makeHardwareSvg('ps5', 'PS5 Disc Edition', 'Pakai Kaset BD PS5') },
-  { id: 'ps5_dig_825', platform: 'PS5', name: 'PlayStation 5 Digital Edition (SSD 825GB)', mediaType: 'digital', storageGb: 825, releaseYear: 2020, basePrice2010: 6800000, watt: 190, baseRate2010: 18000, img: makeHardwareSvg('ps5', 'PS5 Digital 825GB', 'SSD Internal 825GB') },
-  { id: 'ps5_slim_dig1tb', platform: 'PS5', name: 'PS5 Slim Digital Edition (SSD 1TB)', mediaType: 'digital', storageGb: 1000, releaseYear: 2023, basePrice2010: 7200000, watt: 185, baseRate2010: 20000, img: makeHardwareSvg('ps5', 'PS5 Slim Digital 1TB', 'SSD Internal 1000GB') },
-  { id: 'ps5_pro_dig2tb', platform: 'PS5', name: 'PS5 Pro Digital Edition (SSD 2TB)', mediaType: 'digital', storageGb: 2000, releaseYear: 2024, basePrice2010: 9500000, watt: 215, baseRate2010: 25000, img: makeHardwareSvg('ps5', 'PS5 Pro 2TB', 'SSD Internal 2000GB') }
+  { id: 'ps1_fat', platform: 'PS1', name: 'PlayStation 1 (PSX SCPH-7501) CD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 1995, basePrice2010: 450000, watt: 18, baseRate2010: 2000, img: REAL_CONSOLE_PHOTOS.ps1_fat },
+  { id: 'ps1_one', platform: 'PS1', name: 'PSOne Slim Original CD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2000, basePrice2010: 550000, watt: 15, baseRate2010: 2500, img: REAL_CONSOLE_PHOTOS.ps1_one },
+  { id: 'ps2_fat', platform: 'PS2', name: 'PlayStation 2 Fat (SCPH-50000) DVD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2001, basePrice2010: 1150000, watt: 45, baseRate2010: 3000, img: REAL_CONSOLE_PHOTOS.ps2_fat },
+  { id: 'ps2_slim', platform: 'PS2', name: 'PlayStation 2 Slim (SCPH-90006) DVD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2007, basePrice2010: 1350000, watt: 35, baseRate2010: 3500, img: REAL_CONSOLE_PHOTOS.ps2_slim },
+  { id: 'ps3_fat_disc', platform: 'PS3', name: 'PS3 Fat Blu-Ray Fisik (80GB)', mediaType: 'disc', storageGb: 80, releaseYear: 2007, basePrice2010: 3400000, watt: 160, baseRate2010: 6000, img: REAL_CONSOLE_PHOTOS.ps3_fat },
+  { id: 'ps3_slim_disc', platform: 'PS3', name: 'PS3 Slim Versi Kaset BD Fisik (160GB)', mediaType: 'disc', storageGb: 160, releaseYear: 2009, basePrice2010: 3800000, watt: 95, baseRate2010: 7000, img: REAL_CONSOLE_PHOTOS.ps3_slim },
+  { id: 'ps3_slim_dig120', platform: 'PS3', name: 'PS3 Slim Digital Internal 120GB', mediaType: 'digital', storageGb: 120, releaseYear: 2009, basePrice2010: 3950000, watt: 95, baseRate2010: 7000, img: REAL_CONSOLE_PHOTOS.ps3_slim },
+  { id: 'ps3_slim_dig250', platform: 'PS3', name: 'PS3 Slim Digital Internal 250GB', mediaType: 'digital', storageGb: 250, releaseYear: 2010, basePrice2010: 4300000, watt: 90, baseRate2010: 7500, img: REAL_CONSOLE_PHOTOS.ps3_slim },
+  { id: 'ps3_sslim_dig500', platform: 'PS3', name: 'PS3 Super Slim Digital Internal 500GB', mediaType: 'digital', storageGb: 500, releaseYear: 2012, basePrice2010: 4600000, watt: 80, baseRate2010: 8000, img: REAL_CONSOLE_PHOTOS.ps3_sslim },
+  { id: 'ps4_fat_disc', platform: 'PS4', name: 'PS4 Fat Blu-Ray Fisik (500GB)', mediaType: 'disc', storageGb: 500, releaseYear: 2013, basePrice2010: 5200000, watt: 140, baseRate2010: 10000, img: REAL_CONSOLE_PHOTOS.ps4_fat },
+  { id: 'ps4_slim_disc', platform: 'PS4', name: 'PS4 Slim Versi Kaset BD Fisik (500GB)', mediaType: 'disc', storageGb: 500, releaseYear: 2016, basePrice2010: 4800000, watt: 110, baseRate2010: 11000, img: REAL_CONSOLE_PHOTOS.ps4_slim },
+  { id: 'ps4_slim_dig500', platform: 'PS4', name: 'PS4 Slim Digital Internal 500GB', mediaType: 'digital', storageGb: 500, releaseYear: 2016, basePrice2010: 4900000, watt: 110, baseRate2010: 11000, img: REAL_CONSOLE_PHOTOS.ps4_slim },
+  { id: 'ps4_slim_dig1tb', platform: 'PS4', name: 'PS4 Slim Digital Internal 1TB (1000GB)', mediaType: 'digital', storageGb: 1000, releaseYear: 2016, basePrice2010: 5400000, watt: 110, baseRate2010: 12000, img: REAL_CONSOLE_PHOTOS.ps4_slim },
+  { id: 'ps4_pro_dig2tb', platform: 'PS4', name: 'PS4 Pro 4K Digital Internal 2TB', mediaType: 'digital', storageGb: 2000, releaseYear: 2017, basePrice2010: 6500000, watt: 155, baseRate2010: 14000, img: REAL_CONSOLE_PHOTOS.ps4_pro },
+  { id: 'ps5_disc', platform: 'PS5', name: 'PlayStation 5 Disc Edition (Kaset BD Fisik)', mediaType: 'disc', storageGb: 825, releaseYear: 2020, basePrice2010: 7800000, watt: 200, baseRate2010: 18000, img: REAL_CONSOLE_PHOTOS.ps5_disc },
+  { id: 'ps5_dig_825', platform: 'PS5', name: 'PlayStation 5 Digital Edition (SSD 825GB)', mediaType: 'digital', storageGb: 825, releaseYear: 2020, basePrice2010: 6800000, watt: 190, baseRate2010: 18000, img: REAL_CONSOLE_PHOTOS.ps5_dig },
+  { id: 'ps5_slim_dig1tb', platform: 'PS5', name: 'PS5 Slim Digital Edition (SSD 1TB)', mediaType: 'digital', storageGb: 1000, releaseYear: 2023, basePrice2010: 7200000, watt: 185, baseRate2010: 20000, img: REAL_CONSOLE_PHOTOS.ps5_dig },
+  { id: 'ps5_pro_dig2tb', platform: 'PS5', name: 'PS5 Pro Digital Edition (SSD 2TB)', mediaType: 'digital', storageGb: 2000, releaseYear: 2024, basePrice2010: 9500000, watt: 215, baseRate2010: 25000, img: REAL_CONSOLE_PHOTOS.ps5_disc }
 ];
 
 // ==================== KATALOG TV & MONITOR ====================
 const TV_CATALOG = [
-  { id: 'tv_crt14', name: 'TV Tabung Polytron 14" CRT', releaseYear: 1995, basePrice2010: 450000, watt: 55, comfortBonus: 0, rateBonus2010: 0, img: makeHardwareSvg('tv_crt', 'TV Tabung 14"', '55 Watt • Standar') },
-  { id: 'tv_crt21', name: 'TV Tabung Sony Trinitron 21" Flat', releaseYear: 2000, basePrice2010: 750000, watt: 75, comfortBonus: 5, rateBonus2010: 500, img: makeHardwareSvg('tv_crt', 'Sony Trinitron 21"', '75 Watt • Layar Datar') },
-  { id: 'tv_lcd24', name: 'TV LCD LG 24" HD Ready', releaseYear: 2008, basePrice2010: 1450000, watt: 40, comfortBonus: 12, rateBonus2010: 1000, img: makeHardwareSvg('tv_led', 'TV LCD LG 24"', '40 Watt • HDMI') },
-  { id: 'tv_led32', name: 'TV LED Samsung 32" HD', releaseYear: 2010, basePrice2010: 2250000, watt: 48, comfortBonus: 20, rateBonus2010: 1500, img: makeHardwareSvg('tv_led', 'Samsung LED 32"', '48 Watt • Jernih') },
-  { id: 'tv_led43', name: 'Smart TV Sony Bravia 43" Full HD', releaseYear: 2014, basePrice2010: 3600000, watt: 65, comfortBonus: 30, rateBonus2010: 2500, img: makeHardwareSvg('tv_led', 'Bravia 43" FHD', '65 Watt • Full HD') },
-  { id: 'tv_oled55', name: 'LG OLED 55" 4K 120Hz Gaming TV', releaseYear: 2019, basePrice2010: 7800000, watt: 95, comfortBonus: 45, rateBonus2010: 5000, img: makeHardwareSvg('tv_led', 'LG OLED 55" 4K', '95 Watt • 120Hz HDR') }
+  { id: 'tv_crt14', name: 'TV Tabung Polytron 14" CRT', releaseYear: 1995, basePrice2010: 450000, watt: 55, comfortBonus: 0, rateBonus2010: 0, img: REAL_CONSOLE_PHOTOS.tv_crt },
+  { id: 'tv_crt21', name: 'TV Tabung Sony Trinitron 21" Flat', releaseYear: 2000, basePrice2010: 750000, watt: 75, comfortBonus: 5, rateBonus2010: 500, img: REAL_CONSOLE_PHOTOS.tv_crt },
+  { id: 'tv_lcd24', name: 'TV LCD LG 24" HD Ready', releaseYear: 2008, basePrice2010: 1450000, watt: 40, comfortBonus: 12, rateBonus2010: 1000, img: REAL_CONSOLE_PHOTOS.tv_lcd },
+  { id: 'tv_led32', name: 'TV LED Samsung 32" HD', releaseYear: 2010, basePrice2010: 2250000, watt: 48, comfortBonus: 20, rateBonus2010: 1500, img: REAL_CONSOLE_PHOTOS.tv_led },
+  { id: 'tv_led43', name: 'Smart TV Sony Bravia 43" Full HD', releaseYear: 2014, basePrice2010: 3600000, watt: 65, comfortBonus: 30, rateBonus2010: 2500, img: REAL_CONSOLE_PHOTOS.tv_led },
+  { id: 'tv_oled55', name: 'LG OLED 55" 4K 120Hz Gaming TV', releaseYear: 2019, basePrice2010: 7800000, watt: 95, comfortBonus: 45, rateBonus2010: 5000, img: REAL_CONSOLE_PHOTOS.tv_led }
 ];
 
 // ==================== KATALOG PENDINGIN (KIPAS & AC) ====================
 const COOLING_CATALOG = [
-  { id: 'fan_wall', type: 'fan', name: 'Kipas Angin Dinding Miyako 16"', releaseYear: 1995, basePrice2010: 165000, watt: 45, comfortBonus: 10, rateBonus2010: 500, img: makeHardwareSvg('fan', 'Kipas Dinding 16"', '45 Watt • Anti Gerah') },
-  { id: 'fan_tornado', type: 'fan', name: 'Kipas Tornado Besi Regency 18"', releaseYear: 2005, basePrice2010: 320000, watt: 75, comfortBonus: 16, rateBonus2010: 1000, img: makeHardwareSvg('fan', 'Kipas Tornado 18"', '75 Watt • Angin Kencang') },
-  { id: 'ac_half_pk', type: 'ac', name: 'AC Split Panasonic 1/2 PK Low Watt', releaseYear: 2008, basePrice2010: 2450000, watt: 340, comfortBonus: 35, rateBonus2010: 2500, img: makeHardwareSvg('ac', 'AC Panasonic 1/2 PK', '340 Watt • Dingin Sejuk') },
-  { id: 'ac_1pk_inv', type: 'ac', name: 'AC Daikin Inverter 1 PK Dingin Cepat', releaseYear: 2013, basePrice2010: 3800000, watt: 520, comfortBonus: 50, rateBonus2010: 4000, img: makeHardwareSvg('ac', 'AC Daikin 1 PK', '520 Watt • Super Dingin') }
+  { id: 'fan_wall', type: 'fan', name: 'Kipas Angin Dinding Miyako 16"', releaseYear: 1995, basePrice2010: 165000, watt: 45, comfortBonus: 10, rateBonus2010: 500, img: REAL_CONSOLE_PHOTOS.fan },
+  { id: 'fan_tornado', type: 'fan', name: 'Kipas Tornado Besi Regency 18"', releaseYear: 2005, basePrice2010: 320000, watt: 75, comfortBonus: 16, rateBonus2010: 1000, img: REAL_CONSOLE_PHOTOS.fan },
+  { id: 'ac_half_pk', type: 'ac', name: 'AC Split Panasonic 1/2 PK Low Watt', releaseYear: 2008, basePrice2010: 2450000, watt: 340, comfortBonus: 35, rateBonus2010: 2500, img: REAL_CONSOLE_PHOTOS.ac },
+  { id: 'ac_1pk_inv', type: 'ac', name: 'AC Daikin Inverter 1 PK Dingin Cepat', releaseYear: 2013, basePrice2010: 3800000, watt: 520, comfortBonus: 50, rateBonus2010: 4000, img: REAL_CONSOLE_PHOTOS.ac }
 ];
 
 // ==================== KATALOG STIK & MEMORY CARD (STOK KASIR) ====================
 const ACCESSORY_CATALOG = [
-  { id: 'stik_ps1', kind: 'stik', platform: 'PS1', name: 'Stik PS1 Analog Original', releaseYear: 1995, basePrice2010: 45000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: makeHardwareSvg('stik', 'Stik PS1 Analog', 'Tahan 100% (Baru)', '#64748b') },
-  { id: 'stik_ps2', kind: 'stik', platform: 'PS2', name: 'Stik PS2 DualShock 2 Ori Pabrik (OP)', releaseYear: 2001, basePrice2010: 65000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: makeHardwareSvg('stik', 'DualShock 2 Ori', 'Tahan 100% (Baru)', '#1e293b') },
-  { id: 'stik_ps3', kind: 'stik', platform: 'PS3', name: 'Stik PS3 DualShock 3 Wireless Ori', releaseYear: 2007, basePrice2010: 185000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: makeHardwareSvg('stik', 'DualShock 3 Wireless', 'Tahan 100% (Baru)', '#991b1b') },
-  { id: 'stik_ps4', kind: 'stik', platform: 'PS4', name: 'Stik PS4 DualShock 4 Lightbar Ori', releaseYear: 2013, basePrice2010: 420000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: makeHardwareSvg('stik', 'DualShock 4 Ori', 'Tahan 100% (Baru)', '#1d4ed8') },
-  { id: 'stik_ps5', kind: 'stik', platform: 'PS5', name: 'Stik PS5 DualSense Haptic Original', releaseYear: 2020, basePrice2010: 680000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: makeHardwareSvg('stik', 'DualSense PS5', 'Tahan 100% (Baru)', '#475569') },
-  { id: 'mc_ps1', kind: 'mc', platform: 'PS1', name: 'Memory Card PS1 1MB (15 Blocks)', releaseYear: 1995, basePrice2010: 35000, img: makeHardwareSvg('mc', 'Memory Card PS1', '15 Blok Save Data', '#475569') },
-  { id: 'mc_ps2', kind: 'mc', platform: 'PS2', name: 'Memory Card PS2 8MB MagicGate', releaseYear: 2001, basePrice2010: 55000, img: makeHardwareSvg('mc', 'Memory Card PS2 8MB', 'Wajib Save GTA/WE', '#0f172a') }
+  { id: 'stik_ps1', kind: 'stik', platform: 'PS1', name: 'Stik PS1 Analog Original', releaseYear: 1995, basePrice2010: 45000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps1 },
+  { id: 'stik_ps2', kind: 'stik', platform: 'PS2', name: 'Stik PS2 DualShock 2 Ori Pabrik (OP)', releaseYear: 2001, basePrice2010: 65000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps2 },
+  { id: 'stik_ps3', kind: 'stik', platform: 'PS3', name: 'Stik PS3 DualShock 3 Wireless Ori', releaseYear: 2007, basePrice2010: 185000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps3 },
+  { id: 'stik_ps4', kind: 'stik', platform: 'PS4', name: 'Stik PS4 DualShock 4 Lightbar Ori', releaseYear: 2013, basePrice2010: 420000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps4 },
+  { id: 'stik_ps5', kind: 'stik', platform: 'PS5', name: 'Stik PS5 DualSense Haptic Original', releaseYear: 2020, basePrice2010: 680000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps5 },
+  { id: 'mc_ps1', kind: 'mc', platform: 'PS1', name: 'Memory Card PS1 1MB (15 Blocks)', releaseYear: 1995, basePrice2010: 35000, img: REAL_CONSOLE_PHOTOS.mc_ps1 },
+  { id: 'mc_ps2', kind: 'mc', platform: 'PS2', name: 'Memory Card PS2 8MB MagicGate', releaseYear: 2001, basePrice2010: 55000, img: REAL_CONSOLE_PHOTOS.mc_ps2 }
 ];
 
 // ==================== RENOVASI TEMPAT USAHA & ROOM ====================
@@ -229,16 +229,16 @@ const RENOV_LEVELS = [
   { level: 4, name: 'Level 4: Sultan Esports Arena (Kedap Suara, Vinyl & RGB)', baseCost2010: 28000000, appealBonus: 65, rateMult: 1.65, wallColor: '#4c1d95', floorColor: '#090d16' }
 ];
 
-// ==================== GROSIR MAKANAN & MINUMAN AGEN (BELI PER DUS!) ====================
+// ==================== GROSIR MAKANAN & MINUMAN AGEN (BELI PER DUS + FOTO ASLI!) ====================
 const WHOLESALE_SNACK_CATALOG = [
-  { id: 'sn_indomie_grg', name: 'Indomie Goreng Spesial (Matang + Telur)', pcsPerBox: 40, boxPrice2010: 48000, sellPcs2010: 3500, img: makeHardwareSvg('box', 'Dus Indomie Goreng', 'Isi 40 Bungkus / Dus') },
-  { id: 'sn_indomie_soto', name: 'Indomie Kuah Soto Mie (Matang)', pcsPerBox: 40, boxPrice2010: 46000, sellPcs2010: 3500, img: makeHardwareSvg('box', 'Dus Indomie Soto', 'Isi 40 Bungkus / Dus') },
-  { id: 'sn_teh_gelas', name: 'Teh Gelas Cup Dingin', pcsPerBox: 24, boxPrice2010: 16500, sellPcs2010: 1000, img: makeHardwareSvg('box', 'Dus Teh Gelas', 'Isi 24 Cup / Dus') },
-  { id: 'sn_teh_pucuk', name: 'Teh Pucuk Harum Botol 350ml', pcsPerBox: 24, boxPrice2010: 48000, sellPcs2010: 3000, img: makeHardwareSvg('box', 'Dus Teh Pucuk', 'Isi 24 Botol / Dus') },
-  { id: 'sn_aqua_gelas', name: 'Aqua Gelas Air Mineral', pcsPerBox: 48, boxPrice2010: 20000, sellPcs2010: 500, img: makeHardwareSvg('box', 'Dus Aqua Gelas', 'Isi 48 Cup / Dus') },
-  { id: 'sn_kopi_goodday', name: 'Es Kopi Good Day / Kapal Api Seduh', pcsPerBox: 30, boxPrice2010: 27000, sellPcs2010: 2000, img: makeHardwareSvg('box', 'Renteng/Dus Kopi', 'Isi 30 Sachet / Box') },
-  { id: 'sn_chitato', name: 'Chitato / Qtela Snack Kentang', pcsPerBox: 20, boxPrice2010: 55000, sellPcs2010: 4000, img: makeHardwareSvg('box', 'Dus Chitato/Snack', 'Isi 20 Pcs / Dus') },
-  { id: 'sn_kacang_garuda', name: 'Kacang Garuda / Sukro Rosta', pcsPerBox: 24, boxPrice2010: 36000, sellPcs2010: 2500, img: makeHardwareSvg('box', 'Dus Kacang Garuda', 'Isi 24 Pcs / Dus') }
+  { id: 'sn_indomie_grg', name: 'Indomie Goreng Spesial (Matang + Telur)', pcsPerBox: 40, boxPrice2010: 48000, sellPcs2010: 3500, img: REAL_CONSOLE_PHOTOS.indomie },
+  { id: 'sn_indomie_soto', name: 'Indomie Kuah Soto Mie (Matang)', pcsPerBox: 40, boxPrice2010: 46000, sellPcs2010: 3500, img: REAL_CONSOLE_PHOTOS.indomie },
+  { id: 'sn_teh_gelas', name: 'Teh Gelas Cup Dingin', pcsPerBox: 24, boxPrice2010: 16500, sellPcs2010: 1000, img: REAL_CONSOLE_PHOTOS.drink },
+  { id: 'sn_teh_pucuk', name: 'Teh Pucuk Harum Botol 350ml', pcsPerBox: 24, boxPrice2010: 48000, sellPcs2010: 3000, img: REAL_CONSOLE_PHOTOS.drink },
+  { id: 'sn_aqua_gelas', name: 'Aqua Gelas Air Mineral', pcsPerBox: 48, boxPrice2010: 20000, sellPcs2010: 500, img: REAL_CONSOLE_PHOTOS.drink },
+  { id: 'sn_kopi_goodday', name: 'Es Kopi Good Day / Kapal Api Seduh', pcsPerBox: 30, boxPrice2010: 27000, sellPcs2010: 2000, img: REAL_CONSOLE_PHOTOS.drink },
+  { id: 'sn_chitato', name: 'Chitato / Qtela Snack Kentang', pcsPerBox: 20, boxPrice2010: 55000, sellPcs2010: 4000, img: REAL_CONSOLE_PHOTOS.snack },
+  { id: 'sn_kacang_garuda', name: 'Kacang Garuda / Sukro Rosta', pcsPerBox: 24, boxPrice2010: 36000, sellPcs2010: 2500, img: REAL_CONSOLE_PHOTOS.snack }
 ];
 
 // ==================== OPERATOR PULSA ASLI INDONESIA ====================
@@ -251,58 +251,64 @@ const PPOB_OPERATORS = [
   { id: 'smart', name: 'Smartfren', color: '#e11d48' }
 ];
 
+const REAL_MOTOR_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Honda_Supra_X_125.jpg/320px-Honda_Supra_X_125.jpg';
+const REAL_CAR_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/2019_Toyota_Avanza_1.3_G_F653RM_%2820200228%29.jpg/320px-2019_Toyota_Avanza_1.3_G_F653RM_%2820200228%29.jpg';
+const REAL_PICKUP_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/2013_Mitsubishi_Colt_L300_Pickup_Flatbed_in_Denpasar%2C_Bali%2C_Indonesia.jpg/320px-2013_Mitsubishi_Colt_L300_Pickup_Flatbed_in_Denpasar%2C_Bali%2C_Indonesia.jpg';
+const REAL_PHONE_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/IPhone_4_Mock_No_Shadow.png/240px-IPhone_4_Mock_No_Shadow.png';
+const REAL_LAPTOP_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Laptop-computer.jpg/320px-Laptop-computer.jpg';
+
 // ==================== 20 PILIHAN MOTOR INDONESIA SESUAI TAHUN ====================
 const MOTOR_CATALOG_20 = [
-  ['m01', 'Honda Supra X 125D / CW', 2005, 14800000, 4.0, '#dc2626'],
-  ['m02', 'Yamaha Mio Sporty CW (Mio Smile)', 2008, 12200000, 3.7, '#2563eb'],
-  ['m03', 'Honda Beat Karbu', 2008, 12500000, 3.5, '#ec4899'],
-  ['m04', 'Suzuki Satria FU 150 SCD', 2009, 18200000, 4.2, '#1d4ed8'],
-  ['m05', 'Yamaha V-Ixion 150 (Old Vixion)', 2008, 20800000, 12.0, '#991b1b'],
-  ['m06', 'Honda Tiger Revo 200cc', 2008, 24500000, 13.2, '#1e293b'],
-  ['m07', 'Yamaha RX-King Peredam Legend', 2007, 16500000, 9.5, '#0f172a'],
-  ['m08', 'Kawasaki Ninja 150 RR 2-Tak', 2009, 32500000, 11.5, '#16a34a'],
-  ['m09', 'Honda Vario Techno 110 CBS', 2009, 15800000, 3.7, '#475569'],
-  ['m10', 'Honda Scoopy Karbu / FI', 2010, 13800000, 3.7, '#d97706'],
-  ['m11', 'Yamaha Jupiter MX 135 New', 2011, 16800000, 4.0, '#1e40af'],
-  ['m12', 'Honda Vario Techno 125 PGM-FI', 2012, 16500000, 5.5, '#dc2626'],
-  ['m13', 'Honda CB150R StreetFire', 2013, 22800000, 12.0, '#b91c1c'],
-  ['m14', 'Honda Beat FI eSP', 2014, 14500000, 4.0, '#ef4444'],
-  ['m15', 'Yamaha NMAX 155 VVA', 2015, 24500000, 6.6, '#334155'],
-  ['m16', 'Kawasaki KLX 150 BF Trail', 2015, 29500000, 6.9, '#15803d'],
-  ['m17', 'Yamaha Aerox 155 VVA', 2017, 23800000, 4.6, '#0284c7'],
-  ['m18', 'Honda PCX 150 / 160 Lokal ABS', 2018, 28800000, 8.0, '#f8fafc'],
-  ['m19', 'Vespa Sprint 150 i-Get ABS', 2019, 46500000, 7.0, '#eab308'],
-  ['m20', 'Kawasaki Ninja ZX-25R 4-Silinder', 2020, 96000000, 15.0, '#16a34a']
-].map(([id, name, yearStart, price2010, tankCap, color]) => ({
+  ['m01', 'Honda Supra X 125D / CW', 2005, 14800000, 4.0],
+  ['m02', 'Yamaha Mio Sporty CW (Mio Smile)', 2008, 12200000, 3.7],
+  ['m03', 'Honda Beat Karbu', 2008, 12500000, 3.5],
+  ['m04', 'Suzuki Satria FU 150 SCD', 2009, 18200000, 4.2],
+  ['m05', 'Yamaha V-Ixion 150 (Old Vixion)', 2008, 20800000, 12.0],
+  ['m06', 'Honda Tiger Revo 200cc', 2008, 24500000, 13.2],
+  ['m07', 'Yamaha RX-King Peredam Legend', 2007, 16500000, 9.5],
+  ['m08', 'Kawasaki Ninja 150 RR 2-Tak', 2009, 32500000, 11.5],
+  ['m09', 'Honda Vario Techno 110 CBS', 2009, 15800000, 3.7],
+  ['m10', 'Honda Scoopy Karbu / FI', 2010, 13800000, 3.7],
+  ['m11', 'Yamaha Jupiter MX 135 New', 2011, 16800000, 4.0],
+  ['m12', 'Honda Vario Techno 125 PGM-FI', 2012, 16500000, 5.5],
+  ['m13', 'Honda CB150R StreetFire', 2013, 22800000, 12.0],
+  ['m14', 'Honda Beat FI eSP', 2014, 14500000, 4.0],
+  ['m15', 'Yamaha NMAX 155 VVA', 2015, 24500000, 6.6],
+  ['m16', 'Kawasaki KLX 150 BF Trail', 2015, 29500000, 6.9],
+  ['m17', 'Yamaha Aerox 155 VVA', 2017, 23800000, 4.6],
+  ['m18', 'Honda PCX 150 / 160 Lokal ABS', 2018, 28800000, 8.0],
+  ['m19', 'Vespa Sprint 150 i-Get ABS', 2019, 46500000, 7.0],
+  ['m20', 'Kawasaki Ninja ZX-25R 4-Silinder', 2020, 96000000, 15.0]
+].map(([id, name, yearStart, price2010, tankCap]) => ({
   id, category: 'Motor', name, yearStart, price2010, tankCap, commercialDaily2010: 0,
-  img: makeHardwareSvg('motor', name, `Rilis ${yearStart} • Tangki ${tankCap}L`, color)
+  img: REAL_MOTOR_PHOTO
 }));
 
 // ==================== 20 PILIHAN MOBIL INDONESIA (PRIBADI + PICK UP ANGKUTAN + TRAVEL) ====================
 const CAR_CATALOG_20 = [
-  ['c01', 'Suzuki Carry Futura 1.5 Pick Up (Angkutan Barang)', 2005, 82000000, 42, 120000, '#1e293b'],
-  ['c02', 'Daihatsu Gran Max 1.5 Pick Up (Usaha Kargo)', 2008, 88000000, 43, 135000, '#475569'],
-  ['c03', 'Mitsubishi L300 Pick Up Diesel (Raja Angkutan)', 2005, 138000000, 47, 185000, '#0f172a'],
-  ['c04', 'Isuzu Elf Microbus 16-Seat (Usaha Travel Antarkota)', 2008, 215000000, 75, 290000, '#0284c7'],
-  ['c05', 'Toyota Avanza 1.3 G VVT-i', 2006, 142000000, 45, 95000, '#64748b'],
-  ['c06', 'Daihatsu Xenia 1.3 Xi', 2006, 128000000, 45, 85000, '#475569'],
-  ['c07', 'Toyota Kijang Innova 2.0 G / 2.5 Diesel', 2008, 218000000, 55, 140000, '#334155'],
-  ['c08', 'Honda Jazz GE8 1.5 RS', 2008, 198000000, 42, 0, '#dc2626'],
-  ['c09', 'Toyota Yaris Bakpao 1.5 S', 2009, 185000000, 42, 0, '#b91c1c'],
-  ['c10', 'Nissan Grand Livina 1.5 XV', 2008, 168000000, 50, 0, '#475569'],
-  ['c11', 'Suzuki Ertiga 1.4 GX', 2012, 165000000, 45, 100000, '#78350f'],
-  ['c12', 'Honda Brio Satya / RS', 2013, 125000000, 35, 0, '#ea580c'],
-  ['c13', 'Toyota Agya / Daihatsu Ayla LCGC', 2013, 105000000, 33, 0, '#eab308'],
-  ['c14', 'Toyota HiAce Commuter 15-Seat (Travel Eksekutif)', 2013, 365000000, 70, 420000, '#94a3b8'],
-  ['c15', 'Honda Mobilio 1.5 E / RS', 2014, 175000000, 42, 110000, '#1d4ed8'],
-  ['c16', 'Toyota Calya / Daihatsu Sigra 7-Seater', 2016, 138000000, 36, 95000, '#64748b'],
-  ['c17', 'Mitsubishi Pajero Sport Dakar 4x2', 2016, 445000000, 68, 0, '#0f172a'],
-  ['c18', 'Toyota Fortuner VRZ 2.4 Diesel', 2016, 450000000, 80, 0, '#1e293b'],
-  ['c19', 'Mitsubishi Xpander Ultimate', 2017, 235000000, 45, 130000, '#475569'],
-  ['c20', 'Toyota Kijang Innova Zenix Hybrid / Alphard', 2022, 480000000, 52, 250000, '#0284c7']
-].map(([id, name, yearStart, price2010, tankCap, commercialDaily2010, color]) => ({
+  ['c01', 'Suzuki Carry Futura 1.5 Pick Up (Angkutan Barang)', 2005, 82000000, 42, 120000],
+  ['c02', 'Daihatsu Gran Max 1.5 Pick Up (Usaha Kargo)', 2008, 88000000, 43, 135000],
+  ['c03', 'Mitsubishi L300 Pick Up Diesel (Raja Angkutan)', 2005, 138000000, 47, 185000],
+  ['c04', 'Isuzu Elf Microbus 16-Seat (Usaha Travel Antarkota)', 2008, 215000000, 75, 290000],
+  ['c05', 'Toyota Avanza 1.3 G VVT-i', 2006, 142000000, 45, 95000],
+  ['c06', 'Daihatsu Xenia 1.3 Xi', 2006, 128000000, 45, 85000],
+  ['c07', 'Toyota Kijang Innova 2.0 G / 2.5 Diesel', 2008, 218000000, 55, 140000],
+  ['c08', 'Honda Jazz GE8 1.5 RS', 2008, 198000000, 42, 0],
+  ['c09', 'Toyota Yaris Bakpao 1.5 S', 2009, 185000000, 42, 0],
+  ['c10', 'Nissan Grand Livina 1.5 XV', 2008, 168000000, 50, 0],
+  ['c11', 'Suzuki Ertiga 1.4 GX', 2012, 165000000, 45, 100000],
+  ['c12', 'Honda Brio Satya / RS', 2013, 125000000, 35, 0],
+  ['c13', 'Toyota Agya / Daihatsu Ayla LCGC', 2013, 105000000, 33, 0],
+  ['c14', 'Toyota HiAce Commuter 15-Seat (Travel Eksekutif)', 2013, 365000000, 70, 420000],
+  ['c15', 'Honda Mobilio 1.5 E / RS', 2014, 175000000, 42, 110000],
+  ['c16', 'Toyota Calya / Daihatsu Sigra 7-Seater', 2016, 138000000, 36, 95000],
+  ['c17', 'Mitsubishi Pajero Sport Dakar 4x2', 2016, 445000000, 68, 0],
+  ['c18', 'Toyota Fortuner VRZ 2.4 Diesel', 2016, 450000000, 80, 0],
+  ['c19', 'Mitsubishi Xpander Ultimate', 2017, 235000000, 45, 130000],
+  ['c20', 'Toyota Kijang Innova Zenix Hybrid / Alphard', 2022, 480000000, 52, 250000]
+].map(([id, name, yearStart, price2010, tankCap, commercialDaily2010]) => ({
   id, category: 'Mobil', name, yearStart, price2010, tankCap, commercialDaily2010,
-  img: makeHardwareSvg('mobil', name, commercialDaily2010 > 0 ? `Rilis ${yearStart} • Bisa Usaha Travel/Kargo` : `Rilis ${yearStart} • Tangki ${tankCap}L`, color)
+  img: name.includes('Pick Up') ? REAL_PICKUP_PHOTO : REAL_CAR_PHOTO
 }));
 
 const VEHICLE_CATALOG = [...MOTOR_CATALOG_20, ...CAR_CATALOG_20];
@@ -331,7 +337,7 @@ const GADGET_CATALOG = [
   ['g20', 'Apple', 'HP', 'iPhone 16 Pro Max 256GB', 2024, 22999000]
 ].map(([id, brand, category, name, yearStart, price2010]) => ({
   id, brand, category, name, yearStart, price2010,
-  img: makeHardwareSvg('hp', name, `${brand} • Rilis ${yearStart}`, category === 'Laptop' ? '#0284c7' : '#2563eb')
+  img: category === 'Laptop' ? REAL_LAPTOP_PHOTO : REAL_PHONE_PHOTO
 }));
 
 // PASANGAN UNTUK MENIKAH & PUNYA ANAK (PEWARIS RENTAL PS)

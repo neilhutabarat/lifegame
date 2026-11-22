@@ -220,6 +220,8 @@ function isSlotReadyToPlay(slot) {
 }
 
 function addLog(msg) {
+  const toast = document.getElementById('liveToastBar');
+  if (toast) toast.innerHTML = msg;
   const box = document.getElementById('logBox');
   if (!box) return;
   const div = document.createElement('div');
@@ -229,6 +231,13 @@ function addLog(msg) {
   div.innerHTML = `<span style="color:var(--muted)">[${DAY_NAMES[state.dayOfWeek]}, ${state.day}/${state.month}/${state.year} ${hh}:${mm}]</span> ${msg}`;
   box.prepend(div);
   if (box.children.length > 80) box.removeChild(box.lastChild);
+}
+
+function getReleasedPlatforms() {
+  const plats = ['PS1', 'PS2', 'PS3'];
+  if (state.year >= 2013) plats.push('PS4');
+  if (state.year >= 2020) plats.push('PS5');
+  return plats;
 }
 
 // ==================== TEMA & MODAL ====================
@@ -702,16 +711,25 @@ function renderHud() {
   const hh = String(state.hour).padStart(2, '0');
   const mm = String(state.minute).padStart(2, '0');
   const hol = getHolidayName(state.year, state.month, state.day);
-  const schoolBadge = isPlayerAtSchool() ? ' • 🎒 Di Sekolah' : '';
+  const schoolBadge = isPlayerAtSchool() ? ' • 🎒 Sekolah' : '';
   const holBadge = hol ? ` • 🔴 ${hol}` : '';
   document.getElementById('hudDateTime').textContent = `${DAY_NAMES[state.dayOfWeek]}, ${state.day}/${state.month}/${state.year} • ${hh}:${mm}${schoolBadge}${holBadge}`;
   document.getElementById('hudCityUmr').textContent = `${getCity().name} • $1 = Rp ${getUsdRate(state.year).toLocaleString('id-ID')}`;
+  const pBadge = document.getElementById('hudPlayerBadge');
+  if (pBadge) pBadge.textContent = `${state.player.name} (${state.player.age} Thn)`;
   document.getElementById('hudLaci').textContent = fmtRp(state.laciCash);
   document.getElementById('hudHand').textContent = fmtRp(state.handWallet);
   document.getElementById('hudBank').textContent = fmtRp(state.personalBank);
   document.getElementById('hudPpob').textContent = fmtRp(state.businessPpobBalance);
   document.getElementById('hudKwh').textContent = `${state.kwh.toFixed(1)} kWh`;
   document.getElementById('hudClean').textContent = `${Math.round(state.cleanliness)}%`;
+  const qCount = document.getElementById('lblQueueCount');
+  if (qCount) qCount.textContent = state.waitingQueue.length;
+  const btnOpen = document.getElementById('btnToggleOpen');
+  if (btnOpen) {
+    btnOpen.className = state.rentalOpen ? 'success' : 'danger';
+    btnOpen.textContent = state.rentalOpen ? '🟢 BUKA' : '🔴 TUTUP';
+  }
 
   const btnPause = document.getElementById('btnPause');
   if (btnPause) {
@@ -722,75 +740,7 @@ function renderHud() {
 }
 
 function renderCenterWorkspace() {
-  const cw = document.getElementById('centerWorkspace');
-  if (!cw) return;
-
-  // Pastikan kartu Studio 3D hanya dibuat sekali agar WebGL canvas tidak ke-reset!
-  if (!document.getElementById('studio3dCard')) {
-    cw.innerHTML = `
-      <div class="card" id="studio3dCard">
-        <h2>
-          <span>🏢 Visual 3D Tempat Usaha Rental PS (10 Unit Luar + 10 Room VIP + Ruang Tunggu)</span>
-          <div style="display:flex;gap:5px;">
-            <button onclick="manualCleanShop()" title="Sapu & Bersihkan Sendiri">🧹 Bersihkan (<span id="lblCleanBtn">100%</span>)</button>
-            <button id="btnToggleOpen" class="success" onclick="toggleRentalOpenStatus()">🟢 BUKA</button>
-            <button onclick="resetStudio3dCamera()">🎥 Reset</button>
-            <button id="btn3dFs" class="primary" onclick="toggleStudio3dFullscreen()">⛶ Fullscreen 3D</button>
-          </div>
-        </h2>
-        <div id="studio3dStatusBanner" class="spec-line" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;"></div>
-        <div id="studio3dViewport" style="width:100%;height:340px;border-radius:10px;overflow:hidden;background:#090d16;border:1px solid var(--border);"></div>
-      </div>
-      <div class="card">
-        <h2>
-          <span>🪑 Ringkasan Cepat 20 Slot & Ruang Tunggu (<span id="lblQueueCount">0</span> Antre)</span>
-          <button onclick="spawnIncomingCustomer()">+ Panggil Tamu</button>
-        </h2>
-        <div id="quickSlotsGrid" class="booths-grid" style="max-height:260px;overflow-y:auto;"></div>
-      </div>
-    `;
-    if (typeof window.initRental3D === 'function') window.initRental3D();
-  }
-
-  // Update isi dinamis tanpa merusak canvas 3D
-  const btnOpen = document.getElementById('btnToggleOpen');
-  if (btnOpen) {
-    btnOpen.className = state.rentalOpen ? 'success' : 'danger';
-    btnOpen.textContent = state.rentalOpen ? '🟢 RENTAL BUKA' : '🔴 TUTUP (Habiskan Sisa Billing)';
-  }
-  const lblCl = document.getElementById('lblCleanBtn');
-  if (lblCl) lblCl.textContent = `${Math.round(state.cleanliness)}%`;
-
-  const banner = document.getElementById('studio3dStatusBanner');
-  if (banner) {
-    const activeCount = state.slots.filter(s => s.occupied).length;
-    const readyCount = state.slots.filter(s => isSlotReadyToPlay(s).ok).length;
-    const rName = (RENOV_LEVELS[state.renovLevel - 1] || RENOV_LEVELS[0]).name;
-    banner.innerHTML = `<span><b>Status:</b> ${activeCount}/${readyCount} Unit Main • Antrean Tunggu: <b>${state.waitingQueue.length} orang</b></span>
-                        <span><b>Interior:</b> ${rName}</span>`;
-  }
-
-  const qCount = document.getElementById('lblQueueCount');
-  if (qCount) qCount.textContent = state.waitingQueue.length;
-
-  const qGrid = document.getElementById('quickSlotsGrid');
-  if (qGrid) {
-    qGrid.innerHTML = state.slots.map(s => {
-      const st = isSlotReadyToPlay(s);
-      const badge = s.occupied
-        ? `<span class="badge busy">Main (${s.minutesLeft}m)</span>`
-        : st.ok ? `<span class="badge ok">Siap (${fmtRp(getSlotHourlyRate(s))}/j)</span>` : `<span class="badge warn">Belum Siap</span>`;
-      return `<div class="booth ${s.occupied ? 'active' : ''}">
-        <div class="booth-top"><span>${s.name}</span>${badge}</div>
-        <div class="spec-line">
-          PS: <b>${s.console ? s.console.name.slice(0, 22) : '-'}</b><br>
-          TV: <b>${s.tv ? s.tv.name.slice(0, 22) : '-'}</b> • ${s.cooling ? s.cooling.name.slice(0, 14) : 'Tanpa AC/Kipas'}<br>
-          Stik: <b>${s.controller ? `${s.controller.platform} (${s.controller.durability}%)` : 'Kosong'}</b> • Game: <b>${s.console && s.console.mediaType === 'digital' ? `${s.digitalGames.length} Digital` : (s.installedGame ? s.installedGame.title.slice(0, 16) : 'Kosong')}</b>
-        </div>
-        <button onclick="openSlotConfigModal(${s.id})">⚙️ Atur / Bongkar Pasang</button>
-      </div>`;
-    }).join('');
-  }
+  if (typeof window.initRental3D === 'function') window.initRental3D();
 }
 
 function toggleRentalOpenStatus() {
@@ -812,11 +762,39 @@ function manualCleanShop() {
 }
 
 // ==================== TAB NAVIGASI PANEL KANAN ====================
-function switchMainTab(tabId, btnEl) {
+const DRAWER_TITLES = {
+  slots: '🎮 20 Slot & Room Rental PS (10 Luar + 10 Room VIP)',
+  store_hw: '🛒 Toko Konsol PS, TV, Pendingin & Renovasi',
+  discs: '💿 Katalog Kaset Game Original (Sesuai Tahun)',
+  cashier_stik: '🔧 Meja Kasir: Stok Stik Cadangan, Servis & Gudang',
+  agen_ppob: '📦 Agen Grosir Makanan (Per Dus) & Konter Pulsa',
+  employees: '👷 Manajemen Karyawan, Jadwal & Tugas',
+  finance: '🏦 Token Listrik PLN, Pinjaman Orang Tua & Bank',
+  automotive: '🛵 Dealer Motor, Mobil (Travel/Kargo) & Gadget',
+  life: '🧬 Kehidupan, Sekolah, Keluarga & Warisan Anak',
+  logs: '📜 Riwayat Catatan Aktivitas Rental & Kehidupan'
+};
+
+function openDrawerTab(tabId) {
   state.mainTab = tabId;
-  document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => b.classList.remove('active'));
-  if (btnEl) btnEl.classList.add('active');
+  document.querySelectorAll('.dock-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabId);
+  });
+  const titleEl = document.getElementById('drawerTitle');
+  if (titleEl) titleEl.textContent = DRAWER_TITLES[tabId] || '📱 Menu Manajemen';
+  const backdrop = document.getElementById('appDrawerBackdrop');
+  if (backdrop) backdrop.classList.add('open');
   renderRightPanel();
+}
+
+function closeDrawer() {
+  const backdrop = document.getElementById('appDrawerBackdrop');
+  if (backdrop) backdrop.classList.remove('open');
+  document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+}
+
+function switchMainTab(tabId) {
+  openDrawerTab(tabId);
 }
 
 function renderCenterAndRight() {
@@ -865,12 +843,18 @@ function renderRightPanel() {
     return;
   }
 
+  if (state.mainTab === 'logs') {
+    const logBox = document.getElementById('logBox');
+    box.innerHTML = `<div class="spec-line">Catatan kejadian terbaru di usaha Rental PS & kehidupanmu:</div>` +
+      (logBox ? logBox.innerHTML : '<div class="spec-line">Belum ada catatan.</div>');
+    return;
+  }
+
   if (state.mainTab === 'store_hw') {
     const nextRenov = RENOV_LEVELS[state.renovLevel];
     let itemsHtml = '';
     if (state.hwCategoryFilter === 'console') {
-      itemsHtml = CONSOLE_CATALOG.map(c => {
-        const unlocked = state.year >= c.releaseYear;
+      itemsHtml = CONSOLE_CATALOG.filter(c => c.releaseYear <= state.year).map(c => {
         const price = getPriceFrom2010(c.basePrice2010);
         return `<div class="item-row">
           <img class="prod-thumb" src="${c.img}" alt="${c.name}" />
@@ -879,12 +863,11 @@ function renderRightPanel() {
             <div class="spec-line">Rilis: ${c.releaseYear} • Daya: ${c.watt}W • Tarif dasar: ${fmtRp(getPriceFrom2010(c.baseRate2010))}/jam</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('console','${c.id}')">${unlocked ? 'Beli' : `Thn ${c.releaseYear}`}</button>
+          <button class="primary" onclick="buyHardwareItem('console','${c.id}')">Beli</button>
         </div>`;
       }).join('');
     } else if (state.hwCategoryFilter === 'tv') {
-      itemsHtml = TV_CATALOG.map(t => {
-        const unlocked = state.year >= t.releaseYear;
+      itemsHtml = TV_CATALOG.filter(t => t.releaseYear <= state.year).map(t => {
         const price = getPriceFrom2010(t.basePrice2010);
         return `<div class="item-row">
           <img class="prod-thumb" src="${t.img}" alt="${t.name}" />
@@ -893,12 +876,11 @@ function renderRightPanel() {
             <div class="spec-line">Rilis: ${t.releaseYear} • Daya: ${t.watt}W • Bonus kenyamanan +${t.comfortBonus}</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('tv','${t.id}')">${unlocked ? 'Beli' : `Thn ${t.releaseYear}`}</button>
+          <button class="primary" onclick="buyHardwareItem('tv','${t.id}')">Beli</button>
         </div>`;
       }).join('');
     } else if (state.hwCategoryFilter === 'cooling') {
-      itemsHtml = COOLING_CATALOG.map(cl => {
-        const unlocked = state.year >= cl.releaseYear;
+      itemsHtml = COOLING_CATALOG.filter(cl => cl.releaseYear <= state.year).map(cl => {
         const price = getPriceFrom2010(cl.basePrice2010);
         return `<div class="item-row">
           <img class="prod-thumb" src="${cl.img}" alt="${cl.name}" />
@@ -907,12 +889,11 @@ function renderRightPanel() {
             <div class="spec-line">Rilis: ${cl.releaseYear} • Daya: ${cl.watt}W • Bonus sejuk +${cl.comfortBonus}</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('cooling','${cl.id}')">${unlocked ? 'Beli' : `Thn ${cl.releaseYear}`}</button>
+          <button class="primary" onclick="buyHardwareItem('cooling','${cl.id}')">Beli</button>
         </div>`;
       }).join('');
     } else {
-      itemsHtml = ACCESSORY_CATALOG.map(ac => {
-        const unlocked = state.year >= ac.releaseYear;
+      itemsHtml = ACCESSORY_CATALOG.filter(ac => ac.releaseYear <= state.year).map(ac => {
         const price = getPriceFrom2010(ac.basePrice2010);
         return `<div class="item-row">
           <img class="prod-thumb" src="${ac.img}" alt="${ac.name}" />
@@ -921,7 +902,7 @@ function renderRightPanel() {
             <div class="spec-line">Masuk ke Stok Cadangan Kasir (${ac.platform})</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyHardwareItem('acc','${ac.id}')">${unlocked ? 'Beli ke Kasir' : `Thn ${ac.releaseYear}`}</button>
+          <button class="primary" onclick="buyHardwareItem('acc','${ac.id}')">Beli ke Kasir</button>
         </div>`;
       }).join('');
     }
@@ -935,8 +916,8 @@ function renderRightPanel() {
         ${nextRenov ? `<button class="amber" onclick="upgradeRenovation()">Renov (${fmtRp(getPriceFrom2010(nextRenov.baseCost2010))})</button>` : '<span class="badge ok">MAX</span>'}
       </div>
       <div class="sub-tabs">
-        <button class="sub-btn ${state.hwCategoryFilter === 'console' ? 'active' : ''}" onclick="state.hwCategoryFilter='console';renderRightPanel()">🎮 Konsol PS1–PS5</button>
-        <button class="sub-btn ${state.hwCategoryFilter === 'tv' ? 'active' : ''}" onclick="state.hwCategoryFilter='tv';renderRightPanel()">📺 TV Tabung/LED</button>
+        <button class="sub-btn ${state.hwCategoryFilter === 'console' ? 'active' : ''}" onclick="state.hwCategoryFilter='console';renderRightPanel()">🎮 Konsol PS (Thn ${state.year})</button>
+        <button class="sub-btn ${state.hwCategoryFilter === 'tv' ? 'active' : ''}" onclick="state.hwCategoryFilter='tv';renderRightPanel()">📺 TV</button>
         <button class="sub-btn ${state.hwCategoryFilter === 'cooling' ? 'active' : ''}" onclick="state.hwCategoryFilter='cooling';renderRightPanel()">❄️ Kipas & AC</button>
         <button class="sub-btn ${state.hwCategoryFilter === 'acc' ? 'active' : ''}" onclick="state.hwCategoryFilter='acc';renderRightPanel()">🕹️ Stik & MemCard</button>
       </div>
@@ -946,21 +927,23 @@ function renderRightPanel() {
   }
 
   if (state.mainTab === 'discs') {
+    const availPlats = getReleasedPlatforms();
+    if (!availPlats.includes(state.discPlatformFilter)) state.discPlatformFilter = availPlats[availPlats.length - 1];
     const q = (state.discSearchQuery || '').toLowerCase();
     const list = GAME_DISC_CATALOG.filter(g =>
       g.platform === state.discPlatformFilter &&
+      g.releaseYear <= state.year &&
       (!q || g.title.toLowerCase().includes(q) || g.genre.toLowerCase().includes(q))
     );
     box.innerHTML = `
       <div class="sub-tabs">
-        ${['PS1', 'PS2', 'PS3', 'PS4', 'PS5'].map(p => `<button class="sub-btn ${state.discPlatformFilter === p ? 'active' : ''}" onclick="state.discPlatformFilter='${p}';renderRightPanel()">💿 ${p} (${GAME_DISC_CATALOG.filter(x => x.platform === p).length})</button>`).join('')}
+        ${availPlats.map(p => `<button class="sub-btn ${state.discPlatformFilter === p ? 'active' : ''}" onclick="state.discPlatformFilter='${p}';renderRightPanel()">💿 ${p} (${GAME_DISC_CATALOG.filter(x => x.platform === p && x.releaseYear <= state.year).length})</button>`).join('')}
       </div>
-      <input placeholder="🔍 Cari dari 200+ judul game original (misal: Winning Eleven, GTA,CTR, Downhill)..." value="${state.discSearchQuery}" oninput="state.discSearchQuery=this.value;renderRightPanel()" />
-      <div class="spec-line">Aturan Realistis: 1 PS Kaset Fisik membutuhkan 1 Kaset Original yang bebas. Beli kaset ekstra jika ingin dipasang di banyak PS sekaligus!</div>
+      <input placeholder="🔍 Cari judul game original yang tersedia di tahun ${state.year}..." value="${state.discSearchQuery}" oninput="state.discSearchQuery=this.value;renderRightPanel()" />
+      <div class="spec-line">Aturan Realistis: 1 PS Kaset Fisik membutuhkan 1 Kaset Original yang bebas. Hanya menampilkan game yang sudah rilis s/d tahun ${state.year}.</div>
       ${list.map(g => {
         const owned = state.ownedDiscs[g.id] || 0;
         const used = getUsedDiscCopies(g.id);
-        const unlocked = state.year >= g.releaseYear;
         const price = getPriceFrom2010(g.basePrice2010);
         return `<div class="item-row">
           <img class="disc-thumb" src="${g.cover}" alt="${g.title}" />
@@ -969,7 +952,7 @@ function renderRightPanel() {
             <div class="spec-line">${g.genre} • Hype: 🔥${g.hype} • Rilis ${g.releaseYear} • Punya: <b>${owned} kaset</b> (Terpakai: ${used})</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)} / kaset</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyGameDisc('${g.id}')">${unlocked ? '+ Beli Kaset' : `Thn ${g.releaseYear}`}</button>
+          <button class="primary" onclick="buyGameDisc('${g.id}')">+ Beli Kaset</button>
         </div>`;
       }).join('')}
     `;
@@ -977,11 +960,12 @@ function renderRightPanel() {
   }
 
   if (state.mainTab === 'cashier_stik') {
+    const availPlats = getReleasedPlatforms();
     box.innerHTML = `
       <div class="card" style="padding:8px;">
         <b>🕹️ Stok Stik Cadangan & Servis di Meja Kasir</b>
         <div class="spec-line">Stik Baru tahan <b>100%</b>, sedangkan Stik Hasil Servis tahan <b>65%</b>. Stik rusak yang dicabut dari PS masuk ke sini untuk kamu servis sendiri atau diservis karyawan.</div>
-        ${['PS1', 'PS2', 'PS3', 'PS4', 'PS5'].map(p => `
+        ${availPlats.map(p => `
           <div class="item-row">
             <div>
               <b>Stik ${p}</b>
@@ -993,10 +977,10 @@ function renderRightPanel() {
       </div>
       <div class="card" style="padding:8px;">
         <b>📦 Gudang Perangkat Belum Dipasang / Dilepas (${state.warehouseConsoles.length} PS, ${state.warehouseTvs.length} TV, ${state.warehouseCoolings.length} Kipas/AC)</b>
-        <div class="spec-line">Pilih salah satu dari 20 Slot/Room untuk memasang perangkat dari gudang ini.</div>
-        ${state.warehouseConsoles.map((c, i) => `<div class="item-row"><span>🎮 ${c.name} (Kondisi ${c.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
-        ${state.warehouseTvs.map((t, i) => `<div class="item-row"><span>📺 ${t.name} (Kondisi ${t.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
-        ${state.warehouseCoolings.map((cl, i) => `<div class="item-row"><span>❄️ ${cl.name}</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+        <div class="spec-line">Tap unit/slot langsung di layar 3D atau buka tab 20 Slot untuk memasang perangkat dari gudang ini.</div>
+        ${state.warehouseConsoles.map(c => `<div class="item-row"><span>🎮 ${c.name} (Kondisi ${c.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+        ${state.warehouseTvs.map(t => `<div class="item-row"><span>📺 ${t.name} (Kondisi ${t.cond}%)</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
+        ${state.warehouseCoolings.map(cl => `<div class="item-row"><span>❄️ ${cl.name}</span><span class="badge ok">Siap Pasang</span></div>`).join('')}
       </div>
     `;
     return;
@@ -1117,9 +1101,8 @@ function renderRightPanel() {
           </div>
         `).join('')}
       </div>
-      <b>🛵 20 Pilihan Motor & 🚗 20 Pilihan Mobil (Sesuai Tahun Rilis) + 📱 HP/Laptop</b>
-      ${VEHICLE_CATALOG.map(v => {
-        const unlocked = state.year >= v.yearStart;
+      <b>🛵 Pilihan Motor & 🚗 Mobil (Keluaran s/d Tahun ${state.year}) + 📱 HP/Laptop</b>
+      ${VEHICLE_CATALOG.filter(v => v.yearStart <= state.year).map(v => {
         const price = getPriceFrom2010(v.price2010);
         return `<div class="item-row">
           <img class="prod-thumb" src="${v.img}" alt="${v.name}" />
@@ -1128,11 +1111,10 @@ function renderRightPanel() {
             <div class="spec-line">Rilis: ${v.yearStart} • Tangki: ${v.tankCap}L ${v.commercialDaily2010 > 0 ? `• Hasil Usaha: +${fmtRp(getPriceFrom2010(v.commercialDaily2010))}/hari` : ''}</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyVehicle('${v.id}')">${unlocked ? 'Beli' : `Thn ${v.yearStart}`}</button>
+          <button class="primary" onclick="buyVehicle('${v.id}')">Beli</button>
         </div>`;
       }).join('')}
-      ${GADGET_CATALOG.map(g => {
-        const unlocked = state.year >= g.yearStart;
+      ${GADGET_CATALOG.filter(g => g.yearStart <= state.year).map(g => {
         const price = getPriceFrom2010(g.price2010);
         return `<div class="item-row">
           <img class="prod-thumb" src="${g.img}" alt="${g.name}" />
@@ -1141,7 +1123,7 @@ function renderRightPanel() {
             <div class="spec-line">${g.brand} • Rilis ${g.yearStart}</div>
             <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
           </div>
-          <button class="primary" ${!unlocked ? 'disabled' : ''} onclick="buyGadget('${g.id}')">${unlocked ? 'Beli' : `Thn ${g.yearStart}`}</button>
+          <button class="primary" onclick="buyGadget('${g.id}')">Beli</button>
         </div>`;
       }).join('')}
     `;

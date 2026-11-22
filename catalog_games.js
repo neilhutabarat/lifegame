@@ -1,5 +1,36 @@
-// ==================== DATABASE 100 GAME PS1 & 100 GAME PS2 TERKENAL DI INDONESIA (+ PS3/PS4/PS5) ====================
-// Lengkap dengan tahun rilis, harga kaset original sesuai zaman, daya tarik pelanggan (hype), dan cover art CD/DVD/BD original.
+// ==================== KATALOG 100 GAME PS1 & 100 GAME PS2 TERKENAL DI INDONESIA (+ PS3/PS4/PS5) ====================
+// Hanya menampilkan game yang SUDAH RILIS pada tahun berjalan (releaseYear <= state.year).
+// Menggunakan cover box art bergaya cetak original dengan fallback foto nyata.
+
+const REAL_CONSOLE_PHOTOS = {
+  ps1_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/PSX-Console-wController.png/320px-PSX-Console-wController.png',
+  ps1_one: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/PSone-Console-Set-NoLCD.png/320px-PSone-Console-Set-NoLCD.png',
+  ps2_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/PS2-Versions.png/320px-PS2-Versions.png',
+  ps2_slim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/PS2-Slim-Console-Set.png/320px-PS2-Slim-Console-Set.png',
+  ps3_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Sony-PlayStation-3-2001A-wController-L.jpg/320px-Sony-PlayStation-3-2001A-wController-L.jpg',
+  ps3_slim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Sony-PlayStation-3-CECH-2001A-wController-L.jpg/320px-Sony-PlayStation-3-CECH-2001A-wController-L.jpg',
+  ps3_sslim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Sony-PlayStation-3-4001B-wController-L.jpg/320px-Sony-PlayStation-3-4001B-wController-L.jpg',
+  ps4_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/PS4-Console-wDS4.png/320px-PS4-Console-wDS4.png',
+  ps4_slim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/PS4-Slim-Console-Set.png/320px-PS4-Slim-Console-Set.png',
+  ps4_pro: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/PS4-Pro-Console-Set.png/320px-PS4-Pro-Console-Set.png',
+  ps5_disc: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/PlayStation_5_and_DualSense_with_transparent_background.png/320px-PlayStation_5_and_DualSense_with_transparent_background.png',
+  ps5_dig: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Black_and_white_Playstation_5_base_edition_with_controller.png/320px-Black_and_white_Playstation_5_base_edition_with_controller.png',
+  stik_ps1: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/PlayStation-DualShock-Controller-Gray.png/320px-PlayStation-DualShock-Controller-Gray.png',
+  stik_ps2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/PS2-DualShock-2-Controller-FL.png/320px-PS2-DualShock-2-Controller-FL.png',
+  stik_ps3: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PlayStation-3-DualShock-3-Controller-BR.png/320px-PlayStation-3-DualShock-3-Controller-BR.png',
+  stik_ps4: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/DualShock-4.png/320px-DualShock-4.png',
+  stik_ps5: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/DualSense.png/320px-DualSense.png',
+  mc_ps1: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/PS1-Memory-Card.jpg/240px-PS1-Memory-Card.jpg',
+  mc_ps2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/PS2-Memory-Card.jpg/240px-PS2-Memory-Card.jpg',
+  tv_crt: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/CRT_television_set.jpg/320px-CRT_television_set.jpg',
+  tv_lcd: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/LG_LCD_TV.jpg/320px-LG_LCD_TV.jpg',
+  tv_led: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Smart-TV-Samsung.jpg/320px-Smart-TV-Samsung.jpg',
+  fan: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Electric_fan_01.jpg/240px-Electric_fan_01.jpg',
+  ac: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Air_conditioner_indoor_unit.jpg/320px-Air_conditioner_indoor_unit.jpg',
+  indomie: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Indomie_Mie_Goreng_expanded.jpg/320px-Indomie_Mie_Goreng_expanded.jpg',
+  snack: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Potato_Chips.jpg/320px-Potato_Chips.jpg',
+  drink: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Iced_Tea_in_cup.jpg/240px-Iced_Tea_in_cup.jpg'
+};
 
 const PS1_100_NAMES = [
   ['we2002', 'Winning Eleven 2002 (WE6)', 'Sports', 98, 2002],
@@ -208,149 +239,85 @@ const PS2_100_NAMES = [
 ];
 
 const NEXTGEN_GAMES_RAW = [
-  // PS3 (2006 - 2016)
-  ['ps3_pes2013', 'PS3', 'Pro Evolution Soccer 2013 (PES 2013 Legend)', 'Sports', 100, 2012, 350000, 12],
-  ['ps3_gtav', 'PS3', 'Grand Theft Auto V (GTA 5)', 'Open World', 100, 2013, 550000, 18],
-  ['ps3_tlou', 'PS3', 'The Last of Us', 'Action Adventure', 98, 2013, 480000, 24],
+  ['ps3_pes2010', 'PS3', 'Pro Evolution Soccer 2010', 'Sports', 96, 2009, 320000, 10],
   ['ps3_gow3', 'PS3', 'God of War III', 'Action', 97, 2010, 420000, 20],
   ['ps3_uncharted2', 'PS3', 'Uncharted 2: Among Thieves', 'Action', 95, 2009, 380000, 16],
-  ['ps3_uncharted3', 'PS3', 'Uncharted 3: Drake\'s Deception', 'Action', 96, 2011, 420000, 20],
   ['ps3_rdr', 'PS3', 'Red Dead Redemption', 'Open World', 96, 2010, 420000, 15],
+  ['ps3_uncharted3', 'PS3', 'Uncharted 3: Drake\'s Deception', 'Action', 96, 2011, 420000, 20],
+  ['ps3_pes2013', 'PS3', 'Pro Evolution Soccer 2013 (PES 2013 Legend)', 'Sports', 100, 2012, 350000, 12],
   ['ps3_cod_bo2', 'PS3', 'Call of Duty: Black Ops II', 'FPS', 97, 2012, 450000, 14],
   ['ps3_tekken_ttt2', 'PS3', 'Tekken Tag Tournament 2', 'Fighting', 96, 2012, 400000, 15],
+  ['ps3_gtav', 'PS3', 'Grand Theft Auto V (GTA 5)', 'Open World', 100, 2013, 550000, 18],
+  ['ps3_tlou', 'PS3', 'The Last of Us', 'Action Adventure', 98, 2013, 480000, 24],
   ['ps3_naruto_storm3', 'PS3', 'Naruto Shippuden: Ultimate Ninja Storm 3', 'Fighting', 95, 2013, 400000, 12],
   ['ps3_gt6', 'PS3', 'Gran Turismo 6', 'Racing', 94, 2013, 420000, 16],
-  ['ps3_fifa14', 'PS3', 'EA Sports FIFA 14 World Cup', 'Sports', 95, 2013, 380000, 11],
 
-  // PS4 (2013 - 2024)
-  ['ps4_pes2021', 'PS4', 'eFootball PES 2021 Season Update', 'Sports', 100, 2020, 490000, 40],
-  ['ps4_pes2018', 'PS4', 'Pro Evolution Soccer 2018', 'Sports', 98, 2017, 450000, 32],
   ['ps4_gtav', 'PS4', 'Grand Theft Auto V Premium Edition', 'Open World', 99, 2014, 550000, 65],
+  ['ps4_naruto_storm4', 'PS4', 'Naruto Shippuden: Ultimate Ninja Storm 4', 'Fighting', 97, 2016, 480000, 35],
+  ['ps4_pes2018', 'PS4', 'Pro Evolution Soccer 2018', 'Sports', 98, 2017, 450000, 32],
+  ['ps4_tekken7', 'PS4', 'Tekken 7', 'Fighting', 97, 2017, 550000, 42],
   ['ps4_rdr2', 'PS4', 'Red Dead Redemption 2', 'Open World', 99, 2018, 749000, 105],
   ['ps4_gow2018', 'PS4', 'God of War (2018)', 'Action', 98, 2018, 599000, 45],
   ['ps4_spiderman', 'PS4', 'Marvel\'s Spider-Man', 'Action', 98, 2018, 599000, 50],
-  ['ps4_ghost_tsushima', 'PS4', 'Ghost of Tsushima', 'Open World', 98, 2020, 699000, 55],
-  ['ps4_tekken7', 'PS4', 'Tekken 7', 'Fighting', 97, 2017, 550000, 42],
   ['ps4_mk11', 'PS4', 'Mortal Kombat 11', 'Fighting', 96, 2019, 590000, 48],
-  ['ps4_fc24', 'PS4', 'EA Sports FC 24', 'Sports', 99, 2023, 750000, 45],
   ['ps4_re2_remake', 'PS4', 'Resident Evil 2 Remake', 'Horror', 96, 2019, 550000, 28],
-  ['ps4_naruto_storm4', 'PS4', 'Naruto Shippuden: Ultimate Ninja Storm 4', 'Fighting', 97, 2016, 480000, 35],
+  ['ps4_pes2021', 'PS4', 'eFootball PES 2021 Season Update', 'Sports', 100, 2020, 490000, 40],
+  ['ps4_ghost_tsushima', 'PS4', 'Ghost of Tsushima', 'Open World', 98, 2020, 699000, 55],
+  ['ps4_fc24', 'PS4', 'EA Sports FC 24', 'Sports', 99, 2023, 750000, 45],
 
-  // PS5 (2020 - 2026+)
-  ['ps5_fc25', 'PS5', 'EA Sports FC 25', 'Sports', 100, 2024, 999000, 55],
-  ['ps5_fc24', 'PS5', 'EA Sports FC 24', 'Sports', 99, 2023, 899000, 52],
-  ['ps5_efootball', 'PS5', 'eFootball Patch Liga 1 & Eropa', 'Sports', 99, 2022, 350000, 48],
-  ['ps5_spiderman2', 'PS5', 'Marvel\'s Spider-Man 2', 'Action', 99, 2023, 1029000, 98],
+  ['ps5_efootball', 'PS5', 'eFootball Patch Liga 1 & Eropa', 'Sports', 99, 2021, 350000, 48],
   ['ps5_gow_ragnarok', 'PS5', 'God of War Ragnarök', 'Action', 99, 2022, 1029000, 85],
-  ['ps5_tekken8', 'PS5', 'Tekken 8', 'Fighting', 99, 2024, 999000, 100],
-  ['ps5_wukong', 'PS5', 'Black Myth: Wukong', 'Action RPG', 100, 2024, 899000, 105],
   ['ps5_gt7', 'PS5', 'Gran Turismo 7', 'Racing', 97, 2022, 899000, 110],
+  ['ps5_elden_ring', 'PS5', 'Elden Ring', 'Action RPG', 98, 2022, 899000, 80],
+  ['ps5_fc24', 'PS5', 'EA Sports FC 24', 'Sports', 99, 2023, 899000, 52],
+  ['ps5_spiderman2', 'PS5', 'Marvel\'s Spider-Man 2', 'Action', 99, 2023, 1029000, 98],
   ['ps5_re4_remake', 'PS5', 'Resident Evil 4 Remake', 'Action Horror', 98, 2023, 829000, 68],
-  ['ps5_elden_ring', 'PS5', 'Elden Ring: Shadow of the Erdtree', 'Action RPG', 98, 2022, 899000, 80]
+  ['ps5_fc25', 'PS5', 'EA Sports FC 25', 'Sports', 100, 2024, 999000, 55],
+  ['ps5_tekken8', 'PS5', 'Tekken 8', 'Fighting', 99, 2024, 999000, 100],
+  ['ps5_wukong', 'PS5', 'Black Myth: Wukong', 'Action RPG', 100, 2024, 899000, 105]
 ];
 
-// Generator Cover Art CD / DVD / Blu-Ray Original (SVG Data URI tajam, tidak pernah broken link!)
+// Box Art Cover CD / DVD / Blu-Ray Original Detail Tinggi (dengan efek kilap plastik, hologram PlayStation, & rating ESRB)
 function makeDiscCoverSvg(platform, title, genre, id) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = ((hash << 5) - hash) + id.charCodeAt(i);
   const hue1 = Math.abs(hash) % 360;
-  const hue2 = (hue1 + 48) % 360;
-  const headerBg = platform === 'PS1' ? '#111827' : platform === 'PS2' ? '#1e3a8a' : platform === 'PS3' ? '#991b1b' : platform === 'PS4' ? '#0284c7' : '#e2e8f0';
+  const hue2 = (hue1 + 55) % 360;
+  const caseColor = platform === 'PS1' ? '#1e293b' : platform === 'PS2' ? '#172554' : platform === 'PS3' ? '#7f1d1d' : platform === 'PS4' ? '#0369a1' : '#f8fafc';
   const headerFg = platform === 'PS5' ? '#0f172a' : '#ffffff';
   const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const l1 = safeTitle.slice(0, 18);
-  const l2 = safeTitle.slice(18, 36);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200" width="160" height="200">
+  const words = safeTitle.split(' ');
+  const l1 = words.slice(0, 2).join(' ').slice(0, 16);
+  const l2 = words.slice(2, 5).join(' ').slice(0, 18);
+  const l3 = words.slice(5).join(' ').slice(0, 18);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 230" width="180" height="230">
     <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="hsl(${hue1},72%,36%)"/>
-        <stop offset="100%" stop-color="hsl(${hue2},82%,18%)"/>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="hsl(${hue1},78%,42%)"/>
+        <stop offset="55%" stop-color="hsl(${hue2},85%,22%)"/>
+        <stop offset="100%" stop-color="#090d16"/>
+      </linearGradient>
+      <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.28)"/>
+        <stop offset="20%" stop-color="rgba(255,255,255,0.03)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0.12)"/>
       </linearGradient>
     </defs>
-    <rect width="160" height="200" rx="10" fill="url(#g)" stroke="#475569" stroke-width="3"/>
-    <rect width="160" height="28" rx="8" fill="${headerBg}"/>
-    <text x="10" y="19" fill="${headerFg}" font-family="Arial,sans-serif" font-weight="900" font-size="13">${platform} ORIGINAL</text>
-    <circle cx="80" cy="96" r="40" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-    <circle cx="80" cy="96" r="11" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/>
-    <text x="80" y="156" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-weight="800" font-size="11.5">${l1}</text>
-    <text x="80" y="171" text-anchor="middle" fill="#e2e8f0" font-family="Arial,sans-serif" font-weight="700" font-size="10.5">${l2}</text>
-    <rect x="30" y="178" width="100" height="15" rx="7" fill="rgba(0,0,0,0.45)"/>
-    <text x="80" y="189" text-anchor="middle" fill="#38bdf8" font-family="Arial,sans-serif" font-weight="700" font-size="9">${genre.toUpperCase()}</text>
-  </svg>`;
-  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-}
-
-// Generator Foto/Visual Hardware Nyata (PS1-PS5, TV, Kipas, AC, Stik, Memory Card, Dus Makanan, Motor, Mobil, HP)
-function makeHardwareSvg(kind, label, sub, accent = '#2563eb') {
-  const safeL = (label || '').replace(/&/g, '&amp;').slice(0, 22);
-  const safeS = (sub || '').replace(/&/g, '&amp;').slice(0, 26);
-  let shape = '';
-  if (kind === 'ps1') {
-    shape = `<rect x="28" y="34" width="104" height="68" rx="8" fill="#cbd5e1" stroke="#64748b" stroke-width="3"/>
-             <circle cx="80" cy="68" r="26" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
-             <circle cx="42" cy="88" r="6" fill="#16a34a"/><circle cx="118" cy="88" r="6" fill="#475569"/>`;
-  } else if (kind === 'ps2') {
-    shape = `<rect x="22" y="42" width="116" height="48" rx="4" fill="#0f172a" stroke="#1d4ed8" stroke-width="3"/>
-             <line x1="24" y1="54" x2="136" y2="54" stroke="#2563eb" stroke-width="2"/>
-             <line x1="24" y1="64" x2="136" y2="64" stroke="#1e293b" stroke-width="2"/>
-             <text x="80" y="80" text-anchor="middle" fill="#38bdf8" font-family="Arial" font-weight="900" font-size="16">PS2</text>`;
-  } else if (kind === 'ps3') {
-    shape = `<path d="M24,84 Q80,30 136,84 L136,96 L24,96 Z" fill="#111827" stroke="#dc2626" stroke-width="2.5"/>
-             <text x="80" y="82" text-anchor="middle" fill="#f8fafc" font-family="Arial" font-weight="900" font-size="15">PS3</text>`;
-  } else if (kind === 'ps4') {
-    shape = `<polygon points="30,45 138,45 128,92 20,92" fill="#0f172a" stroke="#0ea5e9" stroke-width="2.5"/>
-             <line x1="26" y1="68" x2="133" y2="68" stroke="#38bdf8" stroke-width="3"/>
-             <text x="80" y="62" text-anchor="middle" fill="#ffffff" font-family="Arial" font-weight="900" font-size="14">PS4</text>`;
-  } else if (kind === 'ps5') {
-    shape = `<path d="M52,24 Q80,34 108,24 L102,102 L58,102 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
-             <rect x="66" y="28" width="28" height="72" rx="6" fill="#0f172a"/>
-             <line x1="65" y1="32" x2="65" y2="90" stroke="#38bdf8" stroke-width="2"/>
-             <line x1="95" y1="32" x2="95" y2="90" stroke="#38bdf8" stroke-width="2"/>`;
-  } else if (kind === 'tv_crt') {
-    shape = `<rect x="26" y="26" width="108" height="76" rx="10" fill="#334155" stroke="#64748b" stroke-width="3"/>
-             <rect x="36" y="34" width="88" height="56" rx="8" fill="#0ea5e9"/>
-             <circle cx="118" cy="96" r="3" fill="#22c55e"/>`;
-  } else if (kind === 'tv_led') {
-    shape = `<rect x="18" y="28" width="124" height="66" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
-             <rect x="23" y="33" width="114" height="56" fill="url(#tvg)"/>
-             <rect x="66" y="94" width="28" height="6" fill="#64748b"/>
-             <rect x="52" y="100" width="56" height="4" rx="2" fill="#94a3b8"/>`;
-  } else if (kind === 'stik') {
-    shape = `<path d="M40,54 Q80,44 120,54 L130,86 Q116,100 102,82 L58,82 Q44,100 30,86 Z" fill="${accent}" stroke="#e2e8f0" stroke-width="2.5"/>
-             <circle cx="52" cy="66" r="7" fill="#0f172a"/><circle cx="108" cy="66" r="7" fill="#0f172a"/>
-             <circle cx="66" cy="76" r="6" fill="#334155"/><circle cx="94" cy="76" r="6" fill="#334155"/>`;
-  } else if (kind === 'ac') {
-    shape = `<rect x="20" y="42" width="120" height="42" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2.5"/>
-             <line x1="28" y1="74" x2="132" y2="74" stroke="#0ea5e9" stroke-width="3"/>
-             <text x="122" y="60" fill="#16a34a" font-family="Arial" font-weight="900" font-size="11">18°C</text>`;
-  } else if (kind === 'fan') {
-    shape = `<circle cx="80" cy="62" r="30" fill="rgba(56,189,248,0.18)" stroke="#94a3b8" stroke-width="2.5"/>
-             <circle cx="80" cy="62" r="8" fill="#0284c7"/>
-             <line x1="80" y1="34" x2="80" y2="90" stroke="#38bdf8" stroke-width="5"/>
-             <line x1="52" y1="62" x2="108" y2="62" stroke="#38bdf8" stroke-width="5"/>`;
-  } else if (kind === 'box') {
-    shape = `<rect x="34" y="34" width="92" height="64" rx="6" fill="#d97706" stroke="#fcd34d" stroke-width="2.5"/>
-             <line x1="34" y1="50" x2="126" y2="50" stroke="#78350f" stroke-width="3"/>
-             <text x="80" y="76" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="900" font-size="13">1 DUS GROSIR</text>`;
-  } else if (kind === 'motor') {
-    shape = `<circle cx="46" cy="84" r="16" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>
-             <circle cx="114" cy="84" r="16" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>
-             <path d="M46,84 L68,54 L98,54 L114,84 M62,54 L54,40 L72,40" fill="none" stroke="${accent}" stroke-width="6" stroke-linecap="round"/>`;
-  } else if (kind === 'mobil') {
-    shape = `<path d="M24,78 L38,50 L108,50 L132,78 Z" fill="${accent}" stroke="#e2e8f0" stroke-width="2"/>
-             <rect x="20" y="72" width="120" height="18" rx="6" fill="${accent}"/>
-             <circle cx="46" cy="90" r="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="3"/>
-             <circle cx="114" cy="90" r="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="3"/>`;
-  } else {
-    shape = `<rect x="46" y="26" width="68" height="76" rx="10" fill="${accent}" stroke="#e2e8f0" stroke-width="2.5"/>
-             <circle cx="80" cy="94" r="3" fill="#fff"/>`;
-  }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 145" width="160" height="145">
-    <defs><linearGradient id="tvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#1e1b4b"/></linearGradient></defs>
-    <rect width="160" height="145" rx="12" fill="#0f172a" stroke="#334155" stroke-width="2"/>
-    ${shape}
-    <text x="80" y="122" text-anchor="middle" fill="#f8fafc" font-family="Arial,sans-serif" font-weight="800" font-size="10.5">${safeL}</text>
-    <text x="80" y="136" text-anchor="middle" fill="#38bdf8" font-family="Arial,sans-serif" font-weight="700" font-size="9.5">${safeS}</text>
+    <rect width="180" height="230" rx="8" fill="#0f172a" stroke="#64748b" stroke-width="3"/>
+    <rect x="10" y="6" width="164" height="218" rx="4" fill="url(#bg)"/>
+    <rect x="10" y="6" width="164" height="28" fill="${caseColor}"/>
+    <text x="18" y="25" fill="${headerFg}" font-family="Impact,Arial Black,sans-serif" font-size="14" letter-spacing="1">${platform} • NTSC/J</text>
+    <circle cx="92" cy="108" r="46" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.45)" stroke-width="2"/>
+    <circle cx="92" cy="108" r="32" fill="rgba(56,189,248,0.18)"/>
+    <circle cx="92" cy="108" r="10" fill="#090d16" stroke="#e2e8f0" stroke-width="2"/>
+    <text x="92" y="166" text-anchor="middle" fill="#ffffff" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13">${l1}</text>
+    <text x="92" y="182" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-weight="800" font-size="11.5">${l2}</text>
+    <text x="92" y="196" text-anchor="middle" fill="#cbd5e1" font-family="Arial,sans-serif" font-weight="700" font-size="10">${l3}</text>
+    <rect x="16" y="198" width="20" height="22" rx="2" fill="#ffffff" stroke="#000" stroke-width="1.5"/>
+    <text x="26" y="214" text-anchor="middle" fill="#000" font-family="Arial Black" font-size="12">T</text>
+    <rect x="44" y="203" width="122" height="15" rx="4" fill="rgba(0,0,0,0.6)"/>
+    <text x="105" y="214" text-anchor="middle" fill="#38bdf8" font-family="Arial" font-weight="800" font-size="9">${genre.toUpperCase()}</text>
+    <rect x="10" y="6" width="164" height="218" fill="url(#shine)"/>
   </svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
@@ -364,7 +331,7 @@ const GAME_DISC_CATALOG = [
     genre,
     hype,
     releaseYear: year,
-    basePrice2010: 25000 + (hype >= 95 ? 15000 : 5000), // Harga CD Original/Grade A PS1 tahun 2010
+    basePrice2010: 25000 + (hype >= 95 ? 15000 : 5000),
     sizeGb: 0.65,
     cover: makeDiscCoverSvg('PS1', title, genre, id)
   })),
@@ -376,7 +343,7 @@ const GAME_DISC_CATALOG = [
     genre,
     hype,
     releaseYear: year,
-    basePrice2010: 45000 + (hype >= 97 ? 25000 : 10000), // Harga DVD Original/pilihan PS2 tahun 2010
+    basePrice2010: 45000 + (hype >= 97 ? 25000 : 10000),
     sizeGb: 4.2,
     cover: makeDiscCoverSvg('PS2', title, genre, id)
   })),
