@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ID Simulator by Oneilverse v1.0</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <div class="brand-box">
+    <div class="brand-title">🇮🇩 ID Simulator by Oneilverse</div>
+    <div class="brand-sub">
+      <span>v1.0 • Nusantara Edition</span>
+      <span class="badge" onclick="openSettingsResetModal()" style="cursor:pointer;">⚙️ Settings / Reset</span>
+      <span class="badge" id="btnTheme" onclick="toggleTheme()" style="cursor:pointer;">🌙 Gelap</span>
+    </div>
+  </div>
+
+  <div class="hud-group">
+    <div class="stat"><span class="lbl">Waktu:</span><b id="hudDateTime">Selasa, 1/1/2019 • 08:00</b></div>
+    <div class="stat"><span class="lbl">Wilayah:</span><b id="hudCityUmr">DKI Jakarta</b></div>
+    <div class="speed-controls">
+      <button id="btnPause" class="speed-btn paused" onclick="togglePause()">⏸️</button>
+      <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
+      <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
+      <button class="speed-btn" data-speed="4" onclick="setSpeed(4)">4x</button>
+    </div>
+    <div class="stat"><span class="lbl">Dompet:</span><b id="hudHand" style="color:var(--green);">Rp 0</b></div>
+    <div class="stat"><span class="lbl">Bank:</span><b id="hudBank" style="color:var(--accent);">Rp 0</b></div>
+    <div class="stat"><span class="lbl">Laci:</span><b id="hudLaci" style="color:var(--purple);">Rp 0</b></div>
+    <div class="stat"><span class="lbl">PLN:</span><b id="hudKwh">25.0 kWh</b></div>
+    <button onclick="openBankTransferModal()">🏦 Transfer</button>
+    <button onclick="openCloudSyncModal()">☁️ Cloud</button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <div class="col">
+    <div class="card">
+      <h2>📢 Catatan Kehidupan & Karier</h2>
+      <div id="logBox" class="log-box"></div>
+    </div>
+  </div>
+
+  <div class="col" id="centerWorkspace"></div>
+
+  <div class="col">
+    <div class="card">
+      <h2>📱 Menu Utama Nusantara</h2>
+      <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchMainTab('karier', this)">💼 Kerja</button>
+        <button class="nav-btn" onclick="switchMainTab('usaha', this)">🏢 Usaha</button>
+        <button class="nav-btn" onclick="switchMainTab('gadget', this)">📱 Gadget</button>
+        <button class="nav-btn" onclick="switchMainTab('otomotif', this)">🛵 Otomotif</button>
+        <button class="nav-btn" onclick="switchMainTab('aset', this)">📦 Aset</button>
+        <button class="nav-btn" onclick="switchMainTab('kuliah', this)">🎓 Kuliah</button>
+        <button class="nav-btn" onclick="switchMainTab('pln', this)">⚡ PLN/Lab</button>
+        <button class="nav-btn" onclick="switchMainTab('life', this)">🧬 Hidup</button>
+      </div>
+      <div id="rightPanelContent" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="customModalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <h3 id="customModalTitle" style="margin:0;color:var(--accent);font-size:0.95rem;">Judul</h3>
+    <div id="customModalBody" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div id="customModalFooter" style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="cloud.js"></script>
+<script src="data.js"></script>
+<script src="game.js"></script>
+<script src="world3d.js"></script>
+</body>
+</html>
