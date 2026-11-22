@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Rental PS & Life Simulator (2010–Now) • Oneilverse</title>
+  <title>Warnet & Life Simulator (2010–Now) • Oneilverse</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="dark-theme">
@@ -12,14 +12,14 @@
   <!-- 1. TOP HUD TERKUNCI (TANPA SCROLL SAMPING DI HP) -->
   <header class="top-hud-locked">
     <div class="hud-bar-top">
-      <button class="hud-user-btn" onclick="openCharacterCreationModal()" title="Karakter / Reset">
+      <button class="hud-user-btn" type="button" onclick="openCharacterCreationModal()" title="Karakter / Reset">
         👤 <span id="hudPlayerBadge">Neil (12 Thn)</span>
       </button>
       <div class="hud-clock-box">
         <b id="hudDateTime">Jum, 1/1/2010 • 08:00</b>
         <small id="hudCityUmr">Jambi • $1=Rp9.090</small>
       </div>
-      <button id="btnToggleOpen" class="hud-open-btn success" onclick="toggleRentalOpenStatus()">🟢 BUKA</button>
+      <button id="btnToggleOpen" type="button" class="hud-open-btn success" onclick="toggleRentalOpenStatus()">🟢 BUKA</button>
     </div>
 
     <div class="hud-bar-controls">
@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    <!-- GRID 3x2 STAT KEUANGAN & ANTREAN (TANPA SCROLL SAMPING!) -->
+    <!-- GRID 3x2 STAT KEUANGAN, INTERNET, PLN/GENSET & GALON (TANPA SCROLL SAMPING!) -->
     <div class="hud-stats-grid">
       <div class="stat-cell" onclick="openBankTransferModal()">
         <span>Laci Kasir</span>
@@ -51,41 +51,39 @@
         <span>Bank</span>
         <b id="hudBank" style="color:#38bdf8;">Rp 0</b>
       </div>
-      <div class="stat-cell" onclick="openDrawerTab('agen_ppob')">
-        <span>Saldo Pulsa</span>
-        <b id="hudPpob" style="color:#fbbf24;">Rp 0</b>
+      <div class="stat-cell" onclick="openDrawerTab('discs')">
+        <span>Internet &amp; Ping</span>
+        <b id="hudPpob" style="color:#fbbf24;">1 Mbps • 24ms</b>
       </div>
       <div class="stat-cell" onclick="openDrawerTab('finance')">
-        <span>Token PLN</span>
-        <b id="hudKwh">45.0 kWh</b>
+        <span>PLN / Genset</span>
+        <b id="hudKwh">45kWh • ⛽5L</b>
       </div>
-      <div class="stat-cell" onclick="spawnIncomingCustomer()">
-        <span>Ruang Tunggu</span>
-        <b style="color:#38bdf8;">+<span id="lblQueueCount">0</span> Antre</b>
+      <div class="stat-cell" onclick="openDrawerTab('agen_ppob')">
+        <span>Galon &amp; Antre</span>
+        <b style="color:#38bdf8;">💧<span id="hudGalon">45</span> • +<span id="lblQueueCount">0</span></b>
       </div>
     </div>
   </header>
 
-  <!-- 2. AREA UTAMA RUANGAN & BILLING 20 SLOT (TERKUNCI, TIDAK BISA GESER SAMPING, TAMPIL GAMBAR PS+TV & BAR MUNDUR BILLING) -->
+  <!-- 2. PAPAN BILLING 20 PC WARNET (PAKET BAR MENURUN vs BILLING METER RUPIAH NAIK PER DETIK + UPDATE PATCH MB/GB) -->
   <main id="studio3dViewport" class="room-board-locked"></main>
 
   <!-- 3. TICKER AKTIVITAS SINGKAT -->
   <div id="liveToastBar" class="live-toast-bar" onclick="openDrawerTab('logs')">
-    📢 Tap slot ruangan untuk pasang PS/TV, atau gunakan menu dock di bawah.
+    📢 Tap PC untuk rakit komponen / atur tarif billing, atau gunakan dock bawah.
   </div>
 
-  <!-- 4. DOCK BAWAH 5x2 TERKUNCI (TANPA SCROLL) -->
-  <nav class="bottom-dock-locked">
-    <button class="dock-btn" type="button" data-tab="slots" onclick="openDrawerTab('slots')"><span>🎮</span><small>20 Slot</small></button>
-    <button class="dock-btn" type="button" data-tab="store_hw" onclick="openDrawerTab('store_hw')"><span>🛒</span><small>Toko PS</small></button>
-    <button class="dock-btn" type="button" data-tab="discs" onclick="openDrawerTab('discs')"><span>💿</span><small>Kaset</small></button>
-    <button class="dock-btn" type="button" data-tab="cashier_stik" onclick="openDrawerTab('cashier_stik')"><span>🔧</span><small>Stik/Kasir</small></button>
-    <button class="dock-btn" type="button" data-tab="agen_ppob" onclick="openDrawerTab('agen_ppob')"><span>📦</span><small>Agen/Pulsa</small></button>
+  <!-- 4. DOCK BAWAH 4x2 SIMPLE & FUNGSIONAL (TANPA SCROLL) -->
+  <nav class="bottom-dock-locked" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+    <button class="dock-btn" type="button" data-tab="slots" onclick="openDrawerTab('slots')"><span>🖥️</span><small>Billing/PC</small></button>
+    <button class="dock-btn" type="button" data-tab="store_hw" onclick="openDrawerTab('store_hw')"><span>🛒</span><small>Rakit/Server</small></button>
+    <button class="dock-btn" type="button" data-tab="discs" onclick="openDrawerTab('discs')"><span>🌐</span><small>Game/ISP</small></button>
+    <button class="dock-btn" type="button" data-tab="cashier_stik" onclick="openDrawerTab('cashier_stik')"><span>🔧</span><small>Teknisi/Part</small></button>
+    <button class="dock-btn" type="button" data-tab="agen_ppob" onclick="openDrawerTab('agen_ppob')"><span>🍜</span><small>PopMie/Galon</small></button>
     <button class="dock-btn" type="button" data-tab="employees" onclick="openDrawerTab('employees')"><span>👷</span><small>Karyawan</small></button>
-    <button class="dock-btn" type="button" data-tab="finance" onclick="openDrawerTab('finance')"><span>🏦</span><small>Bank/PLN</small></button>
-    <button class="dock-btn" type="button" data-tab="automotive" onclick="openDrawerTab('automotive')"><span>🛵</span><small>Motor/HP</small></button>
-    <button class="dock-btn" type="button" data-tab="life" onclick="openDrawerTab('life')"><span>🧬</span><small>Hidup</small></button>
-    <button class="dock-btn" type="button" data-tab="logs" onclick="openDrawerTab('logs')"><span>📜</span><small>Catatan</small></button>
+    <button class="dock-btn" type="button" data-tab="finance" onclick="openDrawerTab('finance')"><span>⚡</span><small>PLN/Genset</small></button>
+    <button class="dock-btn" type="button" data-tab="life" onclick="openDrawerTab('life')"><span>🧬</span><small>Hidup/Motor</small></button>
   </nav>
 </div>
 
@@ -93,7 +91,7 @@
 <div id="appDrawerBackdrop" class="drawer-backdrop" onclick="if(event.target===this)closeDrawer()">
   <div class="drawer-sheet">
     <div class="drawer-header">
-      <h2 id="drawerTitle">📱 Menu Manajemen</h2>
+      <h2 id="drawerTitle">📱 Menu Manajemen Warnet</h2>
       <button class="drawer-close" type="button" onclick="closeDrawer()">✕ Tutup</button>
     </div>
     <div id="rightPanelContent" class="drawer-body"></div>

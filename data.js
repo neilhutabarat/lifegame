@@ -170,75 +170,12 @@ function getHolidayName(year, month, day) {
   return null;
 }
 
-// ==================== KATALOG KONSOL PS1 - PS5 (VERSI KASET FISIK & VERSI DIGITAL INTERNAL + FOTO ASLI) ====================
-const CONSOLE_CATALOG = [
-  { id: 'ps1_fat', platform: 'PS1', name: 'PlayStation 1 (PSX SCPH-7501) CD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 1995, basePrice2010: 450000, watt: 18, baseRate2010: 2000, img: REAL_CONSOLE_PHOTOS.ps1_fat },
-  { id: 'ps1_one', platform: 'PS1', name: 'PSOne Slim Original CD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2000, basePrice2010: 550000, watt: 15, baseRate2010: 2500, img: REAL_CONSOLE_PHOTOS.ps1_one },
-  { id: 'ps2_fat', platform: 'PS2', name: 'PlayStation 2 Fat (SCPH-50000) DVD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2001, basePrice2010: 1150000, watt: 45, baseRate2010: 3000, img: REAL_CONSOLE_PHOTOS.ps2_fat },
-  { id: 'ps2_slim', platform: 'PS2', name: 'PlayStation 2 Slim (SCPH-90006) DVD Fisik', mediaType: 'disc', storageGb: 0, releaseYear: 2007, basePrice2010: 1350000, watt: 35, baseRate2010: 3500, img: REAL_CONSOLE_PHOTOS.ps2_slim },
-  { id: 'ps3_fat_disc', platform: 'PS3', name: 'PS3 Fat Blu-Ray Fisik (80GB)', mediaType: 'disc', storageGb: 80, releaseYear: 2007, basePrice2010: 3400000, watt: 160, baseRate2010: 6000, img: REAL_CONSOLE_PHOTOS.ps3_fat },
-  { id: 'ps3_slim_disc', platform: 'PS3', name: 'PS3 Slim Versi Kaset BD Fisik (160GB)', mediaType: 'disc', storageGb: 160, releaseYear: 2009, basePrice2010: 3800000, watt: 95, baseRate2010: 7000, img: REAL_CONSOLE_PHOTOS.ps3_slim },
-  { id: 'ps3_slim_dig120', platform: 'PS3', name: 'PS3 Slim Digital Internal 120GB', mediaType: 'digital', storageGb: 120, releaseYear: 2009, basePrice2010: 3950000, watt: 95, baseRate2010: 7000, img: REAL_CONSOLE_PHOTOS.ps3_slim },
-  { id: 'ps3_slim_dig250', platform: 'PS3', name: 'PS3 Slim Digital Internal 250GB', mediaType: 'digital', storageGb: 250, releaseYear: 2010, basePrice2010: 4300000, watt: 90, baseRate2010: 7500, img: REAL_CONSOLE_PHOTOS.ps3_slim },
-  { id: 'ps3_sslim_dig500', platform: 'PS3', name: 'PS3 Super Slim Digital Internal 500GB', mediaType: 'digital', storageGb: 500, releaseYear: 2012, basePrice2010: 4600000, watt: 80, baseRate2010: 8000, img: REAL_CONSOLE_PHOTOS.ps3_sslim },
-  { id: 'ps4_fat_disc', platform: 'PS4', name: 'PS4 Fat Blu-Ray Fisik (500GB)', mediaType: 'disc', storageGb: 500, releaseYear: 2013, basePrice2010: 5200000, watt: 140, baseRate2010: 10000, img: REAL_CONSOLE_PHOTOS.ps4_fat },
-  { id: 'ps4_slim_disc', platform: 'PS4', name: 'PS4 Slim Versi Kaset BD Fisik (500GB)', mediaType: 'disc', storageGb: 500, releaseYear: 2016, basePrice2010: 4800000, watt: 110, baseRate2010: 11000, img: REAL_CONSOLE_PHOTOS.ps4_slim },
-  { id: 'ps4_slim_dig500', platform: 'PS4', name: 'PS4 Slim Digital Internal 500GB', mediaType: 'digital', storageGb: 500, releaseYear: 2016, basePrice2010: 4900000, watt: 110, baseRate2010: 11000, img: REAL_CONSOLE_PHOTOS.ps4_slim },
-  { id: 'ps4_slim_dig1tb', platform: 'PS4', name: 'PS4 Slim Digital Internal 1TB (1000GB)', mediaType: 'digital', storageGb: 1000, releaseYear: 2016, basePrice2010: 5400000, watt: 110, baseRate2010: 12000, img: REAL_CONSOLE_PHOTOS.ps4_slim },
-  { id: 'ps4_pro_dig2tb', platform: 'PS4', name: 'PS4 Pro 4K Digital Internal 2TB', mediaType: 'digital', storageGb: 2000, releaseYear: 2017, basePrice2010: 6500000, watt: 155, baseRate2010: 14000, img: REAL_CONSOLE_PHOTOS.ps4_pro },
-  { id: 'ps5_disc', platform: 'PS5', name: 'PlayStation 5 Disc Edition (Kaset BD Fisik)', mediaType: 'disc', storageGb: 825, releaseYear: 2020, basePrice2010: 7800000, watt: 200, baseRate2010: 18000, img: REAL_CONSOLE_PHOTOS.ps5_disc },
-  { id: 'ps5_dig_825', platform: 'PS5', name: 'PlayStation 5 Digital Edition (SSD 825GB)', mediaType: 'digital', storageGb: 825, releaseYear: 2020, basePrice2010: 6800000, watt: 190, baseRate2010: 18000, img: REAL_CONSOLE_PHOTOS.ps5_dig },
-  { id: 'ps5_slim_dig1tb', platform: 'PS5', name: 'PS5 Slim Digital Edition (SSD 1TB)', mediaType: 'digital', storageGb: 1000, releaseYear: 2023, basePrice2010: 7200000, watt: 185, baseRate2010: 20000, img: REAL_CONSOLE_PHOTOS.ps5_dig },
-  { id: 'ps5_pro_dig2tb', platform: 'PS5', name: 'PS5 Pro Digital Edition (SSD 2TB)', mediaType: 'digital', storageGb: 2000, releaseYear: 2024, basePrice2010: 9500000, watt: 215, baseRate2010: 25000, img: REAL_CONSOLE_PHOTOS.ps5_disc }
-];
-
-// ==================== KATALOG TV & MONITOR ====================
-const TV_CATALOG = [
-  { id: 'tv_crt14', name: 'TV Tabung Polytron 14" CRT', releaseYear: 1995, basePrice2010: 450000, watt: 55, comfortBonus: 0, rateBonus2010: 0, img: REAL_CONSOLE_PHOTOS.tv_crt },
-  { id: 'tv_crt21', name: 'TV Tabung Sony Trinitron 21" Flat', releaseYear: 2000, basePrice2010: 750000, watt: 75, comfortBonus: 5, rateBonus2010: 500, img: REAL_CONSOLE_PHOTOS.tv_crt },
-  { id: 'tv_lcd24', name: 'TV LCD LG 24" HD Ready', releaseYear: 2008, basePrice2010: 1450000, watt: 40, comfortBonus: 12, rateBonus2010: 1000, img: REAL_CONSOLE_PHOTOS.tv_lcd },
-  { id: 'tv_led32', name: 'TV LED Samsung 32" HD', releaseYear: 2010, basePrice2010: 2250000, watt: 48, comfortBonus: 20, rateBonus2010: 1500, img: REAL_CONSOLE_PHOTOS.tv_led },
-  { id: 'tv_led43', name: 'Smart TV Sony Bravia 43" Full HD', releaseYear: 2014, basePrice2010: 3600000, watt: 65, comfortBonus: 30, rateBonus2010: 2500, img: REAL_CONSOLE_PHOTOS.tv_led },
-  { id: 'tv_oled55', name: 'LG OLED 55" 4K 120Hz Gaming TV', releaseYear: 2019, basePrice2010: 7800000, watt: 95, comfortBonus: 45, rateBonus2010: 5000, img: REAL_CONSOLE_PHOTOS.tv_led }
-];
-
-// ==================== KATALOG PENDINGIN (KIPAS & AC) ====================
-const COOLING_CATALOG = [
-  { id: 'fan_wall', type: 'fan', name: 'Kipas Angin Dinding Miyako 16"', releaseYear: 1995, basePrice2010: 165000, watt: 45, comfortBonus: 10, rateBonus2010: 500, img: REAL_CONSOLE_PHOTOS.fan },
-  { id: 'fan_tornado', type: 'fan', name: 'Kipas Tornado Besi Regency 18"', releaseYear: 2005, basePrice2010: 320000, watt: 75, comfortBonus: 16, rateBonus2010: 1000, img: REAL_CONSOLE_PHOTOS.fan },
-  { id: 'ac_half_pk', type: 'ac', name: 'AC Split Panasonic 1/2 PK Low Watt', releaseYear: 2008, basePrice2010: 2450000, watt: 340, comfortBonus: 35, rateBonus2010: 2500, img: REAL_CONSOLE_PHOTOS.ac },
-  { id: 'ac_1pk_inv', type: 'ac', name: 'AC Daikin Inverter 1 PK Dingin Cepat', releaseYear: 2013, basePrice2010: 3800000, watt: 520, comfortBonus: 50, rateBonus2010: 4000, img: REAL_CONSOLE_PHOTOS.ac }
-];
-
-// ==================== KATALOG STIK & MEMORY CARD (STOK KASIR) ====================
-const ACCESSORY_CATALOG = [
-  { id: 'stik_ps1', kind: 'stik', platform: 'PS1', name: 'Stik PS1 Analog Original', releaseYear: 1995, basePrice2010: 45000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps1 },
-  { id: 'stik_ps2', kind: 'stik', platform: 'PS2', name: 'Stik PS2 DualShock 2 Ori Pabrik (OP)', releaseYear: 2001, basePrice2010: 65000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps2 },
-  { id: 'stik_ps3', kind: 'stik', platform: 'PS3', name: 'Stik PS3 DualShock 3 Wireless Ori', releaseYear: 2007, basePrice2010: 185000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps3 },
-  { id: 'stik_ps4', kind: 'stik', platform: 'PS4', name: 'Stik PS4 DualShock 4 Lightbar Ori', releaseYear: 2013, basePrice2010: 420000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps4 },
-  { id: 'stik_ps5', kind: 'stik', platform: 'PS5', name: 'Stik PS5 DualSense Haptic Original', releaseYear: 2020, basePrice2010: 680000, maxDurabilityNew: 100, maxDurabilityServiced: 65, img: REAL_CONSOLE_PHOTOS.stik_ps5 },
-  { id: 'mc_ps1', kind: 'mc', platform: 'PS1', name: 'Memory Card PS1 1MB (15 Blocks)', releaseYear: 1995, basePrice2010: 35000, img: REAL_CONSOLE_PHOTOS.mc_ps1 },
-  { id: 'mc_ps2', kind: 'mc', platform: 'PS2', name: 'Memory Card PS2 8MB MagicGate', releaseYear: 2001, basePrice2010: 55000, img: REAL_CONSOLE_PHOTOS.mc_ps2 }
-];
-
-// ==================== RENOVASI TEMPAT USAHA & ROOM ====================
+// ==================== RENOVASI TEMPAT USAHA WARNET & ROOM VIP ====================
 const RENOV_LEVELS = [
-  { level: 1, name: 'Level 1: Ruko Standar Semen & Cat Polos', baseCost2010: 0, appealBonus: 0, rateMult: 1.0, wallColor: '#1e293b', floorColor: '#0f172a' },
-  { level: 2, name: 'Level 2: Keramik Bersih, Cat Cerah & Poster Game', baseCost2010: 4500000, appealBonus: 15, rateMult: 1.15, wallColor: '#1e3a8a', floorColor: '#1e293b' },
-  { level: 3, name: 'Level 3: Sofa Beanbag/Kulit, Partisi Kaca & Lampu LED', baseCost2010: 12500000, appealBonus: 35, rateMult: 1.35, wallColor: '#312e81', floorColor: '#172554' },
-  { level: 4, name: 'Level 4: Sultan Esports Arena (Kedap Suara, Vinyl & RGB)', baseCost2010: 28000000, appealBonus: 65, rateMult: 1.65, wallColor: '#4c1d95', floorColor: '#090d16' }
-];
-
-// ==================== GROSIR MAKANAN & MINUMAN AGEN (BELI PER DUS + FOTO ASLI!) ====================
-const WHOLESALE_SNACK_CATALOG = [
-  { id: 'sn_indomie_grg', name: 'Indomie Goreng Spesial (Matang + Telur)', pcsPerBox: 40, boxPrice2010: 48000, sellPcs2010: 3500, img: REAL_CONSOLE_PHOTOS.indomie },
-  { id: 'sn_indomie_soto', name: 'Indomie Kuah Soto Mie (Matang)', pcsPerBox: 40, boxPrice2010: 46000, sellPcs2010: 3500, img: REAL_CONSOLE_PHOTOS.indomie },
-  { id: 'sn_teh_gelas', name: 'Teh Gelas Cup Dingin', pcsPerBox: 24, boxPrice2010: 16500, sellPcs2010: 1000, img: REAL_CONSOLE_PHOTOS.drink },
-  { id: 'sn_teh_pucuk', name: 'Teh Pucuk Harum Botol 350ml', pcsPerBox: 24, boxPrice2010: 48000, sellPcs2010: 3000, img: REAL_CONSOLE_PHOTOS.drink },
-  { id: 'sn_aqua_gelas', name: 'Aqua Gelas Air Mineral', pcsPerBox: 48, boxPrice2010: 20000, sellPcs2010: 500, img: REAL_CONSOLE_PHOTOS.drink },
-  { id: 'sn_kopi_goodday', name: 'Es Kopi Good Day / Kapal Api Seduh', pcsPerBox: 30, boxPrice2010: 27000, sellPcs2010: 2000, img: REAL_CONSOLE_PHOTOS.drink },
-  { id: 'sn_chitato', name: 'Chitato / Qtela Snack Kentang', pcsPerBox: 20, boxPrice2010: 55000, sellPcs2010: 4000, img: REAL_CONSOLE_PHOTOS.snack },
-  { id: 'sn_kacang_garuda', name: 'Kacang Garuda / Sukro Rosta', pcsPerBox: 24, boxPrice2010: 36000, sellPcs2010: 2500, img: REAL_CONSOLE_PHOTOS.snack }
+  { level: 1, name: 'Level 1: Ruko Warnet Standar (Bilik Kayu & Cat Polos)', baseCost2010: 0, appealBonus: 0, rateMult: 1.0, wallColor: '#1e293b', floorColor: '#0f172a' },
+  { level: 2, name: 'Level 2: Keramik Bersih, Sekat Rapi & Poster Game Online', baseCost2010: 4500000, appealBonus: 15, rateMult: 1.15, wallColor: '#1e3a8a', floorColor: '#1e293b' },
+  { level: 3, name: 'Level 3: Kursi Gaming Busa Tebal, Partisi Kaca & Lampu LED', baseCost2010: 12500000, appealBonus: 35, rateMult: 1.35, wallColor: '#312e81', floorColor: '#172554' },
+  { level: 4, name: 'Level 4: Sultan iCafe Esports Arena (Kedap Suara, Vinyl & RGB)', baseCost2010: 28000000, appealBonus: 65, rateMult: 1.65, wallColor: '#4c1d95', floorColor: '#090d16' }
 ];
 
 // ==================== OPERATOR PULSA ASLI INDONESIA ====================
