@@ -2,34 +2,104 @@
 // Hanya menampilkan game yang SUDAH RILIS pada tahun berjalan (releaseYear <= state.year).
 // Menggunakan cover box art bergaya cetak original dengan fallback foto nyata.
 
+function makeItemIllus(kind, label, sub, accent) {
+  accent = accent || '#2563eb';
+  var safeL = String(label || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').slice(0, 20);
+  var safeS = String(sub || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').slice(0, 24);
+  var shape = '';
+  if (kind === 'ps1') {
+    shape = '<rect x="30" y="28" width="100" height="64" rx="10" fill="#cbd5e1" stroke="#64748b" stroke-width="3"/>' +
+      '<circle cx="80" cy="60" r="24" fill="#94a3b8" stroke="#475569" stroke-width="2"/>' +
+      '<circle cx="44" cy="78" r="5" fill="#16a34a"/>';
+  } else if (kind === 'ps2') {
+    shape = '<rect x="24" y="34" width="112" height="50" rx="6" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>' +
+      '<line x1="26" y1="48" x2="134" y2="48" stroke="#38bdf8" stroke-width="2.5"/>' +
+      '<text x="80" y="72" text-anchor="middle" fill="#38bdf8" font-family="Arial" font-weight="900" font-size="16">PS2</text>';
+  } else if (kind === 'ps3') {
+    shape = '<path d="M26,78 Q80,26 134,78 L134,90 L26,90 Z" fill="#111827" stroke="#ef4444" stroke-width="2.5"/>' +
+      '<text x="80" y="76" text-anchor="middle" fill="#f8fafc" font-family="Arial" font-weight="900" font-size="15">PS3</text>';
+  } else if (kind === 'ps4') {
+    shape = '<polygon points="32,38 136,38 126,84 22,84" fill="#0f172a" stroke="#0ea5e9" stroke-width="2.5"/>' +
+      '<line x1="28" y1="61" x2="131" y2="61" stroke="#38bdf8" stroke-width="3"/>' +
+      '<text x="80" y="56" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="900" font-size="14">PS4</text>';
+  } else if (kind === 'ps5') {
+    shape = '<path d="M54,20 Q80,28 106,20 L100,92 L60,92 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>' +
+      '<rect x="68" y="24" width="24" height="66" rx="5" fill="#0f172a"/>' +
+      '<line x1="67" y1="28" x2="67" y2="84" stroke="#38bdf8" stroke-width="2"/>' +
+      '<line x1="93" y1="28" x2="93" y2="84" stroke="#38bdf8" stroke-width="2"/>';
+  } else if (kind === 'tv_crt') {
+    shape = '<rect x="28" y="22" width="104" height="70" rx="10" fill="#334155" stroke="#64748b" stroke-width="3"/>' +
+      '<rect x="38" y="30" width="84" height="50" rx="8" fill="#0ea5e9"/>';
+  } else if (kind === 'tv_led') {
+    shape = '<rect x="20" y="24" width="120" height="62" rx="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>' +
+      '<rect x="25" y="29" width="110" height="52" fill="#0284c7"/>' +
+      '<rect x="68" y="86" width="24" height="6" fill="#64748b"/>';
+  } else if (kind === 'stik') {
+    shape = '<path d="M40,48 Q80,38 120,48 L128,78 Q114,92 100,74 L60,74 Q46,92 32,78 Z" fill="' + accent + '" stroke="#e2e8f0" stroke-width="2.5"/>' +
+      '<circle cx="54" cy="60" r="6" fill="#0f172a"/><circle cx="106" cy="60" r="6" fill="#0f172a"/>';
+  } else if (kind === 'mc') {
+    shape = '<rect x="52" y="24" width="56" height="68" rx="6" fill="' + accent + '" stroke="#94a3b8" stroke-width="2.5"/>' +
+      '<rect x="60" y="32" width="40" height="22" rx="3" fill="#e2e8f0"/>';
+  } else if (kind === 'fan') {
+    shape = '<circle cx="80" cy="56" r="28" fill="rgba(56,189,248,0.2)" stroke="#94a3b8" stroke-width="2.5"/>' +
+      '<line x1="80" y1="30" x2="80" y2="82" stroke="#38bdf8" stroke-width="5"/>' +
+      '<line x1="54" y1="56" x2="106" y2="56" stroke="#38bdf8" stroke-width="5"/>';
+  } else if (kind === 'ac') {
+    shape = '<rect x="22" y="36" width="116" height="38" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2.5"/>' +
+      '<line x1="30" y1="66" x2="130" y2="66" stroke="#0ea5e9" stroke-width="3"/>';
+  } else if (kind === 'box') {
+    shape = '<rect x="34" y="28" width="92" height="60" rx="8" fill="#d97706" stroke="#fcd34d" stroke-width="2.5"/>' +
+      '<text x="80" y="64" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="900" font-size="13">1 DUS</text>';
+  } else if (kind === 'motor') {
+    shape = '<circle cx="48" cy="76" r="15" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>' +
+      '<circle cx="112" cy="76" r="15" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>' +
+      '<path d="M48,76 L70,48 L98,48 L112,76" fill="none" stroke="' + accent + '" stroke-width="6" stroke-linecap="round"/>';
+  } else if (kind === 'mobil') {
+    shape = '<path d="M26,70 L40,44 L108,44 L130,70 Z" fill="' + accent + '" stroke="#e2e8f0" stroke-width="2"/>' +
+      '<rect x="22" y="64" width="116" height="16" rx="5" fill="' + accent + '"/>' +
+      '<circle cx="48" cy="82" r="11" fill="#0f172a" stroke="#cbd5e1" stroke-width="3"/>' +
+      '<circle cx="112" cy="82" r="11" fill="#0f172a" stroke="#cbd5e1" stroke-width="3"/>';
+  } else {
+    shape = '<rect x="48" y="22" width="64" height="68" rx="9" fill="' + accent + '" stroke="#e2e8f0" stroke-width="2.5"/>' +
+      '<circle cx="80" cy="82" r="3" fill="#fff"/>';
+  }
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 135" width="160" height="135">' +
+    '<rect width="160" height="135" rx="14" fill="#0f172a" stroke="#334155" stroke-width="2"/>' +
+    shape +
+    '<text x="80" y="112" text-anchor="middle" fill="#f8fafc" font-family="Arial,sans-serif" font-weight="800" font-size="10.5">' + safeL + '</text>' +
+    '<text x="80" y="126" text-anchor="middle" fill="#38bdf8" font-family="Arial,sans-serif" font-weight="700" font-size="9">' + safeS + '</text>' +
+    '</svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
 const REAL_CONSOLE_PHOTOS = {
-  ps1_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/PSX-Console-wController.png/320px-PSX-Console-wController.png',
-  ps1_one: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/PSone-Console-Set-NoLCD.png/320px-PSone-Console-Set-NoLCD.png',
-  ps2_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/PS2-Versions.png/320px-PS2-Versions.png',
-  ps2_slim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/PS2-Slim-Console-Set.png/320px-PS2-Slim-Console-Set.png',
-  ps3_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Sony-PlayStation-3-2001A-wController-L.jpg/320px-Sony-PlayStation-3-2001A-wController-L.jpg',
-  ps3_slim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Sony-PlayStation-3-CECH-2001A-wController-L.jpg/320px-Sony-PlayStation-3-CECH-2001A-wController-L.jpg',
-  ps3_sslim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Sony-PlayStation-3-4001B-wController-L.jpg/320px-Sony-PlayStation-3-4001B-wController-L.jpg',
-  ps4_fat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/PS4-Console-wDS4.png/320px-PS4-Console-wDS4.png',
-  ps4_slim: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/PS4-Slim-Console-Set.png/320px-PS4-Slim-Console-Set.png',
-  ps4_pro: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/PS4-Pro-Console-Set.png/320px-PS4-Pro-Console-Set.png',
-  ps5_disc: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/PlayStation_5_and_DualSense_with_transparent_background.png/320px-PlayStation_5_and_DualSense_with_transparent_background.png',
-  ps5_dig: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Black_and_white_Playstation_5_base_edition_with_controller.png/320px-Black_and_white_Playstation_5_base_edition_with_controller.png',
-  stik_ps1: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/PlayStation-DualShock-Controller-Gray.png/320px-PlayStation-DualShock-Controller-Gray.png',
-  stik_ps2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/PS2-DualShock-2-Controller-FL.png/320px-PS2-DualShock-2-Controller-FL.png',
-  stik_ps3: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PlayStation-3-DualShock-3-Controller-BR.png/320px-PlayStation-3-DualShock-3-Controller-BR.png',
-  stik_ps4: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/DualShock-4.png/320px-DualShock-4.png',
-  stik_ps5: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/DualSense.png/320px-DualSense.png',
-  mc_ps1: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/PS1-Memory-Card.jpg/240px-PS1-Memory-Card.jpg',
-  mc_ps2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/PS2-Memory-Card.jpg/240px-PS2-Memory-Card.jpg',
-  tv_crt: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/CRT_television_set.jpg/320px-CRT_television_set.jpg',
-  tv_lcd: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/LG_LCD_TV.jpg/320px-LG_LCD_TV.jpg',
-  tv_led: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Smart-TV-Samsung.jpg/320px-Smart-TV-Samsung.jpg',
-  fan: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Electric_fan_01.jpg/240px-Electric_fan_01.jpg',
-  ac: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Air_conditioner_indoor_unit.jpg/320px-Air_conditioner_indoor_unit.jpg',
-  indomie: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Indomie_Mie_Goreng_expanded.jpg/320px-Indomie_Mie_Goreng_expanded.jpg',
-  snack: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Potato_Chips.jpg/320px-Potato_Chips.jpg',
-  drink: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Iced_Tea_in_cup.jpg/240px-Iced_Tea_in_cup.jpg'
+  ps1_fat: makeItemIllus('ps1', 'PS1 Original', 'CD Fisik'),
+  ps1_one: makeItemIllus('ps1', 'PSOne Slim', 'CD Fisik'),
+  ps2_fat: makeItemIllus('ps2', 'PS2 Fat', 'DVD Fisik'),
+  ps2_slim: makeItemIllus('ps2', 'PS2 Slim', 'DVD Fisik'),
+  ps3_fat: makeItemIllus('ps3', 'PS3 Fat', 'Blu-Ray'),
+  ps3_slim: makeItemIllus('ps3', 'PS3 Slim', 'Fisik / Digital'),
+  ps3_sslim: makeItemIllus('ps3', 'PS3 SuperSlim', 'Digital 500GB'),
+  ps4_fat: makeItemIllus('ps4', 'PS4 Fat', '500GB'),
+  ps4_slim: makeItemIllus('ps4', 'PS4 Slim', 'Fisik / Digital'),
+  ps4_pro: makeItemIllus('ps4', 'PS4 Pro 4K', 'Digital 2TB'),
+  ps5_disc: makeItemIllus('ps5', 'PS5 Disc', 'Kaset BD'),
+  ps5_dig: makeItemIllus('ps5', 'PS5 Digital', 'SSD Internal'),
+  stik_ps1: makeItemIllus('stik', 'Stik PS1', 'Analog Ori', '#64748b'),
+  stik_ps2: makeItemIllus('stik', 'Stik PS2', 'DualShock 2', '#1e293b'),
+  stik_ps3: makeItemIllus('stik', 'Stik PS3', 'Wireless', '#991b1b'),
+  stik_ps4: makeItemIllus('stik', 'Stik PS4', 'DualShock 4', '#1d4ed8'),
+  stik_ps5: makeItemIllus('stik', 'Stik PS5', 'DualSense', '#475569'),
+  mc_ps1: makeItemIllus('mc', 'MemCard PS1', '1MB Save', '#475569'),
+  mc_ps2: makeItemIllus('mc', 'MemCard PS2', '8MB MagicGate', '#0f172a'),
+  tv_crt: makeItemIllus('tv_crt', 'TV Tabung', 'CRT Klasik'),
+  tv_lcd: makeItemIllus('tv_led', 'TV LCD HD', 'HDMI Ready'),
+  tv_led: makeItemIllus('tv_led', 'TV LED/OLED', 'Full HD / 4K'),
+  fan: makeItemIllus('fan', 'Kipas Angin', 'Anti Gerah'),
+  ac: makeItemIllus('ac', 'AC Split', 'Dingin Sejuk'),
+  indomie: makeItemIllus('box', 'Dus Indomie', 'Isi 40 Bks'),
+  snack: makeItemIllus('box', 'Dus Snack', 'Grosir Agen'),
+  drink: makeItemIllus('box', 'Dus Minuman', 'Grosir Agen')
 };
 
 const PS1_100_NAMES = [

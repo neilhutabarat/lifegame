@@ -344,3 +344,27 @@ input, select {
   font-size: 0.73rem;
   line-height: 1.4;
 }
+
+/* OPTIMALISASI LAYAR HP (MOBILE) */
+@media (max-width: 640px) {
+  .floating-hud-top { top: 6px; left: 6px; right: 6px; gap: 4px; }
+  .hud-row-main { gap: 4px; }
+  .brand-pill { padding: 4px 8px; }
+  .brand-pill b { font-size: 0.7rem; }
+  .brand-pill small { display: none; }
+  .time-pill { padding: 4px 7px; gap: 5px; }
+  .time-pill b { font-size: 0.68rem; }
+  .speed-btn { padding: 2px 5px; font-size: 0.64rem; }
+  .quick-actions-pill { padding: 3px 6px; gap: 4px; }
+  .quick-actions-pill button { padding: 4px 6px; font-size: 0.68rem; }
+  .hud-row-stats { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+  .hud-row-stats::-webkit-scrollbar { display: none; }
+  .stat-chip { flex: 0 0 auto; font-size: 0.67rem; padding: 3px 8px; }
+  .live-toast-bar { bottom: 66px; font-size: 0.67rem; padding: 4px 10px; max-width: 92vw; }
+  .floating-dock-bottom { bottom: 6px; padding: 5px 6px; gap: 4px; border-radius: 14px; }
+  .dock-btn { min-width: 52px; padding: 4px 7px; }
+  .dock-btn span { font-size: 1rem; }
+  .dock-btn small { font-size: 0.58rem; }
+  .drawer-backdrop { padding: 6px; }
+  .drawer-sheet { max-height: 85dvh; border-radius: 18px; padding: 12px; }
+}

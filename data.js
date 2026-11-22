@@ -251,11 +251,11 @@ const PPOB_OPERATORS = [
   { id: 'smart', name: 'Smartfren', color: '#e11d48' }
 ];
 
-const REAL_MOTOR_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Honda_Supra_X_125.jpg/320px-Honda_Supra_X_125.jpg';
-const REAL_CAR_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/2019_Toyota_Avanza_1.3_G_F653RM_%2820200228%29.jpg/320px-2019_Toyota_Avanza_1.3_G_F653RM_%2820200228%29.jpg';
-const REAL_PICKUP_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/2013_Mitsubishi_Colt_L300_Pickup_Flatbed_in_Denpasar%2C_Bali%2C_Indonesia.jpg/320px-2013_Mitsubishi_Colt_L300_Pickup_Flatbed_in_Denpasar%2C_Bali%2C_Indonesia.jpg';
-const REAL_PHONE_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/IPhone_4_Mock_No_Shadow.png/240px-IPhone_4_Mock_No_Shadow.png';
-const REAL_LAPTOP_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Laptop-computer.jpg/320px-Laptop-computer.jpg';
+const REAL_MOTOR_PHOTO = makeItemIllus('motor', 'Motor Indonesia', 'Otomotif Roda 2', '#ef4444');
+const REAL_CAR_PHOTO = makeItemIllus('mobil', 'Mobil Keluarga', 'MPV / SUV / Travel', '#2563eb');
+const REAL_PICKUP_PHOTO = makeItemIllus('mobil', 'Pick Up Niaga', 'Angkutan Barang', '#475569');
+const REAL_PHONE_PHOTO = makeItemIllus('hp', 'Smartphone / Tablet', 'Gadget Pribadi', '#3b82f6');
+const REAL_LAPTOP_PHOTO = makeItemIllus('hp', 'Laptop / Notebook', 'Komputer Portabel', '#0284c7');
 
 // ==================== 20 PILIHAN MOTOR INDONESIA SESUAI TAHUN ====================
 const MOTOR_CATALOG_20 = [

@@ -132,8 +132,53 @@ const state = {
   slotSubFilter: 'all', // 'all' | 'outdoor' | 'vip'
   discPlatformFilter: 'PS2',
   discSearchQuery: '',
-  hwCategoryFilter: 'console'
+  hwCategoryFilter: 'console',
+  hwConsolePlatFilter: 'PS1',
+  soundEnabled: true
 };
+
+// ==================== EFEK SUARA GAME (WEB AUDIO API) ====================
+let audioCtx = null;
+function playSfx(type) {
+  if (!state.soundEnabled) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    if (type === 'cash') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(987.77, now);
+      osc.frequency.setValueAtTime(1318.51, now + 0.07);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc.start(now); osc.stop(now + 0.28);
+    } else if (type === 'alert') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.setValueAtTime(220, now + 0.12);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+      osc.start(now); osc.stop(now + 0.26);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(620, now);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.start(now); osc.stop(now + 0.06);
+    }
+  } catch (e) {}
+}
+
+function toggleSound() {
+  state.soundEnabled = !state.soundEnabled;
+  const btn = document.getElementById('btnSoundToggle');
+  if (btn) btn.textContent = state.soundEnabled ? '🔊' : '🔇';
+  if (state.soundEnabled) playSfx('click');
+}
 
 // Pasang 2 unit awal (1 PS1 di Slot #1 & 1 PS2 di Room VIP #11) supaya langsung terlihat hidup!
 function seedStarterUnits() {
@@ -504,6 +549,7 @@ function seatCustomerAtSlot(slot, guest) {
   slot.minutesLeft = guest.hours * 60;
   slot.hourlyRate = rate;
   state.laciCash += totalPay;
+  playSfx('cash');
   const gTitle = slot.console.mediaType === 'disc'
     ? (slot.installedGame ? slot.installedGame.title : 'Game')
     : `${slot.digitalGames.length} Game Internal`;
@@ -776,6 +822,7 @@ const DRAWER_TITLES = {
 };
 
 function openDrawerTab(tabId) {
+  playSfx('click');
   state.mainTab = tabId;
   document.querySelectorAll('.dock-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tabId);
@@ -852,20 +899,25 @@ function renderRightPanel() {
 
   if (state.mainTab === 'store_hw') {
     const nextRenov = RENOV_LEVELS[state.renovLevel];
+    const availPlats = getReleasedPlatforms();
+    if (!availPlats.includes(state.hwConsolePlatFilter)) state.hwConsolePlatFilter = availPlats[0];
     let itemsHtml = '';
     if (state.hwCategoryFilter === 'console') {
-      itemsHtml = CONSOLE_CATALOG.filter(c => c.releaseYear <= state.year).map(c => {
-        const price = getPriceFrom2010(c.basePrice2010);
-        return `<div class="item-row">
-          <img class="prod-thumb" src="${c.img}" alt="${c.name}" />
-          <div style="flex:1">
-            <b>${c.name}</b> <span class="badge">${c.mediaType === 'disc' ? '💿 Kaset Fisik' : `💾 Digital ${c.storageGb}GB`}</span>
-            <div class="spec-line">Rilis: ${c.releaseYear} • Daya: ${c.watt}W • Tarif dasar: ${fmtRp(getPriceFrom2010(c.baseRate2010))}/jam</div>
-            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
-          </div>
-          <button class="primary" onclick="buyHardwareItem('console','${c.id}')">Beli</button>
-        </div>`;
-      }).join('');
+      itemsHtml = `<div class="sub-tabs" style="margin-bottom:4px;">` +
+        availPlats.map(p => `<button class="sub-btn ${state.hwConsolePlatFilter === p ? 'active' : ''}" onclick="state.hwConsolePlatFilter='${p}';renderRightPanel()">${p}</button>`).join('') +
+        `</div>` +
+        CONSOLE_CATALOG.filter(c => c.releaseYear <= state.year && c.platform === state.hwConsolePlatFilter).map(c => {
+          const price = getPriceFrom2010(c.basePrice2010);
+          return `<div class="item-row">
+            <img class="prod-thumb" src="${c.img}" alt="${c.name}" />
+            <div style="flex:1">
+              <b>${c.name}</b> <span class="badge">${c.mediaType === 'disc' ? '💿 Kaset Fisik' : `💾 Digital ${c.storageGb}GB`}</span>
+              <div class="spec-line">Rilis: ${c.releaseYear} • Daya: ${c.watt}W • Tarif dasar: ${fmtRp(getPriceFrom2010(c.baseRate2010))}/jam</div>
+              <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+            </div>
+            <button class="primary" onclick="buyHardwareItem('console','${c.id}')">Beli</button>
+          </div>`;
+        }).join('');
     } else if (state.hwCategoryFilter === 'tv') {
       itemsHtml = TV_CATALOG.filter(t => t.releaseYear <= state.year).map(t => {
         const price = getPriceFrom2010(t.basePrice2010);
