@@ -54,13 +54,13 @@ const state = {
   minute: 0,
   second: 0,
 
-  // Modal Awal 50 Juta dari Orang Tua
-  laciCash: 5000000,
-  handWallet: 1500000,
-  personalBank: 42500000,
-  businessPpobBalance: 1000000,
+  // Modal Awal Rp 0 (Pinjam ke Orang Tua 5-30 Juta untuk mulai rakit PC!)
+  laciCash: 0,
+  handWallet: 0,
+  personalBank: 0,
+  businessPpobBalance: 0,
 
-  // Listrik PLN, Genset Otomatis, Kebersihan, Renovasi & PC Server Kasir
+  // Listrik PLN, Genset Otomatis, Kebersihan, Renovasi, PC Server & Jam Operasional
   kwh: 45.0,
   plnBlackout: false,
   genset: {
@@ -74,6 +74,8 @@ const state = {
   serverLevel: 1,
   internetPlanId: 'isp_1m',
   rentalOpen: true,
+  openHour: 8,
+  closeHour: 23,
 
   // Pengaturan Tarif Billing Meter (Per Jam, Dihitung Per Detik!) & Paket Custom
   billingHourlyRate: 3000, // Bisa diubah bebas oleh pemain (misal 6000/jam = Rp 1.66/detik)
@@ -134,9 +136,11 @@ const state = {
     kprMonthsLeft: 0
   },
 
-  // Pinjaman Orang Tua (52x mingguan 0% bunga) & Kredit Bank (Usia 21+)
+  // Pinjaman Orang Tua (5-30 Jt, 52x mingguan 0% bunga), Kredit Bank (Usia 21+), & Cicilan Aset (Motor/Mobil/Rumah)
   parentLoan: { active: false, remainingTotal: 0, weeklyInstallment: 0, weeksLeft: 0 },
   bankLoan: { active: false, principal: 0, remainingTotal: 0, monthlyInstallment: 0, monthsLeft: 0, interestRatePct: 0 },
+  assetLoans: [],
+  ownedHouses: [],
 
   // Otomotif & Gadget
   ownedVehicles: [],
@@ -164,29 +168,9 @@ const state = {
   soundEnabled: true
 };
 
-// Rakit 3 PC awal (2 di Bilik Reguler #1-#2, 1 di Room VIP #11) supaya warnet langsung jalan!
+// Awal mulai Rp 0 tanpa PC — pemain pinjam ke Orang Tua (5-30 Juta) dulu lalu beli & rakit PC sendiri!
 function seedStarterWarnetPcs() {
-  const cpu1 = PC_CPU_CATALOG[0];
-  const cpu2 = PC_CPU_CATALOG[1];
-  const ram1 = PC_RAM_CATALOG[1];
-  const vga1 = PC_VGA_CATALOG[1];
-  const hdd1 = PC_STORAGE_CATALOG[1];
-  const os1 = PC_OS_CATALOG[1];
-  const mon1 = MONITOR_CATALOG[1];
-  const fan1 = COOLING_CATALOG[0];
-
-  [0, 1, 10].forEach((idx, n) => {
-    const s = state.slots[idx];
-    if (!s) return;
-    s.cpu = { ...(n === 2 ? cpu2 : cpu1), uid: 'cpu_init_' + n, cond: 100 };
-    s.ram = { ...ram1, uid: 'ram_init_' + n, cond: 100 };
-    s.vga = { ...vga1, uid: 'vga_init_' + n, cond: 100 };
-    s.storage = { ...hdd1, uid: 'hdd_init_' + n, cond: 100 };
-    s.os = { ...os1 };
-    s.monitor = { ...mon1, uid: 'mon_init_' + n, cond: 100 };
-    if (n === 2) s.cooling = { ...fan1, uid: 'cl_init_' + n };
-    s.gear = { name: 'Set Mouse+KB+Headset', quality: 'new', durability: 100, maxDurability: 100 };
-  });
+  // Sengaja dikosongkan sesuai skenario mulai dari Rp 0
 }
 
 // ==================== EFEK SUARA (WEB AUDIO API) ====================
@@ -682,18 +666,45 @@ function autoEmployeeServiceGear(empName) {
 }
 
 function onHourPassed() {
+  // 1. Cek Jam Buka & Jam Tutup Warnet Otomatis
+  const oh = Number(state.openHour ?? 8);
+  const ch = Number(state.closeHour ?? 23);
+  if (state.hour === oh && !state.rentalOpen) {
+    state.rentalOpen = true;
+    addLog(`🟢 <b>WARNET BUKA OTOMATIS</b> (Jam ${String(oh).padStart(2, '0')}:00)!`);
+  }
+  if (state.hour === ch && ch !== 24 && state.rentalOpen) {
+    state.rentalOpen = false;
+    state.waitingQueue = [];
+    addLog(`🔴 <b>WARNET TUTUP OTOMATIS</b> (Jam ${String(ch).padStart(2, '0')}:00). Menunggu tamu aktif selesai & update game.`);
+    triggerManualPatchAll(true);
+  }
+
+  // 2. Cek Pergantian / Selesai Shift Karyawan -> Uang Laci Kasir Otomatis Pindah ke Bank!
+  let shiftEnded = false;
+  (state.employees || []).forEach(emp => {
+    const start = Number(emp.startHour) || 8;
+    const end = (start + (Number(emp.durationHours) || 8)) % 24;
+    if (state.hour === end) shiftEnded = true;
+  });
+  if (shiftEnded && state.laciCash > 0) {
+    const moved = state.laciCash;
+    state.personalBank += moved;
+    state.laciCash = 0;
+    addLog(`🏦 <b>Ganti Shift Kasir:</b> Uang di Laci (<b>${fmtRp(moved)}</b>) otomatis disetor ke <b>Bank</b>!`);
+  }
+
   if (state.hour === 7 && isPlayerAtSchool()) {
     const pocket = getPriceFrom2010(15000);
     state.handWallet += pocket;
     addLog(`🎒 Kamu berangkat sekolah (07:00–13:00). Dapat uang jajan <b style="color:var(--green)">+${fmtRp(pocket)}</b> ke Dompet.`);
   }
-  // Jam 23:00 malam: jadwal rilis patch game online baru
   if (state.hour === 23 && Math.random() < 0.45) {
     const onlineInstalled = GAME_DISC_CATALOG.filter(g => g.type === 'online' && state.installedGames[g.id] && g.releaseYear <= state.year);
     if (onlineInstalled.length > 0) {
       const g = onlineInstalled[Math.floor(Math.random() * onlineInstalled.length)];
       state.pendingGamePatches[g.id] = g.patchMb || 250;
-      addLog(`🔄 <b>JADWAL UPDATE GAME:</b> <b>${g.title}</b> merilis Patch baru (<b>${g.patchMb} MB</b>). Tutup warnet atau klik Update Game untuk patch semua PC!`);
+      addLog(`🔄 <b>JADWAL UPDATE GAME:</b> <b>${g.title}</b> merilis Patch baru (<b>${g.patchMb} MB</b>).`);
     }
   }
 }
@@ -794,6 +805,21 @@ function onMonthPassed() {
       if (state.bankLoan.remainingTotal <= 0 || state.bankLoan.monthsLeft <= 0) state.bankLoan.active = false;
     }
   }
+
+  // 4. Cicilan Bulanan Motor, Mobil & Rumah/Aset
+  (state.assetLoans || []).forEach(al => {
+    if (!al.active) return;
+    const pay = Math.min(al.remainingTotal, al.monthlyInstallment);
+    if (deductFromAnyCash(pay)) {
+      al.remainingTotal -= pay;
+      al.monthsLeft = Math.max(0, al.monthsLeft - 1);
+      addLog(`💳 Bayar cicilan <b>${al.name}</b>: <b>-${fmtRp(pay)}</b> (Sisa ${al.monthsLeft} bln).`);
+      if (al.remainingTotal <= 0 || al.monthsLeft <= 0) {
+        al.active = false;
+        addLog(`🎉 <b>LUNAS!</b> Cicilan <b>${al.name}</b> telah lunas sepenuhnya!`);
+      }
+    }
+  });
 }
 
 // ATURAN KETAT: Pembelian & Tagihan TIDAK boleh mengambil dari Laci Kasir! Harus dari Bank atau Dompet.
@@ -812,27 +838,29 @@ function payEmployeeSalary(emp, label) {
   }
 }
 
-// ==================== LOOP UTAMA (UPDATE TIAP 10 DETIK GAME) ====================
-function mainLoop(now) {
-  const dt = Math.min(250, Math.max(0, now - lastFrameTime));
-  lastFrameTime = now;
-  if (!state.paused) {
-    const spd = Number(state.speed) || 1;
-    // 1 menit game = 125ms pada 1x -> 10 detik game = ~20.8ms pada 1x
-    const msPerTenSec = (125 / 6) / spd;
-    tickAccumulatorMs += dt;
-    let steps = 0;
-    while (tickAccumulatorMs >= msPerTenSec && steps < 40) {
-      tickAccumulatorMs -= msPerTenSec;
-      stepTenGameSeconds();
-      steps++;
-    }
-    if (steps > 0) {
-      renderHud();
-      if (typeof window.renderRoomBoard === 'function') window.renderRoomBoard(false);
-    }
+// ==================== LOOP HEMAT BATERAI & ANTI-PANAS HP (250ms TICK, BUKAN 60FPS!) ====================
+function gameTick() {
+  if (document.hidden || state.paused) {
+    lastFrameTime = performance.now();
+    return;
   }
-  requestAnimationFrame(mainLoop);
+  const now = performance.now();
+  const dt = Math.min(400, Math.max(0, now - lastFrameTime));
+  lastFrameTime = now;
+  const spd = Number(state.speed) || 1;
+  // 2x lama menjadi 1x baru (~10.4ms per 10 detik game pada 1x), sehingga 16x baru = 32x lama!
+  const msPerTenSec = (125 / 12) / spd;
+  tickAccumulatorMs += dt;
+  let steps = 0;
+  while (tickAccumulatorMs >= msPerTenSec && steps < 80) {
+    tickAccumulatorMs -= msPerTenSec;
+    stepTenGameSeconds();
+    steps++;
+  }
+  if (steps > 0) {
+    renderHud();
+    if (typeof window.renderRoomBoard === 'function') window.renderRoomBoard(false);
+  }
 }
 
 // ==================== RENDER HUD & DRAWER ====================
@@ -901,8 +929,12 @@ function manualCleanShop() {
 // ==================== PENGATURAN TARIF BILLING METER & PAKET CUSTOM + UPDATE PATCH ====================
 function openBillingRateModal() {
   showCustomModal(
-    '⚙️ Atur Tarif Billing Meter (Per Detik) & Paket Jam Warnet',
-    `<div class="spec-line">Tarif Billing Meter dihitung <b>per detik nyata</b> (Misal Rp 6.000/jam = Rp 1,67/detik, tepat di 3.600 detik = Rp 6.000).</div>
+    '⚙️ Atur Jam Buka/Tutup, Tarif Billing & Paket Warnet',
+    `<div class="grid-2">
+       <div><label class="spec-line">Jam Buka Otomatis (0-23)</label><input type="number" id="inpOpenHr" value="${state.openHour ?? 8}" min="0" max="23" /></div>
+       <div><label class="spec-line">Jam Tutup Otomatis (1-24, 24=Nonstop)</label><input type="number" id="inpCloseHr" value="${state.closeHour ?? 23}" min="1" max="24" /></div>
+     </div>
+     <div class="spec-line">Tarif Billing Meter dihitung <b>per detik nyata</b> (Misal Rp 6.000/jam = tepat 3.600 detik Rp 6.000).</div>
      <div class="grid-2">
        <div><label class="spec-line">Tarif Billing Meter / Jam (Rp)</label><input type="number" id="inpMeterRate" value="${state.billingHourlyRate}" step="500" /></div>
        <div><label class="spec-line">Tambahan Room VIP / Jam (Rp)</label><input type="number" id="inpVipBonus" value="${state.vipRateBonus}" step="500" /></div>
@@ -921,6 +953,8 @@ function openBillingRateModal() {
 }
 
 function saveBillingRateConfig() {
+  state.openHour = Math.max(0, Math.min(23, Number(document.getElementById('inpOpenHr').value) || 8));
+  state.closeHour = Math.max(1, Math.min(24, Number(document.getElementById('inpCloseHr').value) || 23));
   state.billingHourlyRate = Math.max(1000, Number(document.getElementById('inpMeterRate').value) || 3000);
   state.vipRateBonus = Math.max(0, Number(document.getElementById('inpVipBonus').value) || 1500);
   state.customPackages.forEach((p, idx) => {
@@ -1214,18 +1248,19 @@ function renderRightPanel() {
       <div class="spec-line">Saat karyawan jaga sedang bertugas, kamu tidak perlu ikut jaga! Setelah tutup, karyawan teknisi/jaga juga otomatis menyelesaikan update game di PC.</div>
       ${state.employees.map((emp, idx) => {
         const onDuty = isEmployeeOnDuty(emp);
+        const isStandby = onDuty && !state.rentalOpen;
         const dayLabels = (emp.workDaysArray || [1,2,3,4,5,6]).map(d => DAY_NAMES[d].slice(0, 3)).join(', ');
-        return `<div class="item-row" style="flex-direction:column;align-items:stretch;">
+        return `<div class="item-row" style="flex-direction:column;align-items:stretch;cursor:pointer;" onclick="openHireEmployeeModal(${idx})">
           <div style="display:flex;justify-content:space-between;">
-            <b>${emp.name}</b>
-            <span class="badge ${onDuty ? 'ok' : 'warn'}">${onDuty ? '🟢 Sedang Jaga' : '⚪ Libur / Luar Shift'}</span>
+            <b>${emp.name} <small style="color:#38bdf8">(Tap untuk Edit)</small></b>
+            <span class="badge ${isStandby ? 'busy' : onDuty ? 'ok' : 'warn'}">${isStandby ? '⏳ Standby Tunggu Buka' : onDuty ? '🟢 Sedang Jaga' : '⚪ Libur / Luar Shift'}</span>
           </div>
           <div class="spec-line">
             • Hari Kerja: <b>${dayLabels}</b> • Shift: <b>${String(emp.startHour).padStart(2, '0')}:00</b> (${emp.durationHours} jam)<br>
             • Gaji (${emp.payPeriod}): <b>${fmtRp(emp.salaryAmount)}</b> + Insentif <b>${fmtRp(emp.incentive)}</b><br>
             • Tugas: <b>${emp.tasks.join(', ').toUpperCase()}</b>
           </div>
-          <button type="button" class="danger" onclick="fireEmployee(${idx})">Berhentikan</button>
+          <button type="button" class="danger" onclick="event.stopPropagation();fireEmployee(${idx})">Berhentikan</button>
         </div>`;
       }).join('')}
     `;
@@ -1268,14 +1303,19 @@ function renderRightPanel() {
                </div>`}
       </div>
       <div class="card">
-        <b>👨‍👩‍👦 Pinjaman Orang Tua (Maks 50 Juta • 52x Mingguan • Bunga 0%)</b>
+        <b>👨‍👩‍👦 Pinjaman Orang Tua (5–30 Juta • 52x Mingguan • Bunga 0%)</b>
         ${state.parentLoan.active
           ? `<div class="spec-line">Sisa Hutang: <b>${fmtRp(state.parentLoan.remainingTotal)}</b> (${state.parentLoan.weeksLeft} mgg @ ${fmtRp(state.parentLoan.weeklyInstallment)})</div>
              <div style="display:flex;gap:6px;">
                <button type="button" class="primary" onclick="payParentLoanNow(false)">Cicil 1x</button>
                <button type="button" class="success" onclick="payParentLoanNow(true)">✅ Lunasi Semua</button>
              </div>`
-          : `<div style="display:flex;gap:6px;"><button type="button" class="primary" onclick="takeParentLoan(20000000)">Pinjam 20 Jt</button><button type="button" class="primary" onclick="takeParentLoan(50000000)">Pinjam 50 Jt</button></div>`}
+          : `<div class="grid-2">
+               <button type="button" class="primary" onclick="takeParentLoan(5000000)">Pinjam 5 Juta</button>
+               <button type="button" class="primary" onclick="takeParentLoan(10000000)">Pinjam 10 Juta</button>
+               <button type="button" class="primary" onclick="takeParentLoan(20000000)">Pinjam 20 Juta</button>
+               <button type="button" class="amber" onclick="takeParentLoan(30000000)">Pinjam Maks 30 Jt</button>
+             </div>`}
       </div>
       <div class="card">
         <b>🏦 Kredit Usaha Bank (Wajib Usia 21+ • Bunga ${bRate}%/thn)</b>
@@ -1313,12 +1353,31 @@ function renderRightPanel() {
         `).join('')}
       </div>
       <div class="card">
-        <b>🛵 Kendaraan &amp; Gadget (Sesuai Tahun ${state.year})</b>
+        <b>🏠 Aset Properti &amp; Cicilan Aktif</b>
+        <div class="item-row">
+          <div><b>Rumah Tinggal Minimalis (2 Lantai)</b><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(250000000))}</div></div>
+          <div style="display:flex;gap:4px;">
+            <button type="button" class="primary" onclick="buyOrInstallmentAsset('Rumah Minimalis', 250000000, false, 'house')">Cash</button>
+            <button type="button" class="amber" onclick="buyOrInstallmentAsset('Rumah Minimalis', 250000000, true, 'house')">Cicil DP 20%</button>
+          </div>
+        </div>
+        ${(state.assetLoans || []).filter(a => a.active).map((al, idx) => `
+          <div class="item-row">
+            <div><b>Cicilan ${al.name}</b><div class="spec-line">Sisa ${fmtRp(al.remainingTotal)} (${al.monthsLeft} bln @ ${fmtRp(al.monthlyInstallment)})</div></div>
+            <button type="button" class="success" onclick="payOffAssetLoan(${idx})">Lunasi</button>
+          </div>
+        `).join('')}
+      </div>
+      <div class="card">
+        <b>🛵 Kendaraan Motor &amp; Mobil (Bisa Cash atau Cicil DP 20% • Tahun ${state.year})</b>
         ${VEHICLE_CATALOG.filter(v => v.yearStart <= state.year).map(v => `
           <div class="item-row">
             <img class="prod-thumb" src="${v.img}" alt="${v.name}" />
             <div style="flex:1"><b>${v.name}</b><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(v.price2010))}</div></div>
-            <button type="button" class="primary" onclick="buyVehicle('${v.id}')">Beli</button>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <button type="button" class="primary" onclick="buyVehicle('${v.id}', false)">Cash</button>
+              <button type="button" class="amber" onclick="buyVehicle('${v.id}', true)">Cicil</button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -1617,41 +1676,44 @@ function buyPlnToken(nom) {
   renderAll();
 }
 
-// ==================== REKRUT KARYAWAN DENGAN CHECKLIST HARI SENIN - MINGGU ====================
-function openHireEmployeeModal() {
+// ==================== REKRUT & EDIT KARYAWAN (CHECKLIST HARI SENIN - MINGGU) ====================
+function openHireEmployeeModal(editIdx = -1) {
+  const isEdit = editIdx >= 0 && state.employees[editIdx];
+  const emp = isEdit ? state.employees[editIdx] : null;
   const umrNow = getCurrentUmr();
+  const activeDays = emp && Array.isArray(emp.workDaysArray) ? emp.workDaysArray : [1, 2, 3, 4, 5, 6];
   const daysCheckHtml = [
     [1, 'Senin'], [2, 'Selasa'], [3, 'Rabu'], [4, 'Kamis'], [5, 'Jumat'], [6, 'Sabtu'], [0, 'Minggu']
-  ].map(([dIdx, dName]) => `<label style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><input type="checkbox" class="empDayCb" value="${dIdx}" ${dIdx !== 0 ? 'checked' : ''} style="width:auto"> ${dName}</label>`).join('');
+  ].map(([dIdx, dName]) => `<label style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><input type="checkbox" class="empDayCb" value="${dIdx}" ${activeDays.includes(dIdx) ? 'checked' : ''} style="width:auto"> ${dName}</label>`).join('');
 
   showCustomModal(
-    '👷 Rekrut Karyawan & Teknisi Warnet',
+    isEdit ? `✏️ Perbarui Gaji & Jadwal: ${emp.name}` : '👷 Rekrut Karyawan & Teknisi Warnet',
     `<div class="spec-line">Centang bebas hari apa saja karyawan ini masuk kerja (Senin–Minggu):</div>
      <div class="grid-2">
-       <div><label class="spec-line">Nama Karyawan</label><input id="empName" value="Rian Teknisi" /></div>
-       <div><label class="spec-line">Skema Gaji</label><select id="empPeriod"><option value="daily">Harian</option><option value="weekly">Mingguan</option><option value="monthly" selected>Bulanan</option></select></div>
+       <div><label class="spec-line">Nama Karyawan</label><input id="empName" value="${emp ? emp.name : 'Rian Teknisi'}" /></div>
+       <div><label class="spec-line">Skema Gaji</label><select id="empPeriod"><option value="daily" ${emp && emp.payPeriod === 'daily' ? 'selected' : ''}>Harian</option><option value="weekly" ${emp && emp.payPeriod === 'weekly' ? 'selected' : ''}>Mingguan</option><option value="monthly" ${!emp || emp.payPeriod === 'monthly' ? 'selected' : ''}>Bulanan</option></select></div>
      </div>
      <div class="grid-2">
-       <div><label class="spec-line">Gaji Pokok (Rp)</label><input type="number" id="empSalary" value="${Math.round(umrNow * 0.6)}" /></div>
-       <div><label class="spec-line">Insentif (Rp)</label><input type="number" id="empInc" value="100000" /></div>
+       <div><label class="spec-line">Gaji Pokok (Rp)</label><input type="number" id="empSalary" value="${emp ? emp.salaryAmount : Math.round(umrNow * 0.6)}" /></div>
+       <div><label class="spec-line">Insentif (Rp)</label><input type="number" id="empInc" value="${emp ? emp.incentive : 100000}" /></div>
      </div>
      <div class="grid-2">
-       <div><label class="spec-line">Jam Masuk (0-23)</label><input type="number" id="empStart" min="0" max="23" value="8" /></div>
-       <div><label class="spec-line">Durasi Kerja (Jam)</label><input type="number" id="empDur" min="4" max="16" value="8" /></div>
+       <div><label class="spec-line">Jam Masuk (0-23)</label><input type="number" id="empStart" min="0" max="23" value="${emp ? emp.startHour : 8}" /></div>
+       <div><label class="spec-line">Durasi Kerja (Jam)</label><input type="number" id="empDur" min="4" max="16" value="${emp ? emp.durationHours : 8}" /></div>
      </div>
      <div class="spec-line"><b>📅 Hari Masuk Kerja (Senin–Minggu):</b><br>${daysCheckHtml}</div>
      <div class="spec-line">
        <b>🛠️ Tugas Karyawan:</b><br>
-       <label><input type="checkbox" id="empTaskGuard" checked style="width:auto"> Jaga Operator Billing (Kamu tidak perlu ikut jaga)</label><br>
-       <label><input type="checkbox" id="empTaskClean" checked style="width:auto"> Bersih-bersih Ruangan Warnet</label><br>
-       <label><input type="checkbox" id="empTaskService" checked style="width:auto"> Teknisi Servis Gear &amp; Update Patch Game</label><br>
-       <label><input type="checkbox" id="empBpjs" checked style="width:auto"> Berikan BPJS Kesehatan</label>
+       <label><input type="checkbox" id="empTaskGuard" ${!emp || emp.tasks.includes('guard') ? 'checked' : ''} style="width:auto"> Jaga Operator Billing (Kamu tidak perlu ikut jaga)</label><br>
+       <label><input type="checkbox" id="empTaskClean" ${!emp || emp.tasks.includes('clean') ? 'checked' : ''} style="width:auto"> Bersih-bersih Ruangan Warnet</label><br>
+       <label><input type="checkbox" id="empTaskService" ${!emp || emp.tasks.includes('service') ? 'checked' : ''} style="width:auto"> Teknisi Servis Gear &amp; Update Patch Game</label><br>
+       <label><input type="checkbox" id="empBpjs" ${!emp || emp.hasBpjs ? 'checked' : ''} style="width:auto"> Berikan BPJS Kesehatan</label>
      </div>`,
-    `<button type="button" onclick="closeCustomModal()">Batal</button><button type="button" class="primary" onclick="confirmHireEmployee()">✅ Rekrut</button>`
+    `<button type="button" onclick="closeCustomModal()">Batal</button><button type="button" class="primary" onclick="confirmHireEmployee(${editIdx})">${isEdit ? '💾 Simpan Perubahan' : '✅ Rekrut'}</button>`
   );
 }
 
-function confirmHireEmployee() {
+function confirmHireEmployee(editIdx = -1) {
   const name = (document.getElementById('empName').value || 'Operator').trim();
   const payPeriod = document.getElementById('empPeriod').value;
   const salaryAmount = Math.max(10000, Number(document.getElementById('empSalary').value) || 500000);
@@ -1668,11 +1730,18 @@ function confirmHireEmployee() {
   if (document.getElementById('empTaskService').checked) tasks.push('service');
   const hasBpjs = document.getElementById('empBpjs').checked;
 
-  state.employees.push({
-    id: Date.now(), name, payPeriod, salaryAmount, incentive, startHour, durationHours, workDaysArray, tasks, hasBpjs
-  });
+  const obj = {
+    id: (editIdx >= 0 && state.employees[editIdx]) ? state.employees[editIdx].id : Date.now(),
+    name, payPeriod, salaryAmount, incentive, startHour, durationHours, workDaysArray, tasks, hasBpjs
+  };
+  if (editIdx >= 0 && state.employees[editIdx]) {
+    state.employees[editIdx] = obj;
+    addLog(`✏️ Jadwal &amp; gaji <b>${name}</b> diperbarui!`);
+  } else {
+    state.employees.push(obj);
+    addLog(`👷 Merekrut <b>${name}</b> (${workDaysArray.length} hari/minggu, jam ${startHour}:00).`);
+  }
   closeCustomModal();
-  addLog(`👷 Merekrut <b>${name}</b> (${workDaysArray.length} hari/minggu, jam ${startHour}:00).`);
   saveGame();
   renderAll();
 }
@@ -1686,7 +1755,7 @@ function fireEmployee(idx) {
 // ==================== PINJAMAN, TRANSFER KAS, KARAKTER & CLOUD ====================
 function takeParentLoan(amount) {
   if (state.parentLoan.active) return;
-  const amt = Math.min(50000000, amount);
+  const amt = Math.min(30000000, amount);
   state.personalBank += amt;
   state.parentLoan = { active: true, remainingTotal: amt, weeklyInstallment: Math.ceil(amt / 52), weeksLeft: 52 };
   playSfx('cash');
@@ -1743,14 +1812,58 @@ function transferCustomFunds(all) {
   renderAll();
 }
 
-function buyVehicle(id) {
+function buyVehicle(id, isInstallment = false) {
   const v = VEHICLE_CATALOG.find(x => x.id === id);
   if (!v) return;
   const price = getPriceFrom2010(v.price2010);
-  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang kurang!');
-  state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap });
+  if (isInstallment) {
+    const dp = Math.round(price * 0.2);
+    if (!deductFromAnyCash(dp)) return;
+    const rem = Math.round((price - dp) * 1.12);
+    const months = v.category === 'Mobil' ? 36 : 12;
+    state.assetLoans = state.assetLoans || [];
+    state.assetLoans.push({ name: v.name, active: true, remainingTotal: rem, monthlyInstallment: Math.ceil(rem / months), monthsLeft: months });
+    state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap });
+    playSfx('cash');
+    addLog(`💳 Kredit <b>${v.name}</b> disetujui! DP <b>-${fmtRp(dp)}</b>, cicilan ${months} bln @ ${fmtRp(Math.ceil(rem / months))}/bln.`);
+  } else {
+    if (!deductFromAnyCash(price)) return;
+    state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap });
+    playSfx('cash');
+    addLog(`🛵 Membeli tunai <b>${v.name}</b> (${fmtRp(price)}).`);
+  }
+  saveGame(); renderAll();
+}
+
+function buyOrInstallmentAsset(name, basePrice2010, isInstallment, kind) {
+  const price = getPriceFrom2010(basePrice2010);
+  if (isInstallment) {
+    const dp = Math.round(price * 0.2);
+    if (!deductFromAnyCash(dp)) return;
+    const rem = Math.round((price - dp) * 1.15);
+    const months = 60;
+    state.assetLoans = state.assetLoans || [];
+    state.assetLoans.push({ name, active: true, remainingTotal: rem, monthlyInstallment: Math.ceil(rem / months), monthsLeft: months });
+    if (kind === 'house') state.ownedHouses.push({ name, boughtYear: state.year });
+    playSfx('cash');
+    addLog(`🏠 KPR <b>${name}</b> disetujui! DP <b>-${fmtRp(dp)}</b>, cicilan 60 bln.`);
+  } else {
+    if (!deductFromAnyCash(price)) return;
+    if (kind === 'house') state.ownedHouses.push({ name, boughtYear: state.year });
+    playSfx('cash');
+    addLog(`🏠 Membeli tunai <b>${name}</b> (${fmtRp(price)})!`);
+  }
+  saveGame(); renderAll();
+}
+
+function payOffAssetLoan(idx) {
+  const al = (state.assetLoans || [])[idx];
+  if (!al || !al.active) return;
+  if (!deductFromAnyCash(al.remainingTotal)) return;
+  const paid = al.remainingTotal;
+  al.remainingTotal = 0; al.monthsLeft = 0; al.active = false;
   playSfx('cash');
-  addLog(`🛵 Membeli <b>${v.name}</b> (${fmtRp(price)}).`);
+  addLog(`✅ Cicilan <b>${al.name}</b> dilunasi (${fmtRp(paid)})!`);
   saveGame(); renderAll();
 }
 
@@ -1832,7 +1945,8 @@ function confirmCharacterCreation() {
   state.cityId = cityId;
   state.year = 2010; state.month = 1; state.day = 1; state.dayOfWeek = 5;
   state.hour = 8; state.minute = 0; state.second = 0; state.totalDays = 1;
-  state.laciCash = 5000000; state.handWallet = 1500000; state.personalBank = 42500000;
+  state.laciCash = 0; state.handWallet = 0; state.personalBank = 0;
+  state.openHour = 8; state.closeHour = 23;
   state.kwh = 45.0; state.plnBlackout = false;
   state.genset = { owned: true, active: false, fuelLiters: 8.0, maxTankLiters: 15.0 };
   state.cleanliness = 100; state.renovLevel = 1; state.serverLevel = 1; state.internetPlanId = 'isp_1m';
@@ -1887,5 +2001,5 @@ function openCloudSyncModal() {
 window.addEventListener('DOMContentLoaded', () => {
   loadGame();
   renderAll();
-  requestAnimationFrame(mainLoop);
+  setInterval(gameTick, 250);
 });
