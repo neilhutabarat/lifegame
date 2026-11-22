@@ -11,8 +11,8 @@
   let isDragging = false, downPos = { x: 0, y: 0 }, lastPos = { x: 0, y: 0 };
   const hitRegions = [];
 
-  const WORLD_W = 1200, WORLD_H = 760;
-  const DOOR_POS = { x: 600, y: 715 };
+  const WORLD_W = 540, WORLD_H = 920;
+  const DOOR_POS = { x: 270, y: 885 };
 
   // State posisi berjalan tiap karakter agar bergerak mulus dari pintu -> kursi -> pintu keluar
   const walkers = new Map(); // id -> { x, y, tx, ty, state: 'walk'|'sit', seed, name, shirt, isLeaving }
@@ -150,9 +150,9 @@
     const idx = isRoom ? (i - 10) : i;
     const row = Math.floor(idx / 5);
     const col = idx % 5;
-    const sx = (isRoom ? 635 : 55) + col * 104;
-    const sy = 128 + row * 172;
-    return { sx, sy, sw: 94, sh: 152, isRoom, seatX: sx + 47, seatY: sy + 98 };
+    const sx = 28 + col * 98;
+    const sy = (isRoom ? 405 : 112) + row * 134;
+    return { sx, sy, sw: 90, sh: 124, isRoom, seatX: sx + 45, seatY: sy + 82 };
   }
 
   function updateWalkers(dt, t) {
@@ -187,8 +187,8 @@
     (state.waitingQueue || []).forEach((wq, idx) => {
       const id = 'wait_' + wq.id;
       activeIds.add(id);
-      const tx = 835 + (idx % 4) * 76;
-      const ty = idx < 4 ? 580 : 645;
+      const tx = 340 + (idx % 4) * 44;
+      const ty = idx < 4 ? 765 : 815;
       let w = walkers.get(id);
       if (!w) {
         w = {
@@ -208,8 +208,8 @@
       const id = 'emp_' + emp.id;
       activeIds.add(id);
       const isCleaner = emp.tasks && emp.tasks.includes('clean');
-      const tx = isCleaner ? 540 + Math.sin(t * 0.45 + idx) * 260 : 285 + idx * 44;
-      const ty = isCleaner ? 492 + Math.cos(t * 0.35 + idx) * 35 : 640;
+      const tx = isCleaner ? 270 + Math.sin(t * 0.45 + idx) * 160 : 145 + idx * 32;
+      const ty = isCleaner ? 385 + Math.cos(t * 0.35 + idx) * 20 : 815;
       let w = walkers.get(id);
       if (!w) {
         w = { x: tx, y: ty, tx, ty, seed: 50 + idx, name: emp.name.split(' ')[0], shirt: '#10b981' };
@@ -264,58 +264,46 @@
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, cw, ch);
 
-    const baseScale = Math.min((cw - 12) / WORLD_W, (ch - 132) / WORLD_H);
+    const baseScale = Math.min((cw - 6) / WORLD_W, (ch - 96) / WORLD_H);
     const effScale = Math.max(0.28, baseScale * zoom);
     const offsetX = (cw - WORLD_W * effScale) / 2 + panX;
-    const offsetY = (ch - WORLD_H * effScale) / 2 + 16 + panY;
+    const offsetY = (ch - WORLD_H * effScale) / 2 + 8 + panY;
 
     ctx.translate(offsetX, offsetY);
     ctx.scale(effScale, effScale);
 
     hitRegions.length = 0;
 
-    // 1. Dinding Luar Ruko & Lantai Kayu / Keramik Cerah Hangat (Warnet Life Style!)
+    // 1. Dinding Luar Ruko & Lantai Kayu / Keramik Cerah Hangat (Portrait Fullscreen)
     const renovLv = typeof state !== 'undefined' ? (state.renovLevel || 1) : 1;
     const floorPalettes = ['#e7d8c3', '#f1e4d1', '#e2e8f0', '#ede9fe'];
     const wallPalettes = ['#fef3c7', '#e0f2fe', '#f3e8ff', '#dbeafe'];
     const floorCol = floorPalettes[Math.min(3, renovLv - 1)];
     const wallCol = wallPalettes[Math.min(3, renovLv - 1)];
 
-    // Dinding Atas
-    roundRect(16, 16, WORLD_W - 32, WORLD_H - 32, 22, floorCol, '#475569', 6);
-    roundRect(20, 20, WORLD_W - 40, 72, 16, wallCol, '#cbd5e1', 2);
+    roundRect(8, 8, WORLD_W - 16, WORLD_H - 16, 20, floorCol, '#475569', 5);
+    roundRect(12, 12, WORLD_W - 24, 62, 14, wallCol, '#cbd5e1', 2);
 
-    // Papan Tekstur Lantai Kayu Hangat
     ctx.strokeStyle = 'rgba(120, 53, 15, 0.1)';
-    ctx.lineWidth = 1.5;
-    for (let y = 100; y < WORLD_H - 30; y += 38) {
-      ctx.beginPath(); ctx.moveTo(22, y); ctx.lineTo(WORLD_W - 22, y); ctx.stroke();
+    ctx.lineWidth = 1.2;
+    for (let y = 84; y < WORLD_H - 20; y += 36) {
+      ctx.beginPath(); ctx.moveTo(14, y); ctx.lineTo(WORLD_W - 14, y); ctx.stroke();
     }
 
-    // Poster Game di Dinding Atas & Papan Nama Toko
-    roundRect(80, 28, 70, 54, 6, '#ef4444', '#7f1d1d', 2);
-    ctx.fillStyle = '#fff'; ctx.font = '800 9px Arial'; ctx.textAlign = 'center'; ctx.fillText('WE 2002', 115, 58);
-    roundRect(170, 28, 70, 54, 6, '#2563eb', '#1e3a8a', 2);
-    ctx.fillStyle = '#fff'; ctx.fillText('GTA SA', 205, 58);
+    // Papan Nama Toko & Poster
+    roundRect(95, 18, 350, 48, 10, '#1e293b', '#f59e0b', 2.5);
+    ctx.fillStyle = '#fde047'; ctx.font = '900 15px Inter, Arial'; ctx.textAlign = 'center';
+    ctx.fillText('🎮 RENTAL PS & KONTER PULSA', 270, 40);
+    ctx.fillStyle = '#38bdf8'; ctx.font = '700 9.5px Inter, Arial';
+    ctx.fillText('10 UNIT REGULER • 10 ROOM VIP • RUANG TUNGGU', 270, 56);
 
-    roundRect(350, 26, 500, 56, 12, '#1e293b', '#f59e0b', 3);
-    ctx.fillStyle = '#fde047'; ctx.font = '900 18px Inter, Arial';
-    ctx.fillText('🎮 RENTAL PS & KONTER PULSA', 600, 52);
-    ctx.fillStyle = '#38bdf8'; ctx.font = '700 11px Inter, Arial';
-    ctx.fillText('TERIMA KASIH TELAH BERMAIN • RENTAL BUKA', 600, 70);
-
-    roundRect(960, 28, 70, 54, 6, '#16a34a', '#14532d', 2);
-    ctx.fillStyle = '#fff'; ctx.fillText('DOWNHILL', 995, 58);
-    roundRect(1050, 28, 70, 54, 6, '#7c3aed', '#4c1d95', 2);
-    ctx.fillStyle = '#fff'; ctx.fillText('TEKKEN', 1085, 58);
-
-    // Karpet Pembatas Area Reguler vs Room VIP
-    roundRect(42, 98, 546, 375, 16, 'rgba(255,255,255,0.28)', 'rgba(148,163,184,0.4)', 2);
-    roundRect(612, 98, 546, 375, 16, 'rgba(199,210,254,0.35)', 'rgba(99,102,241,0.45)', 2);
-    ctx.fillStyle = '#334155'; ctx.font = '800 11px Inter, Arial'; ctx.textAlign = 'left';
-    ctx.fillText('🕹️ AREA REGULER (10 UNIT)', 58, 118);
+    // Zona Area Reguler (Atas) & Room VIP (Tengah)
+    roundRect(18, 84, WORLD_W - 36, 290, 14, 'rgba(255,255,255,0.28)', 'rgba(148,163,184,0.4)', 1.5);
+    roundRect(18, 382, WORLD_W - 36, 290, 14, 'rgba(199,210,254,0.35)', 'rgba(99,102,241,0.45)', 1.5);
+    ctx.fillStyle = '#334155'; ctx.font = '800 10px Inter, Arial'; ctx.textAlign = 'left';
+    ctx.fillText('🕹️ AREA REGULER (10 UNIT)', 28, 102);
     ctx.fillStyle = '#3730a3';
-    ctx.fillText('👑 AREA ROOM VIP AC (10 ROOM)', 628, 118);
+    ctx.fillText('👑 AREA ROOM VIP AC (10 ROOM)', 28, 398);
 
     // 2. 20 Slot Unit Rental PS
     if (typeof state !== 'undefined' && state.slots) {
@@ -361,38 +349,34 @@
     }
 
     // 3. Meja Kasir, Etalase Snack & Rak Kaset (Bawah Kiri)
-    roundRect(50, 510, 360, 195, 16, 'rgba(255,255,255,0.55)', '#94a3b8', 2);
-    roundRect(80, 550, 230, 46, 10, '#78350f', '#451a03', 2);
-    roundRect(205, 556, 95, 32, 6, '#bae6fd', '#0284c7', 1.5); // Etalase Kaca Snack/Pulsa
-    ctx.fillStyle = '#0f172a'; ctx.font = '800 11px Inter, Arial'; ctx.textAlign = 'center';
-    ctx.fillText('KASIR & ETALASE', 142, 577);
-    // Rak Kaset Warna-warni di samping kasir
-    roundRect(330, 540, 62, 130, 8, '#334155', '#0f172a', 2);
-    ctx.fillStyle = '#fde047'; ctx.font = '700 9px Arial'; ctx.fillText('RAK', 361, 558); ctx.fillText('KASET', 361, 569);
-    ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7'].forEach((c, ci) => {
-      roundRect(338, 580 + ci * 16, 46, 10, 2, c);
+    roundRect(18, 684, 210, 180, 14, 'rgba(255,255,255,0.55)', '#94a3b8', 2);
+    roundRect(30, 715, 130, 38, 8, '#78350f', '#451a03', 1.5);
+    ctx.fillStyle = '#fde047'; ctx.font = '800 9px Inter, Arial'; ctx.textAlign = 'center';
+    ctx.fillText('KASIR & PULSA', 95, 738);
+    roundRect(170, 700, 46, 115, 6, '#334155', '#0f172a', 1.5);
+    ctx.fillStyle = '#fde047'; ctx.font = '700 8px Arial'; ctx.fillText('KASET', 193, 715);
+    ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b'].forEach((c, ci) => {
+      roundRect(176, 725 + ci * 18, 34, 10, 2, c);
     });
-    hitRegions.push({ x: 50, y: 510, w: 360, h: 195, action: 'cashier' });
+    hitRegions.push({ x: 18, y: 684, w: 210, h: 180, action: 'cashier' });
 
     // Owner di Kasir
     if (typeof isPlayerAtSchool !== 'function' || !isPlayerAtSchool()) {
-      drawPerson25D(155, 645, 7, '#f5ccb0', '#2563eb', false, false, typeof state !== 'undefined' ? state.player.name.split(' ')[0] : 'Owner', t);
+      drawPerson25D(95, 815, 7, '#f5ccb0', '#2563eb', false, false, typeof state !== 'undefined' ? state.player.name.split(' ')[0] : 'Owner', t);
     }
 
-    // Tanaman Hias & Pintu Masuk Utama (Bawah Tengah)
-    drawPlant2D(445, 535);
-    drawPlant2D(730, 535);
-    roundRect(535, 695, 130, 46, 8, '#0ea5e9', '#0f172a', 3);
-    roundRect(550, 655, 100, 36, 8, '#b91c1c', '#7f1d1d', 2);
-    ctx.fillStyle = '#fde047'; ctx.font = '800 10px Inter, Arial'; ctx.textAlign = 'center';
-    ctx.fillText('WELCOME', 600, 677);
+    // Pintu Masuk Utama (Bawah Tengah)
+    roundRect(235, 875, 70, 32, 6, '#0ea5e9', '#0f172a', 2.5);
+    roundRect(240, 845, 60, 26, 6, '#b91c1c', '#7f1d1d', 1.5);
+    ctx.fillStyle = '#fde047'; ctx.font = '800 8.5px Inter, Arial'; ctx.textAlign = 'center';
+    ctx.fillText('WELCOME', 270, 861);
 
     // 4. Ruang Tunggu Antrean (Bawah Kanan)
-    roundRect(760, 510, 395, 195, 16, 'rgba(255,255,255,0.55)', '#94a3b8', 2);
-    ctx.fillStyle = '#1e293b'; ctx.font = '800 11.5px Inter, Arial'; ctx.textAlign = 'left';
-    ctx.fillText('🪑 RUANG TUNGGU ANTREAN', 780, 535);
-    roundRect(785, 560, 345, 34, 8, '#475569', '#1e293b', 1.5);
-    roundRect(785, 625, 345, 34, 8, '#475569', '#1e293b', 1.5);
+    roundRect(312, 684, 210, 180, 14, 'rgba(255,255,255,0.55)', '#94a3b8', 2);
+    ctx.fillStyle = '#1e293b'; ctx.font = '800 9.5px Inter, Arial'; ctx.textAlign = 'left';
+    ctx.fillText('🪑 RUANG TUNGGU', 324, 704);
+    roundRect(324, 750, 186, 26, 6, '#475569', '#1e293b', 1.5);
+    roundRect(324, 800, 186, 26, 6, '#475569', '#1e293b', 1.5);
 
     // 5. Render Semua Karakter Berjalan / Duduk (Tamu, Antrean, Karyawan)
     walkers.forEach((w) => {
@@ -417,10 +401,10 @@
   function handleCanvasTap(clientX, clientY) {
     if (!canvas) return;
     const cw = window.innerWidth, ch = window.innerHeight;
-    const baseScale = Math.min((cw - 12) / WORLD_W, (ch - 132) / WORLD_H);
+    const baseScale = Math.min((cw - 6) / WORLD_W, (ch - 96) / WORLD_H);
     const effScale = Math.max(0.28, baseScale * zoom);
     const offsetX = (cw - WORLD_W * effScale) / 2 + panX;
-    const offsetY = (ch - WORLD_H * effScale) / 2 + 16 + panY;
+    const offsetY = (ch - WORLD_H * effScale) / 2 + 8 + panY;
     const wx = (clientX - offsetX) / effScale;
     const wy = (clientY - offsetY) / effScale;
 
