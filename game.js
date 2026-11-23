@@ -187,7 +187,9 @@ const state = {
   hwCategoryFilter: 'cpu',
   gameTypeFilter: 'online',
   soundEnabled: true,
-  musicEnabled: true
+  musicEnabled: true,
+  bgmTrack: 1,
+  unlockAllEras: true
 };
 
 // Awal mulai Rp 0 tanpa PC — pemain pinjam ke Orang Tua (5-30 Juta) dulu lalu beli & rakit PC sendiri!
@@ -195,21 +197,49 @@ function seedStarterWarnetPcs() {
   // Sengaja dikosongkan sesuai skenario mulai dari Rp 0
 }
 
-// ==================== SYNTHESIZER MUSIK BACKSOUND CHIPTUNE/LO-FI WARNET & EFEK SUARA ====================
+// ==================== SYNTHESIZER MUSIK BACKSOUND CHIPTUNE/LO-FI WARNET (3 LAGU + BEAT + BASS + CHORD) ====================
 let audioCtx = null;
 let bgmTimer = null;
 let bgmStepIdx = 0;
 
-// Melodi Chiptune/Lo-Fi Nostalgia Warnet (Chord + Bass + Lead Arpeggio)
-const BGM_MELODY_NOTES = [
-  261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 392.00,
-  220.00, 261.63, 329.63, 440.00, 329.63, 261.63, 246.94, 329.63,
-  174.61, 220.00, 261.63, 349.23, 261.63, 220.00, 196.00, 293.66,
-  196.00, 246.94, 293.66, 392.00, 440.00, 392.00, 329.63, 293.66
-];
-const BGM_BASS_NOTES = [
-  130.81, 130.81, 110.00, 110.00, 87.31, 87.31, 98.00, 98.00
-];
+const BGM_TRACKS = {
+  1: {
+    name: '🎵 Lagu 1: Nostalgia Warnet 2010',
+    tempoMs: 260,
+    wave: 'triangle',
+    melody: [
+      523.25, 659.25, 783.99, 659.25, 587.33, 659.25, 523.25, 392.00,
+      440.00, 523.25, 659.25, 880.00, 783.99, 659.25, 587.33, 523.25,
+      349.23, 440.00, 523.25, 698.46, 659.25, 523.25, 440.00, 392.00,
+      392.00, 493.88, 587.33, 783.99, 659.25, 587.33, 523.25, 392.00
+    ],
+    bass: [130.81, 130.81, 110.00, 110.00, 87.31, 87.31, 98.00, 98.00]
+  },
+  2: {
+    name: '🎵 Lagu 2: Cyber Arena Mabar',
+    tempoMs: 210,
+    wave: 'square',
+    melody: [
+      440.00, 0, 523.25, 659.25, 587.33, 0, 523.25, 440.00,
+      349.23, 440.00, 523.25, 698.46, 659.25, 587.33, 523.25, 392.00,
+      440.00, 523.25, 659.25, 880.00, 783.99, 659.25, 523.25, 440.00,
+      329.63, 392.00, 493.88, 659.25, 587.33, 493.88, 440.00, 329.63
+    ],
+    bass: [110.00, 110.00, 87.31, 87.31, 130.81, 130.81, 98.00, 82.41]
+  },
+  3: {
+    name: '🎵 Lagu 3: Lo-Fi Begadang Malam',
+    tempoMs: 340,
+    wave: 'sine',
+    melody: [
+      392.00, 493.88, 587.33, 783.99, 659.25, 587.33, 493.88, 392.00,
+      329.63, 392.00, 493.88, 659.25, 587.33, 493.88, 392.00, 329.63,
+      261.63, 329.63, 392.00, 523.25, 493.88, 392.00, 329.63, 261.63,
+      293.66, 369.99, 440.00, 587.33, 523.25, 440.00, 369.99, 293.66
+    ],
+    bass: [98.00, 98.00, 82.41, 82.41, 65.41, 65.41, 73.42, 73.42]
+  }
+};
 
 function ensureAudioContext() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -221,36 +251,57 @@ function playBgmStep() {
   if (!state.soundEnabled || state.musicEnabled === false) return;
   try {
     const ctx = ensureAudioContext();
+    if (ctx.state === 'suspended') return;
     const now = ctx.currentTime;
-    const leadFreq = BGM_MELODY_NOTES[bgmStepIdx % BGM_MELODY_NOTES.length];
-    const bassFreq = BGM_BASS_NOTES[Math.floor(bgmStepIdx / 4) % BGM_BASS_NOTES.length];
+    const tr = BGM_TRACKS[state.bgmTrack || 1] || BGM_TRACKS[1];
+    const leadFreq = tr.melody[bgmStepIdx % tr.melody.length];
+    const bassFreq = tr.bass[Math.floor(bgmStepIdx / 4) % tr.bass.length];
 
-    // Lead Synth (Warm Triangle Lo-Fi)
-    const oscLead = ctx.createOscillator();
-    const gainLead = ctx.createGain();
-    oscLead.type = 'triangle';
-    oscLead.frequency.setValueAtTime(leadFreq, now);
-    gainLead.gain.setValueAtTime(0.022, now);
-    gainLead.gain.exponentialRampToValueAtTime(0.0008, now + 0.34);
-    oscLead.connect(gainLead);
-    gainLead.connect(ctx.destination);
-    oscLead.start(now);
-    oscLead.stop(now + 0.35);
+    // 1. Lead Melody Synth (Jelas & Nyaring)
+    if (leadFreq > 0) {
+      const oscLead = ctx.createOscillator();
+      const gainLead = ctx.createGain();
+      oscLead.type = tr.wave || 'triangle';
+      oscLead.frequency.setValueAtTime(leadFreq, now);
+      const peakGain = tr.wave === 'square' ? 0.055 : 0.11;
+      gainLead.gain.setValueAtTime(peakGain, now);
+      gainLead.gain.exponentialRampToValueAtTime(0.002, now + (tr.tempoMs / 1000) * 0.9);
+      oscLead.connect(gainLead);
+      gainLead.connect(ctx.destination);
+      oscLead.start(now);
+      oscLead.stop(now + (tr.tempoMs / 1000) * 0.95);
+    }
 
-    // Bass Synth pada tiap ketukan pertama bar
+    // 2. Warm Harmony Chord pada tiap awal ketukan 4
+    if (bgmStepIdx % 4 === 0 && leadFreq > 0) {
+      const oscChord = ctx.createOscillator();
+      const gainChord = ctx.createGain();
+      oscChord.type = 'sine';
+      oscChord.frequency.setValueAtTime(leadFreq * 0.75, now);
+      gainChord.gain.setValueAtTime(0.06, now);
+      gainChord.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+      oscChord.connect(gainChord);
+      gainChord.connect(ctx.destination);
+      oscChord.start(now);
+      oscChord.stop(now + 0.8);
+    }
+
+    // 3. Bassline + Drum Kick Synth pada tiap ketukan genap
     if (bgmStepIdx % 2 === 0) {
       const oscBass = ctx.createOscillator();
       const gainBass = ctx.createGain();
-      oscBass.type = 'sine';
-      oscBass.frequency.setValueAtTime(bassFreq, now);
-      gainBass.gain.setValueAtTime(0.032, now);
-      gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      oscBass.type = 'triangle';
+      oscBass.frequency.setValueAtTime(bassFreq * 2, now);
+      oscBass.frequency.exponentialRampToValueAtTime(bassFreq, now + 0.08);
+      gainBass.gain.setValueAtTime(0.13, now);
+      gainBass.gain.exponentialRampToValueAtTime(0.002, now + 0.45);
       oscBass.connect(gainBass);
       gainBass.connect(ctx.destination);
       oscBass.start(now);
-      oscBass.stop(now + 0.68);
+      oscBass.stop(now + 0.48);
     }
-    bgmStepIdx = (bgmStepIdx + 1) % BGM_MELODY_NOTES.length;
+
+    bgmStepIdx = (bgmStepIdx + 1) % tr.melody.length;
   } catch (e) {}
 }
 
@@ -259,19 +310,58 @@ function startOrUpdateBgm() {
     clearInterval(bgmTimer);
     bgmTimer = null;
   }
+  const btnM = document.getElementById('btnMusicTrack');
+  if (btnM) {
+    if (!state.soundEnabled || state.musicEnabled === false) {
+      btnM.textContent = '🔇 Musik';
+    } else {
+      btnM.textContent = `🎵 Lagu ${state.bgmTrack || 1}`;
+    }
+  }
   if (state.soundEnabled && state.musicEnabled !== false) {
-    bgmTimer = setInterval(playBgmStep, 380);
+    const tr = BGM_TRACKS[state.bgmTrack || 1] || BGM_TRACKS[1];
+    bgmTimer = setInterval(playBgmStep, tr.tempoMs || 260);
   }
 }
 
-// Otomatis aktifkan musik backsound saat pemain pertama kali tap layar
+function cycleBgmTrack() {
+  ensureAudioContext();
+  if (!state.soundEnabled || state.musicEnabled === false) {
+    state.soundEnabled = true;
+    state.musicEnabled = true;
+    state.bgmTrack = 1;
+  } else if ((state.bgmTrack || 1) < 3) {
+    state.bgmTrack = (state.bgmTrack || 1) + 1;
+  } else {
+    state.musicEnabled = false;
+  }
+  bgmStepIdx = 0;
+  startOrUpdateBgm();
+  const btnS = document.getElementById('btnSoundToggle');
+  if (btnS) btnS.textContent = state.soundEnabled ? '🔊' : '🔇';
+  if (state.musicEnabled) {
+    playBgmStep();
+    const tr = BGM_TRACKS[state.bgmTrack || 1] || BGM_TRACKS[1];
+    showFloatingToast(`🎶 Memutar <b>${tr.name}</b> (Tap tombol 🎵 di atas untuk ganti lagu / matikan musik).`, 'ok');
+  } else {
+    showFloatingToast('🔇 <b>Musik Backsound Dimatikan.</b> Tap tombol 🔇 Musik lagi untuk menyalakan.', 'info');
+  }
+  saveGame();
+}
+
+// Unlock Web Audio API pada event click / touchend / pointerup / keydown agar musik selalu menyala di Chrome/HP!
 if (typeof window !== 'undefined') {
-  window.addEventListener('pointerdown', function initBgmOnFirstTap() {
-    try {
-      ensureAudioContext();
-      if (!bgmTimer && state.soundEnabled) startOrUpdateBgm();
-    } catch (e) {}
-  }, { once: true });
+  ['click', 'touchend', 'pointerup', 'keydown'].forEach(evName => {
+    window.addEventListener(evName, function unlockBgmAudio() {
+      try {
+        const ctx = ensureAudioContext();
+        if (!bgmTimer && state.soundEnabled && state.musicEnabled !== false) {
+          startOrUpdateBgm();
+          playBgmStep();
+        }
+      } catch (e) {}
+    }, { passive: true });
+  });
 }
 
 function playSfx(type) {
@@ -288,13 +378,13 @@ function playSfx(type) {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(987.77, now);
       osc.frequency.setValueAtTime(1318.51, now + 0.07);
-      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.setValueAtTime(0.11, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
       osc.start(now); osc.stop(now + 0.25);
     } else {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(640, now);
-      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.setValueAtTime(0.045, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
       osc.start(now); osc.stop(now + 0.05);
     }
@@ -305,12 +395,44 @@ function toggleSound() {
   state.soundEnabled = !state.soundEnabled;
   state.musicEnabled = state.soundEnabled;
   const btn = document.getElementById('btnSoundToggle');
-  if (btn) btn.textContent = state.soundEnabled ? '🎵' : '🔇';
+  if (btn) btn.textContent = state.soundEnabled ? '🔊' : '🔇';
   startOrUpdateBgm();
-  if (state.soundEnabled) playSfx('click');
+  if (state.soundEnabled) {
+    playSfx('click');
+    playBgmStep();
+    showFloatingToast('🔊 <b>Suara & Musik Aktif!</b>', 'ok');
+  } else {
+    showFloatingToast('🔇 <b>Semua Suara & Musik Dimatikan (Mute).</b>', 'info');
+  }
 }
 
 // ==================== HELPER EKONOMI, INTERNET, PENJAGA & SPEK PC ====================
+function isEraUnlocked(releaseYear) {
+  if (state.unlockAllEras !== false) return true;
+  return (releaseYear || 2010) <= state.year;
+}
+function toggleUnlockAllEras() {
+  state.unlockAllEras = (state.unlockAllEras === false);
+  playSfx('click');
+  showFloatingToast(
+    state.unlockAllEras
+      ? '🌍 <b>Mode Semua Era (2010–2026+) Aktif!</b> Semua spek PC Tier 12, PS5 Pro, 87 Game, 250 Mbps, HP &amp; Mobil tampil di toko!'
+      : `📅 <b>Mode Historis Aktif!</b> Item toko kini mengikuti tahun berjalan (<b>${state.year}</b>).`,
+    'ok'
+  );
+  saveGame();
+  renderAll();
+}
+function getStoreEraBannerHtml() {
+  const allOn = state.unlockAllEras !== false;
+  return `<div class="item-row" style="background:rgba(37,99,235,0.18);border-color:rgba(59,130,246,0.4);">
+    <div style="flex:1">
+      <b>${allOn ? '🌍 Katalog Lengkap Semua Era (2010–2026+) Aktif' : `📅 Mode Historis (Hanya Rilisan ≤ ${state.year})`}</b>
+      <div class="spec-line">${allOn ? 'Semua spek PC Tier 12, PS5 Pro, 87 Game & 250 Mbps langsung terbuka!' : 'Hanya item sampai tahun kalender saat ini yang tampil.'}</div>
+    </div>
+    <button type="button" class="${allOn ? 'success' : 'amber'}" onclick="toggleUnlockAllEras()">${allOn ? '🌍 Semua Era ON' : `📅 Thn ${state.year} Saja`}</button>
+  </div>`;
+}
 function fmtRp(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
 function roundTo500(n) { return Math.max(500, Math.round(n / 500) * 500); }
 function getCity() { return INDONESIA_CITIES.find(c => c.id === state.cityId) || INDONESIA_CITIES[0]; }
@@ -931,7 +1053,7 @@ function pickActivityForPc(slot) {
   }
   const playable = GAME_DISC_CATALOG.filter(g =>
     pcGames.includes(g.id) &&
-    g.releaseYear <= state.year &&
+    isEraUnlocked(g.releaseYear) &&
     g.minTier <= tier &&
     !state.pendingGamePatches[g.id]
   );
@@ -974,7 +1096,7 @@ function spawnMabarParty() {
 
   const partySize = Math.min(readySlots.length, [3, 4, 5, 6, 8][Math.floor(Math.random() * 5)]);
   const mabarGames = GAME_DISC_CATALOG.filter(g =>
-    state.installedGames[g.id] && g.canPartyMabar && g.releaseYear <= state.year && !state.pendingGamePatches[g.id]
+    state.installedGames[g.id] && g.canPartyMabar && isEraUnlocked(g.releaseYear) && !state.pendingGamePatches[g.id]
   );
   const chosenGame = mabarGames.length > 0
     ? mabarGames[Math.floor(Math.random() * mabarGames.length)].title
@@ -1118,7 +1240,7 @@ function onHourPassed() {
     addLog(`🎒 Kamu berangkat sekolah (07:00–13:00). Dapat uang jajan <b style="color:var(--green)">+${fmtRp(pocket)}</b> ke Dompet.`);
   }
   if (state.hour === 23 && Math.random() < 0.45) {
-    const onlineInstalled = GAME_DISC_CATALOG.filter(g => g.type === 'online' && state.installedGames[g.id] && g.releaseYear <= state.year);
+    const onlineInstalled = GAME_DISC_CATALOG.filter(g => g.type === 'online' && state.installedGames[g.id] && isEraUnlocked(g.releaseYear));
     if (onlineInstalled.length > 0) {
       const g = onlineInstalled[Math.floor(Math.random() * onlineInstalled.length)];
       state.pendingGamePatches[g.id] = g.patchMb || 250;
@@ -1741,9 +1863,10 @@ function renderRightPanel() {
     else if (state.hwCategoryFilter === 'fac') list = typeof WARNET_FACILITIES_CATALOG !== 'undefined' ? WARNET_FACILITIES_CATALOG : [];
     else list = PERIPHERAL_CATALOG;
 
-    const upcomingItems = state.hwCategoryFilter === 'fac' ? [] : list.filter(it => it.releaseYear > state.year);
+    const upcomingItems = state.hwCategoryFilter === 'fac' ? [] : list.filter(it => !isEraUnlocked(it.releaseYear));
 
     box.innerHTML = `
+      ${getStoreEraBannerHtml()}
       <div class="item-row" style="background:var(--panel-3);">
         <div>
           <b>🖥️ Upgrade PC Server Kasir (Saat ini: Level ${state.serverLevel})</b>
@@ -1776,7 +1899,7 @@ function renderRightPanel() {
               <button type="button" class="${owned ? 'success' : 'primary'}" onclick="buyFacilityItem('${f.id}')">${owned ? '✅ Terpasang' : 'Pasang'}</button>
             </div>`;
           }).join('')
-        : list.filter(it => it.releaseYear <= state.year).map(it => {
+        : list.filter(it => isEraUnlocked(it.releaseYear)).map(it => {
             const price = roundTo500(getPriceFrom2010(it.basePrice2010) * discMult);
             let inWhCount = 0;
             let instCount = 0;
@@ -1818,7 +1941,7 @@ function renderRightPanel() {
                 <b>${it.name}</b> ${it.tier ? `<span class="badge">Tier ${it.tier}</span>` : ''}
                 <div class="spec-line">Terbuka Otomatis pada <b>Tahun ${it.releaseYear}</b></div>
               </div>
-              <button type="button" class="btn-locked" onclick="notifyBlockedPopup('Item Belum Rilis (Tahun ${it.releaseYear})', '<b>${it.name}</b> baru akan rilis di Indonesia pada <b>Tahun ${it.releaseYear}</b> (Saat ini masih Tahun <b>${state.year}</b>).')">🔒 Thn ${it.releaseYear}</button>
+              <button type="button" class="btn-locked" onclick="notifyUpcomingItemPopup('${state.hwCategoryFilter}','${it.id}')">🔒 Thn ${it.releaseYear}</button>
             </div>
           `).join('')}
         </div>
@@ -1829,12 +1952,13 @@ function renderRightPanel() {
 
   if (state.mainTab === 'discs') {
     const curPlan = getInternetPlan();
-    const games = GAME_DISC_CATALOG.filter(g => g.type === state.gameTypeFilter && g.releaseYear <= state.year);
+    const games = GAME_DISC_CATALOG.filter(g => g.type === state.gameTypeFilter && isEraUnlocked(g.releaseYear));
     box.innerHTML = `
+      ${getStoreEraBannerHtml()}
       <div class="card">
         <b>🌐 Paket Internet Warnet Saat Ini: ${curPlan.name} (${curPlan.mbps} Mbps • Ping ${getCurrentPingMs()}ms)</b>
         <div class="spec-line">Dampak Nyata Internet: Makin tinggi Mbps, makin banyak PC bebas Lag/RTO, kecepatan Patch naik drastis, Traffic Rombongan Mabar naik (+${curPlan.appealBonusPct || 0}%), Bonus Tarif Sewa +${fmtRp(getPriceFrom2010(curPlan.rateBonus2010 || 0))}/jam, &amp; omzet WiFi Hotspot naik!</div>
-        ${INTERNET_PLANS.filter(p => p.releaseYear <= state.year).map(p => `
+        ${INTERNET_PLANS.filter(p => isEraUnlocked(p.releaseYear)).map(p => `
           <div class="item-row">
             <div>
               <b>${p.name}</b>
@@ -2164,7 +2288,7 @@ function renderRightPanel() {
 
       <div class="card">
         <b>📱 Katalog HP &amp; Laptop (Harga Second iPhone/Apple Jauh Lebih Stabil Saat Dijual Balik!)</b>
-        ${GADGET_CATALOG.filter(g => g.yearStart <= state.year).map(g => {
+        ${GADGET_CATALOG.filter(g => isEraUnlocked(g.yearStart)).map(g => {
           const ownedIdx = state.ownedGadgets.findIndex(og => og.id === g.id);
           const owned = ownedIdx >= 0;
           const ownedObj = owned ? state.ownedGadgets[ownedIdx] : null;
@@ -2185,8 +2309,8 @@ function renderRightPanel() {
       </div>
 
       <div class="card">
-        <b>🛵 Kendaraan Motor &amp; Mobil (Cash / Cicil DP 20% • Tahun ${state.year})</b>
-        ${VEHICLE_CATALOG.filter(v => v.yearStart <= state.year).map(v => {
+        <b>🛵 Kendaraan Motor &amp; Mobil (Cash / Cicil DP 20% • ${state.unlockAllEras !== false ? 'Semua Era 2010–2026+' : `Tahun ${state.year}`})</b>
+        ${VEHICLE_CATALOG.filter(v => isEraUnlocked(v.yearStart)).map(v => {
           const ownedCount = (state.ownedVehicles || []).filter(ov => ov.id === v.id).length;
           return `<div class="item-row">
             <img class="prod-thumb" src="${v.img}" alt="${v.name}" />
@@ -2236,7 +2360,7 @@ function openSlotConfigModal(slotId) {
   if (!Array.isArray(s.installedGames)) s.installedGames = [];
   state.warehouseChairs = state.warehouseChairs || [];
   state.warehousePsConsoles = state.warehousePsConsoles || [];
-  const availOs = PC_OS_CATALOG.filter(o => o.releaseYear <= state.year);
+  const availOs = PC_OS_CATALOG.filter(o => isEraUnlocked(o.releaseYear));
   const maxRams = s.cpu ? (s.cpu.maxRamSlots || 2) : 2;
   const totalRamGb = getPcTotalRamGb(s);
   const totalGb = getPcTotalStorageGb(s);
@@ -2256,7 +2380,7 @@ function openSlotConfigModal(slotId) {
     </div>`;
   }
 
-  const ownedLibGames = GAME_DISC_CATALOG.filter(g => state.installedGames[g.id] && g.releaseYear <= state.year);
+  const ownedLibGames = GAME_DISC_CATALOG.filter(g => state.installedGames[g.id] && isEraUnlocked(g.releaseYear));
 
   showCustomModal(
     `🖥️ Konfigurasi ${s.name} (${isPs ? 'Mode Rental PS' : 'Mode Rakit PC'})`,
@@ -2373,6 +2497,25 @@ function toggleGameOnPc(slotId, gameId, doInstall) {
   }
   playSfx('click');
   saveGame(); openSlotConfigModal(slotId); renderAll();
+}
+
+function notifyUpcomingItemPopup(cat, id) {
+  let list = [];
+  if (cat === 'cpu') list = PC_CPU_CATALOG;
+  else if (cat === 'ram') list = PC_RAM_CATALOG;
+  else if (cat === 'vga') list = PC_VGA_CATALOG;
+  else if (cat === 'storage') list = PC_STORAGE_CATALOG;
+  else if (cat === 'monitor') list = MONITOR_CATALOG;
+  else if (cat === 'cooling') list = COOLING_CATALOG;
+  else if (cat === 'chair') list = typeof CHAIR_CATALOG !== 'undefined' ? CHAIR_CATALOG : [];
+  else if (cat === 'ps') list = typeof PS_CONSOLE_CATALOG !== 'undefined' ? PS_CONSOLE_CATALOG : [];
+  else list = PERIPHERAL_CATALOG;
+  const it = list.find(x => x.id === id);
+  if (!it) return;
+  notifyBlockedPopup(
+    `Item Belum Rilis (Tahun ${it.releaseYear})`,
+    `<b>${it.name}</b> baru rilis di Indonesia pada <b>Tahun ${it.releaseYear}</b> (Saat ini Tahun <b>${state.year}</b>).<br><br>💡 Klik tombol <b>🌍 Semua Era ON</b> di bagian atas Toko jika ingin langsung membuka seluruh komponen 2010–2026+!`
+  );
 }
 
 function attachPcPart(slotId, prop, whKey, idxStr) {
@@ -3407,19 +3550,52 @@ function saveGame() {
   } catch (e) {}
 }
 
+function migrateStateDefaults() {
+  if (state.soundEnabled === undefined) state.soundEnabled = true;
+  if (state.musicEnabled === undefined) state.musicEnabled = true;
+  if (!state.bgmTrack) state.bgmTrack = 1;
+  if (state.unlockAllEras === undefined) state.unlockAllEras = true;
+  if (!state.plnMeterLevel) state.plnMeterLevel = 1;
+  if (!state.facilities) state.facilities = {};
+  if (!state.members) state.members = { count: 0, discountPct: 10 };
+  if (!state.branches) state.branches = { warnetOwned: false, psRentalOwned: false };
+  if (!state.financeStats) state.financeStats = { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
+  if (!Array.isArray(state.warehouseChairs)) state.warehouseChairs = [];
+  if (!Array.isArray(state.warehousePsConsoles)) state.warehousePsConsoles = [];
+  if (state.cashierGearMech === undefined) state.cashierGearMech = 0;
+  if (state.goldGrams === undefined) state.goldGrams = 0;
+  if (state.familyHappiness === undefined) state.familyHappiness = 90;
+  if (state.lastTournamentDay === undefined) state.lastTournamentDay = -10;
+  if (state.reputationBonus === undefined) state.reputationBonus = 0;
+  if (!state.property) state.property = { owned: false, kprActive: false, kprRemaining: 0, kprMonthly: 0, kprMonthsLeft: 0 };
+  if (!Array.isArray(state.assetLoans)) state.assetLoans = [];
+  if (!Array.isArray(state.ownedHouses)) state.ownedHouses = [];
+  if (!Array.isArray(state.ownedVehicles)) state.ownedVehicles = [];
+  if (!Array.isArray(state.ownedGadgets)) state.ownedGadgets = [];
+  if (!state.slots || state.slots.length !== 20 || !('cpu' in state.slots[0])) {
+    state.slots = createEmptyWarnetSlots20();
+    seedStarterWarnetPcs();
+  }
+  state.slots.forEach(s => {
+    if (!s.unitType) s.unitType = 'pc';
+    if (!Array.isArray(s.rams)) s.rams = s.ram ? [s.ram] : [];
+    if (!Array.isArray(s.installedGames)) s.installedGames = [];
+    if (s.tempC === undefined) s.tempC = 40;
+    if (s.dustPct === undefined) s.dustPct = 0;
+  });
+}
+
 function loadGame() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) { seedStarterWarnetPcs(); return false; }
+    if (!raw) { seedStarterWarnetPcs(); migrateStateDefaults(); return false; }
     const parsed = JSON.parse(raw);
     Object.assign(state, parsed);
-    if (!state.slots || state.slots.length !== 20 || !('cpu' in state.slots[0])) {
-      state.slots = createEmptyWarnetSlots20();
-      seedStarterWarnetPcs();
-    }
+    migrateStateDefaults();
     return true;
   } catch (e) {
     seedStarterWarnetPcs();
+    migrateStateDefaults();
     return false;
   }
 }
@@ -3461,9 +3637,11 @@ async function manualCloudPull() {
   const res = await CloudSync.pullFromCloud();
   if (res && res.ok && res.state) {
     Object.assign(state, res.state);
+    migrateStateDefaults();
     saveGame();
     closeCustomModal();
     renderAll();
+    startOrUpdateBgm();
     playSfx('cash');
     showFloatingToast(`✅ Data Cloud (ID: <b>${CloudSync.syncId}</b>) berhasil dimuat!`, 'ok');
   } else {
@@ -3474,5 +3652,8 @@ async function manualCloudPull() {
 window.addEventListener('DOMContentLoaded', () => {
   loadGame();
   renderAll();
+  const btnS = document.getElementById('btnSoundToggle');
+  if (btnS) btnS.textContent = state.soundEnabled ? '🔊' : '🔇';
+  startOrUpdateBgm();
   setInterval(gameTick, 250);
 });

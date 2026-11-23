@@ -31,13 +31,19 @@
     const readyCount = state.slots.filter(s => typeof isSlotReadyToPlay === 'function' && isSlotReadyToPlay(s).ok).length;
     const guardInfo = typeof getCurrentGuardStatus === 'function' ? getCurrentGuardStatus() : { label: 'Owner' };
 
+    const star = typeof getWarnetStarRating === 'function' ? getWarnetStarRating().toFixed(1) : '3.0';
+    const wattsNow = typeof getCurrentActiveWatts === 'function' ? getCurrentActiveWatts() : 35;
+    const meterObj = typeof getPlnMeterObj === 'function' ? getPlnMeterObj() : { maxWatts: 1300 };
+
     if (fullRebuild || !document.getElementById('slotsBoardGrid')) {
       container.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;background:rgba(15,23,42,0.85);padding:6px 8px;border-radius:10px;border:1px solid var(--border);font-size:0.68rem;">
-          <span>🖥️ <b>Penjaga:</b> <span id="lblGuardStatus">${guardInfo.label}</span></span>
-          <div style="display:flex;gap:4px;">
-            <button type="button" class="primary" style="padding:3px 7px;font-size:0.64rem;" onclick="openBillingRateModal()">⚙️ Tarif/Paket</button>
-            <button type="button" class="amber" style="padding:3px 7px;font-size:0.64rem;" onclick="triggerManualPatchAll()">🔄 Update Game</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;background:rgba(15,23,42,0.85);padding:6px 8px;border-radius:10px;border:1px solid var(--border);font-size:0.66rem;flex-wrap:wrap;">
+          <span>🖥️ <b>Penjaga:</b> <span id="lblGuardStatus">${guardInfo.label}</span> • ⭐<b id="lblBoardStar">${star}</b> • 🔌<b id="lblBoardWatt">${wattsNow}/${meterObj.maxWatts}W</b></span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button type="button" class="primary" style="padding:3px 6px;font-size:0.62rem;" onclick="openBillingRateModal()">⚙️ Tarif/Begadang</button>
+            <button type="button" class="amber" style="padding:3px 6px;font-size:0.62rem;" onclick="triggerManualPatchAll()">🔄 Patch</button>
+            <button type="button" class="success" style="padding:3px 6px;font-size:0.62rem;" onclick="holdWeekendTournament()">🏆 Turnamen</button>
+            <button type="button" style="padding:3px 6px;font-size:0.62rem;" onclick="cleanAllPcDustAndPaste()">🌬️ Debu</button>
           </div>
         </div>
         <div class="room-filter-bar">
@@ -50,6 +56,10 @@
     } else {
       const gs = document.getElementById('lblGuardStatus');
       if (gs) gs.textContent = guardInfo.label;
+      const stEl = document.getElementById('lblBoardStar');
+      if (stEl) stEl.textContent = star;
+      const wtEl = document.getElementById('lblBoardWatt');
+      if (wtEl) wtEl.textContent = `${wattsNow}/${meterObj.maxWatts}W`;
     }
 
     const grid = document.getElementById('slotsBoardGrid');
