@@ -846,13 +846,6 @@ function onMonthPassed() {
     if (deductFromAnyCash(bpjsCost)) addLog(`🏥 Bayar iuran bulanan <b>${bpjsObj.name}</b>: <b>-${fmtRp(bpjsCost)}</b>.`);
   }
 
-  // 3.5 Iuran Bulanan BPJS Kesehatan Pribadi
-  const bpjsObj = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
-  if (bpjsObj && bpjsObj.monthly2024 > 0) {
-    const bpjsCost = roundTo500(bpjsObj.monthly2024 * getEraMultiplier(state.year));
-    if (deductFromAnyCash(bpjsCost)) addLog(`🏥 Bayar iuran bulanan <b>${bpjsObj.name}</b>: <b>-${fmtRp(bpjsCost)}</b>.`);
-  }
-
   state.employees.forEach(emp => {
     if (emp.payPeriod === 'monthly') payEmployeeSalary(emp, 'Bulanan');
   });
