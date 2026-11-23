@@ -510,12 +510,6 @@ function stepOneGameMinute() {
     state.player.sickName = ills[Math.floor(Math.random() * ills.length)];
     addLog(`🤒 <b>KAMU JATUH SAKIT (${state.player.sickName})</b> karena kelelahan! Segera berobat ke Rumah Sakit di tab Hidup!`);
   }
-  // 3.5 Iuran Bulanan BPJS Kesehatan Pribadi
-  const bpjsObj = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
-  if (bpjsObj && bpjsObj.monthly2024 > 0) {
-    const bpjsCost = roundTo500(bpjsObj.monthly2024 * getEraMultiplier(state.year));
-    if (deductFromAnyCash(bpjsCost)) addLog(`🏥 Bayar iuran bulanan <b>${bpjsObj.name}</b>: <b>-${fmtRp(bpjsCost)}</b>.`);
-  }
 
   state.employees.forEach(emp => {
     if (!isEmployeeOnDuty(emp)) return;
@@ -717,8 +711,8 @@ function onHourPassed() {
     triggerManualPatchAll(true);
   }
 
-  // 2. Cek Pergantian / Selesai Shift Karyawan -> Uang Laci Kasir Otomatis Pindah ke DOMPET (Nanti setor ke Bank manual!)
-  let shiftEnded = false;
+  // 2. Cek Pergantian / Selesai Shift Karyawan ATAU Jam Tutup Warnet -> Uang Laci Kasir Otomatis Pindah ke DOMPET!
+  let shiftEnded = (state.hour === ch && ch !== 24);
   (state.employees || []).forEach(emp => {
     const start = Number(emp.startHour) || 8;
     const end = (start + (Number(emp.durationHours) || 8)) % 24;
@@ -728,7 +722,7 @@ function onHourPassed() {
     const moved = state.laciCash;
     state.handWallet += moved;
     state.laciCash = 0;
-    addLog(`👛 <b>Ganti Shift Kasir:</b> Uang di Laci (<b>${fmtRp(moved)}</b>) masuk ke <b>Dompetmu</b>! (Silakan setor ke Bank secara manual).`);
+    addLog(`👛 <b>Ganti Shift / Tutup Kasir:</b> Uang di Laci (<b>${fmtRp(moved)}</b>) masuk ke <b>Dompetmu</b>!`);
   }
 
   if (state.hour === 7 && isPlayerAtSchool()) {
@@ -787,13 +781,6 @@ function onDayPassed() {
   }
 
   // Gaji Karyawan Harian & Mingguan
-  // 3.5 Iuran Bulanan BPJS Kesehatan Pribadi
-  const bpjsObj = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
-  if (bpjsObj && bpjsObj.monthly2024 > 0) {
-    const bpjsCost = roundTo500(bpjsObj.monthly2024 * getEraMultiplier(state.year));
-    if (deductFromAnyCash(bpjsCost)) addLog(`🏥 Bayar iuran bulanan <b>${bpjsObj.name}</b>: <b>-${fmtRp(bpjsCost)}</b>.`);
-  }
-
   state.employees.forEach(emp => {
     if (emp.payPeriod === 'daily') payEmployeeSalary(emp, 'Harian');
     else if (emp.payPeriod === 'weekly' && state.totalDays % 7 === 0) payEmployeeSalary(emp, 'Mingguan');
@@ -847,6 +834,13 @@ function onMonthPassed() {
   }
   const rtTax = getPriceFrom2010(175000);
   if (deductFromAnyCash(rtTax)) addLog(`🧾 Iuran kebersihan, keamanan &amp; pajak UMKM: <b>-${fmtRp(rtTax)}</b>.`);
+
+  // 3.5 Iuran Bulanan BPJS Kesehatan Pribadi
+  const bpjsObj = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
+  if (bpjsObj && bpjsObj.monthly2024 > 0) {
+    const bpjsCost = roundTo500(bpjsObj.monthly2024 * getEraMultiplier(state.year));
+    if (deductFromAnyCash(bpjsCost)) addLog(`🏥 Bayar iuran bulanan <b>${bpjsObj.name}</b>: <b>-${fmtRp(bpjsCost)}</b>.`);
+  }
 
   // 3.5 Iuran Bulanan BPJS Kesehatan Pribadi
   const bpjsObj = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
