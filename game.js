@@ -8,14 +8,20 @@ function createEmptyWarnetSlots20() {
       id: i,
       isRoom: true,
       name: `Room VIP #${i}`,
+      unitType: 'pc', // 'pc' (Rakit PC) atau 'ps' (Rental PlayStation)
+      psConsole: null,
       cpu: null,
-      rams: [], // Bisa pasang 2 s/d 4 keping RAM tergantung support processor!
+      rams: [], // Bisa pasang 2, 4, hingga 8 keping RAM tergantung processor!
       vga: null,
       storage: null,
       os: null,
       monitor: null,
       cooling: null,
       gear: null,
+      chair: null,
+      overclocked: false,
+      tempC: 40,
+      dustPct: 0,
       installedGames: [], // Semua game belum terinstal! Instal & uninstal per PC sesuai storage & spek.
       occupied: false,
       customerName: '',
@@ -61,8 +67,9 @@ const state = {
   personalBank: 0,
   businessPpobBalance: 0,
 
-  // Listrik PLN, Genset Otomatis, Kebersihan, Renovasi, PC Server & Jam Operasional
+  // Listrik PLN, Meteran VA, Genset Otomatis, Kebersihan, Renovasi, PC Server & Jam Operasional
   kwh: 45.0,
+  plnMeterLevel: 1,
   plnBlackout: false,
   genset: {
     owned: true,
@@ -79,12 +86,17 @@ const state = {
   closeHour: 23,
   weather: 'cerah', // 'cerah' | 'panas' | 'hujan'
   happyHourActive: false,
+  nightPackageActive: false,
   qrisActive: false,
   facilities: {},
   members: { count: 0, discountPct: 10 },
   goldGrams: 0,
   itCourseCompleted: false,
   familyHappiness: 90,
+  lastTournamentDay: -10,
+  reputationBonus: 0,
+  branches: { warnetOwned: false, psRentalOwned: false },
+  financeStats: { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 },
 
   // Pengaturan Tarif Billing Meter (Per Jam, Dihitung Per Detik!) & Paket Custom
   billingHourlyRate: 3000, // Bisa diubah bebas oleh pemain (misal 6000/jam = Rp 1.66/detik)
@@ -96,20 +108,23 @@ const state = {
     { id: 'pkt_5', name: 'Paket Begadang 5 Jam', hours: 5, price: 10000 }
   ],
 
-  // 20 Slot PC Warnet & Ruang Tunggu
+  // 20 Slot PC Warnet / Rental PS & Ruang Tunggu
   slots: createEmptyWarnetSlots20(),
   waitingQueue: [],
 
-  // Gudang Komponen Rakit PC (Belum Dipasang / Dilepas dari Slot)
+  // Gudang Komponen Rakit PC, Kursi & Konsol PS (Belum Dipasang / Dilepas dari Slot)
   warehouseCpus: [],
   warehouseRams: [],
   warehouseVgas: [],
   warehouseStorages: [],
   warehouseMonitors: [],
   warehouseCoolings: [],
+  warehouseChairs: [],
+  warehousePsConsoles: [],
 
-  // Stok Gear (Mouse+KB+Headset) di Kasir: Baru (100%), Servis (65%), Rusak
+  // Stok Gear (Mouse+KB+Headset) di Kasir: Baru Standar (100%), Mechanical RGB (220%), Servis (65%), Rusak
   cashierGearNew: 3,
+  cashierGearMech: 0,
   cashierGearServiced: 0,
   cashierGearBroken: 0,
 
@@ -171,7 +186,8 @@ const state = {
   slotSubFilter: 'all',
   hwCategoryFilter: 'cpu',
   gameTypeFilter: 'online',
-  soundEnabled: true
+  soundEnabled: true,
+  musicEnabled: true
 };
 
 // Awal mulai Rp 0 tanpa PC — pemain pinjam ke Orang Tua (5-30 Juta) dulu lalu beli & rakit PC sendiri!
@@ -179,29 +195,106 @@ function seedStarterWarnetPcs() {
   // Sengaja dikosongkan sesuai skenario mulai dari Rp 0
 }
 
-// ==================== EFEK SUARA (WEB AUDIO API) ====================
+// ==================== SYNTHESIZER MUSIK BACKSOUND CHIPTUNE/LO-FI WARNET & EFEK SUARA ====================
 let audioCtx = null;
+let bgmTimer = null;
+let bgmStepIdx = 0;
+
+// Melodi Chiptune/Lo-Fi Nostalgia Warnet (Chord + Bass + Lead Arpeggio)
+const BGM_MELODY_NOTES = [
+  261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 392.00,
+  220.00, 261.63, 329.63, 440.00, 329.63, 261.63, 246.94, 329.63,
+  174.61, 220.00, 261.63, 349.23, 261.63, 220.00, 196.00, 293.66,
+  196.00, 246.94, 293.66, 392.00, 440.00, 392.00, 329.63, 293.66
+];
+const BGM_BASS_NOTES = [
+  130.81, 130.81, 110.00, 110.00, 87.31, 87.31, 98.00, 98.00
+];
+
+function ensureAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playBgmStep() {
+  if (!state.soundEnabled || state.musicEnabled === false) return;
+  try {
+    const ctx = ensureAudioContext();
+    const now = ctx.currentTime;
+    const leadFreq = BGM_MELODY_NOTES[bgmStepIdx % BGM_MELODY_NOTES.length];
+    const bassFreq = BGM_BASS_NOTES[Math.floor(bgmStepIdx / 4) % BGM_BASS_NOTES.length];
+
+    // Lead Synth (Warm Triangle Lo-Fi)
+    const oscLead = ctx.createOscillator();
+    const gainLead = ctx.createGain();
+    oscLead.type = 'triangle';
+    oscLead.frequency.setValueAtTime(leadFreq, now);
+    gainLead.gain.setValueAtTime(0.022, now);
+    gainLead.gain.exponentialRampToValueAtTime(0.0008, now + 0.34);
+    oscLead.connect(gainLead);
+    gainLead.connect(ctx.destination);
+    oscLead.start(now);
+    oscLead.stop(now + 0.35);
+
+    // Bass Synth pada tiap ketukan pertama bar
+    if (bgmStepIdx % 2 === 0) {
+      const oscBass = ctx.createOscillator();
+      const gainBass = ctx.createGain();
+      oscBass.type = 'sine';
+      oscBass.frequency.setValueAtTime(bassFreq, now);
+      gainBass.gain.setValueAtTime(0.032, now);
+      gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      oscBass.connect(gainBass);
+      gainBass.connect(ctx.destination);
+      oscBass.start(now);
+      oscBass.stop(now + 0.68);
+    }
+    bgmStepIdx = (bgmStepIdx + 1) % BGM_MELODY_NOTES.length;
+  } catch (e) {}
+}
+
+function startOrUpdateBgm() {
+  if (bgmTimer) {
+    clearInterval(bgmTimer);
+    bgmTimer = null;
+  }
+  if (state.soundEnabled && state.musicEnabled !== false) {
+    bgmTimer = setInterval(playBgmStep, 380);
+  }
+}
+
+// Otomatis aktifkan musik backsound saat pemain pertama kali tap layar
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', function initBgmOnFirstTap() {
+    try {
+      ensureAudioContext();
+      if (!bgmTimer && state.soundEnabled) startOrUpdateBgm();
+    } catch (e) {}
+  }, { once: true });
+}
+
 function playSfx(type) {
   if (!state.soundEnabled) return;
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const now = audioCtx.currentTime;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = ensureAudioContext();
+    if (!bgmTimer && state.musicEnabled !== false) startOrUpdateBgm();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(ctx.destination);
     if (type === 'cash') {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(987.77, now);
       osc.frequency.setValueAtTime(1318.51, now + 0.07);
-      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.setValueAtTime(0.09, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
       osc.start(now); osc.stop(now + 0.25);
     } else {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(640, now);
-      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.setValueAtTime(0.04, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
       osc.start(now); osc.stop(now + 0.05);
     }
@@ -210,8 +303,10 @@ function playSfx(type) {
 
 function toggleSound() {
   state.soundEnabled = !state.soundEnabled;
+  state.musicEnabled = state.soundEnabled;
   const btn = document.getElementById('btnSoundToggle');
-  if (btn) btn.textContent = state.soundEnabled ? '🔊' : '🔇';
+  if (btn) btn.textContent = state.soundEnabled ? '🎵' : '🔇';
+  startOrUpdateBgm();
   if (state.soundEnabled) playSfx('click');
 }
 
@@ -292,22 +387,103 @@ function getPcUsedStorageGb(slot) {
 }
 
 function getPcTier(slot) {
+  if (!slot) return 0;
+  if (slot.unitType === 'ps') {
+    return slot.psConsole ? (slot.psConsole.tier || 2) : 0;
+  }
   const ramGb = getPcTotalRamGb(slot);
-  if (!slot || !slot.cpu || ramGb <= 0 || !slot.vga) return 0;
-  const ramTier = ramGb >= 16 ? 8 : ramGb >= 8 ? 5 : ramGb >= 4 ? 3 : ramGb >= 2 ? 2 : 1;
-  return Math.min(slot.cpu.tier || 1, ramTier, slot.vga.tier || 1);
+  if (!slot.cpu || ramGb <= 0 || !slot.vga) return 0;
+  const ramTier = ramGb >= 64 ? 12 : ramGb >= 32 ? 10 : ramGb >= 16 ? 8 : ramGb >= 8 ? 5 : ramGb >= 4 ? 3 : ramGb >= 2 ? 2 : 1;
+  let baseTier = Math.min(slot.cpu.tier || 1, ramTier, slot.vga.tier || 1);
+  if (slot.overclocked) baseTier += 1;
+  if ((slot.tempC || 40) > 85) baseTier = Math.max(1, baseTier - 1);
+  return baseTier;
+}
+
+function getSlotComfortScore(slot) {
+  if (!slot) return 0;
+  let c = 0;
+  if (slot.monitor && slot.monitor.comfortBonus) c += slot.monitor.comfortBonus;
+  if (slot.cooling && slot.cooling.comfortBonus) c += slot.cooling.comfortBonus;
+  if (slot.chair && slot.chair.comfortBonus) c += slot.chair.comfortBonus;
+  if (slot.gear && slot.gear.quality === 'mech') c += 15;
+  return c;
 }
 
 function getSlotHourlyRate(slot) {
   const base = Number(state.billingHourlyRate) || 3000;
   const vipAdd = (slot && slot.isRoom) ? (Number(state.vipRateBonus) || 1500) : 0;
-  const coolAdd = (slot && slot.cooling && slot.cooling.type === 'ac') ? 1000 : 0;
-  return base + vipAdd + coolAdd;
+  if (!slot) return base + vipAdd;
+
+  // Dampak Nyata Upgrade PC / PS, Monitor, Kursi, AC, Mechanical Gear & Paket Internet terhadap Tarif Sewa!
+  const tier = getPcTier(slot);
+  const tierBonus = tier > 1 ? getPriceFrom2010((tier - 1) * 450) : 0;
+  const monBonus = (slot.monitor && slot.monitor.rateBonus2010) ? getPriceFrom2010(slot.monitor.rateBonus2010) : 0;
+  const coolBonus = (slot.cooling && slot.cooling.rateBonus2010) ? getPriceFrom2010(slot.cooling.rateBonus2010) : 0;
+  const chairBonus = (slot.chair && slot.chair.rateBonus2010) ? getPriceFrom2010(slot.chair.rateBonus2010) : 0;
+  const gearBonus = (slot.gear && slot.gear.quality === 'mech') ? getPriceFrom2010(1200) : 0;
+  const psBonus = (slot.unitType === 'ps' && slot.psConsole && slot.psConsole.rateBonus2010) ? getPriceFrom2010(slot.psConsole.rateBonus2010) : 0;
+  const plan = getInternetPlan();
+  const ispBonus = (plan && plan.rateBonus2010) ? getPriceFrom2010(plan.rateBonus2010) : 0;
+  const renovObj = RENOV_LEVELS[(state.renovLevel || 1) - 1] || RENOV_LEVELS[0];
+  const rawTotal = base + vipAdd + tierBonus + monBonus + coolBonus + chairBonus + gearBonus + psBonus + ispBonus;
+  return roundTo500(rawTotal * (renovObj.rateMult || 1.0));
+}
+
+function getWarnetStarRating() {
+  const readySlots = state.slots.filter(s => isSlotReadyToPlay(s).ok);
+  const avgTier = readySlots.length > 0
+    ? readySlots.reduce((sum, s) => sum + getPcTier(s), 0) / readySlots.length
+    : 1;
+  const cleanScore = (state.cleanliness || 100) / 100; // 0..1
+  const plan = getInternetPlan();
+  const ping = getCurrentPingMs();
+  const ispScore = Math.min(1.2, (plan.mbps >= 50 ? 1.15 : plan.mbps >= 10 ? 0.95 : plan.mbps >= 3 ? 0.8 : 0.6) - (ping > 100 ? 0.35 : 0));
+  const facCount = Object.keys(state.facilities || {}).filter(k => state.facilities[k]).length;
+  const repAdd = Math.min(0.8, (state.reputationBonus || 0) * 0.05);
+  const star = 2.2 + (cleanScore * 0.9) + Math.min(1.0, avgTier * 0.12) + (ispScore * 0.4) + Math.min(0.5, facCount * 0.05) + repAdd;
+  return Math.max(1.0, Math.min(5.0, +star.toFixed(1)));
+}
+
+function getWholesaleDiscountMult() {
+  // Jika punya Mobil Pick-Up / Mobil -> Diskon Grosir 22%, jika punya Motor -> Diskon Grosir 12%
+  const hasPickupOrCar = (state.ownedVehicles || []).some(v => v.category === 'Mobil');
+  if (hasPickupOrCar) return 0.78;
+  const hasMotor = (state.ownedVehicles || []).length > 0;
+  if (hasMotor) return 0.88;
+  return 1.0;
+}
+
+function getPlnMeterObj() {
+  const lv = state.plnMeterLevel || 1;
+  return (typeof PLN_METER_LEVELS !== 'undefined' ? PLN_METER_LEVELS : [])[lv - 1] || { level: 1, name: 'Daya PLN 1.300 VA', maxWatts: 1300, baseCost2010: 0 };
+}
+
+function getCurrentActiveWatts() {
+  let totalWatt = 35;
+  state.slots.forEach(s => {
+    if (s.occupied || s.updatingPatch) {
+      if (s.unitType === 'ps') {
+        totalWatt += (s.psConsole ? s.psConsole.watt : 90) + (s.monitor ? s.monitor.watt : 35) + (s.cooling ? s.cooling.watt : 0);
+      } else {
+        const ocMult = s.overclocked ? 1.28 : 1.0;
+        totalWatt += Math.round(((s.cpu ? s.cpu.watt : 65) + (s.vga ? s.vga.watt : 50)) * ocMult) + (s.monitor ? s.monitor.watt : 35) + (s.cooling ? s.cooling.watt : 0);
+      }
+    }
+  });
+  return totalWatt;
 }
 
 function isSlotReadyToPlay(slot) {
+  if (!slot) return { ok: false, reason: 'Slot Kosong' };
+  if (slot.unitType === 'ps') {
+    if (!slot.psConsole || !slot.monitor) {
+      return { ok: false, reason: 'Rental PS Belum Lengkap (Wajib Konsol PS + TV/Monitor)' };
+    }
+    return { ok: true, reason: 'Rental PS Siap Main' };
+  }
   const ramGb = getPcTotalRamGb(slot);
-  if (!slot || !slot.cpu || ramGb <= 0 || !slot.vga || !slot.storage || !slot.monitor) {
+  if (!slot.cpu || ramGb <= 0 || !slot.vga || !slot.storage || !slot.monitor) {
     return { ok: false, reason: 'PC Belum Lengkap (Wajib CPU+RAM+VGA+HDD+Monitor)' };
   }
   if (!slot.os) return { ok: false, reason: 'Belum Install Windows OS' };
@@ -320,7 +496,12 @@ function isPowerAvailable() {
   return state.kwh > 0 || (state.genset.owned && state.genset.fuelLiters > 0);
 }
 
-function addRevenueToWarnet(amount) {
+function addRevenueToWarnet(amount, category = 'billing') {
+  state.financeStats = state.financeStats || { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
+  if (category === 'snack') state.financeStats.revSnack += amount;
+  else if (category === 'extra') state.financeStats.revExtra += amount;
+  else state.financeStats.revBilling += amount;
+
   if (state.qrisActive && state.year >= 2019) {
     const toBank = Math.round(amount * 0.5);
     const toLaci = amount - toBank;
@@ -419,7 +600,7 @@ function stepTenGameSeconds() {
       return;
     }
 
-    // 2. Proses Billing PC yang Sedang Online (Per Detik!)
+    // 2. Proses Billing PC / PS yang Sedang Online (Per Detik!)
     if (!s.occupied) return;
     if (!powerOk) {
       s.occupied = false;
@@ -428,16 +609,20 @@ function stepTenGameSeconds() {
 
     if (s.billingMode === 'paket') {
       s.secondsLeft = Math.max(0, (s.secondsLeft || 0) - SEC_STEP);
-      // Saat cuaca hujan deras, peluang tamu nambah jam naik 2x lipat!
-      const extChance = state.weather === 'hujan' ? 0.52 : 0.28;
+      // Peluang tambah jam dipengaruhi Cuaca Hujan, Kenyamanan Kursi/Monitor/AC, SSD & Kecepatan Internet!
+      const comfortBonusChance = Math.min(0.25, getSlotComfortScore(s) * 0.0025);
+      const ssdBonus = (s.storage && s.storage.sizeGb >= 1000) ? 0.08 : 0;
+      const ispBonus = plan.mbps >= 20 ? 0.08 : 0;
+      const extChance = (state.weather === 'hujan' ? 0.48 : 0.24) + comfortBonusChance + ssdBonus + ispBonus;
       if (s.secondsLeft <= 60 && s.secondsLeft > 0 && state.rentalOpen && Math.random() < extChance) {
         const extPkt = state.customPackages[0] || { name: 'Paket 1 Jam', hours: 1, price: state.billingHourlyRate };
+        const extPrice = Math.max(extPkt.price, getSlotHourlyRate(s));
         s.secondsLeft += extPkt.hours * 3600;
         s.totalSecondsBooked += extPkt.hours * 3600;
-        s.packagePrice += extPkt.price;
-        addRevenueToWarnet(extPkt.price);
+        s.packagePrice += extPrice;
+        addRevenueToWarnet(extPrice, 'billing');
         playSfx('cash');
-        addLog(`⏱️ <b>${s.customerName}</b> otomatis tambah waktu (${extPkt.name}${state.weather === 'hujan' ? ' • 🌧️ Hujan' : ''}) di <b>${s.name}</b>: <b style="color:var(--green)">+${fmtRp(extPkt.price)}</b>.`);
+        addLog(`⏱️ <b>${s.customerName}</b> betah &amp; tambah waktu (${extPkt.name}${state.weather === 'hujan' ? ' • 🌧️ Hujan' : ''}) di <b>${s.name}</b>: <b style="color:var(--green)">+${fmtRp(extPrice)}</b>.`);
       }
       if (s.secondsLeft <= 0) {
         s.occupied = false;
@@ -449,10 +634,15 @@ function stepTenGameSeconds() {
       // Mode Billing Meter: Detik & Rupiah Naik Terus, Bayar Saat Selesai!
       s.elapsedSeconds = (s.elapsedSeconds || 0) + SEC_STEP;
       if (s.elapsedSeconds >= (s.targetMeterSeconds || 3600)) {
-        const totalBill = Math.max(500, Math.round((s.elapsedSeconds / 3600) * (s.hourlyRate || state.billingHourlyRate)));
-        addRevenueToWarnet(totalBill);
-        playSfx('cash');
-        addLog(`💳 <b>${s.customerName}</b> selesai Billing Meter di <b>${s.name}</b> (${Math.round(s.elapsedSeconds / 60)} mnt): <b style="color:var(--green)">+${fmtRp(totalBill)}</b>.`);
+        const totalBill = Math.max(500, Math.round((s.elapsedSeconds / 3600) * (s.hourlyRate || getSlotHourlyRate(s))));
+        // Risiko bocil kabur belum bayar Billing Meter jika belum pasang CCTV!
+        if (!(state.facilities && state.facilities.fac_cctv) && Math.random() < 0.03) {
+          addLog(`🏃‍♂️💨 <b>BOCIL KABUR!</b> Pelanggan <b>${s.customerName}</b> di <b>${s.name}</b> kabur belum bayar Billing Meter (${fmtRp(totalBill)})! Pasang <b>CCTV Keamanan</b> agar tidak kebobolan!`);
+        } else {
+          addRevenueToWarnet(totalBill, 'billing');
+          playSfx('cash');
+          addLog(`💳 <b>${s.customerName}</b> selesai Billing Meter di <b>${s.name}</b> (${Math.round(s.elapsedSeconds / 60)} mnt): <b style="color:var(--green)">+${fmtRp(totalBill)}</b>.`);
+        }
         s.occupied = false;
         s.elapsedSeconds = 0;
         s.partyTag = '';
@@ -480,32 +670,66 @@ function stepOneGameMinute() {
     onDayPassed();
   }
 
-  // 1. Konsumsi Listrik PLN per menit
+  // 1. Konsumsi Listrik PLN per menit & Cek Beban Daya Meteran PLN (MCB Jeglek jika kelebihan beban Watt!)
+  const totalWatt = getCurrentActiveWatts();
+  const meterObj = getPlnMeterObj();
+  if (!state.genset.active && state.kwh > 0 && totalWatt > meterObj.maxWatts) {
+    // MCB PLN Jeglek karena daya VA kurang! Matikan 1-2 PC yang baru menyala
+    const activeSlots = state.slots.filter(s => s.occupied);
+    if (activeSlots.length > 0) {
+      const victim = activeSlots[activeSlots.length - 1];
+      victim.occupied = false;
+      addLog(`🔌 <b>MCB LISTRIK JEGLEK!</b> Beban daya warnet (<b>${totalWatt}W</b>) melebihi batas <b>${meterObj.name} (${meterObj.maxWatts}W)</b>! Upgrade Daya Meteran PLN di tab <b>⚡ PLN/Genset</b>!`);
+    }
+  }
   if (state.kwh > 0) {
-    let totalWatt = 35;
-    state.slots.forEach(s => {
-      if (s.occupied || s.updatingPatch) {
-        totalWatt += (s.cpu ? s.cpu.watt : 65) + (s.vga ? s.vga.watt : 50) + (s.monitor ? s.monitor.watt : 35) + (s.cooling ? s.cooling.watt : 0);
-      }
-    });
     const kwhUsed = (totalWatt / 1000) / 60;
     state.kwh = Math.max(0, +(state.kwh - kwhUsed).toFixed(4));
   }
 
-  // 2. Penurunan ketahanan Mouse/KB/Headset & Pembelian Pop Mie / Minuman
+  // 1.5 Efek Lag Internet jika jumlah PC Online melampaui kapasitas paket internet murah!
+  const curPing = getCurrentPingMs();
+  if (curPing > 135 && Math.random() < 0.03) {
+    const onlineGamers = state.slots.filter(s => s.occupied && s.unitType !== 'ps');
+    if (onlineGamers.length > 0) {
+      const gSlot = onlineGamers[Math.floor(Math.random() * onlineGamers.length)];
+      addLog(`📶 <b>PING LAG (${curPing}ms)!</b> Pelanggan di <b>${gSlot.name}</b> mengeluh patah-patah/DC karena bandwidth internet kurang. Upgrade paket Mbps di tab <b>🌐 Game/ISP</b>!`);
+    }
+  }
+
+  // 2. Penurunan ketahanan Mouse/KB/Headset, Suhu/Debu PC, Pembelian Pop Mie/Indomie, Print Tugas, Voucher Game & MP3
   state.slots.forEach(s => {
-    if (!s.occupied) return;
-    if (s.gear && Math.random() < 0.04) {
-      s.gear.durability = Math.max(0, +(s.gear.durability - 0.5).toFixed(1));
+    if (!s.occupied) {
+      s.tempC = Math.max(36, (s.tempC || 40) - 1);
+      return;
+    }
+    // Simulasi Debu & Suhu PC
+    if (s.unitType !== 'ps') {
+      s.dustPct = Math.min(100, +((s.dustPct || 0) + 0.03).toFixed(2));
+      const coolCut = s.cooling ? (s.cooling.type === 'ac' ? 18 : 9) : 0;
+      const ocHeat = s.overclocked ? 12 : 0;
+      const targetTemp = 54 + Math.round((s.dustPct || 0) * 0.35) + ocHeat - coolCut;
+      s.tempC = Math.round(((s.tempC || 45) * 0.85) + (targetTemp * 0.15));
+      if (s.tempC > 88 && Math.random() < 0.008) {
+        addLog(`🌡️ <b>OVERHEAT (${s.tempC}°C)!</b> <b>${s.name}</b> kepanasan &amp; FPS drop karena berdebu (${Math.round(s.dustPct)}%). Pasang Kipas/AC atau semprot Kompresor &amp; Pasta Thermal!`);
+      }
+    }
+
+    if (s.unitType !== 'ps' && s.gear && Math.random() < 0.04) {
+      const wear = s.overclocked ? 0.6 : 0.45;
+      s.gear.durability = Math.max(0, +(s.gear.durability - wear).toFixed(1));
       if (s.gear.durability <= 0) {
         state.cashierGearBroken++;
         s.gear = null;
         s.occupied = false;
         addLog(`🖱️ Mouse/Keyboard/Headset di <b>${s.name}</b> RUSAK (0%) dan masuk ke stok servis Kasir!`);
-        // Jika ada karyawan tugas servis/jaga & ada stok cadangan (Baru/Servis), langsung pasang otomatis!
         const staffOn = state.employees.find(e => isEmployeeOnDuty(e) && (e.tasks.includes('service') || e.tasks.includes('guard')));
         if (staffOn) {
-          if (state.cashierGearNew > 0) {
+          if ((state.cashierGearMech || 0) > 0) {
+            state.cashierGearMech--;
+            s.gear = { name: 'Set Mechanical RGB', quality: 'mech', durability: 220, maxDurability: 220 };
+            addLog(`🔧 <b>${staffOn.name}</b> langsung memasang cadangan Mechanical RGB ke <b>${s.name}</b>!`);
+          } else if (state.cashierGearNew > 0) {
             state.cashierGearNew--;
             s.gear = { name: 'Set Gear Baru', quality: 'new', durability: 100, maxDurability: 100 };
             addLog(`🔧 <b>${staffOn.name}</b> langsung memasang cadangan Gear Baru ke <b>${s.name}</b>!`);
@@ -517,16 +741,49 @@ function stepOneGameMinute() {
         }
       }
     }
-    const snackChance = (state.facilities && state.facilities.fac_dispenser) ? 0.013 : 0.01;
+    const snackChance = (state.facilities && state.facilities.fac_dispenser) ? 0.014 : 0.01;
     if (Math.random() < snackChance) {
       tryCustomerBuyPopMieOrDrink(s);
     }
+    // Jasa Print Tugas/Skripsi jika punya Printer & stok HVS+Tinta
+    if (state.facilities && state.facilities.fac_printer && (state.snackStockPcs['sup_hvs_tinta'] || 0) > 0 && Math.random() < 0.005) {
+      state.snackStockPcs['sup_hvs_tinta']--;
+      const printPay = getPriceFrom2010(3500);
+      addRevenueToWarnet(printPay, 'extra');
+      playSfx('cash');
+      addLog(`🖨️ <b>${s.customerName}</b> nge-print tugas/skripsi di Kasir: <b style="color:var(--green)">+${fmtRp(printPay)}</b>.`);
+    }
+    // Penjualan Voucher Game Online Fisik (G-Cash / Megaxus / Steam Wallet)
+    if ((state.snackStockPcs['sup_voucher_game'] || 0) > 0 && Math.random() < 0.0045) {
+      state.snackStockPcs['sup_voucher_game']--;
+      const vPay = getPriceFrom2010(12000);
+      addRevenueToWarnet(vPay, 'extra');
+      playSfx('cash');
+      addLog(`💎 <b>${s.customerName}</b> beli Voucher Game Online (G-Cash/Steam): <b style="color:var(--green)">+${fmtRp(vPay)}</b>.`);
+    }
+    // Jasa Isi Lagu MP3 / Film ke HP & Flashdisk
+    if (state.facilities && state.facilities.fac_mp3_booth && Math.random() < 0.003) {
+      const mp3Pay = getPriceFrom2010(5000);
+      addRevenueToWarnet(mp3Pay, 'extra');
+      playSfx('cash');
+      addLog(`💿 <b>${s.customerName}</b> minta isi lagu MP3/Film ke Flashdisk: <b style="color:var(--green)">+${fmtRp(mp3Pay)}</b>.`);
+    }
     // Risiko virus flashdisk tamu jika belum pasang Deep Freeze
-    if (!(state.facilities && state.facilities.fac_deepfreeze) && Math.random() < 0.0012) {
+    if (s.unitType !== 'ps' && !(state.facilities && state.facilities.fac_deepfreeze) && Math.random() < 0.0012) {
       s.occupied = false;
       addLog(`🦠 <b>${s.name}</b> terkena virus flashdisk tamu &amp; Blue Screen! Pasang <b>Deep Freeze</b> di menu Rakit/Server agar aman.`);
     }
   });
+
+  // Celotehan khas anak warnet sesekali di log
+  if (state.rentalOpen && Math.random() < 0.006 && typeof WARNET_CHAT_BUBBLES !== 'undefined') {
+    const activeGuests = state.slots.filter(s => s.occupied);
+    if (activeGuests.length > 0) {
+      const g = activeGuests[Math.floor(Math.random() * activeGuests.length)];
+      const msg = WARNET_CHAT_BUBBLES[Math.floor(Math.random() * WARNET_CHAT_BUBBLES.length)];
+      addLog(`<b>[${g.customerName} - ${g.name}]</b> ${msg}`);
+    }
+  }
 
   // 2.5 Penurunan Energi / Stamina (Full 100% = 36 jam). Otomatis tidur jika <= 20% dan ada karyawan jaga atau warnet tutup!
   if (state.player.energy === undefined) state.player.energy = 100;
@@ -550,6 +807,8 @@ function stepOneGameMinute() {
     }
     if (emp.tasks.includes('service') && Math.random() < 0.05) {
       autoEmployeeServiceGear(emp.name);
+      // Teknisi juga otomatis membersihkan debu PC sedikit demi sedikit
+      state.slots.forEach(s => { if (s.dustPct > 0) s.dustPct = Math.max(0, +(s.dustPct - 4).toFixed(1)); });
     }
   });
 
@@ -570,25 +829,32 @@ function stepOneGameMinute() {
     }
   }
 
-  // 5. Kedatangan Pelanggan Baru / Party Mabar (Dipengaruhi Neon Box, Member, Happy Hour & Cuaca)
-  if (state.rentalOpen && state.hour >= 8 && state.hour <= 23 && isPowerAvailable()) {
+  // 5. Kedatangan Pelanggan Baru / Party Mabar (Dipengaruhi Rating Bintang, Kecepatan Internet Mbps, Neon Box, Member, Happy Hour & Paket Malam Begadang)
+  const isNightHours = (state.hour >= 22 || state.hour < 6);
+  const canSpawnThisHour = (state.hour >= 8 && state.hour <= 23) || (state.nightPackageActive && isNightHours);
+  if (state.rentalOpen && canSpawnThisHour && isPowerAvailable()) {
     const isHol = !!getHolidayName(state.year, state.month, state.day) || state.dayOfWeek === 0 || state.dayOfWeek === 6;
     const cleanFactor = Math.max(0.25, state.cleanliness / 100);
     const neonMult = (state.facilities && state.facilities.fac_neonbox) ? 1.3 : 1.0;
     const hhMult = (state.happyHourActive && state.hour >= 8 && state.hour < 12) ? 1.45 : 1.0;
+    const nightMult = (state.nightPackageActive && isNightHours) ? 1.5 : 1.0;
     const memberMult = 1 + Math.min(0.5, ((state.members && state.members.count) || 0) * 0.015);
-    const spawnChance = 0.065 * (isHol ? 1.5 : 1.0) * cleanFactor * neonMult * hhMult * memberMult;
-    if (Math.random() < spawnChance && state.waitingQueue.length < 10) {
+    const plan = getInternetPlan();
+    const ispMult = 1 + ((plan.appealBonusPct || 0) / 100);
+    const starMult = 0.7 + (getWarnetStarRating() * 0.14);
+    const spawnChance = 0.065 * (isHol ? 1.5 : 1.0) * cleanFactor * neonMult * hhMult * nightMult * memberMult * ispMult * starMult;
+    if (Math.random() < spawnChance && state.waitingQueue.length < 12) {
       // Peluang tamu daftar jadi Member Baru & setor deposit saldo di muka!
       if (Math.random() < 0.09) {
         state.members = state.members || { count: 0, discountPct: 10 };
         state.members.count++;
         const dep = getPriceFrom2010(50000);
-        addRevenueToWarnet(dep);
+        addRevenueToWarnet(dep, 'extra');
         playSfx('cash');
         addLog(`💳 Pelanggan mendaftar jadi <b>Member VIP Warnet #${state.members.count}</b> &amp; setor deposit <b style="color:var(--green)">+${fmtRp(dep)}</b>!`);
       }
-      if (Math.random() < 0.22) spawnMabarParty();
+      const mabarChance = Math.min(0.45, 0.20 + ((plan.appealBonusPct || 0) * 0.002));
+      if (Math.random() < mabarChance) spawnMabarParty();
       else spawnSingleCustomer();
     }
   }
@@ -597,6 +863,9 @@ function stepOneGameMinute() {
 const GUEST_NAMES = ['Budi', 'Rizky', 'Fajar', 'Deni', 'Agus', 'Hendra', 'Wahyu', 'Ilham', 'Tono', 'Bayu', 'Dimas', 'Reza', 'Aldi', 'Yudi', 'Rian', 'Eko', 'Kevin', 'Putra', 'gilang', 'Dani'];
 
 function pickActivityForPc(slot) {
+  if (slot && slot.unitType === 'ps' && slot.psConsole) {
+    return slot.psConsole.defaultGame || '🎮 Main Rental PlayStation';
+  }
   const tier = getPcTier(slot);
   const pcGames = Array.isArray(slot.installedGames) ? slot.installedGames : [];
   if (pcGames.length === 0 || Math.random() < 0.25) {
@@ -611,7 +880,10 @@ function pickActivityForPc(slot) {
     !state.pendingGamePatches[g.id]
   );
   if (playable.length > 0) {
-    const g = playable[Math.floor(Math.random() * playable.length)];
+    // Prioritaskan game dengan Tier tertinggi yang terpasang di PC tersebut!
+    playable.sort((a, b) => b.minTier - a.minTier);
+    const topPool = playable.slice(0, Math.min(4, playable.length));
+    const g = topPool[Math.floor(Math.random() * topPool.length)];
     return `🎮 ${g.title}`;
   }
   return '📘 Buka Facebook & YouTube';
@@ -661,7 +933,7 @@ function spawnMabarParty() {
       name: gName,
       billingMode: 'paket',
       partyTag: `Party ${partySize}P`,
-      forcedActivity: `🎮 ${chosenGame}`
+      forcedActivity: sl.unitType === 'ps' ? (sl.psConsole ? sl.psConsole.defaultGame : '🎮 Main PS') : `🎮 ${chosenGame}`
     }, true);
   });
   addLog(`🔥 <b>ROMBONGAN MABAR (${partySize} Orang)</b> duduk berdekatan di <b>${selectedSlots.map(s => '#' + s.id).join(', ')}</b> main <b>${chosenGame}</b>!`);
@@ -682,16 +954,20 @@ function seatCustomerAtPc(slot, guest, silentLog = false) {
   slot.snackBill = 0;
 
   if (guest.billingMode === 'paket' && state.customPackages.length > 0) {
-    const pkt = state.customPackages[Math.floor(Math.random() * state.customPackages.length)];
-    const vipExtra = slot.isRoom ? Math.round(pkt.hours * (state.vipRateBonus || 1500)) : 0;
-    let totalPay = pkt.price + vipExtra;
+    const isNight = (state.hour >= 22 || state.hour < 5) && state.nightPackageActive;
+    const pkt = isNight
+      ? (state.customPackages[state.customPackages.length - 1] || state.customPackages[0])
+      : state.customPackages[Math.floor(Math.random() * state.customPackages.length)];
+    // Harga paket otomatis menyesuaikan bonus spek PC/PS, monitor, kursi, AC & internet!
+    const specAddonPerHr = Math.max(0, rate - (Number(state.billingHourlyRate) || 3000));
+    let totalPay = pkt.price + Math.round(pkt.hours * specAddonPerHr * 0.85);
     if (discPct > 0) totalPay = roundTo500(totalPay * (1 - discPct / 100));
     slot.billingMode = 'paket';
     slot.packageName = pkt.name;
     slot.packagePrice = totalPay;
     slot.totalSecondsBooked = pkt.hours * 3600;
     slot.secondsLeft = pkt.hours * 3600;
-    addRevenueToWarnet(totalPay);
+    addRevenueToWarnet(totalPay, 'billing');
     playSfx('cash');
     if (!silentLog) {
       addLog(`📦 <b>${slot.customerName}</b> beli <b>${pkt.name}</b> di <b>${slot.name}</b> (${slot.activityLabel}): <b style="color:var(--green)">+${fmtRp(totalPay)}</b>.`);
@@ -710,14 +986,15 @@ function seatCustomerAtPc(slot, guest, silentLog = false) {
 function tryCustomerBuyPopMieOrDrink(slot) {
   const buyerName = slot ? (slot.customerName || slot.name) : 'Tamu';
   const avail = WARNET_SUPPLY_CATALOG.filter(item => {
-    if (item.kind === 'galon') return false;
+    if (item.kind !== 'snack') return false;
+    if (item.requiresFacility && !(state.facilities && state.facilities[item.requiresFacility])) return false;
     if ((state.snackStockPcs[item.id] || 0) <= 0) return false;
     if (item.needsWater && state.waterGallonServings <= 0) return false;
     return true;
   });
   if (avail.length === 0) {
     if (state.waterGallonServings <= 0 && Math.random() < 0.25) {
-      addLog('💧 <b>AIR GALON HABIS!</b> Pelanggan batal beli Pop Mie/Kopi karena air galon 0. Segera beli Galon Air 19L!');
+      addLog('💧 <b>AIR GALON HABIS!</b> Pelanggan batal beli Pop Mie/Indomie/Kopi karena air galon 0. Segera beli Galon Air 19L!');
     }
     return;
   }
@@ -730,7 +1007,7 @@ function tryCustomerBuyPopMieOrDrink(slot) {
     price = roundTo500(price * 1.35);
   }
   if (slot) slot.snackBill = (slot.snackBill || 0) + price;
-  addRevenueToWarnet(price);
+  addRevenueToWarnet(price, 'snack');
   const dirtLoss = (state.facilities && state.facilities.fac_exhaust) ? 0.2 : 0.4;
   state.cleanliness = Math.max(0, +(state.cleanliness - dirtLoss).toFixed(1));
   playSfx('cash');
@@ -742,7 +1019,7 @@ function autoEmployeeServiceGear(empName) {
   state.cashierGearBroken--;
   state.cashierGearServiced++;
   addLog(`🔧 Teknisi <b>${empName}</b> selesai menyervis 1 set Mouse+KB+Headset (Ketahanan 65%).`);
-  const needSlot = state.slots.find(s => s.cpu && (!s.gear || s.gear.durability <= 0));
+  const needSlot = state.slots.find(s => s.unitType !== 'ps' && s.cpu && (!s.gear || s.gear.durability <= 0));
   if (needSlot && state.cashierGearServiced > 0) {
     state.cashierGearServiced--;
     needSlot.gear = { name: 'Set Gear Servis', quality: 'serviced', durability: 65, maxDurability: 65 };
@@ -751,9 +1028,9 @@ function autoEmployeeServiceGear(empName) {
 }
 
 function onHourPassed() {
-  // 1. Cek Jam Buka & Jam Tutup Warnet Otomatis
+  // 1. Cek Jam Buka & Jam Tutup Warnet Otomatis (Jika Paket Begadang Malam aktif, tetap buka 24 jam!)
   const oh = Number(state.openHour ?? 8);
-  const ch = Number(state.closeHour ?? 23);
+  const ch = state.nightPackageActive ? 24 : Number(state.closeHour ?? 23);
   if (state.hour === oh && !state.rentalOpen) {
     state.rentalOpen = true;
     addLog(`🟢 <b>WARNET BUKA OTOMATIS</b> (Jam ${String(oh).padStart(2, '0')}:00)!`);
@@ -766,7 +1043,7 @@ function onHourPassed() {
   }
 
   // 2. Cek Pergantian / Selesai Shift Karyawan ATAU Jam Tutup Warnet -> Uang Laci Kasir Otomatis Pindah ke DOMPET!
-  let shiftEnded = (state.hour === ch && ch !== 24);
+  let shiftEnded = (state.hour === ch && ch !== 24) || (state.nightPackageActive && state.hour === 23);
   (state.employees || []).forEach(emp => {
     const start = Number(emp.startHour) || 8;
     const end = (start + (Number(emp.durationHours) || 8)) % 24;
@@ -776,7 +1053,7 @@ function onHourPassed() {
     const moved = state.laciCash;
     state.handWallet += moved;
     state.laciCash = 0;
-    addLog(`👛 <b>Ganti Shift / Tutup Kasir:</b> Uang di Laci (<b>${fmtRp(moved)}</b>) masuk ke <b>Dompetmu</b>!`);
+    addLog(`👛 <b>Ganti Shift / Setor Kasir:</b> Uang di Laci (<b>${fmtRp(moved)}</b>) masuk ke <b>Dompetmu</b>!`);
   }
 
   if (state.hour === 7 && isPlayerAtSchool()) {
@@ -852,11 +1129,40 @@ function onDayPassed() {
     addLog(`🍛 Kebutuhan harian (<b>${mName}</b>): <b>-${fmtRp(mealCost)}</b>.`);
   }
 
-  // Pemasukan Pasif Harian Voucher WiFi Hotspot jika sudah pasang Router Hotspot
+  // Pemasukan Pasif Harian Voucher WiFi Hotspot sesuai Kecepatan Paket Internet Mbps!
   if (state.facilities && state.facilities.fac_wifi_router) {
-    const wifiIncome = getPriceFrom2010(35000 + Math.floor(Math.random() * 25000));
-    addRevenueToWarnet(wifiIncome);
-    addLog(`📶 Penjualan Voucher WiFi Hotspot warga/kos hari ini: <b style="color:var(--green)">+${fmtRp(wifiIncome)}</b>.`);
+    const plan = getInternetPlan();
+    const baseWifi = plan.wifiDaily2010 || 25000;
+    const wifiIncome = getPriceFrom2010(baseWifi + Math.floor(Math.random() * 15000));
+    addRevenueToWarnet(wifiIncome, 'extra');
+    addLog(`📶 Penjualan Voucher WiFi Hotspot (${plan.mbps} Mbps) hari ini: <b style="color:var(--green)">+${fmtRp(wifiIncome)}</b>.`);
+  }
+
+  // Pemasukan Pasif Harian dari Mobil yang Disewakan Jadi Travel / Kargo Angkutan Barang!
+  (state.ownedVehicles || []).forEach(v => {
+    if (v.rentedOut && (v.commercialDaily2010 || 85000) > 0) {
+      const rentInc = getPriceFrom2010(v.commercialDaily2010 || 85000);
+      state.personalBank += rentInc;
+      state.financeStats = state.financeStats || { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
+      state.financeStats.revExtra += rentInc;
+      v.oilPct = Math.max(10, (v.oilPct ?? 100) - 1.5);
+      v.engineCond = Math.max(25, (v.engineCond ?? 100) - 0.8);
+      addLog(`🚕 Setoran harian sewa angkutan/travel <b>${v.name}</b>: <b style="color:var(--green)">+${fmtRp(rentInc)}</b> masuk ke Bank!`);
+    }
+  });
+
+  // Pemasukan Pasif Harian dari Cabang ke-2 (Franchise Warnet iCafe & Cabang Rental PS VIP)
+  if (state.branches && state.branches.warnetOwned) {
+    const brInc = getPriceFrom2010(380000 + Math.floor(Math.random() * 120000));
+    state.personalBank += brInc;
+    state.financeStats.revExtra += brInc;
+    addLog(`🏪 Setoran profit bersih <b>Cabang ke-2 Warnet iCafe</b>: <b style="color:var(--green)">+${fmtRp(brInc)}</b> masuk ke Bank.`);
+  }
+  if (state.branches && state.branches.psRentalOwned) {
+    const psInc = getPriceFrom2010(290000 + Math.floor(Math.random() * 90000));
+    state.personalBank += psInc;
+    state.financeStats.revExtra += psInc;
+    addLog(`🎮 Setoran profit bersih <b>Cabang Rental PlayStation VIP</b>: <b style="color:var(--green)">+${fmtRp(psInc)}</b> masuk ke Bank.`);
   }
 
   // Gaji Karyawan Harian & Mingguan
@@ -871,6 +1177,7 @@ function onDayPassed() {
     if (deductFromAnyCash(pay)) {
       state.parentLoan.remainingTotal -= pay;
       state.parentLoan.weeksLeft = Math.max(0, state.parentLoan.weeksLeft - 1);
+      state.financeStats.expLoan += pay;
       addLog(`👨‍👩‍👦 Cicilan mingguan ke Orang Tua: <b>-${fmtRp(pay)}</b> (Sisa ${state.parentLoan.weeksLeft}x).`);
       if (state.parentLoan.remainingTotal <= 0 || state.parentLoan.weeksLeft <= 0) state.parentLoan.active = false;
     }
@@ -879,6 +1186,7 @@ function onDayPassed() {
 }
 
 function onMonthPassed() {
+  state.financeStats = state.financeStats || { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
   // 1. Sewa Ruko atau Cicilan Beli Ruko Permanen
   if (!state.property.owned) {
     if (state.property.kprActive) {
@@ -886,6 +1194,7 @@ function onMonthPassed() {
       if (deductFromAnyCash(kPay)) {
         state.property.kprRemaining -= kPay;
         state.property.kprMonthsLeft = Math.max(0, state.property.kprMonthsLeft - 1);
+        state.financeStats.expLoan += kPay;
         addLog(`🏠 Bayar cicilan KPR Ruko Warnet: <b>-${fmtRp(kPay)}</b> (Sisa ${state.property.kprMonthsLeft} bln).`);
         if (state.property.kprRemaining <= 0 || state.property.kprMonthsLeft <= 0) {
           state.property.kprActive = false;
@@ -895,7 +1204,10 @@ function onMonthPassed() {
       }
     } else {
       const rentCost = getPriceFrom2010(1500000);
-      if (deductFromAnyCash(rentCost)) addLog(`🏢 Bayar sewa ruko bulanan: <b>-${fmtRp(rentCost)}</b>.`);
+      if (deductFromAnyCash(rentCost)) {
+        state.financeStats.expLoan += rentCost;
+        addLog(`🏢 Bayar sewa ruko bulanan: <b>-${fmtRp(rentCost)}</b>.`);
+      }
     }
   }
 
@@ -903,17 +1215,28 @@ function onMonthPassed() {
   const ispPlan = getInternetPlan();
   const ispCost = ispPlan.monthlyReal || 295000;
   if (deductFromAnyCash(ispCost)) {
+    state.financeStats.expPower += ispCost;
     addLog(`🌐 Bayar tagihan internet <b>${ispPlan.name}</b>: <b>-${fmtRp(ispCost)}</b>.`);
   }
 
-  // 3. Biaya Sekolah SPP (jika usia < 18) + Iuran Kebersihan/Keamanan & Pajak UMKM
+  // 3. Biaya Sekolah SPP (jika usia < 18) + Sekolah Anak + Iuran Kebersihan/Keamanan & Pajak UMKM
   if (state.player.age < 18) {
     const spp = getPriceFrom2010(250000);
     if (deductFromAnyCash(spp)) addLog(`🎒 Bayar SPP Sekolah bulanan: <b>-${fmtRp(spp)}</b>.`);
   }
+  (state.player.childrenList || []).forEach(ch => {
+    if (ch.age >= 6 && ch.eliteSchool) {
+      const childSpp = getPriceFrom2010(450000);
+      if (deductFromAnyCash(childSpp)) {
+        ch.skillBonus = (ch.skillBonus || 0) + 1;
+        addLog(`🏫 Bayar SPP Sekolah Unggulan IT untuk <b>${ch.name}</b>: <b>-${fmtRp(childSpp)}</b>.`);
+      }
+    }
+  });
   const rtTax = getPriceFrom2010(175000);
   const pdamBill = getPriceFrom2010(85000);
   if (deductFromAnyCash(rtTax + pdamBill)) {
+    state.financeStats.expPower += (rtTax + pdamBill);
     addLog(`🧾 Tagihan Air PDAM (${fmtRp(pdamBill)}), kebersihan &amp; pajak UMKM (${fmtRp(rtTax)}): <b>-${fmtRp(rtTax + pdamBill)}</b>.`);
   }
 
@@ -932,6 +1255,7 @@ function onMonthPassed() {
     if (deductFromAnyCash(pay)) {
       state.bankLoan.remainingTotal -= pay;
       state.bankLoan.monthsLeft = Math.max(0, state.bankLoan.monthsLeft - 1);
+      state.financeStats.expLoan += pay;
       if (state.bankLoan.remainingTotal <= 0 || state.bankLoan.monthsLeft <= 0) state.bankLoan.active = false;
     }
   }
@@ -943,6 +1267,7 @@ function onMonthPassed() {
     if (deductFromAnyCash(pay)) {
       al.remainingTotal -= pay;
       al.monthsLeft = Math.max(0, al.monthsLeft - 1);
+      state.financeStats.expLoan += pay;
       addLog(`💳 Bayar cicilan <b>${al.name}</b>: <b>-${fmtRp(pay)}</b> (Sisa ${al.monthsLeft} bln).`);
       if (al.remainingTotal <= 0 || al.monthsLeft <= 0) {
         al.active = false;
@@ -952,11 +1277,17 @@ function onMonthPassed() {
   });
 }
 
-// ATURAN KETAT: Pembelian & Tagihan TIDAK boleh mengambil dari Laci Kasir! Harus dari Bank atau Dompet.
+// ATURAN KETAT: Pembelian & Tagihan TIDAK boleh mengambil dari Laci Kasir! Bisa dari Bank, Dompet, atau gabungan Bank + Dompet.
 function deductFromAnyCash(amount) {
   if (state.personalBank >= amount) { state.personalBank -= amount; return true; }
   if (state.handWallet >= amount) { state.handWallet -= amount; return true; }
-  addLog(`⚠️ Saldo <b>Bank &amp; Dompet</b> kurang (${fmtRp(amount)})! Tarik uang dari <b>Laci Kasir</b> dulu.`);
+  if (state.personalBank + state.handWallet >= amount) {
+    const rem = amount - state.personalBank;
+    state.personalBank = 0;
+    state.handWallet -= rem;
+    return true;
+  }
+  addLog(`⚠️ Saldo <b>Bank + Dompet</b> kurang (Butuh <b>${fmtRp(amount)}</b>)! Tarik uang dari <b>Laci Kasir</b> dulu.`);
   return false;
 }
 
@@ -966,7 +1297,6 @@ function payEmployeeSalary(emp, label) {
   const otPay = otHours * getPriceFrom2010(10000);
   const total = Number(emp.salaryAmount || 0) + Number(emp.incentive || 0) + otPay + (label === 'Bulanan' ? bpjsCost : 0);
 
-  // Pastikan pembayaran gaji karyawan SELALU JALAN (ambil dari Bank, Dompet, gabungan Bank+Dompet, atau Laci jika terpaksa)
   let paidOk = false;
   if (state.personalBank >= total) {
     state.personalBank -= total;
@@ -992,6 +1322,8 @@ function payEmployeeSalary(emp, label) {
   if (paidOk) {
     emp.totalPaidHistory = (emp.totalPaidHistory || 0) + total;
     emp.overtimeHours = 0;
+    state.financeStats = state.financeStats || { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
+    state.financeStats.expSalary += total;
     addLog(`👷 Bayar gaji ${label} <b>${emp.name}</b>${otHours > 0 ? ` (+Lembur ${otHours}j: ${fmtRp(otPay)})` : ''}: <b>-${fmtRp(total)}</b>.`);
   } else {
     addLog(`⚠️ Kas tidak cukup untuk bayar gaji ${label} <b>${emp.name}</b> (${fmtRp(total)})!`);
@@ -1029,8 +1361,9 @@ function renderHud() {
   const mm = String(state.minute).padStart(2, '0');
   const hol = getHolidayName(state.year, state.month, state.day);
   const wIcon = state.weather === 'hujan' ? '🌧️ Hujan' : (state.weather === 'panas' ? '🥵 Panas' : '☀️ Cerah');
+  const star = getWarnetStarRating().toFixed(1);
   document.getElementById('hudDateTime').textContent = `${DAY_NAMES[state.dayOfWeek].slice(0, 3)}, ${state.day}/${state.month}/${state.year} • ${hh}:${mm} • ${wIcon}${hol ? ' 🔴' : ''}`;
-  document.getElementById('hudCityUmr').textContent = `${getCity().name.split(' ')[0]} • $1=Rp${getUsdRate(state.year).toLocaleString('id-ID')}`;
+  document.getElementById('hudCityUmr').textContent = `${getCity().name.split(' ')[0]} • ⭐${star} • $1=Rp${getUsdRate(state.year).toLocaleString('id-ID')}`;
   document.getElementById('hudPlayerBadge').textContent = `${state.player.name.split(' ')[0]} (${state.player.age}th)`;
   document.getElementById('hudLaci').textContent = fmtRp(state.laciCash);
   document.getElementById('hudHand').textContent = fmtRp(state.handWallet);
@@ -1038,7 +1371,7 @@ function renderHud() {
 
   const plan = getInternetPlan();
   document.getElementById('hudPpob').textContent = `${plan.mbps}Mbps • ${getCurrentPingMs()}ms`;
-  document.getElementById('hudKwh').textContent = `${state.kwh.toFixed(1)}kWh • ⛽${state.genset.fuelLiters.toFixed(1)}L`;
+  document.getElementById('hudKwh').textContent = `${state.kwh.toFixed(1)}kWh • ${getCurrentActiveWatts()}W • ⛽${state.genset.fuelLiters.toFixed(1)}L`;
   const gEl = document.getElementById('hudGalon');
   if (gEl) gEl.textContent = state.waterGallonServings;
   const qEl = document.getElementById('lblQueueCount');
@@ -1113,6 +1446,10 @@ function openBillingRateModal() {
          <span>🏷️ <b>Promo Happy Hour Pagi (08:00–12:00)</b>: Diskon 20% tarif pagi, pelanggan pagi +45% lebih ramai</span>
        </label>
        <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;margin-top:4px;">
+         <input type="checkbox" id="chkNightPkg" ${state.nightPackageActive ? 'checked' : ''} style="width:auto;" />
+         <span>🌙 <b>Paket Begadang / Kalong Malam (22:00–06:00 Nonstop)</b>: Warnet buka 24 jam &amp; diserbu anak begadang malam!</span>
+       </label>
+       <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;margin-top:4px;">
          <input type="checkbox" id="chkQrisActive" ${state.qrisActive && canQris ? 'checked' : ''} ${!canQris ? 'disabled' : ''} style="width:auto;" />
          <span>📱 <b>Pembayaran QRIS / E-Wallet (${canQris ? 'Tersedia' : 'Terbuka Tahun 2019+'})</b>: 50% omzet otomatis langsung masuk ke Bank</span>
        </label>
@@ -1141,6 +1478,8 @@ function saveBillingRateConfig() {
   state.vipRateBonus = Math.max(0, Number(document.getElementById('inpVipBonus').value) || 1500);
   const hhEl = document.getElementById('chkHappyHour');
   if (hhEl) state.happyHourActive = !!hhEl.checked;
+  const npEl = document.getElementById('chkNightPkg');
+  if (npEl) state.nightPackageActive = !!npEl.checked;
   const qrEl = document.getElementById('chkQrisActive');
   if (qrEl && state.year >= 2019) state.qrisActive = !!qrEl.checked;
   const mdEl = document.getElementById('inpMemberDisc');
@@ -1267,24 +1606,39 @@ function renderRightPanel() {
   }
 
   if (state.mainTab === 'slots') {
+    const star = getWarnetStarRating().toFixed(1);
     box.innerHTML = `
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="primary" style="flex:1" onclick="openBillingRateModal()">⚙️ Atur Tarif Meter &amp; Paket Jam</button>
-        <button type="button" class="amber" onclick="triggerManualPatchAll()">🔄 Patch Semua PC</button>
+      <div class="card" style="margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b>🏅 Rating Warnet &amp; Rental PS: ⭐ ${star} / 5.0</b>
+          <span class="badge ok">Member VIP: ${(state.members && state.members.count) || 0}</span>
+        </div>
+        <div class="spec-line">Makin tinggi spek PC/PS, monitor Hz, kursi, AC, internet Mbps &amp; kebersihan, makin tinggi tarif sewa/jam &amp; rating bintang!</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          <button type="button" class="primary" style="flex:1" onclick="openBillingRateModal()">⚙️ Tarif, Begadang &amp; QRIS</button>
+          <button type="button" class="amber" onclick="triggerManualPatchAll()">🔄 Patch Semua PC</button>
+          <button type="button" class="success" onclick="holdWeekendTournament()">🏆 Gelar Turnamen</button>
+        </div>
       </div>
       ${state.slots.map(s => {
         const st = isSlotReadyToPlay(s);
+        const tier = getPcTier(s);
+        const rateNow = getSlotHourlyRate(s);
+        const ramGb = getPcTotalRamGb(s);
+        const isPs = s.unitType === 'ps';
         return `<div class="item-row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;justify-content:space-between;">
-            <b>${s.name}</b>
+            <b>${s.name} <span class="badge">${isPs ? '🎮 RENTAL PS' : `🖥️ PC Tier ${tier}${s.overclocked ? ' ⚡OC' : ''}`}</span> <small style="color:var(--green)">${fmtRp(rateNow)}/jam</small></b>
             <span class="badge ${s.occupied ? 'ok' : st.ok ? 'busy' : 'warn'}">${s.occupied ? `${s.customerName} (${s.billingMode.toUpperCase()})` : st.reason}</span>
           </div>
           <div class="spec-line">
-            • CPU: <b>${s.cpu ? s.cpu.name : '-'}</b> | RAM: <b>${s.ram ? s.ram.name : '-'}</b><br>
-            • VGA: <b>${s.vga ? s.vga.name : '-'}</b> | Storage: <b>${s.storage ? s.storage.name : '-'}</b><br>
-            • OS: <b>${s.os ? s.os.name : '-'}</b> | Monitor: <b>${s.monitor ? s.monitor.name : '-'}</b> | Gear: <b>${s.gear ? s.gear.durability + '%' : 'Kosong'}</b>
+            ${isPs
+              ? `• Konsol: <b>${s.psConsole ? s.psConsole.name : '-'}</b> | TV/Monitor: <b>${s.monitor ? s.monitor.name : '-'}</b><br>• Kursi: <b>${s.chair ? s.chair.name : 'Kursi Plastik'}</b> | Pendingin: <b>${s.cooling ? s.cooling.name : '-'}</b>`
+              : `• CPU: <b>${s.cpu ? s.cpu.name : '-'}</b> | RAM: <b>${ramGb}GB (${(s.rams || []).length}/${s.cpu ? (s.cpu.maxRamSlots || 2) : 2} Slot)</b><br>
+                 • VGA: <b>${s.vga ? s.vga.name : '-'}</b> | Storage: <b>${s.storage ? s.storage.name : '-'}</b><br>
+                 • Monitor: <b>${s.monitor ? s.monitor.name : '-'}</b> | Kursi: <b>${s.chair ? s.chair.name : 'Plastik'}</b> | Suhu: <b style="color:${(s.tempC || 40) > 82 ? '#ef4444' : '#38bdf8'}">${s.tempC || 40}°C (Debu ${Math.round(s.dustPct || 0)}%)</b>`}
           </div>
-          <button type="button" class="primary" onclick="openSlotConfigModal(${s.id})">🔧 Rakit / Bongkar Pasang PC Ini</button>
+          <button type="button" class="primary" onclick="openSlotConfigModal(${s.id})">🔧 Rakit PC / Pasang PS &amp; Kursi Bilik Ini</button>
         </div>`;
       }).join('')}
     `;
@@ -1295,14 +1649,18 @@ function renderRightPanel() {
     state.facilities = state.facilities || {};
     const nextRenov = RENOV_LEVELS[state.renovLevel];
     const nextSrv = SERVER_LEVELS[state.serverLevel];
-    const discMult = state.itCourseCompleted ? 0.85 : 1;
+    const itMult = state.itCourseCompleted ? 0.85 : 1.0;
+    const whMult = getWholesaleDiscountMult();
+    const discMult = +(itMult * whMult).toFixed(3);
     const cats = [
       ['cpu', '🧠 Processor'],
-      ['ram', '⚡ RAM'],
+      ['ram', '⚡ RAM (s/d 8 Slot)'],
       ['vga', '🎮 VGA Card'],
       ['storage', '💾 HDD/SSD'],
-      ['monitor', '🖥️ Monitor'],
+      ['monitor', '🖥️ Monitor/TV'],
       ['cooling', '❄️ Kipas/AC'],
+      ['chair', '🪑 Kursi Bilik'],
+      ['ps', '🎮 Konsol PS'],
       ['gear', '🖱️ Gear Set'],
       ['fac', '🏢 Fasilitas Ruko']
     ];
@@ -1313,8 +1671,12 @@ function renderRightPanel() {
     else if (state.hwCategoryFilter === 'storage') list = PC_STORAGE_CATALOG;
     else if (state.hwCategoryFilter === 'monitor') list = MONITOR_CATALOG;
     else if (state.hwCategoryFilter === 'cooling') list = COOLING_CATALOG;
+    else if (state.hwCategoryFilter === 'chair') list = typeof CHAIR_CATALOG !== 'undefined' ? CHAIR_CATALOG : [];
+    else if (state.hwCategoryFilter === 'ps') list = typeof PS_CONSOLE_CATALOG !== 'undefined' ? PS_CONSOLE_CATALOG : [];
     else if (state.hwCategoryFilter === 'fac') list = typeof WARNET_FACILITIES_CATALOG !== 'undefined' ? WARNET_FACILITIES_CATALOG : [];
     else list = PERIPHERAL_CATALOG;
+
+    const upcomingItems = state.hwCategoryFilter === 'fac' ? [] : list.filter(it => it.releaseYear > state.year);
 
     box.innerHTML = `
       <div class="item-row" style="background:var(--panel-3);">
@@ -1327,11 +1689,11 @@ function renderRightPanel() {
       <div class="item-row" style="background:var(--panel-3);">
         <div>
           <b>🧱 Renovasi Ruangan Warnet (Level ${state.renovLevel})</b>
-          <div class="spec-line">${nextRenov ? nextRenov.name : 'Sudah Level Maksimal'}</div>
+          <div class="spec-line">${nextRenov ? `${nextRenov.name} (Tarif Sewa x${nextRenov.rateMult})` : 'Sudah Level Maksimal'}</div>
         </div>
         ${nextRenov ? `<button type="button" class="amber" onclick="upgradeRenovation()">Renov (${fmtRp(getPriceFrom2010(nextRenov.baseCost2010))})</button>` : '<span class="badge ok">MAX</span>'}
       </div>
-      ${state.itCourseCompleted ? `<div class="spec-line" style="color:var(--green)">🎓 <b>Sertifikat Kuliah/Kursus IT Aktif:</b> Diskon Permanen 15% semua harga komponen PC!</div>` : ''}
+      ${(state.itCourseCompleted || whMult < 1) ? `<div class="spec-line" style="color:var(--green)">🏷️ <b>Diskon Aktif:</b> ${state.itCourseCompleted ? 'Sertifikat IT (-15%) ' : ''}${whMult < 1 ? `+ Kendaraan Belanja Grosir (-${Math.round((1 - whMult) * 100)}%)` : ''}</div>` : ''}
       <div class="sub-tabs">
         ${cats.map(([id, lbl]) => `<button type="button" class="sub-btn ${state.hwCategoryFilter === id ? 'active' : ''}" onclick="state.hwCategoryFilter='${id}';renderRightPanel()">${lbl}</button>`).join('')}
       </div>
@@ -1354,13 +1716,19 @@ function renderRightPanel() {
             return `<div class="item-row">
               <img class="prod-thumb" src="${it.img}" alt="${it.name}" />
               <div style="flex:1">
-                <b>${it.name}</b>
-                <div class="spec-line">Rilis: ${it.releaseYear} ${it.watt ? `• Daya: ${it.watt}W` : ''} ${it.sizeGb ? `• Kapasitas: ${it.sizeGb}GB` : ''}</div>
-                <div style="color:var(--green);font-weight:700;">${fmtRp(price)} ${state.itCourseCompleted ? '<small style="color:#38bdf8">(-15%)</small>' : ''}</div>
+                <b>${it.name}</b> ${it.tier ? `<span class="badge ok">Tier ${it.tier}</span>` : ''} ${it.maxRamSlots ? `<span class="badge">${it.maxRamSlots} Slot RAM</span>` : ''}
+                <div class="spec-line">Rilis: ${it.releaseYear} ${it.watt ? `• Daya: ${it.watt}W` : ''} ${it.sizeGb ? `• Kapasitas: ${it.sizeGb}GB` : ''} ${it.rateBonus2010 ? `• +${fmtRp(getPriceFrom2010(it.rateBonus2010))}/jam` : ''}</div>
+                <div style="color:var(--green);font-weight:700;">${fmtRp(price)} ${discMult < 1 ? `<small style="color:#38bdf8">(-${Math.round((1 - discMult) * 100)}%)</small>` : ''}</div>
               </div>
               <button type="button" class="primary" onclick="buyPcComponent('${state.hwCategoryFilter}','${it.id}')">Beli</button>
             </div>`;
           }).join('')}
+      ${upcomingItems.length > 0 ? `
+        <div class="card" style="margin-top:8px;opacity:0.8;">
+          <b>🔒 Segera Hadir di Tahun Mendatang (${upcomingItems.length} Item Terkunci Tahun):</b>
+          ${upcomingItems.map(it => `<div class="spec-line">• <b>${it.name}</b> — Terbuka Tahun <b>${it.releaseYear}</b> ${it.tier ? `(Tier ${it.tier})` : ''}</div>`).join('')}
+        </div>
+      ` : ''}
     `;
     return;
   }
@@ -1371,10 +1739,13 @@ function renderRightPanel() {
     box.innerHTML = `
       <div class="card">
         <b>🌐 Paket Internet Warnet Saat Ini: ${curPlan.name} (${curPlan.mbps} Mbps • Ping ${getCurrentPingMs()}ms)</b>
-        <div class="spec-line">Makin tinggi Mbps internet, makin banyak PC bisa main game online tanpa lag & makin cepat proses Update Patch!</div>
+        <div class="spec-line">Dampak Nyata Internet: Makin tinggi Mbps, makin banyak PC bebas Lag/RTO, kecepatan Patch naik drastis, Traffic Rombongan Mabar naik (+${curPlan.appealBonusPct || 0}%), Bonus Tarif Sewa +${fmtRp(getPriceFrom2010(curPlan.rateBonus2010 || 0))}/jam, &amp; omzet WiFi Hotspot naik!</div>
         ${INTERNET_PLANS.filter(p => p.releaseYear <= state.year).map(p => `
           <div class="item-row">
-            <div><b>${p.name}</b><div class="spec-line">Stabil s/d ${p.maxSmoothPcs} PC Online • <b>${fmtRp(p.monthlyReal)}/bln</b> (Harga Asli)</div></div>
+            <div>
+              <b>${p.name}</b>
+              <div class="spec-line">Stabil <b>${p.maxSmoothPcs} PC</b> • Traffic <b>+${p.appealBonusPct || 0}%</b> • Bonus Tarif <b>+${fmtRp(getPriceFrom2010(p.rateBonus2010 || 0))}/jam</b> • <b>${fmtRp(p.monthlyReal)}/bln</b></div>
+            </div>
             <button type="button" class="${p.id === state.internetPlanId ? 'success' : 'primary'}" onclick="changeInternetPlan('${p.id}')">${p.id === state.internetPlanId ? 'Aktif' : 'Pasang'}</button>
           </div>
         `).join('')}
@@ -1406,17 +1777,21 @@ function renderRightPanel() {
   if (state.mainTab === 'cashier_stik') {
     box.innerHTML = `
       <div class="card">
-        <b>🖱️ Stok & Servis Gear (Mouse + Keyboard + Headset) di Kasir</b>
-        <div class="spec-line">Baru (100%): <b>${state.cashierGearNew}</b> • Hasil Servis (65%): <b>${state.cashierGearServiced}</b> • Rusak: <b style="color:var(--red)">${state.cashierGearBroken}</b></div>
-        <button type="button" class="amber" ${state.cashierGearBroken <= 0 ? 'disabled' : ''} onclick="manualServiceGear()">🔧 Servis Sendiri 1 Set Gear Rusak</button>
+        <b>🖱️ Stok &amp; Servis Gear (Mouse + Keyboard + Headset) &amp; Perawatan Suhu PC</b>
+        <div class="spec-line">Standar Baru (100%): <b>${state.cashierGearNew}</b> • Mechanical RGB (220%): <b style="color:#a855f7">${state.cashierGearMech || 0}</b> • Hasil Servis (65%): <b>${state.cashierGearServiced}</b> • Rusak: <b style="color:var(--red)">${state.cashierGearBroken}</b></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          <button type="button" class="amber" ${state.cashierGearBroken <= 0 ? 'disabled' : ''} onclick="manualServiceGear()">🔧 Servis 1 Set Gear Rusak</button>
+          <button type="button" class="primary" onclick="cleanAllPcDustAndPaste()">🌬️ Semprot Debu &amp; Ganti Pasta Thermal Semua PC (${state.facilities && state.facilities.fac_kompresor ? 'GRATIS Kompresor' : fmtRp(getPriceFrom2010(75000))})</button>
+        </div>
       </div>
       <div class="card">
-        <b>📦 Gudang Komponen PC (Bisa Dipasang ke PC atau Dijual Second)</b>
-        ${['Cpus', 'Rams', 'Vgas', 'Storages', 'Monitors', 'Coolings'].map(k => {
+        <b>📦 Gudang Komponen PC, Kursi &amp; PS (Harga Jual Second Sesuai Tahun Pemakaian)</b>
+        ${['Cpus', 'Rams', 'Vgas', 'Storages', 'Monitors', 'Coolings', 'Chairs', 'PsConsoles'].map(k => {
           const arr = state['warehouse' + k] || [];
           return arr.map((it, idx) => {
-            const sellP = Math.round(getPriceFrom2010(it.basePrice2010) * 0.65 * ((it.cond || 100) / 100));
-            return `<div class="item-row"><span>${it.name} (${it.cond || 100}%)</span><button type="button" class="amber" onclick="sellSecondhandPart('${k}',${idx})">Jual Second ${fmtRp(sellP)}</button></div>`;
+            const sellP = calcSecondhandPartPrice(it);
+            const ageYrs = Math.max(0, state.year - (it.boughtYear || state.year));
+            return `<div class="item-row"><span><b>${it.name}</b> <small style="color:var(--muted)">(${ageYrs === 0 ? 'Baru Tahun Ini' : `Pakai ${ageYrs} thn`})</small></span><button type="button" class="amber" onclick="sellSecondhandPart('${k}',${idx})">💸 Jual Second ${fmtRp(sellP)}</button></div>`;
           }).join('');
         }).join('')}
       </div>
@@ -1425,21 +1800,23 @@ function renderRightPanel() {
   }
 
   if (state.mainTab === 'agen_ppob') {
+    const whMult = getWholesaleDiscountMult();
     box.innerHTML = `
       <div class="card">
-        <b>💧 Stok Air Galon &amp; Jualan Pop Mie / Minuman Dingin</b>
-        <div class="spec-line">Sisa Air Galon Saat Ini: <b style="color:#38bdf8">${state.waterGallonServings} porsi seduhan</b>. Setiap penjualan Pop Mie / Kopi / ExtraJoss membutuhkan 1 porsi air galon!</div>
+        <b>💧 Stok Air Galon, Pop Mie, Indomie Telur, Kertas Print &amp; Voucher Game</b>
+        <div class="spec-line">Sisa Air Galon Saat Ini: <b style="color:#38bdf8">${state.waterGallonServings} porsi seduhan</b>. ${whMult < 1 ? `<span style="color:var(--green)">🛵 Diskon Grosir Kendaraan Pribadi Aktif (-${Math.round((1 - whMult) * 100)}%)!</span>` : 'Miliki Motor atau Mobil Pick-Up untuk diskon belanja grosir s/d 22%!'}</div>
         ${WARNET_SUPPLY_CATALOG.map(it => {
-          const price = getPriceFrom2010(it.boxPrice2010);
+          const price = roundTo500(getPriceFrom2010(it.boxPrice2010) * whMult);
           const stock = it.kind === 'galon' ? `${state.waterGallonServings} porsi` : `${state.snackStockPcs[it.id] || 0} pcs`;
+          const lockedFac = it.requiresFacility && !(state.facilities && state.facilities[it.requiresFacility]);
           return `<div class="item-row">
             <img class="prod-thumb" src="${it.img}" alt="${it.name}" />
             <div style="flex:1">
               <b>${it.name}</b> <span class="badge">Stok: ${stock}</span>
-              <div class="spec-line">${it.kind === 'galon' ? 'Wajib untuk seduh Pop Mie & Kopi' : `Harga jual ecer: ${fmtRp(getPriceFrom2010(it.sellPcs2010))}/cup`}</div>
-              <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
+              <div class="spec-line">${it.kind === 'galon' ? 'Wajib untuk seduh Pop Mie, Indomie & Kopi' : `Harga jual ecer: ${fmtRp(getPriceFrom2010(it.sellPcs2010))}/porsi`}</div>
+              <div style="color:var(--green);font-weight:700;">${fmtRp(price)} ${whMult < 1 ? `<small style="color:#38bdf8">(-${Math.round((1 - whMult) * 100)}% Grosir)</small>` : ''}</div>
             </div>
-            <button type="button" class="primary" onclick="buyWarnetSupply('${it.id}')">+ Beli</button>
+            <button type="button" class="primary" ${lockedFac ? 'disabled' : ''} onclick="buyWarnetSupply('${it.id}')">${lockedFac ? 'Butuh Fasilitas' : '+ Beli'}</button>
           </div>`;
         }).join('')}
       </div>
@@ -1484,7 +1861,44 @@ function renderRightPanel() {
     const canBank = state.player.age >= 21;
     const goldPrice = typeof getHistoricalGoldPricePerGram === 'function' ? getHistoricalGoldPricePerGram(state.year, state.totalDays) : getPriceFrom2010(385000);
     state.goldGrams = state.goldGrams || 0;
+    const fs = state.financeStats || { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
+    const totalRev = (fs.revBilling || 0) + (fs.revSnack || 0) + (fs.revExtra || 0);
+    const totalExp = (fs.expPower || 0) + (fs.expSalary || 0) + (fs.expLoan || 0);
+    const netProfit = totalRev - totalExp;
+    const curMeter = getPlnMeterObj();
+    const nextMeter = (typeof PLN_METER_LEVELS !== 'undefined' ? PLN_METER_LEVELS : [])[(state.plnMeterLevel || 1)];
+    state.branches = state.branches || { warnetOwned: false, psRentalOwned: false };
+
     box.innerHTML = `
+      <div class="card">
+        <b>📈 Laporan Keuangan Usaha Warnet &amp; Aset</b>
+        <div class="spec-line">
+          • Omzet Sewa Billing PC/PS: <b style="color:var(--green)">+${fmtRp(fs.revBilling || 0)}</b><br>
+          • Omzet Pop Mie/Indomie/Minuman: <b style="color:var(--green)">+${fmtRp(fs.revSnack || 0)}</b><br>
+          • Omzet WiFi/Print/Voucher/Travel/Cabang: <b style="color:var(--green)">+${fmtRp(fs.revExtra || 0)}</b><br>
+          • Beban Listrik/ISP/Gaji/Cicilan: <b style="color:var(--red)">-${fmtRp(totalExp)}</b><br>
+          • <b>Profit Bersih Akumulasi:</b> <b style="color:${netProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtRp(netProfit)}</b>
+        </div>
+      </div>
+      <div class="card">
+        <b>🔌 Daya Meteran Listrik PLN Saat Ini: ${curMeter.name} (Beban Aktif: ${getCurrentActiveWatts()}W / ${curMeter.maxWatts}W)</b>
+        <div class="spec-line">Jika total watt PC + AC melampaui batas VA meteran PLN, MCB akan jeglek!</div>
+        ${nextMeter
+          ? `<button type="button" class="primary" onclick="upgradePlnMeterLevel()">⚡ Upgrade ke ${nextMeter.name} (${fmtRp(getPriceFrom2010(nextMeter.baseCost2010))})</button>`
+          : `<span class="badge ok">Sudah Daya Maksimal 10.600 VA 3-Phase</span>`}
+      </div>
+      <div class="card">
+        <b>🏪 Buka Cabang ke-2 (Franchise Warnet iCafe &amp; Cabang Rental PS VIP)</b>
+        <div class="spec-line">Buka cabang baru yang dikelola manajer dan menyetor profit bersih setiap hari ke Bank!</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          ${state.branches.warnetOwned
+            ? `<span class="badge ok">✅ Cabang Warnet iCafe Aktif (+Setoran Harian)</span>`
+            : `<button type="button" class="primary" onclick="buySecondBranch('warnet')">🏪 Buka Cabang Warnet PC (${fmtRp(getPriceFrom2010(45000000))})</button>`}
+          ${state.branches.psRentalOwned
+            ? `<span class="badge ok">✅ Cabang Rental PS VIP Aktif (+Setoran Harian)</span>`
+            : `<button type="button" class="amber" onclick="buySecondBranch('ps')">🎮 Buka Cabang Rental PS (${fmtRp(getPriceFrom2010(32000000))})</button>`}
+        </div>
+      </div>
       <div class="card">
         <b>🪙 Investasi Emas Antam Lintas Tahun (Harga Tahun ${state.year}: ${fmtRp(goldPrice)}/gram)</b>
         <div class="spec-line">Tabungan Emasmu: <b style="color:#fbbf24">${state.goldGrams} gram</b> (Nilai Jual Saat Ini: <b style="color:var(--green)">${fmtRp(state.goldGrams * goldPrice)}</b>)</div>
@@ -1519,9 +1933,9 @@ function renderRightPanel() {
           : state.property && state.property.kprActive
             ? `<div class="spec-line">Cicilan KPR Ruko: <b>${fmtRp(state.property.kprRemaining)}</b> (${state.property.kprMonthsLeft} bln @ ${fmtRp(state.property.kprMonthly)}/bln)</div>
                <button type="button" class="success" onclick="payOffRukoKpr()">💸 Lunasi KPR Ruko Sekarang</button>`
-            : `<div class="spec-line">Saat ini masih Sewa Bulanan (${fmtRp(getPriceFrom2010(1500000))}/bln). Beli permanen atau cicil 36 bulan:</div>
+            : `<div class="spec-line">Saat ini masih Sewa Bulanan (${fmtRp(getPriceFrom2010(1500000))}/bln). Beli permanen atau cicil 36 bulan (DP 20% = ${fmtRp(Math.round(getPriceFrom2010(120000000) * 0.2))}):</div>
                <div style="display:flex;gap:6px;">
-                 <button type="button" class="primary" onclick="startRukoKpr()">🏠 Cicil KPR 36 Bln (${fmtRp(getPriceFrom2010(120000000))})</button>
+                 <button type="button" class="primary" onclick="startRukoKpr()">🏠 Cicil KPR 36 Bln (DP ${fmtRp(Math.round(getPriceFrom2010(120000000) * 0.2))})</button>
                  <button type="button" class="amber" onclick="buyRukoCash()">💵 Beli Cash</button>
                </div>`}
       </div>
@@ -1590,39 +2004,55 @@ function renderRightPanel() {
       </div>
 
       <div class="card">
-        <b>🚗 Kendaraan &amp; Meteran Perawatan (Bensin, Oli, Mesin &amp; Jual Darurat)</b>
+        <b>🚗 Kendaraan, Sewa Travel/Kargo Harian &amp; Jual Second Sesuai Tahun Pakai</b>
+        <div class="spec-line">Punya Motor memberi diskon belanja grosir <b>-12%</b>, punya Mobil/Pick-Up memberi diskon grosir <b>-22%</b> &amp; bisa disewakan jadi Travel/Angkutan!</div>
         ${state.ownedVehicles.length === 0 ? `<div class="spec-line">Belum punya motor/mobil.</div>` : ''}
-        ${state.ownedVehicles.map((v, idx) => `
-          <div class="item-row" style="flex-direction:column;align-items:stretch;">
-            <div style="display:flex;justify-content:space-between;"><b>${v.name}</b><span class="badge">BBM ${v.fuelLiters.toFixed(1)}/${v.tankCap}L • Oli ${Math.round(v.oilPct ?? 100)}% • Mesin ${Math.round(v.engineCond ?? 100)}%</span></div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${state.ownedVehicles.map((v, idx) => {
+          const sellPrice = calcResalePrice('vehicle', v);
+          const usedYrs = Math.max(0, state.year - (v.boughtYear || state.year));
+          const dailyRent = getPriceFrom2010(v.commercialDaily2010 || (v.category === 'Mobil' ? 95000 : 0));
+          return `<div class="item-row" style="flex-direction:column;align-items:stretch;">
+            <div style="display:flex;justify-content:space-between;">
+              <b>${v.name} <small style="color:var(--muted)">(${usedYrs === 0 ? 'Baru' : `Pakai ${usedYrs} thn`})</small></b>
+              <span class="badge">BBM ${v.fuelLiters.toFixed(1)}/${v.tankCap}L • Oli ${Math.round(v.oilPct ?? 100)}% • Mesin ${Math.round(v.engineCond ?? 100)}%</span>
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
               <button type="button" onclick="refuelOwnedVehicle(${idx})">⛽ Bensin (${fmtRp(bbmPrice)}/L)</button>
               <button type="button" onclick="changeOilVehicle(${idx})">🛢️ Ganti Oli</button>
               <button type="button" onclick="serviceVehicleEngine(${idx})">🔧 Servis</button>
               <button type="button" class="primary" onclick="rideOwnedVehicle(${idx})">🛣️ Jalan</button>
-              <button type="button" class="danger" onclick="sellEmergencyAsset('vehicle', ${idx})">💸 Jual Darurat</button>
+              ${v.category === 'Mobil' ? `<button type="button" class="${v.rentedOut ? 'success' : 'amber'}" onclick="toggleRentOutVehicle(${idx})">🚕 ${v.rentedOut ? `Disewakan (+${fmtRp(dailyRent)}/hr)` : `Sewakan Travel (+${fmtRp(dailyRent)}/hr)`}</button>` : ''}
+              <button type="button" class="danger" onclick="sellEmergencyAsset('vehicle', ${idx})">💸 Jual Second (${fmtRp(sellPrice)})</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
 
       <div class="card">
-        <b>🏠 Properti (Rumah / Apartemen), Cicilan &amp; Jual Aset</b>
-        ${(state.ownedHouses || []).map((h, idx) => `
-          <div class="item-row">
-            <div><b>🏡 Milik Sendiri: ${h.name}</b></div>
-            <button type="button" class="danger" onclick="sellEmergencyAsset('house', ${idx})">💸 Jual Rumah (75%)</button>
-          </div>
-        `).join('')}
-        ${PROPERTY_CATALOG.map(pr => `
-          <div class="item-row">
-            <div><b>${pr.name}</b><div class="spec-line">${pr.desc}</div><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(pr.basePrice2010))}</div></div>
-            <div style="display:flex;flex-direction:column;gap:3px;">
-              <button type="button" class="primary" onclick="buyOrInstallmentAsset('${pr.name}', ${pr.basePrice2010}, false, 'house')">Cash</button>
-              <button type="button" class="amber" onclick="buyOrInstallmentAsset('${pr.name}', ${pr.basePrice2010}, true, 'house')">Cicil</button>
+        <b>🏠 Properti (Rumah / Apartemen), Cicilan KPR (DP Mulai 10%) &amp; Jual Aset</b>
+        ${(state.ownedHouses || []).map((h, idx) => {
+          const sellP = calcResalePrice('house', h);
+          return `<div class="item-row">
+            <div><b>🏡 Milik Sendiri: ${h.name}</b> <small style="color:var(--muted)">(Beli ${h.boughtYear || state.year})</small></div>
+            <button type="button" class="danger" onclick="sellEmergencyAsset('house', ${idx})">💸 Jual (${fmtRp(sellP)})</button>
+          </div>`;
+        }).join('')}
+        ${PROPERTY_CATALOG.map(pr => {
+          const fullP = getPriceFrom2010(pr.basePrice2010);
+          const dpRate = pr.dpPct || 0.15;
+          const dpAmt = Math.round(fullP * dpRate);
+          return `<div class="item-row">
+            <div>
+              <b>${pr.name}</b>
+              <div class="spec-line">${pr.desc} • DP KPR: <b>${fmtRp(dpAmt)} (${Math.round(dpRate * 100)}%)</b></div>
+              <div style="color:var(--green);font-weight:700;">Harga Cash: ${fmtRp(fullP)}</div>
             </div>
-          </div>
-        `).join('')}
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <button type="button" class="primary" onclick="buyOrInstallmentAsset('${pr.name}', ${pr.basePrice2010}, false, 'house', ${dpRate})">Cash</button>
+              <button type="button" class="amber" onclick="buyOrInstallmentAsset('${pr.name}', ${pr.basePrice2010}, true, 'house', ${dpRate})">Cicil (DP ${Math.round(dpRate * 100)}%)</button>
+            </div>
+          </div>`;
+        }).join('')}
         ${(state.assetLoans || []).filter(a => a.active).map((al, idx) => `
           <div class="item-row">
             <div><b>Cicilan ${al.name}</b><div class="spec-line">Sisa ${fmtRp(al.remainingTotal)} (${al.monthsLeft} bln @ ${fmtRp(al.monthlyInstallment)})</div></div>
@@ -1632,15 +2062,22 @@ function renderRightPanel() {
       </div>
 
       <div class="card">
-        <b>📱 Katalog HP &amp; Laptop (iPhone, Samsung, Pixel, Xiaomi • Tahun ${state.year})</b>
+        <b>📱 Katalog HP &amp; Laptop (Harga Second iPhone/Apple Jauh Lebih Stabil Saat Dijual Balik!)</b>
         ${GADGET_CATALOG.filter(g => g.yearStart <= state.year).map(g => {
           const ownedIdx = state.ownedGadgets.findIndex(og => og.id === g.id);
           const owned = ownedIdx >= 0;
+          const ownedObj = owned ? state.ownedGadgets[ownedIdx] : null;
+          const resaleP = ownedObj ? calcResalePrice('gadget', ownedObj) : 0;
+          const usedYrs = ownedObj ? Math.max(0, state.year - (ownedObj.boughtYear || state.year)) : 0;
           return `<div class="item-row">
             <img class="prod-thumb" src="${g.img}" alt="${g.name}" />
-            <div style="flex:1"><b>${g.name}</b> <span class="badge">${g.brand}</span><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(g.price2010))}</div></div>
+            <div style="flex:1">
+              <b>${g.name}</b> <span class="badge">${g.brand}</span> ${g.brand === 'Apple' ? '<span class="badge ok">Harga Second Stabil</span>' : ''}
+              <div style="color:var(--green);font-weight:700;">Beli Baru: ${fmtRp(getPriceFrom2010(g.price2010))}</div>
+              ${owned ? `<div class="spec-line">Dimiliki (${usedYrs === 0 ? 'Baru Tahun Ini' : `Pakai ${usedYrs} thn`}) • Nilai Jual Second: <b style="color:#fbbf24">${fmtRp(resaleP)}</b></div>` : ''}
+            </div>
             ${owned
-              ? `<button type="button" class="danger" onclick="sellEmergencyAsset('gadget', ${ownedIdx})">💸 Jual Second</button>`
+              ? `<button type="button" class="danger" onclick="sellEmergencyAsset('gadget', ${ownedIdx})">💸 Jual ${fmtRp(resaleP)}</button>`
               : `<button type="button" class="primary" onclick="buyGadgetItem('${g.id}')">Beli</button>`}
           </div>`;
         }).join('')}
@@ -1651,17 +2088,21 @@ function renderRightPanel() {
         ${VEHICLE_CATALOG.filter(v => v.yearStart <= state.year).map(v => `
           <div class="item-row">
             <img class="prod-thumb" src="${v.img}" alt="${v.name}" />
-            <div style="flex:1"><b>${v.name}</b><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(v.price2010))}</div></div>
+            <div style="flex:1">
+              <b>${v.name}</b>
+              <div class="spec-line">${v.category === 'Mobil' ? `Bisa Disewakan Travel (+${fmtRp(getPriceFrom2010(v.commercialDaily2010 || 95000))}/hr) & Diskon Grosir 22%` : 'Diskon Belanja Grosir 12%'}</div>
+              <div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(v.price2010))}</div>
+            </div>
             <div style="display:flex;flex-direction:column;gap:3px;">
               <button type="button" class="primary" onclick="buyVehicle('${v.id}', false)">Cash</button>
-              <button type="button" class="amber" onclick="buyVehicle('${v.id}', true)">Cicil</button>
+              <button type="button" class="amber" onclick="buyVehicle('${v.id}', true)">Cicil (DP 20%)</button>
             </div>
           </div>
         `).join('')}
       </div>
 
       <div class="card">
-        <b>💍 Keluarga, Kebahagiaan (${state.familyHappiness ?? 85}%) &amp; Wariskan Warnet</b>
+        <b>💍 Keluarga, Pendidikan Anak, Kebahagiaan (${state.familyHappiness ?? 85}%) &amp; Wariskan Warnet</b>
         <div class="spec-line">Kebahagiaan Keluarga: <b style="color:var(--green)">${state.familyHappiness ?? 85}%</b> • <button type="button" class="amber" onclick="giveFamilyGift()">🎁 Beli Hadiah / Liburan Keluarga (${fmtRp(getPriceFrom2010(500000))})</button></div>
         ${!p.partner ? PARTNERS_LIST.filter(pt => pt.gender !== p.gender).map(pt => `
           <div class="item-row"><span><b>${pt.name}</b> (${pt.job})</span><button type="button" class="primary" ${p.age < 17 ? 'disabled' : ''} onclick="choosePartner('${pt.id}')">Pacaran</button></div>
@@ -1671,25 +2112,36 @@ function renderRightPanel() {
           </div>
         `}
         ${(p.childrenList || []).map((ch, idx) => `
-          <div class="item-row"><span>👶 <b>${ch.name}</b> (${ch.age} thn)</span><button type="button" class="amber" ${ch.age < 8 ? 'disabled' : ''} onclick="inheritToChild(${idx})">👑 Wariskan</button></div>
+          <div class="item-row" style="flex-wrap:wrap;">
+            <span>👶 <b>${ch.name}</b> (${ch.age} thn) ${ch.eliteSchool ? '<span class="badge ok">🎓 Sekolah IT</span>' : ''}</span>
+            <div style="display:flex;gap:4px;">
+              ${ch.age >= 6 ? `<button type="button" class="${ch.eliteSchool ? 'success' : 'primary'}" onclick="toggleChildEliteSchool(${idx})">🏫 ${ch.eliteSchool ? 'Sekolah IT Aktif' : 'Sekolahkan IT'}</button>` : ''}
+              <button type="button" class="amber" ${ch.age < 8 ? 'disabled' : ''} onclick="inheritToChild(${idx})">👑 Wariskan</button>
+            </div>
+          </div>
         `).join('')}
       </div>
     `;
   }
 }
 
-// ==================== MODAL RAKIT PC PER SLOT (MULTI-RAM 2-4 SLOT + INSTAL/UNINSTAL GAME PER PC) ====================
+// ==================== MODAL RAKIT PC / RENTAL PS PER SLOT (MULTI-RAM 2-8 SLOT + KURSI + OVERCLOCK + INSTAL GAME) ====================
 function openSlotConfigModal(slotId) {
   const s = state.slots.find(x => x.id === slotId);
   if (!s) return;
+  s.unitType = s.unitType || 'pc';
   if (!Array.isArray(s.rams)) s.rams = s.ram ? [s.ram] : [];
   if (!Array.isArray(s.installedGames)) s.installedGames = [];
+  state.warehouseChairs = state.warehouseChairs || [];
+  state.warehousePsConsoles = state.warehousePsConsoles || [];
   const availOs = PC_OS_CATALOG.filter(o => o.releaseYear <= state.year);
   const maxRams = s.cpu ? (s.cpu.maxRamSlots || 2) : 2;
   const totalRamGb = getPcTotalRamGb(s);
   const totalGb = getPcTotalStorageGb(s);
   const usedGb = getPcUsedStorageGb(s);
   const pcTier = getPcTier(s);
+  const rateNow = getSlotHourlyRate(s);
+  const isPs = s.unitType === 'ps';
 
   function partRow(label, prop, whKey) {
     const cur = s[prop];
@@ -1705,51 +2157,67 @@ function openSlotConfigModal(slotId) {
   const ownedLibGames = GAME_DISC_CATALOG.filter(g => state.installedGames[g.id] && g.releaseYear <= state.year);
 
   showCustomModal(
-    `🖥️ Rakit & Kelola Game ${s.name}`,
-    `<div class="spec-line">Spek PC: Tier <b>${pcTier}</b> • RAM: <b>${totalRamGb} GB</b> (${s.rams.length}/${maxRams} Slot) • Storage: <b>${usedGb}/${totalGb} GB</b></div>
-     ${partRow('🧠 Processor', 'cpu', 'Cpus')}
-     <div class="item-row" style="flex-direction:column;align-items:stretch;">
-       <div style="display:flex;justify-content:space-between;align-items:center;">
-         <b>⚡ Slot RAM (${s.rams.length}/${maxRams} Keping • Total ${totalRamGb}GB)</b>
-         ${s.rams.length < maxRams ? `<select style="width:auto;" onchange="if(this.value!=='')attachRamToSlot(${s.id},this.value)"><option value="">+ Tambah RAM (${state.warehouseRams.length})</option>${state.warehouseRams.map((r, idx) => `<option value="${idx}">${r.name}</option>`).join('')}</select>` : '<span class="badge ok">Slot Penuh</span>'}
-       </div>
-       <div style="display:flex;gap:4px;flex-wrap:wrap;">
-         ${s.rams.map((r, rIdx) => `<button type="button" class="danger" style="font-size:0.65rem;padding:2px 6px;" onclick="detachRamFromSlot(${s.id},${rIdx})">✕ ${r.sizeGb}GB</button>`).join('') || '<span class="spec-line">Belum ada RAM terpasang</span>'}
-       </div>
+    `🖥️ Konfigurasi ${s.name} (${isPs ? 'Mode Rental PS' : 'Mode Rakit PC'})`,
+    `<div class="sub-tabs" style="margin-bottom:6px;">
+       <button type="button" class="sub-btn ${!isPs ? 'active' : ''}" onclick="setSlotUnitType(${s.id},'pc')">🖥️ Mode Rakit PC Warnet</button>
+       <button type="button" class="sub-btn ${isPs ? 'active' : ''}" onclick="setSlotUnitType(${s.id},'ps')">🎮 Mode Rental PlayStation</button>
      </div>
-     ${partRow('🎮 VGA Card', 'vga', 'Vgas')}
-     ${partRow('💾 Storage', 'storage', 'Storages')}
-     ${partRow('🖥️ Monitor', 'monitor', 'Monitors')}
-     ${partRow('❄️ Kipas/AC', 'cooling', 'Coolings')}
-     <div class="item-row">
-       <div><b>🪟 Windows OS:</b> ${s.os ? s.os.name : 'Belum Install'}</div>
-       <select onchange="if(this.value)installWindowsOs(${s.id},this.value)">
-         <option value="">-- Install Windows --</option>
-         ${availOs.map(o => `<option value="${o.id}">${o.name} (${fmtRp(getPriceFrom2010(o.basePrice2010))})</option>`).join('')}
-       </select>
-     </div>
-     <div class="item-row">
-       <div><b>🖱️ Mouse+KB+Headset:</b> ${s.gear ? `${s.gear.durability}%` : 'Kosong'}</div>
-       <div style="display:flex;gap:4px;">
-         <button type="button" class="primary" ${state.cashierGearNew <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'new')">Baru (${state.cashierGearNew})</button>
-         <button type="button" class="amber" ${state.cashierGearServiced <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'serviced')">Servis (${state.cashierGearServiced})</button>
-       </div>
-     </div>
-     <div class="card">
-       <b>💿 Instal / Uninstal Game di PC Ini (${usedGb} / ${totalGb} GB)</b>
-       ${ownedLibGames.length === 0 ? `<div class="spec-line">Belum ada kaset/installer game yang dibeli di tab <b>🌐 Game/ISP</b>!</div>` : ''}
-       ${ownedLibGames.map(g => {
-         const isInst = s.installedGames.includes(g.id);
-         const fitSpace = (usedGb + g.sizeGb) <= totalGb;
-         const fitSpec = pcTier >= g.minTier;
-         return `<div class="item-row">
-           <div><b>${g.title}</b><div class="spec-line">${g.sizeGb}GB • Min Tier ${g.minTier}</div></div>
-           ${isInst
-             ? `<button type="button" class="danger" onclick="toggleGameOnPc(${s.id},'${g.id}',false)">Uninstal</button>`
-             : `<button type="button" class="primary" ${(!fitSpace || !fitSpec) ? 'disabled' : ''} onclick="toggleGameOnPc(${s.id},'${g.id}',true)">${!fitSpec ? 'Spek Kurang' : !fitSpace ? 'HDD Penuh' : 'Instal'}</button>`}
-         </div>`;
-       }).join('')}
-     </div>`
+     <div class="spec-line">Spek: <b>Tier ${pcTier}${s.overclocked && !isPs ? ' (⚡OC +1 Tier)' : ''}</b> • Tarif Sewa Bilik Ini: <b style="color:var(--green)">${fmtRp(rateNow)}/jam</b></div>
+     ${isPs
+       ? `${partRow('🎮 Konsol PlayStation', 'psConsole', 'PsConsoles')}
+          ${partRow('🖥️ TV / Monitor', 'monitor', 'Monitors')}
+          ${partRow('🪑 Kursi Bilik', 'chair', 'Chairs')}
+          ${partRow('❄️ Kipas / AC', 'cooling', 'Coolings')}`
+       : `<div class="spec-line">RAM: <b>${totalRamGb} GB</b> (${s.rams.length}/${maxRams} Slot) • Storage: <b>${usedGb}/${totalGb} GB</b> • Suhu: <b>${s.tempC || 40}°C</b> (Debu ${Math.round(s.dustPct || 0)}%)</div>
+          <div style="display:flex;gap:6px;margin:4px 0;">
+            <button type="button" class="${s.overclocked ? 'amber' : 'primary'}" onclick="toggleSlotOverclock(${s.id})">⚡ ${s.overclocked ? 'Overclock AKTIF (+1 Tier)' : 'Aktifkan Overclock (+1 Tier)'}</button>
+            <button type="button" onclick="cleanSinglePcThermal(${s.id})">🌬️ Bersihkan Debu &amp; Pasta Thermal</button>
+          </div>
+          ${partRow('🧠 Processor (2/4/8 Slot RAM)', 'cpu', 'Cpus')}
+          <div class="item-row" style="flex-direction:column;align-items:stretch;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <b>⚡ Slot RAM (${s.rams.length}/${maxRams} Keping • Total ${totalRamGb}GB)</b>
+              ${s.rams.length < maxRams ? `<select style="width:auto;" onchange="if(this.value!=='')attachRamToSlot(${s.id},this.value)"><option value="">+ Tambah RAM (${state.warehouseRams.length})</option>${state.warehouseRams.map((r, idx) => `<option value="${idx}">${r.name}</option>`).join('')}</select>` : '<span class="badge ok">Slot Penuh</span>'}
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              ${s.rams.map((r, rIdx) => `<button type="button" class="danger" style="font-size:0.65rem;padding:2px 6px;" onclick="detachRamFromSlot(${s.id},${rIdx})">✕ ${r.sizeGb}GB</button>`).join('') || '<span class="spec-line">Belum ada RAM terpasang</span>'}
+            </div>
+          </div>
+          ${partRow('🎮 VGA Card', 'vga', 'Vgas')}
+          ${partRow('💾 Storage', 'storage', 'Storages')}
+          ${partRow('🖥️ Monitor', 'monitor', 'Monitors')}
+          ${partRow('🪑 Kursi Bilik', 'chair', 'Chairs')}
+          ${partRow('❄️ Kipas/AC', 'cooling', 'Coolings')}
+          <div class="item-row">
+            <div><b>🪟 Windows OS:</b> ${s.os ? s.os.name : 'Belum Install'}</div>
+            <select onchange="if(this.value)installWindowsOs(${s.id},this.value)">
+              <option value="">-- Install Windows --</option>
+              ${availOs.map(o => `<option value="${o.id}">${o.name} (${fmtRp(getPriceFrom2010(o.basePrice2010))})</option>`).join('')}
+            </select>
+          </div>
+          <div class="item-row">
+            <div><b>🖱️ Mouse+KB+Headset:</b> ${s.gear ? `${s.gear.name} (${s.gear.durability}%)` : 'Kosong'}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button type="button" class="primary" ${state.cashierGearNew <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'new')">Standar (${state.cashierGearNew})</button>
+              <button type="button" class="success" ${(state.cashierGearMech || 0) <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'mech')">Mech RGB (${state.cashierGearMech || 0})</button>
+              <button type="button" class="amber" ${state.cashierGearServiced <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'serviced')">Servis (${state.cashierGearServiced})</button>
+            </div>
+          </div>
+          <div class="card">
+            <b>💿 Instal / Uninstal Game di PC Ini (${usedGb} / ${totalGb} GB)</b>
+            ${ownedLibGames.length === 0 ? `<div class="spec-line">Belum ada kaset/installer game yang dibeli di tab <b>🌐 Game/ISP</b>!</div>` : ''}
+            ${ownedLibGames.map(g => {
+              const isInst = s.installedGames.includes(g.id);
+              const fitSpace = (usedGb + g.sizeGb) <= totalGb;
+              const fitSpec = pcTier >= g.minTier;
+              return `<div class="item-row">
+                <div><b>${g.title}</b><div class="spec-line">${g.sizeGb}GB • Min Tier ${g.minTier}</div></div>
+                ${isInst
+                  ? `<button type="button" class="danger" onclick="toggleGameOnPc(${s.id},'${g.id}',false)">Uninstal</button>`
+                  : `<button type="button" class="primary" ${(!fitSpace || !fitSpec) ? 'disabled' : ''} onclick="toggleGameOnPc(${s.id},'${g.id}',true)">${!fitSpec ? 'Spek Kurang' : !fitSpace ? 'HDD Penuh' : 'Instal'}</button>`}
+              </div>`;
+            }).join('')}
+          </div>`}`
   );
 }
 
@@ -1819,12 +2287,90 @@ function installWindowsOs(slotId, osId) {
   renderAll();
 }
 
+function setSlotUnitType(slotId, mode) {
+  const s = state.slots.find(x => x.id === slotId);
+  if (!s) return;
+  s.occupied = false;
+  s.unitType = mode === 'ps' ? 'ps' : 'pc';
+  playSfx('click');
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderAll();
+}
+
+function toggleSlotOverclock(slotId) {
+  const s = state.slots.find(x => x.id === slotId);
+  if (!s) return;
+  s.overclocked = !s.overclocked;
+  playSfx('click');
+  addLog(`⚡ Overclocking pada <b>${s.name}</b> kini <b>${s.overclocked ? 'AKTIF (+1 Tier Spek)' : 'NONAKTIF'}</b>.`);
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderAll();
+}
+
+function cleanSinglePcThermal(slotId) {
+  const s = state.slots.find(x => x.id === slotId);
+  if (!s) return;
+  const hasKompresor = state.facilities && state.facilities.fac_kompresor;
+  const cost = hasKompresor ? 0 : getPriceFrom2010(15000);
+  if (cost > 0 && !deductFromAnyCash(cost)) return;
+  s.dustPct = 0;
+  s.tempC = 38;
+  playSfx('click');
+  addLog(`🌬️ Debu &amp; Pasta Thermal <b>${s.name}</b> dibersihkan (${hasKompresor ? 'Gratis Kompresor' : fmtRp(cost)}). Suhu dingin 38°C!`);
+  saveGame();
+  openSlotConfigModal(slotId);
+  renderAll();
+}
+
+function cleanAllPcDustAndPaste() {
+  const hasKompresor = state.facilities && state.facilities.fac_kompresor;
+  const cost = hasKompresor ? 0 : getPriceFrom2010(75000);
+  if (cost > 0 && !deductFromAnyCash(cost)) return;
+  state.slots.forEach(s => {
+    s.dustPct = 0;
+    s.tempC = 38;
+  });
+  playSfx('cash');
+  addLog(`🌬️ Seluruh 20 PC disemprot Kompresor &amp; diganti Pasta Thermal (${hasKompresor ? 'Gratis Kompresor' : fmtRp(cost)})! Suhu semua PC dingin 38°C!`);
+  saveGame();
+  renderAll();
+}
+
+function holdWeekendTournament() {
+  const readySlots = state.slots.filter(s => isSlotReadyToPlay(s).ok);
+  if (readySlots.length < 6) {
+    return addLog('⚠️ Minimal harus ada <b>6 unit PC / Rental PS siap main</b> untuk menggelar Turnamen Lokal!');
+  }
+  if (state.totalDays - (state.lastTournamentDay || -10) < 5) {
+    return addLog('⚠️ Turnamen baru saja digelar! Tunggu beberapa hari lagi untuk menggelar turnamen berikutnya.');
+  }
+  const prizeCost = getPriceFrom2010(350000);
+  if (!deductFromAnyCash(prizeCost)) return;
+  state.lastTournamentDay = state.totalDays;
+  const participants = readySlots.length * 4;
+  const regFee = getPriceFrom2010(25000);
+  const grossRev = participants * regFee;
+  addRevenueToWarnet(grossRev, 'extra');
+  state.reputationBonus = (state.reputationBonus || 0) + 2;
+  state.members = state.members || { count: 0, discountPct: 10 };
+  state.members.count += 3;
+  playSfx('cash');
+  addLog(`🏆 <b>TURNAMEN WARNET &amp; RENTAL PS SUKSES!</b> ${participants} peserta mendaftar. Hadiah -${fmtRp(prizeCost)}, Pendaftaran <b style="color:var(--green)">+${fmtRp(grossRev)}</b>, +3 Member VIP &amp; Rating Warnet naik!`);
+  saveGame();
+  renderAll();
+}
+
 function attachGearToPc(slotId, quality) {
   const s = state.slots.find(x => x.id === slotId);
   if (!s) return;
   if (quality === 'new' && state.cashierGearNew > 0) {
     state.cashierGearNew--;
-    s.gear = { name: 'Set Gear Baru', quality: 'new', durability: 100, maxDurability: 100 };
+    s.gear = { name: 'Set Gear Standar', quality: 'new', durability: 100, maxDurability: 100 };
+  } else if (quality === 'mech' && (state.cashierGearMech || 0) > 0) {
+    state.cashierGearMech--;
+    s.gear = { name: 'Set Mechanical RGB', quality: 'mech', durability: 220, maxDurability: 220 };
   } else if (quality === 'serviced' && state.cashierGearServiced > 0) {
     state.cashierGearServiced--;
     s.gear = { name: 'Set Gear Servis', quality: 'serviced', durability: 65, maxDurability: 65 };
@@ -1837,28 +2383,132 @@ function attachGearToPc(slotId, quality) {
 // ==================== PEMBELIAN KOMPONEN, SERVER, ISP, GAME, GALON, GENSET & KARYAWAN SENIN-MINGGU ====================
 function buyPcComponent(cat, id) {
   let item, whKey;
-  const discMult = state.itCourseCompleted ? 0.85 : 1;
+  const itMult = state.itCourseCompleted ? 0.85 : 1.0;
+  const whMult = getWholesaleDiscountMult();
+  const discMult = +(itMult * whMult).toFixed(3);
+  state.warehouseChairs = state.warehouseChairs || [];
+  state.warehousePsConsoles = state.warehousePsConsoles || [];
   if (cat === 'cpu') { item = PC_CPU_CATALOG.find(x => x.id === id); whKey = 'warehouseCpus'; }
   else if (cat === 'ram') { item = PC_RAM_CATALOG.find(x => x.id === id); whKey = 'warehouseRams'; }
   else if (cat === 'vga') { item = PC_VGA_CATALOG.find(x => x.id === id); whKey = 'warehouseVgas'; }
   else if (cat === 'storage') { item = PC_STORAGE_CATALOG.find(x => x.id === id); whKey = 'warehouseStorages'; }
   else if (cat === 'monitor') { item = MONITOR_CATALOG.find(x => x.id === id); whKey = 'warehouseMonitors'; }
   else if (cat === 'cooling') { item = COOLING_CATALOG.find(x => x.id === id); whKey = 'warehouseCoolings'; }
+  else if (cat === 'chair') { item = (typeof CHAIR_CATALOG !== 'undefined' ? CHAIR_CATALOG : []).find(x => x.id === id); whKey = 'warehouseChairs'; }
+  else if (cat === 'ps') { item = (typeof PS_CONSOLE_CATALOG !== 'undefined' ? PS_CONSOLE_CATALOG : []).find(x => x.id === id); whKey = 'warehousePsConsoles'; }
   else if (cat === 'gear') {
-    item = PERIPHERAL_CATALOG[0];
+    item = PERIPHERAL_CATALOG.find(x => x.id === id) || PERIPHERAL_CATALOG[0];
     const p = roundTo500(getPriceFrom2010(item.basePrice2010) * discMult);
-    if (!deductFromAnyCash(p)) return addLog('⚠️ Uang kurang!');
-    state.cashierGearNew++;
+    if (!deductFromAnyCash(p)) return;
+    if (item.id === 'gear_mech') {
+      state.cashierGearMech = (state.cashierGearMech || 0) + 1;
+    } else {
+      state.cashierGearNew++;
+    }
     playSfx('cash');
-    addLog(`🛒 Beli 1 Set Mouse+KB+Headset ke stok Kasir (${fmtRp(p)}).`);
+    addLog(`🛒 Beli 1 <b>${item.name}</b> ke stok Kasir (${fmtRp(p)}).`);
     saveGame(); renderAll(); return;
   }
   if (!item) return;
   const price = roundTo500(getPriceFrom2010(item.basePrice2010) * discMult);
-  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup!');
-  state[whKey].push({ ...item, uid: cat + '_' + Date.now(), cond: 100 });
+  if (!deductFromAnyCash(price)) return;
+  state[whKey].push({ ...item, uid: cat + '_' + Date.now(), cond: 100, boughtYear: state.year });
   playSfx('cash');
-  addLog(`🛒 Membeli <b>${item.name}</b> (${fmtRp(price)}) ke Gudang Rakit PC.`);
+  addLog(`🛒 Membeli <b>${item.name}</b> (${fmtRp(price)}) ke Gudang.`);
+  saveGame();
+  renderAll();
+}
+
+function calcSecondhandPartPrice(it) {
+  if (!it) return 0;
+  const baseNow = getPriceFrom2010(it.basePrice2010 || 200000);
+  const ageYears = Math.max(0, state.year - (it.boughtYear || state.year));
+  const depMult = Math.max(0.30, 0.75 - (ageYears * 0.08));
+  const condMult = (it.cond || 100) / 100;
+  return roundTo500(baseNow * depMult * condMult);
+}
+
+function calcResalePrice(type, obj) {
+  if (!obj) return 0;
+  const ageYears = Math.max(0, state.year - (obj.boughtYear || state.year));
+  if (type === 'gadget') {
+    const cat = GADGET_CATALOG.find(x => x.id === obj.id);
+    const base2010 = cat ? cat.price2010 : (obj.price2010 || 3500000);
+    const brand = (cat ? cat.brand : obj.brand) || '';
+    // iPhone / Apple harga jual second jauh lebih stabil dibanding merek lain!
+    const isApple = brand.toLowerCase().includes('apple') || (obj.name || '').toLowerCase().includes('iphone');
+    const ratio = isApple
+      ? Math.max(0.48, 0.85 - (ageYears * 0.055))
+      : Math.max(0.25, 0.72 - (ageYears * 0.12));
+    return roundTo500(getPriceFrom2010(base2010) * ratio);
+  }
+  if (type === 'vehicle') {
+    const cat = VEHICLE_CATALOG.find(x => x.id === obj.id);
+    const base2010 = cat ? cat.price2010 : (obj.price2010 || 14000000);
+    const condMult = ((obj.engineCond ?? 90) / 100);
+    const ratio = Math.max(0.32, 0.78 - (ageYears * 0.07));
+    return roundTo500(getPriceFrom2010(base2010) * ratio * condMult);
+  }
+  if (type === 'house') {
+    const pr = PROPERTY_CATALOG.find(x => x.name === obj.name);
+    const base2010 = obj.basePrice2010 || (pr ? pr.basePrice2010 : 95000000);
+    // Properti / Rumah cenderung naik/stabil seiring tahun!
+    const ratio = Math.min(1.35, 0.85 + (ageYears * 0.03));
+    return roundTo500(getPriceFrom2010(base2010) * ratio);
+  }
+  return 0;
+}
+
+function upgradePlnMeterLevel() {
+  const next = (typeof PLN_METER_LEVELS !== 'undefined' ? PLN_METER_LEVELS : [])[(state.plnMeterLevel || 1)];
+  if (!next) return;
+  const cost = getPriceFrom2010(next.baseCost2010);
+  if (!deductFromAnyCash(cost)) return;
+  state.plnMeterLevel = next.level;
+  playSfx('cash');
+  addLog(`🔌 <b>UPGRADE DAYA LISTRIK PLN!</b> Meteran ruko kini <b>${next.name} (Maks ${next.maxWatts}W)</b>!`);
+  saveGame();
+  renderAll();
+}
+
+function buySecondBranch(kind) {
+  state.branches = state.branches || { warnetOwned: false, psRentalOwned: false };
+  if (kind === 'warnet') {
+    if (state.branches.warnetOwned) return;
+    const cost = getPriceFrom2010(45000000);
+    if (!deductFromAnyCash(cost)) return;
+    state.branches.warnetOwned = true;
+    playSfx('cash');
+    addLog(`🏪 <b>CABANG KE-2 WARNET iCAFE DIBUKA!</b> Manajer cabang akan menyetor profit bersih setiap hari ke Bank!`);
+  } else if (kind === 'ps') {
+    if (state.branches.psRentalOwned) return;
+    const cost = getPriceFrom2010(32000000);
+    if (!deductFromAnyCash(cost)) return;
+    state.branches.psRentalOwned = true;
+    playSfx('cash');
+    addLog(`🎮 <b>CABANG RENTAL PLAYSTATION VIP DIBUKA!</b> Setoran harian rental PS otomatis masuk ke Bank setiap hari!`);
+  }
+  saveGame();
+  renderAll();
+}
+
+function toggleRentOutVehicle(idx) {
+  const v = state.ownedVehicles[idx];
+  if (!v) return;
+  v.rentedOut = !v.rentedOut;
+  playSfx('click');
+  const dailyRent = getPriceFrom2010(v.commercialDaily2010 || 95000);
+  addLog(`🚕 Status <b>${v.name}</b>: <b>${v.rentedOut ? `Disewakan Jadi Travel/Kargo (+${fmtRp(dailyRent)}/hari ke Bank)` : 'Dipakai Pribadi'}</b>.`);
+  saveGame();
+  renderAll();
+}
+
+function toggleChildEliteSchool(idx) {
+  const ch = (state.player.childrenList || [])[idx];
+  if (!ch) return;
+  ch.eliteSchool = !ch.eliteSchool;
+  playSfx('click');
+  addLog(`🏫 Pendidikan <b>${ch.name}</b>: <b>${ch.eliteSchool ? 'Terdaftar di Sekolah Unggulan IT & Bisnis (Otomatis Lulus Sertifikasi IT saat Warisan!)' : 'Sekolah Reguler'}</b>.`);
   saveGame();
   renderAll();
 }
@@ -1938,20 +2588,15 @@ function sellEmergencyAsset(type, idx) {
   if (type === 'vehicle') {
     const v = state.ownedVehicles[idx];
     if (!v) return;
-    const cat = VEHICLE_CATALOG.find(x => x.id === v.id);
-    const base = cat ? cat.price2010 : 12000000;
-    const condMult = ((v.engineCond ?? 85) / 100);
-    const sellPrice = roundTo500(getPriceFrom2010(base) * 0.65 * condMult);
+    const sellPrice = calcResalePrice('vehicle', v);
     state.ownedVehicles.splice(idx, 1);
     state.handWallet += sellPrice;
     playSfx('cash');
-    addLog(`💸 Menjual kendaraan <b>${v.name}</b> secara darurat: <b style="color:var(--green)">+${fmtRp(sellPrice)}</b> masuk ke Dompet.`);
+    addLog(`💸 Menjual kendaraan <b>${v.name}</b> (Harga Second Tahun ${state.year}): <b style="color:var(--green)">+${fmtRp(sellPrice)}</b> masuk ke Dompet.`);
   } else if (type === 'gadget') {
     const g = state.ownedGadgets[idx];
     if (!g) return;
-    const cat = GADGET_CATALOG.find(x => x.id === g.id);
-    const base = cat ? cat.price2010 : 3500000;
-    const sellPrice = roundTo500(getPriceFrom2010(base) * 0.60);
+    const sellPrice = calcResalePrice('gadget', g);
     state.ownedGadgets.splice(idx, 1);
     state.handWallet += sellPrice;
     playSfx('cash');
@@ -1959,7 +2604,7 @@ function sellEmergencyAsset(type, idx) {
   } else if (type === 'house') {
     const h = (state.ownedHouses || [])[idx];
     if (!h) return;
-    const sellPrice = roundTo500(getPriceFrom2010(h.basePrice2010 || 120000000) * 0.75);
+    const sellPrice = calcResalePrice('house', h);
     state.ownedHouses.splice(idx, 1);
     state.personalBank += sellPrice;
     playSfx('cash');
@@ -1973,10 +2618,10 @@ function sellSecondhandPart(whSuffix, idx) {
   const arr = state['warehouse' + whSuffix];
   if (!arr || !arr[idx]) return;
   const it = arr.splice(idx, 1)[0];
-  const price = Math.round(getPriceFrom2010(it.basePrice2010) * 0.65 * ((it.cond || 100) / 100));
-  state.laciCash += price;
+  const price = calcSecondhandPartPrice(it);
+  state.handWallet += price;
   playSfx('cash');
-  addLog(`💸 Menjual komponen second <b>${it.name}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b> ke Laci.`);
+  addLog(`💸 Menjual komponen second <b>${it.name}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b> masuk ke Dompet.`);
   saveGame();
   renderAll();
 }
@@ -2101,14 +2746,18 @@ function manualServiceGear() {
 function buyWarnetSupply(id) {
   const it = WARNET_SUPPLY_CATALOG.find(x => x.id === id);
   if (!it) return;
-  const cost = getPriceFrom2010(it.boxPrice2010);
-  if (!deductFromAnyCash(cost)) return addLog('⚠️ Uang kurang!');
+  if (it.requiresFacility && !(state.facilities && state.facilities[it.requiresFacility])) {
+    return addLog('⚠️ Pasang fasilitas pendukungnya dulu di menu <b>Rakit/Server -> Fasilitas Ruko</b>!');
+  }
+  const whMult = getWholesaleDiscountMult();
+  const cost = roundTo500(getPriceFrom2010(it.boxPrice2010) * whMult);
+  if (!deductFromAnyCash(cost)) return;
   if (it.kind === 'galon') {
     state.waterGallonServings += it.servings;
-    addLog(`💧 Beli 1 Galon Air 19L (+${it.servings} porsi seduhan Pop Mie/Kopi).`);
+    addLog(`💧 Beli 1 Galon Air 19L (+${it.servings} porsi seduhan) seharga ${fmtRp(cost)}.`);
   } else {
     state.snackStockPcs[it.id] = (state.snackStockPcs[it.id] || 0) + it.pcsPerBox;
-    addLog(`🍜 Beli 1 Dus <b>${it.name}</b> (+${it.pcsPerBox} pcs).`);
+    addLog(`🍜 Beli 1 Dus/Pak <b>${it.name}</b> (+${it.pcsPerBox} pcs) seharga ${fmtRp(cost)}.`);
   }
   playSfx('cash');
   saveGame();
@@ -2286,33 +2935,33 @@ function buyVehicle(id, isInstallment = false) {
     const months = v.category === 'Mobil' ? 36 : 12;
     state.assetLoans = state.assetLoans || [];
     state.assetLoans.push({ name: v.name, active: true, remainingTotal: rem, monthlyInstallment: Math.ceil(rem / months), monthsLeft: months });
-    state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap });
+    state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap, oilPct: 100, engineCond: 100, boughtYear: state.year, rentedOut: false });
     playSfx('cash');
     addLog(`💳 Kredit <b>${v.name}</b> disetujui! DP <b>-${fmtRp(dp)}</b>, cicilan ${months} bln @ ${fmtRp(Math.ceil(rem / months))}/bln.`);
   } else {
     if (!deductFromAnyCash(price)) return;
-    state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap });
+    state.ownedVehicles.push({ ...v, fuelLiters: v.tankCap, oilPct: 100, engineCond: 100, boughtYear: state.year, rentedOut: false });
     playSfx('cash');
-    addLog(`🛵 Membeli tunai <b>${v.name}</b> (${fmtRp(price)}).`);
+    addLog(`🛵 Membeli tunai <b>${v.name}</b> (${fmtRp(price)}). Diskon belanja grosir aktif!`);
   }
   saveGame(); renderAll();
 }
 
-function buyOrInstallmentAsset(name, basePrice2010, isInstallment, kind) {
+function buyOrInstallmentAsset(name, basePrice2010, isInstallment, kind, dpRate = 0.15) {
   const price = getPriceFrom2010(basePrice2010);
   if (isInstallment) {
-    const dp = Math.round(price * 0.2);
+    const dp = Math.round(price * (dpRate || 0.15));
     if (!deductFromAnyCash(dp)) return;
     const rem = Math.round((price - dp) * 1.15);
     const months = 60;
     state.assetLoans = state.assetLoans || [];
     state.assetLoans.push({ name, active: true, remainingTotal: rem, monthlyInstallment: Math.ceil(rem / months), monthsLeft: months });
-    if (kind === 'house') state.ownedHouses.push({ name, boughtYear: state.year });
+    if (kind === 'house') state.ownedHouses.push({ name, basePrice2010, boughtYear: state.year });
     playSfx('cash');
-    addLog(`🏠 KPR <b>${name}</b> disetujui! DP <b>-${fmtRp(dp)}</b>, cicilan 60 bln.`);
+    addLog(`🏠 KPR <b>${name}</b> disetujui! DP (${Math.round((dpRate || 0.15) * 100)}%) <b>-${fmtRp(dp)}</b>, cicilan 60 bln @ ${fmtRp(Math.ceil(rem / months))}/bln.`);
   } else {
     if (!deductFromAnyCash(price)) return;
-    if (kind === 'house') state.ownedHouses.push({ name, boughtYear: state.year });
+    if (kind === 'house') state.ownedHouses.push({ name, basePrice2010, boughtYear: state.year });
     playSfx('cash');
     addLog(`🏠 Membeli tunai <b>${name}</b> (${fmtRp(price)})!`);
   }
@@ -2351,7 +3000,7 @@ function haveChildWithPartner() {
   if (!state.player.married) return;
   const isBoy = Math.random() < 0.5;
   const cName = isBoy ? `Putra ${state.player.name.split(' ')[0]}` : `Putri ${state.player.name.split(' ')[0]}`;
-  state.player.childrenList.push({ name: cName, gender: isBoy ? 'Laki-laki' : 'Perempuan', age: 0, birthDay: state.day, birthMonth: state.month, birthYear: state.year });
+  state.player.childrenList.push({ name: cName, gender: isBoy ? 'Laki-laki' : 'Perempuan', age: 0, birthDay: state.day, birthMonth: state.month, birthYear: state.year, eliteSchool: false, skillBonus: 0 });
   addLog(`👶 Anakmu <b>${cName}</b> lahir!`);
   saveGame(); renderAll();
 }
@@ -2359,6 +3008,7 @@ function haveChildWithPartner() {
 function inheritToChild(idx) {
   const ch = state.player.childrenList[idx];
   if (!ch || ch.age < 8) return;
+  const hadElite = !!ch.eliteSchool;
   state.player.name = ch.name;
   state.player.gender = ch.gender;
   state.player.age = ch.age;
@@ -2366,7 +3016,11 @@ function inheritToChild(idx) {
   state.player.partner = null;
   state.player.married = false;
   state.player.childrenList = [];
-  addLog(`👑 Seluruh usaha Warnet resmi diwariskan kepada <b>${ch.name}</b>!`);
+  if (hadElite) {
+    state.itCourseCompleted = true;
+    state.reputationBonus = (state.reputationBonus || 0) + 3;
+  }
+  addLog(`👑 Seluruh usaha Warnet resmi diwariskan kepada <b>${ch.name}</b>${hadElite ? ' (Lulusan Sekolah Unggulan IT: Diskon 15% Komponen PC & Bonus Reputasi Aktif!)' : ''}!`);
   saveGame(); renderAll();
 }
 

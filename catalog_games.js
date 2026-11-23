@@ -73,35 +73,50 @@ const PC_CPU_CATALOG = [
   { id: 'cpu_e5400', name: 'Intel Pentium Dual-Core E5400 2.7GHz', tier: 1, maxRamSlots: 2, releaseYear: 2009, basePrice2010: 520000, watt: 65, img: makeItemIllus('cpu', 'Pentium E5400', '2 Slot RAM • 2.7GHz', '#0284c7') },
   { id: 'cpu_e7500', name: 'Intel Core 2 Duo E7500 2.93GHz', tier: 2, maxRamSlots: 2, releaseYear: 2009, basePrice2010: 890000, watt: 65, img: makeItemIllus('cpu', 'Core 2 Duo E7500', '2 Slot RAM • LGA775', '#2563eb') },
   { id: 'cpu_athlon250', name: 'AMD Athlon II X2 250 3.0GHz', tier: 2, maxRamSlots: 2, releaseYear: 2009, basePrice2010: 560000, watt: 65, img: makeItemIllus('cpu', 'Athlon II X2 250', '2 Slot RAM • 3.0GHz', '#dc2626') },
+  { id: 'cpu_q6600', name: 'Intel Core 2 Quad Q6600 2.4GHz (4-Core)', tier: 3, maxRamSlots: 4, releaseYear: 2008, basePrice2010: 1180000, watt: 95, img: makeItemIllus('cpu', 'Core 2 Quad Q6600', '4 Slot RAM • GTA IV', '#1d4ed8') },
+  { id: 'cpu_phenom955', name: 'AMD Phenom II X4 955 Black Edition', tier: 3, maxRamSlots: 4, releaseYear: 2009, basePrice2010: 1290000, watt: 95, img: makeItemIllus('cpu', 'Phenom II X4 955', '4 Slot RAM • 3.2GHz', '#ea580c') },
+  { id: 'cpu_i7_920', name: 'Intel Core i7-920 Bloomfield Extreme', tier: 4, maxRamSlots: 8, releaseYear: 2009, basePrice2010: 2150000, watt: 130, img: makeItemIllus('cpu', 'Core i7-920 HEDT', '8 Slot RAM • LGA1366', '#1e40af') },
   { id: 'cpu_i3_2100', name: 'Intel Core i3-2100 Sandy Bridge', tier: 3, maxRamSlots: 4, releaseYear: 2011, basePrice2010: 1050000, watt: 65, img: makeItemIllus('cpu', 'Core i3-2100', '4 Slot RAM • LGA1155', '#2563eb') },
   { id: 'cpu_fx6300', name: 'AMD FX-6300 Vishera 6-Core', tier: 4, maxRamSlots: 4, releaseYear: 2012, basePrice2010: 1180000, watt: 95, img: makeItemIllus('cpu', 'AMD FX-6300', '4 Slot RAM • 6-Core', '#ea580c') },
   { id: 'cpu_i5_4460', name: 'Intel Core i5-4460 Haswell', tier: 5, maxRamSlots: 4, releaseYear: 2014, basePrice2010: 1850000, watt: 84, img: makeItemIllus('cpu', 'Core i5-4460', '4 Slot RAM • Haswell', '#1d4ed8') },
+  { id: 'cpu_xeon_e5', name: 'Intel Xeon E5-2670 v3 Workstation', tier: 6, maxRamSlots: 8, releaseYear: 2015, basePrice2010: 2350000, watt: 120, img: makeItemIllus('cpu', 'Xeon E5-2670 v3', '8 Slot RAM • 12-Core', '#0f766e') },
   { id: 'cpu_i5_7400', name: 'Intel Core i5-7400 Kaby Lake', tier: 6, maxRamSlots: 4, releaseYear: 2017, basePrice2010: 2100000, watt: 65, img: makeItemIllus('cpu', 'Core i5-7400', '4 Slot RAM • Kaby Lake', '#1d4ed8') },
   { id: 'cpu_r5_2600', name: 'AMD Ryzen 5 2600 6C/12T', tier: 7, maxRamSlots: 4, releaseYear: 2018, basePrice2010: 1950000, watt: 65, img: makeItemIllus('cpu', 'Ryzen 5 2600', '4 Slot RAM • 12T', '#ea580c') },
+  { id: 'cpu_i9_9900k', name: 'Intel Core i9-9900K 5.0GHz Coffee Lake', tier: 8, maxRamSlots: 4, releaseYear: 2019, basePrice2010: 3200000, watt: 95, img: makeItemIllus('cpu', 'Core i9-9900K', '4 Slot RAM • 16T', '#1d4ed8') },
   { id: 'cpu_i5_10400f', name: 'Intel Core i5-10400F 6C/12T', tier: 8, maxRamSlots: 4, releaseYear: 2020, basePrice2010: 1850000, watt: 65, img: makeItemIllus('cpu', 'Core i5-10400F', '4 Slot RAM • 12T', '#2563eb') },
   { id: 'cpu_r5_5600x', name: 'AMD Ryzen 5 5600X Zen 3', tier: 9, maxRamSlots: 4, releaseYear: 2020, basePrice2010: 2650000, watt: 65, img: makeItemIllus('cpu', 'Ryzen 5 5600X', '4 Slot RAM • Esports', '#dc2626') },
-  { id: 'cpu_r7_7800x3d', name: 'AMD Ryzen 7 7800X3D 3D V-Cache', tier: 10, maxRamSlots: 4, releaseYear: 2023, basePrice2010: 4500000, watt: 105, img: makeItemIllus('cpu', 'Ryzen 7 7800X3D', '4 Slot RAM • Sultan', '#b91c1c') }
+  { id: 'cpu_r9_5950x', name: 'AMD Ryzen 9 5950X 16-Core Extreme', tier: 9, maxRamSlots: 8, releaseYear: 2021, basePrice2010: 3900000, watt: 105, img: makeItemIllus('cpu', 'Ryzen 9 5950X', '8 Slot RAM • 32T', '#b91c1c') },
+  { id: 'cpu_r7_7800x3d', name: 'AMD Ryzen 7 7800X3D 3D V-Cache', tier: 10, maxRamSlots: 4, releaseYear: 2023, basePrice2010: 4500000, watt: 105, img: makeItemIllus('cpu', 'Ryzen 7 7800X3D', '4 Slot RAM • Sultan', '#b91c1c') },
+  { id: 'cpu_i9_14900ks', name: 'Intel Core i9-14900KS 6.2GHz Special', tier: 11, maxRamSlots: 8, releaseYear: 2024, basePrice2010: 5600000, watt: 150, img: makeItemIllus('cpu', 'Core i9-14900KS', '8 Slot RAM • 24-Core', '#1e3a8a') },
+  { id: 'cpu_r7_9800x3d', name: 'AMD Ryzen 7 9800X3D Zen 5 V-Cache', tier: 11, maxRamSlots: 4, releaseYear: 2024, basePrice2010: 5200000, watt: 120, img: makeItemIllus('cpu', 'Ryzen 7 9800X3D', '4 Slot RAM • King FPS', '#991b1b') },
+  { id: 'cpu_r9_9950x3d', name: 'AMD Ryzen 9 9950X3D 16C/32T Flagship', tier: 12, maxRamSlots: 8, releaseYear: 2025, basePrice2010: 6800000, watt: 140, img: makeItemIllus('cpu', 'Ryzen 9 9950X3D', '8 Slot RAM • Tier 12', '#7f1d1d') },
+  { id: 'cpu_tr_7980x', name: 'AMD Threadripper PRO 7980X 64-Core', tier: 12, maxRamSlots: 8, releaseYear: 2025, basePrice2010: 9500000, watt: 220, img: makeItemIllus('cpu', 'Threadripper 64C', '8 Slot RAM • God Tier', '#4c1d95') }
 ];
 
 const PC_RAM_CATALOG = [
   { id: 'ram_1gb', name: 'RAM 1GB DDR2 V-GEN', sizeGb: 1, tier: 1, releaseYear: 2008, basePrice2010: 180000, img: makeItemIllus('ram', 'RAM 1GB DDR2', 'Standar XP') },
   { id: 'ram_2gb', name: 'RAM 2GB DDR3 Kingston', sizeGb: 2, tier: 2, releaseYear: 2009, basePrice2010: 320000, img: makeItemIllus('ram', 'RAM 2GB DDR3', 'PB & Dragon Nest') },
-  { id: 'ram_4gb', name: 'RAM 4GB DDR3 Corsair', sizeGb: 4, tier: 3, releaseYear: 2010, basePrice2010: 540000, img: makeItemIllus('ram', 'RAM 4GB DDR3', 'Lancar Multitask') },
+  { id: 'ram_4gb', name: 'RAM 4GB DDR3 Corsair', sizeGb: 4, tier: 3, releaseYear: 2010, basePrice2010: 540000, img: makeItemIllus('ram', 'RAM 4GB DDR3', 'Lancar GTA IV') },
   { id: 'ram_8gb', name: 'RAM 8GB DDR3/DDR4 Dual Channel', sizeGb: 8, tier: 5, releaseYear: 2013, basePrice2010: 780000, img: makeItemIllus('ram', 'RAM 8GB Dual', 'Dota 2 & GTA V') },
   { id: 'ram_16gb', name: 'RAM 16GB DDR4 3200MHz RGB', sizeGb: 16, tier: 8, releaseYear: 2017, basePrice2010: 1250000, img: makeItemIllus('ram', 'RAM 16GB DDR4', 'PUBG & Valorant') },
-  { id: 'ram_32gb', name: 'RAM 32GB DDR5 6000MHz', sizeGb: 32, tier: 10, releaseYear: 2022, basePrice2010: 2100000, img: makeItemIllus('ram', 'RAM 32GB DDR5', 'Ultra Sultan') }
+  { id: 'ram_32gb', name: 'RAM 32GB DDR5 6000MHz', sizeGb: 32, tier: 10, releaseYear: 2022, basePrice2010: 2100000, img: makeItemIllus('ram', 'RAM 32GB DDR5', 'Ultra Sultan') },
+  { id: 'ram_64gb', name: 'RAM 64GB DDR5 6400MHz Dominator RGB', sizeGb: 64, tier: 12, releaseYear: 2024, basePrice2010: 3600000, img: makeItemIllus('ram', 'RAM 64GB DDR5', 'Extreme 6400MHz') }
 ];
 
 const PC_VGA_CATALOG = [
   { id: 'vga_onboard', name: 'VGA Onboard Intel GMA (Tanpa VGA Card)', tier: 1, releaseYear: 2008, basePrice2010: 100000, watt: 15, img: makeItemIllus('vga', 'VGA Onboard', 'Browsing & CS 1.6', '#64748b') },
   { id: 'vga_9500gt', name: 'NVIDIA GeForce 9500 GT 512MB', tier: 2, releaseYear: 2009, basePrice2010: 480000, watt: 50, img: makeItemIllus('vga', 'GeForce 9500 GT', 'PB & AyoDance', '#16a34a') },
-  { id: 'vga_hd5670', name: 'ATI Radeon HD 5670 1GB GDDR5', tier: 3, releaseYear: 2010, basePrice2010: 780000, watt: 64, img: makeItemIllus('vga', 'Radeon HD 5670', 'Dragon Nest & RF', '#dc2626') },
+  { id: 'vga_hd5670', name: 'ATI Radeon HD 5670 1GB GDDR5', tier: 3, releaseYear: 2010, basePrice2010: 780000, watt: 64, img: makeItemIllus('vga', 'Radeon HD 5670', 'GTA IV & Dragon Nest', '#dc2626') },
+  { id: 'vga_hd5870', name: 'ATI Radeon HD 5870 1GB Cypress XT', tier: 4, releaseYear: 2009, basePrice2010: 1350000, watt: 150, img: makeItemIllus('vga', 'Radeon HD 5870', 'Rata Kanan 2010', '#b91c1c') },
   { id: 'vga_gts450', name: 'NVIDIA GeForce GTS 450 1GB', tier: 4, releaseYear: 2011, basePrice2010: 980000, watt: 106, img: makeItemIllus('vga', 'GeForce GTS 450', 'Dota 2 Lancar', '#16a34a') },
   { id: 'vga_gtx750ti', name: 'NVIDIA GTX 750 Ti 2GB (Legenda Warnet)', tier: 6, releaseYear: 2014, basePrice2010: 1550000, watt: 60, img: makeItemIllus('vga', 'GTX 750 Ti 2GB', 'Hemat Listrik & Kencang', '#15803d') },
   { id: 'vga_gtx1050ti', name: 'NVIDIA GTX 1050 Ti 4GB GDDR5', tier: 7, releaseYear: 2016, basePrice2010: 1950000, watt: 75, img: makeItemIllus('vga', 'GTX 1050 Ti 4GB', 'PUBG & GTA V', '#16a34a') },
   { id: 'vga_gtx1650', name: 'NVIDIA GTX 1650 4GB Super', tier: 8, releaseYear: 2019, basePrice2010: 2250000, watt: 85, img: makeItemIllus('vga', 'GTX 1650 4GB', 'Valorant 144FPS+', '#16a34a') },
   { id: 'vga_rtx3060', name: 'NVIDIA GeForce RTX 3060 12GB', tier: 9, releaseYear: 2021, basePrice2010: 3900000, watt: 170, img: makeItemIllus('vga', 'RTX 3060 12GB', 'Ray Tracing iCafe', '#059669') },
-  { id: 'vga_rtx4070', name: 'NVIDIA GeForce RTX 4070 Super', tier: 10, releaseYear: 2023, basePrice2010: 6200000, watt: 200, img: makeItemIllus('vga', 'RTX 4070 Super', 'Rata Kanan 4K', '#10b981') }
+  { id: 'vga_rtx4070', name: 'NVIDIA GeForce RTX 4070 Super', tier: 10, releaseYear: 2023, basePrice2010: 6200000, watt: 200, img: makeItemIllus('vga', 'RTX 4070 Super', 'Rata Kanan 4K', '#10b981') },
+  { id: 'vga_rtx4090', name: 'NVIDIA GeForce RTX 4090 24GB ROG Strix', tier: 11, releaseYear: 2023, basePrice2010: 9500000, watt: 320, img: makeItemIllus('vga', 'RTX 4090 24GB', 'Ultra 4K 240FPS', '#047857') },
+  { id: 'vga_rtx5080', name: 'NVIDIA GeForce RTX 5080 16GB GDDR7', tier: 11, releaseYear: 2025, basePrice2010: 8800000, watt: 280, img: makeItemIllus('vga', 'RTX 5080 16GB', 'Blackwell DLSS 4', '#065f46') },
+  { id: 'vga_rtx5090', name: 'NVIDIA GeForce RTX 5090 32GB GDDR7', tier: 12, releaseYear: 2025, basePrice2010: 13500000, watt: 380, img: makeItemIllus('vga', 'RTX 5090 32GB', 'God Tier GPU 2025+', '#7c3aed') }
 ];
 
 const PC_STORAGE_CATALOG = [
@@ -109,7 +124,9 @@ const PC_STORAGE_CATALOG = [
   { id: 'hdd_250', name: 'Hardisk WD Blue 250GB SATA', sizeGb: 250, releaseYear: 2009, basePrice2010: 380000, img: makeItemIllus('storage', 'HDD 250GB', 'Standar Warnet 2010', '#2563eb') },
   { id: 'hdd_500', name: 'Hardisk Seagate 500GB 7200RPM', sizeGb: 500, releaseYear: 2010, basePrice2010: 490000, img: makeItemIllus('storage', 'HDD 500GB', 'Koleksi Lengkap', '#0284c7') },
   { id: 'ssd_256_hdd1tb', name: 'SSD 256GB + HDD 1TB (Booting Cepat)', sizeGb: 1256, releaseYear: 2015, basePrice2010: 950000, img: makeItemIllus('storage', 'SSD 256G + 1TB', 'Anti Loading Lama', '#10b981') },
-  { id: 'nvme_2tb', name: 'SSD NVMe M.2 Gen4 2TB (2000GB)', sizeGb: 2000, releaseYear: 2020, basePrice2010: 1550000, img: makeItemIllus('storage', 'NVMe 2TB Gen4', 'Speed 7000MB/s', '#8b5cf6') }
+  { id: 'nvme_2tb', name: 'SSD NVMe M.2 Gen4 2TB (2000GB)', sizeGb: 2000, releaseYear: 2020, basePrice2010: 1550000, img: makeItemIllus('storage', 'NVMe 2TB Gen4', 'Speed 7000MB/s', '#8b5cf6') },
+  { id: 'nvme_4tb_gen5', name: 'SSD NVMe M.2 Gen5 4TB (14.000MB/s)', sizeGb: 4000, releaseYear: 2024, basePrice2010: 2800000, img: makeItemIllus('storage', 'NVMe 4TB Gen5', 'Speed 14.000MB/s', '#7c3aed') },
+  { id: 'nvme_8tb_gen5', name: 'SSD NVMe Enterprise Gen5 8TB (8000GB)', sizeGb: 8000, releaseYear: 2025, basePrice2010: 4900000, img: makeItemIllus('storage', 'NVMe 8TB Gen5', 'Muat Semua Game!', '#db2777') }
 ];
 
 const PC_OS_CATALOG = [
@@ -121,10 +138,12 @@ const PC_OS_CATALOG = [
 
 const MONITOR_CATALOG = [
   { id: 'mon_crt15', name: 'Monitor Tabung LG 15" CRT', releaseYear: 2005, basePrice2010: 350000, watt: 55, comfortBonus: 0, rateBonus2010: 0, img: makeItemIllus('monitor', 'Monitor Tabung 15"', '55W • Klasik', '#334155') },
-  { id: 'mon_lcd17', name: 'Monitor LCD AOC / BenQ 17" Square', releaseYear: 2008, basePrice2010: 780000, watt: 28, comfortBonus: 8, rateBonus2010: 500, img: makeItemIllus('monitor', 'Monitor LCD 17"', '28W • Hemat Listrik', '#0284c7') },
-  { id: 'mon_lcd19w', name: 'Monitor LCD Samsung 19" Widescreen', releaseYear: 2010, basePrice2010: 1050000, watt: 32, comfortBonus: 15, rateBonus2010: 1000, img: makeItemIllus('monitor', 'Samsung 19" Wide', '32W • Favorit PB/DN', '#2563eb') },
-  { id: 'mon_led24_144', name: 'Monitor Gaming ASUS/Zowie 24" 144Hz', releaseYear: 2015, basePrice2010: 2350000, watt: 38, comfortBonus: 30, rateBonus2010: 2000, img: makeItemIllus('monitor', 'Gaming 24" 144Hz', '38W • Smooth Esports', '#4f46e5') },
-  { id: 'mon_led27_240', name: 'Monitor Esports 27" 240Hz IPS HDR', releaseYear: 2020, basePrice2010: 3800000, watt: 45, comfortBonus: 45, rateBonus2010: 3500, img: makeItemIllus('monitor', 'Esports 27" 240Hz', '45W • Sultan iCafe', '#7c3aed') }
+  { id: 'mon_lcd17', name: 'Monitor LCD AOC / BenQ 17" Square', releaseYear: 2008, basePrice2010: 780000, watt: 28, comfortBonus: 8, rateBonus2010: 500, img: makeItemIllus('monitor', 'Monitor LCD 17"', '28W • +Rp500/jam', '#0284c7') },
+  { id: 'mon_lcd19w', name: 'Monitor LCD Samsung 19" Widescreen', releaseYear: 2010, basePrice2010: 1050000, watt: 32, comfortBonus: 15, rateBonus2010: 1000, img: makeItemIllus('monitor', 'Samsung 19" Wide', '32W • +Rp1.000/jam', '#2563eb') },
+  { id: 'mon_led24_144', name: 'Monitor Gaming ASUS/Zowie 24" 144Hz', releaseYear: 2015, basePrice2010: 2350000, watt: 38, comfortBonus: 30, rateBonus2010: 2000, img: makeItemIllus('monitor', 'Gaming 24" 144Hz', '38W • +Rp2.000/jam', '#4f46e5') },
+  { id: 'mon_led27_240', name: 'Monitor Esports 27" 240Hz IPS HDR', releaseYear: 2020, basePrice2010: 3800000, watt: 45, comfortBonus: 45, rateBonus2010: 3500, img: makeItemIllus('monitor', 'Esports 27" 240Hz', '45W • +Rp3.500/jam', '#7c3aed') },
+  { id: 'mon_oled32_360', name: 'Monitor ROG Swift OLED 32" 4K 360Hz', releaseYear: 2024, basePrice2010: 6200000, watt: 52, comfortBonus: 65, rateBonus2010: 5500, img: makeItemIllus('monitor', 'OLED 32" 4K 360Hz', '52W • +Rp5.500/jam', '#9333ea') },
+  { id: 'mon_oled27_480', name: 'Monitor Sony INZONE OLED 27" 480Hz', releaseYear: 2025, basePrice2010: 7500000, watt: 55, comfortBonus: 80, rateBonus2010: 7000, img: makeItemIllus('monitor', 'OLED 27" 480Hz', '55W • +Rp7.000/jam', '#db2777') }
 ];
 
 const COOLING_CATALOG = [
@@ -134,22 +153,40 @@ const COOLING_CATALOG = [
   { id: 'ac_1pk_inv', type: 'ac', name: 'AC Daikin Inverter 1 PK Dingin Cepat', releaseYear: 2013, basePrice2010: 3800000, watt: 520, comfortBonus: 50, rateBonus2010: 2500, img: makeItemIllus('ac', 'AC Daikin 1 PK', '520W • Super Dingin') }
 ];
 
-// PERIPHERAL (MOUSE + KEYBOARD + HEADSET WARNET) - BISA RUSAK & DISERVIS
+// PERIPHERAL (MOUSE + KEYBOARD + HEADSET WARNET) - STANDAR VS MECHANICAL GAMING RGB
 const PERIPHERAL_CATALOG = [
-  { id: 'gear_std', name: 'Set Mouse Optic + Keyboard + Headset Warnet (Logitech B100)', releaseYear: 2008, basePrice2010: 120000, img: makeItemIllus('gear', 'Set Gear Warnet', 'Mouse+KB+Headset', '#475569') }
+  { id: 'gear_std', name: 'Set Mouse Optic + Keyboard + Headset Standar (Logitech B100)', maxDurability: 100, rateBonus2010: 0, releaseYear: 2008, basePrice2010: 120000, img: makeItemIllus('gear', 'Set Gear Standar', 'Ketahanan 100%', '#475569') },
+  { id: 'gear_mech', name: 'Set Mechanical Keyboard RGB + Mouse Gaming + Headset 7.1', maxDurability: 220, rateBonus2010: 1200, releaseYear: 2014, basePrice2010: 420000, img: makeItemIllus('gear', 'Mechanical RGB Set', 'Awet 220% • +Tarif', '#7c3aed') }
 ];
 
-// ==================== PAKET LANGGANAN INTERNET ASLI INDONESIA (TELKOM SPEEDY 2010 & INDIHOME/BIZNET) ====================
+// KURSI WARNET PER BILIK (KURSI PLASTIK BAKSO -> KURSI KANTOR -> KURSI GAMING RACING)
+const CHAIR_CATALOG = [
+  { id: 'chair_plastik', name: 'Kursi Plastik Bakso Napolly Hijau/Merah', comfortBonus: 0, rateBonus2010: 0, releaseYear: 2005, basePrice2010: 45000, img: makeItemIllus('pc_case', 'Kursi Plastik Bakso', 'Standar Warnet', '#16a34a') },
+  { id: 'chair_kantor', name: 'Kursi Kantor Jaring Putar Hidrolik', comfortBonus: 12, rateBonus2010: 500, releaseYear: 2009, basePrice2010: 280000, img: makeItemIllus('pc_case', 'Kursi Kantor Jaring', '+Betah • +Rp500/jam', '#0284c7') },
+  { id: 'chair_gaming', name: 'Kursi Gaming Racing Busa Tebal Reclining', comfortBonus: 28, rateBonus2010: 1200, releaseYear: 2015, basePrice2010: 950000, img: makeItemIllus('pc_case', 'Kursi Gaming Racing', '+Betah • +Rp1.200/jam', '#dc2626') },
+  { id: 'chair_sultan', name: 'Kursi Gaming Sultan Ergonomis + Sandaran Kaki', comfortBonus: 45, rateBonus2010: 2200, releaseYear: 2020, basePrice2010: 1850000, img: makeItemIllus('pc_case', 'Kursi Sultan VIP', '+Betah • +Rp2.200/jam', '#9333ea') }
+];
+
+// KONSOL PLAYSTATION UNTUK BILIK RENTAL PS (OPSI SELAIN RAKIT PC DI TIAP BILIK!)
+const PS_CONSOLE_CATALOG = [
+  { id: 'ps2_fat', name: 'PlayStation 2 Hardisk Matrix + 2 Stik Getar (WE/PES/GTA SA)', tier: 2, releaseYear: 2005, basePrice2010: 1150000, watt: 45, rateBonus2010: 500, defaultGame: '🎮 Winning Eleven / GTA San Andreas PS2', img: makeItemIllus('pc_case', 'PlayStation 2 Matrix', 'Rental PS2 Klasik', '#1e293b') },
+  { id: 'ps3_slim', name: 'PlayStation 3 Slim CFW Full Game + 2 DualShock 3 (PES 2013/GTA V)', tier: 4, releaseYear: 2010, basePrice2010: 2850000, watt: 85, rateBonus2010: 1500, defaultGame: '🎮 PES 2013 / GTA V PlayStation 3', img: makeItemIllus('pc_case', 'PlayStation 3 Slim', 'Rental PS3 Favorit', '#2563eb') },
+  { id: 'ps4_slim', name: 'PlayStation 4 Slim 1TB + 2 DualShock 4 (FIFA/eFootball/Spider-Man)', tier: 7, releaseYear: 2015, basePrice2010: 4200000, watt: 110, rateBonus2010: 2500, defaultGame: '🎮 eFootball / EA FC / God of War PS4', img: makeItemIllus('pc_case', 'PlayStation 4 1TB', 'Rental PS4 HD', '#1d4ed8') },
+  { id: 'ps5_disc', name: 'PlayStation 5 Disc Edition 4K + 2 DualSense (EA FC 25/GTA VI Ready)', tier: 10, releaseYear: 2020, basePrice2010: 6800000, watt: 190, rateBonus2010: 4500, defaultGame: '🎮 EA Sports FC / Tekken 8 / Spider-Man 2 PS5', img: makeItemIllus('pc_case', 'PlayStation 5 4K', 'Rental PS5 Sultan', '#4f46e5') },
+  { id: 'ps5_pro', name: 'PlayStation 5 Pro 2TB 8K Ray Tracing + 2 DualSense Edge', tier: 12, releaseYear: 2024, basePrice2010: 9500000, watt: 220, rateBonus2010: 6500, defaultGame: '🎮 EA FC / Black Myth: Wukong PS5 Pro', img: makeItemIllus('pc_case', 'PlayStation 5 Pro', 'Rental PS5 Pro 2TB', '#7c3aed') }
+];
+
+// ==================== PAKET LANGGANAN INTERNET ASLI INDONESIA (DENGAN DAMPAK NYATA KE TRAFFIC, PING & BONUS TARIF) ====================
 const INTERNET_PLANS = [
-  { id: 'isp_1m', name: 'Telkom Speedy Familia 1 Mbps Unlimited', mbps: 1, releaseYear: 2009, monthlyReal: 295000, maxSmoothPcs: 6 },
-  { id: 'isp_2m', name: 'Telkom Speedy Executive 2 Mbps', mbps: 2, releaseYear: 2010, monthlyReal: 495000, maxSmoothPcs: 11 },
-  { id: 'isp_3m', name: 'Telkom Speedy Biz 3 Mbps Warnet', mbps: 3, releaseYear: 2010, monthlyReal: 695000, maxSmoothPcs: 16 },
-  { id: 'isp_5m', name: 'Telkom Speedy Gold 5 Mbps', mbps: 5, releaseYear: 2012, monthlyReal: 990000, maxSmoothPcs: 20 },
-  { id: 'isp_10m', name: 'IndiHome Fiber Optic 10 Mbps', mbps: 10, releaseYear: 2015, monthlyReal: 385000, maxSmoothPcs: 20 },
-  { id: 'isp_20m', name: 'IndiHome Fiber 20 Mbps', mbps: 20, releaseYear: 2016, monthlyReal: 515000, maxSmoothPcs: 20 },
-  { id: 'isp_50m', name: 'IndiHome / Biznet 50 Mbps', mbps: 50, releaseYear: 2018, monthlyReal: 890000, maxSmoothPcs: 20 },
-  { id: 'isp_100m', name: 'Biznet Metronet 100 Mbps iCafe', mbps: 100, releaseYear: 2020, monthlyReal: 1250000, maxSmoothPcs: 20 },
-  { id: 'isp_250m', name: 'Biznet Dedicated GameNet 250 Mbps', mbps: 250, releaseYear: 2023, monthlyReal: 2100000, maxSmoothPcs: 20 }
+  { id: 'isp_1m', name: 'Telkom Speedy Familia 1 Mbps Unlimited', mbps: 1, releaseYear: 2009, monthlyReal: 295000, maxSmoothPcs: 4, appealBonusPct: 0, rateBonus2010: 0, wifiDaily2010: 12000 },
+  { id: 'isp_2m', name: 'Telkom Speedy Executive 2 Mbps', mbps: 2, releaseYear: 2010, monthlyReal: 495000, maxSmoothPcs: 8, appealBonusPct: 10, rateBonus2010: 300, wifiDaily2010: 20000 },
+  { id: 'isp_3m', name: 'Telkom Speedy Biz 3 Mbps Warnet', mbps: 3, releaseYear: 2010, monthlyReal: 695000, maxSmoothPcs: 12, appealBonusPct: 18, rateBonus2010: 500, wifiDaily2010: 28000 },
+  { id: 'isp_5m', name: 'Telkom Speedy Gold 5 Mbps', mbps: 5, releaseYear: 2012, monthlyReal: 990000, maxSmoothPcs: 16, appealBonusPct: 25, rateBonus2010: 800, wifiDaily2010: 35000 },
+  { id: 'isp_10m', name: 'IndiHome Fiber Optic 10 Mbps', mbps: 10, releaseYear: 2015, monthlyReal: 385000, maxSmoothPcs: 18, appealBonusPct: 32, rateBonus2010: 1000, wifiDaily2010: 45000 },
+  { id: 'isp_20m', name: 'IndiHome Fiber 20 Mbps', mbps: 20, releaseYear: 2016, monthlyReal: 515000, maxSmoothPcs: 20, appealBonusPct: 40, rateBonus2010: 1200, wifiDaily2010: 60000 },
+  { id: 'isp_50m', name: 'IndiHome / Biznet 50 Mbps Gaming', mbps: 50, releaseYear: 2018, monthlyReal: 890000, maxSmoothPcs: 20, appealBonusPct: 55, rateBonus2010: 1600, wifiDaily2010: 85000 },
+  { id: 'isp_100m', name: 'Biznet Metronet 100 Mbps iCafe', mbps: 100, releaseYear: 2020, monthlyReal: 1250000, maxSmoothPcs: 20, appealBonusPct: 70, rateBonus2010: 2200, wifiDaily2010: 115000 },
+  { id: 'isp_250m', name: 'Biznet Dedicated GameNet 250 Mbps Anti-Lag', mbps: 250, releaseYear: 2023, monthlyReal: 2100000, maxSmoothPcs: 20, appealBonusPct: 90, rateBonus2010: 3000, wifiDaily2010: 160000 }
 ];
 
 // ==================== UPGRADE PC SERVER KASIR (DISKLESS / AUTO-PATCH CACHE) ====================
@@ -303,13 +340,17 @@ const NON_GAME_ACTIVITIES = [
   { id: 'act_tt', title: '🎵 Scroll TikTok & Reels Web', minYear: 2019 }
 ];
 
-// LOGISTIK WARNET: POP MIE, MINUMAN DINGIN & AIR GALON (WAJIB UNTUK SEDUH POP MIE/KOPI)
+// LOGISTIK WARNET: POP MIE, INDOMIE TELUR, MINUMAN, AIR GALON, KERTAS PRINT & VOUCHER GAME
 const WARNET_SUPPLY_CATALOG = [
   { id: 'galon_air', kind: 'galon', name: 'Isi Ulang Air Galon Aqua 19 Liter (Untuk 45 Cup Pop Mie/Kopi)', servings: 45, boxPrice2010: 12000, sellPcs2010: 0, needsWater: false, img: makeItemIllus('galon', 'Galon Air 19L', 'Untuk 45 Seduhan') },
   { id: 'sn_popmie_ayam', kind: 'snack', name: 'Pop Mie Rasa Ayam / Baso (1 Dus 24 Cup)', pcsPerBox: 24, boxPrice2010: 62000, sellPcs2010: 4500, needsWater: true, img: makeItemIllus('box', 'Dus Pop Mie', 'Isi 24 Cup • Butuh Air', '#dc2626') },
+  { id: 'sn_indomie_telur', kind: 'snack', name: 'Indomie Rebus/Goreng + Telur Kornet (1 Dus 24 Porsi • Wajib Dapur)', pcsPerBox: 24, boxPrice2010: 78000, sellPcs2010: 7500, needsWater: true, requiresFacility: 'fac_dapur', img: makeItemIllus('box', 'Indomie + Telur', 'Margin 2x • Wajib Dapur', '#ea580c') },
   { id: 'sn_kopi_goodday', kind: 'snack', name: 'Es Kopi Good Day / Kapal Api (1 Box 30 Sachet)', pcsPerBox: 30, boxPrice2010: 27000, sellPcs2010: 2500, needsWater: true, img: makeItemIllus('box', 'Box Kopi Seduh', '30 Sachet • Butuh Air', '#78350f') },
+  { id: 'sn_esteh_jumbo', kind: 'snack', name: 'Es Teh Manis Jumbo Warnet (1 Pak 30 Gelas)', pcsPerBox: 30, boxPrice2010: 22000, sellPcs2010: 2500, needsWater: true, img: makeItemIllus('box', 'Es Teh Jumbo', '30 Gelas • Laris Manis', '#b45309') },
   { id: 'sn_teh_pucuk', kind: 'snack', name: 'Teh Pucuk Harum Dingin (1 Dus 24 Botol)', pcsPerBox: 24, boxPrice2010: 48000, sellPcs2010: 3500, needsWater: false, img: makeItemIllus('box', 'Dus Teh Pucuk', 'Isi 24 Botol Dingin', '#16a34a') },
-  { id: 'sn_extrajoss', kind: 'snack', name: 'Extra Joss / KukuBima Susu Dingin (1 Box 24 Porsi)', pcsPerBox: 24, boxPrice2010: 32000, sellPcs2010: 3000, needsWater: true, img: makeItemIllus('box', 'Box ExtraJoss', 'Isi 24 Porsi • Butuh Air', '#eab308') }
+  { id: 'sn_extrajoss', kind: 'snack', name: 'Extra Joss / KukuBima Susu Dingin (1 Box 24 Porsi)', pcsPerBox: 24, boxPrice2010: 32000, sellPcs2010: 3000, needsWater: true, img: makeItemIllus('box', 'Box ExtraJoss', 'Isi 24 Porsi • Butuh Air', '#eab308') },
+  { id: 'sup_hvs_tinta', kind: 'print', name: 'Kertas HVS A4 1 Rim + Tinta Printer (Untuk 80x Print Tugas/Skripsi)', pcsPerBox: 80, boxPrice2010: 45000, sellPcs2010: 2000, needsWater: false, requiresFacility: 'fac_printer', img: makeItemIllus('box', 'HVS + Tinta Print', '80x Print Tugas', '#0284c7') },
+  { id: 'sup_voucher_game', kind: 'voucher', name: 'Bundel Voucher Game (G-Cash / Megaxus / Lyto / Steam • 25 Pcs)', pcsPerBox: 25, boxPrice2010: 210000, sellPcs2010: 12000, needsWater: false, img: makeItemIllus('box', 'Voucher G-Cash', '25 Voucher Game', '#7c3aed') }
 ];
 
 const REAL_CONSOLE_PHOTOS = {
@@ -318,15 +359,40 @@ const REAL_CONSOLE_PHOTOS = {
   mon_std: makeItemIllus('monitor', 'Monitor PC', 'Layar Jernih', '#0284c7')
 };
 
-// KATALOG FASILITAS & PERALATAN TAMBAHAN RUKO WARNET (YANG DISETUJUI PEMAIN)
+// KATALOG FASILITAS & PERALATAN TAMBAHAN RUKO WARNET (LENGKAP 12 FASILITAS)
 const WARNET_FACILITIES_CATALOG = [
-  { id: 'fac_showcase', name: 'Kulkas Showcase Minuman Dingin', basePrice2010: 1850000, desc: 'Minuman dingin lebih laris & harga jual +35% lebih menguntungkan!' },
-  { id: 'fac_dispenser', name: 'Dispenser Air Panas & Dingin Otomatis', basePrice2010: 450000, desc: 'Seduh Pop Mie & Kopi jauh lebih cepat (+25% penjualan Pop Mie/Kopi).' },
-  { id: 'fac_wifi_router', name: 'Router Hotspot Voucher WiFi Warga/Kos', basePrice2010: 650000, desc: 'Menghasilkan pemasukan pasif harian dari jualan Voucher WiFi tanpa makan slot PC!' },
-  { id: 'fac_exhaust', name: 'Exhaust Fan & Pengharum Ruangan Otomatis', basePrice2010: 550000, desc: 'Mengurangi bau rokok/apek & memperlambat penurunan kebersihan ruko hingga 50%.' },
-  { id: 'fac_neonbox', name: 'Spanduk & Neon Box Menyala Depan Ruko', basePrice2010: 950000, desc: 'Meningkatkan kedatangan pengunjung baru & rombongan mabar (+30% traffic).' },
-  { id: 'fac_stabilizer', name: 'Stabilizer Tegangan & Penangkal Petir Ruko', basePrice2010: 1250000, desc: 'Melindungi seluruh PC 100% dari kerusakan komponen saat hujan deras & petir!' },
-  { id: 'fac_deepfreeze', name: 'Lisensi Deep Freeze & Antivirus Semua PC', basePrice2010: 350000, desc: 'Mencegah PC terkena virus flashdisk tamu atau blue screen mendadak.' }
+  { id: 'fac_showcase', icon: '🧊', name: 'Kulkas Showcase Minuman Dingin', basePrice2010: 1850000, desc: 'Minuman dingin lebih laris & harga jual +35% lebih menguntungkan!' },
+  { id: 'fac_dispenser', icon: '🚰', name: 'Dispenser Air Panas & Dingin Otomatis', basePrice2010: 450000, desc: 'Seduh Pop Mie & Kopi jauh lebih cepat (+25% penjualan Pop Mie/Kopi).' },
+  { id: 'fac_dapur', icon: '🍳', name: 'Dapur Kompor Gas & Panci Indomie Warnet', basePrice2010: 850000, desc: 'Membuka menu legendaris Indomie Telur Kornet dengan profit 2x lipat!' },
+  { id: 'fac_printer', icon: '🖨️', name: 'Mesin Printer, Scanner & Fotokopi Kasir', basePrice2010: 1150000, desc: 'Pelanggan ketik tugas otomatis bayar ekstra uang print (butuh stok HVS+Tinta).' },
+  { id: 'fac_wifi_router', icon: '📶', name: 'Router Hotspot Voucher WiFi Warga/Kos', basePrice2010: 650000, desc: 'Menghasilkan pemasukan pasif harian sesuai kecepatan Mbps internet warnet!' },
+  { id: 'fac_mp3_booth', icon: '💿', name: 'Koleksi Master Lagu MP3, Film & Burner CD/FD', basePrice2010: 500000, desc: 'Pemasukan tambahan otomatis dari tamu yang minta isi lagu MP3/film ke HP/Flashdisk.' },
+  { id: 'fac_cctv', icon: '📹', name: 'CCTV Keamanan 8 Titik & Hansip Lingkungan', basePrice2010: 1450000, desc: 'Mencegah 100% bocil kabur belum bayar Billing Meter & maling mouse/headset!' },
+  { id: 'fac_kompresor', icon: '🌬️', name: 'Kompresor Angin & Kit Thermal Paste CPU/VGA', basePrice2010: 750000, desc: 'Bisa bersih debu & ganti pasta thermal semua PC agar dingin & tidak overheat!' },
+  { id: 'fac_exhaust', icon: '🌀', name: 'Exhaust Fan & Pengharum Ruangan Otomatis', basePrice2010: 550000, desc: 'Mengurangi bau rokok/apek & memperlambat penurunan kebersihan ruko hingga 50%.' },
+  { id: 'fac_neonbox', icon: '🪧', name: 'Spanduk & Neon Box Menyala Depan Ruko', basePrice2010: 950000, desc: 'Meningkatkan kedatangan pengunjung baru & rombongan mabar (+30% traffic).' },
+  { id: 'fac_stabilizer', icon: '⚡', name: 'Stabilizer Tegangan & Penangkal Petir Ruko', basePrice2010: 1250000, desc: 'Melindungi seluruh PC/PS 100% dari kerusakan komponen saat hujan deras & petir!' },
+  { id: 'fac_deepfreeze', icon: '🛡️', name: 'Lisensi Deep Freeze & Antivirus Semua PC', basePrice2010: 350000, desc: 'Mencegah PC terkena virus flashdisk tamu atau blue screen mendadak.' }
+];
+
+// LEVEL DAYA METERAN LISTRIK PLN (JIKA BEBAN WATT PC+AC MELEBIHI BATAS, MCB BISA JEGLEK!)
+const PLN_METER_LEVELS = [
+  { level: 1, name: 'Daya PLN 1.300 VA (Standar Ruko Kecil)', maxWatts: 1300, baseCost2010: 0 },
+  { level: 2, name: 'Daya PLN 2.200 VA (Menengah ~8-10 PC)', maxWatts: 2200, baseCost2010: 850000 },
+  { level: 3, name: 'Daya PLN 5.500 VA (Besar ~20 PC + Kipas/AC)', maxWatts: 5500, baseCost2010: 2400000 },
+  { level: 4, name: 'Daya PLN 10.600 VA 3-Phase iCafe (Bebas Jeglek 20 PC High-End + AC)', maxWatts: 12000, baseCost2010: 5800000 }
+];
+
+// CELOTEHAN KHAS ANAK WARNET & RENTAL PS
+const WARNET_CHAT_BUBBLES = [
+  '💬 "Bang, billing PC nomor 4 tambah sejam ya!"',
+  '💬 "Bang, Indomie goreng telur kornet satu sama Es Teh Jumbo!"',
+  '💬 "Woi jangan lempar granat di B! Maju rush mid!"',
+  '💬 "Mantap bang, PC sama monitornya mulus banget gak pake patah-patah!"',
+  '💬 "Bang, beli voucher G-Cash Gemscool satu dong buat beli senjata Kriss SV!"',
+  '💬 "Enak bener main di sini dingin, kursinya empuk bikin betah mabar!"',
+  '💬 "Bang, tolong print tugas makalah 12 lembar ya di kasir!"',
+  '💬 "Gas paket begadang sampe subuh boy, besok tanggal merah!"'
 ];
 
 // HARGA EMAS ANTAM PER GRAM ASLI INDONESIA (2010 - 2026+)
@@ -344,8 +410,8 @@ function getHistoricalGoldPricePerGram(year, daySeed = 1) {
 
 // KATALOG PROPERTI (RUMAH, APARTEMEN, RUKO PRIBADI)
 const PROPERTY_CATALOG = [
-  { id: 'prop_subsidi', name: 'Rumah Subsidi Type 36/60', basePrice2010: 95000000, desc: 'Rumah sederhana untuk keluarga baru' },
-  { id: 'prop_cluster', name: 'Rumah Minimalis 2 Lantai Type 70', basePrice2010: 260000000, desc: 'Cluster nyaman dekat pusat kota' },
-  { id: 'prop_apt', name: 'Apartemen Studio / 2BR City Center', basePrice2010: 380000000, desc: 'Hunian modern strategis' },
-  { id: 'prop_mewah', name: 'Rumah Mewah Sultan + Kolam Renang', basePrice2010: 950000000, desc: 'Hunian elit keluarga besar' }
+  { id: 'prop_subsidi', name: 'Rumah Subsidi Type 36/60', basePrice2010: 95000000, dpPct: 0.10, desc: 'Rumah sederhana untuk keluarga baru (DP Ringan 10%)' },
+  { id: 'prop_cluster', name: 'Rumah Minimalis 2 Lantai Type 70', basePrice2010: 260000000, dpPct: 0.15, desc: 'Cluster nyaman dekat pusat kota (DP 15%)' },
+  { id: 'prop_apt', name: 'Apartemen Studio / 2BR City Center', basePrice2010: 380000000, dpPct: 0.15, desc: 'Hunian modern strategis (DP 15%)' },
+  { id: 'prop_mewah', name: 'Rumah Mewah Sultan + Kolam Renang', basePrice2010: 950000000, dpPct: 0.20, desc: 'Hunian elit keluarga besar (DP 20%)' }
 ];

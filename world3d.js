@@ -56,16 +56,17 @@
     if (!grid) return;
 
     grid.innerHTML = list.map(s => {
-      const hasPc = !!(s.cpu || s.monitor);
+      const isPs = s.unitType === 'ps';
+      const hasPc = !!(s.cpu || s.psConsole || s.monitor);
       if (!hasPc) {
         return `<div class="slot-card empty-slot vip" onclick="openSlotConfigModal(${s.id})">
           <b style="color:#94a3b8;font-size:0.74rem;">+ Room VIP #${s.id}</b>
-          <span class="spec-line">Tap untuk Rakit PC &amp; AC</span>
+          <span class="spec-line">Tap untuk Rakit PC / Pasang PS</span>
         </div>`;
       }
 
       const st = typeof isSlotReadyToPlay === 'function' ? isSlotReadyToPlay(s) : { ok: true, reason: 'Siap' };
-      const pcImg = REAL_CONSOLE_PHOTOS.pc_vip;
+      const pcImg = (isPs && s.psConsole) ? s.psConsole.img : REAL_CONSOLE_PHOTOS.pc_vip;
       const monImg = s.monitor ? s.monitor.img : REAL_CONSOLE_PHOTOS.mon_std;
       const snackRp = s.snackBill || 0;
       const snackTag = snackRp > 0 ? ` + 🍜${(snackRp / 1000).toFixed(1)}rb` : '';
@@ -132,24 +133,28 @@
             </div>
             <div class="countdown-track"><div class="countdown-fill" style="width:0%;"></div></div>
             <div class="spec-line" style="font-size:0.59rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${st.ok ? `✅ ${s.os ? s.os.name.slice(0, 14) : 'Win 7'} • Siap Pakai` : `⚠️ ${st.reason}`}
+              ${st.ok ? `✅ ${isPs ? (s.psConsole ? s.psConsole.name.slice(0, 15) : 'Rental PS') : (s.os ? s.os.name.slice(0, 14) : 'Win 7')} • Siap` : `⚠️ ${st.reason}`}
             </div>
           </div>`;
       }
 
       return `<div class="slot-card vip ${s.occupied ? 'playing' : ''}" onclick="openSlotConfigModal(${s.id})">
         <div class="slot-card-head">
-          <b>👑 Room #${s.id}</b>
+          <b>${isPs ? '🎮 PS' : '👑 PC'} #${s.id}${!isPs && s.overclocked ? ' ⚡' : ''}</b>
           <span class="badge ${s.updatingPatch ? 'warn' : s.occupied ? 'ok' : st.ok ? 'busy' : 'warn'}">${s.updatingPatch ? 'PATCH' : s.occupied ? (s.billingMode === 'paket' ? 'PAKET' : 'METER') : st.ok ? 'IDLE' : 'CEK'}</span>
         </div>
 
         <div class="slot-hw-pics">
-          <img class="slot-pic" src="${pcImg}" alt="PC" />
+          <img class="slot-pic" src="${pcImg}" alt="Unit" />
           <img class="slot-pic" src="${monImg}" alt="Monitor" />
           <div class="slot-hw-info">
-            <div><b>${s.cpu ? s.cpu.name.replace('Intel ', '').replace('AMD ', '').slice(0, 14) : 'Tanpa CPU'}</b></div>
-            <div>RAM ${typeof getPcTotalRamGb === 'function' ? getPcTotalRamGb(s) : (s.ram ? s.ram.sizeGb : 0)}GB • ${(s.installedGames || []).length} Game</div>
-            <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • 🖱️ <b>${s.gear ? Math.round(s.gear.durability) + '%' : '0%'}</b></div>
+            ${isPs
+              ? `<div><b>${s.psConsole ? s.psConsole.name.slice(0, 15) : 'Tanpa Konsol'}</b></div>
+                 <div>🪑 ${s.chair ? s.chair.name.slice(0, 12) : 'Plastik'}</div>
+                 <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • Tier ${typeof getPcTier === 'function' ? getPcTier(s) : 2}</div>`
+              : `<div><b>${s.cpu ? s.cpu.name.replace('Intel ', '').replace('AMD ', '').slice(0, 14) : 'Tanpa CPU'}</b></div>
+                 <div>RAM ${typeof getPcTotalRamGb === 'function' ? getPcTotalRamGb(s) : (s.ram ? s.ram.sizeGb : 0)}GB • ${(s.installedGames || []).length}G • ${s.tempC || 40}°C</div>
+                 <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • 🖱️ <b>${s.gear ? Math.round(s.gear.durability) + '%' : '0%'}</b></div>`}
           </div>
         </div>
 
