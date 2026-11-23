@@ -70,17 +70,17 @@ function makeItemIllus(kind, label, sub, accent) {
 
 // ==================== KOMPONEN RAKIT PC WARNET (SESUAI TAHUN 2010 - 2026+) ====================
 const PC_CPU_CATALOG = [
-  { id: 'cpu_e5400', name: 'Intel Pentium Dual-Core E5400 2.7GHz', tier: 1, releaseYear: 2009, basePrice2010: 520000, watt: 65, img: makeItemIllus('cpu', 'Pentium E5400', 'Dual-Core 2.7GHz', '#0284c7') },
-  { id: 'cpu_e7500', name: 'Intel Core 2 Duo E7500 2.93GHz', tier: 2, releaseYear: 2009, basePrice2010: 890000, watt: 65, img: makeItemIllus('cpu', 'Core 2 Duo E7500', 'LGA 775 Legend', '#2563eb') },
-  { id: 'cpu_athlon250', name: 'AMD Athlon II X2 250 3.0GHz', tier: 2, releaseYear: 2009, basePrice2010: 560000, watt: 65, img: makeItemIllus('cpu', 'Athlon II X2 250', 'Raja Warnet 2010', '#dc2626') },
-  { id: 'cpu_i3_2100', name: 'Intel Core i3-2100 Sandy Bridge', tier: 3, releaseYear: 2011, basePrice2010: 1050000, watt: 65, img: makeItemIllus('cpu', 'Core i3-2100', '3.1GHz LGA1155', '#2563eb') },
-  { id: 'cpu_fx6300', name: 'AMD FX-6300 Vishera 6-Core', tier: 4, releaseYear: 2012, basePrice2010: 1180000, watt: 95, img: makeItemIllus('cpu', 'AMD FX-6300', '6-Core Warnet', '#ea580c') },
-  { id: 'cpu_i5_4460', name: 'Intel Core i5-4460 Haswell', tier: 5, releaseYear: 2014, basePrice2010: 1850000, watt: 84, img: makeItemIllus('cpu', 'Core i5-4460', '4-Core Haswell', '#1d4ed8') },
-  { id: 'cpu_i5_7400', name: 'Intel Core i5-7400 Kaby Lake', tier: 6, releaseYear: 2017, basePrice2010: 2100000, watt: 65, img: makeItemIllus('cpu', 'Core i5-7400', 'Kaby Lake Gaming', '#1d4ed8') },
-  { id: 'cpu_r5_2600', name: 'AMD Ryzen 5 2600 6C/12T', tier: 7, releaseYear: 2018, basePrice2010: 1950000, watt: 65, img: makeItemIllus('cpu', 'Ryzen 5 2600', '6-Core 12-Thread', '#ea580c') },
-  { id: 'cpu_i5_10400f', name: 'Intel Core i5-10400F 6C/12T', tier: 8, releaseYear: 2020, basePrice2010: 1850000, watt: 65, img: makeItemIllus('cpu', 'Core i5-10400F', 'Comet Lake 12T', '#2563eb') },
-  { id: 'cpu_r5_5600x', name: 'AMD Ryzen 5 5600X Zen 3', tier: 9, releaseYear: 2020, basePrice2010: 2650000, watt: 65, img: makeItemIllus('cpu', 'Ryzen 5 5600X', 'Esports Beast', '#dc2626') },
-  { id: 'cpu_r7_7800x3d', name: 'AMD Ryzen 7 7800X3D 3D V-Cache', tier: 10, releaseYear: 2023, basePrice2010: 4500000, watt: 105, img: makeItemIllus('cpu', 'Ryzen 7 7800X3D', 'Sultan Gaming CPU', '#b91c1c') }
+  { id: 'cpu_e5400', name: 'Intel Pentium Dual-Core E5400 2.7GHz', tier: 1, maxRamSlots: 2, releaseYear: 2009, basePrice2010: 520000, watt: 65, img: makeItemIllus('cpu', 'Pentium E5400', '2 Slot RAM • 2.7GHz', '#0284c7') },
+  { id: 'cpu_e7500', name: 'Intel Core 2 Duo E7500 2.93GHz', tier: 2, maxRamSlots: 2, releaseYear: 2009, basePrice2010: 890000, watt: 65, img: makeItemIllus('cpu', 'Core 2 Duo E7500', '2 Slot RAM • LGA775', '#2563eb') },
+  { id: 'cpu_athlon250', name: 'AMD Athlon II X2 250 3.0GHz', tier: 2, maxRamSlots: 2, releaseYear: 2009, basePrice2010: 560000, watt: 65, img: makeItemIllus('cpu', 'Athlon II X2 250', '2 Slot RAM • 3.0GHz', '#dc2626') },
+  { id: 'cpu_i3_2100', name: 'Intel Core i3-2100 Sandy Bridge', tier: 3, maxRamSlots: 4, releaseYear: 2011, basePrice2010: 1050000, watt: 65, img: makeItemIllus('cpu', 'Core i3-2100', '4 Slot RAM • LGA1155', '#2563eb') },
+  { id: 'cpu_fx6300', name: 'AMD FX-6300 Vishera 6-Core', tier: 4, maxRamSlots: 4, releaseYear: 2012, basePrice2010: 1180000, watt: 95, img: makeItemIllus('cpu', 'AMD FX-6300', '4 Slot RAM • 6-Core', '#ea580c') },
+  { id: 'cpu_i5_4460', name: 'Intel Core i5-4460 Haswell', tier: 5, maxRamSlots: 4, releaseYear: 2014, basePrice2010: 1850000, watt: 84, img: makeItemIllus('cpu', 'Core i5-4460', '4 Slot RAM • Haswell', '#1d4ed8') },
+  { id: 'cpu_i5_7400', name: 'Intel Core i5-7400 Kaby Lake', tier: 6, maxRamSlots: 4, releaseYear: 2017, basePrice2010: 2100000, watt: 65, img: makeItemIllus('cpu', 'Core i5-7400', '4 Slot RAM • Kaby Lake', '#1d4ed8') },
+  { id: 'cpu_r5_2600', name: 'AMD Ryzen 5 2600 6C/12T', tier: 7, maxRamSlots: 4, releaseYear: 2018, basePrice2010: 1950000, watt: 65, img: makeItemIllus('cpu', 'Ryzen 5 2600', '4 Slot RAM • 12T', '#ea580c') },
+  { id: 'cpu_i5_10400f', name: 'Intel Core i5-10400F 6C/12T', tier: 8, maxRamSlots: 4, releaseYear: 2020, basePrice2010: 1850000, watt: 65, img: makeItemIllus('cpu', 'Core i5-10400F', '4 Slot RAM • 12T', '#2563eb') },
+  { id: 'cpu_r5_5600x', name: 'AMD Ryzen 5 5600X Zen 3', tier: 9, maxRamSlots: 4, releaseYear: 2020, basePrice2010: 2650000, watt: 65, img: makeItemIllus('cpu', 'Ryzen 5 5600X', '4 Slot RAM • Esports', '#dc2626') },
+  { id: 'cpu_r7_7800x3d', name: 'AMD Ryzen 7 7800X3D 3D V-Cache', tier: 10, maxRamSlots: 4, releaseYear: 2023, basePrice2010: 4500000, watt: 105, img: makeItemIllus('cpu', 'Ryzen 7 7800X3D', '4 Slot RAM • Sultan', '#b91c1c') }
 ];
 
 const PC_RAM_CATALOG = [
@@ -265,3 +265,11 @@ const REAL_CONSOLE_PHOTOS = {
   pc_vip: makeItemIllus('pc_case', 'PC Gaming VIP', 'RGB Tempered Glass', '#8b5cf6'),
   mon_std: makeItemIllus('monitor', 'Monitor PC', 'Layar Jernih', '#0284c7')
 };
+
+// KATALOG PROPERTI (RUMAH, APARTEMEN, RUKO PRIBADI)
+const PROPERTY_CATALOG = [
+  { id: 'prop_subsidi', name: 'Rumah Subsidi Type 36/60', basePrice2010: 95000000, desc: 'Rumah sederhana untuk keluarga baru' },
+  { id: 'prop_cluster', name: 'Rumah Minimalis 2 Lantai Type 70', basePrice2010: 260000000, desc: 'Cluster nyaman dekat pusat kota' },
+  { id: 'prop_apt', name: 'Apartemen Studio / 2BR City Center', basePrice2010: 380000000, desc: 'Hunian modern strategis' },
+  { id: 'prop_mewah', name: 'Rumah Mewah Sultan + Kolam Renang', basePrice2010: 950000000, desc: 'Hunian elit keluarga besar' }
+];

@@ -267,11 +267,15 @@ const GADGET_CATALOG = [
   ['g13', 'ASUS', 'Laptop', 'ASUS ROG GL552VX Gaming', 2016, 12500000],
   ['g14', 'Apple', 'HP', 'iPhone X 64GB FaceID', 2017, 14500000],
   ['g15', 'Xiaomi', 'HP', 'Redmi Note 8 Pro', 2019, 2899000],
+  ['g15b', 'Google Pixel', 'HP', 'Google Pixel 3 XL', 2018, 9500000],
   ['g16', 'Apple', 'HP', 'iPhone 11 128GB', 2019, 12999000],
+  ['g16b', 'Google Pixel', 'HP', 'Google Pixel 6 Pro', 2021, 11800000],
   ['g17', 'Apple', 'Laptop', 'MacBook Air M1', 2020, 13999000],
   ['g18', 'Samsung', 'HP', 'Samsung Galaxy S22 Ultra', 2022, 17999000],
+  ['g18b', 'Google Pixel', 'HP', 'Google Pixel 8 Pro', 2023, 14500000],
   ['g19', 'ASUS', 'Laptop', 'ASUS ROG Strix G16 RTX 4060', 2023, 21500000],
-  ['g20', 'Apple', 'HP', 'iPhone 16 Pro Max 256GB', 2024, 22999000]
+  ['g20', 'Apple', 'HP', 'iPhone 16 Pro Max 256GB', 2024, 22999000],
+  ['g21', 'Google Pixel', 'HP', 'Google Pixel 9 Pro XL', 2024, 16900000]
 ].map(([id, brand, category, name, yearStart, price2010]) => ({
   id, brand, category, name, yearStart, price2010,
   img: category === 'Laptop' ? REAL_LAPTOP_PHOTO : REAL_PHONE_PHOTO

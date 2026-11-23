@@ -148,7 +148,7 @@
           <img class="slot-pic" src="${monImg}" alt="Monitor" />
           <div class="slot-hw-info">
             <div><b>${s.cpu ? s.cpu.name.replace('Intel ', '').replace('AMD ', '').slice(0, 14) : 'Tanpa CPU'}</b></div>
-            <div>RAM ${s.ram ? s.ram.sizeGb + 'GB' : '-'} • ${s.vga ? s.vga.name.replace('NVIDIA ', '').replace('GeForce ', '').slice(0, 11) : 'No VGA'}</div>
+            <div>RAM ${typeof getPcTotalRamGb === 'function' ? getPcTotalRamGb(s) : (s.ram ? s.ram.sizeGb : 0)}GB • ${(s.installedGames || []).length} Game</div>
             <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • 🖱️ <b>${s.gear ? Math.round(s.gear.durability) + '%' : '0%'}</b></div>
           </div>
         </div>
