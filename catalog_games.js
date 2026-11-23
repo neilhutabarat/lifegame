@@ -187,41 +187,93 @@ function makeGameCoverSvg(type, title, genre, id) {
 
 // [id, type ('online'|'offline'), title, genre, minTier, releaseYear, price2010 (0=gratis download, >0=beli kaset DVD installer), sizeGb, patchMb, canPartyMabar]
 const PC_GAMES_RAW = [
-  // GAME ONLINE LEGENDARIS WARNET INDONESIA
+  // ==================== 42 GAME ONLINE LEGENDARIS WARNET INDONESIA (2010 - 2026+) ====================
   ['go_pb', 'online', 'Point Blank (PB Gemscool/Zepetto)', 'FPS Online', 1, 2009, 0, 2.5, 180, true],
-  ['go_dn', 'online', 'Dragon Nest INA / SEA', 'Action MMORPG', 2, 2010, 0, 4.5, 420, true],
+  ['go_dn', 'online', 'Dragon Nest INA / SEA (Gemscool)', 'Action MMORPG', 2, 2010, 0, 4.5, 420, true],
   ['go_ls', 'online', 'Lost Saga Indonesia', 'Brawler Online', 1, 2011, 0, 1.8, 150, true],
   ['go_ayo', 'online', 'Audition AyoDance (Megaxus)', 'Rhythm Dance', 1, 2007, 0, 3.2, 240, true],
   ['go_rf', 'online', 'RF Online Indonesia (Lyto)', 'Sci-Fi MMORPG', 1, 2007, 0, 2.8, 160, true],
   ['go_atl', 'online', 'Atlantica Online Indonesia', 'Turn-Based MMO', 2, 2010, 0, 5.0, 310, true],
-  ['go_cf', 'online', 'CrossFire Indonesia', 'FPS Online', 1, 2009, 0, 2.2, 140, true],
+  ['go_cf', 'online', 'CrossFire Indonesia (Lyto)', 'FPS Online', 1, 2009, 0, 2.2, 140, true],
   ['go_cso', 'online', 'Counter-Strike Online (CSO Megaxus)', 'FPS Zombie', 1, 2011, 0, 2.4, 190, true],
   ['go_seal', 'online', 'Seal Online Plus Indonesia', 'Anime MMORPG', 1, 2008, 0, 2.0, 120, true],
-  ['go_ro', 'online', 'Ragnarok Online Indonesia', 'MMORPG', 1, 2004, 0, 1.5, 95, true],
+  ['go_ro', 'online', 'Ragnarok Online Indonesia', 'Classic MMORPG', 1, 2004, 0, 1.5, 95, true],
+  ['go_pw', 'online', 'Perfect World Indonesia (Lyto)', 'Fantasy MMORPG', 2, 2008, 0, 4.2, 260, true],
+  ['go_idol', 'online', 'Idol Street Indonesia', 'Dance Online', 1, 2008, 0, 2.6, 170, true],
+  ['go_getamped', 'online', 'GetAmped-X Indonesia', 'Fighting Online', 1, 2006, 0, 0.9, 80, true],
+  ['go_ghost', 'online', 'Ghost Online Indonesia', '2D Side MMORPG', 1, 2008, 0, 1.1, 90, true],
+  ['go_yulgang', 'online', 'Yulgang Online (Scions of Fate)', 'Martial MMO', 1, 2009, 0, 1.7, 110, true],
+  ['go_luna', 'online', 'Luna Online Plus Indonesia', 'Cute MMORPG', 1, 2010, 0, 2.1, 140, true],
+  ['go_rohan', 'online', 'Rohan Online: Blood Feud', 'PK MMORPG', 2, 2009, 0, 3.4, 210, true],
+  ['go_cabal', 'online', 'Cabal Online Indonesia', 'Action MMORPG', 2, 2010, 0, 2.9, 180, true],
+  ['go_crazykart', 'online', 'Crazy Kart 2 Indonesia', 'Kart Racing', 1, 2010, 0, 1.2, 95, true],
+  ['go_pangya', 'online', 'PangYa Golf Online', 'Sports Fantasy', 1, 2008, 0, 1.8, 120, true],
+  ['go_hon', 'online', 'Heroes of Newerth (HoN Garena)', 'MOBA 5v5', 2, 2011, 0, 3.8, 280, true],
+  ['go_elsword', 'online', 'Elsword Indonesia (Netmarble)', 'Anime Action MMO', 2, 2012, 0, 4.5, 320, true],
+  ['go_SDgundam', 'online', 'SD Gundam Capsule Fighter Online', 'Mecha Shooter', 2, 2012, 0, 3.6, 240, true],
+  ['go_ava', 'online', 'A.V.A (Alliance of Valiant Arms)', 'Military FPS', 2, 2011, 0, 4.8, 290, true],
   ['go_dota2', 'online', 'Dota 2 (Steam)', 'MOBA 5v5', 3, 2013, 0, 15.0, 650, true],
-  ['go_lol', 'online', 'League of Legends Garena', 'MOBA 5v5', 2, 2013, 0, 8.5, 480, true],
-  ['go_csgo', 'online', 'Counter-Strike: Global Offensive', 'Esports FPS', 3, 2012, 0, 14.0, 520, true],
-  ['go_gtav_rp', 'online', 'GTA V Online / FiveM Roleplay', 'Open World RP', 6, 2015, 350000, 75.0, 950, true],
+  ['go_lol', 'online', 'League of Legends (LoL Garena)', 'MOBA 5v5', 2, 2013, 0, 8.5, 480, true],
+  ['go_csgo', 'online', 'Counter-Strike: Global Offensive (CS:GO)', 'Esports FPS', 3, 2012, 0, 14.0, 520, true],
+  ['go_tf2', 'online', 'Team Fortress 2 (Steam)', 'Class Shooter', 2, 2011, 0, 11.0, 380, true],
+  ['go_wot', 'online', 'World of Tanks Online', 'Tank Combat', 3, 2012, 0, 16.0, 540, true],
+  ['go_warthunder', 'online', 'War Thunder PC', 'Vehicular Combat', 4, 2013, 0, 22.0, 680, true],
+  ['go_closers', 'online', 'Closers Online Megaxus', 'Anime Action', 3, 2016, 0, 10.0, 420, true],
+  ['go_treeofsavior', 'online', 'Tree of Savior (Gemscool)', 'MMORPG', 3, 2016, 0, 12.0, 450, true],
+  ['go_bdo', 'online', 'Black Desert Online SEA', 'Open World MMO', 6, 2018, 0, 42.0, 950, true],
+  ['go_gtav_rp', 'online', 'GTA V Online / FiveM Indo Roleplay', 'Open World RP', 6, 2015, 350000, 75.0, 950, true],
   ['go_pubg', 'online', 'PUBG: Battlegrounds PC', 'Battle Royale', 7, 2017, 0, 35.0, 850, true],
-  ['go_apex', 'online', 'Apex Legends', 'Battle Royale', 7, 2019, 0, 45.0, 900, true],
+  ['go_fortnite', 'online', 'Fortnite Battle Royale PC', 'Battle Royale', 6, 2017, 0, 32.0, 820, true],
+  ['go_apex', 'online', 'Apex Legends (Steam/EA)', 'Battle Royale', 7, 2019, 0, 45.0, 900, true],
   ['go_valorant', 'online', 'VALORANT (Riot Games)', 'Tactical FPS', 6, 2020, 0, 28.0, 720, true],
   ['go_genshin', 'online', 'Genshin Impact PC', 'Anime Open World', 7, 2020, 0, 65.0, 1200, false],
+  ['go_roblox', 'online', 'Roblox PC Player', 'Sandbox Online', 2, 2014, 0, 2.5, 180, true],
+  ['go_fconline', 'online', 'EA Sports FC Online (FIFA Online 4)', 'Football Online', 5, 2018, 0, 24.0, 620, true],
+  ['go_cs2', 'online', 'Counter-Strike 2 (CS2 Source 2)', 'Esports FPS', 8, 2023, 0, 38.0, 980, true],
 
-  // GAME PC OFFLINE / LAN (BELI KASET DVD INSTALLER PC DI TOKO!)
+  // ==================== 45 GAME PC OFFLINE / LAN (BELI KASET DVD INSTALLER PC DI TOKO!) ====================
   ['pc_dota1', 'offline', 'Warcraft III: DotA Allstars v6.67c (LAN)', 'MOBA LAN', 1, 2005, 35000, 1.8, 0, true],
   ['pc_cs16', 'offline', 'Counter-Strike 1.6 + Condition Zero (LAN)', 'FPS LAN', 1, 2004, 30000, 0.9, 0, true],
+  ['pc_css', 'offline', 'Counter-Strike: Source (LAN Edition)', 'FPS LAN', 1, 2006, 35000, 2.4, 0, true],
   ['pc_gtasa', 'offline', 'GTA: San Andreas PC + Mod Indonesia', 'Open World', 1, 2005, 40000, 4.7, 0, false],
+  ['pc_gtavc', 'offline', 'GTA: Vice City PC Original', 'Open World', 1, 2003, 30000, 1.6, 0, false],
+  ['pc_gta4', 'offline', 'Grand Theft Auto IV Complete DVD', 'Open World', 3, 2008, 60000, 16.0, 0, false],
+  ['pc_l4d1', 'offline', 'Left 4 Dead 1 (Co-op Zombie LAN)', 'Co-op Shooter', 1, 2008, 40000, 5.0, 0, true],
   ['pc_l4d2', 'offline', 'Left 4 Dead 2 (Co-op Zombie LAN)', 'Co-op Shooter', 2, 2009, 45000, 7.5, 0, true],
+  ['pc_pes6', 'offline', 'Winning Eleven 9 / PES 6 PC', 'Sports', 1, 2006, 35000, 2.2, 0, false],
   ['pc_pes2010', 'offline', 'Pro Evolution Soccer 2010 PC', 'Sports', 2, 2009, 45000, 5.5, 0, false],
   ['pc_pes2013', 'offline', 'PES 2013 PC + Patch Liga Indonesia', 'Sports', 2, 2012, 50000, 6.5, 0, false],
-  ['pc_nfsmw', 'offline', 'Need for Speed: Most Wanted Black Edition', 'Racing', 1, 2005, 35000, 3.0, 0, false],
-  ['pc_ra2', 'offline', 'Command & Conquer: Red Alert 2 Yuri', 'Strategy LAN', 1, 2001, 30000, 1.2, 0, true],
-  ['pc_aoe2', 'offline', 'Age of Empires II: The Conquerors', 'Strategy LAN', 1, 2000, 30000, 0.8, 0, true],
-  ['pc_pvz', 'offline', 'Plants vs. Zombies + GameHouse Collection', 'Casual', 1, 2009, 25000, 0.6, 0, false],
+  ['pc_pes2016', 'offline', 'Pro Evolution Soccer 2016 PC', 'Sports', 3, 2015, 65000, 12.0, 0, false],
+  ['pc_pes2017', 'offline', 'PES 2017 PC + SmokePatch Liga 1', 'Sports', 4, 2016, 75000, 16.0, 0, false],
+  ['pc_pes2021', 'offline', 'eFootball PES 2021 Season Update PC', 'Sports', 6, 2020, 110000, 38.0, 0, false],
+  ['pc_fifa14', 'offline', 'EA Sports FIFA 14 World Cup PC', 'Sports', 3, 2013, 55000, 9.0, 0, false],
+  ['pc_nfsu2', 'offline', 'Need for Speed: Underground 2 PC', 'Racing', 1, 2004, 30000, 2.0, 0, true],
+  ['pc_nfsmw', 'offline', 'Need for Speed: Most Wanted Black Edition', 'Racing', 1, 2005, 35000, 3.0, 0, true],
+  ['pc_nfscarbon', 'offline', 'Need for Speed: Carbon Collector PC', 'Racing', 1, 2006, 38000, 4.2, 0, false],
+  ['pc_burnout', 'offline', 'Burnout Paradise: The Ultimate Box', 'Racing', 2, 2009, 45000, 3.8, 0, false],
+  ['pc_dirt3', 'offline', 'DiRT 3 Complete Edition (Rally)', 'Racing', 2, 2011, 50000, 11.0, 0, true],
+  ['pc_ets2', 'offline', 'Euro Truck Simulator 2 + Mod Bus & Truk Indo', 'Simulation', 3, 2012, 55000, 8.5, 0, false],
+  ['pc_ra2', 'offline', 'Command & Conquer: Red Alert 2 Yuri (LAN)', 'Strategy LAN', 1, 2001, 30000, 1.2, 0, true],
+  ['pc_generals', 'offline', 'C&C: Generals Zero Hour (LAN)', 'Strategy LAN', 1, 2003, 35000, 2.2, 0, true],
+  ['pc_aoe2', 'offline', 'Age of Empires II: The Conquerors (LAN)', 'Strategy LAN', 1, 2000, 30000, 0.8, 0, true],
+  ['pc_aoe3', 'offline', 'Age of Empires III Complete (LAN)', 'Strategy LAN', 1, 2007, 40000, 3.5, 0, true],
+  ['pc_stronghold', 'offline', 'Stronghold Crusader Extreme (LAN)', 'Strategy LAN', 1, 2008, 32000, 1.1, 0, true],
+  ['pc_battlerealms', 'offline', 'Battle Realms: Winter of the Wolf (LAN)', 'Strategy LAN', 1, 2002, 30000, 0.9, 0, true],
+  ['pc_starcraft', 'offline', 'StarCraft: Brood War (LAN)', 'Strategy LAN', 1, 2001, 28000, 0.8, 0, true],
+  ['pc_sc2', 'offline', 'StarCraft II: Wings of Liberty PC', 'Strategy', 2, 2010, 50000, 10.0, 0, true],
+  ['pc_pvz', 'offline', 'Plants vs. Zombies + 150 GameHouse Collection', 'Casual', 1, 2009, 25000, 1.4, 0, false],
+  ['pc_sims2', 'offline', 'The Sims 2 All Expansions PC', 'Simulation', 1, 2005, 40000, 5.0, 0, false],
   ['pc_sims3', 'offline', 'The Sims 3 Complete DVD PC', 'Simulation', 2, 2009, 55000, 6.2, 0, false],
+  ['pc_sims4', 'offline', 'The Sims 4 Deluxe Edition PC', 'Simulation', 4, 2014, 80000, 18.0, 0, false],
+  ['pc_cod4', 'offline', 'Call of Duty 4: Modern Warfare (LAN)', 'FPS LAN', 2, 2007, 45000, 6.5, 0, true],
   ['pc_cod_mw2', 'offline', 'Call of Duty: Modern Warfare 2 PC', 'FPS', 2, 2009, 50000, 11.0, 0, true],
-  ['pc_skyrim', 'offline', 'The Elder Scrolls V: Skyrim PC DVD', 'Action RPG', 3, 2011, 65000, 9.0, 0, false],
-  ['pc_pes2017', 'offline', 'PES 2017 PC + SmokePatch', 'Sports', 4, 2016, 75000, 16.0, 0, false],
+  ['pc_cod_bo1', 'offline', 'Call of Duty: Black Ops PC', 'FPS', 2, 2010, 55000, 12.0, 0, true],
+  ['pc_farcry3', 'offline', 'Far Cry 3 Deluxe Edition PC', 'Action FPS', 3, 2012, 60000, 10.0, 0, false],
+  ['pc_skyrim', 'offline', 'The Elder Scrolls V: Skyrim Legendary PC', 'Action RPG', 3, 2011, 65000, 9.0, 0, false],
+  ['pc_re4', 'offline', 'Resident Evil 4 PC Edition', 'Action Horror', 1, 2007, 38000, 3.8, 0, false],
+  ['pc_re5', 'offline', 'Resident Evil 5 Gold Edition PC', 'Action Horror', 2, 2009, 50000, 8.0, 0, true],
+  ['pc_dmc4', 'offline', 'Devil May Cry 4 PC DVD', 'Hack & Slash', 2, 2008, 45000, 7.2, 0, false],
+  ['pc_naruto_s4', 'offline', 'Naruto Shippuden: Ultimate Ninja Storm 4 PC', 'Fighting', 5, 2016, 85000, 32.0, 0, false],
   ['pc_witcher3', 'offline', 'The Witcher 3: Wild Hunt GOTY PC', 'RPG', 6, 2015, 120000, 40.0, 0, false],
   ['pc_rdr2', 'offline', 'Red Dead Redemption 2 PC Installer', 'Open World', 8, 2019, 220000, 115.0, 0, false],
   ['pc_elden', 'offline', 'Elden Ring PC Deluxe Installer', 'Action RPG', 8, 2022, 250000, 60.0, 0, false]
@@ -265,6 +317,30 @@ const REAL_CONSOLE_PHOTOS = {
   pc_vip: makeItemIllus('pc_case', 'PC Gaming VIP', 'RGB Tempered Glass', '#8b5cf6'),
   mon_std: makeItemIllus('monitor', 'Monitor PC', 'Layar Jernih', '#0284c7')
 };
+
+// KATALOG FASILITAS & PERALATAN TAMBAHAN RUKO WARNET (YANG DISETUJUI PEMAIN)
+const WARNET_FACILITIES_CATALOG = [
+  { id: 'fac_showcase', name: 'Kulkas Showcase Minuman Dingin', basePrice2010: 1850000, desc: 'Minuman dingin lebih laris & harga jual +35% lebih menguntungkan!' },
+  { id: 'fac_dispenser', name: 'Dispenser Air Panas & Dingin Otomatis', basePrice2010: 450000, desc: 'Seduh Pop Mie & Kopi jauh lebih cepat (+25% penjualan Pop Mie/Kopi).' },
+  { id: 'fac_wifi_router', name: 'Router Hotspot Voucher WiFi Warga/Kos', basePrice2010: 650000, desc: 'Menghasilkan pemasukan pasif harian dari jualan Voucher WiFi tanpa makan slot PC!' },
+  { id: 'fac_exhaust', name: 'Exhaust Fan & Pengharum Ruangan Otomatis', basePrice2010: 550000, desc: 'Mengurangi bau rokok/apek & memperlambat penurunan kebersihan ruko hingga 50%.' },
+  { id: 'fac_neonbox', name: 'Spanduk & Neon Box Menyala Depan Ruko', basePrice2010: 950000, desc: 'Meningkatkan kedatangan pengunjung baru & rombongan mabar (+30% traffic).' },
+  { id: 'fac_stabilizer', name: 'Stabilizer Tegangan & Penangkal Petir Ruko', basePrice2010: 1250000, desc: 'Melindungi seluruh PC 100% dari kerusakan komponen saat hujan deras & petir!' },
+  { id: 'fac_deepfreeze', name: 'Lisensi Deep Freeze & Antivirus Semua PC', basePrice2010: 350000, desc: 'Mencegah PC terkena virus flashdisk tamu atau blue screen mendadak.' }
+];
+
+// HARGA EMAS ANTAM PER GRAM ASLI INDONESIA (2010 - 2026+)
+function getHistoricalGoldPricePerGram(year, daySeed = 1) {
+  const table = {
+    2010: 385000, 2011: 465000, 2012: 535000, 2013: 515000, 2014: 525000,
+    2015: 545000, 2016: 585000, 2017: 615000, 2018: 655000, 2019: 725000,
+    2020: 965000, 2021: 935000, 2022: 995000, 2023: 1085000, 2024: 1385000,
+    2025: 1520000, 2026: 1650000
+  };
+  const base = table[year] || (year < 2010 ? 385000 : 1650000 + (year - 2026) * 110000);
+  const swing = Math.sin(daySeed * 0.85) * 0.025; // Fluktuasi harian +-2.5%
+  return Math.round((base * (1 + swing)) / 1000) * 1000;
+}
 
 // KATALOG PROPERTI (RUMAH, APARTEMEN, RUKO PRIBADI)
 const PROPERTY_CATALOG = [

@@ -77,6 +77,14 @@ const state = {
   rentalOpen: true,
   openHour: 8,
   closeHour: 23,
+  weather: 'cerah', // 'cerah' | 'panas' | 'hujan'
+  happyHourActive: false,
+  qrisActive: false,
+  facilities: {},
+  members: { count: 0, discountPct: 10 },
+  goldGrams: 0,
+  itCourseCompleted: false,
+  familyHappiness: 90,
 
   // Pengaturan Tarif Billing Meter (Per Jam, Dihitung Per Detik!) & Paket Custom
   billingHourlyRate: 3000, // Bisa diubah bebas oleh pemain (misal 6000/jam = Rp 1.66/detik)
@@ -312,6 +320,17 @@ function isPowerAvailable() {
   return state.kwh > 0 || (state.genset.owned && state.genset.fuelLiters > 0);
 }
 
+function addRevenueToWarnet(amount) {
+  if (state.qrisActive && state.year >= 2019) {
+    const toBank = Math.round(amount * 0.5);
+    const toLaci = amount - toBank;
+    state.personalBank += toBank;
+    state.laciCash += toLaci;
+  } else {
+    state.laciCash += amount;
+  }
+}
+
 function addLog(msg) {
   const toast = document.getElementById('liveToastBar');
   if (toast) toast.innerHTML = msg;
@@ -409,33 +428,36 @@ function stepTenGameSeconds() {
 
     if (s.billingMode === 'paket') {
       s.secondsLeft = Math.max(0, (s.secondsLeft || 0) - SEC_STEP);
-      // Otomatis perpanjang paket jika sisa <= 60 detik (30% peluang pelanggan tambah jam otomatis!)
-      if (s.secondsLeft <= 60 && s.secondsLeft > 0 && state.rentalOpen && Math.random() < 0.28) {
+      // Saat cuaca hujan deras, peluang tamu nambah jam naik 2x lipat!
+      const extChance = state.weather === 'hujan' ? 0.52 : 0.28;
+      if (s.secondsLeft <= 60 && s.secondsLeft > 0 && state.rentalOpen && Math.random() < extChance) {
         const extPkt = state.customPackages[0] || { name: 'Paket 1 Jam', hours: 1, price: state.billingHourlyRate };
         s.secondsLeft += extPkt.hours * 3600;
         s.totalSecondsBooked += extPkt.hours * 3600;
         s.packagePrice += extPkt.price;
-        state.laciCash += extPkt.price;
+        addRevenueToWarnet(extPkt.price);
         playSfx('cash');
-        addLog(`⏱️ <b>${s.customerName}</b> otomatis tambah waktu (${extPkt.name}) di <b>${s.name}</b>: <b style="color:var(--green)">+${fmtRp(extPkt.price)}</b> ke Laci.`);
+        addLog(`⏱️ <b>${s.customerName}</b> otomatis tambah waktu (${extPkt.name}${state.weather === 'hujan' ? ' • 🌧️ Hujan' : ''}) di <b>${s.name}</b>: <b style="color:var(--green)">+${fmtRp(extPkt.price)}</b>.`);
       }
       if (s.secondsLeft <= 0) {
         s.occupied = false;
         s.partyTag = '';
-        state.cleanliness = Math.max(0, +(state.cleanliness - 0.5).toFixed(1));
+        const dirtLoss = (state.facilities && state.facilities.fac_exhaust) ? 0.25 : 0.5;
+        state.cleanliness = Math.max(0, +(state.cleanliness - dirtLoss).toFixed(1));
       }
     } else {
       // Mode Billing Meter: Detik & Rupiah Naik Terus, Bayar Saat Selesai!
       s.elapsedSeconds = (s.elapsedSeconds || 0) + SEC_STEP;
       if (s.elapsedSeconds >= (s.targetMeterSeconds || 3600)) {
         const totalBill = Math.max(500, Math.round((s.elapsedSeconds / 3600) * (s.hourlyRate || state.billingHourlyRate)));
-        state.laciCash += totalBill;
+        addRevenueToWarnet(totalBill);
         playSfx('cash');
-        addLog(`💳 <b>${s.customerName}</b> selesai Billing Meter di <b>${s.name}</b> (${Math.round(s.elapsedSeconds / 60)} mnt): <b style="color:var(--green)">+${fmtRp(totalBill)}</b> ke Laci.`);
+        addLog(`💳 <b>${s.customerName}</b> selesai Billing Meter di <b>${s.name}</b> (${Math.round(s.elapsedSeconds / 60)} mnt): <b style="color:var(--green)">+${fmtRp(totalBill)}</b>.`);
         s.occupied = false;
         s.elapsedSeconds = 0;
         s.partyTag = '';
-        state.cleanliness = Math.max(0, +(state.cleanliness - 0.5).toFixed(1));
+        const dirtLoss = (state.facilities && state.facilities.fac_exhaust) ? 0.25 : 0.5;
+        state.cleanliness = Math.max(0, +(state.cleanliness - dirtLoss).toFixed(1));
       }
     }
   });
@@ -495,8 +517,14 @@ function stepOneGameMinute() {
         }
       }
     }
-    if (Math.random() < 0.01) {
+    const snackChance = (state.facilities && state.facilities.fac_dispenser) ? 0.013 : 0.01;
+    if (Math.random() < snackChance) {
       tryCustomerBuyPopMieOrDrink(s);
+    }
+    // Risiko virus flashdisk tamu jika belum pasang Deep Freeze
+    if (!(state.facilities && state.facilities.fac_deepfreeze) && Math.random() < 0.0012) {
+      s.occupied = false;
+      addLog(`🦠 <b>${s.name}</b> terkena virus flashdisk tamu &amp; Blue Screen! Pasang <b>Deep Freeze</b> di menu Rakit/Server agar aman.`);
     }
   });
 
@@ -542,12 +570,24 @@ function stepOneGameMinute() {
     }
   }
 
-  // 5. Kedatangan Pelanggan Baru / Party Mabar (3-8 Orang di PC Berdekatan!)
+  // 5. Kedatangan Pelanggan Baru / Party Mabar (Dipengaruhi Neon Box, Member, Happy Hour & Cuaca)
   if (state.rentalOpen && state.hour >= 8 && state.hour <= 23 && isPowerAvailable()) {
     const isHol = !!getHolidayName(state.year, state.month, state.day) || state.dayOfWeek === 0 || state.dayOfWeek === 6;
     const cleanFactor = Math.max(0.25, state.cleanliness / 100);
-    const spawnChance = 0.065 * (isHol ? 1.5 : 1.0) * cleanFactor;
+    const neonMult = (state.facilities && state.facilities.fac_neonbox) ? 1.3 : 1.0;
+    const hhMult = (state.happyHourActive && state.hour >= 8 && state.hour < 12) ? 1.45 : 1.0;
+    const memberMult = 1 + Math.min(0.5, ((state.members && state.members.count) || 0) * 0.015);
+    const spawnChance = 0.065 * (isHol ? 1.5 : 1.0) * cleanFactor * neonMult * hhMult * memberMult;
     if (Math.random() < spawnChance && state.waitingQueue.length < 10) {
+      // Peluang tamu daftar jadi Member Baru & setor deposit saldo di muka!
+      if (Math.random() < 0.09) {
+        state.members = state.members || { count: 0, discountPct: 10 };
+        state.members.count++;
+        const dep = getPriceFrom2010(50000);
+        addRevenueToWarnet(dep);
+        playSfx('cash');
+        addLog(`💳 Pelanggan mendaftar jadi <b>Member VIP Warnet #${state.members.count}</b> &amp; setor deposit <b style="color:var(--green)">+${fmtRp(dep)}</b>!`);
+      }
       if (Math.random() < 0.22) spawnMabarParty();
       else spawnSingleCustomer();
     }
@@ -628,9 +668,14 @@ function spawnMabarParty() {
 }
 
 function seatCustomerAtPc(slot, guest, silentLog = false) {
-  const rate = getSlotHourlyRate(slot);
+  let rate = getSlotHourlyRate(slot);
+  // Diskon Happy Hour Pagi (08:00 - 12:00) atau Diskon Khusus Member VIP
+  const isMember = (state.members && state.members.count > 0 && Math.random() < 0.35);
+  const discPct = isMember ? (state.members.discountPct || 10) : ((state.happyHourActive && state.hour >= 8 && state.hour < 12) ? 20 : 0);
+  if (discPct > 0) rate = roundTo500(rate * (1 - discPct / 100));
+
   slot.occupied = true;
-  slot.customerName = guest.name;
+  slot.customerName = guest.name + (isMember ? ' ⭐' : '');
   slot.partyTag = guest.partyTag || '';
   slot.activityLabel = guest.forcedActivity || pickActivityForPc(slot);
   slot.hourlyRate = rate;
@@ -639,25 +684,25 @@ function seatCustomerAtPc(slot, guest, silentLog = false) {
   if (guest.billingMode === 'paket' && state.customPackages.length > 0) {
     const pkt = state.customPackages[Math.floor(Math.random() * state.customPackages.length)];
     const vipExtra = slot.isRoom ? Math.round(pkt.hours * (state.vipRateBonus || 1500)) : 0;
-    const totalPay = pkt.price + vipExtra;
+    let totalPay = pkt.price + vipExtra;
+    if (discPct > 0) totalPay = roundTo500(totalPay * (1 - discPct / 100));
     slot.billingMode = 'paket';
     slot.packageName = pkt.name;
     slot.packagePrice = totalPay;
     slot.totalSecondsBooked = pkt.hours * 3600;
     slot.secondsLeft = pkt.hours * 3600;
-    state.laciCash += totalPay;
+    addRevenueToWarnet(totalPay);
     playSfx('cash');
     if (!silentLog) {
-      addLog(`📦 <b>${guest.name}</b> beli <b>${pkt.name}</b> di <b>${slot.name}</b> (${slot.activityLabel}): <b style="color:var(--green)">+${fmtRp(totalPay)}</b> ke Laci.`);
+      addLog(`📦 <b>${slot.customerName}</b> beli <b>${pkt.name}</b> di <b>${slot.name}</b> (${slot.activityLabel}): <b style="color:var(--green)">+${fmtRp(totalPay)}</b>.`);
     }
   } else {
-    // Mode Billing Meter (Dihitung Per Detik!)
     const targetHours = [1, 1.5, 2, 3][Math.floor(Math.random() * 4)];
     slot.billingMode = 'meter';
     slot.elapsedSeconds = 0;
     slot.targetMeterSeconds = Math.round(targetHours * 3600);
     if (!silentLog) {
-      addLog(`⏱️ <b>${guest.name}</b> mulai <b>Billing Meter</b> di <b>${slot.name}</b> (${slot.activityLabel} • Tarif ${fmtRp(rate)}/jam).`);
+      addLog(`⏱️ <b>${slot.customerName}</b> mulai <b>Billing Meter</b> di <b>${slot.name}</b> (${slot.activityLabel} • Tarif ${fmtRp(rate)}/jam).`);
     }
   }
 }
@@ -679,12 +724,17 @@ function tryCustomerBuyPopMieOrDrink(slot) {
   const chosen = avail[Math.floor(Math.random() * avail.length)];
   state.snackStockPcs[chosen.id]--;
   if (chosen.needsWater) state.waterGallonServings = Math.max(0, state.waterGallonServings - 1);
-  const price = getPriceFrom2010(chosen.sellPcs2010);
+  let price = getPriceFrom2010(chosen.sellPcs2010);
+  // Jika sudah punya Kulkas Showcase Minuman Dingin, harga jual minuman naik +35%!
+  if (!chosen.needsWater && state.facilities && state.facilities.fac_showcase) {
+    price = roundTo500(price * 1.35);
+  }
   if (slot) slot.snackBill = (slot.snackBill || 0) + price;
-  state.laciCash += price;
-  state.cleanliness = Math.max(0, +(state.cleanliness - 0.4).toFixed(1));
+  addRevenueToWarnet(price);
+  const dirtLoss = (state.facilities && state.facilities.fac_exhaust) ? 0.2 : 0.4;
+  state.cleanliness = Math.max(0, +(state.cleanliness - dirtLoss).toFixed(1));
   playSfx('cash');
-  addLog(`🍜 <b>${buyerName}</b> (${slot ? slot.name : 'Kasir'}) pesan <b>${chosen.name.split('(')[0]}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b> masuk Billing &amp; Laci.`);
+  addLog(`🍜 <b>${buyerName}</b> (${slot ? slot.name : 'Kasir'}) pesan <b>${chosen.name.split('(')[0]}</b>: <b style="color:var(--green)">+${fmtRp(price)}</b>.`);
 }
 
 function autoEmployeeServiceGear(empName) {
@@ -742,6 +792,24 @@ function onHourPassed() {
       addLog(`🔄 <b>JADWAL UPDATE GAME:</b> <b>${g.title}</b> merilis Patch baru (<b>${g.patchMb} MB</b>).`);
     }
   }
+
+  // 3. Perubahan Cuaca Dinamis & Risiko Petir jika belum pasang Stabilizer
+  if (state.hour % 6 === 0) {
+    const wList = ['cerah', 'cerah', 'panas', 'hujan'];
+    state.weather = wList[Math.floor(Math.random() * wList.length)];
+    if (state.weather === 'hujan' && !(state.facilities && state.facilities.fac_stabilizer) && Math.random() < 0.15) {
+      addLog('⚡ <b>PETIR MENYAMBAR SAAT HUJAN DERAS!</b> Listrik sempat lonjak. Pasang <b>Stabilizer &amp; Penangkal Petir</b> di menu Rakit/Server agar PC tidak rusak!');
+    }
+  }
+
+  // 4. Hitung Jam Lembur Karyawan yang masih standby update patch setelah warnet tutup
+  if (!state.rentalOpen && state.slots.some(s => s.updatingPatch)) {
+    (state.employees || []).forEach(emp => {
+      if (emp.tasks.includes('service') || emp.tasks.includes('guard')) {
+        emp.overtimeHours = (emp.overtimeHours || 0) + 1;
+      }
+    });
+  }
 }
 
 function onDayPassed() {
@@ -782,6 +850,13 @@ function onDayPassed() {
     addLog(`🍛 Kebutuhan harian (<b>${mName}</b>): <b>-${fmtRp(mealCost)}</b> dari Dompet.`);
   } else if (deductFromAnyCash(mealCost)) {
     addLog(`🍛 Kebutuhan harian (<b>${mName}</b>): <b>-${fmtRp(mealCost)}</b>.`);
+  }
+
+  // Pemasukan Pasif Harian Voucher WiFi Hotspot jika sudah pasang Router Hotspot
+  if (state.facilities && state.facilities.fac_wifi_router) {
+    const wifiIncome = getPriceFrom2010(35000 + Math.floor(Math.random() * 25000));
+    addRevenueToWarnet(wifiIncome);
+    addLog(`📶 Penjualan Voucher WiFi Hotspot warga/kos hari ini: <b style="color:var(--green)">+${fmtRp(wifiIncome)}</b>.`);
   }
 
   // Gaji Karyawan Harian & Mingguan
@@ -837,7 +912,10 @@ function onMonthPassed() {
     if (deductFromAnyCash(spp)) addLog(`🎒 Bayar SPP Sekolah bulanan: <b>-${fmtRp(spp)}</b>.`);
   }
   const rtTax = getPriceFrom2010(175000);
-  if (deductFromAnyCash(rtTax)) addLog(`🧾 Iuran kebersihan, keamanan &amp; pajak UMKM: <b>-${fmtRp(rtTax)}</b>.`);
+  const pdamBill = getPriceFrom2010(85000);
+  if (deductFromAnyCash(rtTax + pdamBill)) {
+    addLog(`🧾 Tagihan Air PDAM (${fmtRp(pdamBill)}), kebersihan &amp; pajak UMKM (${fmtRp(rtTax)}): <b>-${fmtRp(rtTax + pdamBill)}</b>.`);
+  }
 
   // 3.5 Iuran Bulanan BPJS Kesehatan Pribadi
   const bpjsObj = BPJS_TIERS.find(b => b.id === state.player.bpjsTier);
@@ -884,9 +962,39 @@ function deductFromAnyCash(amount) {
 
 function payEmployeeSalary(emp, label) {
   const bpjsCost = emp.hasBpjs ? getPriceFrom2010(55000) : 0;
-  const total = Number(emp.salaryAmount || 0) + Number(emp.incentive || 0) + (label === 'Bulanan' ? bpjsCost : 0);
-  if (deductFromAnyCash(total)) {
-    addLog(`👷 Bayar gaji ${label} <b>${emp.name}</b>: <b>-${fmtRp(total)}</b>.`);
+  const otHours = emp.overtimeHours || 0;
+  const otPay = otHours * getPriceFrom2010(10000);
+  const total = Number(emp.salaryAmount || 0) + Number(emp.incentive || 0) + otPay + (label === 'Bulanan' ? bpjsCost : 0);
+
+  // Pastikan pembayaran gaji karyawan SELALU JALAN (ambil dari Bank, Dompet, gabungan Bank+Dompet, atau Laci jika terpaksa)
+  let paidOk = false;
+  if (state.personalBank >= total) {
+    state.personalBank -= total;
+    paidOk = true;
+  } else if (state.handWallet >= total) {
+    state.handWallet -= total;
+    paidOk = true;
+  } else if (state.personalBank + state.handWallet >= total) {
+    const rem = total - state.personalBank;
+    state.personalBank = 0;
+    state.handWallet -= rem;
+    paidOk = true;
+  } else if (state.personalBank + state.handWallet + state.laciCash >= total) {
+    let rem = total - state.personalBank;
+    state.personalBank = 0;
+    const fromW = Math.min(state.handWallet, rem);
+    state.handWallet -= fromW;
+    rem -= fromW;
+    state.laciCash -= rem;
+    paidOk = true;
+  }
+
+  if (paidOk) {
+    emp.totalPaidHistory = (emp.totalPaidHistory || 0) + total;
+    emp.overtimeHours = 0;
+    addLog(`👷 Bayar gaji ${label} <b>${emp.name}</b>${otHours > 0 ? ` (+Lembur ${otHours}j: ${fmtRp(otPay)})` : ''}: <b>-${fmtRp(total)}</b>.`);
+  } else {
+    addLog(`⚠️ Kas tidak cukup untuk bayar gaji ${label} <b>${emp.name}</b> (${fmtRp(total)})!`);
   }
 }
 
@@ -920,7 +1028,8 @@ function renderHud() {
   const hh = String(state.hour).padStart(2, '0');
   const mm = String(state.minute).padStart(2, '0');
   const hol = getHolidayName(state.year, state.month, state.day);
-  document.getElementById('hudDateTime').textContent = `${DAY_NAMES[state.dayOfWeek].slice(0, 3)}, ${state.day}/${state.month}/${state.year} • ${hh}:${mm}${hol ? ' 🔴' : ''}`;
+  const wIcon = state.weather === 'hujan' ? '🌧️ Hujan' : (state.weather === 'panas' ? '🥵 Panas' : '☀️ Cerah');
+  document.getElementById('hudDateTime').textContent = `${DAY_NAMES[state.dayOfWeek].slice(0, 3)}, ${state.day}/${state.month}/${state.year} • ${hh}:${mm} • ${wIcon}${hol ? ' 🔴' : ''}`;
   document.getElementById('hudCityUmr').textContent = `${getCity().name.split(' ')[0]} • $1=Rp${getUsdRate(state.year).toLocaleString('id-ID')}`;
   document.getElementById('hudPlayerBadge').textContent = `${state.player.name.split(' ')[0]} (${state.player.age}th)`;
   document.getElementById('hudLaci').textContent = fmtRp(state.laciCash);
@@ -985,8 +1094,10 @@ function manualCleanShop() {
 
 // ==================== PENGATURAN TARIF BILLING METER & PAKET CUSTOM + UPDATE PATCH ====================
 function openBillingRateModal() {
+  state.members = state.members || { count: 0, totalDeposit: 0, discountPct: 10 };
+  const canQris = state.year >= 2019;
   showCustomModal(
-    '⚙️ Atur Jam Buka/Tutup, Tarif Billing & Paket Warnet',
+    '⚙️ Atur Jam Buka/Tutup, Tarif Billing, Promo & QRIS',
     `<div class="grid-2">
        <div><label class="spec-line">Jam Buka Otomatis (0-23)</label><input type="number" id="inpOpenHr" value="${state.openHour ?? 8}" min="0" max="23" /></div>
        <div><label class="spec-line">Jam Tutup Otomatis (1-24, 24=Nonstop)</label><input type="number" id="inpCloseHr" value="${state.closeHour ?? 23}" min="1" max="24" /></div>
@@ -995,6 +1106,20 @@ function openBillingRateModal() {
      <div class="grid-2">
        <div><label class="spec-line">Tarif Billing Meter / Jam (Rp)</label><input type="number" id="inpMeterRate" value="${state.billingHourlyRate}" step="500" /></div>
        <div><label class="spec-line">Tambahan Room VIP / Jam (Rp)</label><input type="number" id="inpVipBonus" value="${state.vipRateBonus}" step="500" /></div>
+     </div>
+     <div class="card" style="margin:6px 0;">
+       <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;">
+         <input type="checkbox" id="chkHappyHour" ${state.happyHourActive ? 'checked' : ''} style="width:auto;" />
+         <span>🏷️ <b>Promo Happy Hour Pagi (08:00–12:00)</b>: Diskon 20% tarif pagi, pelanggan pagi +45% lebih ramai</span>
+       </label>
+       <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;margin-top:4px;">
+         <input type="checkbox" id="chkQrisActive" ${state.qrisActive && canQris ? 'checked' : ''} ${!canQris ? 'disabled' : ''} style="width:auto;" />
+         <span>📱 <b>Pembayaran QRIS / E-Wallet (${canQris ? 'Tersedia' : 'Terbuka Tahun 2019+'})</b>: 50% omzet otomatis langsung masuk ke Bank</span>
+       </label>
+       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;">
+         <span class="spec-line">⭐ <b>Member Terdaftar: ${state.members.count} orang</b> • Diskon Khusus Member (%):</span>
+         <input type="number" id="inpMemberDisc" value="${state.members.discountPct ?? 10}" min="0" max="35" style="width:70px;" />
+       </div>
      </div>
      <b>📦 Daftar Paket Jam (Bar Menurun):</b>
      ${state.customPackages.map((p, idx) => `
@@ -1014,6 +1139,13 @@ function saveBillingRateConfig() {
   state.closeHour = Math.max(1, Math.min(24, Number(document.getElementById('inpCloseHr').value) || 23));
   state.billingHourlyRate = Math.max(1000, Number(document.getElementById('inpMeterRate').value) || 3000);
   state.vipRateBonus = Math.max(0, Number(document.getElementById('inpVipBonus').value) || 1500);
+  const hhEl = document.getElementById('chkHappyHour');
+  if (hhEl) state.happyHourActive = !!hhEl.checked;
+  const qrEl = document.getElementById('chkQrisActive');
+  if (qrEl && state.year >= 2019) state.qrisActive = !!qrEl.checked;
+  const mdEl = document.getElementById('inpMemberDisc');
+  state.members = state.members || { count: 0, totalDeposit: 0, discountPct: 10 };
+  if (mdEl) state.members.discountPct = Math.max(0, Math.min(35, Number(mdEl.value) || 0));
   state.customPackages.forEach((p, idx) => {
     const nm = document.getElementById('pktName_' + idx);
     const hr = document.getElementById('pktHrs_' + idx);
@@ -1160,8 +1292,10 @@ function renderRightPanel() {
   }
 
   if (state.mainTab === 'store_hw') {
+    state.facilities = state.facilities || {};
     const nextRenov = RENOV_LEVELS[state.renovLevel];
     const nextSrv = SERVER_LEVELS[state.serverLevel];
+    const discMult = state.itCourseCompleted ? 0.85 : 1;
     const cats = [
       ['cpu', '🧠 Processor'],
       ['ram', '⚡ RAM'],
@@ -1169,7 +1303,8 @@ function renderRightPanel() {
       ['storage', '💾 HDD/SSD'],
       ['monitor', '🖥️ Monitor'],
       ['cooling', '❄️ Kipas/AC'],
-      ['gear', '🖱️ Gear Set']
+      ['gear', '🖱️ Gear Set'],
+      ['fac', '🏢 Fasilitas Ruko']
     ];
     let list = [];
     if (state.hwCategoryFilter === 'cpu') list = PC_CPU_CATALOG;
@@ -1178,6 +1313,7 @@ function renderRightPanel() {
     else if (state.hwCategoryFilter === 'storage') list = PC_STORAGE_CATALOG;
     else if (state.hwCategoryFilter === 'monitor') list = MONITOR_CATALOG;
     else if (state.hwCategoryFilter === 'cooling') list = COOLING_CATALOG;
+    else if (state.hwCategoryFilter === 'fac') list = typeof WARNET_FACILITIES_CATALOG !== 'undefined' ? WARNET_FACILITIES_CATALOG : [];
     else list = PERIPHERAL_CATALOG;
 
     box.innerHTML = `
@@ -1195,21 +1331,36 @@ function renderRightPanel() {
         </div>
         ${nextRenov ? `<button type="button" class="amber" onclick="upgradeRenovation()">Renov (${fmtRp(getPriceFrom2010(nextRenov.baseCost2010))})</button>` : '<span class="badge ok">MAX</span>'}
       </div>
+      ${state.itCourseCompleted ? `<div class="spec-line" style="color:var(--green)">🎓 <b>Sertifikat Kuliah/Kursus IT Aktif:</b> Diskon Permanen 15% semua harga komponen PC!</div>` : ''}
       <div class="sub-tabs">
         ${cats.map(([id, lbl]) => `<button type="button" class="sub-btn ${state.hwCategoryFilter === id ? 'active' : ''}" onclick="state.hwCategoryFilter='${id}';renderRightPanel()">${lbl}</button>`).join('')}
       </div>
-      ${list.filter(it => it.releaseYear <= state.year).map(it => {
-        const price = getPriceFrom2010(it.basePrice2010);
-        return `<div class="item-row">
-          <img class="prod-thumb" src="${it.img}" alt="${it.name}" />
-          <div style="flex:1">
-            <b>${it.name}</b>
-            <div class="spec-line">Rilis: ${it.releaseYear} ${it.watt ? `• Daya: ${it.watt}W` : ''} ${it.sizeGb ? `• Kapasitas: ${it.sizeGb}GB` : ''}</div>
-            <div style="color:var(--green);font-weight:700;">${fmtRp(price)}</div>
-          </div>
-          <button type="button" class="primary" onclick="buyPcComponent('${state.hwCategoryFilter}','${it.id}')">Beli</button>
-        </div>`;
-      }).join('')}
+      ${state.hwCategoryFilter === 'fac'
+        ? list.map(f => {
+            const owned = !!state.facilities[f.id];
+            const fPrice = getPriceFrom2010(f.basePrice2010);
+            return `<div class="item-row">
+              <div style="font-size:24px;width:36px;text-align:center;">${f.icon || '🏢'}</div>
+              <div style="flex:1">
+                <b>${f.name}</b>
+                <div class="spec-line">${f.desc}</div>
+                <div style="color:var(--green);font-weight:700;">${fmtRp(fPrice)}</div>
+              </div>
+              <button type="button" class="${owned ? 'success' : 'primary'}" ${owned ? 'disabled' : ''} onclick="buyFacilityItem('${f.id}')">${owned ? 'Terpasang' : 'Pasang'}</button>
+            </div>`;
+          }).join('')
+        : list.filter(it => it.releaseYear <= state.year).map(it => {
+            const price = roundTo500(getPriceFrom2010(it.basePrice2010) * discMult);
+            return `<div class="item-row">
+              <img class="prod-thumb" src="${it.img}" alt="${it.name}" />
+              <div style="flex:1">
+                <b>${it.name}</b>
+                <div class="spec-line">Rilis: ${it.releaseYear} ${it.watt ? `• Daya: ${it.watt}W` : ''} ${it.sizeGb ? `• Kapasitas: ${it.sizeGb}GB` : ''}</div>
+                <div style="color:var(--green);font-weight:700;">${fmtRp(price)} ${state.itCourseCompleted ? '<small style="color:#38bdf8">(-15%)</small>' : ''}</div>
+              </div>
+              <button type="button" class="primary" onclick="buyPcComponent('${state.hwCategoryFilter}','${it.id}')">Beli</button>
+            </div>`;
+          }).join('')}
     `;
     return;
   }
@@ -1314,10 +1465,13 @@ function renderRightPanel() {
           </div>
           <div class="spec-line">
             • Hari Kerja: <b>${dayLabels}</b> • Shift: <b>${String(emp.startHour).padStart(2, '0')}:00</b> (${emp.durationHours} jam)<br>
-            • Gaji (${emp.payPeriod}): <b>${fmtRp(emp.salaryAmount)}</b> + Insentif <b>${fmtRp(emp.incentive)}</b><br>
-            • Tugas: <b>${emp.tasks.join(', ').toUpperCase()}</b>
+            • Gaji (${emp.payPeriod}): <b>${fmtRp(emp.salaryAmount)}</b> + Insentif <b>${fmtRp(emp.incentive)}</b> • Lembur: <b>${emp.overtimeHours || 0} jam</b><br>
+            • Total Gaji Sudah Dibayar: <b style="color:var(--green)">${fmtRp(emp.totalPaidHistory || 0)}</b> • Tugas: <b>${emp.tasks.join(', ').toUpperCase()}</b>
           </div>
-          <button type="button" class="danger" onclick="event.stopPropagation();fireEmployee(${idx})">Berhentikan</button>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button type="button" class="success" onclick="event.stopPropagation();payEmployeeNowManual(${idx})">💸 Bayar Gaji Sekarang</button>
+            <button type="button" class="danger" onclick="event.stopPropagation();fireEmployee(${idx})">Berhentikan</button>
+          </div>
         </div>`;
       }).join('')}
     `;
@@ -1328,7 +1482,19 @@ function renderRightPanel() {
     const bbmPrice = getBbmPricePerLiter(state.year);
     const bRate = getBankInterestRate(state.year);
     const canBank = state.player.age >= 21;
+    const goldPrice = typeof getHistoricalGoldPricePerGram === 'function' ? getHistoricalGoldPricePerGram(state.year, state.totalDays) : getPriceFrom2010(385000);
+    state.goldGrams = state.goldGrams || 0;
     box.innerHTML = `
+      <div class="card">
+        <b>🪙 Investasi Emas Antam Lintas Tahun (Harga Tahun ${state.year}: ${fmtRp(goldPrice)}/gram)</b>
+        <div class="spec-line">Tabungan Emasmu: <b style="color:#fbbf24">${state.goldGrams} gram</b> (Nilai Jual Saat Ini: <b style="color:var(--green)">${fmtRp(state.goldGrams * goldPrice)}</b>)</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="amber" onclick="buyGoldGrams(1)">+ Beli 1gr (${fmtRp(goldPrice)})</button>
+          <button type="button" class="amber" onclick="buyGoldGrams(5)">+ Beli 5gr (${fmtRp(5 * goldPrice)})</button>
+          <button type="button" class="success" ${state.goldGrams < 1 ? 'disabled' : ''} onclick="sellGoldGrams(1)">💸 Jual 1gr</button>
+          <button type="button" class="success" ${state.goldGrams < 1 ? 'disabled' : ''} onclick="sellGoldGrams(${state.goldGrams})">💸 Jual Semua Emas</button>
+        </div>
+      </div>
       <div class="card">
         <b>⛽ Genset Otomatis Backup Listrik (Meteran Bensin: ${state.genset.fuelLiters.toFixed(1)} / ${state.genset.maxTankLiters} Liter)</b>
         <div class="spec-line">Status: <b>${state.genset.active ? '🟢 MENYALA OTOMATIS (Backup PLN)' : '⚪ Standby Otomatis'}</b> • Harga Bensin Tahun ${state.year}: <b>${fmtRp(bbmPrice)}/Liter</b></div>
@@ -1416,7 +1582,15 @@ function renderRightPanel() {
       </div>
 
       <div class="card">
-        <b>🚗 Kendaraan &amp; Meteran Perawatan (Bensin, Oli, Mesin)</b>
+        <b>🎓 Pendidikan &amp; Kursus Malam Bisnis / Teknisi IT (Usia 18+)</b>
+        <div class="spec-line">Mengikuti kuliah/kursus malam IT memberi <b>Diskon Permanen 15%</b> semua komponen rakit PC di Toko!</div>
+        ${state.itCourseCompleted
+          ? `<div class="spec-line" style="color:var(--green)">✅ <b>Lulus Sertifikasi Teknisi IT &amp; Bisnis Warnet!</b> (Diskon 15% Komponen PC Aktif)</div>`
+          : `<button type="button" class="primary" ${p.age < 18 ? 'disabled' : ''} onclick="takeItNightCourse()">🎓 Ikut Kursus / Kuliah Malam IT (${fmtRp(getPriceFrom2010(4500000))})</button>`}
+      </div>
+
+      <div class="card">
+        <b>🚗 Kendaraan &amp; Meteran Perawatan (Bensin, Oli, Mesin &amp; Jual Darurat)</b>
         ${state.ownedVehicles.length === 0 ? `<div class="spec-line">Belum punya motor/mobil.</div>` : ''}
         ${state.ownedVehicles.map((v, idx) => `
           <div class="item-row" style="flex-direction:column;align-items:stretch;">
@@ -1426,13 +1600,20 @@ function renderRightPanel() {
               <button type="button" onclick="changeOilVehicle(${idx})">🛢️ Ganti Oli</button>
               <button type="button" onclick="serviceVehicleEngine(${idx})">🔧 Servis</button>
               <button type="button" class="primary" onclick="rideOwnedVehicle(${idx})">🛣️ Jalan</button>
+              <button type="button" class="danger" onclick="sellEmergencyAsset('vehicle', ${idx})">💸 Jual Darurat</button>
             </div>
           </div>
         `).join('')}
       </div>
 
       <div class="card">
-        <b>🏠 Properti (Rumah / Apartemen) &amp; Cicilan Aktif</b>
+        <b>🏠 Properti (Rumah / Apartemen), Cicilan &amp; Jual Aset</b>
+        ${(state.ownedHouses || []).map((h, idx) => `
+          <div class="item-row">
+            <div><b>🏡 Milik Sendiri: ${h.name}</b></div>
+            <button type="button" class="danger" onclick="sellEmergencyAsset('house', ${idx})">💸 Jual Rumah (75%)</button>
+          </div>
+        `).join('')}
         ${PROPERTY_CATALOG.map(pr => `
           <div class="item-row">
             <div><b>${pr.name}</b><div class="spec-line">${pr.desc}</div><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(pr.basePrice2010))}</div></div>
@@ -1453,11 +1634,14 @@ function renderRightPanel() {
       <div class="card">
         <b>📱 Katalog HP &amp; Laptop (iPhone, Samsung, Pixel, Xiaomi • Tahun ${state.year})</b>
         ${GADGET_CATALOG.filter(g => g.yearStart <= state.year).map(g => {
-          const owned = state.ownedGadgets.some(og => og.id === g.id);
+          const ownedIdx = state.ownedGadgets.findIndex(og => og.id === g.id);
+          const owned = ownedIdx >= 0;
           return `<div class="item-row">
             <img class="prod-thumb" src="${g.img}" alt="${g.name}" />
             <div style="flex:1"><b>${g.name}</b> <span class="badge">${g.brand}</span><div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(g.price2010))}</div></div>
-            <button type="button" class="${owned ? 'success' : 'primary'}" ${owned ? 'disabled' : ''} onclick="buyGadgetItem('${g.id}')">${owned ? 'Dimiliki' : 'Beli'}</button>
+            ${owned
+              ? `<button type="button" class="danger" onclick="sellEmergencyAsset('gadget', ${ownedIdx})">💸 Jual Second</button>`
+              : `<button type="button" class="primary" onclick="buyGadgetItem('${g.id}')">Beli</button>`}
           </div>`;
         }).join('')}
       </div>
@@ -1477,7 +1661,8 @@ function renderRightPanel() {
       </div>
 
       <div class="card">
-        <b>💍 Keluarga &amp; Wariskan Warnet ke Anak</b>
+        <b>💍 Keluarga, Kebahagiaan (${state.familyHappiness ?? 85}%) &amp; Wariskan Warnet</b>
+        <div class="spec-line">Kebahagiaan Keluarga: <b style="color:var(--green)">${state.familyHappiness ?? 85}%</b> • <button type="button" class="amber" onclick="giveFamilyGift()">🎁 Beli Hadiah / Liburan Keluarga (${fmtRp(getPriceFrom2010(500000))})</button></div>
         ${!p.partner ? PARTNERS_LIST.filter(pt => pt.gender !== p.gender).map(pt => `
           <div class="item-row"><span><b>${pt.name}</b> (${pt.job})</span><button type="button" class="primary" ${p.age < 17 ? 'disabled' : ''} onclick="choosePartner('${pt.id}')">Pacaran</button></div>
         `).join('') : `
@@ -1652,6 +1837,7 @@ function attachGearToPc(slotId, quality) {
 // ==================== PEMBELIAN KOMPONEN, SERVER, ISP, GAME, GALON, GENSET & KARYAWAN SENIN-MINGGU ====================
 function buyPcComponent(cat, id) {
   let item, whKey;
+  const discMult = state.itCourseCompleted ? 0.85 : 1;
   if (cat === 'cpu') { item = PC_CPU_CATALOG.find(x => x.id === id); whKey = 'warehouseCpus'; }
   else if (cat === 'ram') { item = PC_RAM_CATALOG.find(x => x.id === id); whKey = 'warehouseRams'; }
   else if (cat === 'vga') { item = PC_VGA_CATALOG.find(x => x.id === id); whKey = 'warehouseVgas'; }
@@ -1660,7 +1846,7 @@ function buyPcComponent(cat, id) {
   else if (cat === 'cooling') { item = COOLING_CATALOG.find(x => x.id === id); whKey = 'warehouseCoolings'; }
   else if (cat === 'gear') {
     item = PERIPHERAL_CATALOG[0];
-    const p = getPriceFrom2010(item.basePrice2010);
+    const p = roundTo500(getPriceFrom2010(item.basePrice2010) * discMult);
     if (!deductFromAnyCash(p)) return addLog('⚠️ Uang kurang!');
     state.cashierGearNew++;
     playSfx('cash');
@@ -1668,11 +1854,117 @@ function buyPcComponent(cat, id) {
     saveGame(); renderAll(); return;
   }
   if (!item) return;
-  const price = getPriceFrom2010(item.basePrice2010);
+  const price = roundTo500(getPriceFrom2010(item.basePrice2010) * discMult);
   if (!deductFromAnyCash(price)) return addLog('⚠️ Uang tidak cukup!');
   state[whKey].push({ ...item, uid: cat + '_' + Date.now(), cond: 100 });
   playSfx('cash');
   addLog(`🛒 Membeli <b>${item.name}</b> (${fmtRp(price)}) ke Gudang Rakit PC.`);
+  saveGame();
+  renderAll();
+}
+
+function buyFacilityItem(facId) {
+  state.facilities = state.facilities || {};
+  if (state.facilities[facId]) return;
+  const fac = (typeof WARNET_FACILITIES_CATALOG !== 'undefined' ? WARNET_FACILITIES_CATALOG : []).find(x => x.id === facId);
+  if (!fac) return;
+  const price = getPriceFrom2010(fac.basePrice2010);
+  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang di Dompet/Bank tidak cukup untuk memasang fasilitas ini!');
+  state.facilities[facId] = true;
+  playSfx('cash');
+  addLog(`${fac.icon || '🏢'} Memasang <b>${fac.name}</b> (${fmtRp(price)})! ${fac.desc}`);
+  saveGame();
+  renderAll();
+}
+
+function payEmployeeNowManual(idx) {
+  const emp = state.employees[idx];
+  if (!emp) return;
+  payEmployeeSalary(emp, `Manual (${emp.payPeriod})`);
+  saveGame();
+  renderAll();
+}
+
+function buyGoldGrams(grams) {
+  const g = Math.max(1, Number(grams) || 1);
+  const pricePerGram = typeof getHistoricalGoldPricePerGram === 'function' ? getHistoricalGoldPricePerGram(state.year, state.totalDays) : getPriceFrom2010(385000);
+  const totalCost = g * pricePerGram;
+  if (!deductFromAnyCash(totalCost)) return addLog('⚠️ Saldo Dompet/Bank tidak cukup untuk membeli Emas Antam!');
+  state.goldGrams = (state.goldGrams || 0) + g;
+  playSfx('cash');
+  addLog(`🪙 Membeli <b>${g} gram Emas Antam</b> seharga <b>${fmtRp(totalCost)}</b> (${fmtRp(pricePerGram)}/gr).`);
+  saveGame();
+  renderAll();
+}
+
+function sellGoldGrams(grams) {
+  state.goldGrams = state.goldGrams || 0;
+  const g = Math.min(state.goldGrams, Math.max(1, Number(grams) || 1));
+  if (g <= 0) return;
+  const pricePerGram = typeof getHistoricalGoldPricePerGram === 'function' ? getHistoricalGoldPricePerGram(state.year, state.totalDays) : getPriceFrom2010(385000);
+  const totalProceeds = g * pricePerGram;
+  state.goldGrams -= g;
+  state.handWallet += totalProceeds;
+  playSfx('cash');
+  addLog(`💸 Menjual <b>${g} gram Emas Antam</b>: <b style="color:var(--green)">+${fmtRp(totalProceeds)}</b> masuk ke Dompet!`);
+  saveGame();
+  renderAll();
+}
+
+function takeItNightCourse() {
+  if (state.itCourseCompleted) return;
+  if (state.player.age < 18) return addLog('⚠️ Minimal usia 18 tahun untuk mengambil Kursus/Kuliah Malam IT!');
+  const cost = getPriceFrom2010(4500000);
+  if (!deductFromAnyCash(cost)) return addLog('⚠️ Uang tidak cukup untuk biaya Kursus/Kuliah Malam IT!');
+  state.itCourseCompleted = true;
+  playSfx('cash');
+  addLog(`🎓 <b>Selamat!</b> Kamu lulus Kursus & Sertifikasi Teknisi IT (${fmtRp(cost)}). Semua komponen rakit PC di Toko kini <b>Diskon Permanen 15%</b>!`);
+  saveGame();
+  renderAll();
+}
+
+function giveFamilyGift() {
+  const cost = getPriceFrom2010(500000);
+  if (!deductFromAnyCash(cost)) return addLog('⚠️ Uang di Dompet/Bank tidak cukup untuk membeli hadiah keluarga!');
+  state.familyHappiness = Math.min(100, (state.familyHappiness ?? 85) + 15);
+  state.player.energy = Math.min(100, (state.player.energy ?? 80) + 20);
+  playSfx('cash');
+  addLog(`🎁 Membelikan hadiah & makan bersama keluarga (${fmtRp(cost)}). Kebahagiaan keluarga naik ke <b>${state.familyHappiness}%</b> & Stamina +20%!`);
+  saveGame();
+  renderAll();
+}
+
+function sellEmergencyAsset(type, idx) {
+  if (type === 'vehicle') {
+    const v = state.ownedVehicles[idx];
+    if (!v) return;
+    const cat = VEHICLE_CATALOG.find(x => x.id === v.id);
+    const base = cat ? cat.price2010 : 12000000;
+    const condMult = ((v.engineCond ?? 85) / 100);
+    const sellPrice = roundTo500(getPriceFrom2010(base) * 0.65 * condMult);
+    state.ownedVehicles.splice(idx, 1);
+    state.handWallet += sellPrice;
+    playSfx('cash');
+    addLog(`💸 Menjual kendaraan <b>${v.name}</b> secara darurat: <b style="color:var(--green)">+${fmtRp(sellPrice)}</b> masuk ke Dompet.`);
+  } else if (type === 'gadget') {
+    const g = state.ownedGadgets[idx];
+    if (!g) return;
+    const cat = GADGET_CATALOG.find(x => x.id === g.id);
+    const base = cat ? cat.price2010 : 3500000;
+    const sellPrice = roundTo500(getPriceFrom2010(base) * 0.60);
+    state.ownedGadgets.splice(idx, 1);
+    state.handWallet += sellPrice;
+    playSfx('cash');
+    addLog(`💸 Menjual gadget second <b>${g.name}</b>: <b style="color:var(--green)">+${fmtRp(sellPrice)}</b> masuk ke Dompet.`);
+  } else if (type === 'house') {
+    const h = (state.ownedHouses || [])[idx];
+    if (!h) return;
+    const sellPrice = roundTo500(getPriceFrom2010(h.basePrice2010 || 120000000) * 0.75);
+    state.ownedHouses.splice(idx, 1);
+    state.personalBank += sellPrice;
+    playSfx('cash');
+    addLog(`💸 Menjual properti <b>${h.name}</b>: <b style="color:var(--green)">+${fmtRp(sellPrice)}</b> masuk ke Bank.`);
+  }
   saveGame();
   renderAll();
 }
