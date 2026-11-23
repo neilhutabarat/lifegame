@@ -500,15 +500,19 @@ function stepOneGameMinute() {
     }
   });
 
-  // 2.5 Penurunan Energi / Stamina Karakter Utama (Full 100% = tahan 36 jam -> ~0.0463% per menit)
+  // 2.5 Penurunan Energi / Stamina (Full 100% = 36 jam). Otomatis tidur jika <= 20% dan ada karyawan jaga atau warnet tutup!
   if (state.player.energy === undefined) state.player.energy = 100;
-  const drainPerMin = state.player.isSick ? 0.09 : 0.0463;
+  const drainPerMin = state.player.isSick ? 0.08 : 0.0463;
   state.player.energy = Math.max(0, +(state.player.energy - drainPerMin).toFixed(2));
-  if (state.player.energy < 12 && !state.player.isSick && Math.random() < 0.008) {
-    const ills = ['Tipes / Demam Tinggi', 'Maag Akut & Kelelahan', 'Infeksi Saluran Pernapasan (ISPA)'];
+  const guardNow = getCurrentGuardStatus();
+  if (state.player.energy <= 20 && !state.player.isSick && (guardNow.byEmployee || !state.rentalOpen)) {
+    state.player.energy = 100;
+    addLog(`😴 Stamina menyentuh 20% — Kamu otomatis tidur/istirahat (${guardNow.byEmployee ? 'warnet dijaga karyawan' : 'warnet sedang tutup'}). Stamina kembali <b>100%</b>!`);
+  } else if (state.player.energy < 8 && !state.player.isSick && Math.random() < 0.004) {
+    const ills = ['Tipes / Demam Tinggi', 'Maag Akut & Kelelahan', 'ISPA'];
     state.player.isSick = true;
     state.player.sickName = ills[Math.floor(Math.random() * ills.length)];
-    addLog(`🤒 <b>KAMU JATUH SAKIT (${state.player.sickName})</b> karena kelelahan! Segera berobat ke Rumah Sakit di tab Hidup!`);
+    addLog(`🤒 <b>KAMU JATUH SAKIT (${state.player.sickName})</b> karena jaga sendirian tanpa tidur! Segera berobat ke Rumah Sakit di tab Hidup!`);
   }
 
   state.employees.forEach(emp => {
