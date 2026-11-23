@@ -436,12 +436,57 @@ button {
   cursor: pointer;
   font-size: 0.72rem;
   font-weight: 600;
+  transition: transform 0.08s ease, filter 0.12s ease;
 }
+button:active { transform: scale(0.96); filter: brightness(1.15); }
 button:disabled { opacity: 0.42; cursor: not-allowed; }
+button.btn-locked {
+  background: rgba(51, 65, 85, 0.55);
+  color: #94a3b8;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+}
 button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 button.success { background: var(--green); color: var(--green-text); border-color: var(--green); }
 button.danger { background: var(--red); color: #fff; border-color: var(--red); }
 button.amber { background: var(--amber); color: #fff; border-color: var(--amber); }
+
+/* FLOATING POPUP TOAST DI ATAS DRAWER & MODAL (Z-INDEX 99999) */
+.floating-popup-toast {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-130%);
+  z-index: 99999;
+  width: calc(100% - 20px);
+  max-width: 520px;
+  background: rgba(15, 23, 42, 0.97);
+  border: 1.5px solid #38bdf8;
+  border-radius: 12px;
+  padding: 9px 12px;
+  color: #f8fafc;
+  font-size: 0.73rem;
+  line-height: 1.38;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  opacity: 0;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.floating-popup-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.floating-popup-toast.warn {
+  border-color: #f59e0b;
+  background: rgba(30, 20, 10, 0.97);
+}
+.floating-popup-toast.ok {
+  border-color: #10b981;
+  background: rgba(6, 32, 24, 0.97);
+}
 
 .badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 99px; background: var(--panel-3); color: var(--text); font-weight: 700; white-space: nowrap; }
 .badge.ok { background: rgba(16,185,129,0.2); color: #34d399; }

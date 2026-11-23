@@ -55,27 +55,10 @@
     const grid = document.getElementById('slotsBoardGrid');
     if (!grid) return;
 
-    grid.innerHTML = list.map(s => {
-      const isPs = s.unitType === 'ps';
-      const hasPc = !!(s.cpu || s.psConsole || s.monitor);
-      if (!hasPc) {
-        return `<div class="slot-card empty-slot vip" onclick="openSlotConfigModal(${s.id})">
-          <b style="color:#94a3b8;font-size:0.74rem;">+ Room VIP #${s.id}</b>
-          <span class="spec-line">Tap untuk Rakit PC / Pasang PS</span>
-        </div>`;
-      }
-
-      const st = typeof isSlotReadyToPlay === 'function' ? isSlotReadyToPlay(s) : { ok: true, reason: 'Siap' };
-      const pcImg = (isPs && s.psConsole) ? s.psConsole.img : REAL_CONSOLE_PHOTOS.pc_vip;
-      const monImg = s.monitor ? s.monitor.img : REAL_CONSOLE_PHOTOS.mon_std;
-      const snackRp = s.snackBill || 0;
-      const snackTag = snackRp > 0 ? ` + 🍜${(snackRp / 1000).toFixed(1)}rb` : '';
-
-      // Status Billing / Update Patch
-      let billingHtml = '';
+    function buildSlotBillingHtml(s, isPs, st, snackRp, snackTag) {
       if (s.updatingPatch) {
         const upPct = Math.min(100, Math.round(((s.patchDoneMb || 0) / Math.max(1, s.patchTotalMb || 100)) * 100));
-        billingHtml = `
+        return `
           <div class="billing-box" style="border:1px solid #f59e0b;">
             <div class="billing-top">
               <span style="color:#fbbf24;">🔄 Update Patch</span>
@@ -86,12 +69,13 @@
             </div>
             <div class="spec-line" style="font-size:0.59rem;color:#fde047;">Patching: ${s.updatingGameTitle || 'Game Online'} (${upPct}%)</div>
           </div>`;
-      } else if (s.occupied) {
+      }
+      if (s.occupied) {
         if (s.billingMode === 'paket') {
           const totalSec = Math.max(60, s.totalSecondsBooked || 3600);
           const pct = Math.max(0, Math.min(100, Math.round(((s.secondsLeft || 0) / totalSec) * 100)));
           const totBill = Math.round((s.packagePrice || 0) + snackRp);
-          billingHtml = `
+          return `
             <div class="billing-box">
               <div class="billing-top">
                 <span style="color:#4ade80;">📦 ${s.packageName || 'Paket'} (${fmtSecToHms(s.secondsLeft)})</span>
@@ -104,61 +88,112 @@
                 ${s.partyTag ? `<b style="color:#f43f5e">[${s.partyTag}]</b> ` : ''}<b>${s.customerName}:</b> ${s.activityLabel || 'Main Game'}
               </div>
             </div>`;
-        } else {
-          // Mode Billing Meter (Hitung Per Detik, Rupiah Naik Terus + Lampiran Jajan!)
-          const elSec = s.elapsedSeconds || 0;
-          const curRp = Math.floor((elSec / 3600) * (s.hourlyRate || state.billingHourlyRate || 6000)) + snackRp;
-          const meterPct = Math.min(100, Math.round(((elSec % 3600) / 3600) * 100));
-          billingHtml = `
-            <div class="billing-box">
-              <div class="billing-top">
-                <span style="color:#38bdf8;">⏱️ METER ${fmtSecToHms(elSec)}</span>
-                <span style="color:#4ade80;">Rp ${curRp.toLocaleString('id-ID')}${snackTag}</span>
-              </div>
-              <div class="countdown-track">
-                <div class="countdown-fill" style="width:${meterPct}%;background:linear-gradient(90deg,#3b82f6,#a855f7);"></div>
-              </div>
-              <div class="spec-line" style="font-size:0.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                ${s.partyTag ? `<b style="color:#f43f5e">[${s.partyTag}]</b> ` : ''}<b>${s.customerName}:</b> ${s.activityLabel || 'Browsing'}
-              </div>
-            </div>`;
         }
-      } else {
-        const rate = typeof getSlotHourlyRate === 'function' ? getSlotHourlyRate(s) : (state.billingHourlyRate || 5000);
-        billingHtml = `
+        const elSec = s.elapsedSeconds || 0;
+        const curRp = Math.floor((elSec / 3600) * (s.hourlyRate || state.billingHourlyRate || 6000)) + snackRp;
+        const meterPct = Math.min(100, Math.round(((elSec % 3600) / 3600) * 100));
+        return `
           <div class="billing-box">
             <div class="billing-top">
-              <span style="color:#94a3b8;">Standby</span>
-              <span style="color:#fbbf24;">Rp ${rate.toLocaleString('id-ID')}/jam</span>
+              <span style="color:#38bdf8;">⏱️ METER ${fmtSecToHms(elSec)}</span>
+              <span style="color:#4ade80;">Rp ${curRp.toLocaleString('id-ID')}${snackTag}</span>
             </div>
-            <div class="countdown-track"><div class="countdown-fill" style="width:0%;"></div></div>
-            <div class="spec-line" style="font-size:0.59rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${st.ok ? `✅ ${isPs ? (s.psConsole ? s.psConsole.name.slice(0, 15) : 'Rental PS') : (s.os ? s.os.name.slice(0, 14) : 'Win 7')} • Siap` : `⚠️ ${st.reason}`}
+            <div class="countdown-track">
+              <div class="countdown-fill" style="width:${meterPct}%;background:linear-gradient(90deg,#3b82f6,#a855f7);"></div>
+            </div>
+            <div class="spec-line" style="font-size:0.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${s.partyTag ? `<b style="color:#f43f5e">[${s.partyTag}]</b> ` : ''}<b>${s.customerName}:</b> ${s.activityLabel || 'Browsing'}
             </div>
           </div>`;
       }
+      const rate = typeof getSlotHourlyRate === 'function' ? getSlotHourlyRate(s) : (state.billingHourlyRate || 5000);
+      return `
+        <div class="billing-box">
+          <div class="billing-top">
+            <span style="color:#94a3b8;">Standby</span>
+            <span style="color:#fbbf24;">Rp ${rate.toLocaleString('id-ID')}/jam</span>
+          </div>
+          <div class="countdown-track"><div class="countdown-fill" style="width:0%;"></div></div>
+          <div class="spec-line" style="font-size:0.59rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${st.ok ? `✅ ${isPs ? (s.psConsole ? s.psConsole.name.slice(0, 15) : 'Rental PS') : (s.os ? s.os.name.slice(0, 14) : 'Win 7')} • Siap` : `⚠️ ${st.reason}`}
+          </div>
+        </div>`;
+    }
 
-      return `<div class="slot-card vip ${s.occupied ? 'playing' : ''}" onclick="openSlotConfigModal(${s.id})">
+    function buildSlotHwInfoHtml(s, isPs) {
+      return isPs
+        ? `<div><b>${s.psConsole ? s.psConsole.name.slice(0, 15) : 'Tanpa Konsol'}</b></div>
+           <div>🪑 ${s.chair ? s.chair.name.slice(0, 12) : 'Plastik'}</div>
+           <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • Tier ${typeof getPcTier === 'function' ? getPcTier(s) : 2}</div>`
+        : `<div><b>${s.cpu ? s.cpu.name.replace('Intel ', '').replace('AMD ', '').slice(0, 14) : 'Tanpa CPU'}</b></div>
+           <div>RAM ${typeof getPcTotalRamGb === 'function' ? getPcTotalRamGb(s) : (s.ram ? s.ram.sizeGb : 0)}GB • ${(s.installedGames || []).length}G • ${s.tempC || 40}°C</div>
+           <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • 🖱️ <b>${s.gear ? Math.round(s.gear.durability) + '%' : '0%'}</b></div>`;
+    }
+
+    // Cek apakah bisa update in-place tanpa hancurkan node DOM .slot-card (agar tap/click tidak pernah meleset!)
+    const canUpdateInPlace = !fullRebuild && grid.children.length === list.length && list.every(s => {
+      const el = document.getElementById('slotCard_' + s.id);
+      const hasPc = !!(s.cpu || s.psConsole || s.monitor);
+      return el && el.dataset.hasPc === String(hasPc) && el.dataset.unitType === (s.unitType || 'pc');
+    });
+
+    if (canUpdateInPlace) {
+      const btnAll = container.querySelector('.room-filter-bar button');
+      if (btnAll) btnAll.textContent = `Semua Room (${activeCount}/${readyCount})`;
+      list.forEach(s => {
+        const hasPc = !!(s.cpu || s.psConsole || s.monitor);
+        if (!hasPc) return;
+        const isPs = s.unitType === 'ps';
+        const st = typeof isSlotReadyToPlay === 'function' ? isSlotReadyToPlay(s) : { ok: true, reason: 'Siap' };
+        const snackRp = s.snackBill || 0;
+        const snackTag = snackRp > 0 ? ` + 🍜${(snackRp / 1000).toFixed(1)}rb` : '';
+        const cardEl = document.getElementById('slotCard_' + s.id);
+        if (cardEl) cardEl.classList.toggle('playing', !!s.occupied);
+        const badgeEl = document.getElementById('slotBadge_' + s.id);
+        if (badgeEl) {
+          badgeEl.className = `badge ${s.updatingPatch ? 'warn' : s.occupied ? 'ok' : st.ok ? 'busy' : 'warn'}`;
+          badgeEl.textContent = s.updatingPatch ? 'PATCH' : s.occupied ? (s.billingMode === 'paket' ? 'PAKET' : 'METER') : st.ok ? 'IDLE' : 'CEK';
+        }
+        const hwEl = document.getElementById('slotHwInfo_' + s.id);
+        if (hwEl) hwEl.innerHTML = buildSlotHwInfoHtml(s, isPs);
+        const billEl = document.getElementById('slotBillBox_' + s.id);
+        if (billEl) billEl.innerHTML = buildSlotBillingHtml(s, isPs, st, snackRp, snackTag);
+      });
+      return;
+    }
+
+    grid.innerHTML = list.map(s => {
+      const isPs = s.unitType === 'ps';
+      const hasPc = !!(s.cpu || s.psConsole || s.monitor);
+      if (!hasPc) {
+        return `<div id="slotCard_${s.id}" data-has-pc="false" data-unit-type="${s.unitType || 'pc'}" class="slot-card empty-slot vip" onclick="openSlotConfigModal(${s.id})">
+          <b style="color:#94a3b8;font-size:0.74rem;">+ Room VIP #${s.id}</b>
+          <span class="spec-line">Tap untuk Rakit PC / Pasang PS</span>
+        </div>`;
+      }
+
+      const st = typeof isSlotReadyToPlay === 'function' ? isSlotReadyToPlay(s) : { ok: true, reason: 'Siap' };
+      const pcImg = (isPs && s.psConsole) ? s.psConsole.img : REAL_CONSOLE_PHOTOS.pc_vip;
+      const monImg = s.monitor ? s.monitor.img : REAL_CONSOLE_PHOTOS.mon_std;
+      const snackRp = s.snackBill || 0;
+      const snackTag = snackRp > 0 ? ` + 🍜${(snackRp / 1000).toFixed(1)}rb` : '';
+      const billingHtml = buildSlotBillingHtml(s, isPs, st, snackRp, snackTag);
+
+      return `<div id="slotCard_${s.id}" data-has-pc="true" data-unit-type="${s.unitType || 'pc'}" class="slot-card vip ${s.occupied ? 'playing' : ''}" onclick="openSlotConfigModal(${s.id})">
         <div class="slot-card-head">
           <b>${isPs ? '🎮 PS' : '👑 PC'} #${s.id}${!isPs && s.overclocked ? ' ⚡' : ''}</b>
-          <span class="badge ${s.updatingPatch ? 'warn' : s.occupied ? 'ok' : st.ok ? 'busy' : 'warn'}">${s.updatingPatch ? 'PATCH' : s.occupied ? (s.billingMode === 'paket' ? 'PAKET' : 'METER') : st.ok ? 'IDLE' : 'CEK'}</span>
+          <span id="slotBadge_${s.id}" class="badge ${s.updatingPatch ? 'warn' : s.occupied ? 'ok' : st.ok ? 'busy' : 'warn'}">${s.updatingPatch ? 'PATCH' : s.occupied ? (s.billingMode === 'paket' ? 'PAKET' : 'METER') : st.ok ? 'IDLE' : 'CEK'}</span>
         </div>
 
         <div class="slot-hw-pics">
           <img class="slot-pic" src="${pcImg}" alt="Unit" />
           <img class="slot-pic" src="${monImg}" alt="Monitor" />
-          <div class="slot-hw-info">
-            ${isPs
-              ? `<div><b>${s.psConsole ? s.psConsole.name.slice(0, 15) : 'Tanpa Konsol'}</b></div>
-                 <div>🪑 ${s.chair ? s.chair.name.slice(0, 12) : 'Plastik'}</div>
-                 <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • Tier ${typeof getPcTier === 'function' ? getPcTier(s) : 2}</div>`
-              : `<div><b>${s.cpu ? s.cpu.name.replace('Intel ', '').replace('AMD ', '').slice(0, 14) : 'Tanpa CPU'}</b></div>
-                 <div>RAM ${typeof getPcTotalRamGb === 'function' ? getPcTotalRamGb(s) : (s.ram ? s.ram.sizeGb : 0)}GB • ${(s.installedGames || []).length}G • ${s.tempC || 40}°C</div>
-                 <div>❄️ ${s.cooling ? (s.cooling.type === 'ac' ? 'AC' : 'Kipas') : '-'} • 🖱️ <b>${s.gear ? Math.round(s.gear.durability) + '%' : '0%'}</b></div>`}
+          <div id="slotHwInfo_${s.id}" class="slot-hw-info">
+            ${buildSlotHwInfoHtml(s, isPs)}
           </div>
         </div>
 
-        ${billingHtml}
+        <div id="slotBillBox_${s.id}">${billingHtml}</div>
       </div>`;
     }).join('');
   };

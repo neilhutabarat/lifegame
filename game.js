@@ -512,9 +512,65 @@ function addRevenueToWarnet(amount, category = 'billing') {
   }
 }
 
+let floatingToastTimer = null;
+function showFloatingToast(htmlMsg, kind = 'info') {
+  const el = document.getElementById('floatingPopupToast');
+  if (!el) return;
+  el.className = 'floating-popup-toast show ' + (kind === 'warn' ? 'warn' : kind === 'ok' ? 'ok' : '');
+  el.innerHTML = `<div style="flex:1">${htmlMsg}</div><span style="color:#94a3b8;font-weight:900;cursor:pointer;padding-left:6px;">✕</span>`;
+  if (floatingToastTimer) clearTimeout(floatingToastTimer);
+  floatingToastTimer = setTimeout(() => {
+    el.classList.remove('show');
+  }, 4200);
+}
+
+function notifyBlockedPopup(title, reasonHtml) {
+  playSfx('click');
+  addLog(`🔒 <b>${title}:</b> ${reasonHtml}`);
+  showFloatingToast(`🔒 <b>${title}</b><br>${reasonHtml}`, 'warn');
+  // Jika modal tidak sedang terbuka, tampilkan juga popup modal penjelasan agar pemain paham 100%!
+  const modalBg = document.getElementById('customModalBackdrop');
+  const isModalOpen = modalBg && modalBg.style.display === 'flex';
+  if (!isModalOpen) {
+    showCustomModal(
+      `🔒 ${title}`,
+      `<div class="card" style="border-color:#f59e0b;">
+         <div class="spec-line" style="font-size:0.78rem;color:#f8fafc;">${reasonHtml}</div>
+       </div>`,
+      `<button type="button" class="primary" onclick="closeCustomModal()">👍 Mengerti</button>`
+    );
+  }
+}
+
+function pullAllLaciToWalletNow() {
+  if (state.laciCash <= 0) {
+    showFloatingToast('⚠️ Saldo di Laci Kasir saat ini Rp 0.', 'warn');
+    return;
+  }
+  const amt = state.laciCash;
+  state.handWallet += amt;
+  state.laciCash = 0;
+  playSfx('cash');
+  addLog(`👛 Menarik seluruh uang dari <b>Laci Kasir (${fmtRp(amt)})</b> ke <b>Dompet</b>!`);
+  showFloatingToast(`✅ <b>${fmtRp(amt)}</b> ditarik dari Laci Kasir ke Dompet! Sekarang kamu bisa lanjut belanja.`, 'ok');
+  saveGame();
+  renderAll();
+}
+
 function addLog(msg) {
   const toast = document.getElementById('liveToastBar');
   if (toast) toast.innerHTML = msg;
+
+  // Jika drawer atau modal sedang terbuka, tampilkan feedback aksi pemain di Floating Popup Toast atas (z-index 99999) agar tidak tertutup!
+  const drawerEl = document.getElementById('appDrawerBackdrop');
+  const modalEl = document.getElementById('customModalBackdrop');
+  const overlayOpen = (drawerEl && drawerEl.classList.contains('open')) || (modalEl && modalEl.style.display === 'flex');
+  const isWarn = msg.includes('⚠️') || msg.includes('🔒');
+  const isUserAction = isWarn || msg.startsWith('🛒') || msg.startsWith('🏠') || msg.startsWith('💳') || msg.startsWith('🏦') || msg.startsWith('👨‍👩‍👦') || msg.startsWith('🎓') || msg.startsWith('🏆') || msg.startsWith('🏪') || msg.startsWith('🎮') || msg.startsWith('💸') || msg.startsWith('🔧') || msg.startsWith('🌬️') || msg.startsWith('🌐') || msg.startsWith('🧱') || msg.startsWith('🖥️') || msg.startsWith('⚡') || msg.startsWith('⛽') || msg.startsWith('💧') || msg.startsWith('💍') || msg.startsWith('👶') || msg.startsWith('👑') || msg.startsWith('💕') || msg.startsWith('🏥') || msg.startsWith('🚕') || msg.startsWith('🏫') || msg.startsWith('🪙');
+  if (isWarn || (overlayOpen && isUserAction)) {
+    showFloatingToast(msg, isWarn ? 'warn' : 'ok');
+  }
+
   const box = document.getElementById('logBox');
   if (!box) return;
   const div = document.createElement('div');
@@ -1287,7 +1343,16 @@ function deductFromAnyCash(amount) {
     state.handWallet -= rem;
     return true;
   }
-  addLog(`⚠️ Saldo <b>Bank + Dompet</b> kurang (Butuh <b>${fmtRp(amount)}</b>)! Tarik uang dari <b>Laci Kasir</b> dulu.`);
+  const availNow = state.personalBank + state.handWallet;
+  if (availNow + state.laciCash >= amount && state.laciCash > 0) {
+    const msg = `⚠️ Saldo <b>Dompet + Bank</b> kurang (Butuh <b>${fmtRp(amount)}</b>, ada <b>${fmtRp(availNow)}</b>). Tapi di <b>Laci Kasir</b> ada <b>${fmtRp(state.laciCash)}</b>! <button type="button" class="amber" style="margin-left:6px;padding:2px 8px;" onclick="event.stopPropagation();pullAllLaciToWalletNow()">💸 Tarik Laci ke Dompet</button>`;
+    addLog(msg);
+  } else {
+    const needLoanBtn = (!state.parentLoan.active && availNow < 500000)
+      ? ` <button type="button" class="primary" style="margin-left:6px;padding:2px 8px;" onclick="event.stopPropagation();openDrawerTab('finance')">👨‍👩‍👦 Pinjam Modal Ortu</button>`
+      : '';
+    addLog(`⚠️ Saldo <b>Bank + Dompet</b> tidak cukup! Butuh <b>${fmtRp(amount)}</b> (Tersedia: <b>${fmtRp(availNow)}</b>).${needLoanBtn}`);
+  }
   return false;
 }
 
@@ -1450,8 +1515,8 @@ function openBillingRateModal() {
          <span>🌙 <b>Paket Begadang / Kalong Malam (22:00–06:00 Nonstop)</b>: Warnet buka 24 jam &amp; diserbu anak begadang malam!</span>
        </label>
        <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;margin-top:4px;">
-         <input type="checkbox" id="chkQrisActive" ${state.qrisActive && canQris ? 'checked' : ''} ${!canQris ? 'disabled' : ''} style="width:auto;" />
-         <span>📱 <b>Pembayaran QRIS / E-Wallet (${canQris ? 'Tersedia' : 'Terbuka Tahun 2019+'})</b>: 50% omzet otomatis langsung masuk ke Bank</span>
+         <input type="checkbox" id="chkQrisActive" ${state.qrisActive && canQris ? 'checked' : ''} style="width:auto;" onclick="if(${!canQris}){this.checked=false;showFloatingToast('🔒 <b>QRIS Belum Tersedia di Tahun ' + state.year + '!</b><br>Pembayaran QRIS / E-Wallet baru terbuka mulai <b>Tahun 2019+</b>.', 'warn');}" />
+         <span>📱 <b>Pembayaran QRIS / E-Wallet (${canQris ? 'Tersedia' : '🔒 Terbuka Tahun 2019+'})</b>: 50% omzet otomatis langsung masuk ke Bank</span>
        </label>
        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;">
          <span class="spec-line">⭐ <b>Member Terdaftar: ${state.members.count} orang</b> • Diskon Khusus Member (%):</span>
@@ -1704,29 +1769,58 @@ function renderRightPanel() {
             return `<div class="item-row">
               <div style="font-size:24px;width:36px;text-align:center;">${f.icon || '🏢'}</div>
               <div style="flex:1">
-                <b>${f.name}</b>
+                <b>${f.name}</b> ${owned ? '<span class="badge ok">✅ Aktif</span>' : ''}
                 <div class="spec-line">${f.desc}</div>
                 <div style="color:var(--green);font-weight:700;">${fmtRp(fPrice)}</div>
               </div>
-              <button type="button" class="${owned ? 'success' : 'primary'}" ${owned ? 'disabled' : ''} onclick="buyFacilityItem('${f.id}')">${owned ? 'Terpasang' : 'Pasang'}</button>
+              <button type="button" class="${owned ? 'success' : 'primary'}" onclick="buyFacilityItem('${f.id}')">${owned ? '✅ Terpasang' : 'Pasang'}</button>
             </div>`;
           }).join('')
         : list.filter(it => it.releaseYear <= state.year).map(it => {
             const price = roundTo500(getPriceFrom2010(it.basePrice2010) * discMult);
+            let inWhCount = 0;
+            let instCount = 0;
+            const cat = state.hwCategoryFilter;
+            if (cat === 'gear') {
+              inWhCount = it.id === 'gear_mech' ? (state.cashierGearMech || 0) : (state.cashierGearNew || 0);
+              instCount = state.slots.filter(s => s.gear && ((it.id === 'gear_mech' && s.gear.quality === 'mech') || (it.id !== 'gear_mech' && s.gear.quality === 'new'))).length;
+            } else {
+              const whMap = { cpu: 'warehouseCpus', ram: 'warehouseRams', vga: 'warehouseVgas', storage: 'warehouseStorages', monitor: 'warehouseMonitors', cooling: 'warehouseCoolings', chair: 'warehouseChairs', ps: 'warehousePsConsoles' };
+              const propMap = { cpu: 'cpu', vga: 'vga', storage: 'storage', monitor: 'monitor', cooling: 'cooling', chair: 'chair', ps: 'psConsole' };
+              const whArr = state[whMap[cat]] || [];
+              inWhCount = whArr.filter(x => x.id === it.id).length;
+              if (cat === 'ram') {
+                state.slots.forEach(s => { (s.rams || []).forEach(r => { if (r.id === it.id) instCount++; }); });
+              } else if (propMap[cat]) {
+                instCount = state.slots.filter(s => s[propMap[cat]] && s[propMap[cat]].id === it.id).length;
+              }
+            }
             return `<div class="item-row">
               <img class="prod-thumb" src="${it.img}" alt="${it.name}" />
               <div style="flex:1">
                 <b>${it.name}</b> ${it.tier ? `<span class="badge ok">Tier ${it.tier}</span>` : ''} ${it.maxRamSlots ? `<span class="badge">${it.maxRamSlots} Slot RAM</span>` : ''}
                 <div class="spec-line">Rilis: ${it.releaseYear} ${it.watt ? `• Daya: ${it.watt}W` : ''} ${it.sizeGb ? `• Kapasitas: ${it.sizeGb}GB` : ''} ${it.rateBonus2010 ? `• +${fmtRp(getPriceFrom2010(it.rateBonus2010))}/jam` : ''}</div>
-                <div style="color:var(--green);font-weight:700;">${fmtRp(price)} ${discMult < 1 ? `<small style="color:#38bdf8">(-${Math.round((1 - discMult) * 100)}%)</small>` : ''}</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
+                  <span style="color:var(--green);font-weight:700;">${fmtRp(price)} ${discMult < 1 ? `<small style="color:#38bdf8">(-${Math.round((1 - discMult) * 100)}%)</small>` : ''}</span>
+                  ${inWhCount > 0 ? `<span class="badge ok">📦 Di Gudang: ${inWhCount}</span>` : ''}
+                  ${instCount > 0 ? `<span class="badge busy">🖥️ Terpasang: ${instCount}</span>` : ''}
+                </div>
               </div>
-              <button type="button" class="primary" onclick="buyPcComponent('${state.hwCategoryFilter}','${it.id}')">Beli</button>
+              <button type="button" class="primary" onclick="buyPcComponent('${state.hwCategoryFilter}','${it.id}')">+ Beli</button>
             </div>`;
           }).join('')}
       ${upcomingItems.length > 0 ? `
-        <div class="card" style="margin-top:8px;opacity:0.8;">
+        <div class="card" style="margin-top:8px;">
           <b>🔒 Segera Hadir di Tahun Mendatang (${upcomingItems.length} Item Terkunci Tahun):</b>
-          ${upcomingItems.map(it => `<div class="spec-line">• <b>${it.name}</b> — Terbuka Tahun <b>${it.releaseYear}</b> ${it.tier ? `(Tier ${it.tier})` : ''}</div>`).join('')}
+          ${upcomingItems.map(it => `
+            <div class="item-row" style="opacity:0.85;">
+              <div style="flex:1">
+                <b>${it.name}</b> ${it.tier ? `<span class="badge">Tier ${it.tier}</span>` : ''}
+                <div class="spec-line">Terbuka Otomatis pada <b>Tahun ${it.releaseYear}</b></div>
+              </div>
+              <button type="button" class="btn-locked" onclick="notifyBlockedPopup('Item Belum Rilis (Tahun ${it.releaseYear})', '<b>${it.name}</b> baru akan rilis di Indonesia pada <b>Tahun ${it.releaseYear}</b> (Saat ini masih Tahun <b>${state.year}</b>).')">🔒 Thn ${it.releaseYear}</button>
+            </div>
+          `).join('')}
         </div>
       ` : ''}
     `;
@@ -1746,7 +1840,7 @@ function renderRightPanel() {
               <b>${p.name}</b>
               <div class="spec-line">Stabil <b>${p.maxSmoothPcs} PC</b> • Traffic <b>+${p.appealBonusPct || 0}%</b> • Bonus Tarif <b>+${fmtRp(getPriceFrom2010(p.rateBonus2010 || 0))}/jam</b> • <b>${fmtRp(p.monthlyReal)}/bln</b></div>
             </div>
-            <button type="button" class="${p.id === state.internetPlanId ? 'success' : 'primary'}" onclick="changeInternetPlan('${p.id}')">${p.id === state.internetPlanId ? 'Aktif' : 'Pasang'}</button>
+            <button type="button" class="${p.id === state.internetPlanId ? 'success' : 'primary'}" onclick="changeInternetPlan('${p.id}')">${p.id === state.internetPlanId ? '✅ Aktif' : 'Pasang'}</button>
           </div>
         `).join('')}
       </div>
@@ -1758,6 +1852,7 @@ function renderRightPanel() {
         const installed = !!state.installedGames[g.id];
         const needPatch = state.pendingGamePatches[g.id];
         const price = g.basePrice2010 > 0 ? getPriceFrom2010(g.basePrice2010) : 0;
+        const safeTitle = g.title.replace(/'/g, "\\'");
         return `<div class="item-row">
           <img class="disc-thumb" src="${g.cover}" alt="${g.title}" />
           <div style="flex:1">
@@ -1766,7 +1861,9 @@ function renderRightPanel() {
             <div style="color:var(--green);font-weight:700;">${price > 0 ? fmtRp(price) : 'Gratis Download Installer'}</div>
           </div>
           ${installed
-            ? (needPatch ? `<button type="button" class="amber" onclick="triggerManualPatchAll()">🔄 Update ${needPatch}MB</button>` : `<span class="badge ok">Ter-install</span>`)
+            ? (needPatch
+                ? `<button type="button" class="amber" onclick="triggerManualPatchAll()">🔄 Update ${needPatch}MB</button>`
+                : `<button type="button" class="success" onclick="notifyBlockedPopup('Game Sudah Dimiliki di Server Kasir', 'Master installer <b>${safeTitle}</b> sudah ada di Server Kasir.<br><br>💡 <b>Cara Instal ke PC:</b> Tap salah satu kartu <b>Room VIP #1–#20</b> di layar utama (atau tab Billing/PC), lalu klik tombol <b>Instal</b> pada daftar game di bilik PC tersebut!')">✅ Di Server</button>`)
             : `<button type="button" class="primary" onclick="installOrBuyPcGame('${g.id}')">${price > 0 ? 'Beli DVD' : 'Download'}</button>`}
         </div>`;
       }).join('')}
@@ -1780,7 +1877,7 @@ function renderRightPanel() {
         <b>🖱️ Stok &amp; Servis Gear (Mouse + Keyboard + Headset) &amp; Perawatan Suhu PC</b>
         <div class="spec-line">Standar Baru (100%): <b>${state.cashierGearNew}</b> • Mechanical RGB (220%): <b style="color:#a855f7">${state.cashierGearMech || 0}</b> • Hasil Servis (65%): <b>${state.cashierGearServiced}</b> • Rusak: <b style="color:var(--red)">${state.cashierGearBroken}</b></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-          <button type="button" class="amber" ${state.cashierGearBroken <= 0 ? 'disabled' : ''} onclick="manualServiceGear()">🔧 Servis 1 Set Gear Rusak</button>
+          <button type="button" class="${state.cashierGearBroken <= 0 ? 'btn-locked' : 'amber'}" onclick="manualServiceGear()">🔧 Servis 1 Set Gear Rusak (${state.cashierGearBroken})</button>
           <button type="button" class="primary" onclick="cleanAllPcDustAndPaste()">🌬️ Semprot Debu &amp; Ganti Pasta Thermal Semua PC (${state.facilities && state.facilities.fac_kompresor ? 'GRATIS Kompresor' : fmtRp(getPriceFrom2010(75000))})</button>
         </div>
       </div>
@@ -1793,7 +1890,7 @@ function renderRightPanel() {
             const ageYrs = Math.max(0, state.year - (it.boughtYear || state.year));
             return `<div class="item-row"><span><b>${it.name}</b> <small style="color:var(--muted)">(${ageYrs === 0 ? 'Baru Tahun Ini' : `Pakai ${ageYrs} thn`})</small></span><button type="button" class="amber" onclick="sellSecondhandPart('${k}',${idx})">💸 Jual Second ${fmtRp(sellP)}</button></div>`;
           }).join('');
-        }).join('')}
+        }).join('') || '<div class="spec-line">Gudang komponen sedang kosong. Beli komponen di tab <b>🛒 Rakit/Server</b>.</div>'}
       </div>
     `;
     return;
@@ -1812,11 +1909,11 @@ function renderRightPanel() {
           return `<div class="item-row">
             <img class="prod-thumb" src="${it.img}" alt="${it.name}" />
             <div style="flex:1">
-              <b>${it.name}</b> <span class="badge">Stok: ${stock}</span>
+              <b>${it.name}</b> <span class="badge ok">Stok: ${stock}</span>
               <div class="spec-line">${it.kind === 'galon' ? 'Wajib untuk seduh Pop Mie, Indomie & Kopi' : `Harga jual ecer: ${fmtRp(getPriceFrom2010(it.sellPcs2010))}/porsi`}</div>
               <div style="color:var(--green);font-weight:700;">${fmtRp(price)} ${whMult < 1 ? `<small style="color:#38bdf8">(-${Math.round((1 - whMult) * 100)}% Grosir)</small>` : ''}</div>
             </div>
-            <button type="button" class="primary" ${lockedFac ? 'disabled' : ''} onclick="buyWarnetSupply('${it.id}')">${lockedFac ? 'Butuh Fasilitas' : '+ Beli'}</button>
+            <button type="button" class="${lockedFac ? 'btn-locked' : 'primary'}" onclick="buyWarnetSupply('${it.id}')">${lockedFac ? '🔒 Butuh Fasilitas' : '+ Beli'}</button>
           </div>`;
         }).join('')}
       </div>
@@ -1905,8 +2002,8 @@ function renderRightPanel() {
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button type="button" class="amber" onclick="buyGoldGrams(1)">+ Beli 1gr (${fmtRp(goldPrice)})</button>
           <button type="button" class="amber" onclick="buyGoldGrams(5)">+ Beli 5gr (${fmtRp(5 * goldPrice)})</button>
-          <button type="button" class="success" ${state.goldGrams < 1 ? 'disabled' : ''} onclick="sellGoldGrams(1)">💸 Jual 1gr</button>
-          <button type="button" class="success" ${state.goldGrams < 1 ? 'disabled' : ''} onclick="sellGoldGrams(${state.goldGrams})">💸 Jual Semua Emas</button>
+          <button type="button" class="${state.goldGrams < 1 ? 'btn-locked' : 'success'}" onclick="sellGoldGrams(1)">💸 Jual 1gr</button>
+          <button type="button" class="${state.goldGrams < 1 ? 'btn-locked' : 'success'}" onclick="sellGoldGrams(${Math.max(1, state.goldGrams)})">💸 Jual Semua Emas</button>
         </div>
       </div>
       <div class="card">
@@ -1962,7 +2059,10 @@ function renderRightPanel() {
                <button type="button" class="primary" onclick="payBankLoanNow(false)">Cicil 1x</button>
                <button type="button" class="success" onclick="payBankLoanNow(true)">✅ Lunasi Semua</button>
              </div>`
-          : `<div style="display:flex;gap:6px;"><button type="button" class="primary" ${!canBank ? 'disabled' : ''} onclick="takeBankLoan(50000000)">Kredit 50 Jt</button><button type="button" class="primary" ${!canBank ? 'disabled' : ''} onclick="takeBankLoan(150000000)">Kredit 150 Jt</button></div>`}
+          : `<div style="display:flex;gap:6px;">
+               <button type="button" class="${!canBank ? 'btn-locked' : 'primary'}" onclick="takeBankLoan(50000000)">${!canBank ? '🔒 ' : ''}Kredit 50 Jt</button>
+               <button type="button" class="${!canBank ? 'btn-locked' : 'primary'}" onclick="takeBankLoan(150000000)">${!canBank ? '🔒 ' : ''}Kredit 150 Jt</button>
+             </div>`}
       </div>
     `;
     return;
@@ -2000,7 +2100,7 @@ function renderRightPanel() {
         <div class="spec-line">Mengikuti kuliah/kursus malam IT memberi <b>Diskon Permanen 15%</b> semua komponen rakit PC di Toko!</div>
         ${state.itCourseCompleted
           ? `<div class="spec-line" style="color:var(--green)">✅ <b>Lulus Sertifikasi Teknisi IT &amp; Bisnis Warnet!</b> (Diskon 15% Komponen PC Aktif)</div>`
-          : `<button type="button" class="primary" ${p.age < 18 ? 'disabled' : ''} onclick="takeItNightCourse()">🎓 Ikut Kursus / Kuliah Malam IT (${fmtRp(getPriceFrom2010(4500000))})</button>`}
+          : `<button type="button" class="${p.age < 18 ? 'btn-locked' : 'primary'}" onclick="takeItNightCourse()">${p.age < 18 ? '🔒 ' : '🎓 '}Ikut Kursus / Kuliah Malam IT (${fmtRp(getPriceFrom2010(4500000))})</button>`}
       </div>
 
       <div class="card">
@@ -2041,9 +2141,10 @@ function renderRightPanel() {
           const fullP = getPriceFrom2010(pr.basePrice2010);
           const dpRate = pr.dpPct || 0.15;
           const dpAmt = Math.round(fullP * dpRate);
+          const ownedCount = (state.ownedHouses || []).filter(h => h.name === pr.name).length;
           return `<div class="item-row">
             <div>
-              <b>${pr.name}</b>
+              <b>${pr.name}</b> ${ownedCount > 0 ? `<span class="badge ok">✅ Dimiliki: ${ownedCount}</span>` : ''}
               <div class="spec-line">${pr.desc} • DP KPR: <b>${fmtRp(dpAmt)} (${Math.round(dpRate * 100)}%)</b></div>
               <div style="color:var(--green);font-weight:700;">Harga Cash: ${fmtRp(fullP)}</div>
             </div>
@@ -2085,11 +2186,12 @@ function renderRightPanel() {
 
       <div class="card">
         <b>🛵 Kendaraan Motor &amp; Mobil (Cash / Cicil DP 20% • Tahun ${state.year})</b>
-        ${VEHICLE_CATALOG.filter(v => v.yearStart <= state.year).map(v => `
-          <div class="item-row">
+        ${VEHICLE_CATALOG.filter(v => v.yearStart <= state.year).map(v => {
+          const ownedCount = (state.ownedVehicles || []).filter(ov => ov.id === v.id).length;
+          return `<div class="item-row">
             <img class="prod-thumb" src="${v.img}" alt="${v.name}" />
             <div style="flex:1">
-              <b>${v.name}</b>
+              <b>${v.name}</b> ${ownedCount > 0 ? `<span class="badge ok">✅ Dimiliki: ${ownedCount}</span>` : ''}
               <div class="spec-line">${v.category === 'Mobil' ? `Bisa Disewakan Travel (+${fmtRp(getPriceFrom2010(v.commercialDaily2010 || 95000))}/hr) & Diskon Grosir 22%` : 'Diskon Belanja Grosir 12%'}</div>
               <div style="color:var(--green);font-weight:700;">${fmtRp(getPriceFrom2010(v.price2010))}</div>
             </div>
@@ -2097,15 +2199,15 @@ function renderRightPanel() {
               <button type="button" class="primary" onclick="buyVehicle('${v.id}', false)">Cash</button>
               <button type="button" class="amber" onclick="buyVehicle('${v.id}', true)">Cicil (DP 20%)</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
 
       <div class="card">
         <b>💍 Keluarga, Pendidikan Anak, Kebahagiaan (${state.familyHappiness ?? 85}%) &amp; Wariskan Warnet</b>
         <div class="spec-line">Kebahagiaan Keluarga: <b style="color:var(--green)">${state.familyHappiness ?? 85}%</b> • <button type="button" class="amber" onclick="giveFamilyGift()">🎁 Beli Hadiah / Liburan Keluarga (${fmtRp(getPriceFrom2010(500000))})</button></div>
         ${!p.partner ? PARTNERS_LIST.filter(pt => pt.gender !== p.gender).map(pt => `
-          <div class="item-row"><span><b>${pt.name}</b> (${pt.job})</span><button type="button" class="primary" ${p.age < 17 ? 'disabled' : ''} onclick="choosePartner('${pt.id}')">Pacaran</button></div>
+          <div class="item-row"><span><b>${pt.name}</b> (${pt.job})</span><button type="button" class="${p.age < 17 ? 'btn-locked' : 'primary'}" onclick="choosePartner('${pt.id}')">${p.age < 17 ? '🔒 ' : '💕 '}Pacaran</button></div>
         `).join('') : `
           <div style="display:flex;gap:6px;">
             ${!p.married ? `<button type="button" class="primary" onclick="marryPartner()">💍 Menikah dengan ${p.partner.name}</button>` : `<button type="button" class="success" onclick="haveChildWithPartner()">👶 Program Anak</button>`}
@@ -2116,7 +2218,7 @@ function renderRightPanel() {
             <span>👶 <b>${ch.name}</b> (${ch.age} thn) ${ch.eliteSchool ? '<span class="badge ok">🎓 Sekolah IT</span>' : ''}</span>
             <div style="display:flex;gap:4px;">
               ${ch.age >= 6 ? `<button type="button" class="${ch.eliteSchool ? 'success' : 'primary'}" onclick="toggleChildEliteSchool(${idx})">🏫 ${ch.eliteSchool ? 'Sekolah IT Aktif' : 'Sekolahkan IT'}</button>` : ''}
-              <button type="button" class="amber" ${ch.age < 8 ? 'disabled' : ''} onclick="inheritToChild(${idx})">👑 Wariskan</button>
+              <button type="button" class="${ch.age < 8 ? 'btn-locked' : 'amber'}" onclick="inheritToChild(${idx})">${ch.age < 8 ? '🔒 ' : '👑 '}Wariskan</button>
             </div>
           </div>
         `).join('')}
@@ -2198,9 +2300,9 @@ function openSlotConfigModal(slotId) {
           <div class="item-row">
             <div><b>🖱️ Mouse+KB+Headset:</b> ${s.gear ? `${s.gear.name} (${s.gear.durability}%)` : 'Kosong'}</div>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
-              <button type="button" class="primary" ${state.cashierGearNew <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'new')">Standar (${state.cashierGearNew})</button>
-              <button type="button" class="success" ${(state.cashierGearMech || 0) <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'mech')">Mech RGB (${state.cashierGearMech || 0})</button>
-              <button type="button" class="amber" ${state.cashierGearServiced <= 0 ? 'disabled' : ''} onclick="attachGearToPc(${s.id},'serviced')">Servis (${state.cashierGearServiced})</button>
+              <button type="button" class="${state.cashierGearNew <= 0 ? 'btn-locked' : 'primary'}" onclick="attachGearToPc(${s.id},'new')">Standar (${state.cashierGearNew})</button>
+              <button type="button" class="${(state.cashierGearMech || 0) <= 0 ? 'btn-locked' : 'success'}" onclick="attachGearToPc(${s.id},'mech')">Mech RGB (${state.cashierGearMech || 0})</button>
+              <button type="button" class="${state.cashierGearServiced <= 0 ? 'btn-locked' : 'amber'}" onclick="attachGearToPc(${s.id},'serviced')">Servis (${state.cashierGearServiced})</button>
             </div>
           </div>
           <div class="card">
@@ -2214,7 +2316,7 @@ function openSlotConfigModal(slotId) {
                 <div><b>${g.title}</b><div class="spec-line">${g.sizeGb}GB • Min Tier ${g.minTier}</div></div>
                 ${isInst
                   ? `<button type="button" class="danger" onclick="toggleGameOnPc(${s.id},'${g.id}',false)">Uninstal</button>`
-                  : `<button type="button" class="primary" ${(!fitSpace || !fitSpec) ? 'disabled' : ''} onclick="toggleGameOnPc(${s.id},'${g.id}',true)">${!fitSpec ? 'Spek Kurang' : !fitSpace ? 'HDD Penuh' : 'Instal'}</button>`}
+                  : `<button type="button" class="${(!fitSpace || !fitSpec) ? 'btn-locked' : 'primary'}" onclick="toggleGameOnPc(${s.id},'${g.id}',true)">${!fitSpec ? '🔒 Spek Kurang' : !fitSpace ? '🔒 HDD Penuh' : 'Instal'}</button>`}
               </div>`;
             }).join('')}
           </div>`}`
@@ -2227,7 +2329,10 @@ function attachRamToSlot(slotId, whIdx) {
   if (!s || !state.warehouseRams[idx]) return;
   if (!Array.isArray(s.rams)) s.rams = [];
   const maxRams = s.cpu ? (s.cpu.maxRamSlots || 2) : 2;
-  if (s.rams.length >= maxRams) return;
+  if (s.rams.length >= maxRams) {
+    showFloatingToast(`🔒 <b>Slot RAM Penuh (${maxRams} Slot)!</b><br>Upgrade Processor ke seri yang mendukung 4 atau 8 Slot RAM untuk menambah keping RAM lagi.`, 'warn');
+    return;
+  }
   s.rams.push(state.warehouseRams.splice(idx, 1)[0]);
   saveGame(); openSlotConfigModal(slotId); renderAll();
 }
@@ -2243,10 +2348,28 @@ function toggleGameOnPc(slotId, gameId, doInstall) {
   const s = state.slots.find(x => x.id === slotId);
   if (!s) return;
   if (!Array.isArray(s.installedGames)) s.installedGames = [];
-  if (doInstall) {
+  const g = GAME_DISC_CATALOG.find(x => x.id === gameId);
+  if (doInstall && g) {
+    const pcTier = getPcTier(s);
+    const totalGb = getPcTotalStorageGb(s);
+    const usedGb = getPcUsedStorageGb(s);
+    if (pcTier < g.minTier) {
+      const cpuT = s.cpu ? s.cpu.tier : 0;
+      const vgaT = s.vga ? s.vga.tier : 0;
+      const ramGb = getPcTotalRamGb(s);
+      const ramT = ramGb >= 64 ? 12 : ramGb >= 32 ? 10 : ramGb >= 16 ? 8 : ramGb >= 8 ? 5 : ramGb >= 4 ? 3 : ramGb >= 2 ? 2 : 0;
+      showFloatingToast(`🔒 <b>Spek PC Kurang untuk ${g.title}!</b><br>Butuh minimal <b>Tier ${g.minTier}</b>, sedangkan PC ini masih <b>Tier ${pcTier}</b> (CPU Tier ${cpuT}, RAM ${ramGb}GB=Tier ${ramT}, VGA Tier ${vgaT}).<br>💡 <b>Solusi:</b> Upgrade komponen yang Tier-nya paling rendah atau tekan tombol <b>⚡ Aktifkan Overclock (+1 Tier)</b>!`, 'warn');
+      return;
+    }
+    if ((usedGb + g.sizeGb) > totalGb) {
+      showFloatingToast(`🔒 <b>Kapasitas HDD/SSD Tidak Cukup!</b><br>Game <b>${g.title}</b> butuh <b>${g.sizeGb} GB</b>, sedangkan sisa ruang kosong di PC ini hanya <b>${Math.max(0, +(totalGb - usedGb).toFixed(1))} GB</b> (Total ${totalGb} GB).<br>💡 <b>Solusi:</b> Uninstal game lain atau ganti HDD/SSD yang lebih besar!`, 'warn');
+      return;
+    }
     if (!s.installedGames.includes(gameId)) s.installedGames.push(gameId);
+    showFloatingToast(`✅ Berhasil meng-instal <b>${g.title}</b> di <b>${s.name}</b>!`, 'ok');
   } else {
     s.installedGames = s.installedGames.filter(id => id !== gameId);
+    if (g) showFloatingToast(`🗑️ Meng-uninstal <b>${g.title}</b> dari <b>${s.name}</b>.`, 'info');
   }
   playSfx('click');
   saveGame(); openSlotConfigModal(slotId); renderAll();
@@ -2341,10 +2464,17 @@ function cleanAllPcDustAndPaste() {
 function holdWeekendTournament() {
   const readySlots = state.slots.filter(s => isSlotReadyToPlay(s).ok);
   if (readySlots.length < 6) {
-    return addLog('⚠️ Minimal harus ada <b>6 unit PC / Rental PS siap main</b> untuk menggelar Turnamen Lokal!');
+    return notifyBlockedPopup(
+      'Unit PC / PS Belum Cukup untuk Turnamen',
+      `Untuk menggelar Turnamen Lokal, minimal harus ada <b>6 unit PC / Rental PS</b> yang sudah lengkap &amp; siap main.<br><br>Saat ini baru ada <b>${readySlots.length} unit</b> yang siap main. Rakit/lengkapi bilik terlebih dahulu!`
+    );
   }
-  if (state.totalDays - (state.lastTournamentDay || -10) < 5) {
-    return addLog('⚠️ Turnamen baru saja digelar! Tunggu beberapa hari lagi untuk menggelar turnamen berikutnya.');
+  const daysSince = state.totalDays - (state.lastTournamentDay || -10);
+  if (daysSince < 5) {
+    return notifyBlockedPopup(
+      'Turnamen Masih Cooldown',
+      `Kamu baru saja menggelar turnamen ${daysSince} hari yang lalu.<br>Tunggu <b>${5 - daysSince} hari lagi</b> untuk menggelar turnamen berikutnya!`
+    );
   }
   const prizeCost = getPriceFrom2010(350000);
   if (!deductFromAnyCash(prizeCost)) return;
@@ -2365,16 +2495,29 @@ function holdWeekendTournament() {
 function attachGearToPc(slotId, quality) {
   const s = state.slots.find(x => x.id === slotId);
   if (!s) return;
-  if (quality === 'new' && state.cashierGearNew > 0) {
+  if (quality === 'new') {
+    if (state.cashierGearNew <= 0) {
+      return showFloatingToast('🔒 <b>Stok Gear Standar Baru di Kasir Kosong (0)!</b><br>Beli dulu di menu <b>🛒 Rakit/Server -> 🖱️ Gear Set</b>.', 'warn');
+    }
     state.cashierGearNew--;
     s.gear = { name: 'Set Gear Standar', quality: 'new', durability: 100, maxDurability: 100 };
-  } else if (quality === 'mech' && (state.cashierGearMech || 0) > 0) {
+    showFloatingToast(`✅ Memasang <b>Set Gear Standar (100%)</b> ke <b>${s.name}</b>.`, 'ok');
+  } else if (quality === 'mech') {
+    if ((state.cashierGearMech || 0) <= 0) {
+      return showFloatingToast('🔒 <b>Stok Mechanical RGB Gear di Kasir Kosong (0)!</b><br>Beli dulu di menu <b>🛒 Rakit/Server -> 🖱️ Gear Set</b> (Rilis 2014+).', 'warn');
+    }
     state.cashierGearMech--;
     s.gear = { name: 'Set Mechanical RGB', quality: 'mech', durability: 220, maxDurability: 220 };
-  } else if (quality === 'serviced' && state.cashierGearServiced > 0) {
+    showFloatingToast(`✅ Memasang <b>Set Mechanical RGB (220%)</b> ke <b>${s.name}</b>.`, 'ok');
+  } else if (quality === 'serviced') {
+    if (state.cashierGearServiced <= 0) {
+      return showFloatingToast('🔒 <b>Stok Gear Hasil Servis Kosong (0)!</b><br>Servis dulu gear yang rusak di menu <b>🔧 Teknisi/Part</b>.', 'warn');
+    }
     state.cashierGearServiced--;
     s.gear = { name: 'Set Gear Servis', quality: 'serviced', durability: 65, maxDurability: 65 };
+    showFloatingToast(`✅ Memasang <b>Set Gear Servis (65%)</b> ke <b>${s.name}</b>.`, 'ok');
   }
+  playSfx('click');
   saveGame();
   openSlotConfigModal(slotId);
   renderAll();
@@ -2515,11 +2658,13 @@ function toggleChildEliteSchool(idx) {
 
 function buyFacilityItem(facId) {
   state.facilities = state.facilities || {};
-  if (state.facilities[facId]) return;
   const fac = (typeof WARNET_FACILITIES_CATALOG !== 'undefined' ? WARNET_FACILITIES_CATALOG : []).find(x => x.id === facId);
   if (!fac) return;
+  if (state.facilities[facId]) {
+    return showFloatingToast(`✅ <b>${fac.name}</b> sudah terpasang dan aktif di ruko warnetmu!`, 'ok');
+  }
   const price = getPriceFrom2010(fac.basePrice2010);
-  if (!deductFromAnyCash(price)) return addLog('⚠️ Uang di Dompet/Bank tidak cukup untuk memasang fasilitas ini!');
+  if (!deductFromAnyCash(price)) return;
   state.facilities[facId] = true;
   playSfx('cash');
   addLog(`${fac.icon || '🏢'} Memasang <b>${fac.name}</b> (${fmtRp(price)})! ${fac.desc}`);
@@ -2539,7 +2684,7 @@ function buyGoldGrams(grams) {
   const g = Math.max(1, Number(grams) || 1);
   const pricePerGram = typeof getHistoricalGoldPricePerGram === 'function' ? getHistoricalGoldPricePerGram(state.year, state.totalDays) : getPriceFrom2010(385000);
   const totalCost = g * pricePerGram;
-  if (!deductFromAnyCash(totalCost)) return addLog('⚠️ Saldo Dompet/Bank tidak cukup untuk membeli Emas Antam!');
+  if (!deductFromAnyCash(totalCost)) return;
   state.goldGrams = (state.goldGrams || 0) + g;
   playSfx('cash');
   addLog(`🪙 Membeli <b>${g} gram Emas Antam</b> seharga <b>${fmtRp(totalCost)}</b> (${fmtRp(pricePerGram)}/gr).`);
@@ -2549,8 +2694,13 @@ function buyGoldGrams(grams) {
 
 function sellGoldGrams(grams) {
   state.goldGrams = state.goldGrams || 0;
+  if (state.goldGrams <= 0) {
+    return notifyBlockedPopup(
+      'Belum Punya Tabungan Emas Antam',
+      'Saldo tabungan Emas Antam kamu saat ini masih <b>0 gram</b>.<br>Beli emas terlebih dahulu melalui tombol <b>+ Beli 1gr</b> atau <b>+ Beli 5gr</b>!'
+    );
+  }
   const g = Math.min(state.goldGrams, Math.max(1, Number(grams) || 1));
-  if (g <= 0) return;
   const pricePerGram = typeof getHistoricalGoldPricePerGram === 'function' ? getHistoricalGoldPricePerGram(state.year, state.totalDays) : getPriceFrom2010(385000);
   const totalProceeds = g * pricePerGram;
   state.goldGrams -= g;
@@ -2562,10 +2712,17 @@ function sellGoldGrams(grams) {
 }
 
 function takeItNightCourse() {
-  if (state.itCourseCompleted) return;
-  if (state.player.age < 18) return addLog('⚠️ Minimal usia 18 tahun untuk mengambil Kursus/Kuliah Malam IT!');
+  if (state.itCourseCompleted) {
+    return showFloatingToast('✅ Kamu sudah lulus Sertifikasi Teknisi IT (Diskon 15% komponen PC aktif)!', 'ok');
+  }
+  if (state.player.age < 18) {
+    return notifyBlockedPopup(
+      'Syarat Usia Kuliah / Kursus Malam IT (Minimal 18 Tahun)',
+      `Usiamu saat ini masih <b>${state.player.age} tahun</b> (masih usia sekolah).<br><br>Kamu baru bisa mendaftar <b>Kursus / Kuliah Malam Sertifikasi Teknisi IT</b> setelah berusia <b>18 tahun</b>!`
+    );
+  }
   const cost = getPriceFrom2010(4500000);
-  if (!deductFromAnyCash(cost)) return addLog('⚠️ Uang tidak cukup untuk biaya Kursus/Kuliah Malam IT!');
+  if (!deductFromAnyCash(cost)) return;
   state.itCourseCompleted = true;
   playSfx('cash');
   addLog(`🎓 <b>Selamat!</b> Kamu lulus Kursus & Sertifikasi Teknisi IT (${fmtRp(cost)}). Semua komponen rakit PC di Toko kini <b>Diskon Permanen 15%</b>!`);
@@ -2653,6 +2810,9 @@ function upgradeRenovation() {
 function changeInternetPlan(planId) {
   const p = INTERNET_PLANS.find(x => x.id === planId);
   if (!p) return;
+  if (state.internetPlanId === p.id) {
+    return showFloatingToast(`✅ Paket internet <b>${p.name}</b> sudah aktif di warnetmu!`, 'ok');
+  }
   const installFee = p.monthlyReal || 295000;
   if (!deductFromAnyCash(installFee)) return;
   state.internetPlanId = p.id;
@@ -2732,9 +2892,14 @@ function installOrBuyPcGame(gameId) {
 }
 
 function manualServiceGear() {
-  if (state.cashierGearBroken <= 0) return;
+  if (state.cashierGearBroken <= 0) {
+    return notifyBlockedPopup(
+      'Tidak Ada Gear yang Rusak (0 Set)',
+      'Saat ini belum ada Mouse/Keyboard/Headset yang rusak di stok kasir.<br><br>Ketika gear di bilik PC aus hingga 0% setelah dipakai pelanggan, gear tersebut otomatis masuk ke stok rusak untuk diservis di sini.'
+    );
+  }
   const partCost = getPriceFrom2010(10000);
-  if (!deductFromAnyCash(partCost)) return addLog('⚠️ Uang kurang untuk beli kabel/switch mouse!');
+  if (!deductFromAnyCash(partCost)) return;
   state.cashierGearBroken--;
   state.cashierGearServiced++;
   playSfx('click');
@@ -2747,7 +2912,13 @@ function buyWarnetSupply(id) {
   const it = WARNET_SUPPLY_CATALOG.find(x => x.id === id);
   if (!it) return;
   if (it.requiresFacility && !(state.facilities && state.facilities[it.requiresFacility])) {
-    return addLog('⚠️ Pasang fasilitas pendukungnya dulu di menu <b>Rakit/Server -> Fasilitas Ruko</b>!');
+    const reqFac = (typeof WARNET_FACILITIES_CATALOG !== 'undefined' ? WARNET_FACILITIES_CATALOG : []).find(f => f.id === it.requiresFacility);
+    const facName = reqFac ? reqFac.name : 'Fasilitas Ruko';
+    return notifyBlockedPopup(
+      `Butuh Fasilitas: ${facName}`,
+      `Untuk membeli &amp; menjual <b>${it.name}</b>, ruko warnetmu wajib memasang <b>${facName}</b> terlebih dahulu!<br><br>
+       <button type="button" class="primary" onclick="closeCustomModal();state.hwCategoryFilter='fac';openDrawerTab('store_hw')">🏢 Buka Menu Fasilitas Ruko Sekarang</button>`
+    );
   }
   const whMult = getWholesaleDiscountMult();
   const cost = roundTo500(getPriceFrom2010(it.boxPrice2010) * whMult);
@@ -2859,31 +3030,46 @@ function confirmHireEmployee(editIdx = -1) {
 }
 
 function fireEmployee(idx) {
+  const emp = state.employees[idx];
+  if (!emp) return;
   state.employees.splice(idx, 1);
+  playSfx('click');
+  addLog(`👷 Karyawan <b>${emp.name}</b> telah diberhentikan.`);
   saveGame();
   renderAll();
 }
 
 // ==================== PINJAMAN, TRANSFER KAS, KARAKTER & CLOUD ====================
 function takeParentLoan(amount) {
-  if (state.parentLoan.active) return;
+  if (state.parentLoan.active) {
+    return notifyBlockedPopup('Pinjaman Orang Tua Masih Aktif', 'Lunasi pinjaman orang tua yang sedang berjalan terlebih dahulu sebelum meminjam lagi!');
+  }
   const amt = Math.min(30000000, amount);
   state.personalBank += amt;
   state.parentLoan = { active: true, remainingTotal: amt, weeklyInstallment: Math.ceil(amt / 52), weeksLeft: 52 };
   playSfx('cash');
-  addLog(`👨‍👩‍👦 Pinjaman Orang Tua cair <b>+${fmtRp(amt)}</b> (52x mingguan tanpa bunga).`);
+  addLog(`👨‍👩‍👦 Pinjaman Orang Tua cair <b>+${fmtRp(amt)}</b> ke Bank (52x mingguan tanpa bunga).`);
   saveGame(); renderAll();
 }
 
 function takeBankLoan(amount) {
-  if (state.player.age < 21 || state.bankLoan.active) return;
+  if (state.player.age < 21) {
+    return notifyBlockedPopup(
+      'Syarat Usia Kredit Usaha Bank (Minimal 21 Tahun)',
+      `Pengajuan kredit ditolak oleh Bank karena usiamu saat ini masih <b>${state.player.age} tahun</b>.<br><br>
+       💡 <b>Solusi:</b> Selama usia di bawah 21 tahun, gunakan <b>👨‍👩‍👦 Pinjaman Orang Tua (5–30 Juta, Bunga 0%)</b> di kartu atas!`
+    );
+  }
+  if (state.bankLoan.active) {
+    return notifyBlockedPopup('Kredit Bank Masih Berjalan', 'Kamu masih memiliki cicilan Kredit Usaha Bank yang aktif. Lunasi terlebih dahulu sebelum mengajukan kredit baru!');
+  }
   const rate = getBankInterestRate(state.year);
   const months = amount > 60000000 ? 24 : 12;
   const total = Math.round(amount * (1 + (rate / 100) * (months / 12)));
   state.personalBank += amount;
   state.bankLoan = { active: true, principal: amount, remainingTotal: total, monthlyInstallment: Math.ceil(total / months), monthsLeft: months, interestRatePct: rate };
   playSfx('cash');
-  addLog(`🏦 Kredit Usaha Bank cair <b>+${fmtRp(amount)}</b>.`);
+  addLog(`🏦 Kredit Usaha Bank cair <b>+${fmtRp(amount)}</b> ke Bank.`);
   saveGame(); renderAll();
 }
 
@@ -2893,7 +3079,7 @@ function openBankTransferModal() {
     `<div class="spec-line">Laci: <b>${fmtRp(state.laciCash)}</b> • Bank: <b>${fmtRp(state.personalBank)}</b> • Dompet: <b>${fmtRp(state.handWallet)}</b></div>
      <div class="grid-2">
        <div><label class="spec-line">Dari</label><select id="tfFrom"><option value="laci">Laci Kasir</option><option value="bank">Bank</option><option value="wallet">Dompet</option></select></div>
-       <div><label class="spec-line">Ke</label><select id="tfTo"><option value="bank">Bank</option><option value="laci">Laci Kasir</option><option value="wallet">Dompet</option></select></div>
+       <div><label class="spec-line">Ke</label><select id="tfTo"><option value="wallet">Dompet</option><option value="bank">Bank</option><option value="laci">Laci Kasir</option></select></div>
      </div>
      <div><label class="spec-line">Nominal (Rp)</label><input type="number" id="tfAmt" value="100000" min="1000" step="1000" /></div>
      <div class="grid-3">
@@ -2911,14 +3097,23 @@ function openBankTransferModal() {
 function transferCustomFunds(all) {
   const from = document.getElementById('tfFrom').value;
   const to = document.getElementById('tfTo').value;
-  if (from === to) return;
+  if (from === to) {
+    return showFloatingToast('⚠️ Pilih rekening <b>Dari</b> dan <b>Ke</b> yang berbeda!', 'warn');
+  }
   const keyMap = { laci: 'laciCash', bank: 'personalBank', wallet: 'handWallet' };
+  const labelMap = { laci: 'Laci Kasir', bank: 'Bank', wallet: 'Dompet' };
   const avail = state[keyMap[from]] || 0;
+  if (avail <= 0) {
+    return showFloatingToast(`⚠️ Saldo di <b>${labelMap[from]}</b> saat ini masih <b>Rp 0</b>!`, 'warn');
+  }
   const amt = all ? avail : Math.min(avail, Math.max(0, Number(document.getElementById('tfAmt').value) || 0));
-  if (amt <= 0) return;
+  if (amt <= 0) {
+    return showFloatingToast('⚠️ Masukkan nominal transfer yang valid!', 'warn');
+  }
   state[keyMap[from]] -= amt;
   state[keyMap[to]] += amt;
   playSfx('cash');
+  addLog(`💸 Memindahkan <b>${fmtRp(amt)}</b> dari <b>${labelMap[from]}</b> ke <b>${labelMap[to]}</b>.`);
   saveGame();
   openBankTransferModal();
   renderAll();
@@ -2980,18 +3175,27 @@ function payOffAssetLoan(idx) {
 }
 
 function choosePartner(id) {
+  if (state.player.age < 17) {
+    return notifyBlockedPopup(
+      'Belum Cukup Umur untuk Pacaran (Minimal 17 Tahun)',
+      `Usiamu saat ini masih <b>${state.player.age} tahun</b>.<br>Kamu baru bisa mulai berpacaran setelah berusia minimal <b>17 tahun</b>!`
+    );
+  }
   const pt = PARTNERS_LIST.find(x => x.id === id);
   if (!pt) return;
   state.player.partner = pt;
   state.player.married = false;
+  playSfx('click');
+  addLog(`💕 Kamu resmi berpacaran dengan <b>${pt.name} (${pt.job})</b>!`);
   saveGame(); renderAll();
 }
 
 function marryPartner() {
   if (!state.player.partner) return;
   const cost = getPriceFrom2010(15000000);
-  if (!deductFromAnyCash(cost)) return addLog('⚠️ Biaya nikah kurang!');
+  if (!deductFromAnyCash(cost)) return;
   state.player.married = true;
+  playSfx('cash');
   addLog(`💍 Resmi menikah dengan <b>${state.player.partner.name}</b>!`);
   saveGame(); renderAll();
 }
@@ -3001,13 +3205,20 @@ function haveChildWithPartner() {
   const isBoy = Math.random() < 0.5;
   const cName = isBoy ? `Putra ${state.player.name.split(' ')[0]}` : `Putri ${state.player.name.split(' ')[0]}`;
   state.player.childrenList.push({ name: cName, gender: isBoy ? 'Laki-laki' : 'Perempuan', age: 0, birthDay: state.day, birthMonth: state.month, birthYear: state.year, eliteSchool: false, skillBonus: 0 });
+  playSfx('cash');
   addLog(`👶 Anakmu <b>${cName}</b> lahir!`);
   saveGame(); renderAll();
 }
 
 function inheritToChild(idx) {
   const ch = state.player.childrenList[idx];
-  if (!ch || ch.age < 8) return;
+  if (!ch) return;
+  if (ch.age < 8) {
+    return notifyBlockedPopup(
+      'Anak Masih Terlalu Kecil (Minimal 8 Tahun)',
+      `Anakmu <b>${ch.name}</b> saat ini baru berusia <b>${ch.age} tahun</b>.<br>Tunggu hingga usianya minimal <b>8 tahun</b> untuk mewariskan seluruh usaha warnet kepadanya!`
+    );
+  }
   const hadElite = !!ch.eliteSchool;
   state.player.name = ch.name;
   state.player.gender = ch.gender;
@@ -3020,6 +3231,7 @@ function inheritToChild(idx) {
     state.itCourseCompleted = true;
     state.reputationBonus = (state.reputationBonus || 0) + 3;
   }
+  playSfx('cash');
   addLog(`👑 Seluruh usaha Warnet resmi diwariskan kepada <b>${ch.name}</b>${hadElite ? ' (Lulusan Sekolah Unggulan IT: Diskon 15% Komponen PC & Bonus Reputasi Aktif!)' : ''}!`);
   saveGame(); renderAll();
 }
@@ -3122,8 +3334,9 @@ function openCharacterCreationModal() {
   const ethOpts = ETHNICITIES.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
   const relOpts = RELIGIONS_ID.map(r => `<option value="${r}">${r}</option>`).join('');
   showCustomModal(
-    '🖥️ Mulai Usaha Warnet Baru (Tahun 2010 • Modal Rp 50 Juta)',
-    `<div class="grid-2">
+    '🖥️ Mulai Usaha Warnet & Rental PS Baru (Tahun 2010 • Mulai Rp 0)',
+    `<div class="spec-line">Mulai dari Rp 0 di tahun 2010! Pinjam modal ke Orang Tua (5–30 Juta tanpa bunga di tab <b>⚡ PLN/Genset</b>) lalu rakit PC atau pasang PS pertamamu.</div>
+     <div class="grid-2">
        <div><label class="spec-line">Nama</label><input id="ccName" value="${state.player.name}" /></div>
        <div><label class="spec-line">Gender</label><select id="ccGender"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
      </div>
@@ -3157,23 +3370,34 @@ function confirmCharacterCreation() {
   state.hour = 8; state.minute = 0; state.second = 0; state.totalDays = 1;
   state.laciCash = 0; state.handWallet = 0; state.personalBank = 0;
   state.openHour = 8; state.closeHour = 23;
-  state.kwh = 45.0; state.plnBlackout = false;
+  state.kwh = 45.0; state.plnMeterLevel = 1; state.plnBlackout = false;
   state.genset = { owned: true, active: false, fuelLiters: 8.0, maxTankLiters: 15.0 };
   state.cleanliness = 100; state.renovLevel = 1; state.serverLevel = 1; state.internetPlanId = 'isp_1m';
   state.rentalOpen = true;
+  state.happyHourActive = false; state.nightPackageActive = false; state.qrisActive = false;
+  state.facilities = {}; state.members = { count: 0, discountPct: 10 };
+  state.goldGrams = 0; state.itCourseCompleted = false; state.familyHappiness = 90;
+  state.lastTournamentDay = -10; state.reputationBonus = 0;
+  state.branches = { warnetOwned: false, psRentalOwned: false };
+  state.financeStats = { revBilling: 0, revSnack: 0, revExtra: 0, expPower: 0, expSalary: 0, expLoan: 0 };
   state.slots = createEmptyWarnetSlots20();
   state.waitingQueue = [];
   state.warehouseCpus = []; state.warehouseRams = []; state.warehouseVgas = [];
   state.warehouseStorages = []; state.warehouseMonitors = []; state.warehouseCoolings = [];
-  state.cashierGearNew = 3; state.cashierGearServiced = 0; state.cashierGearBroken = 0;
+  state.warehouseChairs = []; state.warehousePsConsoles = [];
+  state.cashierGearNew = 3; state.cashierGearMech = 0; state.cashierGearServiced = 0; state.cashierGearBroken = 0;
   state.waterGallonServings = 45;
   state.employees = [];
-  state.player = { name, gender, religion, ethnicity, birthDay: bDay, birthMonth: bMonth, birthYear: bYear, age: 2010 - bYear, partner: null, married: false, childrenList: [] };
+  state.property = { owned: false, kprActive: false, kprRemaining: 0, kprMonthly: 0, kprMonthsLeft: 0 };
+  state.parentLoan = { active: false, remainingTotal: 0, weeklyInstallment: 0, weeksLeft: 0 };
+  state.bankLoan = { active: false, principal: 0, remainingTotal: 0, monthlyInstallment: 0, monthsLeft: 0, interestRatePct: 0 };
+  state.assetLoans = []; state.ownedHouses = []; state.ownedVehicles = []; state.ownedGadgets = [];
+  state.player = { name, gender, religion, ethnicity, birthDay: bDay, birthMonth: bMonth, birthYear: bYear, age: 2010 - bYear, energy: 100, isSick: false, sickName: '', bpjsTier: 'none', partner: null, married: false, childrenList: [] };
   seedStarterWarnetPcs();
   saveGame();
   closeCustomModal();
   renderAll();
-  addLog(`🎉 Usaha Warnet <b>${name}</b> (Usia ${state.player.age} thn) resmi dimulai di tahun 2010 dengan modal Rp 50 Juta!`);
+  addLog(`🎉 Usaha Warnet <b>${name}</b> (Usia ${state.player.age} thn) resmi dimulai di tahun 2010! Ambil Pinjaman Orang Tua di tab <b>⚡ PLN/Genset</b> untuk mulai merakit PC!`);
 }
 
 function saveGame() {
@@ -3202,10 +3426,49 @@ function loadGame() {
 
 function openCloudSyncModal() {
   showCustomModal(
-    '☁️ Cloud Save Warnet',
-    `<input id="cloudSyncIdInp" value="${typeof CloudSync !== 'undefined' ? CloudSync.syncId : 'oneil_default'}" />`,
-    `<button type="button" onclick="closeCustomModal()">Tutup</button>`
+    '☁️ Cloud Save & Load Warnet',
+    `<div class="spec-line">Masukkan ID Cloud Save unikmu (minimal 4 karakter) untuk menyimpan atau memuat progres game lintas perangkat:</div>
+     <input id="cloudSyncIdInp" value="${typeof CloudSync !== 'undefined' ? CloudSync.syncId : 'oneil_default'}" placeholder="ID Cloud Save" />`,
+    `<button type="button" onclick="closeCustomModal()">Tutup</button>
+     <button type="button" class="amber" onclick="manualCloudPull()">📥 Muat dari Cloud</button>
+     <button type="button" class="primary" onclick="manualCloudPush()">☁️ Simpan ke Cloud</button>`
   );
+}
+
+async function manualCloudPush() {
+  if (typeof CloudSync === 'undefined') return showFloatingToast('⚠️ Modul CloudSync belum aktif.', 'warn');
+  const inp = document.getElementById('cloudSyncIdInp');
+  if (inp && !CloudSync.setSyncId(inp.value)) {
+    return showFloatingToast('⚠️ ID Cloud minimal 4 karakter (huruf/angka)!', 'warn');
+  }
+  showFloatingToast('☁️ Menyimpan data ke Cloud...', 'info');
+  const res = await CloudSync.pushToCloud(state, true);
+  if (res && res.ok) {
+    playSfx('cash');
+    showFloatingToast(`✅ Berhasil disimpan ke Cloud (ID: <b>${CloudSync.syncId}</b>)!`, 'ok');
+  } else {
+    showFloatingToast(`⚠️ Gagal simpan ke Cloud (${res ? res.reason : 'offline'}). Progres tetap aman di memori lokal.`, 'warn');
+  }
+}
+
+async function manualCloudPull() {
+  if (typeof CloudSync === 'undefined') return showFloatingToast('⚠️ Modul CloudSync belum aktif.', 'warn');
+  const inp = document.getElementById('cloudSyncIdInp');
+  if (inp && !CloudSync.setSyncId(inp.value)) {
+    return showFloatingToast('⚠️ ID Cloud minimal 4 karakter (huruf/angka)!', 'warn');
+  }
+  showFloatingToast('📥 Memuat data dari Cloud...', 'info');
+  const res = await CloudSync.pullFromCloud();
+  if (res && res.ok && res.state) {
+    Object.assign(state, res.state);
+    saveGame();
+    closeCustomModal();
+    renderAll();
+    playSfx('cash');
+    showFloatingToast(`✅ Data Cloud (ID: <b>${CloudSync.syncId}</b>) berhasil dimuat!`, 'ok');
+  } else {
+    showFloatingToast(`⚠️ Data Cloud tidak ditemukan untuk ID <b>${CloudSync.syncId}</b>.`, 'warn');
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
