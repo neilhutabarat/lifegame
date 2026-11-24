@@ -1,13 +1,13 @@
 /* main.js — alur game: pilih kota dan QRIS, jam berjalan, buka-tutup kedai, racik dan jualan, laporan malam, kalender, simpan otomatis. */
 (function () {
   'use strict';
-  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU;
+  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG;
   var MENIT_PER_DETIK = 1.875;          /* 1x: 15 jam kedai = 8 menit nyata */
   var TAHUN_DASAR = 2022;               /* tahun Masehi 2023 = tahun ke-1 */
   var HARI_PERTAMA = KAL.dn(2023, 1, 2); /* Senin pertama */
 
   var $ = function (id) { return document.getElementById(id); };
-  var S = null, layar = 'awal', lembar = null, tPrev = 0, menitSimpan = 0, toastT = 0, kotaDipilih = null;
+  var S = null, layar = 'awal', lembar = null, tPrev = 0, menitSimpan = 0, toastT = 0, kotaDipilih = null, qrisDipilih = null;
   var R = null; /* racik yang sedang terbuka: { o: pembeli } */
   var kal = { y: 0, m: 0, pilih: null };
 
@@ -32,10 +32,12 @@
     $('layar-awal').hidden = nama !== 'awal';
     $('layar-kota').hidden = nama !== 'kota';
     $('layar-qris').hidden = nama !== 'qris';
+    $('layar-bank').hidden = nama !== 'bank';
     $('hud').hidden = $('bawah').hidden = nama !== 'main';
     if (nama === 'awal') isiLayarAwal();
     if (nama === 'kota') isiKota();
     if (nama === 'qris') isiQris();
+    if (nama === 'bank') isiBank();
     if (nama === 'main') { perbaruiHUD(true); perbaruiAksi(); }
   }
   function isiLayarAwal() {
@@ -60,24 +62,33 @@
         '<span class="ciri">' + esc(q.transfer) + '</span></button>';
     }).join('');
   }
-  /* lengkapi simpanan lama (tahap 1) dengan isi tahap 2 */
+  function isiBank() {
+    $('bank-daftar').innerHTML = N.bank.map(function (b) {
+      return '<button type="button" class="kota" data-bank="' + b.id + '"><b><i class="tanda-qris" style="background:' + b.warna + '"></i>' + esc(b.nama) + '</b>' +
+        '<span class="ciri">Admin ' + rupiah(b.admin) + ' sebulan · transfer ATM sampai ' + rupiah(b.batasTransfer) + ' sehari</span></button>';
+    }).join('');
+  }
+  /* lengkapi simpanan lama (tahap 1 dan 2) */
   function lengkapi(d) {
-    d.v = 2;
+    d.v = 3;
     d.uang = d.uang || { laci: 0, merchant: 0 };
     d.hariIni = d.hariIni || JUAL.hariBaru();
+    d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
     return d;
   }
-  function mulaiBaru(kota, qris) {
-    S = lengkapi({ v: 2, kota: kota, qris: qris, hari: HARI_PERTAMA, menit: 360, fase: 'pagi', jamBuka: 7, jamTutup: 22, kec: 1, hariKe: 1, dibuat: Date.now() });
+  function mulaiBaru(kota, qris, bank) {
+    S = lengkapi({ v: 3, kota: kota, qris: qris, hari: HARI_PERTAMA, menit: 360, fase: 'pagi', jamBuka: 7, jamTutup: 22, kec: 1, hariKe: 1, dibuat: Date.now() });
+    UANG.siapkan(S, bank);
     JUAL.kosongkan(); simpan(); tampil('main');
     toast('Hari pertama di ' + kotaIni().nama + '. Kedai buka pukul ' + jam(S.jamBuka * 60) + '.', 3000);
   }
   function lanjut(data) {
     S = lengkapi(data); JUAL.kosongkan();
     if (!S.qris) { kotaDipilih = null; tampil('qris'); return; }
+    if (!S.bank) { kotaDipilih = null; tampil('bank'); return; }
     if (S.fase === 'buka' || S.fase === 'pagi') { /* pembeli yang sedang antre tidak ikut tersimpan */ }
     if (S.fase === 'malam') S.menit = S.jamTutup * 60;
     tampil('main');
@@ -97,8 +108,10 @@
     var st = $('h-status');
     st.className = S.fase === 'buka' ? 'status-buka' : '';
     st.textContent = S.fase === 'pagi' ? 'Buka pukul ' + jam(S.jamBuka * 60) : S.fase === 'buka' ? 'Buka sampai ' + jam(S.jamTutup * 60) : 'Tutup';
-    $('h-laci').textContent = rupiah(S.uang.laci);
-    $('h-merchant').textContent = rupiah(S.uang.merchant);
+    $('h-laci').textContent = rupiah(UANG.laci(S));
+    $('h-merchant').textContent = rupiah(UANG.merchantTotal(S));
+    $('h-bank').textContent = rupiah(S.bank.saldo);
+    $('h-bank-nama').textContent = UANG.bankIni(S).nama;
     $('h-merchant-nama').textContent = qrisIni().nama;
     $('h-antre').textContent = JUAL.antre().length;
     if (paksa || Math.floor(S.menit) % 60 === 0) {
@@ -136,11 +149,16 @@
     var h = S.hariIni;
     S.riwayat.push({ hari: S.hari, dilayani: h.dilayani, pergi: h.pergi, omzet: h.omzetTunai + h.omzetQris, laba: labaKotor(h) });
     if (S.riwayat.length > 60) S.riwayat.shift();
-    S.hari += 1; S.hariKe += 1; S.menit = 360; S.fase = 'pagi'; S.hariIni = JUAL.hariBaru(); JUAL.kosongkan();
+    S.fase = 'pagi';
+    var kabar = UANG.gantiHari(S, S.hari, S.hari + 1);
+    S.hari += 1; S.hariKe += 1; S.menit = 360; S.hariIni = JUAL.hariBaru(); JUAL.kosongkan();
     if (KAL.tgl(S.hari).y !== S.tahunOmzet) { S.tahunOmzet = KAL.tgl(S.hari).y; S.omzetTahun = 0; }
     tutupLembar(); simpan(); perbaruiHUD(true); perbaruiAksi();
     var lib = KAL.hariIni(S.hari).filter(function (x) { return x.jenis === 'libur' || x.jenis === 'cuti'; });
     toast(namaTanggal(S.hari, true) + (lib.length ? '. ' + (lib[0].jenis === 'libur' ? 'Libur ' : 'Cuti bersama ') + lib[0].nama + '.' : '.'), 2600);
+    if (kabar.length) bukaLembar('kabar', kepala('Kabar pagi', namaTanggal(S.hari, true)) +
+      '<ul class="daftar kabar">' + kabar.map(function (k) { return '<li><span>' + esc(k) + '</span></li>'; }).join('') + '</ul>' +
+      '<div style="margin-top:16px"><button type="button" class="aksi" data-tutup>Mulai hari</button></div>');
   }
 
   /* ---------- lembar bawah ---------- */
@@ -167,6 +185,7 @@
       baris('Pembeli dilayani', h.dilayani + ' orang') +
       baris('Pergi karena kelamaan', h.pergi + ' orang', h.pergi ? 'rugi' : '') +
       (h.penuh ? baris('Batal karena antrean penuh', h.penuh + ' orang', 'rugi') : '') +
+      (h.tanpaKembalian ? baris('Kembalian tidak cukup', h.tanpaKembalian + ' kali', 'rugi') : '') +
       baris('Omzet tunai', rupiah(h.omzetTunai)) +
       baris('Omzet QRIS', rupiah(h.omzetQris)) +
       baris('Potongan MDR QRIS', '−' + rupiah(h.mdr)) +
@@ -174,7 +193,11 @@
       (h.terbuang ? baris('Bahan terbuang', '−' + rupiah(h.terbuang), 'rugi') : '') +
       baris('<b>Laba kotor</b>', '<b>' + rupiah(labaKotor(h)) + '</b>', 'total') + '</ul>' +
       (laris.length ? '<h3 class="subjudul">Menu terlaris</h3><ul class="daftar angka">' + laris.map(function (m) { return baris(esc(m.nama), h.menu[m.id] + ' gelas'); }).join('') + '</ul>' : '') +
-      '<h3 class="subjudul">Uang sekarang</h3><ul class="daftar angka">' + baris('Laci kas (tunai)', rupiah(S.uang.laci)) + baris('Saldo merchant ' + esc(q.nama), rupiah(S.uang.merchant)) + '</ul>' +
+      '<h3 class="subjudul">Uang sekarang</h3><ul class="daftar angka">' +
+      baris('Laci: uang kecil', rupiah(S.uang.kecil)) + baris('Laci: Rp50.000 dan Rp100.000', rupiah(S.uang.besar)) +
+      baris(esc(q.app) + ': bisa ditarik', rupiah(S.merchant.tersedia)) +
+      baris(esc(q.app) + ': cair hari kerja berikutnya', rupiah(UANG.merchantTotal(S) - S.merchant.tersedia)) +
+      baris('Rekening ' + esc(UANG.bankIni(S).nama), rupiah(S.bank.saldo)) + '</ul>' +
       '<p class="catatan">Omzet ' + rupiah(omzet) + ' hari ini. Belanja bahan, sewa, listrik, dan gaji mulai dihitung di versi berikutnya.</p>';
   }
   function kapan(lagi) { return lagi === 0 ? 'hari ini' : lagi === 1 ? 'besok' : lagi + ' hari lagi'; }
@@ -262,6 +285,110 @@
     simpan(); perbaruiHUD(true); bukaAtur();
   }
 
+  /* ---------- HP dalam game ---------- */
+  var app = { nama: null, pesan: '', salah: false, kurPlafon: 10e6, kurTenor: 24 };
+  function hasilAksi(r, berhasil) { app.pesan = r === true ? berhasil : r; app.salah = r !== true; if (r === true) { simpan(); perbaruiHUD(true); } }
+  function pesanApp() { return app.pesan ? '<p class="racik-pesan ' + (app.salah ? 'salah' : 'siap') + '">' + esc(app.pesan) + '</p>' : ''; }
+  function tombolUang(aksi, jumlah) { return jumlah.map(function (j) { return '<button type="button" class="chip-tombol" data-aksi="' + aksi + ':' + j + '">' + (j === 'semua' ? 'Semua' : rupiah(j)) + '</button>'; }).join(''); }
+  function kepalaApp(judul, sub) {
+    return kepala(judul, sub, '<button type="button" class="panah" data-app="beranda" aria-label="Kembali ke beranda HP">‹</button>');
+  }
+  var APPS = [
+    { id: 'bank', nama: function () { return UANG.bankIni(S).app; }, warna: function () { return UANG.bankIni(S).warna; }, huruf: function () { return UANG.bankIni(S).nama.charAt(0); } },
+    { id: 'merchant', nama: function () { return UANG.qrisIni(S).app; }, warna: function () { return UANG.qrisIni(S).warna; }, huruf: function () { return UANG.qrisIni(S).nama.charAt(0); } },
+    { id: 'laci', nama: function () { return 'Laci kas'; }, warna: function () { return '#b97a46'; }, huruf: function () { return 'Rp'; } },
+    { id: 'pajak', nama: function () { return 'M-Pajak'; }, warna: function () { return '#f2a516'; }, huruf: function () { return '%'; } },
+    { id: 'oss', nama: function () { return 'OSS'; }, warna: function () { return '#2f8f5b'; }, huruf: function () { return 'NIB'; } },
+    { id: 'kalender', nama: function () { return 'Kalender'; }, warna: function () { return '#d9443a'; }, huruf: function () { return KAL.tgl(S.hari).d; } }
+  ];
+  function bukaHP(nama) {
+    app.nama = nama || 'beranda';
+    if (app.nama === 'kalender') return bukaKalender();
+    var html;
+    if (app.nama === 'beranda') {
+      html = kepala('HP', jam(S.menit) + ' · ' + namaTanggal(S.hari, true)) + '<div class="hp-grid">' + APPS.map(function (a) {
+        return '<button type="button" class="hp-app" data-app="' + a.id + '"><i style="background:' + a.warna() + '">' + esc(a.huruf()) + '</i>' + esc(a.nama()) + '</button>';
+      }).join('') + '</div><p class="catatan">Setor, tarik, dan tukar uang hanya bisa saat kedai belum buka atau sudah tutup, karena harus pergi ke ATM atau warung.</p>';
+    } else if (app.nama === 'bank') html = layarBank();
+    else if (app.nama === 'kur') html = layarKur();
+    else if (app.nama === 'merchant') html = layarMerchant();
+    else if (app.nama === 'laci') html = layarLaci();
+    else if (app.nama === 'pajak') html = layarPajak();
+    else if (app.nama === 'oss') html = layarOss();
+    bukaLembar('hp', html);
+  }
+  function layarBank() {
+    var b = UANG.bankIni(S), k = S.kur;
+    var kur = k.status === 'menunggu' ? 'Pengajuan ' + rupiah(k.plafon) + ' sedang diproses' : k.status === 'aktif' ? 'Angsuran ' + rupiah(k.angsuran) + ' tiap tanggal ' + k.tempo + ', sisa ' + k.sisa + ' bulan' + (k.tunggakan ? ', tunggakan ' + rupiah(k.tunggakan) : '') : k.status === 'lunas' ? 'Lunas' : 'Belum punya';
+    return kepalaApp(b.app, 'Rekening usaha ' + b.nama) +
+      '<div class="saldo-besar"><small>Saldo</small><b>' + rupiah(S.bank.saldo) + '</b></div>' + pesanApp() +
+      '<h3 class="subjudul">Setor tunai dari laci</h3><div class="chip-baris">' + tombolUang('setor', [100000, 500000, 'semua']) + '</div>' +
+      '<h3 class="subjudul">Tarik tunai ke laci</h3><div class="chip-baris">' + tombolUang('tarik', [100000, 500000, 1000000]) + '</div>' +
+      '<ul class="daftar angka" style="margin-top:14px">' + baris('Biaya admin', rupiah(b.admin) + ' sebulan') + baris('Transfer ke bank lain (BI-FAST)', rupiah(N.biFast)) +
+      baris('Batas transfer ATM', rupiah(b.batasTransfer) + ' sehari') + '</ul>' +
+      '<button type="button" class="baris-tombol" data-app="kur"><span><b>KUR mikro</b><small>' + esc(kur) + '</small></span><span>›</span></button>' +
+      '<h3 class="subjudul">Mutasi</h3><ul class="daftar angka">' + (S.bank.mutasi.length ? S.bank.mutasi.slice(0, 15).map(function (m) {
+        return baris(esc(m.ket) + '<small>' + namaTanggal(m.n) + '</small>', (m.jml < 0 ? '−' : '+') + rupiah(Math.abs(m.jml)), m.jml < 0 ? 'keluar' : 'masuk');
+      }).join('') : '<li><span>Belum ada transaksi</span></li>') + '</ul>';
+  }
+  function layarKur() {
+    var k = S.kur, syarat = UANG.syaratKur(S), a = UANG.angsuran(app.kurPlafon, app.kurTenor);
+    var isi = '<ul class="daftar syarat">' + syarat.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'belum') + '"><span>' + (x.ok ? '✓ ' : '✗ ') + esc(x.teks) + '</span></li>'; }).join('') + '</ul>';
+    if (k.status === 'aktif' || k.status === 'menunggu') isi += '<ul class="daftar angka" style="margin-top:10px">' + baris('Plafon', rupiah(k.plafon)) + baris('Tenor', k.tenor + ' bulan') + baris('Angsuran', rupiah(k.angsuran) + ' sebulan') +
+      (k.status === 'menunggu' ? baris('Cair', namaTanggal(k.siapPada)) : baris('Sisa', k.sisa + ' bulan')) + '</ul>';
+    else isi += '<h3 class="subjudul">Plafon</h3><div class="chip-baris">' + N.kur.plafon.map(function (p) { return '<button type="button" class="chip-tombol' + (p === app.kurPlafon ? ' pilih' : '') + '" data-aksi="kurPlafon:' + p + '">' + (p / 1e6) + ' juta</button>'; }).join('') + '</div>' +
+      '<h3 class="subjudul">Tenor</h3><div class="chip-baris">' + N.kur.tenor.map(function (t) { return '<button type="button" class="chip-tombol' + (t === app.kurTenor ? ' pilih' : '') + '" data-aksi="kurTenor:' + t + '">' + t + ' bulan</button>'; }).join('') + '</div>' +
+      '<ul class="daftar angka" style="margin-top:10px">' + baris('Bunga', (N.kur.bunga * 100) + '% setahun') + baris('Angsuran', '<b>' + rupiah(a) + ' sebulan</b>', 'total') + '</ul>' +
+      '<div style="margin-top:12px"><button type="button" class="aksi" data-aksi="ajukanKur:1">Ajukan KUR</button></div>';
+    return kepala('KUR mikro', UANG.bankIni(S).nama + ' · proses ' + N.kur.hariProses + ' hari', '<button type="button" class="panah" data-app="bank" aria-label="Kembali ke bank">‹</button>') + pesanApp() + isi +
+      '<p class="catatan">Bank menyetujui kalau angsuran tidak lebih dari separuh rata-rata laba kotor kedai sebulan. Telat bayar tercatat di riwayat kredit.</p>';
+  }
+  function layarMerchant() {
+    var q = UANG.qrisIni(S), sisaGratis = q.gratis === Infinity ? 'tanpa batas' : Math.max(0, q.gratis - S.merchant.tarikBulanIni) + ' kali lagi bulan ini';
+    var kelas = (S.omzetTahun || 0) > N.mdr.batasMikro ? 'kecil' : 'mikro', m = N.mdr[kelas];
+    return kepalaApp(q.app, 'Merchant QRIS ' + q.nama) +
+      '<div class="saldo-besar"><small>Bisa ditarik</small><b>' + rupiah(S.merchant.tersedia) + '</b></div>' + pesanApp() +
+      '<ul class="daftar angka">' + baris('Cair hari kerja berikutnya', rupiah(UANG.merchantTotal(S) - S.merchant.tersedia)) + baris('Transfer gratis ke bank', sisaGratis) +
+      baris('Kelas usaha', 'Usaha ' + kelas) + baris('MDR QRIS', '0% sampai ' + rupiah(m.gratisSampai) + ', di atasnya ' + (m.tarif * 100).toFixed(1).replace('.', ',') + '%') + '</ul>' +
+      '<div style="margin-top:12px"><button type="button" class="aksi" data-aksi="tarikMerchant:1">Tarik semua ke ' + esc(UANG.bankIni(S).nama) + '</button></div>' +
+      '<p class="catatan">' + esc(q.transfer) + '. Uang QRIS masuk keesokan hari kerja; Sabtu, Minggu, dan hari libur tidak dihitung.</p>';
+  }
+  function layarLaci() {
+    return kepalaApp('Laci kas', 'Uang tunai di kedai') +
+      '<div class="saldo-besar"><small>Total</small><b>' + rupiah(UANG.laci(S)) + '</b></div>' + pesanApp() +
+      '<ul class="daftar angka">' + baris('Uang kecil (sampai Rp20.000)', rupiah(S.uang.kecil)) + baris('Rp50.000 dan Rp100.000', rupiah(S.uang.besar)) + '</ul>' +
+      '<h3 class="subjudul">Tukar ke uang kecil</h3><div class="chip-baris">' + tombolUang('tukar', [50000, 100000, 200000]) + '</div>' +
+      '<p class="catatan">Pembeli sering bayar pakai Rp50.000 atau Rp100.000. Kalau uang kecil habis, pembeli tidak bisa diberi kembalian: sebagian pindah ke QRIS, sisanya batal. Warung dan minimarket sekitar bisa menukar sampai ' + rupiah(UANG.BATAS_TUKAR_RECEH) + ' sehari.</p>';
+  }
+  function layarPajak() {
+    var p = N.pajak, ot = S.omzetTahun || 0, persen = Math.min(100, ot / p.bebas * 100);
+    var tagihan = S.pajak.tagihan.map(function (t, i) { return { t: t, i: i }; }).filter(function (x) { return !x.t.dibayar; });
+    return kepalaApp('M-Pajak', 'PPh final UMKM 0,5% omzet') + pesanApp() +
+      '<ul class="daftar angka">' + baris('Omzet tahun ini', rupiah(ot)) + baris('Omzet bulan ini', rupiah(S.pajak.omzetBulan)) + '</ul>' +
+      '<div class="meteran"><i style="width:' + persen.toFixed(1) + '%"></i></div><p class="catatan" style="margin-top:6px">Omzet sampai ' + rupiah(p.bebas) + ' setahun bebas pajak. Lewat dari itu, kena ' + (p.tarif * 100).toFixed(1).replace('.', ',') + '% dan disetor paling lambat tanggal ' + p.jatuhTempo + ' bulan berikutnya.</p>' +
+      '<h3 class="subjudul">Tagihan</h3><ul class="daftar angka">' + (tagihan.length ? tagihan.map(function (x) {
+        return '<li><span>PPh ' + esc(x.t.bulan) + '<small>Jatuh tempo ' + namaTanggal(x.t.jatuhTempo) + (x.t.denda ? ' · denda ' + rupiah(x.t.denda) : '') + '</small></span><span><button type="button" class="chip-tombol" data-aksi="bayarPajak:' + x.i + '">Bayar ' + rupiah(x.t.jml + x.t.denda) + '</button></span></li>';
+      }).join('') : '<li><span>Tidak ada tagihan</span></li>') + '</ul>';
+  }
+  function layarOss() {
+    return kepalaApp('OSS', 'Perizinan berusaha') + pesanApp() + (S.nib
+      ? '<div class="saldo-besar"><small>NIB terbit ' + namaTanggal(S.nib.n) + '</small><b>' + esc(S.nib.nomor) + '</b></div><p class="catatan">NIB dipakai untuk mengajukan KUR dan nanti untuk naik ke ruko.</p>'
+      : '<p class="catatan">Nomor Induk Berusaha didaftarkan gratis lewat OSS. Tanpa NIB, kedai tidak bisa mengajukan KUR.</p><div style="margin-top:12px"><button type="button" class="aksi" data-aksi="nib:1">Daftar NIB gratis</button></div>');
+  }
+  function aksiHP(nama, nilai) {
+    var v = nilai === 'semua' ? Infinity : +nilai;
+    if (nama === 'setor') hasilAksi(UANG.setor(S, v === Infinity ? UANG.laci(S) : v), 'Setor tunai berhasil.');
+    else if (nama === 'tarik') hasilAksi(UANG.tarik(S, v), 'Tarik tunai berhasil, uang masuk laci.');
+    else if (nama === 'tukar') hasilAksi(UANG.tukarReceh(S, v), 'Uang besar sudah ditukar ke uang kecil.');
+    else if (nama === 'tarikMerchant') hasilAksi(UANG.tarikMerchant(S), 'Saldo sudah masuk rekening.');
+    else if (nama === 'bayarPajak') hasilAksi(UANG.bayarPajak(S, v), 'Pajak sudah disetor.');
+    else if (nama === 'nib') hasilAksi(UANG.daftarNib(S), 'NIB terbit.');
+    else if (nama === 'kurPlafon') { app.kurPlafon = v; app.pesan = ''; }
+    else if (nama === 'kurTenor') { app.kurTenor = v; app.pesan = ''; }
+    else if (nama === 'ajukanKur') hasilAksi(UANG.ajukanKur(S, app.kurPlafon, app.kurTenor), 'Pengajuan KUR dikirim. Hasilnya keluar dalam ' + N.kur.hariProses + ' hari.');
+    var gulir = $('lembar-isi').scrollTop; bukaHP(app.nama); $('lembar-isi').scrollTop = gulir;
+  }
+
   /* ---------- racik ---------- */
   var WARNA_LAPIS = { es: 'linear-gradient(90deg,#cfe9f5 0 30%,#e8f6fb 30% 36%,#cfe9f5 36% 64%,#e8f6fb 64% 70%,#cfe9f5 70%)', kopi: '#4a2c1d', air: '#d9c3a3', uht: '#fbf7ef', skm: '#f1e3c0', gula: '#ffffff', aren: '#9a5a22', cokelat: '#6b3b25', teh: '#b8622a' };
   var TINGGI_LAPIS = { es: 14, kopi: 16, air: 20, uht: 20, skm: 9, gula: 5, aren: 9, cokelat: 16, teh: 20 };
@@ -326,7 +453,9 @@
   }
   function serahkan() {
     if (!R || !lengkap(R.o)) return;
-    var o = R.o; JUAL.layani(S, o, biayaGelas(o));
+    var o = R.o, hasil = JUAL.layani(S, o, biayaGelas(o));
+    if (hasil === false) toast('Uang kecil di laci tidak cukup untuk kembalian. Pembeli batal.', 2600);
+    else if (typeof hasil === 'string' && hasil.indexOf('QRIS') >= 0) toast('Kembalian kurang, pembeli bayar pakai QRIS.', 2200);
     var lanjutO = JUAL.depan();
     if (lanjutO) { R = { o: lanjutO }; lanjutO.keadaan = 'dilayani'; gambarRacik(); }
     else tutupRacik();
@@ -367,9 +496,16 @@
     $('kota-daftar').onclick = function (e) { var b = e.target.closest('[data-kota]'); if (b) { kotaDipilih = b.dataset.kota; tampil('qris'); } };
     $('qris-daftar').onclick = function (e) {
       var b = e.target.closest('[data-qris]'); if (!b) return;
-      if (kotaDipilih) mulaiBaru(kotaDipilih, b.dataset.qris);
-      else if (S) { S.qris = b.dataset.qris; simpan(); lanjut(S); }
+      qrisDipilih = b.dataset.qris;
+      if (kotaDipilih) tampil('bank');
+      else if (S) { S.qris = qrisDipilih; simpan(); lanjut(S); }
     };
+    $('bank-daftar').onclick = function (e) {
+      var b = e.target.closest('[data-bank]'); if (!b) return;
+      if (kotaDipilih) mulaiBaru(kotaDipilih, qrisDipilih, b.dataset.bank);
+      else if (S) { UANG.siapkan(S, b.dataset.bank); simpan(); lanjut(S); }
+    };
+    $('b-kembali-bank').onclick = function () { tampil(kotaDipilih ? 'qris' : 'awal'); };
     $('b-kembali-qris').onclick = function () { tampil(kotaDipilih ? 'kota' : 'awal'); };
     $('b-aksi').onclick = function () { if (S.fase === 'pagi') bukaKedai(false); else if (S.fase === 'buka') bukaRacik(); else if (S.fase === 'malam') bukaLaporan(); };
     $('r-bahan').onclick = function (e) { var b = e.target.closest('[data-bahan]'); if (b) tapBahan(b.dataset.bahan); };
@@ -377,6 +513,7 @@
     $('r-serah').onclick = serahkan;
     $('r-tunda').onclick = tutupRacik;
     $('b-kal').onclick = function () { bukaKalender(); };
+    $('b-hp').onclick = function () { app.pesan = ''; bukaHP('beranda'); };
     $('h-uang').onclick = function () { if (S && S.fase !== 'pagi') bukaLaporanSementara(); };
     $('b-atur').onclick = function () { konfirmasiUlang = false; bukaAtur(); };
     document.querySelector('.kec').onclick = function (e) {
@@ -387,6 +524,8 @@
       if (e.target === $('lembar') || e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
       if ((b = e.target.closest('[data-besok]'))) return besok();
+      if ((b = e.target.closest('[data-app]'))) { app.pesan = ''; return bukaHP(b.dataset.app); }
+      if ((b = e.target.closest('[data-aksi]'))) { var pa = b.dataset.aksi.split(':'); return aksiHP(pa[0], pa[1]); }
       if ((b = e.target.closest('[data-bulan]'))) { var m = kal.m + (+b.dataset.bulan), y = kal.y; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } return bukaKalender(y, m); }
       if ((b = e.target.closest('[data-tg]'))) { kal.pilih = +b.dataset.tg; return bukaKalender(kal.y, kal.m); }
       if ((b = e.target.closest('[data-jam]'))) { var p = b.dataset.jam.split(':'); return ubahJam(p[0], +p[1]); }

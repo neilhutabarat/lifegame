@@ -95,15 +95,28 @@
 
   /* gelas jadi dan diserahkan; biayaBahan = HPP bahan yang dipakai di gelas ini */
   function layani(S, o, biayaBahan) {
-    var h = o.menu.harga, hi = S.hariIni;
-    if (o.bayar === 'qris') { var biaya = mdr(S, h); S.uang.merchant += h - biaya; hi.omzetQris += h; hi.mdr += biaya; }
-    else { S.uang.laci += h; hi.omzetTunai += h; }
+    var h = o.menu.harga, hi = S.hariIni, U = g.KK_UANG, catatan = '';
+    if (o.bayar === 'tunai') {
+      var t = U.bayarTunai(S, h);
+      if (!t.ok) {
+        hi.tanpaKembalian++;
+        /* kembalian kurang: sebagian pembeli pindah ke QRIS, sisanya batal */
+        if (Math.random() < 0.6) { o.bayar = 'qris'; catatan = ' (pindah QRIS)'; }
+        else {
+          hi.terbuang += biayaBahan; o.keadaan = 'pulang'; o.marah = true; o.racik = [];
+          o.efek = { teks: 'Tak ada kembalian', warna: '#d9443a' }; aturSlot(); return false;
+        }
+      } else { hi.omzetTunai += h; if (t.kembalian) catatan = ' bayar ' + (t.uang / 1000) + 'rb'; }
+    }
+    if (o.bayar === 'qris') { var biaya = mdr(S, h); U.terimaQris(S, h - biaya); hi.omzetQris += h; hi.mdr += biaya; }
     S.omzetTahun = (S.omzetTahun || 0) + h;
+    S.pajak.omzetBulan += h;
     hi.hpp += biayaBahan; hi.dilayani++;
     hi.menu[o.menu.id] = (hi.menu[o.menu.id] || 0) + 1;
     o.keadaan = 'pulang'; o.bawaCup = true; o.marah = false;
     o.efek = { teks: '+' + h.toLocaleString('id-ID') + (o.bayar === 'qris' ? ' QRIS' : ' tunai'), warna: o.bayar === 'qris' ? '#155e57' : '#2a1d00', cup: true };
     aturSlot();
+    return catatan || true;
   }
 
   /* kedai tutup: yang masih antre pulang tanpa dihitung pergi */
@@ -111,7 +124,7 @@
   function kosongkan() { daftar = []; }
 
   function hariBaru() {
-    return { dilayani: 0, pergi: 0, penuh: 0, omzetTunai: 0, omzetQris: 0, mdr: 0, hpp: 0, terbuang: 0, menu: {} };
+    return { dilayani: 0, pergi: 0, penuh: 0, tanpaKembalian: 0, omzetTunai: 0, omzetQris: 0, mdr: 0, hpp: 0, terbuang: 0, menu: {} };
   }
 
   g.KK_JUAL = { langkah: langkah, depan: depan, layani: layani, tutup: tutup, kosongkan: kosongkan, bersihkan: bersihkan,

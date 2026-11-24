@@ -23,6 +23,7 @@
     <button id="h-uang" class="kartu-hud uang" type="button" aria-label="Lihat jualan hari ini">
       <span><small>Laci</small><b id="h-laci">Rp0</b></span>
       <span><small id="h-merchant-nama">QRIS</small><b id="h-merchant">Rp0</b></span>
+      <span><small id="h-bank-nama">Bank</small><b id="h-bank">Rp0</b></span>
       <span><small>Antre</small><b id="h-antre">0</b></span>
     </button>
     <div id="h-chip" class="chips"></div>
@@ -40,6 +41,9 @@
         <button type="button" data-kec="4" aria-pressed="false">4×</button>
       </div>
       <div class="dok">
+        <button id="b-hp" class="ikon" type="button" aria-label="HP: bank, QRIS, pajak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+        </button>
         <button id="b-kal" class="ikon" type="button" aria-label="Kalender">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
         </button>
@@ -71,6 +75,12 @@
     <button id="b-kembali-qris" class="tombol-lain" type="button">Kembali</button>
   </section>
 
+  <section id="layar-bank" class="layar" hidden>
+    <h1 class="judul-game" style="font-size:32px">Rekening usaha di bank mana?<small>Uang QRIS dipindah ke sini. Sewa, gaji, cicilan, dan pajak dibayar dari sini. Modal kerja awal Rp5.000.000 masuk ke rekening ini.</small></h1>
+    <div id="bank-daftar" class="kota-daftar"></div>
+    <button id="b-kembali-bank" class="tombol-lain" type="button">Kembali</button>
+  </section>
+
   <section id="racik" class="racik" hidden aria-label="Racik pesanan">
     <div class="racik-kepala">
       <div id="r-gelas" class="gelas kosong"><div id="r-isi" class="gelas-isi"></div></div>
@@ -92,6 +102,7 @@
 <script src="js/data/menu.js"></script>
 <script src="js/kalender.js"></script>
 <script src="js/simpan.js"></script>
+<script src="js/uang.js"></script>
 <script src="js/jualan.js"></script>
 <script src="js/adegan.js"></script>
 <script src="js/main.js"></script>
