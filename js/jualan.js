@@ -56,7 +56,7 @@
     var p = M.PEMBELI[jenis], dariKanan = Math.random() < 0.45;
     return {
       id: ++nomor, jenis: jenis, menu: pilihMenu(S, jenis, jam), bayar: Math.random() < p.qris ? 'qris' : 'tunai',
-      tiba: S.menit, sabar: p.sabar * (0.8 + Math.random() * 0.4), keadaan: 'antre', racik: [],
+      tiba: S.menit, sabar: p.sabar * (0.8 + Math.random() * 0.4) * (S.bonusSabar || 1), keadaan: 'antre', racik: [],
       x: dariKanan ? 390 : -30, arahPulang: Math.random() < 0.5 ? -1 : 1,
       rupa: { kulit: KULIT[Math.floor(Math.random() * 4)], rambut: RAMBUT[Math.floor(Math.random() * 4)], baju: Math.floor(Math.random() * 5), perempuan: Math.random() < 0.5 }
     };
@@ -86,7 +86,7 @@
   /* dipanggil adegan setelah pembeli keluar layar */
   function bersihkan() { daftar = daftar.filter(function (o) { return !o.hilang; }); }
 
-  function depan() { var a = antre(); return a.length ? a[0] : null; }
+  function depan() { var a = antre().filter(function (o) { return !o.oleh; }); return a.length ? a[0] : null; }
 
   function mdr(S, nilai) {
     var aturan = (S.omzetTahun || 0) > N.mdr.batasMikro ? N.mdr.kecil : N.mdr.mikro;
