@@ -20,7 +20,13 @@
     foam: { porsi: 60, nama: 'Foam susu', takaran: '60 ml susu', harga: 21, perMl: true, warna: '#fffdf6', stok: 'uht', butuhAlat: 'espresso' },
     oat: { porsi: 150, nama: 'Susu oat', takaran: '150 ml', harga: 37.5, perMl: true, warna: '#efe2c4', tambahan: true },
     sirup: { porsi: 20, nama: 'Sirup rasa', takaran: '20 ml', harga: 113, perMl: true, warna: '#d9667a', tambahan: true },
-    matcha: { porsi: 5, nama: 'Matcha', takaran: '5 g', harga: 300, perGram: true, warna: '#7fae4f', tambahan: true }
+    matcha: { porsi: 5, nama: 'Matcha', takaran: '5 g', harga: 300, perGram: true, warna: '#7fae4f', tambahan: true },
+    /* bahan cemilan kedai */
+    wadahMakan: { porsi: 1, nama: 'Box cemilan', takaran: '1 box', harga: 700, warna: '#e8d8be' },
+    kentang: { porsi: 150, nama: 'Kentang beku', takaran: '150 g', harga: 35, perGram: true, warna: '#f2c14e' },
+    tahu: { porsi: 2, nama: 'Tahu & balado', takaran: '2 potong', harga: 1800, warna: '#d9534f' },
+    mie: { porsi: 1, nama: 'Mie goreng', takaran: '1 bungkus', harga: 3000, warna: '#e0a94c' },
+    sosisTelur: { porsi: 1, nama: 'Sosis & telur', takaran: '1 porsi', harga: 5500, warna: '#c85a3a' }
   };
   /* barang yang dibeli (rancangan bagian "Bahan & harga pemasok"); isi dalam satuan stok: g, ml, atau buah.
      harga = harga tengah November 2026 untuk satu kemasan. ada = tempat belanja yang menjual. */
@@ -39,9 +45,14 @@
     oat: { nama: 'Susu oat', merek: 'Oatside', kemasan: '1 L', isi: 1000, satuan: 'ml', harga: 37500, ada: ['grosir', 'online'] },
     sirup: { nama: 'Sirup rasa (vanila, karamel, hazelnut)', merek: 'Denali', kemasan: '750 ml', isi: 750, satuan: 'ml', harga: 85000, ada: ['grosir', 'online'] }, /* perkiraan */
     matcha: { nama: 'Matcha bubuk', merek: 'Merek lokal', kemasan: '500 g', isi: 500, satuan: 'g', harga: 150000, ada: ['online'] }, /* perkiraan, tidak ada di tabel rancangan */
-    galon: { nama: 'Air galon isi ulang', merek: 'Depot isi ulang', kemasan: '19 L', isi: 19000, satuan: 'ml', harga: 7000, tetap: true, ada: ['grosir'] }
+    galon: { nama: 'Air galon isi ulang', merek: 'Depot isi ulang', kemasan: '19 L', isi: 19000, satuan: 'ml', harga: 7000, tetap: true, ada: ['grosir'] },
+    kentang: { nama: 'Kentang goreng beku (shoestring)', merek: 'Fiesta / lokal', kemasan: '1 kg', isi: 1000, satuan: 'g', harga: 35000, ada: ['pasar', 'grosir', 'online'] },
+    tahu: { nama: 'Tahu putih + bumbu balado', merek: 'Pasar lokal', kemasan: '10 potong', isi: 10, satuan: 'buah', harga: 18000, ada: ['pasar', 'grosir'] },
+    mie: { nama: 'Mie instan goreng', merek: 'Indomie', kemasan: '1 dus (40 bks)', isi: 40, satuan: 'buah', harga: 120000, ada: ['pasar', 'grosir', 'online', 'sales'] },
+    sosisTelur: { nama: 'Paket sosis & telur ayam', merek: 'Pasar / grosir', kemasan: '10 porsi', isi: 10, satuan: 'buah', harga: 55000, ada: ['pasar', 'grosir'] },
+    wadahMakan: { nama: 'Box kertas cemilan + garpu', merek: 'Grosir kemasan', kemasan: '50 set', isi: 50, satuan: 'buah', harga: 35000, ada: ['grosir', 'online'] }
   };
-  var URUT_BARANG = ['kopi', 'uht', 'skm', 'gula', 'aren', 'cokelat', 'teh', 'oat', 'sirup', 'matcha', 'es', 'cupPlastik', 'cupKertas', 'gas', 'galon'];
+  var URUT_BARANG = ['kopi', 'uht', 'skm', 'gula', 'aren', 'cokelat', 'teh', 'oat', 'sirup', 'matcha', 'es', 'cupPlastik', 'cupKertas', 'gas', 'galon', 'kentang', 'tahu', 'mie', 'sosisTelur', 'wadahMakan'];
   /* satu tap bahan = berapa satuan stok. Air panas memakai air galon dan gas (biaya operasional, bukan HPP). */
   var TAP_STOK = { es: 150, air: 0, cupPlastik: 1, cupKertas: 1 };
   var AIR_PANAS = { galon: 150, gas: 20 }; /* setelan: 1 tabung 3 kg cukup sekitar 150 gelas */
@@ -72,11 +83,19 @@
     { id: 'mocha', nama: 'Mocha', pendek: 'Mocha', harga: 20000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#6b3b25',
       resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['cokelat', 25], ['uht', 120]] },
     { id: 'cappuccino', nama: 'Cappuccino', pendek: 'Cappuccino', harga: 20000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#b98b63',
-      resep: [['cupKertas', 1], ['kopi', 18], ['uht', 150], ['gula', 10]] }
+      resep: [['cupKertas', 1], ['kopi', 18], ['uht', 150], ['gula', 10]] },
+    /* 3 cemilan utama dijual barengan di kedai */
+    { id: 'kentang', nama: 'Kentang goreng', pendek: 'Kentang Goreng', harga: 15000, aktifAwal: true, cemilan: true, bisaSuhu: false, warna: '#f2c14e',
+      resep: [['wadahMakan', 1], ['kentang', 150]] },
+    { id: 'tahu', nama: 'Tahu balado', pendek: 'Tahu Balado', harga: 12000, aktifAwal: true, cemilan: true, bisaSuhu: false, warna: '#d9534f',
+      resep: [['wadahMakan', 1], ['tahu', 2]] },
+    { id: 'miegoreng', nama: 'Mie goreng sosis telur', pendek: 'Mie Sosis Telur', harga: 18000, aktifAwal: true, cemilan: true, bisaSuhu: false, warna: '#d98a2b',
+      resep: [['wadahMakan', 1], ['mie', 1], ['sosisTelur', 1]] }
   ];
   /* sesuaikan resep berdasarkan suhu yang diminta pembeli (panas pakai cup kertas + air panas; dingin pakai cup plastik + es) */
   function resepSuhu(menu, panas) {
     if (!menu || !menu.resep) return [];
+    if (menu.cemilan) return menu.resep.slice();
     var r = menu.resep.filter(function (x) { return x[0] !== 'cupPlastik' && x[0] !== 'cupKertas' && x[0] !== 'es'; });
     var hasil = [[panas ? 'cupKertas' : 'cupPlastik', 1]];
     if (!panas) hasil.push(['es', 1]);
@@ -91,11 +110,11 @@
 
   /* jenis pembeli (rancangan bagian Pembeli). sabar = menit game sebelum pergi; qris = peluang bayar QRIS (setelan) */
   var PEMBELI = {
-    mahasiswa: { nama: 'Mahasiswa', sabar: 50, qris: 0.6, suka: { aren: 32, susu: 24, hitam: 8, americano: 10, mocha: 12, cappuccino: 10, arabica: 4, espresso: 2 } },
-    kantor: { nama: 'Pekerja kantor', sabar: 25, qris: 0.8, suka: { aren: 26, susu: 18, hitam: 16, americano: 16, cappuccino: 12, arabica: 8, espresso: 6, mocha: 6 } },
-    ojol: { nama: 'Driver ojol', sabar: 35, qris: 0.3, suka: { hitam: 40, susu: 30, aren: 18, americano: 5, arabica: 3, espresso: 2, mocha: 1, cappuccino: 1 } },
-    keluarga: { nama: 'Keluarga', sabar: 45, qris: 0.5, suka: { susu: 30, aren: 28, mocha: 18, cappuccino: 14, hitam: 6, arabica: 4, americano: 2, espresso: 1 } },
-    konten: { nama: 'Pembuat konten', sabar: 40, qris: 0.7, suka: { aren: 34, mocha: 18, cappuccino: 16, arabica: 14, americano: 10, susu: 8, espresso: 4, hitam: 2 } }
+    mahasiswa: { nama: 'Mahasiswa', sabar: 50, qris: 0.6, suka: { aren: 28, susu: 20, hitam: 8, americano: 8, mocha: 10, cappuccino: 8, arabica: 4, espresso: 2, kentang: 16, tahu: 12, miegoreng: 18 } },
+    kantor: { nama: 'Pekerja kantor', sabar: 25, qris: 0.8, suka: { aren: 24, susu: 16, hitam: 14, americano: 14, cappuccino: 10, arabica: 8, espresso: 6, mocha: 6, kentang: 10, tahu: 10, miegoreng: 8 } },
+    ojol: { nama: 'Driver ojol', sabar: 35, qris: 0.3, suka: { hitam: 34, susu: 24, aren: 14, americano: 4, arabica: 2, espresso: 2, mocha: 1, cappuccino: 1, tahu: 14, miegoreng: 16, kentang: 6 } },
+    keluarga: { nama: 'Keluarga', sabar: 45, qris: 0.5, suka: { susu: 26, aren: 24, mocha: 14, cappuccino: 10, hitam: 5, arabica: 3, americano: 2, espresso: 1, kentang: 20, tahu: 12, miegoreng: 16 } },
+    konten: { nama: 'Pembuat konten', sabar: 40, qris: 0.7, suka: { aren: 30, mocha: 16, cappuccino: 14, arabica: 12, americano: 8, susu: 6, espresso: 4, hitam: 2, kentang: 18, tahu: 10, miegoreng: 12 } }
   };
   /* campuran jenis pembeli per jam (setelan) */
   function campuran(jam, malamMinggu) {

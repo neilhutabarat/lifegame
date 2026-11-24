@@ -53,6 +53,7 @@
     if (g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)) r *= 1.6;
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
+    if (S.promoAktif) r *= 1.3 + Math.random() * 0.2; /* promo +30% sampai +50% */
     return r * Math.max(0.6, 1 - S.ojek.tolak * 0.05);
   }
   function jeda(S) { return Math.max(3, -Math.log(1 - Math.random()) * 60 / laju(S)); }
@@ -81,17 +82,12 @@
   function kedaluwarsa(S) { var o = S.ojek; o.tawaran = null; o.berikut = waktu(S) + jeda(S); }
 
   function selesai(S) {
-    var o = S.ojek, tr = o.trip, x = tr.x, kabar = tr.kabar.slice(), dapat;
-    if (x.tunai) {
-      var potong = x.tarif - x.bersih;
-      if (x.tarif >= 50000) S.uang.besar += x.tarif; else S.uang.kecil += x.tarif;
-      o.dompet -= potong; dapat = x.bersih;
-      kabar.push(x.nama + ' bayar tunai ' + rp(x.tarif) + ' (masuk laci). Potongan aplikasi ' + rp(potong) + ' dari saldo driver.');
-    } else { o.dompet += x.bersih; dapat = x.bersih; }
+    var o = S.ojek, tr = o.trip, x = tr.x, kabar = tr.kabar.slice(), dapat = x.bersih;
+    o.dompet += x.bersih;
     if (x.tip) { o.dompet += x.tip; dapat += x.tip; kabar.push(x.nama + ' memberi tip ' + rp(x.tip) + '.'); }
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
     S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
-    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Pendapatan +' + rp(dapat) + '.');
+    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Masuk saldo ojek +' + rp(dapat) + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
   }
@@ -112,10 +108,22 @@
     if (o.trip) return { status: o.trip.jalan < o.trip.jemput ? 'jemput' : 'antar', jenis: o.trip.x.jenis, kemajuan: Math.min(1, o.trip.jalan / o.trip.total), x: o.trip.x };
     return { status: 'standby' };
   }
-  function tarikSaldo(S) {
-    var o = S.ojek; if (o.dompet <= 0) return 'Saldo driver kosong.';
-    var j = o.dompet; o.dompet = 0; S.bank.saldo += j; g.KK_MOTOR.catatBank(S, 'Tarik saldo ' + (platform(o.platform || 'gojek').app), j);
-    return { ok: true, jml: j };
+  /* tarik saldo ojek: 'bank' (ke rekening), 'ewallet' (ke saldo e-wallet/QRIS), atau 'dompet' (tarik ATM ke dompet pribadi) */
+  function tarikSaldo(S, tujuan, qrisId) {
+    var o = S.ojek; if (o.dompet <= 0) return 'Saldo ojek kosong.';
+    var j = o.dompet;
+    if (tujuan === 'ewallet') {
+      var id = qrisId || Object.keys(S.merchants || {})[0];
+      if (!id || !S.merchants[id]) return 'Belum ada e-wallet/QRIS terpasang.';
+      o.dompet = 0; S.merchants[id].tersedia += j;
+      return { ok: true, jml: j, ket: 'masuk e-wallet ' + g.KK_UANG.qrisData(id).nama };
+    }
+    if (tujuan === 'dompet') {
+      o.dompet = 0; S.uang.dompet = (S.uang.dompet || 0) + j;
+      return { ok: true, jml: j, ket: 'ditarik lewat ATM ke dompet pribadi' };
+    }
+    o.dompet = 0; S.bank.saldo += j; g.KK_MOTOR.catatBank(S, 'Tarik saldo ' + (platform(o.platform || 'gojek').app), j);
+    return { ok: true, jml: j, ket: 'masuk rekening ' + g.KK_UANG.bankIni(S).nama };
   }
   function gantiHari(S, nLama, nBaru) {
     var o = S.ojek, kabar = [];

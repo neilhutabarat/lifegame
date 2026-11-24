@@ -17,13 +17,22 @@
   };
   var MELELEH_PER_JAM = 0.02;    /* setelan tahap 10: es di cool box */
   var UHT_TAHAN_HARI = 3;        /* susu UHT setelah dibuka, di kulkas */
-  var STOK_AWAL = { kopi: 1000, uht: 6000, skm: 1960, gula: 2000, aren: 1000, cokelat: 1000, teh: 1000, es: 10000, cupPlastik: 100, cupKertas: 50, gas: 3000, galon: 19000 }; /* setelan */
+  var STOK_AWAL = { kopi: 1000, uht: 6000, skm: 1960, gula: 2000, aren: 1000, cokelat: 1000, teh: 1000, es: 10000, cupPlastik: 100, cupKertas: 50, gas: 3000, galon: 19000, kentang: 1500, tahu: 20, mie: 20, sosisTelur: 15, wadahMakan: 50 }; /* setelan */
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function bulat500(n) { return Math.round(n / 500) * 500; }
 
   function siapkan(S) {
-    if (S.stok) { M.URUT_BARANG.forEach(function (id) { if (!S.stok[id]) { S.stok[id] = { jml: 0, nilai: 0 }; S.faktor[id] = 1; } }); return S; }
+    if (S.stok) {
+      M.URUT_BARANG.forEach(function (id) {
+        if (!S.stok[id]) {
+          var b = M.BARANG[id], jml = STOK_AWAL[id] || 0;
+          S.stok[id] = { jml: jml, nilai: jml * b.harga / b.isi };
+          S.faktor[id] = 1;
+        }
+      });
+      return S;
+    }
     S.stok = {}; S.faktor = {};
     M.URUT_BARANG.forEach(function (id) {
       var b = M.BARANG[id], jml = STOK_AWAL[id] || 0;
@@ -108,7 +117,7 @@
   /* cukup untuk berapa gelas lagi (perkiraan kasar dari takaran resep terbesar) */
   function menipis(S) {
     var hasil = [];
-    var batas = { kopi: 150, uht: 1500, skm: 250, gula: 200, aren: 150, cokelat: 150, teh: 30, es: 2000, cupPlastik: 10, cupKertas: 6, gas: 300, galon: 1500 };
+    var batas = { kopi: 150, uht: 1500, skm: 250, gula: 200, aren: 150, cokelat: 150, teh: 30, es: 2000, cupPlastik: 10, cupKertas: 6, gas: 300, galon: 1500, kentang: 300, tahu: 4, mie: 4, sosisTelur: 3, wadahMakan: 8 };
     M.URUT_BARANG.forEach(function (id) { if (S.stok[id].jml < batas[id]) hasil.push(id); });
     return hasil;
   }

@@ -38,6 +38,7 @@
     return M.MENU.filter(function (m) { return !g.KK_USAHA || g.KK_USAHA.menuDijual(S, m.id); });
   }
   function pilihSuhu(menu, jam, isi) {
+    if (menu.cemilan) return false;
     if (!menu.bisaSuhu && menu.sendiri) return !!menu.panas;
     var pPanas = 0.35;
     if (menu.id === 'hitam' || menu.id === 'espresso' || menu.id === 'arabica') pPanas = 0.62;
@@ -112,7 +113,7 @@
     if (dMenit <= 0) return;
     var jam = Math.floor(S.menit / 60) % 24;
     var lambda = M.PEMBELI_PER_HARI / JUMLAH_BOBOT * M.KERAMAIAN[jam] * pengali(S, jam) * (g.KK_DUNIA ? g.KK_DUNIA.faktor(S) : 1) * (g.KK_USAHA && S.usaha ? g.KK_USAHA.faktor(S) : 1) / 60;
-    if (Math.random() < lambda * dMenit) {
+    if (!S.tutupAntre && Math.random() < lambda * dMenit) {
       if (antre().length >= MAKS_ANTRE) S.hariIni.penuh++;
       else { daftar.push(buatPembeli(S, jam)); aturSlot(); }
     }

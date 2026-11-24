@@ -54,8 +54,54 @@
   }
   function tempat(S) { return TEMPAT[S.usaha.tier]; }
   function faktorSewa(S, lokasi) { return (SEWA_KOTA[S.kota] || 1) * LOKASI[lokasi || S.usaha.lokasi].sewa; }
-  function sewaBulan(S, tier) { var t = TEMPAT[tier || S.usaha.tier]; return t.sewa ? Math.round(t.sewa * faktorSewa(S) / 50000) * 50000 : 0; }
-  function sewaTahun(S) { var t = tempat(S); return t.sewaTahun ? Math.round(t.sewaTahun * faktorSewa(S) / 100000) * 100000 : 0; }
+  function sewaBulan(S, tier) {
+    var u = S.usaha;
+    if (u.berhentiSewa) return 0;
+    if (u.milikLahan && !tier) return 0;
+    if (u.rukoBulanan && !tier) return Math.round((N.asetUsaha ? N.asetUsaha.sewaRukoBulan : 5000000) * faktorSewa(S) / 50000) * 50000;
+    var t = TEMPAT[tier || u.tier];
+    var dasar = t.sewa ? Math.round(t.sewa * faktorSewa(S) / 50000) * 50000 : 0;
+    if (u.milikKontainer && !tier && u.tier < 4) dasar = Math.round(dasar * (N.asetUsaha ? N.asetUsaha.porsiSewaLahan : 0.45) / 50000) * 50000;
+    return dasar;
+  }
+  function sewaTahun(S) {
+    if (S.usaha.berhentiSewa || S.usaha.milikLahan || S.usaha.rukoBulanan) return 0;
+    var t = tempat(S);
+    return t.sewaTahun ? Math.round(t.sewaTahun * faktorSewa(S) / 100000) * 100000 : 0;
+  }
+  function hargaKontainer() { return N.asetUsaha ? N.asetUsaha.beliKontainer : 25000000; }
+  function hargaLahan(S) { return Math.round((N.asetUsaha ? N.asetUsaha.beliLahanDasar : 250000000) * faktorSewa(S) / 1e6) * 1e6; }
+  function beliKontainer(S) {
+    if (S.usaha.milikKontainer) return 'Kontainer sudah milik sendiri.';
+    if (S.usaha.tier === 4) return 'Saat ini kedai sudah di ruko.';
+    var h = hargaKontainer();
+    if (!bayar(S, h, 'Beli kontainer sendiri')) return 'Saldo rekening kurang ' + rp(h - S.bank.saldo) + '.';
+    S.usaha.milikKontainer = true; S.usaha.berhentiSewa = false;
+    return true;
+  }
+  function beliLahan(S) {
+    if (S.usaha.milikLahan) return 'Lahan sudah milik sendiri (SHM).';
+    var h = hargaLahan(S);
+    if (!bayar(S, h, 'Beli lahan kedai (SHM) ' + LOKASI[S.usaha.lokasi].nama)) return 'Saldo rekening kurang ' + rp(h - S.bank.saldo) + '.';
+    S.usaha.milikLahan = true; S.usaha.berhentiSewa = false; S.usaha.tunggakanSewa = 0;
+    return true;
+  }
+  function aturBerhentiSewa(S, berhenti) {
+    if (S.usaha.milikLahan) return 'Lahan sudah milik sendiri, tidak ada biaya sewa.';
+    S.usaha.berhentiSewa = !!berhenti;
+    if (!berhenti && S.usaha.tunggakanSewa > 0) S.usaha.tunggakanSewa = 0;
+    return true;
+  }
+  function sewaRukoLangsung(S) {
+    if (S.usaha.tier === 4) return 'Kedai sudah menempati ruko.';
+    var biayaPindah = N.asetUsaha ? N.asetUsaha.pindahRuko : 15000000;
+    var sewaAwal = Math.round((N.asetUsaha ? N.asetUsaha.sewaRukoBulan : 5000000) * faktorSewa(S) / 50000) * 50000;
+    var total = biayaPindah + sewaAwal;
+    if (!bayar(S, total, 'Sewa ruko langsung (renovasi + sewa bulan pertama)')) return 'Saldo rekening kurang ' + rp(total - S.bank.saldo) + ' (butuh ' + rp(total) + ').';
+    S.usaha.tier = 4; S.usaha.rukoBulanan = true; S.usaha.berhentiSewa = false; S.usaha.bangun = null;
+    if (S.usaha.kwh < 20) S.usaha.kwh = 20;
+    return true;
+  }
   function punya(S, id) { return !!S.usaha.alat[id]; }
   function listrikNyala(S) { return tempat(S).listrik === 'numpang' || (!S.usaha.padam && S.usaha.kwh > 0); }
   function bisaEspresso(S) { return punya(S, 'espresso1') && listrikNyala(S); }
@@ -69,6 +115,7 @@
     if (u.tier >= 3 && t.dow === 6 && S.menit >= 1140) f *= 1.3; /* musik akustik malam Minggu */
     if (punya(S, 'tv') && S.menit >= 1140 && (t.dow === 2 || t.dow === 5) && S.hari % 3 === 0) f *= 1.4; /* nobar */
     if (punya(S, 'kursiKayu')) f *= 1.05;
+    if (S.promoAktif) f *= 1.3 + Math.random() * 0.2; /* promo +30% sampai +50% */
     return f;
   }
   function campuran(S, peta) {
@@ -237,7 +284,8 @@
     return kabar;
   }
 
-  g.KK_USAHA = { LOKASI: LOKASI, TEMPAT: TEMPAT, ALAT: ALAT, TARIF: TARIF, siapkan: siapkan, menuDijual: menuDijual, aturMenuAktif: aturMenuAktif, tempat: tempat, sewaBulan: sewaBulan, sewaTahun: sewaTahun, punya: punya,
+  g.KK_USAHA = { LOKASI: LOKASI, TEMPAT: TEMPAT, ALAT: ALAT, TARIF: TARIF, siapkan: siapkan, menuDijual: menuDijual, aturMenuAktif: aturMenuAktif, tempat: tempat, sewaBulan: sewaBulan, sewaTahun: sewaTahun,
+    hargaKontainer: hargaKontainer, hargaLahan: hargaLahan, beliKontainer: beliKontainer, beliLahan: beliLahan, aturBerhentiSewa: aturBerhentiSewa, sewaRukoLangsung: sewaRukoLangsung, punya: punya,
     listrikNyala: listrikNyala, bisaEspresso: bisaEspresso, bahanTersedia: bahanTersedia, faktor: faktor, campuran: campuran, faktorAntar: faktorAntar, kecepatan: kecepatan,
     bonusRasa: bonusRasa, suasana: suasana, sabar: sabar, esTahan: esTahan, beliToken: beliToken, naikKelas: naikKelas, beliAlat: beliAlat, bukaCabang: bukaCabang,
     hasilCabang: hasilCabang, perkiraanBintang: perkiraanBintang, hppResep: hppResep, susunResep: susunResep, namaUsul: namaUsul, simpanMenu: simpanMenu, hapusMenu: hapusMenu,

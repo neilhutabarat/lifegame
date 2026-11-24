@@ -499,7 +499,7 @@
         kotakBulat(x - 12, yk - 21, Math.max(2, 24 * sisa), 3, 1.5, sisa > 0.5 ? '#4fbf6a' : sisa > 0.25 ? '#f2a516' : '#d9443a');
       }
       if (o.slot === 0) {
-        var teksPesanan = o.menu.pendek + (o.panas ? ' · Panas' : ' · Es');
+        var teksPesanan = o.menu.cemilan ? o.menu.pendek : o.menu.pendek + (o.panas ? ' · Panas' : ' · Es');
         cx.font = '800 11.5px "Baloo 2", "Nunito", system-ui, sans-serif';
         var tw = cx.measureText(teksPesanan).width + 16, bxx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), byy = yk - 52;
         kotakBulat(bxx, byy, tw, 24, 10, o.keadaan === 'dilayani' ? '#f2a516' : '#fbfaf6');
@@ -514,6 +514,20 @@
   function gambarCup(x, y, menu, sk, panas, t) {
     cx.save(); cx.translate(x, y); cx.scale(sk, sk);
     var id = menu ? menu.id : 'aren';
+    if (menu && menu.cemilan) {
+      /* kotak cemilan hangat (kentang goreng / tahu balado / mie goreng sosis telur) */
+      kotakBulat(-9, -8, 18, 11, 2.5, '#e8d5b5');
+      if (id === 'kentang') {
+        kotak(-6, -13, 2.5, 7, '#f2c14e'); kotak(-2, -14, 2.5, 8, '#f7d060'); kotak(2, -13, 2.5, 7, '#e6b23c'); kotak(5, -12, 2.2, 6, '#f2c14e');
+      } else if (id === 'tahu') {
+        kotakBulat(-6, -12, 5, 5, 1.2, '#f5e6c8'); kotakBulat(1, -12, 5, 5, 1.2, '#f5e6c8');
+        bulat(-3.5, -10, 2, '#d9443a'); bulat(3.5, -10, 2, '#d9443a');
+      } else {
+        bulat(0, -9, 6, '#e0a94c'); bulat(-3, -11, 2.5, '#c85a3a'); bulat(3, -10, 2.8, '#fff'); bulat(3, -10, 1.2, '#f2a516');
+      }
+      cx.restore();
+      return;
+    }
     var isPanas = panas != null ? !!panas : (menu && (menu.panas || id === 'hitam' || id === 'espresso'));
     if (isPanas) {
       /* uap panas */
