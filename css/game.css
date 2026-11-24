@@ -121,16 +121,19 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* ---------- tahap 2: uang, racik ---------- */
-.uang { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; text-align: left; padding: 6px 12px; }
+.uang { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 6px; text-align: left; padding: 6px 10px; }
 .uang span { display: grid; min-width: 0; }
-.uang small { font-size: 11px; font-weight: 800; color: var(--tinta-pudar); }
-.uang b { font-family: var(--font-judul); font-size: 15px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uang small { font-size: 10.5px; font-weight: 800; color: var(--tinta-pudar); }
+.uang b { font-family: var(--font-judul); font-size: 13.5px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .uang span:last-child { text-align: right; }
 #app.meracik .chips, #app.meracik .uang { display: none; }
+#app.meracik #bawah .aksi, #app.meracik #bawah .dok, #app.meracik #bawah .pesanan-pill, #app.meracik #bawah .kos-aksi, #app.meracik #bawah .ojek-panel { display: none !important; }
+#app.meracik #bawah { z-index: 4; padding-bottom: 10px; pointer-events: none; }
+#app.meracik #bawah .kec { pointer-events: auto; box-shadow: 0 4px 14px -6px rgba(0,0,0,.35); }
 .aksi:disabled { background: #d9d4c4; color: #7a7466; box-shadow: 0 5px 0 #b4ae9e; }
 .tanda-qris { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 8px; vertical-align: 1px; }
 
-.racik { position: absolute; left: 0; right: 0; bottom: 0; background: var(--panel); border-radius: 24px 24px 0 0; padding: 12px max(14px, env(safe-area-inset-right, 0px)) 14px max(14px, env(safe-area-inset-left, 0px)); display: grid; gap: 8px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,.45); animation: naik .2s ease-out; }
+.racik { position: absolute; left: 0; right: 0; bottom: 56px; z-index: 3; background: var(--panel); border-radius: 24px 24px 0 0; padding: 12px max(14px, env(safe-area-inset-right, 0px)) 14px max(14px, env(safe-area-inset-left, 0px)); display: grid; gap: 8px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,.45); animation: naik .2s ease-out; max-height: 62%; overflow-y: auto; }
 .racik-kepala { display: flex; gap: 12px; align-items: flex-start; }
 .racik-info { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .racik-info b { font-family: var(--font-judul); font-size: 19px; line-height: 1.1; }
@@ -168,7 +171,11 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 /* ---------- tahap 3: HP, bank, uang ---------- */
 .hp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; margin-top: 6px; }
 .hp-app { display: grid; justify-items: center; gap: 6px; font-size: 12px; font-weight: 800; text-align: center; line-height: 1.15; }
-.hp-app i { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; color: #fff; font-style: normal; font-family: var(--font-judul); font-size: 18px; font-weight: 800; box-shadow: 0 6px 14px -8px rgba(0,0,0,.5); }
+.hp-app i { position: relative; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; color: #fff; font-style: normal; font-family: var(--font-judul); font-size: 18px; font-weight: 800; box-shadow: 0 6px 14px -8px rgba(0,0,0,.5); }
+.hp-app i svg { width: 30px; height: 30px; display: block; }
+.hp-app .hp-badge { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--merah-libur); color: #fff; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.input-teks { width: 100%; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--panel-garis); background: #fff; font: inherit; font-weight: 700; color: var(--tinta); margin-top: 6px; }
+.input-teks:focus { outline: none; border-color: var(--kontainer); }
 .saldo-besar { display: grid; padding: 14px 16px; border-radius: 18px; background: var(--tinta); color: #fff; margin-bottom: 10px; }
 .saldo-besar small { font-size: 12px; font-weight: 800; opacity: .7; }
 .saldo-besar b { font-family: var(--font-judul); font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -234,12 +241,18 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 
 /* ---------- sajikan menu jadi ---------- */
 .bahan-grid { grid-template-columns: repeat(3, 1fr); }
-.menu-kartu { display: grid; justify-items: center; gap: 4px; padding: 10px 4px 9px; border-radius: 16px; background: rgba(29,43,51,.06); text-align: center; position: relative; }
-.menu-kartu i { width: 30px; height: 38px; border-radius: 4px 4px 9px 9px; box-shadow: inset 0 -12px 0 rgba(255,255,255,.18), inset 0 5px 0 rgba(255,255,255,.55); }
-.menu-kartu b { font-size: 13px; line-height: 1.1; }
-.menu-kartu small { font-size: 11px; font-weight: 800; color: var(--tinta-pudar); font-variant-numeric: tabular-nums; }
+.menu-kartu { display: grid; justify-items: center; gap: 4px; padding: 8px 6px 8px; border-radius: 16px; background: rgba(29,43,51,.06); text-align: center; position: relative; }
+.menu-kartu.dipesan { background: rgba(242,165,22,.16); box-shadow: inset 0 0 0 2px var(--kunyit); }
+.menu-kartu .kopi-svg { width: 42px; height: 50px; display: block; }
+.menu-kartu b { font-size: 12.5px; line-height: 1.1; }
+.menu-kartu small { font-size: 10.5px; font-weight: 800; color: var(--tinta-pudar); font-variant-numeric: tabular-nums; }
+.menu-suhu { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; margin-top: 2px; }
+.menu-suhu button { padding: 5px 2px; border-radius: 9px; font-size: 11px; font-weight: 800; }
+.menu-suhu .btn-panas { background: rgba(217,68,58,.14); color: #a82a22; }
+.menu-suhu .btn-dingin { background: rgba(47,111,176,.14); color: #1b5088; }
+.menu-suhu button.pas { background: var(--kontainer); color: #fff; }
+.menu-suhu button:active { transform: scale(.94); }
 .menu-kartu.habis { opacity: .45; }
-.menu-kartu:active { transform: scale(.95); }
 .menu-kartu.jadi { animation: jadi .75s ease-in-out; background: rgba(242,165,22,.3); }
 @keyframes jadi { 30% { transform: scale(1.08) rotate(-3deg); } 60% { transform: scale(1.05) rotate(3deg); } 100% { transform: none; } }
 .gelas-isi i { height: 0; animation: isiGelas .75s ease-out forwards; }

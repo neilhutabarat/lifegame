@@ -36,15 +36,20 @@
     var h = menuDari(x.menu).harga;
     return p.jenis === 'ojol' ? Math.round(h * (1 + p.markup / 100) / 500) * 500 : h;
   }
-  function pilihMenu() { var r = Math.random(); return r < 0.35 ? 'aren' : r < 0.6 ? 'klasik' : r < 0.75 ? 'cokelat' : r < 0.87 ? 'teh' : r < 0.94 ? 'hitam' : 'sanger'; }
-  function isiAcak(maks) {
+  function menuDari(id) { return M.MENU.filter(function (m) { return m.id === id; })[0] || M.MENU[0]; }
+  function pilihMenu(S) {
+    var aktif = M.MENU.filter(function (m) { return !g.KK_USAHA || g.KK_USAHA.menuDijual(S, m.id); });
+    var sumber = aktif.length ? aktif : M.MENU;
+    return acak(sumber).id;
+  }
+  function isiAcak(S, maks) {
     var n = 1 + Math.floor(Math.random() * maks), peta = {};
-    for (var i = 0; i < n; i++) { var id = pilihMenu(); peta[id] = (peta[id] || 0) + 1; }
+    for (var i = 0; i < n; i++) { var id = pilihMenu(S); peta[id] = (peta[id] || 0) + 1; }
     return Object.keys(peta).map(function (id) { return { menu: id, qty: peta[id], siap: 0 }; });
   }
 
   function buatWa(S) {
-    var jarak = Math.round((0.5 + Math.random() * (S.aturAntar.maksKm - 0.5)) * 10) / 10, items = isiAcak(4);
+    var jarak = Math.round((0.5 + Math.random() * (S.aturAntar.maksKm - 0.5)) * 10) / 10, items = isiAcak(S, 4);
     var p = { id: ++nomor + '-' + S.hari, jenis: 'wa', nama: acak(N.namaOrang), items: items, jarak: jarak, status: 'baru', dibuat: waktu(S),
       bayar: acak(['tunai', 'tunai', 'qris', 'transfer']), biaya: 0 };
     p.ongkir = ongkir(S, jumlahGelas(p), jarak);
@@ -52,12 +57,12 @@
   }
   function buatOjol(S, plat) {
     var jarak = Math.round((0.5 + Math.random() * 6) * 10) / 10;
-    return { id: ++nomor + '-' + S.hari, jenis: 'ojol', platform: plat.id, nama: acak(N.namaOrang), items: isiAcak(3), jarak: jarak, status: 'racik', dibuat: waktu(S),
+    return { id: ++nomor + '-' + S.hari, jenis: 'ojol', platform: plat.id, nama: acak(N.namaOrang), items: isiAcak(S, 3), jarak: jarak, status: 'racik', dibuat: waktu(S),
       markup: S.platform[plat.id].markup, bayar: 'platform', ongkir: 0, biaya: 0, driver: waktu(S) + DRIVER_DATANG };
   }
   function buatBesar(S, nBesok) {
     var qty = 10 + Math.floor(Math.random() * 16), jarak = Math.round((0.8 + Math.random() * 4) * 10) / 10;
-    var peta = {}; for (var i = 0; i < qty; i++) { var id = Math.random() < 0.6 ? 'aren' : pilihMenu(); peta[id] = (peta[id] || 0) + 1; }
+    var peta = {}; for (var i = 0; i < qty; i++) { var id = pilihMenu(S); peta[id] = (peta[id] || 0) + 1; }
     return { id: ++nomor + '-' + S.hari, jenis: 'besar', nama: acak(N.kantor), items: Object.keys(peta).map(function (id) { return { menu: id, qty: peta[id], siap: 0 }; }),
       jarak: jarak, status: 'baru', dibuat: waktu(S), untuk: nBesok * 1440 + acak([600, 660, 780, 900]), bayar: 'transfer', ongkir: 0, minta: 'gratis ongkir', biaya: 0 };
   }
@@ -119,7 +124,7 @@
     item.siap = item.qty; p.biaya += biaya;
     if (!itemBerikut(p)) { p.status = 'siap'; p.siapPada = waktu(S); if (p.jenis === 'ojol') p.driver = Math.max(p.driver, waktu(S) + 2); }
   }
-  function adaEs(p) { return p.items.some(function (x) { return x.menu !== 'hitam' && x.menu !== 'sanger'; }); }
+  function adaEs(p) { return p.items.some(function (x) { return !x.panas && x.menu !== 'hitam' && x.menu !== 'espresso'; }); }
 
   /* antar sendiri beberapa pesanan siap sekaligus. Hasil: { ok, menit, kabar } atau teks alasan */
   function antarSendiri(S, ids) {

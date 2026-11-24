@@ -77,10 +77,13 @@
     }
     return { ok: true, biaya: ambil(S, bahan, butuh), operasional: 0 };
   }
-  /* bahan resep untuk n gelas: { idStok: jumlah } */
-  function butuhResep(menu, n) {
+  /* bahan resep untuk n gelas: { idStok: jumlah }. panas (opsional) menyesuaikan cup & es/air */
+  function daftarResep(menu, panas) {
+    return (panas != null && M.resepSuhu) ? M.resepSuhu(menu, panas) : menu.resep;
+  }
+  function butuhResep(menu, n, panas) {
     var b = {};
-    menu.resep.forEach(function (r) {
+    daftarResep(menu, panas).forEach(function (r) {
       if (r[0] === 'air') { b.galon = (b.galon || 0) + M.AIR_PANAS.galon * n; b.gas = (b.gas || 0) + M.AIR_PANAS.gas * n; return; }
       var id = M.BAHAN[r[0]].stok || r[0];
       b[id] = (b[id] || 0) + (M.TAP_STOK[r[0]] != null ? M.TAP_STOK[r[0]] * r[1] : r[1]) * n;
@@ -88,10 +91,10 @@
     return b;
   }
   /* nama barang yang kurang, atau null kalau cukup */
-  function kurangResep(S, menu, n) { var b = butuhResep(menu, n); for (var id in b) if (!ada(S, id, b[id])) return M.BARANG[id].nama; return null; }
-  function pakaiResep(S, menu, n) {
-    var hasil = { biaya: 0, operasional: 0 };
-    for (var i = 0; i < n; i++) menu.resep.forEach(function (r) { var x = pakaiBahan(S, r[0], r[1]); hasil.biaya += x.biaya || 0; hasil.operasional += x.operasional || 0; });
+  function kurangResep(S, menu, n, panas) { var b = butuhResep(menu, n, panas); for (var id in b) if (!ada(S, id, b[id])) return M.BARANG[id].nama; return null; }
+  function pakaiResep(S, menu, n, panas) {
+    var hasil = { biaya: 0, operasional: 0 }, rsp = daftarResep(menu, panas);
+    for (var i = 0; i < n; i++) rsp.forEach(function (r) { var x = pakaiBahan(S, r[0], r[1]); hasil.biaya += x.biaya || 0; hasil.operasional += x.operasional || 0; });
     return hasil;
   }
   function sisaTeks(S, id) {

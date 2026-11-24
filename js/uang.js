@@ -48,7 +48,8 @@
   function siapkan(S, bankId) {
     var lamaLaci = S.uang && typeof S.uang.laci === 'number' ? S.uang.laci : 0;
     var lamaMerchant = S.uang && typeof S.uang.merchant === 'number' ? S.uang.merchant : 0;
-    if (!S.uang || typeof S.uang.kecil !== 'number') S.uang = { kecil: MODAL_RECEH, besar: lamaLaci, tukarHariIni: 0 };
+    if (!S.uang || typeof S.uang.kecil !== 'number') S.uang = { kecil: MODAL_RECEH, besar: lamaLaci, dompet: 250000, tukarHariIni: 0 };
+    if (typeof S.uang.dompet !== 'number') S.uang.dompet = 150000;
     if (!S.merchants) { S.merchants = {}; S.merchants[S.qris || 'gopay'] = S.merchant || { tersedia: lamaMerchant, menunggu: [], tarikBulanIni: 0 }; delete S.merchant; }
     if (!S.bank) { S.bank = { id: bankId, saldo: 0, mutasi: [], transferBulanIni: 0, tarikHariIni: 0 }; S.bank.saldo = MODAL_BANK; catat(S, 'Saldo awal (modal kerja)', MODAL_BANK); }
     S.pajak = S.pajak || { tagihan: [], omzetBulan: 0 };
@@ -82,36 +83,67 @@
     S.merchants[id].menunggu.push({ n: S.hari, jml: bersih });
   }
   function laci(S) { return S.uang.kecil + S.uang.besar; }
+  function dompet(S) { return (S.uang && S.uang.dompet) || 0; }
+  function bayarDompet(S, jml) {
+    if (!S.uang || (S.uang.dompet || 0) < jml) return false;
+    S.uang.dompet -= jml;
+    return true;
+  }
+  function pindahKeDompet(S, jml) {
+    jml = Math.min(jml, laci(S));
+    if (jml <= 0) return 'Laci kas kosong.';
+    var dariBesar = Math.min(jml, S.uang.besar);
+    S.uang.besar -= dariBesar;
+    S.uang.kecil -= (jml - dariBesar);
+    S.uang.dompet = (S.uang.dompet || 0) + jml;
+    return true;
+  }
+  function pindahKeLaci(S, jml) {
+    jml = Math.min(jml, dompet(S));
+    if (jml <= 0) return 'Dompet kosong.';
+    S.uang.dompet -= jml;
+    if (jml >= 50000) S.uang.besar += jml; else S.uang.kecil += jml;
+    return true;
+  }
   function saldoMerchant(m) { return m.tersedia + m.menunggu.reduce(function (t, x) { return t + x.jml; }, 0); }
   function merchantTotal(S) { var t = 0; for (var id in S.merchants) t += saldoMerchant(S.merchants[id]); return t; }
 
   /* ---------- aksi pemain (jawab: teks hasil, atau Error dengan alasan) ---------- */
-  function bolehKeAtm(S) { return S.fase !== 'buka'; }
-  function setor(S, jml) {
+  function bolehKeAtm(S) {
+    if (S.fase !== 'buka' || S.tutupSementara) return true;
+    return !!(g.KK_STAF && S.staf && S.staf.some(function (k) { return !k.cabang && g.KK_STAF.hadir(S, k); }));
+  }
+  function setor(S, jml, sumber) {
     var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM';
-    if (!bolehKeAtm(S)) return 'Kedai sedang buka. Setor tunai di ' + tempat + ' saat kedai belum buka atau sudah tutup.';
-    jml = Math.min(jml, S.uang.besar + S.uang.kecil);
+    if (!bolehKeAtm(S)) return 'Kedai sedang buka tanpa karyawan. Tutup sementara dulu atau rekrut karyawan agar bisa ke ' + tempat + '.';
+    var dariDompet = sumber === 'dompet';
+    jml = Math.min(jml, dariDompet ? dompet(S) : S.uang.besar + S.uang.kecil);
     if (T) { jml = Math.min(jml, T.maks); if (jml < T.min) return 'Setor di ' + tempat + ' minimal ' + rp(T.min) + '.'; if (S.bank.saldo + jml < T.biaya) return 'Saldo tidak cukup untuk biaya ' + rp(T.biaya) + '.'; }
-    if (jml <= 0) return 'Laci kosong.';
-    var dariBesar = Math.min(jml, S.uang.besar); S.uang.besar -= dariBesar; S.uang.kecil -= jml - dariBesar;
-    S.bank.saldo += jml; catat(S, 'Setor tunai ' + tempat, jml);
+    if (jml <= 0) return dariDompet ? 'Dompet kosong.' : 'Laci kosong.';
+    if (dariDompet) { S.uang.dompet -= jml; }
+    else { var dariBesar = Math.min(jml, S.uang.besar); S.uang.besar -= dariBesar; S.uang.kecil -= jml - dariBesar; }
+    S.bank.saldo += jml; catat(S, 'Setor tunai ' + tempat + (dariDompet ? ' (dari dompet)' : ''), jml);
     if (T) { S.bank.saldo -= T.biaya; catat(S, 'Biaya setor tunai ' + tempat, -T.biaya); }
     return true;
   }
-  function tarik(S, jml) {
+  function tarik(S, jml, tujuan) {
     var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM';
-    if (!bolehKeAtm(S)) return 'Kedai sedang buka. Tarik tunai di ' + tempat + ' saat kedai belum buka atau sudah tutup.';
+    if (!bolehKeAtm(S)) return 'Kedai sedang buka tanpa karyawan. Tutup sementara dulu atau rekrut karyawan agar bisa ke ' + tempat + '.';
     if (T) {
       if (jml > T.maks) return 'Tarik di ' + tempat + ' paling banyak ' + rp(T.maks) + ' sekali.';
       if (S.bank.tarikHariIni + jml > T.tarikHarian) return 'Batas tarik tunai ' + rp(T.tarikHarian) + ' sehari sudah tercapai.';
     }
     var biaya = T ? T.biaya : 0;
     if (S.bank.saldo < jml + biaya) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= jml + biaya; S.uang.besar += jml; S.bank.tarikHariIni += jml; catat(S, 'Tarik tunai ' + tempat + (biaya ? ' (biaya ' + rp(biaya) + ')' : ''), -(jml + biaya));
+    S.bank.saldo -= jml + biaya;
+    if (tujuan === 'dompet') S.uang.dompet = (S.uang.dompet || 0) + jml;
+    else S.uang.besar += jml;
+    S.bank.tarikHariIni += jml;
+    catat(S, 'Tarik tunai ' + tempat + (tujuan === 'dompet' ? ' (ke dompet)' : '') + (biaya ? ' (biaya ' + rp(biaya) + ')' : ''), -(jml + biaya));
     return true;
   }
   function tukarReceh(S, jml) {
-    if (!bolehKeAtm(S)) return 'Kedai sedang buka. Tukar uang kecil saat kedai belum buka atau sudah tutup.';
+    if (!bolehKeAtm(S)) return 'Kedai sedang buka tanpa karyawan. Tutup sementara dulu atau rekrut karyawan untuk tukar uang kecil.';
     var sisa = BATAS_TUKAR_RECEH - S.uang.tukarHariIni;
     if (sisa <= 0) return 'Warung dan minimarket sekitar hanya bisa menukar ' + BATAS_TUKAR_RECEH.toLocaleString('id-ID') + ' sehari.';
     jml = Math.min(jml, sisa, Math.floor(S.uang.besar / 50000) * 50000);
@@ -333,8 +365,8 @@
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
 
   g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris,
-    biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, merchantTotal: merchantTotal,
-    setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
+    biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, merchantTotal: merchantTotal,
+    bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
     penghasilanKk: penghasilanKk, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,
     gantiHari: gantiHari, bankIni: bankIni, qrisIni: qrisIni,

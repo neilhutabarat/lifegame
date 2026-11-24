@@ -22,6 +22,7 @@
     <div class="kartu-hud jam"><b id="h-jam">06.00</b><span id="h-status">Belum buka</span></div>
     <button id="h-uang" class="kartu-hud uang" type="button" aria-label="Lihat jualan hari ini">
       <span><small>Laci</small><b id="h-laci">Rp0</b></span>
+      <span><small>Dompet</small><b id="h-dompet">Rp0</b></span>
       <span><small id="h-merchant-nama">QRIS</small><b id="h-merchant">Rp0</b></span>
       <span><small id="h-bank-nama">Bank</small><b id="h-bank">Rp0</b></span>
       <span><small>Antre</small><b id="h-antre">0</b></span>
@@ -35,6 +36,7 @@
 
   <footer id="bawah" hidden>
     <button id="b-pesanan" class="pesanan-pill" type="button" hidden>Pesanan antar</button>
+    <div id="kedai-aksi" class="chip-baris kos-aksi" hidden></div>
     <div id="kos-aksi" class="chip-baris kos-aksi" hidden></div>
     <div id="ojek-panel" class="ojek-panel" hidden></div>
     <button id="b-aksi" class="aksi" type="button">Buka kedai</button>
@@ -43,7 +45,6 @@
         <button type="button" data-kec="0" aria-pressed="false">Jeda</button>
         <button type="button" data-kec="1" aria-pressed="true">1×</button>
         <button type="button" data-kec="2" aria-pressed="false">2×</button>
-        <button type="button" data-kec="4" aria-pressed="false">4×</button>
       </div>
       <div class="dok">
         <button id="b-hp" class="ikon" type="button" aria-label="HP: bank, QRIS, pajak">

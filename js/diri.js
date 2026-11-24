@@ -79,6 +79,9 @@
 
   /* ---------- makan dan minum ---------- */
   function bayarTunai(S, jml) {
+    if (g.KK_UANG.bayarDompet && g.KK_UANG.bayarDompet(S, jml)) {
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + jml; return true;
+    }
     if (g.KK_UANG.laci(S) < jml) return false;
     g.KK_MOTOR.bayarLaci(S, jml); S.hariIni.pribadi = (S.hariIni.pribadi || 0) + jml; return true;
   }

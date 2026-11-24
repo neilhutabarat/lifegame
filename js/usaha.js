@@ -35,8 +35,22 @@
   function siapkan(S, lokasi) {
     if (!S.usaha) S.usaha = { lokasi: lokasi || 'jalan', tier: 1, alat: {}, kwh: 0, padam: false, bangun: null, cabang: [], tunggakanSewa: 0, sewaTahunTempo: null };
     S.menuSendiri = S.menuSendiri || [];
+    if (!S.menuAktif) {
+      S.menuAktif = {};
+      M.MENU.forEach(function (m) { S.menuAktif[m.id] = !!m.aktifAwal; });
+    }
     terapkanMenu(S);
     return S;
+  }
+  function menuDijual(S, id) {
+    if (!S || !S.menuAktif) return true;
+    if (S.menuAktif[id] === undefined) return true;
+    return !!S.menuAktif[id];
+  }
+  function aturMenuAktif(S, id, aktif) {
+    S.menuAktif = S.menuAktif || {};
+    S.menuAktif[id] = !!aktif;
+    return true;
   }
   function tempat(S) { return TEMPAT[S.usaha.tier]; }
   function faktorSewa(S, lokasi) { return (SEWA_KOTA[S.kota] || 1) * LOKASI[lokasi || S.usaha.lokasi].sewa; }
@@ -223,7 +237,7 @@
     return kabar;
   }
 
-  g.KK_USAHA = { LOKASI: LOKASI, TEMPAT: TEMPAT, ALAT: ALAT, TARIF: TARIF, siapkan: siapkan, tempat: tempat, sewaBulan: sewaBulan, sewaTahun: sewaTahun, punya: punya,
+  g.KK_USAHA = { LOKASI: LOKASI, TEMPAT: TEMPAT, ALAT: ALAT, TARIF: TARIF, siapkan: siapkan, menuDijual: menuDijual, aturMenuAktif: aturMenuAktif, tempat: tempat, sewaBulan: sewaBulan, sewaTahun: sewaTahun, punya: punya,
     listrikNyala: listrikNyala, bisaEspresso: bisaEspresso, bahanTersedia: bahanTersedia, faktor: faktor, campuran: campuran, faktorAntar: faktorAntar, kecepatan: kecepatan,
     bonusRasa: bonusRasa, suasana: suasana, sabar: sabar, esTahan: esTahan, beliToken: beliToken, naikKelas: naikKelas, beliAlat: beliAlat, bukaCabang: bukaCabang,
     hasilCabang: hasilCabang, perkiraanBintang: perkiraanBintang, hppResep: hppResep, susunResep: susunResep, namaUsul: namaUsul, simpanMenu: simpanMenu, hapusMenu: hapusMenu,

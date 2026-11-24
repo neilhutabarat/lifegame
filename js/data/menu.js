@@ -53,25 +53,49 @@
   /* selera jenis pembeli terhadap profil rasa (setelan) */
   var SELERA = { mahasiswa: [0.2, 1, 0.6, 0.5, 0.4], kantor: [1, 0.3, 0.4, 0.2, 0.7], ojol: [0.8, 0.7, 0.3, 0.3, 0.2], keluarga: [0, 1, 0.8, 0.5, 0.3], konten: [0.3, 0.6, 0.5, 0.7, 0.8] };
 
-  /* resep: [bahan, jumlah takaran dalam gram/ml/buah]; cup selalu pertama */
+  /* resep dasar (bisa disajikan panas atau dingin/es sesuai permintaan pemesan).
+     aktifAwal: hanya 3 kopi dasar yang langsung dijual di awal; 5 kopi spesial bebas diaktifkan dari Racik Menu kapan saja. */
   var MENU = [
-    { id: 'aren', nama: 'Es kopi susu gula aren', pendek: 'Kopsu Aren', harga: 18000, resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['uht', 150], ['aren', 25]] },
-    { id: 'klasik', nama: 'Es kopi susu klasik', pendek: 'Kopsu Klasik', harga: 15000, resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['skm', 30], ['uht', 100]] },
-    { id: 'hitam', nama: 'Kopi hitam panas', pendek: 'Kopi Hitam', harga: 8000, resep: [['cupKertas', 1], ['kopi', 12], ['air', 1], ['gula', 15]] },
-    { id: 'sanger', nama: 'Kopi sanger panas', pendek: 'Sanger', harga: 10000, resep: [['cupKertas', 1], ['kopi', 15], ['air', 1], ['skm', 25]] },
-    { id: 'cokelat', nama: 'Es cokelat', pendek: 'Es Cokelat', harga: 15000, resep: [['cupPlastik', 1], ['es', 1], ['cokelat', 25], ['uht', 150], ['gula', 15]] },
-    { id: 'teh', nama: 'Es teh manis', pendek: 'Es Teh', harga: 5000, resep: [['cupPlastik', 1], ['es', 1], ['teh', 3], ['gula', 20]] }
+    { id: 'hitam', nama: 'Kopi hitam', pendek: 'Kopi Hitam', harga: 8000, aktifAwal: true, bisaSuhu: true, warna: '#3a2116',
+      resep: [['cupKertas', 1], ['kopi', 12], ['air', 1], ['gula', 15]] },
+    { id: 'susu', nama: 'Kopi susu', pendek: 'Kopi Susu', harga: 15000, aktifAwal: true, bisaSuhu: true, warna: '#c49a6c',
+      resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['skm', 30], ['uht', 100]] },
+    { id: 'aren', nama: 'Kopi gula aren', pendek: 'Kopsu Aren', harga: 18000, aktifAwal: true, bisaSuhu: true, warna: '#a8774e',
+      resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['uht', 150], ['aren', 25]] },
+    /* menu kopi spesial di racikan: bebas dijual atau tidak dijual kapan saja */
+    { id: 'americano', nama: 'Americano', pendek: 'Americano', harga: 16000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#2c1810',
+      resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['air', 1]] },
+    { id: 'arabica', nama: 'Kopi arabica', pendek: 'Arabica', harga: 18000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#4e2c1a',
+      resep: [['cupKertas', 1], ['kopi', 18], ['air', 1]] },
+    { id: 'espresso', nama: 'Espresso', pendek: 'Espresso', harga: 14000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#26140c',
+      resep: [['cupKertas', 1], ['kopi', 18], ['air', 1]] },
+    { id: 'mocha', nama: 'Mocha', pendek: 'Mocha', harga: 20000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#6b3b25',
+      resep: [['cupPlastik', 1], ['es', 1], ['kopi', 18], ['cokelat', 25], ['uht', 120]] },
+    { id: 'cappuccino', nama: 'Cappuccino', pendek: 'Cappuccino', harga: 20000, aktifAwal: false, spesial: true, bisaSuhu: true, warna: '#b98b63',
+      resep: [['cupKertas', 1], ['kopi', 18], ['uht', 150], ['gula', 10]] }
   ];
+  /* sesuaikan resep berdasarkan suhu yang diminta pembeli (panas pakai cup kertas + air panas; dingin pakai cup plastik + es) */
+  function resepSuhu(menu, panas) {
+    if (!menu || !menu.resep) return [];
+    var r = menu.resep.filter(function (x) { return x[0] !== 'cupPlastik' && x[0] !== 'cupKertas' && x[0] !== 'es'; });
+    var hasil = [[panas ? 'cupKertas' : 'cupPlastik', 1]];
+    if (!panas) hasil.push(['es', 1]);
+    var adaAir = r.some(function (x) { return x[0] === 'air'; });
+    var adaSusu = r.some(function (x) { return x[0] === 'uht' || x[0] === 'oat'; });
+    r.forEach(function (x) { hasil.push(x); });
+    if (panas && !adaAir && !adaSusu) hasil.push(['air', 1]);
+    return hasil;
+  }
   function biaya(idBahan, jumlah) { var b = BAHAN[idBahan]; return Math.round(b.harga * jumlah); }
   MENU.forEach(function (m) { m.hpp = m.resep.reduce(function (t, r) { return t + biaya(r[0], r[1]); }, 0); });
 
   /* jenis pembeli (rancangan bagian Pembeli). sabar = menit game sebelum pergi; qris = peluang bayar QRIS (setelan) */
   var PEMBELI = {
-    mahasiswa: { nama: 'Mahasiswa', sabar: 50, qris: 0.6, suka: { aren: 30, klasik: 25, cokelat: 20, teh: 15, hitam: 5, sanger: 5 } },
-    kantor: { nama: 'Pekerja kantor', sabar: 25, qris: 0.8, suka: { aren: 30, klasik: 20, hitam: 20, sanger: 15, cokelat: 5, teh: 10 } },
-    ojol: { nama: 'Driver ojol', sabar: 35, qris: 0.3, suka: { hitam: 30, teh: 30, sanger: 20, klasik: 15, aren: 5 } },
-    keluarga: { nama: 'Keluarga', sabar: 45, qris: 0.5, suka: { cokelat: 35, teh: 30, aren: 20, klasik: 15 } },
-    konten: { nama: 'Pembuat konten', sabar: 40, qris: 0.7, suka: { aren: 50, cokelat: 30, klasik: 20 } }
+    mahasiswa: { nama: 'Mahasiswa', sabar: 50, qris: 0.6, suka: { aren: 32, susu: 24, hitam: 8, americano: 10, mocha: 12, cappuccino: 10, arabica: 4, espresso: 2 } },
+    kantor: { nama: 'Pekerja kantor', sabar: 25, qris: 0.8, suka: { aren: 26, susu: 18, hitam: 16, americano: 16, cappuccino: 12, arabica: 8, espresso: 6, mocha: 6 } },
+    ojol: { nama: 'Driver ojol', sabar: 35, qris: 0.3, suka: { hitam: 40, susu: 30, aren: 18, americano: 5, arabica: 3, espresso: 2, mocha: 1, cappuccino: 1 } },
+    keluarga: { nama: 'Keluarga', sabar: 45, qris: 0.5, suka: { susu: 30, aren: 28, mocha: 18, cappuccino: 14, hitam: 6, arabica: 4, americano: 2, espresso: 1 } },
+    konten: { nama: 'Pembuat konten', sabar: 40, qris: 0.7, suka: { aren: 34, mocha: 18, cappuccino: 16, arabica: 14, americano: 10, susu: 8, espresso: 4, hitam: 2 } }
   };
   /* campuran jenis pembeli per jam (setelan) */
   function campuran(jam, malamMinggu) {
@@ -84,5 +108,5 @@
   var KERAMAIAN = [0.15, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2, 0.8, 1, 0.7, 0.5, 0.6, 0.9, 0.8, 0.5, 0.6, 0.9, 1, 0.8, 1, 1, 0.8, 0.5, 0.3];
   var PEMBELI_PER_HARI = 40; /* kedai tahap 1 di pinggir jalan, buka 07.00–22.00 (setelan) */
 
-  g.KK_MENU = { PROFIL: PROFIL, SELERA: SELERA, BARANG: BARANG, URUT_BARANG: URUT_BARANG, TAP_STOK: TAP_STOK, AIR_PANAS: AIR_PANAS, BAHAN: BAHAN, URUT_BAHAN: URUT_BAHAN, MENU: MENU, PEMBELI: PEMBELI, campuran: campuran, KERAMAIAN: KERAMAIAN, PEMBELI_PER_HARI: PEMBELI_PER_HARI, biaya: biaya };
+  g.KK_MENU = { PROFIL: PROFIL, SELERA: SELERA, BARANG: BARANG, URUT_BARANG: URUT_BARANG, TAP_STOK: TAP_STOK, AIR_PANAS: AIR_PANAS, BAHAN: BAHAN, URUT_BAHAN: URUT_BAHAN, MENU: MENU, resepSuhu: resepSuhu, PEMBELI: PEMBELI, campuran: campuran, KERAMAIAN: KERAMAIAN, PEMBELI_PER_HARI: PEMBELI_PER_HARI, biaya: biaya };
 })(typeof window !== 'undefined' ? window : this);
