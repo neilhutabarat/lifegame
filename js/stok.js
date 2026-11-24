@@ -22,7 +22,7 @@
   function bulat500(n) { return Math.round(n / 500) * 500; }
 
   function siapkan(S) {
-    if (S.stok) return S;
+    if (S.stok) { M.URUT_BARANG.forEach(function (id) { if (!S.stok[id]) { S.stok[id] = { jml: 0, nilai: 0 }; S.faktor[id] = 1; } }); return S; }
     S.stok = {}; S.faktor = {};
     M.URUT_BARANG.forEach(function (id) {
       var b = M.BARANG[id], jml = STOK_AWAL[id] || 0;
@@ -65,7 +65,8 @@
       return { ok: true, biaya: 0, operasional: ambil(S, 'galon', M.AIR_PANAS.galon) + ambil(S, 'gas', M.AIR_PANAS.gas) };
     }
     var butuh = M.TAP_STOK[bahan] != null ? M.TAP_STOK[bahan] * jml : jml;
-    if (!ada(S, bahan, butuh)) return { ok: false, habis: M.BAHAN[bahan].nama };
+    var asal = bahan; bahan = M.BAHAN[bahan].stok || bahan;
+    if (!ada(S, bahan, butuh)) return { ok: false, habis: M.BAHAN[asal].nama };
     if (bahan === 'uht') {
       /* buka kotak baru kalau susu yang terbuka kurang */
       if (S.uhtBuka.sisa < butuh) { S.uhtBuka.sisa = Math.min(S.stok.uht.jml, S.uhtBuka.sisa + 1000); S.uhtBuka.hari = S.hari; }
@@ -78,7 +79,8 @@
     var b = {};
     menu.resep.forEach(function (r) {
       if (r[0] === 'air') { b.galon = (b.galon || 0) + M.AIR_PANAS.galon * n; b.gas = (b.gas || 0) + M.AIR_PANAS.gas * n; return; }
-      b[r[0]] = (b[r[0]] || 0) + (M.TAP_STOK[r[0]] != null ? M.TAP_STOK[r[0]] * r[1] : r[1]) * n;
+      var id = M.BAHAN[r[0]].stok || r[0];
+      b[id] = (b[id] || 0) + (M.TAP_STOK[r[0]] != null ? M.TAP_STOK[r[0]] * r[1] : r[1]) * n;
     });
     return b;
   }
@@ -96,7 +98,7 @@
     return Math.floor(s) + ' ' + b.satuan;
   }
   /* bahan racik -> barang stok */
-  function barangDari(bahan) { return bahan === 'air' ? 'galon' : bahan; }
+  function barangDari(bahan) { return bahan === 'air' ? 'galon' : (M.BAHAN[bahan] && M.BAHAN[bahan].stok) || bahan; }
   /* cukup untuk berapa gelas lagi (perkiraan kasar dari takaran resep terbesar) */
   function menipis(S) {
     var hasil = [];
@@ -185,7 +187,7 @@
   function jalan(S, dMenit) {
     var kabar = [];
     if (dMenit > 0 && S.stok.es.jml > 0) {
-      var leleh = S.stok.es.jml * MELELEH_PER_JAM * dMenit / 60, biaya = ambil(S, 'es', leleh);
+      var leleh = S.stok.es.jml * (g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S) ? 0.003 : MELELEH_PER_JAM) * dMenit / 60, biaya = ambil(S, 'es', leleh);
       S.hariIni.rusak = (S.hariIni.rusak || 0) + biaya;
     }
     S.kiriman = S.kiriman.filter(function (k) {
@@ -201,7 +203,7 @@
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], tB = KAL.tgl(nBaru);
     /* es di cool box habis mencair semalam */
-    if (S.stok.es.jml > 1) { var e = S.stok.es.jml; S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'es', e); kabar.push('Sisa es ' + (e / 1000).toFixed(1).replace('.', ',') + ' kg mencair semalam di cool box.'); }
+    if (S.stok.es.jml > 1 && !(g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S))) { var e = S.stok.es.jml; S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'es', e); kabar.push('Sisa es ' + (e / 1000).toFixed(1).replace('.', ',') + ' kg mencair semalam di cool box.'); }
     /* susu UHT yang sudah dibuka lewat 3 hari */
     if (S.uhtBuka.sisa > 0 && nBaru - S.uhtBuka.hari >= UHT_TAHAN_HARI) {
       var basi = Math.min(S.uhtBuka.sisa, S.stok.uht.jml); S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'uht', basi);

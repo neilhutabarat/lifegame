@@ -76,7 +76,8 @@
     harga: ['harganya bersahabat', 'harga masih masuk', 'agak mahal untuk ukuran kontainer'],
     tunggu: ['cepat disajikan', 'nunggunya lumayan', 'antre lama banget'],
     ramah: ['pelayannya ramah', 'pelayanan biasa', 'pelayannya jutek'],
-    bersih: ['tempatnya bersih', 'meja agak kotor', 'kotor, banyak sampah']
+    bersih: ['tempatnya bersih', 'meja agak kotor', 'kotor, banyak sampah'],
+    suasana: ['tempatnya nyaman buat nongkrong', 'tempat duduknya terbatas', 'tempatnya sempit dan panas']
   };
   function teksUlasan(nilai) {
     var urut = Object.keys(nilai).sort(function (a, b) { return nilai[b] - nilai[a]; });
@@ -89,13 +90,14 @@
     var p = M.PEMBELI[o.jenis], suka = p.suka[o.menu.id] || 0, maks = Math.max.apply(null, Object.keys(p.suka).map(function (k) { return p.suka[k]; }));
     var rasio = o.menu.harga / o.menu.hargaAwal;
     var nilai = {
-      rasa: batas(3.3 + 1.5 * suka / maks + (pelayan ? (pelayan.racik - 4) * 0.3 : 0.2), 1, 5),
+      rasa: batas(3.3 + 1.5 * suka / maks + (pelayan ? (pelayan.racik - 4) * 0.3 : 0.2) + (g.KK_USAHA ? g.KK_USAHA.bonusRasa(S) : 0), 1, 5),
+      suasana: g.KK_USAHA ? g.KK_USAHA.suasana(S) : 3.5,
       harga: batas(4.2 - (rasio - 1) * 6, 1, 5),
       tunggu: batas(5 - 4 * Math.max(0, S.menit - o.datang) / (o.sabarAwal || 40), 1, 5),
       ramah: pelayan ? batas(1.8 + pelayan.ramah * 0.65 - (pelayan.tenaga < 30 ? 0.8 : 0), 1, 5) : 4.4,
       bersih: batas(5 - S.dunia.kotor / 22, 1, 5)
     };
-    var bobot = { rasa: 0.3, harga: o.jenis === 'mahasiswa' || o.jenis === 'ojol' ? 0.3 : 0.18, tunggu: o.jenis === 'kantor' ? 0.3 : 0.2, ramah: 0.12, bersih: 0.12 };
+    var bobot = { rasa: 0.3, harga: o.jenis === 'mahasiswa' || o.jenis === 'ojol' ? 0.3 : 0.18, tunggu: o.jenis === 'kantor' ? 0.3 : 0.2, ramah: 0.12, bersih: 0.12, suasana: 0.1 };
     var total = 0, bb = 0; for (var k in nilai) { total += nilai[k] * bobot[k]; bb += bobot[k]; }
     var bintang = batas(Math.round(total / bb + (Math.random() - 0.5) * 0.8), 1, 5);
     return { bintang: bintang, nilai: nilai };

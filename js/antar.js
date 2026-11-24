@@ -67,7 +67,7 @@
     var kabar = [], t = waktu(S);
     if (S.fase === 'buka' && dMenit > 0) {
       var aktifWa = S.pesanan.filter(function (p) { return p.jenis === 'wa' && p.status !== 'selesai' && p.status !== 'batal'; }).length;
-      if (aktifWa < 4 && Math.random() < WA_PER_JAM * pengali * (g.KK_DUNIA ? g.KK_DUNIA.faktorAntar(S) : 1) * dMenit / 60) { S.pesanan.push(buatWa(S)); kabar.push('Pesanan WhatsApp baru.'); }
+      if (aktifWa < 4 && Math.random() < WA_PER_JAM * pengali * (g.KK_DUNIA ? g.KK_DUNIA.faktorAntar(S) : 1) * (g.KK_USAHA && S.usaha ? g.KK_USAHA.faktorAntar(S) : 1) * dMenit / 60) { S.pesanan.push(buatWa(S)); kabar.push('Pesanan WhatsApp baru.'); }
       N.platform.forEach(function (pl) {
         if (S.platform[pl.id].status === 'aktif' && Math.random() < OJOL_PER_JAM * pengali * (g.KK_DUNIA ? g.KK_DUNIA.faktorAntar(S) : 1) * dMenit / 60) { S.pesanan.push(buatOjol(S, pl)); kabar.push('Pesanan ' + pl.nama + ' masuk.'); }
       });

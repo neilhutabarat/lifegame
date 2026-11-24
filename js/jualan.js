@@ -52,10 +52,11 @@
   var RAMBUT = ['#2a1d1a', '#3b2a22', '#151515', '#5a3a28'];
   function buatPembeli(S, jam) {
     var malamMinggu = KAL.tgl(S.hari).dow === 6;
-    var jenis = pilihBobot(M.campuran(jam, malamMinggu));
+    var mix = M.campuran(jam, malamMinggu); if (g.KK_USAHA && S.usaha) mix = g.KK_USAHA.campuran(S, mix);
+    var jenis = pilihBobot(mix);
     var D = S.dunia, blogger = false;
     if (D && D.bloggerMenunggu) { jenis = 'konten'; blogger = true; D.bloggerMenunggu = false; }
-    var p = M.PEMBELI[jenis], dariKanan = Math.random() < 0.45, sabar = p.sabar * (0.8 + Math.random() * 0.4) * (S.bonusSabar || 1);
+    var p = M.PEMBELI[jenis], dariKanan = Math.random() < 0.45, sabar = p.sabar * (0.8 + Math.random() * 0.4) * (S.bonusSabar || 1) * (g.KK_USAHA && S.usaha ? g.KK_USAHA.sabar(S) : 1);
     return { blogger: blogger, datang: S.menit, sabarAwal: sabar,
       id: ++nomor, jenis: jenis, menu: pilihMenu(S, jenis, jam), bayar: Math.random() < p.qris ? 'qris' : 'tunai',
       tiba: S.menit, sabar: sabar, keadaan: 'antre', racik: [],
@@ -71,7 +72,7 @@
   function langkah(S, dMenit) {
     if (dMenit <= 0) return;
     var jam = Math.floor(S.menit / 60) % 24;
-    var lambda = M.PEMBELI_PER_HARI / JUMLAH_BOBOT * M.KERAMAIAN[jam] * pengali(S, jam) * (g.KK_DUNIA ? g.KK_DUNIA.faktor(S) : 1) / 60;
+    var lambda = M.PEMBELI_PER_HARI / JUMLAH_BOBOT * M.KERAMAIAN[jam] * pengali(S, jam) * (g.KK_DUNIA ? g.KK_DUNIA.faktor(S) : 1) * (g.KK_USAHA && S.usaha ? g.KK_USAHA.faktor(S) : 1) / 60;
     if (Math.random() < lambda * dMenit) {
       if (antre().length >= MAKS_ANTRE) S.hariIni.penuh++;
       else { daftar.push(buatPembeli(S, jam)); aturSlot(); }

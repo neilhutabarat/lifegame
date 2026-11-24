@@ -66,7 +66,7 @@
     return true;
   }
   function hadir(S, k) {
-    if (!masuk(S, k) || S.fase !== 'buka') return false;
+    if (k.cabang || !masuk(S, k) || S.fase !== 'buka') return false;
     var j = jamKerja(S, k); return S.menit >= j[0] && S.menit < j[1];
   }
   function punyaTugas(k, t) { return k.tugas.indexOf(t) >= 0 || (t !== 'kepala' && k.tugas.indexOf('kepala') >= 0 && false); }
@@ -96,14 +96,14 @@
           if (Math.random() < peluangSalah(k)) { var w = alat.buang(o.menu); kabar.push(k.nama + ' salah racik ' + o.menu.pendek + ', bahan terbuang ' + rp(w) + '.'); }
           var hasil = alat.buatGelas(o.menu, 1);
           if (!hasil.ok) { alat.lepasPembeli(o); k.sibukSampai = tw + 10; kabar.push(k.nama + ': ' + hasil.habis + ' habis, tidak bisa membuat ' + o.menu.pendek + '.'); return; }
-          k.sibukSampai = tw + lamaRacik(k, 1); k.gelas++; o.selesaiOleh = { k: k, pada: k.sibukSampai, biaya: hasil.biaya };
+          k.sibukSampai = tw + lamaRacik(k, 1) * (g.KK_USAHA ? g.KK_USAHA.kecepatan(S) : 1); k.gelas++; o.selesaiOleh = { k: k, pada: k.sibukSampai, biaya: hasil.biaya };
           return;
         }
         var p = alat.ambilPesanan(k);
         if (p) {
           var item = p.item, h2 = alat.buatGelas(item.menuObj, item.qty);
           if (!h2.ok) { alat.lepasPesanan(p); k.sibukSampai = tw + 10; kabar.push(k.nama + ': ' + h2.habis + ' kurang untuk pesanan ' + p.p.nama + '.'); return; }
-          k.sibukSampai = tw + lamaRacik(k, item.qty); k.gelas += item.qty;
+          k.sibukSampai = tw + lamaRacik(k, item.qty) * (g.KK_USAHA ? g.KK_USAHA.kecepatan(S) : 1); k.gelas += item.qty;
           p.p.sedangOleh = { k: k, pada: k.sibukSampai, biaya: h2.biaya, item: item.x }; return;
         }
       }

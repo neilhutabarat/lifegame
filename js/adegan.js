@@ -179,16 +179,29 @@
   }
 
   function gambarKedai(x0, dasar, s, t, m) {
-    var w = 180, h = 132, y0 = dasar - h, p = anim.pantulKedai, sk = 1 + Math.sin(p * 16) * 0.05 * p;
+    var tier = s.tier || 1, w = tier === 1 ? 180 : 196, h = tier === 1 ? 132 : 144, y0 = dasar - h, p = anim.pantulKedai, sk = 1 + Math.sin(p * 16) * 0.05 * p;
+    if (tier > 1) x0 -= 16;
+    var ruko = tier === 4, warnaBadan = ruko ? '#e9e3d6' : '#1f8a80', warnaTepi = ruko ? '#c9bfa9' : '#176d65';
     cx.save(); cx.translate(x0 + w / 2, dasar); cx.scale(1 / sk, sk); cx.translate(-(x0 + w / 2), -dasar);
+    /* lantai atas: rooftop (tahap 3) atau lantai dua ruko (tahap 4) */
+    if (tier === 3) {
+      kotak(x0 + 10, y0 - 70, w - 20, 64, '#2f6fb0'); cx.fillStyle = 'rgba(0,0,0,.12)'; for (var r1 = x0 + 14; r1 < x0 + w - 10; r1 += 9) cx.fillRect(r1, y0 - 70, 3, 64);
+      kotak(x0 + 4, y0 - 82, w - 8, 4, '#3b3f46'); for (var r2 = x0 + 8; r2 < x0 + w - 4; r2 += 14) kotak(r2, y0 - 82, 2, 14, '#3b3f46');
+      cx.fillStyle = '#f2a516'; cx.beginPath(); cx.moveTo(x0 + w - 60, y0 - 104); cx.lineTo(x0 + w - 30, y0 - 90); cx.lineTo(x0 + w - 90, y0 - 90); cx.closePath(); cx.fill(); kotak(x0 + w - 61, y0 - 92, 2, 20, '#3b3f46');
+    }
+    if (ruko) {
+      kotak(x0 - 10, y0 - 120, w + 20, 120, '#d9cfbb'); kotak(x0 - 14, y0 - 126, w + 28, 8, '#b8ab90');
+      for (var r3 = 0; r3 < 3; r3++) kotak(x0 + 14 + r3 * (w - 28) / 3, y0 - 100, (w - 28) / 3 - 10, 56, 'rgba(60,90,110,.55)');
+      kotakBulat(x0 + w - 40, y0 - 40, 26, 16, 3, '#f3f1ea');
+    }
     /* bayangan */
     cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(x0 + w / 2, dasar + 2, w / 2 + 8, 7, 0, 0, Math.PI * 2); cx.fill();
     /* badan kontainer bergelombang */
-    kotak(x0, y0, w, h, '#1f8a80');
+    kotak(x0, y0, w, h, warnaBadan);
     cx.fillStyle = 'rgba(0,0,0,.10)';
-    for (var i = x0 + 4; i < x0 + w; i += 9) cx.fillRect(i, y0, 3, h);
-    kotak(x0 - 3, y0 - 6, w + 6, 8, '#176d65');
-    kotak(x0 - 3, dasar - 6, w + 6, 6, '#176d65');
+    if (!ruko) for (var i = x0 + 4; i < x0 + w; i += 9) cx.fillRect(i, y0, 3, h);
+    kotak(x0 - 3, y0 - 6, w + 6, 8, warnaTepi);
+    kotak(x0 - 3, dasar - 6, w + 6, 6, warnaTepi);
     /* bukaan jendela */
     var bx = x0 + 18, by = y0 + 30, bw = w - 36, bh = 54;
     kotak(bx, by, bw, bh, '#3b2a22');
@@ -400,9 +413,11 @@
     gambarTiang(dasarKedai, dasarRuko - 270);
     gambarPisang(132, dasarKedai, t);
     kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
-    var nyala = s.buka ? Math.max(gp, 0.15) : 0;
+    var nyala = s.buka && !s.padam ? Math.max(gp, 0.15) : 0;
     rantaiLampu(29, dasarRuko - 238, kotakKedai.x + 6, kotakKedai.y + 4, nyala, t);
-    gambarKursi(44, dasarKedai + 4, '#d9443a'); gambarKursi(88, dasarKedai + 8, '#2f6fb0');
+    var wk = s.kayu ? ['#8f5a31', '#a86c3c'] : ['#d9443a', '#2f6fb0'];
+    gambarKursi(44, dasarKedai + 4, wk[0]); gambarKursi(88, dasarKedai + 8, wk[1]);
+    if ((s.tier || 1) >= 2) { gambarKursi(8, dasarKedai + 10, wk[1]); kotak(20, dasarKedai - 22, 30, 4, s.kayu ? '#b97a46' : '#e8e4da'); }
     kotak(60, dasarKedai - 26, 34, 4, '#e8e4da'); kotak(74, dasarKedai - 22, 4, 24, '#c8c2b4');
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.32).toFixed(3) + ')'; cx.fillRect(0, trotoar, W, H - trotoar); }
     var daftar = s.pembeli || [];

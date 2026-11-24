@@ -61,7 +61,7 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .judul-game small { display: block; font-size: 16px; font-weight: 600; opacity: .8; margin-top: 8px; font-family: var(--font-isi); }
 .tombol-dua { display: grid; gap: 10px; margin-top: 8px; }
 .tombol-lain { padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, .14); color: #fff; font-weight: 800; font-size: 16px; }
-#layar-kota, #layar-qris, #layar-bank { background: rgba(18, 25, 29, .82); }
+#layar-kota, #layar-qris, #layar-bank, #layar-lokasi { background: rgba(18, 25, 29, .82); }
 .kota-daftar { display: grid; gap: 10px; overflow-y: auto; min-height: 0; }
 .kota { text-align: left; background: var(--panel); color: var(--tinta); border-radius: 18px; padding: 14px 16px; display: grid; gap: 2px; border: 3px solid transparent; }
 .kota b { font-family: var(--font-judul); font-size: 20px; line-height: 1.1; }
@@ -230,3 +230,4 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 
 /* ---------- tahap 7 ---------- */
 .pudar { color: rgba(29,43,51,.25); }
+.chip-tombol:disabled { opacity: .4; }

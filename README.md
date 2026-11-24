@@ -13,6 +13,7 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 - `js/antar.js` — pesanan antar dan platform
 - `js/karyawan.js` — karyawan, gaji, THR, BPJS
 - `js/dunia.js` — rating, Maps, media sosial, pesaing, cuaca, kejadian
+- `js/usaha.js` — lokasi, tempat, alat, listrik, cabang, menu sendiri
 - `js/jualan.js` — pembeli datang, antre, bayar
 - `js/data/menu.js` — bahan, resep, HPP, jenis pembeli
 - `js/main.js` — alur game
@@ -27,4 +28,5 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 5. Motor dan antar: dealer, kredit, bekas, bensin, oli, servis, pajak; pesanan WhatsApp, GoFood/GrabFood/ShopeeFood, pesanan besar; antar sendiri atau kurir ✔
 6. Karyawan: lowongan, pelamar, tugas, sif, libur, tenaga, betah, gaji UMK, lembur, THR, BPJS, pesangon ✔
 7. Dunia luar: bintang tiap pembeli, Google Maps dan ulasan, Instagram/TikTok/WA Business, iklan dan endorse, pesaing, hujan dan banjir, kebersihan, kejadian acak ✔
-8. Naik kelas: tempat, alat, cabang, racik menu sendiri (berikutnya)
+8. Naik kelas: lokasi, booth sampai ruko, alat, sewa, token listrik PLN, cabang, racik menu sendiri ✔
+9. Gambar AI, animasi, suara (berikutnya)
