@@ -1,0 +1,13 @@
+{
+  "name": "Kopi Kontainer",
+  "short_name": "Kopi Kontainer",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12191d",
+  "theme_color": "#12191d",
+  "icons": [
+    { "src": "img/ikon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/ikon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

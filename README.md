@@ -1,8 +1,16 @@
-# ID Simulator by Oneilverse (v1.0)
+# Kopi Kontainer
 
-Simulasi kehidupan, karier, pendidikan, otomotif, gadget, R&D kelistrikan, dan bisnis di Indonesia lintas zaman (1980 - 2026+).
+Game HP simulasi usaha kedai kopi kontainer berlatar dunia nyata Indonesia masa kini. Layar tegak, semua aksi lewat tap.
+Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 
-## Cara Pasang ke GitHub Pages
-1. Ekstrak seluruh 8 file di dalam arsip ZIP ini.
-2. Upload dan timpa seluruh file ke root repository GitHub kamu (`neilhutabarat/lifegame`).
-3. Tekan **Ctrl + Shift + R** pada browser setelah deploy selesai.
+## Isi
+- `index.html`, `css/game.css` — tampilan
+- `js/kalender.js` — kalender tanpa angka tahun (tahun ke-1 = 2023) dan rumus hari raya
+- `js/adegan.js` — adegan kedai di kanvas 2D
+- `js/main.js` — alur game
+- `js/data/nyata.js` — semua nama, merek, dan angka dunia nyata (diganti di sini saat game dijual)
+- `tools/bundel.py` — gabungkan jadi satu berkas HTML untuk tautan uji
+
+## Tahap
+1. Kerangka: jam, kalender, buka dan tutup kedai, laporan malam, simpan otomatis ✔
+2. Jualan inti (berikutnya)

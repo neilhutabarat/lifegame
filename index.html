@@ -1,128 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Warnet &amp; Life Simulator (2010–Now) • Oneilverse</title>
-  <link rel="stylesheet" href="style.css?v=20261123_6" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kopi Kontainer</title>
+<meta name="theme-color" content="#12191d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="img/ikon-192.png">
+<link rel="apple-touch-icon" href="img/ikon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="css/game.css">
 </head>
-<body class="dark-theme">
+<body>
+<div id="app">
+  <canvas id="adegan" aria-label="Kedai kopi kontainer di pinggir jalan"></canvas>
 
-<div class="app-shell">
-  <!-- 1. TOP HUD TERKUNCI (TANPA SCROLL SAMPING DI HP) -->
-  <header class="top-hud-locked">
-    <div class="hud-bar-top">
-      <button class="hud-user-btn" type="button" onclick="openCharacterCreationModal()" title="Karakter / Reset">
-        👤 <span id="hudPlayerBadge">Neil (12 Thn)</span>
-      </button>
-      <div class="hud-clock-box">
-        <b id="hudDateTime">Jum, 1/1/2010 • 08:00</b>
-        <small id="hudCityUmr">Jambi • $1=Rp9.090</small>
-      </div>
-      <button id="btnToggleOpen" type="button" class="hud-open-btn success" onclick="toggleRentalOpenStatus()">🟢 BUKA</button>
-    </div>
-
-    <div class="hud-bar-controls">
-      <div class="speed-controls">
-        <button id="btnPause" class="speed-btn" type="button" onclick="togglePause()">⏸️</button>
-        <button class="speed-btn active" type="button" data-speed="1" onclick="setSpeed(1)">1x</button>
-        <button class="speed-btn" type="button" data-speed="2" onclick="setSpeed(2)">2x</button>
-        <button class="speed-btn" type="button" data-speed="4" onclick="setSpeed(4)">4x</button>
-        <button class="speed-btn" type="button" data-speed="8" onclick="setSpeed(8)">8x</button>
-        <button class="speed-btn" type="button" data-speed="16" onclick="setSpeed(16)">16x</button>
-      </div>
-      <div class="hud-mini-tools">
-        <button type="button" onclick="openDrawerTab('life')" title="Stamina &amp; Kesehatan">❤️ <span id="hudEnergy">100%</span></button>
-        <button type="button" onclick="manualCleanShop()">🧹 <span id="hudClean">100%</span></button>
-        <button type="button" id="btnMusicTrack" onclick="cycleBgmTrack()" title="Ganti Lagu / Matikan Musik">🎵 Lagu 1</button>
-        <button type="button" id="btnSoundToggle" onclick="toggleSound()">🔊</button>
-        <button type="button" onclick="openCloudSyncModal()">☁️</button>
-      </div>
-    </div>
-
-    <!-- GRID 3x2 STAT KEUANGAN, INTERNET, PLN/GENSET & GALON (TANPA SCROLL SAMPING!) -->
-    <div class="hud-stats-grid">
-      <div class="stat-cell" onclick="openBankTransferModal()">
-        <span>Laci Kasir</span>
-        <b id="hudLaci" style="color:#c084fc;">Rp 0</b>
-      </div>
-      <div class="stat-cell" onclick="openBankTransferModal()">
-        <span>Dompet</span>
-        <b id="hudHand" style="color:#4ade80;">Rp 0</b>
-      </div>
-      <div class="stat-cell" onclick="openBankTransferModal()">
-        <span>Bank</span>
-        <b id="hudBank" style="color:#38bdf8;">Rp 0</b>
-      </div>
-      <div class="stat-cell" onclick="openDrawerTab('discs')">
-        <span>Internet &amp; Ping</span>
-        <b id="hudPpob" style="color:#fbbf24;">1 Mbps • 24ms</b>
-      </div>
-      <div class="stat-cell" onclick="openDrawerTab('finance')">
-        <span>PLN / Genset</span>
-        <b id="hudKwh">45kWh • ⛽5L</b>
-      </div>
-      <div class="stat-cell" onclick="openDrawerTab('agen_ppob')">
-        <span>Galon &amp; Antre</span>
-        <b style="color:#38bdf8;">💧<span id="hudGalon">45</span> • +<span id="lblQueueCount">0</span></b>
-      </div>
-    </div>
+  <header id="hud" hidden>
+    <div class="kartu-hud tanggal"><b id="h-hari">Senin, 2 Januari</b><span id="h-tahun">Tahun ke-1 · Hari ke-1</span></div>
+    <div class="kartu-hud jam"><b id="h-jam">06.00</b><span id="h-status">Belum buka</span></div>
+    <div id="h-chip" class="chips"></div>
   </header>
 
-  <!-- 2. PAPAN BILLING 20 PC WARNET (PAKET BAR MENURUN vs BILLING METER RUPIAH NAIK PER DETIK + UPDATE PATCH MB/GB) -->
-  <main id="studio3dViewport" class="room-board-locked"></main>
+  <div id="toast" hidden></div>
 
-  <!-- 3. TICKER AKTIVITAS SINGKAT -->
-  <div id="liveToastBar" class="live-toast-bar" onclick="openDrawerTab('logs')">
-    📢 Tap PC untuk rakit komponen / atur tarif billing, atau gunakan dock bawah.
-  </div>
-
-  <!-- 4. DOCK BAWAH 4x2 SIMPLE & FUNGSIONAL (TANPA SCROLL) -->
-  <nav class="bottom-dock-locked" style="grid-template-columns:repeat(4,minmax(0,1fr));">
-    <button class="dock-btn" type="button" data-tab="slots" onclick="openDrawerTab('slots')"><span>🖥️</span><small>Billing/PC</small></button>
-    <button class="dock-btn" type="button" data-tab="store_hw" onclick="openDrawerTab('store_hw')"><span>🛒</span><small>Rakit/Server</small></button>
-    <button class="dock-btn" type="button" data-tab="discs" onclick="openDrawerTab('discs')"><span>🌐</span><small>Game/ISP</small></button>
-    <button class="dock-btn" type="button" data-tab="cashier_stik" onclick="openDrawerTab('cashier_stik')"><span>🔧</span><small>Teknisi/Part</small></button>
-    <button class="dock-btn" type="button" data-tab="agen_ppob" onclick="openDrawerTab('agen_ppob')"><span>🍜</span><small>PopMie/Galon</small></button>
-    <button class="dock-btn" type="button" data-tab="employees" onclick="openDrawerTab('employees')"><span>👷</span><small>Karyawan</small></button>
-    <button class="dock-btn" type="button" data-tab="finance" onclick="openDrawerTab('finance')"><span>⚡</span><small>PLN/Genset</small></button>
-    <button class="dock-btn" type="button" data-tab="life" onclick="openDrawerTab('life')"><span>🧬</span><small>Hidup/Motor</small></button>
-  </nav>
-</div>
-
-<!-- SLIDE-UP DRAWER MENU -->
-<div id="appDrawerBackdrop" class="drawer-backdrop" onclick="if(event.target===this)closeDrawer()">
-  <div class="drawer-sheet">
-    <div class="drawer-header">
-      <h2 id="drawerTitle">📱 Menu Manajemen Warnet</h2>
-      <button class="drawer-close" type="button" onclick="closeDrawer()">✕ Tutup</button>
+  <footer id="bawah" hidden>
+    <button id="b-aksi" class="aksi" type="button">Buka kedai</button>
+    <div class="baris">
+      <div class="kec" role="group" aria-label="Kecepatan waktu">
+        <button type="button" data-kec="0" aria-pressed="false">Jeda</button>
+        <button type="button" data-kec="1" aria-pressed="true">1×</button>
+        <button type="button" data-kec="2" aria-pressed="false">2×</button>
+        <button type="button" data-kec="4" aria-pressed="false">4×</button>
+      </div>
+      <div class="dok">
+        <button id="b-kal" class="ikon" type="button" aria-label="Kalender">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button id="b-atur" class="ikon" type="button" aria-label="Atur usaha">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+        </button>
+      </div>
     </div>
-    <div id="rightPanelContent" class="drawer-body"></div>
-  </div>
+  </footer>
+
+  <section id="layar-awal" class="layar">
+    <h1 class="judul-game">Kopi Kontainer<small>Buka kedai kopi dari kontainer kecil di pinggir jalan.</small></h1>
+    <div class="tombol-dua">
+      <button id="b-lanjut" class="aksi" type="button" hidden>Lanjutkan</button>
+      <button id="b-baru" class="tombol-lain" type="button">Mulai usaha baru</button>
+    </div>
+    <p id="info-simpan" class="kecil"></p>
+  </section>
+
+  <section id="layar-kota" class="layar" hidden>
+    <h1 class="judul-game" style="font-size:32px">Buka di kota mana?<small>Kota menentukan gaji karyawan, sewa, dan selera pembeli.</small></h1>
+    <div id="kota-daftar" class="kota-daftar"></div>
+    <button id="b-kembali" class="tombol-lain" type="button">Kembali</button>
+  </section>
+
+  <div id="lembar" class="lembar" hidden><div id="lembar-isi" class="lembar-isi" role="dialog" aria-modal="true"></div></div>
 </div>
 
-<!-- HIDDEN LOG STORAGE -->
-<div id="logBox" style="display:none;"></div>
-
-<!-- FLOATING POPUP FEEDBACK (MUNCUL DI ATAS DRAWER & MODAL SAAT TOMBOL DITEKAN) -->
-<div id="floatingPopupToast" class="floating-popup-toast" onclick="this.classList.remove('show')"></div>
-
-<!-- MODAL POPUP -->
-<div id="customModalBackdrop" class="modal-backdrop" onclick="if(event.target===this)closeCustomModal()">
-  <div class="modal">
-    <h3 id="customModalTitle" style="margin:0;color:var(--accent);font-size:0.95rem;">Judul</h3>
-    <div id="customModalBody" style="display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow-y:auto;"></div>
-    <div id="customModalFooter" style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;"></div>
-  </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=20261123_6"></script>
-<script src="cloud.js?v=20261123_6"></script>
-<script src="catalog_games.js?v=20261123_6"></script>
-<script src="data.js?v=20261123_6"></script>
-<script src="game.js?v=20261123_6"></script>
-<script src="world3d.js?v=20261123_6"></script>
+<script src="js/data/nyata.js"></script>
+<script src="js/kalender.js"></script>
+<script src="js/simpan.js"></script>
+<script src="js/adegan.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
