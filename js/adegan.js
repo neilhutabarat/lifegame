@@ -3,7 +3,7 @@
 (function (g) {
   'use strict';
   var cv, cx, W = 360, H = 640, dpr = 1;
-  var anim = { rolling: 0, pantulKedai: 0, pantulBarista: 0, kedip: 0, motor: [], tMotor: 0 };
+  var anim = { rolling: 0, pantulKedai: 0, pantulBarista: 0, kedip: 0, motor: [], tMotor: 0, angkat: 0, teks: [], cup: [] };
   var ruko = [];
 
   /* angka acak tetap supaya ruko dan jendela selalu sama */
@@ -117,7 +117,7 @@
     for (var x = 0; x < W; x += 24) cx.fillRect(x, trotoar, 1, jalan - trotoar);
     /* trotoar bercat hitam putih khas jalan kota */
     for (var x2 = 0; x2 < W; x2 += 20) kotak(x2, jalan - 7, 10, 7, (x2 / 20) % 2 ? '#f3f1ea' : '#2b2b2b');
-    kotak(0, jalan, W, H - jalan, '#4a4d52');
+    kotak(0, jalan, W, H - jalan + 400, '#4a4d52');
     cx.fillStyle = '#e9e4d4';
     for (var x3 = 8; x3 < W; x3 += 46) cx.fillRect(x3, jalan + 58, 24, 3);
   }
@@ -265,6 +265,96 @@
     cx.restore();
   }
 
+  /* ---------- pembeli ---------- */
+  var BAJU = ['#e0675a', '#3f7fbf', '#7a9e4a', '#e0a33a', '#8a6bb8'];
+  var X_DEPAN = 222, JARAK = 36, kotakDepan = null;
+  function gambarOrang(o, yKaki, t, menit) {
+    var x = o.x, jalan = Math.abs(o.x - o.tx) > 1, langkahK = jalan ? Math.sin(t / 90 + o.id) : 0, r = o.rupa;
+    var bob = jalan ? Math.abs(langkahK) * 2 : Math.sin(t / 500 + o.id) * 0.8;
+    var lompat = o.lompat > 0 ? Math.sin((1 - o.lompat) * Math.PI) * 8 : 0;
+    var y = yKaki - bob - lompat, baju = BAJU[r.baju], celana = '#33414d', hadap = o.keadaan === 'pulang' ? o.arahPulang : (o.tx > o.x + 1 ? 1 : o.tx < o.x - 1 ? -1 : 1);
+    if (o.jenis === 'kantor') { baju = '#eef2f5'; celana = '#2c3640'; }
+    if (o.jenis === 'ojol') baju = '#4f6b3a';
+    cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(x, yKaki + 1, 13, 3.5, 0, 0, Math.PI * 2); cx.fill();
+    /* anak kecil ikut keluarga */
+    if (o.jenis === 'keluarga') {
+      var kx = x - 15 * hadap;
+      kotak(kx - 3, y - 10, 2.6, 10, '#33414d'); kotak(kx + 1, y - 10, 2.6, 10, '#33414d');
+      kotakBulat(kx - 6, y - 24, 12, 15, 4, '#f2a516'); bulat(kx, y - 30, 7, r.kulit);
+      cx.fillStyle = r.rambut; cx.beginPath(); cx.arc(kx, y - 32, 7, Math.PI, 0); cx.fill();
+    }
+    /* kaki */
+    kotak(x - 6 + langkahK * 2, y - 16, 5, 16, celana); kotak(x + 1 - langkahK * 2, y - 16, 5, 16, celana);
+    /* ransel mahasiswa */
+    if (o.jenis === 'mahasiswa') kotakBulat(x - 13 * hadap - 5, y - 40, 10, 20, 3, '#2f3e4a');
+    /* badan */
+    kotakBulat(x - 11, y - 42, 22, 28, 7, baju);
+    if (o.jenis === 'kantor') { cx.strokeStyle = '#2f6fb0'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(x - 4, y - 41); cx.lineTo(x, y - 30); cx.lineTo(x + 4, y - 41); cx.stroke(); kotak(x - 2, y - 30, 4, 5, '#2f6fb0'); }
+    if (o.jenis === 'ojol') kotak(x - 11, y - 30, 22, 3, '#d8d8c8');
+    /* kepala */
+    var yk = y - 52;
+    if (o.jenis === 'keluarga') { /* ibu berkerudung */
+      bulat(x, yk + 1, 13, '#c58fa0'); bulat(x, yk + 2, 9.5, r.kulit);
+    } else {
+      bulat(x, yk, 11, r.kulit);
+      cx.fillStyle = r.rambut;
+      if (r.perempuan) { cx.beginPath(); cx.arc(x, yk - 2, 12, Math.PI * 0.95, Math.PI * 2.05); cx.fill(); kotak(x - 12, yk - 2, 5, 15, r.rambut); kotak(x + 7, yk - 2, 5, 15, r.rambut); }
+      else { cx.beginPath(); cx.arc(x, yk - 2, 11.5, Math.PI * 1.02, Math.PI * 1.98); cx.fill(); }
+      if (o.jenis === 'ojol') { cx.fillStyle = '#2b2b2b'; cx.beginPath(); cx.arc(x, yk - 1, 13, Math.PI, 0); cx.fill(); kotak(x - 13, yk - 2, 26, 3, '#f2a516'); }
+    }
+    /* wajah */
+    var ex = 3.5 * hadap * 0.4;
+    bulat(x - 4 + ex, yk + 1, 1.6, '#2a1d1a'); bulat(x + 4 + ex, yk + 1, 1.6, '#2a1d1a');
+    cx.strokeStyle = '#2a1d1a'; cx.lineWidth = 1.2; cx.beginPath();
+    if (o.marah) cx.arc(x + ex, yk + 8, 3, Math.PI + 0.3, -0.3); else if (o.bawaCup) cx.arc(x + ex, yk + 4, 3.2, 0.2, Math.PI - 0.2); else { cx.moveTo(x - 2 + ex, yk + 6); cx.lineTo(x + 2 + ex, yk + 6); }
+    cx.stroke();
+    /* tangan: HP pembuat konten, cup yang dibawa pulang */
+    if (o.jenis === 'konten' && !o.bawaCup) { kotak(x + 9 * hadap - 2, y - 46, 5, 9, '#222'); kotak(x + 9 * hadap - 1, y - 45, 3, 6, '#7fd3e8'); }
+    if (o.bawaCup) gambarCup(x + 13 * hadap, y - 30, o.menu, 0.8);
+    /* rasa sabar dan pesanan */
+    if (o.keadaan === 'antre' || o.keadaan === 'dilayani') {
+      if (o.keadaan === 'antre') {
+        var sisa = Math.max(0, 1 - (menit - o.tiba) / o.sabar);
+        kotakBulat(x - 13, yk - 22, 26, 5, 2.5, 'rgba(0,0,0,.35)');
+        kotakBulat(x - 12, yk - 21, Math.max(2, 24 * sisa), 3, 1.5, sisa > 0.5 ? '#4fbf6a' : sisa > 0.25 ? '#f2a516' : '#d9443a');
+      }
+      if (o.slot === 0) {
+        cx.font = '800 12px "Baloo 2", "Nunito", system-ui, sans-serif';
+        var tw = cx.measureText(o.menu.pendek).width + 16, bxx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), byy = yk - 52;
+        kotakBulat(bxx, byy, tw, 24, 10, o.keadaan === 'dilayani' ? '#f2a516' : '#fbfaf6');
+        cx.fillStyle = o.keadaan === 'dilayani' ? '#f2a516' : '#fbfaf6';
+        cx.beginPath(); cx.moveTo(x - 5, byy + 23); cx.lineTo(x + 5, byy + 23); cx.lineTo(x, byy + 30); cx.closePath(); cx.fill();
+        cx.fillStyle = '#1d2b33'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(o.menu.pendek, bxx + tw / 2, byy + 12.5);
+        kotakDepan = { x: x - 18, y: byy, w: 36, h: yKaki - byy };
+      }
+    }
+  }
+  function gambarCup(x, y, menu, sk) {
+    cx.save(); cx.translate(x, y); cx.scale(sk, sk);
+    var panas = menu && (menu.id === 'hitam' || menu.id === 'sanger');
+    var isi = { aren: '#a8774e', klasik: '#c49a6c', hitam: '#3a2116', sanger: '#b78a5c', cokelat: '#6b3b25', teh: '#b8622a' }[menu ? menu.id : 'aren'];
+    if (panas) { kotak(-6, -12, 12, 14, '#f3e6d0'); kotak(-6, -6, 12, 5, '#1f8a80'); kotak(-7, -14, 14, 3, '#fbfaf6'); }
+    else { cx.fillStyle = isi; cx.beginPath(); cx.moveTo(-7, -14); cx.lineTo(7, -14); cx.lineTo(5, 3); cx.lineTo(-5, 3); cx.closePath(); cx.fill();
+      cx.fillStyle = 'rgba(255,255,255,.35)'; cx.fillRect(-5, -12, 3, 12); kotak(-8, -17, 16, 3, '#e8f4f8'); kotak(1, -26, 2, 10, '#d9443a'); }
+    cx.restore();
+  }
+  function aturPembeli(daftar, dMenit, dt) {
+    daftar.forEach(function (o) {
+      if (o.tx == null) o.tx = o.x;
+      if (o.keadaan === 'pulang') { o.tx = o.arahPulang < 0 ? -50 : W + 50; }
+      else o.tx = X_DEPAN - (o.slot || 0) * JARAK;
+      var laju = o.keadaan === 'pulang' ? 70 * dt / 1000 : 37 * dMenit;
+      var d = o.tx - o.x; o.x += Math.sign(d) * Math.min(Math.abs(d), laju);
+      if (o.lompat > 0) o.lompat = Math.max(0, o.lompat - dt / 450);
+      if (o.efek) {
+        var e = o.efek; o.efek = null;
+        anim.teks.push({ teks: e.teks, x: o.x, y: 0, umur: 0, warna: e.warna });
+        if (e.cup) { anim.cup.push({ x0: X_DEPAN, x1: o.x, u: 0, menu: o.menu, id: o.id }); o.bawaCup = false; o.tundaCup = true; }
+      }
+      if (o.keadaan === 'pulang' && (o.x < -45 || o.x > W + 45)) o.hilang = true;
+    });
+  }
+
   var kotakKedai = null, kotakBarista = null, tAkhir = 0;
   /* s: { menit, buka (bool), kecepatan } */
   function gambar(s, t) {
@@ -277,8 +367,13 @@
     anim.kedip -= dt; if (anim.kedip < -3400 - Math.random() * 1500) anim.kedip = 140;
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
-    cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
-    var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit;
+    var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
+    /* angkat adegan saat panel racik menutupi kaki pembeli */
+    var skala = cv.getBoundingClientRect().width / W || 1;
+    var targetAngkat = Math.max(0, yKaki + 12 - (H - (s.ruangBawah || 0) / skala));
+    anim.angkat += (targetAngkat - anim.angkat) * Math.min(1, dt / 160);
+    var f = cv.width / W;
+    cx.setTransform(f, 0, 0, f, 0, -anim.angkat * f);
     gambarLangit(m, t);
     gambarRuko(m, dasarRuko);
     var gp = gelap(m);
@@ -292,18 +387,38 @@
     gambarKursi(44, dasarKedai + 4, '#d9443a'); gambarKursi(88, dasarKedai + 8, '#2f6fb0');
     kotak(60, dasarKedai - 26, 34, 4, '#e8e4da'); kotak(74, dasarKedai - 22, 4, 24, '#c8c2b4');
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.32).toFixed(3) + ')'; cx.fillRect(0, trotoar, W, H - trotoar); }
+    var daftar = s.pembeli || [];
+    aturPembeli(daftar, s.dMenit || 0, dt);
+    kotakDepan = null;
+    daftar.slice().sort(function (a, b) { return (b.slot || 0) - (a.slot || 0); }).forEach(function (o) { gambarOrang(o, yKaki, t, m); });
+    /* cup terbang dari konter ke tangan pembeli */
+    anim.cup = anim.cup.filter(function (c) {
+      c.u += dt / 420; var u = Math.min(1, c.u), x = c.x0 + (c.x1 - c.x0) * u, y = kotakKedai.by + kotakKedai.bh - 6 + (yKaki - 30 - kotakKedai.by - kotakKedai.bh + 6) * u - Math.sin(u * Math.PI) * 34;
+      gambarCup(x, y, c.menu, 1);
+      if (c.u >= 1) { daftar.forEach(function (o) { if (o.id === c.id) { o.tundaCup = false; o.bawaCup = true; o.lompat = 1; } }); return false; }
+      return true;
+    });
+    anim.teks = anim.teks.filter(function (e) {
+      e.umur += dt; var u = e.umur / 1400, y = yKaki - 136 - u * 36;
+      cx.globalAlpha = Math.max(0, 1 - Math.max(0, u - 0.6) / 0.4);
+      cx.font = '800 16px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.lineWidth = 4; cx.strokeStyle = '#fbfaf6'; cx.strokeText(e.teks, e.x, y); cx.fillStyle = e.warna; cx.fillText(e.teks, e.x, y);
+      cx.globalAlpha = 1; return u < 1;
+    });
     anim.motor.forEach(function (mt) { gambarMotor(mt, jalan, m); });
     kotakBarista = anim.rolling > 0.35 ? { x: kotakKedai.bx + kotakKedai.bw / 2 - 20, y: kotakKedai.by, w: 40, h: kotakKedai.bh } : null;
   }
 
   /* ketukan: koordinat layar (px CSS relatif kanvas) */
   function ketuk(px, py) {
-    var r = cv.getBoundingClientRect(), x = px / r.width * W, y = py / r.width * W;
+    var r = cv.getBoundingClientRect(), x = px / r.width * W, y = py / r.width * W + anim.angkat;
     function di(k) { return k && x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h; }
+    if (di(kotakDepan)) return 'pembeli';
     if (di(kotakBarista)) { anim.pantulBarista = 1; return 'barista'; }
     if (di(kotakKedai)) { anim.pantulKedai = 1; return 'kedai'; }
     return null;
   }
 
-  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap };
+  function racikSaja() { anim.pantulBarista = 1; }
+  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja };
 })(window);

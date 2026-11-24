@@ -20,6 +20,11 @@
   <header id="hud" hidden>
     <div class="kartu-hud tanggal"><b id="h-hari">Senin, 2 Januari</b><span id="h-tahun">Tahun ke-1 · Hari ke-1</span></div>
     <div class="kartu-hud jam"><b id="h-jam">06.00</b><span id="h-status">Belum buka</span></div>
+    <button id="h-uang" class="kartu-hud uang" type="button" aria-label="Lihat jualan hari ini">
+      <span><small>Laci</small><b id="h-laci">Rp0</b></span>
+      <span><small id="h-merchant-nama">QRIS</small><b id="h-merchant">Rp0</b></span>
+      <span><small>Antre</small><b id="h-antre">0</b></span>
+    </button>
     <div id="h-chip" class="chips"></div>
   </header>
 
@@ -60,12 +65,34 @@
     <button id="b-kembali" class="tombol-lain" type="button">Kembali</button>
   </section>
 
+  <section id="layar-qris" class="layar" hidden>
+    <h1 class="judul-game" style="font-size:32px">Terima QRIS lewat apa?<small>Pembeli bisa bayar dari aplikasi apa pun. Uangnya masuk ke saldo merchant yang kamu pilih, lalu dipindah ke bank.</small></h1>
+    <div id="qris-daftar" class="kota-daftar"></div>
+    <button id="b-kembali-qris" class="tombol-lain" type="button">Kembali</button>
+  </section>
+
+  <section id="racik" class="racik" hidden aria-label="Racik pesanan">
+    <div class="racik-kepala">
+      <div id="r-gelas" class="gelas kosong"><div id="r-isi" class="gelas-isi"></div></div>
+      <div class="racik-info"><b id="r-nama"></b><span id="r-harga"></span><div id="r-resep" class="resep"></div></div>
+      <button id="r-tunda" class="tutup-x" type="button" aria-label="Tunda racik">×</button>
+    </div>
+    <p id="r-pesan" class="racik-pesan"></p>
+    <div id="r-bahan" class="bahan-grid"></div>
+    <div class="baris">
+      <button id="r-buang" class="tombol-buang" type="button">Buang</button>
+      <button id="r-serah" class="aksi" type="button">Serahkan</button>
+    </div>
+  </section>
+
   <div id="lembar" class="lembar" hidden><div id="lembar-isi" class="lembar-isi" role="dialog" aria-modal="true"></div></div>
 </div>
 
 <script src="js/data/nyata.js"></script>
+<script src="js/data/menu.js"></script>
 <script src="js/kalender.js"></script>
 <script src="js/simpan.js"></script>
+<script src="js/jualan.js"></script>
 <script src="js/adegan.js"></script>
 <script src="js/main.js"></script>
 </body>
