@@ -70,6 +70,14 @@
     return f;
   }
 
+  /* ---------- harga pasaran: harga kedai sejenis di kota, dikoreksi harga pesaing di sekitar ---------- */
+  function pasaran(S, m) {
+    var k = N.kota.filter(function (x) { return x.id === S.kota; })[0], dasar = (m.hargaAwal || m.harga) * ((k && k.hargaKopi) || 1);
+    var p = S.dunia ? S.dunia.pesaing.filter(function (x) { return x.jarak < 1.5 && x.jenis !== 'warkop'; }) : [];
+    if (p.length) { var rata = p.reduce(function (t, x) { return t + x.harga; }, 0) / p.length; dasar *= 0.85 + 0.15 * (rata / 15000); }
+    var t = Math.round(dasar / 500) * 500;
+    return { tengah: t, min: Math.round(t * 0.88 / 500) * 500, maks: Math.round(t * 1.12 / 500) * 500 };
+  }
   /* ---------- rating pembeli ---------- */
   var KATA = {
     rasa: ['Kopinya enak', 'Rasanya pas', 'Kopinya kurang nendang'],
@@ -88,13 +96,13 @@
   /* pelayan: karyawan atau null (pemain) */
   function nilaiPembeli(S, o, pelayan) {
     var p = M.PEMBELI[o.jenis], suka = p.suka[o.menu.id] || 0, maks = Math.max.apply(null, Object.keys(p.suka).map(function (k) { return p.suka[k]; }));
-    var rasio = o.menu.harga / o.menu.hargaAwal;
+    var rasio = o.menu.harga / pasaran(S, o.menu).tengah;
     var nilai = {
       rasa: batas(3.3 + 1.5 * suka / maks + (pelayan ? (pelayan.racik - 4) * 0.3 : 0.2) + (g.KK_USAHA ? g.KK_USAHA.bonusRasa(S) : 0), 1, 5),
       suasana: g.KK_USAHA ? g.KK_USAHA.suasana(S) : 3.5,
       harga: batas(4.2 - (rasio - 1) * 6, 1, 5),
       tunggu: batas(5 - 4 * Math.max(0, S.menit - o.datang) / (o.sabarAwal || 40), 1, 5),
-      ramah: pelayan ? batas(1.8 + pelayan.ramah * 0.65 - (pelayan.tenaga < 30 ? 0.8 : 0), 1, 5) : 4.4,
+      ramah: pelayan ? batas(1.8 + pelayan.ramah * 0.65 - (pelayan.tenaga < 30 ? 0.8 : 0), 1, 5) : (g.KK_DIRI ? g.KK_DIRI.ramah(S) : 4.4),
       bersih: batas(5 - S.dunia.kotor / 22, 1, 5)
     };
     var bobot = { rasa: 0.3, harga: o.jenis === 'mahasiswa' || o.jenis === 'ojol' ? 0.3 : 0.18, tunggu: o.jenis === 'kantor' ? 0.3 : 0.2, ramah: 0.12, bersih: 0.12, suasana: 0.1 };
@@ -139,7 +147,7 @@
     if (so.postHari === S.hari && so.postJenis && so.postJenis.indexOf(jenis) >= 0) return 'Sudah posting di sini hari ini. Besok lagi supaya tidak dianggap spam.';
     var jamBagus = S.menit >= 1140 && S.menit <= 1260 ? 1.5 : S.menit >= 690 && S.menit <= 780 ? 1.2 : 0.8;
     var tren = acak(M.MENU).id === so.tren ? 1.3 : 1, dasar = jenis === 'tiktok' ? 60 : 35;
-    var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200));
+    var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200) * (g.KK_DIRI ? g.KK_DIRI.kameraHp(S) : 1));
     so[jenis === 'tiktok' ? 'tiktok' : 'ig'] += baru;
     if (so.postHari !== S.hari) { so.postHari = S.hari; so.postJenis = []; }
     so.postJenis.push(jenis);
@@ -215,7 +223,7 @@
     return kabar;
   }
 
-  g.KK_DUNIA = { BIAYA: BIAYA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang,
+  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang,
     catatPembeli: catatPembeli, catatPergi: catatPergi, catatKomplain: catatKomplain, rataMaps: rataMaps, daftarMaps: daftarMaps, tambahFoto: tambahFoto, balas: balas,
     beliUlasan: beliUlasan, posting: posting, siaran: siaran, iklan: iklan, endorse: endorse, beliCekUang: beliCekUang, bersihkan: bersihkan, jalan: jalan, gantiHari: gantiHari };
 })(window);

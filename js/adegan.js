@@ -386,6 +386,55 @@
     if (gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.3).toFixed(2) + ')'; cx.fillRect(x - 32, y - 26, 64, 44); }
   }
 
+  /* ---------- kamar kos ---------- */
+  function gambarKos(s, t) {
+    var m = s.menit % 1440, gp = gelap(m), b = s.barang || {};
+    var lantai = Math.max(330, H - 300);
+    kotak(0, 0, W, H, '#e9dcc4'); /* dinding */
+    cx.fillStyle = 'rgba(0,0,0,.04)'; for (var x = 0; x < W; x += 30) cx.fillRect(x, 0, 2, lantai);
+    kotak(0, lantai, W, H - lantai, '#c9b08a'); /* lantai keramik */
+    cx.strokeStyle = 'rgba(0,0,0,.08)'; cx.lineWidth = 1;
+    for (var y = lantai; y < H; y += 34) { cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke(); }
+    for (var x2 = 0; x2 < W; x2 += 48) { cx.beginPath(); cx.moveTo(x2, lantai); cx.lineTo(x2 - 30, H); cx.stroke(); }
+    /* jendela: langit sesuai jam */
+    var l = langit(m), gr = cx.createLinearGradient(0, lantai - 300, 0, lantai - 180);
+    gr.addColorStop(0, l[0]); gr.addColorStop(1, l[1]);
+    kotak(36, lantai - 300, 110, 120, '#8a6a4a'); cx.fillStyle = gr; cx.fillRect(42, lantai - 294, 98, 108);
+    kotak(89, lantai - 294, 4, 108, '#8a6a4a'); kotak(42, lantai - 242, 98, 4, '#8a6a4a');
+    kotak(30, lantai - 306, 122, 8, '#c86a5a'); /* gorden */
+    /* AC di dinding */
+    kotakBulat(214, lantai - 300, 112, 34, 8, '#f6f6f2'); kotak(222, lantai - 274, 96, 3, '#d6d6d0');
+    bulat(312, lantai - 290, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a');
+    if (s.acNyala && s.tidur) { cx.strokeStyle = 'rgba(150,200,230,.5)'; cx.lineWidth = 2; for (var a = 0; a < 3; a++) { var yy = lantai - 258 + a * 10 + Math.sin(t / 300 + a) * 3; cx.beginPath(); cx.moveTo(230, yy); cx.quadraticCurveTo(270, yy + 6, 310, yy); cx.stroke(); } }
+    /* lemari */
+    kotakBulat(276, lantai - 170, 70, 180, 4, '#9c7a52'); kotak(310, lantai - 165, 2, 170, '#7d5f3f'); bulat(304, lantai - 80, 2.5, '#e0d3b8'); bulat(318, lantai - 80, 2.5, '#e0d3b8');
+    /* kasur */
+    kotakBulat(20, lantai + 30, 200, 70, 10, '#7d5f3f');
+    kotakBulat(24, lantai + 14, 192, 40, 10, '#f3f1ea'); kotakBulat(30, lantai + 4, 54, 24, 10, '#ffffff');
+    kotakBulat(84, lantai + 18, 130, 34, 8, '#6aa0c8'); /* selimut */
+    if (s.tidur) {
+      bulat(58, lantai + 12, 13, '#f1c39b'); cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(58, lantai + 9, 13, Math.PI, 0); cx.fill();
+      cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif'; cx.fillText('z', 84, lantai - 14 - (t / 40) % 12); cx.fillText('Z', 96, lantai - 30 - (t / 50) % 14);
+    }
+    if (b.karpet) kotakBulat(150, lantai + 120, 150, 50, 10, '#b85c4a');
+    if (b.kipas) { kotak(250, lantai + 40, 4, 60, '#3b3f46'); bulat(252, lantai + 34, 18, '#dfeef3'); cx.save(); cx.translate(252, lantai + 34); cx.rotate(t / 60); kotak(-2, -15, 4, 30, '#9ab'); kotak(-15, -2, 30, 4, '#9ab'); cx.restore(); }
+    if (b.kulkas) { kotakBulat(296, lantai + 10, 50, 86, 5, '#e8ecef'); kotak(300, lantai + 40, 42, 2, '#c8ced3'); kotak(336, lantai + 20, 3, 14, '#9aa3a6'); }
+    /* meja TV */
+    if (b.tv) {
+      kotak(160, lantai + 60, 110, 30, '#7d5f3f');
+      kotakBulat(170, lantai - 10, 90, 58, 4, '#1b1b1b');
+      var nyalaTv = !s.tidur && (m >= 1080 || m < 120);
+      kotak(174, lantai - 6, 82, 48, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
+      kotak(210, lantai + 48, 10, 12, '#1b1b1b');
+      if (b.ps5 || b.ps5disc) { kotakBulat(240, lantai + 30, 14, 30, 4, '#f6f6f2'); kotak(244, lantai + 34, 6, 22, '#1b1b1b'); }
+    }
+    if (b.ricecooker) { bulat(190, lantai + 98, 12, '#f6f6f2'); kotak(180, lantai + 98, 20, 10, '#f6f6f2'); }
+    if (b.dispenser) { kotak(14, lantai + 110, 24, 40, '#f3f1ea'); kotakBulat(12, lantai + 80, 28, 32, 6, 'rgba(150,200,230,.7)'); }
+    /* gelap malam bila lampu dimatikan saat tidur */
+    if (s.tidur) { cx.fillStyle = 'rgba(10,18,45,.45)'; cx.fillRect(0, 0, W, H); }
+    else if (gp > 0.5) { cx.fillStyle = 'rgba(255,230,180,.06)'; cx.fillRect(0, 0, W, H); }
+  }
+
   var kotakKedai = null, kotakBarista = null, tAkhir = 0;
   /* s: { menit, buka (bool), kecepatan } */
   function gambar(s, t) {
@@ -398,6 +447,7 @@
     anim.kedip -= dt; if (anim.kedip < -3400 - Math.random() * 1500) anim.kedip = 140;
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
+    if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
     /* angkat adegan saat panel racik menutupi kaki pembeli */
     var skala = cv.getBoundingClientRect().width / W || 1;

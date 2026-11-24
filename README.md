@@ -14,6 +14,7 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 - `js/karyawan.js` — karyawan, gaji, THR, BPJS
 - `js/dunia.js` — rating, Maps, media sosial, pesaing, cuaca, kejadian
 - `js/usaha.js` — lokasi, tempat, alat, listrik, cabang, menu sendiri
+- `js/diri.js` — kebutuhan badan, kos, isi kos, tidur
 - `js/jualan.js` — pembeli datang, antre, bayar
 - `js/data/menu.js` — bahan, resep, HPP, jenis pembeli
 - `js/main.js` — alur game
@@ -31,3 +32,5 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 8. Naik kelas: lokasi, booth sampai ruko, alat, sewa, token listrik PLN, cabang, racik menu sendiri ✔
 9. Gambar AI, animasi, suara (menunggu gambar)
 10. Uji dan setel: simulasi 400 hari tanpa galat, angka disetel ✔
+A. Penyempurnaan: sajikan sekali tap, harga pasaran, layar tidak mati, token PLN asli, kebutuhan badan, kos dan isinya ✔
+B. Ngojek, motor sampai moge, mobil, rumah dan tanah (berikutnya)

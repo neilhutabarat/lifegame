@@ -10,10 +10,10 @@
 
     /* UMK 2026 (berlaku 1 Januari 2026) */
     kota: [
-      { id: 'medan', nama: 'Medan', provinsi: 'Sumatera Utara', umk: 4335198, bbm: 'sumatera' },
-      { id: 'pekanbaru', nama: 'Pekanbaru', provinsi: 'Riau', umk: 3998179, bbm: 'sumatera' /* perkiraan: Riau tidak ada di daftar sumber */ },
-      { id: 'jambi', nama: 'Kota Jambi', provinsi: 'Jambi', umk: 3868963, bbm: 'sumatera' },
-      { id: 'jakarta', nama: 'Jakarta', provinsi: 'DKI Jakarta', umk: 5729876, bbm: 'jawa' }
+      { id: 'medan', nama: 'Medan', provinsi: 'Sumatera Utara', umk: 4335198, bbm: 'sumatera', kos: 550000, makan: 15000, ppj: 0.03, hargaKopi: 1 },
+      { id: 'pekanbaru', nama: 'Pekanbaru', provinsi: 'Riau', umk: 3998179, bbm: 'sumatera' /* perkiraan: Riau tidak ada di daftar sumber */, kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1 },
+      { id: 'jambi', nama: 'Kota Jambi', provinsi: 'Jambi', umk: 3868963, bbm: 'sumatera', kos: 650000, makan: 15000, ppj: 0.03, hargaKopi: 0.95 },
+      { id: 'jakarta', nama: 'Jakarta', provinsi: 'DKI Jakarta', umk: 5729876, bbm: 'jawa', kos: 910000, makan: 20000, ppj: 0.024, hargaKopi: 1.15 }
     ],
 
     /* penyedia QRIS merchant; aturan transfer ke bank per September 2026 */
@@ -32,6 +32,25 @@
       { id: 'mandiri', nama: 'Mandiri', app: "Livin' by Mandiri", warna: '#003d79', admin: 17000, batasTransfer: 25e6 }
     ],
     biFast: 2500,
+    /* kos AC termurah per kota (Mamikos, November 2026); makan = nasi bungkus warung (perkiraan); ppj = pajak penerangan jalan (Jakarta 2,4%, kota lain perkiraan 3%) */
+    /* token PLN prabayar: tarif 1.300 VA ke atas Rp1.444,70/kWh; biaya admin aplikasi perkiraan Rp2.400 (contoh: token 20 rb dibayar Rp22.400, dapat ±13 kWh) */
+    pln: { tarif: 1444.70, admin: 2400, nominal: [20000, 50000, 100000, 200000, 500000, 1000000] },
+    makanOjol: { tambahHarga: 1.25, ongkir: 10000, tunggu: 35 }, /* perkiraan */
+    ojekKos: 12000, jarakKos: 3, /* perkiraan: kos ke kedai */
+    /* barang untuk kos/rumah. PS5: harga resmi Oktober 2026 (detikInet); lainnya perkiraan pasar */
+    barangRumah: [
+      { id: 'kipas', nama: 'Kipas angin berdiri', merek: 'Miyako', harga: 250000, watt: 0.04, ket: 'Tidur sedikit lebih nyenyak kalau AC mati' },
+      { id: 'kulkas', nama: 'Kulkas 1 pintu', merek: 'Sharp', harga: 1800000, watt: 0.05, ket: 'Simpan minuman dingin, minum lebih murah' },
+      { id: 'ricecooker', nama: 'Rice cooker', merek: 'Miyako', harga: 350000, watt: 0, ket: 'Masak sendiri, makan lebih murah' },
+      { id: 'dispenser', nama: 'Dispenser + galon', merek: 'Miyako', harga: 300000, watt: 0, ket: 'Minum di kos hampir gratis' },
+      { id: 'karpet', nama: 'Karpet dan bantal duduk', merek: 'Lokal', harga: 150000, watt: 0, ket: 'Kamar lebih nyaman' },
+      { id: 'tv', nama: 'TV LED 32 inci', merek: 'Xiaomi', harga: 2000000, watt: 0.06, ket: 'Istirahat sambil nonton, stamina pulih lebih cepat' },
+      { id: 'ps5', nama: 'PS5 Slim Digital', merek: 'Sony', harga: 9999000, watt: 0.2, butuh: 'tv', ket: 'Main game di kos. Butuh TV' },
+      { id: 'ps5disc', nama: 'PS5 Slim Disc', merek: 'Sony', harga: 11399000, watt: 0.2, butuh: 'tv', ket: 'Bisa pakai kaset. Butuh TV' },
+      { id: 'kaset', nama: 'Kaset game PS5', merek: 'Sony', harga: 1029000, watt: 0, butuh: 'ps5disc', banyak: true, ket: 'Game baru, main lebih seru' },
+      { id: 'hp2', nama: 'HP kelas menengah', merek: 'Samsung Galaxy A', harga: 4500000, watt: 0, ket: 'Kamera lebih bagus: posting media sosial lebih ramai' },
+      { id: 'hp3', nama: 'HP flagship', merek: 'iPhone', harga: 22000000, watt: 0, butuh: 'hp2', ket: 'Kamera terbaik: konten paling bagus' }
+    ],
 
     /* PPh final UMKM orang pribadi (PP 20/2026): 0,5% omzet, omzet sampai Rp500 juta setahun bebas, setor paling lambat tanggal 15 */
     pajak: { tarif: 0.005, bebas: 500e6, jatuhTempo: 15, dendaPerBulan: 0.01 /* perkiraan */ },

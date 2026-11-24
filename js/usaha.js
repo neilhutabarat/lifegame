@@ -3,7 +3,7 @@
 (function (g) {
   'use strict';
   var N = g.KK_NYATA, KAL = g.KK_KAL, M = g.KK_MENU;
-  var TARIF = 1445; /* Rp/kWh, perkiraan tarif 1.300 VA ke atas */
+  var TARIF = 1444.70; /* Rp/kWh tarif 1.300 VA ke atas */
 
   var LOKASI = {
     kampus: { nama: 'Dekat kampus', ket: 'Mahasiswa, ramai malam. Sepi saat libur semester.', sewa: 1, ramai: 1, campur: { mahasiswa: 1.8 } },
@@ -86,10 +86,16 @@
   }
   function beliToken(S, nominal) {
     if (tempat(S).listrik !== 'token') return 'Listrik masih numpang, dibayar bulanan ke pemilik lahan.';
-    if (S.bank.saldo < nominal) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= nominal; S.bank.mutasi.unshift({ n: S.hari, ket: 'Token listrik PLN', jml: -nominal });
-    S.usaha.kwh += nominal / TARIF; S.usaha.padam = false; S.usaha.peringatan = false;
-    return { ok: true, kwh: nominal / TARIF };
+    var t = token(S, nominal);
+    if (S.bank.saldo < t.bayar) return 'Saldo rekening tidak cukup.';
+    S.bank.saldo -= t.bayar; S.bank.mutasi.unshift({ n: S.hari, ket: 'Token listrik PLN kedai ' + nominal.toLocaleString('id-ID'), jml: -t.bayar });
+    S.usaha.kwh += t.kwh; S.usaha.padam = false; S.usaha.peringatan = false;
+    return { ok: true, kwh: t.kwh, bayar: t.bayar };
+  }
+  /* token prabayar asli: bayar = nominal + admin; kWh = nominal dipotong PPJ dibagi tarif */
+  function token(S, nominal) {
+    var k = N.kota.filter(function (x) { return x.id === S.kota; })[0];
+    return { bayar: nominal + N.pln.admin, kwh: Math.round(nominal / (1 + (k.ppj || 0.03)) / N.pln.tarif * 10) / 10 };
   }
 
   /* ---------- naik kelas, alat, cabang ---------- */
@@ -221,5 +227,5 @@
     listrikNyala: listrikNyala, bisaEspresso: bisaEspresso, bahanTersedia: bahanTersedia, faktor: faktor, campuran: campuran, faktorAntar: faktorAntar, kecepatan: kecepatan,
     bonusRasa: bonusRasa, suasana: suasana, sabar: sabar, esTahan: esTahan, beliToken: beliToken, naikKelas: naikKelas, beliAlat: beliAlat, bukaCabang: bukaCabang,
     hasilCabang: hasilCabang, perkiraanBintang: perkiraanBintang, hppResep: hppResep, susunResep: susunResep, namaUsul: namaUsul, simpanMenu: simpanMenu, hapusMenu: hapusMenu,
-    terapkanMenu: terapkanMenu, jalan: jalan, gantiHari: gantiHari };
+    terapkanMenu: terapkanMenu, jalan: jalan, gantiHari: gantiHari, token: token };
 })(window);
