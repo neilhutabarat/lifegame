@@ -423,8 +423,23 @@
       cx.lineWidth = 4; cx.strokeStyle = '#fbfaf6'; cx.strokeText(e.teks, e.x, y); cx.fillStyle = e.warna; cx.fillText(e.teks, e.x, y);
       cx.globalAlpha = 1; return u < 1;
     });
+    if (s.kotor > 35) {
+      var nSampah = Math.min(8, Math.floor((s.kotor - 35) / 7) + 1);
+      for (var si = 0; si < nSampah; si++) {
+        var sx = 30 + acak(si + 300) * 260, sy = dasarKedai - 4 + acak(si + 400) * 22;
+        if (si % 2) { cx.save(); cx.translate(sx, sy); cx.rotate(1.3); kotak(-4, -5, 8, 10, '#dfeef3'); cx.restore(); } else bulat(sx, sy, 3, '#f3f1ea');
+      }
+    }
     if (s.motorParkir) gambarParkir(312, jalan + 20, s.motorParkir, m);
     anim.motor.forEach(function (mt) { gambarMotor(mt, jalan, m); });
+    if (s.hujan) {
+      cx.fillStyle = 'rgba(30,40,60,' + (s.hujan > 1 ? 0.28 : 0.18) + ')'; cx.fillRect(0, anim.angkat - 20, W, H + 40);
+      cx.strokeStyle = 'rgba(210,225,240,.55)'; cx.lineWidth = 1.2; cx.beginPath();
+      var jml = s.hujan > 1 ? 140 : 80, geser = (t / 3) % 40;
+      for (var hi = 0; hi < jml; hi++) { var hx = acak(hi + 500) * (W + 40) - 20, hy = (acak(hi + 600) * (H + 60) + geser * (2 + acak(hi) * 2)) % (H + 60) - 30 + anim.angkat; cx.moveTo(hx, hy); cx.lineTo(hx - 3, hy + 12); }
+      cx.stroke();
+      if (s.hujan > 1) { cx.fillStyle = 'rgba(120,100,70,.35)'; cx.fillRect(0, jalan - 4, W, H - jalan + 40); }
+    }
     kotakBarista = anim.rolling > 0.35 ? { x: kotakKedai.bx + kotakKedai.bw / 2 - 20, y: kotakKedai.by, w: 40, h: kotakKedai.bh } : null;
   }
 

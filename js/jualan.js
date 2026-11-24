@@ -53,10 +53,12 @@
   function buatPembeli(S, jam) {
     var malamMinggu = KAL.tgl(S.hari).dow === 6;
     var jenis = pilihBobot(M.campuran(jam, malamMinggu));
-    var p = M.PEMBELI[jenis], dariKanan = Math.random() < 0.45;
-    return {
+    var D = S.dunia, blogger = false;
+    if (D && D.bloggerMenunggu) { jenis = 'konten'; blogger = true; D.bloggerMenunggu = false; }
+    var p = M.PEMBELI[jenis], dariKanan = Math.random() < 0.45, sabar = p.sabar * (0.8 + Math.random() * 0.4) * (S.bonusSabar || 1);
+    return { blogger: blogger, datang: S.menit, sabarAwal: sabar,
       id: ++nomor, jenis: jenis, menu: pilihMenu(S, jenis, jam), bayar: Math.random() < p.qris ? 'qris' : 'tunai',
-      tiba: S.menit, sabar: p.sabar * (0.8 + Math.random() * 0.4) * (S.bonusSabar || 1), keadaan: 'antre', racik: [],
+      tiba: S.menit, sabar: sabar, keadaan: 'antre', racik: [],
       x: dariKanan ? 390 : -30, arahPulang: Math.random() < 0.5 ? -1 : 1,
       rupa: { kulit: KULIT[Math.floor(Math.random() * 4)], rambut: RAMBUT[Math.floor(Math.random() * 4)], baju: Math.floor(Math.random() * 5), perempuan: Math.random() < 0.5 }
     };
@@ -69,7 +71,7 @@
   function langkah(S, dMenit) {
     if (dMenit <= 0) return;
     var jam = Math.floor(S.menit / 60) % 24;
-    var lambda = M.PEMBELI_PER_HARI / JUMLAH_BOBOT * M.KERAMAIAN[jam] * pengali(S, jam) / 60;
+    var lambda = M.PEMBELI_PER_HARI / JUMLAH_BOBOT * M.KERAMAIAN[jam] * pengali(S, jam) * (g.KK_DUNIA ? g.KK_DUNIA.faktor(S) : 1) / 60;
     if (Math.random() < lambda * dMenit) {
       if (antre().length >= MAKS_ANTRE) S.hariIni.penuh++;
       else { daftar.push(buatPembeli(S, jam)); aturSlot(); }
@@ -77,7 +79,7 @@
     daftar.forEach(function (o) {
       if (o.keadaan === 'dilayani') o.tiba += dMenit; /* sabar berhenti selama sedang diracik */
       if (o.keadaan === 'antre' && S.menit - o.tiba > o.sabar) {
-        o.keadaan = 'pulang'; o.marah = true; S.hariIni.pergi++;
+        o.keadaan = 'pulang'; o.marah = true; S.hariIni.pergi++; if (g.KK_DUNIA) g.KK_DUNIA.catatPergi(S, o);
         o.efek = { teks: 'Kelamaan!', warna: '#d9443a' };
       }
     });
@@ -94,7 +96,7 @@
   }
 
   /* gelas jadi dan diserahkan; biayaBahan = HPP bahan yang dipakai di gelas ini */
-  function layani(S, o, biayaBahan) {
+  function layani(S, o, biayaBahan, pelayan) {
     var h = o.menu.harga, hi = S.hariIni, U = g.KK_UANG, catatan = '';
     if (o.bayar === 'tunai') {
       var t = U.bayarTunai(S, h);
@@ -114,7 +116,8 @@
     hi.hpp += biayaBahan; hi.dilayani++;
     hi.menu[o.menu.id] = (hi.menu[o.menu.id] || 0) + 1;
     o.keadaan = 'pulang'; o.bawaCup = true; o.marah = false;
-    o.efek = { teks: '+' + h.toLocaleString('id-ID') + (o.bayar === 'qris' ? ' QRIS' : ' tunai'), warna: o.bayar === 'qris' ? '#155e57' : '#2a1d00', cup: true };
+    var bintang = g.KK_DUNIA ? g.KK_DUNIA.catatPembeli(S, o, pelayan || null) : 0;
+    o.efek = { teks: '+' + h.toLocaleString('id-ID') + (o.bayar === 'qris' ? ' QRIS' : ' tunai') + (bintang ? ' ★' + bintang : ''), warna: o.bayar === 'qris' ? '#155e57' : '#2a1d00', cup: true };
     aturSlot();
     return catatan || true;
   }

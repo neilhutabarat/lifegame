@@ -9,6 +9,7 @@
   var BATAS_ES = 25, BATAS_ES_TAS = 40;
   var nomor = 0;
 
+  function komplain(S, teks) { S.komplain++; if (g.KK_DUNIA) g.KK_DUNIA.catatKomplain(S, teks); }
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function acak(a) { return a[Math.floor(Math.random() * a.length)]; }
   function menuDari(id) { return M.MENU.filter(function (m) { return m.id === id; })[0]; }
@@ -66,18 +67,18 @@
     var kabar = [], t = waktu(S);
     if (S.fase === 'buka' && dMenit > 0) {
       var aktifWa = S.pesanan.filter(function (p) { return p.jenis === 'wa' && p.status !== 'selesai' && p.status !== 'batal'; }).length;
-      if (aktifWa < 4 && Math.random() < WA_PER_JAM * pengali * dMenit / 60) { S.pesanan.push(buatWa(S)); kabar.push('Pesanan WhatsApp baru.'); }
+      if (aktifWa < 4 && Math.random() < WA_PER_JAM * pengali * (g.KK_DUNIA ? g.KK_DUNIA.faktorAntar(S) : 1) * dMenit / 60) { S.pesanan.push(buatWa(S)); kabar.push('Pesanan WhatsApp baru.'); }
       N.platform.forEach(function (pl) {
-        if (S.platform[pl.id].status === 'aktif' && Math.random() < OJOL_PER_JAM * pengali * dMenit / 60) { S.pesanan.push(buatOjol(S, pl)); kabar.push('Pesanan ' + pl.nama + ' masuk.'); }
+        if (S.platform[pl.id].status === 'aktif' && Math.random() < OJOL_PER_JAM * pengali * (g.KK_DUNIA ? g.KK_DUNIA.faktorAntar(S) : 1) * dMenit / 60) { S.pesanan.push(buatOjol(S, pl)); kabar.push('Pesanan ' + pl.nama + ' masuk.'); }
       });
     }
     S.pesanan.forEach(function (p) {
       if (p.status === 'baru' && p.jenis === 'wa' && t - p.dibuat > BATAL_WA_BARU) { p.status = 'batal'; p.alasan = 'Tidak dibalas'; }
-      if (p.jenis === 'ojol' && (p.status === 'racik') && t - p.dibuat > BATAL_OJOL) { p.status = 'batal'; p.alasan = 'Kelamaan, pembeli membatalkan'; S.komplain++; S.hariIni.terbuang += p.biaya; kabar.push('Pesanan ' + namaPlatform(p) + ' ' + p.nama + ' dibatalkan karena kelamaan.'); }
+      if (p.jenis === 'ojol' && (p.status === 'racik') && t - p.dibuat > BATAL_OJOL) { p.status = 'batal'; p.alasan = 'Kelamaan, pembeli membatalkan'; komplain(S, 'Pesanan lewat aplikasi lama sekali, akhirnya dibatalkan.'); S.hariIni.terbuang += p.biaya; kabar.push('Pesanan ' + namaPlatform(p) + ' ' + p.nama + ' dibatalkan karena kelamaan.'); }
       if (p.jenis === 'ojol' && p.status === 'siap' && t >= p.driver) { selesai(S, p, kabar, 'Driver mengambil pesanan ' + namaPlatform(p) + ' ' + p.nama + '.'); }
-      if (p.status === 'jalan' && t >= p.eta) { if (p.esCair) { S.komplain++; kabar.push('Es di pesanan ' + p.nama + ' cair di jalan.'); } selesai(S, p, kabar, 'Kurir sudah mengantar pesanan ' + p.nama + '.'); }
+      if (p.status === 'jalan' && t >= p.eta) { if (p.esCair) { komplain(S, 'Es kopinya sampai sudah cair.'); kabar.push('Es di pesanan ' + p.nama + ' cair di jalan.'); } selesai(S, p, kabar, 'Kurir sudah mengantar pesanan ' + p.nama + '.'); }
       if (p.jenis === 'besar' && p.status !== 'selesai' && p.status !== 'batal' && p.status !== 'baru' && p.status !== 'jalan' && t > p.untuk + 30) {
-        p.status = 'batal'; p.alasan = 'Terlambat dari jam pesanan'; S.komplain++; S.hariIni.terbuang += p.biaya; kabar.push(p.nama + ' membatalkan pesanan karena terlambat.');
+        p.status = 'batal'; p.alasan = 'Terlambat dari jam pesanan'; komplain(S, 'Pesanan untuk acara terlambat, mengecewakan.'); S.hariIni.terbuang += p.biaya; kabar.push(p.nama + ' membatalkan pesanan karena terlambat.');
       }
     });
     return kabar;
@@ -138,15 +139,15 @@
     list.forEach(function (p) {
       var tiba = sampai - Math.round((jauh - p.jarak) / MOT.kecepatan(S) * 60);
       if (Math.random() < 0.03) { tiba += 10; kabar.push('Alamat ' + p.nama + ' sempat salah, muter 10 menit.'); }
-      if (adaEs(p) && tiba - p.siapPada > batasEs) { S.komplain++; kabar.push('Es di pesanan ' + p.nama + ' sudah cair. Pembeli kecewa.'); }
+      if (adaEs(p) && tiba - p.siapPada > batasEs) { komplain(S, 'Es kopinya sampai sudah cair.'); kabar.push('Es di pesanan ' + p.nama + ' sudah cair. Pembeli kecewa.'); }
       if (Math.random() < tumpah) {
-        var x = p.items[0], refund = hargaItem(p, x); S.komplain++;
+        var x = p.items[0], refund = hargaItem(p, x); komplain(S, 'Satu cup tumpah waktu diantar.');
         p.items[0] = { menu: x.menu, qty: x.qty, siap: x.siap, refund: refund };
         kabar.push('Satu cup ' + menuDari(x.menu).pendek + ' tumpah di jalan. Uangnya dikembalikan ' + rp(refund) + '.');
         S.hariIni.refund = (S.hariIni.refund || 0) + refund;
         if (p.bayar === 'tunai') S.uang.kecil -= refund; else S.bank.saldo -= refund;
       }
-      if (p.jenis === 'besar' && tiba > p.untuk + 30) { S.komplain++; kabar.push(p.nama + ' kecewa karena pesanan terlambat.'); }
+      if (p.jenis === 'besar' && tiba > p.untuk + 30) { komplain(S, 'Pesanan acara datang terlambat.'); kabar.push(p.nama + ' kecewa karena pesanan terlambat.'); }
       selesai(S, p, kabar, null);
     });
     kabar.unshift('Mengantar ' + list.length + ' pesanan, ' + km.toLocaleString('id-ID') + ' km pulang-pergi, ' + r.menit + ' menit.');

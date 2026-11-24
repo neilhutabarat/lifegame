@@ -137,6 +137,7 @@
   /* ---------- perjalanan (km pulang-pergi) ---------- */
   function kecepatan(S) {
     var menit = S.menit % 1440;
+    if (g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)) return S.dunia.cuaca.banjir ? 10 : KECEPATAN.hujan;
     if (menit >= 990 && menit <= 1110) return KECEPATAN.pulangKantor;
     return KECEPATAN.biasa;
   }
