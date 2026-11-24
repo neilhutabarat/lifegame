@@ -418,6 +418,8 @@
       kotak(tx + 4, lantai - 2 - th, tw - 8, th - 8, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
       kotak(242, lantai - 6, 8, 8, '#1b1b1b');
       if (b.ps5 || b.ps5disc) { kotakBulat(276, lantai - 22, 12, 26, 4, '#f6f6f2'); kotak(280, lantai - 18, 4, 18, '#1b1b1b'); }
+      else if (b.ps4 || b.ps3 || b.ps2) { kotakBulat(274, lantai - 16, 16, 20, 2, '#1b1b1b'); kotak(276, lantai - 14, 2, 16, '#2f6fb0'); }
+      else if (b.ps1) { kotakBulat(274, lantai - 12, 18, 14, 2, '#b8bfc4'); bulat(283, lantai - 5, 5, '#9aa3a6'); }
     }
     if (b.kulkas2) { kotakBulat(302, lantai - 96, 50, 126, 5, '#d8dde1'); kotak(326, lantai - 92, 2, 118, '#b8c0c6'); kotak(318, lantai - 50, 3, 18, '#8d969b'); kotak(331, lantai - 50, 3, 18, '#8d969b'); }
     else if (b.kulkas) { kotakBulat(304, lantai - 56, 46, 84, 5, '#e8ecef'); kotak(308, lantai - 26, 38, 2, '#c8ced3'); kotak(340, lantai - 46, 3, 14, '#9aa3a6'); }
@@ -486,6 +488,8 @@
       kotak(174 - (besar - 1) * 45, lantai - 6 - (besar - 1) * 58, 90 * besar - 8, 58 * besar - 10, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
       kotak(210, lantai + 48, 10, 12, '#1b1b1b');
       if (b.ps5 || b.ps5disc) { kotakBulat(240, lantai + 30, 14, 30, 4, '#f6f6f2'); kotak(244, lantai + 34, 6, 22, '#1b1b1b'); }
+      else if (b.ps4 || b.ps3 || b.ps2) { kotakBulat(238, lantai + 38, 18, 22, 2, '#1b1b1b'); kotak(240, lantai + 40, 2, 18, '#2f6fb0'); }
+      else if (b.ps1) { kotakBulat(238, lantai + 44, 20, 16, 2, '#b8bfc4'); bulat(248, lantai + 52, 5, '#9aa3a6'); }
     }
     if (b.ricecooker) { bulat(190, lantai + 98, 12, '#f6f6f2'); kotak(180, lantai + 98, 20, 10, '#f6f6f2'); }
     if (b.dispenser) { kotak(14, lantai + 110, 24, 40, '#f3f1ea'); kotakBulat(12, lantai + 80, 28, 32, 6, 'rgba(150,200,230,.7)'); }

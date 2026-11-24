@@ -4,7 +4,7 @@
   'use strict';
   var N = g.KK_NYATA, KAL = g.KK_KAL, M = g.KK_MENU;
   var TUGAS = {
-    barista: 'Barista', kasir: 'Kasir', kurir: 'Kurir', belanja: 'Belanja & stok', bersih: 'Kebersihan', sosmed: 'Admin media sosial', kepala: 'Kepala toko'
+    barista: 'Barista', kasir: 'Kasir', kurir: 'Kurir', belanja: 'Belanja & stok', bersih: 'Kebersihan', keamanan: 'Keamanan', sosmed: 'Admin media sosial', kepala: 'Kepala toko'
   };
   var AGAMA = [['Islam', 65, 'Idulfitri'], ['Kristen', 25, 'Hari Natal'], ['Buddha', 6, 'Hari Raya Waisak'], ['Hindu', 2, 'Hari Suci Nyepi'], ['Konghucu', 2, 'Tahun Baru Imlek']];
   var JAM_SIF = 7, JAM_PARUH = 4;
@@ -19,7 +19,20 @@
 
   function siapkan(S) {
     S.staf = S.staf || []; S.pelamar = S.pelamar || []; S.lowongan = S.lowongan || null;
+    S.staf.forEach(function (k) { pastikanJadwal(S, k); });
     return S;
+  }
+  function pastikanJadwal(S, k) {
+    var b = (S && S.jamBuka) || 7, t = (S && S.jamTutup) || 22;
+    if (typeof k.jamMasuk !== 'number' || typeof k.jamPulang !== 'number') {
+      if (k.paruh) {
+        if (k.sif === 'ramai') { k.jamMasuk = Math.max(b, t - 5); k.jamPulang = Math.min(24, k.jamMasuk + JAM_PARUH); }
+        else { k.jamMasuk = b; k.jamPulang = Math.min(t, b + JAM_PARUH); }
+      } else if (k.sif === 'sore') { k.jamMasuk = Math.max(b, t - JAM_SIF); k.jamPulang = t; }
+      else if (k.sif === 'penuh') { k.jamMasuk = b; k.jamPulang = t; }
+      else { k.jamMasuk = b; k.jamPulang = Math.min(t, b + JAM_SIF); }
+    }
+    if (k.paruh && !k.upahPerJam) k.upahPerJam = Math.round(umk(S) / 173 / 500) * 500;
   }
 
   /* ---------- pelamar ---------- */
@@ -43,9 +56,12 @@
   }
   function terima(S, id) {
     var p = S.pelamar.filter(function (x) { return x.id === id; })[0]; if (!p) return 'Pelamar sudah pergi.';
+    var b = S.jamBuka || 7, t = S.jamTutup || 22;
+    var jm = p.paruh ? Math.max(b, t - 5) : b;
+    var jp = p.paruh ? Math.min(t, jm + JAM_PARUH) : Math.min(t, b + JAM_SIF);
     var k = { id: 'k' + (++nomor) + '-' + S.hari, nama: p.nama, agama: p.agama, hariRaya: p.hariRaya, paruh: p.paruh,
-      cepat: p.cepat, ramah: p.ramah, racik: p.racik, jujur: p.jujur, gaji: p.minta, mulai: S.hari + 1,
-      tugas: p.paruh ? ['barista'] : ['barista'], sif: p.paruh ? 'ramai' : 'pagi', libur: 0, tenaga: 100, setia: 70, capekHari: 0,
+      cepat: p.cepat, ramah: p.ramah, racik: p.racik, jujur: p.jujur, gaji: p.minta, upahPerJam: Math.round(umk(S) / 173 / 500) * 500, mulai: S.hari + 1,
+      tugas: ['barista'], sif: p.paruh ? 'ramai' : 'pagi', jamMasuk: jm, jamPulang: jp, libur: 0, tenaga: 100, setia: 70, capekHari: 0,
       sakitSampai: 0, lemburBulan: 0, gelas: 0, sibukSampai: 0 };
     S.staf.push(k); S.pelamar = S.pelamar.filter(function (x) { return x.id !== id; });
     return true;
@@ -54,11 +70,8 @@
 
   /* ---------- jadwal ---------- */
   function jamKerja(S, k) {
-    var b = S.jamBuka * 60, t = S.jamTutup * 60;
-    if (k.paruh) return k.sif === 'ramai' ? [Math.max(b, t - 300), Math.max(b, t - 300) + JAM_PARUH * 60] : [b, b + JAM_PARUH * 60];
-    if (k.sif === 'pagi') return [b, Math.min(t, b + JAM_SIF * 60)];
-    if (k.sif === 'sore') return [Math.max(b, t - JAM_SIF * 60), t];
-    return [b, t];
+    pastikanJadwal(S, k);
+    return [k.jamMasuk * 60, k.jamPulang * 60];
   }
   function masuk(S, k) {
     if (S.hari < k.mulai || S.hari < k.sakitSampai) return false;
@@ -143,7 +156,7 @@
     S.staf.forEach(function (k) {
       if (S.hari < k.mulai) return;
       var jam = k.jamHariIni || 0;
-      if (k.paruh) { total += jam * upahJam(umk(S)); return; }
+      if (k.paruh) { total += jam * (k.upahPerJam || upahJam(umk(S))); return; }
       var lembur = Math.max(0, jam - JAM_SIF), uj = upahJam(k.gaji);
       total += k.gaji / 30 + Math.min(k.gaji, 12e6) * bp.kedai / 30 + Math.min(1, lembur) * 1.5 * uj + Math.max(0, lembur - 1) * 2 * uj;
     });
@@ -151,12 +164,13 @@
   }
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], tL = KAL.tgl(nLama), tB = KAL.tgl(nBaru), bp = bpjsPersen(S);
+    var adaKeamanan = S.staf.some(function (k) { return (k.jamHariIni || 0) > 0 && k.tugas.indexOf('keamanan') >= 0; });
     S.hariIni.gaji = 0;
     /* upah dan lembur hari kemarin */
     S.staf.forEach(function (k) {
       var jam = k.jamHariIni || 0; k.jamHariIni = 0; k.belanjaSiang = false;
       if (k.paruh) {
-        if (jam > 0) { var up = Math.round(jam * upahJam(umk(S)) / 1000) * 1000; k.upahHutang = (k.upahHutang || 0) + up; }
+        if (jam > 0) { var up = Math.round(jam * (k.upahPerJam || upahJam(umk(S))) / 1000) * 1000; k.upahHutang = (k.upahHutang || 0) + up; }
       } else if (jam > JAM_SIF) {
         var lembur = jam - JAM_SIF, uj = upahJam(k.gaji), bayar = Math.min(1, lembur) * 1.5 * uj + Math.max(0, lembur - 1) * 2 * uj;
         k.lemburBulan += bayar; k.setia -= lembur > 4 ? 3 : 1;
@@ -166,11 +180,12 @@
       if (k.tenaga < 25) k.capekHari++; else k.capekHari = 0;
       if (k.capekHari >= 3 && Math.random() < 0.5) { k.sakitSampai = nBaru + 1 + Math.floor(Math.random() * 2); k.capekHari = 0; kabar.push(k.nama + ' sakit karena kecapekan, izin sampai ' + KAL.tgl(k.sakitSampai).d + ' ' + N.namaBulan[KAL.tgl(k.sakitSampai).m - 1] + '.'); k.setia -= 5; }
       /* kesetiaan dari gaji */
-      var rasio = k.paruh ? 1 : k.gaji / umk(S);
+      var patokan = k.paruh ? upahJam(umk(S)) : umk(S);
+      var rasio = (k.paruh ? (k.upahPerJam || patokan) : k.gaji) / patokan;
       k.setia += rasio >= 1 ? 0.5 : rasio >= 0.85 ? 0 : -1;
       k.setia = Math.max(0, Math.min(100, k.setia));
-      /* kejujuran */
-      if (jam > 0 && k.jujur <= 2 && Math.random() < (3 - k.jujur) * 0.12) {
+      /* kejujuran (dicegah bila ada petugas keamanan) */
+      if (!adaKeamanan && jam > 0 && k.jujur <= 2 && Math.random() < (3 - k.jujur) * 0.12) {
         var ambil = Math.min(S.uang.kecil, (1 + Math.floor(Math.random() * 5)) * 10000);
         if (ambil > 0) { S.uang.kecil -= ambil; S.selisihKas = (S.selisihKas || 0) + ambil; }
       }
@@ -228,13 +243,48 @@
 
   /* ---------- aksi ---------- */
   function cari(S, id) { return S.staf.filter(function (k) { return k.id === id; })[0]; }
-  function aturTugas(S, id, t) { var k = cari(S, id); var i = k.tugas.indexOf(t); if (i >= 0) { if (k.tugas.length > 1) k.tugas.splice(i, 1); } else k.tugas.push(t); return true; }
-  function aturSif(S, id, sif) { cari(S, id).sif = sif; return true; }
+  function aturTugas(S, id, t) {
+    var k = cari(S, id); if (!k) return false;
+    if (t === 'semua') {
+      var semua = Object.keys(TUGAS);
+      k.tugas = k.tugas.length === semua.length ? ['barista'] : semua;
+      return true;
+    }
+    var i = k.tugas.indexOf(t);
+    if (i >= 0) { if (k.tugas.length > 1) k.tugas.splice(i, 1); } else k.tugas.push(t);
+    return true;
+  }
+  function aturSif(S, id, sif) {
+    var k = cari(S, id); if (!k) return false;
+    k.sif = sif;
+    var b = S.jamBuka || 7, t = S.jamTutup || 22;
+    if (sif === 'pagi') { k.jamMasuk = b; k.jamPulang = Math.min(t, b + (k.paruh ? JAM_PARUH : JAM_SIF)); }
+    else if (sif === 'sore') { k.jamPulang = t; k.jamMasuk = Math.max(b, t - JAM_SIF); }
+    else if (sif === 'ramai') { k.jamMasuk = Math.max(b, t - 5); k.jamPulang = Math.min(24, k.jamMasuk + JAM_PARUH); }
+    else if (sif === 'penuh') { k.jamMasuk = b; k.jamPulang = t; }
+    return true;
+  }
+  function aturJam(S, id, bagian, d) {
+    var k = cari(S, id); if (!k) return false;
+    pastikanJadwal(S, k);
+    var b = S.jamBuka || 5, t = S.jamTutup || 24;
+    if (bagian === 'masuk') k.jamMasuk = Math.max(b, Math.min(k.jamPulang - 1, k.jamMasuk + d));
+    else k.jamPulang = Math.max(k.jamMasuk + 1, Math.min(t, k.jamPulang + d));
+    return true;
+  }
   function aturLibur(S, id, d) { cari(S, id).libur = +d; return true; }
   function aturGaji(S, id, d) {
-    var k = cari(S, id), baru = Math.max(500000, k.gaji + d * 100000);
+    var k = cari(S, id); if (!k) return false;
+    if (k.paruh) {
+      pastikanJadwal(S, k);
+      var baruJam = Math.max(5000, (k.upahPerJam || Math.round(umk(S) / 173 / 500) * 500) + d * 1000);
+      k.setia = Math.max(0, Math.min(100, k.setia + (d > 0 ? 4 : -8)));
+      k.upahPerJam = baruJam;
+      return true;
+    }
+    var baru = d === 0 ? umk(S) : Math.max(500000, k.gaji + d * 100000);
     if (baru < umk(S) && kelasUsaha(S) === 'menengah') return 'Usaha menengah wajib menggaji minimal UMK ' + rp(umk(S)) + '.';
-    k.setia = Math.max(0, Math.min(100, k.setia + (d > 0 ? 6 : -12))); k.gaji = baru; return true;
+    k.setia = Math.max(0, Math.min(100, k.setia + (baru > k.gaji ? 6 : baru < k.gaji ? -12 : 0))); k.gaji = baru; return true;
   }
   function kursus(S, id) {
     var k = cari(S, id); if (k.racik >= 5) return 'Keahlian racik ' + k.nama + ' sudah paling tinggi.';
@@ -252,5 +302,5 @@
 
   g.KK_STAF = { TUGAS: TUGAS, BIAYA_LOWONGAN: BIAYA_LOWONGAN, BIAYA_KURSUS: BIAYA_KURSUS, siapkan: siapkan, pasangLowongan: pasangLowongan, terima: terima, tolak: tolak,
     jamKerja: jamKerja, masuk: masuk, hadir: hadir, ada: ada, punyaTugas: punyaTugas, kerja: kerja, gantiHari: gantiHari, biayaHarian: biayaHarian,
-    aturTugas: aturTugas, aturSif: aturSif, aturLibur: aturLibur, aturGaji: aturGaji, kursus: kursus, pecat: pecat, cari: cari, umk: umk, kelasUsaha: kelasUsaha, bpjsPersen: bpjsPersen };
+    aturTugas: aturTugas, aturSif: aturSif, aturJam: aturJam, aturLibur: aturLibur, aturGaji: aturGaji, kursus: kursus, pecat: pecat, cari: cari, umk: umk, kelasUsaha: kelasUsaha, bpjsPersen: bpjsPersen };
 })(window);

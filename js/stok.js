@@ -10,8 +10,8 @@
       ket: 'Paling murah, bayar tunai. Harus dijemput: naik ojek pulang-pergi sekitar 1 jam, atau pakai kendaraan sendiri. Pasar buka sampai pukul 12.00; setelah itu belanja ke swalayan, sekitar 8% lebih mahal.' },
     grosir: { nama: 'Grosir', kali: 1.05, bayar: ['tunai', 'qris', 'transfer'], ongkos: 10000, ongkosNama: 'Ongkir antar', antarMenit: 120,
       ket: 'Toko grosir, pangkalan gas, dan depot air sekitar. Sedikit lebih mahal, diantar sekitar 2 jam.' },
-    online: { nama: 'Online', kali: 0.9, bayar: ['qris', 'transfer'], ongkos: 15000, ongkosNama: 'Ongkir', antarHari: [2, 3],
-      ket: 'Shopee dan Tokopedia. Harga promo, sampai 2–3 hari.' },
+    online: { nama: 'Online', kali: 0.9, bayar: ['qris', 'transfer', 'kk'], ongkos: 15000, ongkosNama: 'Ongkir', antarHari: [2, 3],
+      ket: 'Shopee dan Tokopedia. Harga promo, sampai 2–3 hari. Bisa bayar pakai QRIS, transfer, atau kartu kredit.' },
     sales: { nama: 'Sales', kali: 1, bayar: ['tempo'], ongkos: 0, minimal: 300000, tempoHari: 14, denda: 0.05,
       ket: 'Sales distributor mampir Senin dan Kamis pukul 10.00–12.00. Bayar belakangan 14 hari, minimal pesanan Rp300.000.' }
   };
@@ -153,6 +153,9 @@
       if (S.bank.saldo < total) return 'Saldo rekening tidak cukup.';
       S.bank.saldo -= total; U.catatTransfer(S);
       S.bank.mutasi.unshift({ n: S.hari, ket: 'Belanja ' + namaTempat(S, tempat) + (bf ? ' (termasuk BI-FAST)' : ' (transfer gratis)'), jml: -total });
+    } else if (bayar === 'kk') {
+      var errKk = U.pakaiKk(S, h.total, 'Tokopedia/Shopee: Belanja bahan kedai');
+      if (errKk !== true) return errKk;
     } else if (bayar === 'tempo') {
       S.tagihanSales.push({ jml: h.total, jatuhTempo: S.hari + t.tempoHari, dibayar: false, denda: 0 });
     }

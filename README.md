@@ -19,6 +19,7 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 - `js/usaha.js` — lokasi, tempat, alat, listrik, cabang, menu sendiri
 - `js/diri.js` — kebutuhan badan, kos atau rumah, isinya, tidur
 - `js/jualan.js` — pembeli datang, antre, bayar
+- `js/suara.js` — lagu tema orisinal (pagi, jam buka, malam) dan efek suara Web Audio API
 - `js/data/menu.js` — bahan, resep, HPP, jenis pembeli
 - `js/main.js` — alur game
 - `js/data/nyata.js` — semua nama, merek, dan angka dunia nyata (diganti di sini saat game dijual)
@@ -37,5 +38,5 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 10. Uji dan setel: simulasi 400 hari tanpa galat, angka disetel ✔
 A. Penyempurnaan: sajikan sekali tap, harga pasaran, layar tidak mati, token PLN asli, kebutuhan badan, kos dan isinya ✔
 C1. Makan & minum di HP, QRIS sampai 3, SeaBank, pasar/swalayan kapan saja, bensin per liter, bar oli dan servis, Threads, dock Pesanan antar, layar HP terkunci lebar ✔
-C2. Jadwal karyawan per jam, toko game PS1–PS5, kartu kredit, jual barang, lagu tema (berikutnya)
+C2. Jadwal karyawan per jam & tugas keamanan, toko game PS1–PS5 (bekas original & baru), kartu kredit aturan BI, jual barang bekas, lagu tema 3 suasana & efek suara ✔
 B. Ngojek (Gojek/Grab Driver), motor sampai moge, mobil pikap sampai sultan, KPR subsidi/komersial, pindah rumah, isi rumah, tanah ✔

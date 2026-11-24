@@ -17,11 +17,20 @@
       km: 0, kmServis: 0, kredit: null, pajakTempo: S.hari + 365, dibeli: S.hari };
   }
   function cekGarasi(S) { return S.mobil ? 'Sudah punya ' + S.mobil.nama + '. Jual dulu kalau mau ganti.' : null; }
-  function beliTunai(S, id) {
+  function bayarDealer(S, jml, ket, cara) {
+    if (cara === 'kk') {
+      var err = g.KK_UANG.pakaiKk(S, jml, 'Dealer Mobil: ' + ket);
+      return err === true ? true : err;
+    }
+    if (S.bank.saldo < jml) return 'Saldo rekening tidak cukup untuk ' + ket + ' ' + rp(jml) + '.';
+    S.bank.saldo -= jml; M().catatBank(S, ket, -jml);
+    return true;
+  }
+  function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = model(id);
-    if (S.bank.saldo < m.harga) return 'Saldo rekening tidak cukup untuk beli tunai ' + rp(m.harga) + '.';
-    S.bank.saldo -= m.harga; M().catatBank(S, 'Beli ' + m.nama + ' tunai', -m.harga);
+    var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
+    if (by !== true) return by;
     S.mobil = mobilBaru(m, S); return true;
   }
   function hitungKredit(harga, dp, tenor) {
@@ -29,12 +38,12 @@
     var angsuran = Math.round((pokok * (1 + KR.bungaFlat * tenor) / tenor + harga * KR.asuransi) / 1000) * 1000;
     return { dp: uangMuka, angsuran: angsuran, total: uangMuka + angsuran * tenor };
   }
-  function beliKredit(S, id, dp, tenor) {
+  function beliKredit(S, id, dp, tenor, cara) {
     var e = cekGarasi(S); if (e) return e;
     if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = model(id), k = hitungKredit(m.harga, dp, tenor);
-    if (S.bank.saldo < k.dp) return 'Saldo rekening tidak cukup untuk uang muka ' + rp(k.dp) + '.';
-    S.bank.saldo -= k.dp; M().catatBank(S, 'Uang muka kredit ' + m.nama, -k.dp);
+    var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
+    if (by !== true) return by;
     S.mobil = mobilBaru(m, S);
     S.mobil.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
     return true;

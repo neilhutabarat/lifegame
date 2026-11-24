@@ -78,6 +78,60 @@
       { id: 'tv55', nama: 'TV 55 inci 4K', merek: 'Samsung', harga: 7000000, watt: 0, rumah: true, ket: 'Main PS dan nonton lebih puas' }
     ],
 
+    /* menjual barang kos/rumah bekas (perkiraan): buka kotak turun ke 75%, lalu turun 12% setahun dan 0,15% tiap pemakaian */
+    jualBarang: { awal: 0.75, awalBekas: 0.85, perTahun: 0.12, perPakai: 0.0015, min: 0.2 },
+
+    /* toko game: PS1–PS4 bekas original (harga pasar e-commerce/komunitas retro Indonesia menurut kondisi fisik), PS5 baru resmi Sony Indonesia Oktober 2026 */
+    konsolGame: [
+      { id: 'ps1', nama: 'PlayStation 1 (PS One) Original', merek: 'Sony', bekas: true, min: 350000, maks: 600000, tahun: [1996, 2003], watt: 0.01, pulih: 12, ket: 'Konsol retro original Sony + stik ori, baca CD game original' },
+      { id: 'ps2', nama: 'PlayStation 2 Slim Original', merek: 'Sony', bekas: true, min: 450000, maks: 750000, tahun: [2004, 2012], watt: 0.03, pulih: 14, ket: 'PS2 Slim SCPH-90006 original optik sehat + stik DualShock 2 ori mesin' },
+      { id: 'ps3', nama: 'PlayStation 3 Slim OFW Original', merek: 'Sony', bekas: true, min: 1350000, maks: 2100000, tahun: [2010, 2015], watt: 0.09, pulih: 16, ket: 'PS3 Slim Official Firmware (OFW) original untuk kaset Blu-ray asli' },
+      { id: 'ps4', nama: 'PlayStation 4 Slim 1TB OFW Original', merek: 'Sony', bekas: true, min: 2600000, maks: 3700000, tahun: [2017, 2022], watt: 0.15, pulih: 18, ket: 'PS4 Slim 1TB OFW original + DualShock 4 ori mesin' },
+      { id: 'ps5', nama: 'PS5 Slim Digital Edition', merek: 'Sony', bekas: false, digital: true, harga: 9999000, watt: 0.2, pulih: 20, ket: 'Baru, garansi resmi Sony Indonesia. Main game digital PS Store' },
+      { id: 'ps5disc', nama: 'PS5 Slim Disc Edition', merek: 'Sony', bekas: false, harga: 11399000, watt: 0.2, pulih: 20, ket: 'Baru, garansi resmi Sony Indonesia. Bisa kaset Blu-ray PS5 & PS4' }
+    ],
+    /* kaset / game original tiap konsol (PS1–PS4 original bekas terawat, PS5 original baru) */
+    gameKonsol: [
+      { id: 'g_ps1_we4', konsol: 'ps1', nama: 'Winning Eleven 4 (CD Original)', harga: 120000, bonus: 3, ket: 'Sepak bola klasik PS1, CD original NTSC-J' },
+      { id: 'g_ps1_ctr', konsol: 'ps1', nama: 'Crash Team Racing (CD Original)', harga: 175000, bonus: 4, ket: 'Balap kart legendaris, CD original Black Label' },
+      { id: 'g_ps1_re2', konsol: 'ps1', nama: 'Resident Evil 2 DualShock (2 CD Original)', harga: 280000, bonus: 5, ket: '2 keping CD original lengkap manual' },
+      { id: 'g_ps1_suikoden2', konsol: 'ps1', nama: 'Suikoden II (CD Original Langka)', harga: 850000, bonus: 6, langka: true, ket: 'JRPG kolektor original, harga jual kembali stabil' },
+      { id: 'g_ps2_gtasa', konsol: 'ps2', nama: 'GTA: San Andreas (DVD Original)', harga: 150000, bonus: 4, ket: 'DVD original lengkap peta Los Santos' },
+      { id: 'g_ps2_we10', konsol: 'ps2', nama: 'Winning Eleven 10 (DVD Original)', harga: 95000, bonus: 3, ket: 'DVD original Konami' },
+      { id: 'g_ps2_re4', konsol: 'ps2', nama: 'Resident Evil 4 (DVD Original)', harga: 160000, bonus: 4, ket: 'DVD original Capcom' },
+      { id: 'g_ps2_gow2', konsol: 'ps2', nama: 'God of War II (DVD Original)', harga: 185000, bonus: 5, ket: 'DVD original 2-layer Sony Computer Entertainment' },
+      { id: 'g_ps3_gtav', konsol: 'ps3', nama: 'Grand Theft Auto V (BD Original)', harga: 140000, bonus: 4, ket: 'Blu-ray Disc original Rockstar Games' },
+      { id: 'g_ps3_tlou', konsol: 'ps3', nama: 'The Last of Us (BD Original)', harga: 165000, bonus: 5, ket: 'Blu-ray Disc original Naughty Dog' },
+      { id: 'g_ps3_pes18', konsol: 'ps3', nama: 'PES 2018 (BD Original)', harga: 110000, bonus: 3, ket: 'Blu-ray Disc original Konami' },
+      { id: 'g_ps3_rdr', konsol: 'ps3', nama: 'Red Dead Redemption (BD Original)', harga: 155000, bonus: 4, ket: 'Blu-ray Disc original lengkap peta' },
+      { id: 'g_ps4_gowr', konsol: 'ps4', nama: 'God of War Ragnarök (BD Original)', harga: 380000, bonus: 5, ket: 'Blu-ray Disc original Region 3 Asia' },
+      { id: 'g_ps4_rdr2', konsol: 'ps4', nama: 'Red Dead Redemption 2 (2 BD Original)', harga: 320000, bonus: 5, ket: '2 keping Blu-ray Disc original Data & Play' },
+      { id: 'g_ps4_fc25', konsol: 'ps4', nama: 'EA Sports FC 25 (BD Original)', harga: 420000, bonus: 4, ket: 'Blu-ray Disc original EA Sports' },
+      { id: 'g_ps4_got', konsol: 'ps4', nama: "Ghost of Tsushima Director's Cut (BD Original)", harga: 350000, bonus: 5, ket: 'Blu-ray Disc original Sucker Punch' },
+      { id: 'g_ps5_fc26', konsol: 'ps5', nama: 'EA Sports FC 26 (PS5 Original)', harga: 1029000, bonus: 6, ket: 'Game baru PS5 resmi' },
+      { id: 'g_ps5_spider2', konsol: 'ps5', nama: "Marvel's Spider-Man 2 (PS5 Original)", harga: 1029000, bonus: 7, ket: 'Game eksklusif PS5 resmi Sony' },
+      { id: 'g_ps5_wukong', konsol: 'ps5', nama: 'Black Myth: Wukong (PS5 Original)', harga: 899000, bonus: 7, ket: 'Action RPG populer PS5' },
+      { id: 'g_ps5_gt7', konsol: 'ps5', nama: 'Gran Turismo 7 (PS5 Original)', harga: 1029000, bonus: 6, ket: 'Simulasi balap resmi PlayStation Studios' }
+    ],
+
+    /* kartu kredit bank: aturan Bank Indonesia (bunga maksimal 1,75% sebulan, bayar minimal 5% atau Rp50.000,
+       denda keterlambatan 1% dari tagihan maksimal Rp100.000, penghasilan minimum Rp3 juta sebulan) */
+    kartuKredit: {
+      bungaBulan: 0.0175,
+      minPersen: 0.05,
+      minRp: 50000,
+      dendaPersen: 0.01,
+      dendaMaks: 100000,
+      syaratGaji: 3000000,
+      syaratHari: 30,
+      kaliLimit: 2.5,
+      limitMin: 6000000,
+      limitMaks: 150000000,
+      iuranTahunan: 300000,
+      cetakTanggal: 1,
+      jatuhTempo: 18
+    },
+
     /* PPh final UMKM orang pribadi (PP 20/2026): 0,5% omzet, omzet sampai Rp500 juta setahun bebas, setor paling lambat tanggal 15 */
     pajak: { tarif: 0.005, bebas: 500e6, jatuhTempo: 15, dendaPerBulan: 0.01 /* perkiraan */ },
 

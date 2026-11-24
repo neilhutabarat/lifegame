@@ -182,7 +182,9 @@
       d.padamSampai = S.hari; S.uhtBuka.hari = Math.min(S.uhtBuka.hari, S.hari - 2);
       kabar.push('Listrik PLN padam beberapa jam. Kulkas mati, susu yang sudah dibuka cepat basi.');
     }
-    if (Math.random() < 0.002 * p && !d.cekUang && S.uang.besar >= 50000) {
+    var adaKeamanan = g.KK_STAF && S.staf && g.KK_STAF.ada(S, 'keamanan');
+    if (adaKeamanan && d.parkirSampai >= S.hari) d.parkirSampai = -1;
+    if (Math.random() < (adaKeamanan ? 0.0004 : 0.002) * p && !d.cekUang && S.uang.besar >= 50000) {
       var palsu = acak([50000, 100000]); S.uang.besar = Math.max(0, S.uang.besar - palsu); S.hariIni.uangPalsu = (S.hariIni.uangPalsu || 0) + palsu;
       kabar.push('Ada uang palsu ' + rp(palsu) + ' di laci. Alat cek uang bisa mencegahnya.');
     }
@@ -216,7 +218,9 @@
       }
     }
     d.pesaing.forEach(function (p) { if (p.jenis !== 'warkop' && nBaru > p.promoSampai && Math.random() < 0.03) { p.promoSampai = nBaru + 3; kabar.push(p.nama + ' sedang promo besar-besaran 3 hari.'); } });
-    if (Math.random() < 0.02 && nBaru > d.parkirSampai) { d.parkirSampai = nBaru + 7; kabar.push('Juru parkir liar mulai menarik Rp3.000 di depan kedai. Sebagian pembeli malas mampir.'); }
+    var adaKeamananHari = S.staf && S.staf.some(function (k) { return k.tugas.indexOf('keamanan') >= 0 && k.mulai <= nBaru && nBaru >= (k.sakitSampai || 0); });
+    if (adaKeamananHari) d.parkirSampai = -1;
+    else if (Math.random() < 0.02 && nBaru > d.parkirSampai) { d.parkirSampai = nBaru + 7; kabar.push('Juru parkir liar mulai menarik Rp3.000 di depan kedai. Sebagian pembeli malas mampir.'); }
     /* komplain viral kalau rating rendah dan ulasan buruk tidak dibalas */
     var buruk = d.ulasan.filter(function (u) { return u.bintang <= 2 && !u.balas && nLama - u.hari <= 2; });
     if (buruk.length >= 3 && Math.random() < 0.3) { d.sosmed.ig = Math.max(0, d.sosmed.ig - 100); for (var j = 0; j < 4; j++) d.ulasan.push({ bintang: 1, teks: 'Ikut-ikutan dari postingan viral: pelayanan buruk.', hari: nBaru, nama: acak(N.namaOrang), balas: false }); kabar.push('Keluhan pembeli viral di media sosial. Balas ulasan buruk supaya tidak melebar.'); }

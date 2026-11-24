@@ -15,7 +15,12 @@
     if (S.qris && !Object.keys(S.merchants).length) S.merchants[S.qris] = { tersedia: 0, menunggu: [], tarikBulanIni: 0 };
     delete S.merchant;
     if (S.bank) { S.bank.transferBulanIni = S.bank.transferBulanIni || 0; S.bank.tarikHariIni = S.bank.tarikHariIni || 0; }
+    siapkanKk(S);
     return S;
+  }
+  function siapkanKk(S) {
+    if (!S.kk) S.kk = { status: 'tidak', limit: 0, pakai: 0, tagihan: 0, minBayar: 0, dibayarBulanIni: 0, denda: 0, sejak: 0, iuranTempo: 0, mutasi: [] };
+    S.kk.mutasi = S.kk.mutasi || [];
   }
   function qrisAktif(S) { return Object.keys(S.merchants).filter(function (id) { var m = S.merchants[id]; return !m.aktifPada || S.hari >= m.aktifPada; }); }
   function tersedia(S) { var t = 0; for (var id in S.merchants) t += S.merchants[id].tersedia; return t; }
@@ -50,6 +55,7 @@
     S.nib = S.nib || null;
     S.kur = S.kur || { status: 'tidak' };
     S.kreditBuruk = S.kreditBuruk || false;
+    siapkanKk(S);
     return S;
   }
 
@@ -160,6 +166,89 @@
     return true;
   }
 
+  /* ---------- Kartu Kredit (aturan Bank Indonesia) ---------- */
+  function penghasilanKk(S) {
+    if (g.KK_PROPERTI && g.KK_PROPERTI.penghasilan) return g.KK_PROPERTI.penghasilan(S);
+    return Math.max(0, Math.round(labaBulanan(S)));
+  }
+  function hitungLimitKk(S) {
+    var KK = N.kartuKredit, gj = penghasilanKk(S);
+    if (gj < KK.syaratGaji) return KK.limitMin;
+    return Math.min(KK.limitMaks, Math.max(KK.limitMin, Math.round(gj * KK.kaliLimit / 1000000) * 1000000));
+  }
+  function syaratKk(S) {
+    var KK = N.kartuKredit, gj = penghasilanKk(S);
+    return [
+      { ok: S.hariKe >= KK.syaratHari, teks: 'Usaha berjalan minimal 1 bulan (sekarang hari ke-' + S.hariKe + ')' },
+      { ok: gj >= KK.syaratGaji, teks: 'Penghasilan minimal ' + rp(KK.syaratGaji) + ' sebulan (sekarang ' + rp(gj) + ')' },
+      { ok: !S.kreditBuruk, teks: 'Riwayat kredit lancar (SLIK OJK bersih)' },
+      { ok: !S.kk || S.kk.status === 'tidak', teks: 'Belum punya kartu kredit di ' + bankIni(S).nama }
+    ];
+  }
+  function ajukanKk(S) {
+    siapkanKk(S);
+    if (!syaratKk(S).every(function (x) { return x.ok; })) return 'Syarat pengajuan kartu kredit belum terpenuhi.';
+    var lim = hitungLimitKk(S);
+    S.kk = { status: 'aktif', limit: lim, pakai: 0, tagihan: 0, minBayar: 0, dibayarBulanIni: 0, denda: 0, sejak: S.hari, iuranTempo: S.hari + 365, mutasi: [] };
+    return true;
+  }
+  function naikLimitKk(S) {
+    siapkanKk(S);
+    if (S.kk.status !== 'aktif') return 'Kartu kredit tidak aktif.';
+    if (S.kreditBuruk || S.kk.denda > 0) return 'Tidak bisa naik limit saat ada tunggakan atau riwayat telat bayar.';
+    var baru = hitungLimitKk(S);
+    if (baru <= S.kk.limit) return 'Penghasilan saat ini belum cukup untuk menaikkan limit di atas ' + rp(S.kk.limit) + '.';
+    S.kk.limit = baru;
+    return true;
+  }
+  function sisaLimitKk(S) {
+    siapkanKk(S);
+    if (S.kk.status !== 'aktif') return 0;
+    return Math.max(0, S.kk.limit - S.kk.pakai - S.kk.tagihan - S.kk.denda);
+  }
+  function catatKk(S, ket, jml, n) {
+    siapkanKk(S);
+    S.kk.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket, jml: jml });
+    if (S.kk.mutasi.length > 30) S.kk.mutasi.length = 30;
+  }
+  function pakaiKk(S, jml, ket) {
+    siapkanKk(S);
+    if (S.kk.status === 'tidak') return 'Belum punya kartu kredit. Ajukan dulu di aplikasi ' + bankIni(S).app + '.';
+    if (S.kk.status === 'blokir') return 'Kartu kredit sedang diblokir karena telat bayar tagihan. Lunasi tagihan di aplikasi ' + bankIni(S).app + '.';
+    var sisa = sisaLimitKk(S);
+    if (jml > sisa) return 'Limit kartu kredit tidak cukup (butuh ' + rp(jml) + ', sisa limit ' + rp(sisa) + ').';
+    S.kk.pakai += jml;
+    catatKk(S, ket, -jml);
+    return true;
+  }
+  function bayarKk(S, jenis) {
+    siapkanKk(S);
+    var k = S.kk, KK = N.kartuKredit;
+    var totalTagihan = k.tagihan + k.denda;
+    var jml = 0;
+    if (jenis === 'semua') jml = totalTagihan + k.pakai;
+    else if (jenis === 'minimal') {
+      if (totalTagihan <= 0) return 'Belum ada tagihan cetak yang perlu dibayar.';
+      var kurangMin = Math.max(0, k.minBayar - k.dibayarBulanIni);
+      jml = Math.min(totalTagihan, Math.max(kurangMin || KK.minRp, Math.min(totalTagihan, KK.minRp)));
+    } else {
+      if (totalTagihan <= 0) return 'Tagihan bulan ini sudah lunas.';
+      jml = totalTagihan;
+    }
+    if (jml <= 0) return 'Tidak ada tagihan kartu kredit.';
+    if (S.bank.saldo < jml) return 'Saldo rekening tidak cukup untuk membayar ' + rp(jml) + '.';
+    S.bank.saldo -= jml;
+    catat(S, 'Bayar kartu kredit ' + bankIni(S).nama, -jml);
+    catatKk(S, 'Pembayaran tagihan', jml);
+    var sisaBayar = jml;
+    var potongDenda = Math.min(k.denda, sisaBayar); k.denda -= potongDenda; sisaBayar -= potongDenda;
+    var potongTagihan = Math.min(k.tagihan, sisaBayar); k.tagihan -= potongTagihan; sisaBayar -= potongTagihan;
+    k.dibayarBulanIni += potongDenda + potongTagihan;
+    if (sisaBayar > 0) k.pakai = Math.max(0, k.pakai - sisaBayar);
+    if (k.status === 'blokir' && (k.tagihan === 0 || k.dibayarBulanIni >= k.minBayar)) k.status = 'aktif';
+    return { ok: true, jml: jml };
+  }
+
   /* ---------- pergantian hari: pencairan, akhir bulan, cicilan ---------- */
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], tL = KAL.tgl(nLama), tB = KAL.tgl(nBaru), b = bankIni(S);
@@ -206,6 +295,39 @@
       }
       if (k.sisa === 0 && k.tunggakan === 0) { k.status = 'lunas'; kabar.push('KUR lunas.'); }
     }
+    /* Kartu Kredit: cetak tagihan tiap ganti bulan, jatuh tempo tanggal 18 (aturan BI) */
+    siapkanKk(S);
+    var kk = S.kk, KK = N.kartuKredit;
+    if (kk.status !== 'tidak') {
+      if (tB.m !== tL.m) {
+        var bunga = 0;
+        /* jika tagihan bulan lalu belum lunas penuh, kena bunga BI maks 1,75% sebulan */
+        if (kk.tagihan > 0) {
+          bunga = Math.round((kk.tagihan + kk.pakai) * KK.bungaBulan);
+          kk.tagihan += bunga;
+          catatKk(S, 'Bunga kartu kredit 1,75%', -bunga, nBaru);
+        }
+        kk.tagihan += kk.pakai;
+        kk.pakai = 0;
+        kk.dibayarBulanIni = 0;
+        kk.minBayar = kk.tagihan > 0 ? Math.min(kk.tagihan, Math.max(KK.minRp, Math.round(kk.tagihan * KK.minPersen))) : 0;
+        if (kk.tagihan > 0) kabar.push('Tagihan kartu kredit ' + b.nama + ' tercetak ' + rp(kk.tagihan) + (bunga ? ' (termasuk bunga 1,75% ' + rp(bunga) + ')' : '') + '. Bayar minimal ' + rp(kk.minBayar) + ' paling lambat tanggal ' + KK.jatuhTempo + '.');
+      }
+      if (tB.d === KK.jatuhTempo + 1 && kk.tagihan > 0 && kk.dibayarBulanIni < kk.minBayar) {
+        var dnd = Math.min(KK.dendaMaks, Math.max(10000, Math.round(kk.tagihan * KK.dendaPersen)));
+        kk.denda += dnd;
+        kk.status = 'blokir';
+        S.kreditBuruk = true;
+        catatKk(S, 'Denda keterlambatan BI', -dnd, nBaru);
+        kabar.push('Kartu kredit lewat jatuh tempo tanggal ' + KK.jatuhTempo + '. Kena denda BI ' + rp(dnd) + ' dan kartu diblokir sampai dibayar.');
+      }
+      if (kk.iuranTempo && nBaru >= kk.iuranTempo) {
+        kk.pakai += KK.iuranTahunan;
+        kk.iuranTempo = nBaru + 365;
+        catatKk(S, 'Iuran tahunan kartu kredit', -KK.iuranTahunan, nBaru);
+        kabar.push('Iuran tahunan kartu kredit ' + rp(KK.iuranTahunan) + ' masuk ke pemakaian bulan ini.');
+      }
+    }
     return kabar;
   }
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
@@ -213,6 +335,8 @@
   g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris,
     biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, merchantTotal: merchantTotal,
     setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
-    angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur, gantiHari: gantiHari, bankIni: bankIni, qrisIni: qrisIni,
+    angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
+    penghasilanKk: penghasilanKk, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,
+    gantiHari: gantiHari, bankIni: bankIni, qrisIni: qrisIni,
     hariKerja: hariKerja, BATAS_TUKAR_RECEH: BATAS_TUKAR_RECEH };
 })(window);
