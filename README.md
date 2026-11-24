@@ -9,12 +9,15 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 - `js/adegan.js` — adegan kedai di kanvas 2D
 - `js/uang.js` — laci, merchant QRIS, bank, pajak, KUR
 - `js/stok.js` — stok, belanja, harga bergerak, kiriman
-- `js/motor.js` — motor, kredit, bensin, perawatan
+- `js/motor.js` — motor, kredit, bensin, perawatan, jual
+- `js/mobil.js` — mobil, kredit, bensin, servis, pajak, jual
+- `js/ojek.js` — ngojek: daftar driver, order penumpang/barang/makanan, tarif zona
+- `js/properti.js` — KPR subsidi dan komersial, pindah rumah, tanah
 - `js/antar.js` — pesanan antar dan platform
 - `js/karyawan.js` — karyawan, gaji, THR, BPJS
 - `js/dunia.js` — rating, Maps, media sosial, pesaing, cuaca, kejadian
 - `js/usaha.js` — lokasi, tempat, alat, listrik, cabang, menu sendiri
-- `js/diri.js` — kebutuhan badan, kos, isi kos, tidur
+- `js/diri.js` — kebutuhan badan, kos atau rumah, isinya, tidur
 - `js/jualan.js` — pembeli datang, antre, bayar
 - `js/data/menu.js` — bahan, resep, HPP, jenis pembeli
 - `js/main.js` — alur game
@@ -33,4 +36,4 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 9. Gambar AI, animasi, suara (menunggu gambar)
 10. Uji dan setel: simulasi 400 hari tanpa galat, angka disetel ✔
 A. Penyempurnaan: sajikan sekali tap, harga pasaran, layar tidak mati, token PLN asli, kebutuhan badan, kos dan isinya ✔
-B. Ngojek, motor sampai moge, mobil, rumah dan tanah (berikutnya)
+B. Ngojek (Gojek/Grab Driver), motor sampai moge, mobil pikap sampai sultan, KPR subsidi/komersial, pindah rumah, isi rumah, tanah ✔

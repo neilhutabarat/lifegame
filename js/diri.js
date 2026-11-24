@@ -13,9 +13,12 @@
   function siapkan(S) {
     if (!S.diri) S.diri = { kenyang: 80, minum: 80, stamina: 90, melek: 90, posisi: 'kedai', bangun: 360, ketiduran: 0 };
     if (!S.rumah) S.rumah = { jenis: 'kos', sewa: kota(S).kos, kwh: 10, barang: {}, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false };
+    if (S.rumah.jarak == null) S.rumah.jarak = N.jarakKos;
     return S;
   }
-  function punya(S, id) { return !!S.rumah.barang[id]; }
+  function punya(S, id) { if (id === 'tv') return !!(S.rumah.barang.tv || S.rumah.barang.tv55); return !!S.rumah.barang[id]; }
+  function tempat(S) { return S.rumah.jenis === 'rumah' ? 'rumah' : 'kos'; }
+  function adaAc(S) { return S.rumah.jenis !== 'rumah' || punya(S, 'ac'); }
   function barang(id) { return N.barangRumah.filter(function (b) { return b.id === id; })[0]; }
 
   /* ---------- waktu berjalan ---------- */
@@ -25,7 +28,7 @@
     d.minum = batas(d.minum - TURUN.minum * j);
     d.melek = batas(d.melek - TURUN.melek * j);
     var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0);
-    if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
+    if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
     d.stamina = batas(d.stamina - turunStamina * j);
     listrikKos(S, dMenit, false);
     if (d.melek < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
@@ -35,8 +38,8 @@
   /* pemakaian listrik kos (kW): kulkas 24 jam, AC saat di kos, TV/PS saat dipakai */
   function listrikKos(S, menit, tidur, alat) {
     var r = S.rumah; if (r.kwh <= 0) { r.padam = true; return; }
-    var kw = punya(S, 'kulkas') ? 0.05 : 0;
-    if (S.diri.posisi === 'kos') kw += tidur ? 0.35 : 0.2; /* AC 1/2 PK, perkiraan */
+    var kw = (punya(S, 'kulkas') ? 0.05 : 0) + (punya(S, 'kulkas2') ? 0.07 : 0);
+    if (S.diri.posisi === 'kos') kw += adaAc(S) ? (tidur ? 0.35 : 0.2) : 0.05; /* AC 1/2 PK; tanpa AC hanya lampu, perkiraan */
     if (alat) kw += alat;
     r.kwh = Math.max(0, r.kwh - kw * menit / 60);
     if (r.kwh === 0) r.padam = true;
@@ -44,7 +47,7 @@
   function beliTokenKos(S, nominal) {
     var t = g.KK_USAHA.token(S, nominal);
     if (S.bank.saldo < t.bayar) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= t.bayar; S.bank.mutasi.unshift({ n: S.hari, ket: 'Token listrik PLN kos ' + nominal.toLocaleString('id-ID'), jml: -t.bayar });
+    S.bank.saldo -= t.bayar; S.bank.mutasi.unshift({ n: S.hari, ket: 'Token listrik PLN ' + tempat(S) + ' ' + nominal.toLocaleString('id-ID'), jml: -t.bayar });
     S.rumah.kwh += t.kwh; S.rumah.padam = false;
     return { ok: true, kwh: t.kwh, bayar: t.bayar };
   }
@@ -73,10 +76,10 @@
       return { ok: true, menit: 0, teks: 'Pesan makanan lewat GoFood ' + rp(biaya) + ' termasuk ongkir. Sampai sekitar ' + N.makanOjol.tunggu + ' menit lagi.' };
     }
     if (jenis === 'masak') {
-      if (d.posisi !== 'kos' || !punya(S, 'ricecooker')) return 'Masak sendiri butuh rice cooker di kos.';
+      if (d.posisi !== 'kos' || !(punya(S, 'ricecooker') || punya(S, 'kompor'))) return 'Masak sendiri butuh rice cooker atau kompor.';
       if (!bayarTunai(S, 7000)) return 'Uang di laci tidak cukup untuk beras dan lauk.';
-      d.kenyang = batas(d.kenyang + 60);
-      return { ok: true, menit: 40, teks: 'Masak nasi dan telur di kos, sekitar Rp7.000.' };
+      d.kenyang = batas(d.kenyang + 60 + (punya(S, 'mejamakan') ? 10 : 0) + (punya(S, 'kompor') ? 5 : 0));
+      return { ok: true, menit: 40, teks: 'Masak nasi dan telur di ' + tempat(S) + ', sekitar Rp7.000.' };
     }
     if (jenis === 'air') {
       if (d.posisi === 'kos') { if (!punya(S, 'dispenser') && !bayarTunai(S, 4000)) return 'Uang di laci tidak cukup.'; }
@@ -103,11 +106,12 @@
   /* ---------- istirahat dan tidur ---------- */
   function istirahat(S, jenis) {
     var d = S.diri;
-    if (d.posisi !== 'kos') return 'Pulang ke kos dulu.';
+    if (d.posisi !== 'kos') return 'Pulang dulu.';
     if (jenis === 'ps' && !(punya(S, 'ps5') || punya(S, 'ps5disc'))) return 'Belum punya PS5.';
     if (jenis === 'tv' && !punya(S, 'tv')) return 'Belum punya TV.';
-    if (S.rumah.padam) return 'Listrik kos padam. Beli token dulu.';
-    var naik = jenis === 'ps' ? (S.rumah.barang.kaset ? 22 : 16) : jenis === 'tv' ? 14 : 20;
+    if (S.rumah.padam && jenis !== 'tidurSiang') return 'Listrik ' + tempat(S) + ' padam. Beli token dulu.';
+    var besar = punya(S, 'tv55') ? 4 : 0;
+    var naik = jenis === 'ps' ? (S.rumah.barang.kaset ? 22 : 16) + besar : jenis === 'tv' ? 14 + besar : 20;
     d.stamina = batas(d.stamina + naik);
     if (jenis === 'tidurSiang') d.melek = batas(d.melek + 25);
     else d.melek = batas(d.melek - 3);
@@ -117,9 +121,9 @@
   /* tidur malam: dari jam sekarang sampai jam bangun besok. Mengembalikan menit tidur */
   function tidur(S, menitSekarang, bangun) {
     var d = S.diri, lama = Math.max(60, (S.menit < 1440 ? 1440 - S.menit : -(S.menit - 1440)) + bangun), jam = lama / 60;
-    var ac = !S.rumah.padam;
+    var ac = !S.rumah.padam && adaAc(S);
     listrikKos(S, lama, true);
-    var mutu = S.rumah.padam ? (punya(S, 'kipas') ? 0.85 : 0.7) : 1;
+    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.7) * (punya(S, 'springbed') ? 1.1 : S.rumah.jenis === 'rumah' ? 0.9 : 1);
     d.melek = batas(d.melek + jam * 14 * mutu);
     d.stamina = batas(d.stamina + jam * 11 * mutu);
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
@@ -130,7 +134,8 @@
   function beliBarang(S, id) {
     var b = barang(id);
     if (punya(S, id) && !b.banyak) return 'Sudah punya ' + b.nama + '.';
-    if (b.butuh && !punya(S, b.butuh) && !(b.butuh === 'ps5disc' && punya(S, 'ps5disc'))) return b.nama + ' butuh ' + barang(b.butuh).nama + ' dulu.';
+    if (b.rumah && S.rumah.jenis !== 'rumah') return b.nama + ' tidak muat di kamar kos. Butuh rumah sendiri.';
+    if (b.butuh && !punya(S, b.butuh)) return b.nama + ' butuh ' + barang(b.butuh).nama + ' dulu.';
     if (S.bank.saldo < b.harga) return 'Saldo rekening tidak cukup.';
     S.bank.saldo -= b.harga; S.bank.mutasi.unshift({ n: S.hari, ket: 'Beli ' + b.nama + ' (' + b.merek + ')', jml: -b.harga });
     S.rumah.barang[id] = b.banyak ? (S.rumah.barang[id] || 0) + 1 : true;
@@ -143,11 +148,11 @@
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], r = S.rumah, t = KAL.tgl(nBaru);
     listrikKos(S, 0, false);
-    if (t.d === r.tempo) {
+    if (r.jenis === 'kos' && t.d === r.tempo) {
       if (S.bank.saldo >= r.sewa) { S.bank.saldo -= r.sewa; S.bank.mutasi.unshift({ n: nBaru, ket: 'Sewa kos bulan ini', jml: -r.sewa }); kabar.push('Sewa kos ' + rp(r.sewa) + ' sudah dibayar.'); }
       else { r.tunggakan = (r.tunggakan || 0) + r.sewa; kabar.push('Saldo kurang untuk sewa kos. Ibu kos menagih.'); }
     }
-    if (r.kwh < 4) kabar.push('Token listrik kos tinggal ' + r.kwh.toFixed(1).replace('.', ',') + ' kWh.');
+    if (r.kwh < 4) kabar.push('Token listrik ' + tempat(S) + ' tinggal ' + r.kwh.toFixed(1).replace('.', ',') + ' kWh.');
     return kabar;
   }
   /* pemain sedang melayani: stamina rendah membuat lambat dan kurang ramah */
@@ -155,5 +160,5 @@
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.melek < 15) ? 2 : 1; }
 
   g.KK_DIRI = { siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur, beliBarang: beliBarang, beliTokenKos: beliTokenKos,
-    punya: punya, barang: barang, kameraHp: kameraHp, gantiHari: gantiHari, ramah: ramah, lambat: lambat, kota: kota };
+    punya: punya, tempat: tempat, adaAc: adaAc, barang: barang, kameraHp: kameraHp, gantiHari: gantiHari, ramah: ramah, lambat: lambat, kota: kota };
 })(window);

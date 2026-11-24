@@ -113,7 +113,7 @@
     var t = TEMPAT[tempat], sub = 0, isi = 0;
     for (var id in keranjang) if (keranjang[id] > 0) { sub += harga(S, id, tempat) * keranjang[id]; isi++; }
     var ongkos = isi ? t.ongkos : 0;
-    if (tempat === 'pasar' && g.KK_MOTOR && g.KK_MOTOR.punya(S)) ongkos = 0; /* pakai motor sendiri: bayar bensin, bukan ojek */
+    if (tempat === 'pasar' && ((g.KK_MOTOR && g.KK_MOTOR.punya(S)) || (g.KK_MOBIL && g.KK_MOBIL.punya(S)))) ongkos = 0; /* pakai motor sendiri: bayar bensin, bukan ojek */
     return { sub: sub, ongkos: ongkos, total: sub + ongkos };
   }
   function salesMampir(S) {
@@ -128,7 +128,8 @@
     if (tempat === 'pasar') {
       if (S.fase === 'buka') return 'Kedai sedang buka. Belanja ke pasar sebelum kedai buka.';
       if (S.menit >= 720) return 'Pasar sudah tutup. Pasar buka sampai pukul 12.00.';
-      if (g.KK_MOTOR && g.KK_MOTOR.punya(S)) { if (!g.KK_MOTOR.cukup(S, 6)) return 'Bensin motor tidak cukup ke pasar. Isi bensin dulu.'; perjalanan = true; }
+      if (g.KK_MOTOR && g.KK_MOTOR.punya(S)) { if (!g.KK_MOTOR.cukup(S, 6)) return 'Bensin motor tidak cukup ke pasar. Isi bensin dulu.'; perjalanan = g.KK_MOTOR; }
+      else if (g.KK_MOBIL && g.KK_MOBIL.punya(S)) { if (!g.KK_MOBIL.cukup(S, 6)) return 'Bensin mobil tidak cukup ke pasar. Isi bensin dulu.'; perjalanan = g.KK_MOBIL; }
     }
     if (tempat === 'sales') {
       if (!salesMampir(S)) return 'Sales tidak sedang di kedai. Sales mampir Senin dan Kamis pukul 10.00–12.00.';
@@ -162,7 +163,7 @@
     if (tempat === 'pasar' || tempat === 'sales') {
       masukStok(S, barang, bagiOngkos);
       var lama = t.makanWaktu || 0;
-      if (perjalanan) { var r = g.KK_MOTOR.jalan(S, 6, 1); lama = 30 + r.menit; }
+      if (perjalanan) { var r = perjalanan.jalan(S, 6, 1); lama = 30 + r.menit; }
       return { ok: true, waktu: lama };
     }
     var tiba = tempat === 'grosir' ? { hari: S.hari, menit: S.menit + t.antarMenit } :

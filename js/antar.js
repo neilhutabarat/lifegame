@@ -123,21 +123,24 @@
 
   /* antar sendiri beberapa pesanan siap sekaligus. Hasil: { ok, menit, kabar } atau teks alasan */
   function antarSendiri(S, ids) {
-    var MOT = g.KK_MOTOR;
-    if (!MOT.punya(S)) return 'Belum punya motor. Pakai kurir ' + N.kurir.nama + ' atau beli motor di aplikasi Motor.';
+    var MOT = g.KK_MOTOR, MOB = g.KK_MOBIL;
+    if (!MOT.punya(S) && !(MOB && MOB.punya(S))) return 'Belum punya kendaraan. Pakai kurir ' + N.kurir.nama + ' atau beli motor di aplikasi Kendaraan.';
+    if (S.ojek && S.ojek.online) return 'Sedang narik ojek. Matikan aplikasi driver dulu.';
     var list = ids.map(function (id) { return cari(S, id); }).filter(function (p) { return p && p.status === 'siap' && p.jenis !== 'ojol'; });
     if (!list.length) return 'Tidak ada pesanan siap antar.';
     var gelas = list.reduce(function (t, p) { return t + jumlahGelas(p); }, 0), muat = MOT.muatan(S);
-    if (gelas > muat) return 'Muatan motor hanya ' + muat + ' cup, pesanan ' + gelas + ' cup. Pasang tas atau box, atau pakai kurir.';
+    var pakaiMobil = !!(MOB && MOB.punya(S) && (!MOT.punya(S) || gelas > muat) && S.mobil.muat >= gelas);
+    if (!pakaiMobil && gelas > muat) return 'Muatan ' + (MOT.punya(S) ? 'motor hanya ' + muat : 'mobil hanya ' + S.mobil.muat) + ' cup, pesanan ' + gelas + ' cup. Pasang tas atau box, atau pakai kurir.';
     var jauh = Math.max.apply(null, list.map(function (p) { return p.jarak; }));
     var km = Math.round((jauh * 2 + (list.length - 1)) * 10) / 10;
-    var r = MOT.jalan(S, km, list.length); if (!r.ok) return r.alasan;
-    var kabar = r.kabar.slice(), m = S.motor, batasEs = m.aks.tas || m.aks.box ? BATAS_ES_TAS : BATAS_ES;
-    var tumpah = m.aks.box ? 0.01 : m.aks.tatakan ? 0.025 : 0.05;
-    if (m.kuat) tumpah *= 0.7;
+    var KEN = pakaiMobil ? MOB : MOT;
+    var r = KEN.jalan(S, km, list.length); if (!r.ok) return r.alasan;
+    var kabar = r.kabar.slice(), m = S.motor, batasEs = pakaiMobil || m.aks.tas || m.aks.box ? BATAS_ES_TAS : BATAS_ES;
+    var tumpah = pakaiMobil ? 0.01 : m.aks.box ? 0.01 : m.aks.tatakan ? 0.025 : 0.05;
+    if (!pakaiMobil && m.kuat) tumpah *= 0.7;
     var sampai = waktu(S) + r.menit;
     list.forEach(function (p) {
-      var tiba = sampai - Math.round((jauh - p.jarak) / MOT.kecepatan(S) * 60);
+      var tiba = sampai - Math.round((jauh - p.jarak) / KEN.kecepatan(S) * 60);
       if (Math.random() < 0.03) { tiba += 10; kabar.push('Alamat ' + p.nama + ' sempat salah, muter 10 menit.'); }
       if (adaEs(p) && tiba - p.siapPada > batasEs) { komplain(S, 'Es kopinya sampai sudah cair.'); kabar.push('Es di pesanan ' + p.nama + ' sudah cair. Pembeli kecewa.'); }
       if (Math.random() < tumpah) {
@@ -150,7 +153,7 @@
       if (p.jenis === 'besar' && tiba > p.untuk + 30) { komplain(S, 'Pesanan acara datang terlambat.'); kabar.push(p.nama + ' kecewa karena pesanan terlambat.'); }
       selesai(S, p, kabar, null);
     });
-    kabar.unshift('Mengantar ' + list.length + ' pesanan, ' + km.toLocaleString('id-ID') + ' km pulang-pergi, ' + r.menit + ' menit.');
+    kabar.unshift('Mengantar ' + list.length + ' pesanan' + (pakaiMobil ? ' naik ' + S.mobil.nama : '') + ', ' + km.toLocaleString('id-ID') + ' km pulang-pergi, ' + r.menit + ' menit.');
     return { ok: true, menit: r.menit, kabar: kabar };
   }
   function tarifKurir(jarak) { var k = N.kurir; return k.dasar + Math.max(0, Math.ceil(jarak - k.dasarKm)) * k.perKm; }

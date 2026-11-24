@@ -17,6 +17,7 @@
   }
   function hargaBbm(S, jenis) {
     if (jenis === 'listrik') return R.tarifListrik;
+    if (jenis === 'solar') return N.solar;
     var h = N.bbm[wilayah(S)][jenis];
     return jenis === 'pertalite' ? h : Math.round(h * (S.bbmFaktor[jenis] || 1) / 50) * 50;
   }
@@ -34,8 +35,29 @@
     var m = N.motor.filter(function (x) { return x.id === id; })[0];
     if (S.bank.saldo < m.harga) return 'Saldo rekening tidak cukup untuk beli tunai ' + rp(m.harga) + '.';
     S.bank.saldo -= m.harga; catatBank(S, 'Beli ' + m.nama + ' tunai', -m.harga);
-    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365;
+    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365; S.motor.dibeli = S.hari;
     return true;
+  }
+  /* nilai jual ke pedagang (perkiraan, data jualKendaraan) */
+  function nilaiJual(S, k) {
+    var J = N.jualKendaraan, tahun = (S.hari - (k.dibeli == null ? S.hari : k.dibeli)) / 365;
+    var f = k.bekas ? 0.85 : J.awal; f -= J.perTahun * tahun + J.perKm * k.km;
+    return Math.round(k.harga * Math.max(J.min, Math.min(k.bekas ? 0.9 : J.awal, f)) / 100000) * 100000;
+  }
+  function jual(S) {
+    var m = S.motor; if (!m) return 'Belum punya motor.';
+    if (m.kredit) return 'Motor masih kredit. Lunasi dulu sebelum dijual.';
+    if (S.ojek && S.ojek.online) return 'Matikan aplikasi driver dulu.';
+    var h = nilaiJual(S, m); S.bank.saldo += h; catatBank(S, 'Jual ' + m.nama, h); S.motor = null;
+    return { ok: true, harga: h };
+  }
+  function lunasi(S) {
+    var m = S.motor; if (!m || !m.kredit) return 'Tidak ada kredit motor.';
+    var k = m.kredit, sisa = k.sisa * k.angsuran * 0.9 + k.tunggakan + k.denda; /* pelunasan dipercepat: diskon bunga, perkiraan */
+    sisa = Math.round(sisa / 1000) * 1000;
+    if (S.bank.saldo < sisa) return 'Pelunasan ' + rp(sisa) + '. Saldo rekening tidak cukup.';
+    S.bank.saldo -= sisa; catatBank(S, 'Pelunasan kredit ' + m.nama, -sisa); m.kredit = null;
+    return { ok: true, jml: sisa };
   }
   function hitungKredit(harga, dp, tenor) {
     var uangMuka = Math.round(harga * dp / 100000) * 100000, pokok = harga - uangMuka;
@@ -48,7 +70,7 @@
     var m = N.motor.filter(function (x) { return x.id === id; })[0], k = hitungKredit(m.harga, dp, tenor);
     if (S.bank.saldo < k.dp) return 'Saldo rekening tidak cukup untuk uang muka ' + rp(k.dp) + '.';
     S.bank.saldo -= k.dp; catatBank(S, 'Uang muka kredit ' + m.nama, -k.dp);
-    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365;
+    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365; S.motor.dibeli = S.hari;
     S.motor.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
     return true;
   }
@@ -57,6 +79,7 @@
     for (var i = 0; i < 4; i++) {
       var b = N.motorBekas[i === 0 ? 0 : 1 + Math.floor(Math.random() * (N.motorBekas.length - 1))];
       if (i === 1 && Math.random() < 0.5) b = N.motorBekas[0];
+      if (b.jarang && Math.random() > b.jarang) b = N.motorBekas[1];
       var tahun = b.tahun[0] + Math.floor(Math.random() * (b.tahun[1] - b.tahun[0] + 1));
       var kondisi = ['baik', 'sedang', 'kurang'][Math.floor(Math.random() * 3)];
       var mutu = { baik: 0.8, sedang: 0.45, kurang: 0.15 }[kondisi] + (Math.random() - 0.5) * 0.2;
@@ -72,7 +95,7 @@
     if (S.bank.saldo < u.harga) return 'Saldo rekening tidak cukup.';
     S.bank.saldo -= u.harga; catatBank(S, 'Beli ' + b.nama + ' ' + u.tahun, -u.harga);
     var m = motorBaru({ id: b.id, nama: b.nama.replace(' (bekas)', '') + ' ' + u.tahun, harga: u.harga, kml: b.kml, bbm: b.bbm, tangki: b.tangki, muat: b.muat, kuat: b.kuat, olisamping: b.olisamping });
-    m.bekas = { kondisi: u.kondisi, tahun: u.tahun }; m.km = u.km; m.kmOli = u.km - Math.floor(Math.random() * 2500); m.kmServis = u.km - Math.floor(Math.random() * 5000);
+    m.dibeli = S.hari; m.bekas = { kondisi: u.kondisi, tahun: u.tahun }; m.km = u.km; m.kmOli = u.km - Math.floor(Math.random() * 2500); m.kmServis = u.km - Math.floor(Math.random() * 5000);
     m.pajakTempo = S.hari + 30 + Math.floor(Math.random() * 300);
     S.motor = m; S.pasarBekas.unit.splice(i, 1);
     return true;
@@ -197,5 +220,5 @@
   g.KK_MOTOR = { siapkan: siapkan, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
     beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
     muatan: muatan, telatOli: telatOli, telatServis: telatServis, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan,
-    gantiHari: gantiHari, bayarLaci: bayarLaci };
+    gantiHari: gantiHari, bayarLaci: bayarLaci, nilaiJual: nilaiJual, jual: jual, lunasi: lunasi, catatBank: catatBank };
 })(window);

@@ -387,12 +387,62 @@
   }
 
   /* ---------- kamar kos ---------- */
+  /* ---------- rumah sendiri: denah ringkas supaya barang terlihat di atas tombol bawah ---------- */
+  function gambarRumah(s, t) {
+    var m = s.menit % 1440, gp = gelap(m), b = s.barang || {}, rumah = s.rumah, lantai = Math.max(330, H - 300);
+    kotak(0, 0, W, H, { subsidi: '#dfe6dc', komersial: '#efe6d6', mewah: '#f4efe8' }[rumah]);
+    cx.fillStyle = 'rgba(0,0,0,.035)'; for (var x = 0; x < W; x += 30) cx.fillRect(x, 0, 2, lantai);
+    kotak(0, lantai - 8, W, 8, rumah === 'mewah' ? '#b9a27a' : '#c8bfae'); /* plint */
+    kotak(0, lantai, W, H - lantai, rumah === 'mewah' ? '#e6e0d6' : '#d8cfc0');
+    cx.strokeStyle = 'rgba(0,0,0,.07)'; cx.lineWidth = 1;
+    for (var y = lantai; y < H; y += 40) { cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke(); }
+    for (var x2 = 0; x2 < W; x2 += 60) { cx.beginPath(); cx.moveTo(x2, lantai); cx.lineTo(x2 - 30, H); cx.stroke(); }
+    /* jendela dan pintu */
+    var l = langit(m), gr = cx.createLinearGradient(0, lantai - 230, 0, lantai - 110);
+    gr.addColorStop(0, l[0]); gr.addColorStop(1, l[1]);
+    kotak(30, lantai - 236, 120, 128, '#8a6a4a'); cx.fillStyle = gr; cx.fillRect(36, lantai - 230, 108, 116); kotak(88, lantai - 230, 4, 116, '#8a6a4a');
+    kotak(24, lantai - 242, 132, 8, rumah === 'mewah' ? '#7a5a8a' : '#5a8a7a');
+    if (b.ac) { kotakBulat(196, lantai - 236, 112, 32, 8, '#f6f6f2'); kotak(204, lantai - 212, 96, 3, '#d6d6d0'); bulat(294, lantai - 226, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a');
+      if (s.acNyala && s.tidur) { cx.strokeStyle = 'rgba(150,200,230,.5)'; cx.lineWidth = 2; for (var a = 0; a < 3; a++) { var yy = lantai - 196 + a * 10 + Math.sin(t / 300 + a) * 3; cx.beginPath(); cx.moveTo(212, yy); cx.quadraticCurveTo(252, yy + 6, 292, yy); cx.stroke(); } } }
+    /* dinding belakang: dapur kecil, mesin cuci, TV, kulkas */
+    if (b.kompor || b.ricecooker) { kotak(14, lantai - 34, 88, 50, '#b98a5a'); kotak(14, lantai - 38, 88, 6, '#e8e4da');
+      if (b.kompor) { kotak(22, lantai - 46, 44, 8, '#a5adb3'); bulat(32, lantai - 47, 5, '#2b2b2b'); bulat(56, lantai - 47, 5, '#2b2b2b'); kotakBulat(80, lantai - 20, 16, 34, 6, '#7fb069'); }
+      if (b.ricecooker) { bulat(86, lantai - 46, 10, '#f6f6f2'); kotak(76, lantai - 46, 20, 8, '#f6f6f2'); } }
+    if (b.mesincuci) { kotakBulat(108, lantai - 44, 52, 62, 6, '#eef1f3'); bulat(124, lantai - 14, 11, '#bcd3e0'); bulat(148, lantai - 14, 7, '#bcd3e0'); kotak(112, lantai - 40, 44, 5, '#c8ced3'); }
+    if (b.dispenser) { kotak(164, lantai - 14, 22, 34, '#f3f1ea'); kotakBulat(162, lantai - 44, 26, 30, 6, 'rgba(150,200,230,.7)'); }
+    if (b.tv || b.tv55) {
+      var tw = b.tv55 ? 120 : 88, th = b.tv55 ? 70 : 52, tx = 246 - tw / 2;
+      kotak(192, lantai + 2, 104, 26, '#7d5f3f');
+      kotakBulat(tx, lantai - 6 - th, tw, th, 4, '#1b1b1b');
+      var nyalaTv = !s.tidur && (m >= 1080 || m < 120);
+      kotak(tx + 4, lantai - 2 - th, tw - 8, th - 8, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
+      kotak(242, lantai - 6, 8, 8, '#1b1b1b');
+      if (b.ps5 || b.ps5disc) { kotakBulat(276, lantai - 22, 12, 26, 4, '#f6f6f2'); kotak(280, lantai - 18, 4, 18, '#1b1b1b'); }
+    }
+    if (b.kulkas2) { kotakBulat(302, lantai - 96, 50, 126, 5, '#d8dde1'); kotak(326, lantai - 92, 2, 118, '#b8c0c6'); kotak(318, lantai - 50, 3, 18, '#8d969b'); kotak(331, lantai - 50, 3, 18, '#8d969b'); }
+    else if (b.kulkas) { kotakBulat(304, lantai - 56, 46, 84, 5, '#e8ecef'); kotak(308, lantai - 26, 38, 2, '#c8ced3'); kotak(340, lantai - 46, 3, 14, '#9aa3a6'); }
+    /* lantai depan: kasur, karpet, sofa, meja makan, kipas */
+    if (b.karpet) kotakBulat(176, lantai + 76, 168, 56, 10, '#b85c4a');
+    if (b.springbed) { kotakBulat(10, lantai + 20, 12, 82, 4, '#6b4a2e'); kotakBulat(14, lantai + 50, 156, 56, 10, '#6b4a2e'); kotakBulat(18, lantai + 36, 148, 34, 10, '#f3f1ea'); kotakBulat(22, lantai + 28, 44, 22, 10, '#fff'); kotakBulat(66, lantai + 40, 98, 28, 8, '#c86a5a'); }
+    else { kotakBulat(14, lantai + 70, 156, 30, 8, '#e9e2cf'); kotakBulat(18, lantai + 58, 148, 22, 8, '#f3f1ea'); kotakBulat(22, lantai + 50, 42, 18, 8, '#fff'); kotakBulat(66, lantai + 60, 98, 20, 8, '#a5b88a'); }
+    var yKepala = b.springbed ? lantai + 34 : lantai + 54;
+    if (s.tidur) {
+      bulat(42, yKepala, 11, '#f1c39b'); cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(42, yKepala - 3, 11, Math.PI, 0); cx.fill();
+      cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif'; cx.fillText('z', 64, yKepala - 24 - (t / 40) % 12); cx.fillText('Z', 76, yKepala - 40 - (t / 50) % 14);
+    }
+    if (b.sofa) { kotakBulat(184, lantai + 84, 150, 46, 14, '#5b7a8c'); kotakBulat(190, lantai + 70, 138, 28, 12, '#6d8ea1'); }
+    if (b.mejamakan) { kotakBulat(18, lantai + 112, 18, 26, 3, '#a86c3c'); kotak(36, lantai + 112, 80, 7, '#8f5a31'); kotak(42, lantai + 119, 5, 20, '#6b4a2e'); kotak(104, lantai + 119, 5, 20, '#6b4a2e'); kotakBulat(118, lantai + 112, 18, 26, 3, '#a86c3c'); }
+    if (b.kipas) { kotak(178, lantai + 30, 4, 50, '#3b3f46'); bulat(180, lantai + 24, 16, '#dfeef3'); cx.save(); cx.translate(180, lantai + 24); cx.rotate(t / 60); kotak(-2, -13, 4, 26, '#9ab'); kotak(-13, -2, 26, 4, '#9ab'); cx.restore(); }
+    if (s.tidur) { cx.fillStyle = 'rgba(10,18,45,.45)'; cx.fillRect(0, 0, W, H); }
+    else if (gp > 0.5) { cx.fillStyle = 'rgba(255,230,180,.06)'; cx.fillRect(0, 0, W, H); }
+  }
   function gambarKos(s, t) {
-    var m = s.menit % 1440, gp = gelap(m), b = s.barang || {};
+    if (s.rumah) return gambarRumah(s, t);
+    var m = s.menit % 1440, gp = gelap(m), b = s.barang || {}, rumah = s.rumah;
     var lantai = Math.max(330, H - 300);
-    kotak(0, 0, W, H, '#e9dcc4'); /* dinding */
+    kotak(0, 0, W, H, rumah ? { subsidi: '#dfe6dc', komersial: '#efe6d6', mewah: '#f4efe8' }[rumah] : '#e9dcc4'); /* dinding */
     cx.fillStyle = 'rgba(0,0,0,.04)'; for (var x = 0; x < W; x += 30) cx.fillRect(x, 0, 2, lantai);
-    kotak(0, lantai, W, H - lantai, '#c9b08a'); /* lantai keramik */
+    kotak(0, lantai, W, H - lantai, rumah === 'mewah' ? '#e6e0d6' : rumah ? '#d8cfc0' : '#c9b08a'); /* lantai keramik atau marmer */
     cx.strokeStyle = 'rgba(0,0,0,.08)'; cx.lineWidth = 1;
     for (var y = lantai; y < H; y += 34) { cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke(); }
     for (var x2 = 0; x2 < W; x2 += 48) { cx.beginPath(); cx.moveTo(x2, lantai); cx.lineTo(x2 - 30, H); cx.stroke(); }
@@ -402,37 +452,149 @@
     kotak(36, lantai - 300, 110, 120, '#8a6a4a'); cx.fillStyle = gr; cx.fillRect(42, lantai - 294, 98, 108);
     kotak(89, lantai - 294, 4, 108, '#8a6a4a'); kotak(42, lantai - 242, 98, 4, '#8a6a4a');
     kotak(30, lantai - 306, 122, 8, '#c86a5a'); /* gorden */
-    /* AC di dinding */
-    kotakBulat(214, lantai - 300, 112, 34, 8, '#f6f6f2'); kotak(222, lantai - 274, 96, 3, '#d6d6d0');
-    bulat(312, lantai - 290, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a');
+    /* AC di dinding: kos sudah ada; rumah harus beli */
+    if (!rumah || b.ac) { kotakBulat(214, lantai - 300, 112, 34, 8, '#f6f6f2'); kotak(222, lantai - 274, 96, 3, '#d6d6d0');
+      bulat(312, lantai - 290, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a'); }
+    if (rumah) { /* pintu dan saklar */ kotakBulat(296, lantai - 200, 58, 200, 3, rumah === 'mewah' ? '#6b4a2e' : '#9c7a52'); bulat(344, lantai - 96, 3, '#e0d3b8'); }
     if (s.acNyala && s.tidur) { cx.strokeStyle = 'rgba(150,200,230,.5)'; cx.lineWidth = 2; for (var a = 0; a < 3; a++) { var yy = lantai - 258 + a * 10 + Math.sin(t / 300 + a) * 3; cx.beginPath(); cx.moveTo(230, yy); cx.quadraticCurveTo(270, yy + 6, 310, yy); cx.stroke(); } }
-    /* lemari */
-    kotakBulat(276, lantai - 170, 70, 180, 4, '#9c7a52'); kotak(310, lantai - 165, 2, 170, '#7d5f3f'); bulat(304, lantai - 80, 2.5, '#e0d3b8'); bulat(318, lantai - 80, 2.5, '#e0d3b8');
-    /* kasur */
-    kotakBulat(20, lantai + 30, 200, 70, 10, '#7d5f3f');
-    kotakBulat(24, lantai + 14, 192, 40, 10, '#f3f1ea'); kotakBulat(30, lantai + 4, 54, 24, 10, '#ffffff');
-    kotakBulat(84, lantai + 18, 130, 34, 8, '#6aa0c8'); /* selimut */
+    /* lemari bawaan kos */
+    if (!rumah) { kotakBulat(276, lantai - 170, 70, 180, 4, '#9c7a52'); kotak(310, lantai - 165, 2, 170, '#7d5f3f'); bulat(304, lantai - 80, 2.5, '#e0d3b8'); bulat(318, lantai - 80, 2.5, '#e0d3b8'); }
+    /* kasur: kos bawaan; rumah pakai kasur lantai sampai beli spring bed */
+    if (rumah && !b.springbed) { kotakBulat(20, lantai + 60, 200, 34, 8, '#e9e2cf'); kotakBulat(26, lantai + 46, 188, 26, 8, '#f3f1ea'); kotakBulat(30, lantai + 38, 50, 20, 8, '#fff'); kotakBulat(84, lantai + 48, 128, 24, 8, '#a5b88a'); }
+    else {
+      if (b.springbed) kotakBulat(16, lantai - 40, 14, 120, 4, '#6b4a2e');
+      kotakBulat(20, lantai + 30, 200, 70, 10, b.springbed ? '#6b4a2e' : '#7d5f3f');
+      kotakBulat(24, lantai + 14, 192, 40, 10, '#f3f1ea'); kotakBulat(30, lantai + 4, 54, 24, 10, '#ffffff');
+      kotakBulat(84, lantai + 18, 130, 34, 8, b.springbed ? '#c86a5a' : '#6aa0c8'); /* selimut */
+    }
     if (s.tidur) {
+      if (rumah && !b.springbed) cx.translate(0, 34);
       bulat(58, lantai + 12, 13, '#f1c39b'); cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(58, lantai + 9, 13, Math.PI, 0); cx.fill();
       cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif'; cx.fillText('z', 84, lantai - 14 - (t / 40) % 12); cx.fillText('Z', 96, lantai - 30 - (t / 50) % 14);
+      if (rumah && !b.springbed) cx.translate(0, -34);
     }
     if (b.karpet) kotakBulat(150, lantai + 120, 150, 50, 10, '#b85c4a');
     if (b.kipas) { kotak(250, lantai + 40, 4, 60, '#3b3f46'); bulat(252, lantai + 34, 18, '#dfeef3'); cx.save(); cx.translate(252, lantai + 34); cx.rotate(t / 60); kotak(-2, -15, 4, 30, '#9ab'); kotak(-15, -2, 30, 4, '#9ab'); cx.restore(); }
-    if (b.kulkas) { kotakBulat(296, lantai + 10, 50, 86, 5, '#e8ecef'); kotak(300, lantai + 40, 42, 2, '#c8ced3'); kotak(336, lantai + 20, 3, 14, '#9aa3a6'); }
+    if (b.kulkas2) { kotakBulat(240, lantai - 40, 52, 136, 5, '#d8dde1'); kotak(265, lantai - 36, 2, 128, '#b8c0c6'); kotak(258, lantai + 10, 3, 18, '#8d969b'); kotak(270, lantai + 10, 3, 18, '#8d969b'); }
+    else if (b.kulkas) { kotakBulat(296, lantai + 10, 50, 86, 5, '#e8ecef'); kotak(300, lantai + 40, 42, 2, '#c8ced3'); kotak(336, lantai + 20, 3, 14, '#9aa3a6'); }
     /* meja TV */
-    if (b.tv) {
-      kotak(160, lantai + 60, 110, 30, '#7d5f3f');
-      kotakBulat(170, lantai - 10, 90, 58, 4, '#1b1b1b');
+    if (b.tv || b.tv55) {
+      var besar = b.tv55 && rumah ? 1.35 : 1;
+      kotak(150, lantai + 60, 120 * besar > 140 ? 130 : 110, 30, '#7d5f3f');
+      kotakBulat(170 - (besar - 1) * 45, lantai - 10 - (besar - 1) * 58, 90 * besar, 58 * besar, 4, '#1b1b1b');
       var nyalaTv = !s.tidur && (m >= 1080 || m < 120);
-      kotak(174, lantai - 6, 82, 48, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
+      kotak(174 - (besar - 1) * 45, lantai - 6 - (besar - 1) * 58, 90 * besar - 8, 58 * besar - 10, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
       kotak(210, lantai + 48, 10, 12, '#1b1b1b');
       if (b.ps5 || b.ps5disc) { kotakBulat(240, lantai + 30, 14, 30, 4, '#f6f6f2'); kotak(244, lantai + 34, 6, 22, '#1b1b1b'); }
     }
     if (b.ricecooker) { bulat(190, lantai + 98, 12, '#f6f6f2'); kotak(180, lantai + 98, 20, 10, '#f6f6f2'); }
     if (b.dispenser) { kotak(14, lantai + 110, 24, 40, '#f3f1ea'); kotakBulat(12, lantai + 80, 28, 32, 6, 'rgba(150,200,230,.7)'); }
+    if (b.sofa) { kotakBulat(110, lantai + 190, 170, 54, 14, '#5b7a8c'); kotakBulat(116, lantai + 176, 158, 30, 12, '#6d8ea1'); kotak(124, lantai + 240, 8, 10, '#3b2a22'); kotak(258, lantai + 240, 8, 10, '#3b2a22'); }
+    if (b.mejamakan) { kotak(290, lantai + 196, 62, 8, '#8f5a31'); kotak(296, lantai + 204, 5, 40, '#6b4a2e'); kotak(340, lantai + 204, 5, 40, '#6b4a2e'); kotakBulat(286, lantai + 176, 14, 30, 3, '#a86c3c'); kotakBulat(342, lantai + 176, 14, 30, 3, '#a86c3c'); }
+    if (b.mesincuci) { kotakBulat(20, lantai + 188, 70, 58, 6, '#eef1f3'); bulat(42, lantai + 214, 13, '#bcd3e0'); bulat(72, lantai + 214, 9, '#bcd3e0'); kotak(24, lantai + 192, 62, 6, '#c8ced3'); }
+    if (b.kompor) { kotak(60, lantai + 120, 70, 8, '#a5adb3'); kotak(64, lantai + 128, 62, 30, '#d9dcde'); bulat(80, lantai + 118, 6, '#2b2b2b'); bulat(110, lantai + 118, 6, '#2b2b2b'); kotakBulat(134, lantai + 126, 18, 30, 6, '#7fb069'); }
     /* gelap malam bila lampu dimatikan saat tidur */
     if (s.tidur) { cx.fillStyle = 'rgba(10,18,45,.45)'; cx.fillRect(0, 0, W, H); }
     else if (gp > 0.5) { cx.fillStyle = 'rgba(255,230,180,.06)'; cx.fillRect(0, 0, W, H); }
+  }
+
+  /* ---------- motor sendiri, ngojek, mobil, pindahan ---------- */
+  var SPORT = { gsxr150: '#2f6fb0', cbr150: '#d9443a', r15: '#2f6fb0', mt25: '#3b3f46', cbr250: '#d9443a', ninja250: '#4fa53a', r25: '#2f6fb0', zx25r: '#4fa53a', zx4rr: '#4fa53a', zx6r: '#4fa53a', zx10r: '#4fa53a', cbr1000: '#d9443a', h2: '#2b2f36', r6: '#2f6fb0', 'cbr250-bekas': '#d9443a' };
+  /* motor menghadap kanan; dasar = permukaan jalan */
+  function gambarMotorKu(x, y, id, o, t) {
+    o = o || {};
+    var sport = !!SPORT[id], w = SPORT[id] || WARNA_MOTOR[id] || '#d9443a', putar = o.jalan ? t / 60 : 0;
+    cx.save(); cx.translate(x, y); if (o.kiri) cx.scale(-1, 1);
+    cx.fillStyle = 'rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(0, 1, 30, 4, 0, 0, Math.PI * 2); cx.fill();
+    [-20, 20].forEach(function (rx) {
+      bulat(rx, -9, 9, '#1b1b1b'); bulat(rx, -9, 4, '#9aa3a6');
+      cx.strokeStyle = '#6b7378'; cx.lineWidth = 1; cx.beginPath();
+      for (var j = 0; j < 3; j++) { var a = putar + j * Math.PI / 3; cx.moveTo(rx + Math.cos(a) * 7, -9 + Math.sin(a) * 7); cx.lineTo(rx - Math.cos(a) * 7, -9 - Math.sin(a) * 7); }
+      cx.stroke();
+    });
+    if (sport) {
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-14, -14); cx.lineTo(8, -16); cx.lineTo(24, -30); cx.lineTo(18, -12); cx.lineTo(-4, -8); cx.closePath(); cx.fill();
+      kotakBulat(-24, -26, 22, 6, 3, '#2b2b2b'); kotak(-26, -28, 10, 4, w);
+      cx.fillStyle = 'rgba(150,200,230,.75)'; cx.beginPath(); cx.moveTo(18, -30); cx.lineTo(24, -30); cx.lineTo(20, -38); cx.closePath(); cx.fill();
+    } else { kotakBulat(-22, -20, 40, 11, 5, w); kotakBulat(-20, -28, 22, 8, 3, '#2b2b2b'); kotak(14, -36, 3, 18, '#333'); kotak(10, -38, 10, 3, '#333'); }
+    if (o.muatan === 'paket') { kotak(-30, -44, 20, 16, '#c8a06a'); kotak(-30, -38, 20, 2, '#a5844f'); }
+    if (o.muatan === 'makanan') { kotakBulat(-34, -50, 24, 24, 3, '#1f9a3f'); kotak(-32, -42, 20, 3, '#f3f1ea'); }
+    if (o.bonceng) orangMotor(-14, '#5f7f9a', '#f6f6f2', false);
+    if (o.naik) orangMotor(sport ? 2 : 0, '#1f9a3f', '#1f9a3f', true, o.hp, sport);
+    cx.restore();
+  }
+  function orangMotor(x, baju, helm, sopir, hp, nunduk) {
+    var yb = nunduk ? -50 : -54;
+    kotak(x - 4, -24, 6, 14, '#33414d');
+    cx.save(); cx.translate(x, yb); if (nunduk) cx.rotate(0.35);
+    kotakBulat(-8, 0, 16, 26, 6, baju);
+    if (sopir) kotak(-8, 10, 16, 3, '#f3f1ea');
+    bulat(2, -8, 10, helm); kotak(4, -10, 9, 5, 'rgba(30,40,50,.75)');
+    cx.restore();
+    if (sopir && !hp) kotak(x + 8, yb + 8, 12, 4, baju);
+    if (hp) { kotak(x + 6, yb + 4, 5, 9, '#222'); kotak(x + 7, yb + 5, 3, 6, '#7fd3e8'); }
+  }
+  var WARNA_MOBIL = { granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', calya: '#b8bcc0', agya: '#d9443a', avanza: '#e8e4da', rush: '#2b2f36', veloz: '#8a2a2a', zenix: '#d8d4cc', fortuner: '#2b2f36', camry: '#3a3f46', gr86: '#d9443a', alphard: '#f3f1ea', landcruiser: '#2b2f36' };
+  function gambarMobil(x, y, bentuk, id, kiri, roda) {
+    var w = WARNA_MOBIL[id] || '#e8e4da', kaca = 'rgba(120,160,190,.85)';
+    cx.save(); cx.translate(x, y); if (kiri) cx.scale(-1, 1);
+    cx.fillStyle = 'rgba(0,0,0,.28)'; cx.beginPath(); cx.ellipse(0, 1, 64, 5, 0, 0, Math.PI * 2); cx.fill();
+    var tinggi = { pikap: 40, hatch: 36, mpv: 46, suv: 50, sedan: 34, sport: 28, van: 54 }[bentuk] || 40;
+    if (bentuk === 'pikap') {
+      kotakBulat(14, -50, 44, 38, 6, w); kotak(20, -46, 30, 16, kaca); kotak(-58, -26, 72, 14, w); kotak(-58, -34, 72, 4, '#9aa3a6');
+      kotak(-50, -44, 22, 16, '#c8a06a');
+    } else {
+      kotakBulat(-60, -tinggi * 0.55 - 12, 120, tinggi * 0.55, 8, w);
+      cx.fillStyle = w; cx.beginPath();
+      var atas = -tinggi - 10, dpn = bentuk === 'sport' ? 10 : bentuk === 'sedan' ? 18 : 34, blk = bentuk === 'van' || bentuk === 'mpv' || bentuk === 'suv' ? -56 : bentuk === 'hatch' ? -50 : -34;
+      cx.moveTo(blk, -tinggi * 0.55 - 10); cx.lineTo(blk + 4, atas); cx.lineTo(dpn - 12, atas); cx.lineTo(dpn + 8, -tinggi * 0.55 - 10); cx.closePath(); cx.fill();
+      cx.fillStyle = kaca; cx.beginPath(); cx.moveTo(blk + 6, -tinggi * 0.55 - 12); cx.lineTo(blk + 9, atas + 4); cx.lineTo(dpn - 14, atas + 4); cx.lineTo(dpn + 2, -tinggi * 0.55 - 12); cx.closePath(); cx.fill();
+      kotak((blk + dpn) / 2 - 2, atas + 2, 3, tinggi * 0.45, w);
+      if (bentuk === 'van') { kotak(-60, -14, 120, 3, '#c9b37a'); kotak(48, -tinggi * 0.55 - 6, 10, 10, '#c9b37a'); }
+      if (bentuk === 'suv') kotak(blk + 6, atas - 4, dpn - blk - 22, 3, '#3b3f46');
+    }
+    var pt = roda ? roda / 60 : 0;
+    [-38, 38].forEach(function (rx) { bulat(rx, -9, 11, '#1b1b1b'); bulat(rx, -9, 5, '#b8c0c6'); cx.strokeStyle = '#6b7378'; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(rx + Math.cos(pt) * 5, -9 + Math.sin(pt) * 5); cx.lineTo(rx - Math.cos(pt) * 5, -9 - Math.sin(pt) * 5); cx.stroke(); });
+    kotak(56, -tinggi * 0.4 - 6, 5, 6, '#ffe58f'); kotak(-61, -tinggi * 0.4 - 6, 4, 6, '#d9443a');
+    cx.restore();
+  }
+  /* adegan jalan raya saat mengantar order ojol */
+  function gambarJalanRaya(s, t) {
+    var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
+    gambarLangit(m, t);
+    cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
+    var gp = gelap(m); if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
+    kotak(0, dasarRuko, W, jalan - dasarRuko, '#b9b2a6');
+    var g2 = (t * 0.25) % 20; for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b');
+    kotak(0, jalan, W, H - jalan, '#4a4d52');
+    var g3 = (t * 0.32) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
+    if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
+    /* kendaraan lain menyalip pelan */
+    var sx = W + 80 - ((t * 0.03) % (W + 260));
+    gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t);
+    var antar = f.status === 'antar', goyang = Math.sin(t / 90) * 1.2;
+    gambarMotorKu(W * 0.42, jalan + 52 + goyang, s.motorId, { naik: true, jalan: true, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
+    if (gp > 0.4) { var gr = cx.createRadialGradient(W * 0.42 + 40, jalan + 30, 0, W * 0.42 + 40, jalan + 30, 90); gr.addColorStop(0, 'rgba(255,240,190,.45)'); gr.addColorStop(1, 'rgba(255,240,190,0)'); cx.fillStyle = gr; cx.fillRect(W * 0.42, jalan - 40, 140, 140); }
+    if (s.hujan) {
+      cx.fillStyle = 'rgba(30,40,60,.2)'; cx.fillRect(0, 0, W, H);
+      cx.strokeStyle = 'rgba(210,225,240,.55)'; cx.lineWidth = 1.2; cx.beginPath();
+      for (var hi = 0; hi < 90; hi++) { var hx = acak(hi + 500) * (W + 40) - 20, hy = (acak(hi + 600) * (H + 60) + (t / 3) % 40 * 3) % (H + 60) - 30; cx.moveTo(hx, hy); cx.lineTo(hx - 5, hy + 12); }
+      cx.stroke();
+    }
+  }
+  /* adegan pindahan: pikap membawa kasur, kardus, dan barang */
+  function gambarPindahan(s, t) {
+    var m = s.menit % 1440, jalan = H * 0.5, dasarRuko = jalan - 60, u = Math.max(0, Math.min(1, s.pindah.u));
+    gambarLangit(m, t); gambarRuko(m, dasarRuko);
+    var gp = gelap(m); if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
+    kotak(0, dasarRuko, W, jalan - dasarRuko, '#b9b2a6'); kotak(0, jalan, W, H - jalan, '#4a4d52');
+    cx.fillStyle = '#e9e4d4'; for (var x1 = 8; x1 < W; x1 += 70) cx.fillRect(x1, jalan + 64, 34, 3);
+    var x = -90 + u * (W + 180), y = jalan + 90 + Math.sin(t / 80);
+    gambarMobil(x, y, 'pikap', s.pindah.pikap ? s.pindah.warna : 'granmax', false, t);
+    /* muatan di bak */
+    kotakBulat(x - 56, y - 60, 60, 14, 5, '#f3f1ea'); kotak(x - 30, y - 74, 18, 14, '#c8a06a'); kotak(x - 50, y - 72, 16, 12, '#c8a06a'); kotakBulat(x - 10, y - 66, 18, 20, 3, '#9aa3a6');
+    cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.lineWidth = 5; cx.strokeStyle = 'rgba(29,43,51,.6)'; cx.strokeText('Pindahan…', W / 2, H * 0.36); cx.fillStyle = '#fbfaf6'; cx.fillText('Pindahan…', W / 2, H * 0.36);
   }
 
   var kotakKedai = null, kotakBarista = null, tAkhir = 0;
@@ -447,6 +609,8 @@
     anim.kedip -= dt; if (anim.kedip < -3400 - Math.random() * 1500) anim.kedip = 140;
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
+    if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.ojek && s.ojek.status !== 'standby' && s.motorId) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarJalanRaya(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
     /* angkat adegan saat panel racik menutupi kaki pembeli */
@@ -495,7 +659,9 @@
         if (si % 2) { cx.save(); cx.translate(sx, sy); cx.rotate(1.3); kotak(-4, -5, 8, 10, '#dfeef3'); cx.restore(); } else bulat(sx, sy, 3, '#f3f1ea');
       }
     }
-    if (s.motorParkir) gambarParkir(312, jalan + 20, s.motorParkir, m);
+    if (s.mobil) { gambarMobil(80, jalan + 38, s.mobil.bentuk, s.mobil.id, true); if (gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.3).toFixed(2) + ')'; cx.fillRect(10, jalan - 30, 140, 74); } }
+    if (s.ojek && s.ojek.status === 'standby' && s.motorId) gambarMotorKu(300, jalan + 32, s.motorId, { naik: true, hp: true, kiri: true }, t);
+    else if (s.motorParkir) { if (SPORT[s.motorParkir]) gambarMotorKu(312, jalan + 32, s.motorParkir, { kiri: true }, t); else gambarParkir(312, jalan + 20, s.motorParkir, m); }
     anim.motor.forEach(function (mt) { gambarMotor(mt, jalan, m); });
     if (s.hujan) {
       cx.fillStyle = 'rgba(30,40,60,' + (s.hujan > 1 ? 0.28 : 0.18) + ')'; cx.fillRect(0, anim.angkat - 20, W, H + 40);

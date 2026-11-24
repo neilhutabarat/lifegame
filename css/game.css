@@ -254,3 +254,18 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 #app.meracik .diri { display: none; }
 .kos-aksi { justify-content: center; margin: 0; }
 .kos-aksi .chip-tombol { background: rgba(251,250,246,.94); }
+
+/* ngojek */
+.ojek-panel { display: grid; }
+.ojek-kartu { background: rgba(251,250,246,.96); border-radius: 18px; padding: 12px 14px; box-shadow: 0 8px 22px -10px rgba(0,0,0,.55); border-left: 6px solid #00aa13; }
+.ojek-kartu b { display: block; font-size: 15px; line-height: 1.3; }
+.ojek-kartu small { display: block; color: #4b5a62; margin: 3px 0 8px; font-size: 13px; }
+.ojek-kartu.tawaran { border-left-color: var(--kunyit); animation: denyutKecil 1.2s ease-in-out infinite; }
+.ojek-kartu .meteran { height: 6px; }
+.ojek-kartu .meteran i { transition: none; }
+.ojek-tombol { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 10px; align-items: center; }
+.ojek-tombol .aksi { font-size: 18px; padding: 11px 14px; }
+.ojek-tombol .chip-tombol:only-child { justify-self: start; }
+.daftar li.redup { opacity: .55; }
+@keyframes denyutKecil { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.015); } }
+@media (prefers-reduced-motion: reduce) { .ojek-kartu.tawaran { animation: none; } }
