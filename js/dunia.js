@@ -107,18 +107,18 @@
     d.kotor = Math.min(100, d.kotor + 1.2);
     d.ratingHari.n++; d.ratingHari.total += r.bintang;
     if (r.bintang >= 5 && Math.random() < 0.25) d.langganan++;
-    var peluang = (o.jenis === 'konten' ? 0.25 : 0.07) + (r.bintang <= 2 ? 0.15 : 0);
+    var peluang = (o.jenis === 'konten' ? 0.06 : 0.012) + (r.bintang <= 2 ? 0.05 : 0); /* setelan tahap 10: sekitar 1 ulasan tiap 2 hari di booth */
     if (d.bloggerHari === S.hari && o.blogger) peluang = 1;
     if (d.maps.status === 'aktif' && Math.random() < peluang) d.ulasan.push({ bintang: r.bintang, teks: (o.blogger ? '[Food blogger] ' : '') + teksUlasan(r.nilai), hari: S.hari, nama: acak(N.namaOrang), balas: false });
     return r.bintang;
   }
   function catatPergi(S, o) {
     var d = S.dunia; d.ratingHari.n++; d.ratingHari.total += 1;
-    if (d.maps.status === 'aktif' && Math.random() < 0.2) d.ulasan.push({ bintang: 1, teks: 'Antre lama, tidak dilayani-layani. Akhirnya pergi.', hari: S.hari, nama: acak(N.namaOrang), balas: false });
+    if (d.maps.status === 'aktif' && Math.random() < 0.06) d.ulasan.push({ bintang: 1, teks: 'Antre lama, tidak dilayani-layani. Akhirnya pergi.', hari: S.hari, nama: acak(N.namaOrang), balas: false });
   }
   function catatKomplain(S, teks) {
     var d = S.dunia; d.ratingHari.n++; d.ratingHari.total += 2;
-    if (d.maps.status === 'aktif' && Math.random() < 0.5) d.ulasan.push({ bintang: 2, teks: teks, hari: S.hari, nama: acak(N.namaOrang), balas: false });
+    if (d.maps.status === 'aktif' && Math.random() < 0.25) d.ulasan.push({ bintang: 2, teks: teks, hari: S.hari, nama: acak(N.namaOrang), balas: false });
   }
 
   /* ---------- aksi ---------- */

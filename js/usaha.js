@@ -1,4 +1,4 @@
-/* usaha.js — lokasi, tahapan tempat (booth sampai ruko), alat, listrik PLN (token), sewa, cabang, dan racik menu sendiri.
+/* usaha.js (setelan tahap 10: biaya tempat di batas bawah rancangan, keramaian tempat dinaikkan) — lokasi, tahapan tempat (booth sampai ruko), alat, listrik PLN (token), sewa, cabang, dan racik menu sendiri.
    Rancangan bagian "Tempat usaha & naik kelas" dan "Menu awal, resep & HPP". Harga tempat dan alat: perkiraan. */
 (function (g) {
   'use strict';
@@ -16,9 +16,9 @@
   var TEMPAT = [
     null,
     { nama: 'Booth kontainer mini 2×1 m', biaya: 0, sewa: 1000000, listrik: 'numpang', listrikBulan: 200000, kursi: 4, ramai: 1, hari: 0 },
-    { nama: 'Kontainer 20 kaki', biaya: 60000000, sewa: 2500000, listrik: 'token', kursi: 12, ramai: 1.6, hari: 3 },
-    { nama: 'Dua kontainer + rooftop', biaya: 200000000, sewa: 4000000, listrik: 'token', kursi: 30, ramai: 2.3, hari: 5 },
-    { nama: 'Ruko sewa', biaya: 30000000, sewaTahun: 60000000, listrik: 'token', kursi: 40, ramai: 2.8, hari: 5, butuhNib: true }
+    { nama: 'Kontainer 20 kaki', biaya: 45000000, sewa: 2500000, listrik: 'token', kursi: 12, ramai: 2, hari: 3 },
+    { nama: 'Dua kontainer + rooftop', biaya: 150000000, sewa: 4000000, listrik: 'token', kursi: 30, ramai: 3.2, hari: 5 },
+    { nama: 'Ruko sewa', biaya: 30000000, sewaTahun: 60000000, listrik: 'token', kursi: 40, ramai: 4, hari: 5, butuhNib: true }
   ];
   var ALAT = {
     grinder: { nama: 'Grinder listrik', harga: 1500000, tier: 1, ket: 'Racik lebih cepat, rasa lebih wangi' },

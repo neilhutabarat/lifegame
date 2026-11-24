@@ -14,7 +14,7 @@
     sales: { nama: 'Sales', kali: 1, bayar: ['tempo'], ongkos: 0, minimal: 300000, tempoHari: 14, denda: 0.05,
       ket: 'Sales distributor mampir Senin dan Kamis pukul 10.00–12.00. Bayar belakangan 14 hari, minimal pesanan Rp300.000.' }
   };
-  var MELELEH_PER_JAM = 0.025;   /* setelan: es di cool box */
+  var MELELEH_PER_JAM = 0.02;    /* setelan tahap 10: es di cool box */
   var UHT_TAHAN_HARI = 3;        /* susu UHT setelah dibuka, di kulkas */
   var STOK_AWAL = { kopi: 1000, uht: 6000, skm: 1960, gula: 2000, aren: 1000, cokelat: 1000, teh: 1000, es: 10000, cupPlastik: 100, cupKertas: 50, gas: 3000, galon: 19000 }; /* setelan */
 
@@ -203,7 +203,7 @@
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], tB = KAL.tgl(nBaru);
     /* es di cool box habis mencair semalam */
-    if (S.stok.es.jml > 1 && !(g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S))) { var e = S.stok.es.jml; S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'es', e); kabar.push('Sisa es ' + (e / 1000).toFixed(1).replace('.', ',') + ' kg mencair semalam di cool box.'); }
+    if (S.stok.es.jml > 1 && !(g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S))) { var e = S.stok.es.jml * 0.7; S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'es', e); kabar.push('Es ' + (e / 1000).toFixed(1).replace('.', ',') + ' kg mencair semalam di cool box (sekitar 70%).'); } /* setelan tahap 10 */
     /* susu UHT yang sudah dibuka lewat 3 hari */
     if (S.uhtBuka.sisa > 0 && nBaru - S.uhtBuka.hari >= UHT_TAHAN_HARI) {
       var basi = Math.min(S.uhtBuka.sisa, S.stok.uht.jml); S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'uht', basi);
