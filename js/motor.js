@@ -102,14 +102,20 @@
   }
 
   /* ---------- bensin, perawatan, aksesoris ---------- */
-  function isiBensin(S) {
+  /* isi bensin per liter atau penuh; jenis bisa dipilih. Bensin di bawah anjuran pabrik (mis. Pertalite di motor
+     yang dianjurkan Pertamax) membuat mesin ngelitik: sedikit lebih sering mogok sampai diisi bensin yang sesuai */
+  var RON = { pertalite: 90, pertamax: 92, turbo: 98 };
+  function isiBensin(S, jenis, liter) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
     if (m.bbm === 'listrik') return 'Motor listrik dicas di kedai tiap malam.';
-    var liter = Math.round((m.tangki - m.isi) * 100) / 100; if (liter < 0.2) return 'Tangki sudah penuh.';
-    var biaya = Math.round(liter * hargaBbm(S, m.bbm) / 100) * 100;
+    jenis = RON[jenis] ? jenis : m.bbm;
+    var kosong = Math.round((m.tangki - m.isi) * 100) / 100; if (kosong < 0.2) return 'Tangki sudah penuh.';
+    liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
+    var biaya = Math.round(liter * hargaBbm(S, jenis) / 100) * 100;
     if (g.KK_UANG.laci(S) < biaya) return 'Uang di laci tidak cukup untuk bensin ' + rp(biaya) + '.';
-    bayarLaci(S, biaya); m.isi = m.tangki; S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
-    return { ok: true, liter: liter, biaya: biaya };
+    bayarLaci(S, biaya); m.isi = Math.min(m.tangki, m.isi + liter); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
+    m.ngelitik = RON[jenis] < RON[m.bbm];
+    return { ok: true, liter: liter, biaya: biaya, jenis: jenis, ngelitik: m.ngelitik };
   }
   function bayarLaci(S, jml) {
     var dariBesar = Math.min(S.uang.besar, Math.floor(jml / 50000) * 50000), sisa = jml - dariBesar;
@@ -153,6 +159,7 @@
     var m = S.motor; if (!m) return 0;
     var p = m.bekas ? { baik: 0.01, sedang: 0.025, kurang: 0.05 }[m.bekas.kondisi] : 0.003;
     if (m.olisamping) p += 0.01;
+    if (m.ngelitik) p += 0.015;
     p += (telatOli(S) + telatServis(S)) / 1000 * 0.02;
     return Math.min(0.35, p);
   }
@@ -220,5 +227,5 @@
   g.KK_MOTOR = { siapkan: siapkan, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
     beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
     muatan: muatan, telatOli: telatOli, telatServis: telatServis, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan,
-    gantiHari: gantiHari, bayarLaci: bayarLaci, nilaiJual: nilaiJual, jual: jual, lunasi: lunasi, catatBank: catatBank };
+    gantiHari: gantiHari, bayarLaci: bayarLaci, RON: RON, nilaiJual: nilaiJual, jual: jual, lunasi: lunasi, catatBank: catatBank };
 })(window);

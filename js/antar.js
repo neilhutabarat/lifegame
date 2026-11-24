@@ -161,7 +161,7 @@
     var p = cari(S, id); if (!p || p.status !== 'siap') return 'Pesanan belum siap.';
     if (p.bayar === 'tunai') return 'Pembeli bayar tunai di tempat, jadi harus diantar sendiri.';
     var biaya = tarifKurir(p.jarak);
-    if (S.merchant.tersedia >= biaya) S.merchant.tersedia -= biaya;
+    if (g.KK_UANG.bayarQris(S, biaya)) { /* dari saldo QRIS */ }
     else if (S.bank.saldo >= biaya) S.bank.saldo -= biaya;
     else return 'Saldo tidak cukup untuk ongkos ' + N.kurir.nama + '.';
     S.hariIni.kurir = (S.hariIni.kurir || 0) + biaya;

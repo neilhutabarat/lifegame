@@ -36,4 +36,6 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 9. Gambar AI, animasi, suara (menunggu gambar)
 10. Uji dan setel: simulasi 400 hari tanpa galat, angka disetel ✔
 A. Penyempurnaan: sajikan sekali tap, harga pasaran, layar tidak mati, token PLN asli, kebutuhan badan, kos dan isinya ✔
+C1. Makan & minum di HP, QRIS sampai 3, SeaBank, pasar/swalayan kapan saja, bensin per liter, bar oli dan servis, Threads, dock Pesanan antar, layar HP terkunci lebar ✔
+C2. Jadwal karyawan per jam, toko game PS1–PS5, kartu kredit, jual barang, lagu tema (berikutnya)
 B. Ngojek (Gojek/Grab Driver), motor sampai moge, mobil pikap sampai sultan, KPR subsidi/komersial, pindah rumah, isi rumah, tanah ✔

@@ -61,14 +61,11 @@
   function makan(S, jenis) {
     var d = S.diri, k = kota(S);
     if (jenis === 'warung') {
-      if (S.fase === 'buka' && d.posisi === 'kedai') return 'Kedai sedang buka. Pesan makanan lewat aplikasi atau tutup kedai dulu.';
-      if (!bayarTunai(S, k.makan)) return 'Uang di laci tidak cukup.';
-      d.kenyang = batas(d.kenyang + 65); d.minum = batas(d.minum + 15);
-      return { ok: true, menit: 30, teks: 'Makan nasi bungkus di warung ' + rp(k.makan) + '.' };
+      return beli(S, 'nasi', 'warung');
     }
     if (jenis === 'ojol') {
       var biaya = Math.round(k.makan * N.makanOjol.tambahHarga / 500) * 500 + N.makanOjol.ongkir;
-      if (S.merchant.tersedia >= biaya) S.merchant.tersedia -= biaya;
+      if (g.KK_UANG.bayarQris(S, biaya)) { /* dari saldo QRIS */ }
       else if (S.bank.saldo >= biaya) S.bank.saldo -= biaya;
       else return 'Saldo tidak cukup untuk pesan makanan ' + rp(biaya) + '.';
       S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
@@ -96,11 +93,34 @@
     }
     return 'Tidak dikenal.';
   }
+  /* beli makan atau minum: cara warung (datang sendiri, bayar tunai) atau gofood (diantar, bayar saldo QRIS atau rekening) */
+  function hargaItem(S, x) { return x.harga || Math.round(kota(S).makan * x.kali / 500) * 500; }
+  function hargaGofood(S, x) { return Math.round(hargaItem(S, x) * N.makanOjol.tambahHarga / 500) * 500 + N.makanOjol.ongkir; }
+  function itemMakan(id) { return N.makanan.concat(N.minuman).filter(function (x) { return x.id === id; })[0]; }
+  function beli(S, id, cara) {
+    var d = S.diri, x = itemMakan(id); if (!x) return 'Tidak dikenal.';
+    if (cara === 'gofood') {
+      var biaya = hargaGofood(S, x);
+      if (!g.KK_UANG.bayarQris(S, biaya)) { if (S.bank.saldo < biaya) return 'Saldo tidak cukup untuk pesan ' + rp(biaya) + '.'; S.bank.saldo -= biaya; S.bank.mutasi.unshift({ n: S.hari, ket: 'GoFood ' + x.nama, jml: -biaya }); }
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
+      d.kiriman = d.kiriman || []; d.kiriman.push({ tiba: S.hari * 1440 + S.menit + N.makanOjol.tunggu, kenyang: x.kenyang, minum: x.minum, nama: x.nama });
+      return { ok: true, menit: 0, teks: 'Pesan ' + x.nama + ' lewat GoFood ' + rp(biaya) + ' termasuk ongkir. Sampai sekitar ' + N.makanOjol.tunggu + ' menit lagi.' };
+    }
+    var h = hargaItem(S, x);
+    if (!bayarTunai(S, h)) return 'Uang di laci tidak cukup.';
+    d.kenyang = batas(d.kenyang + x.kenyang); d.minum = batas(d.minum + x.minum);
+    var diKedai = d.posisi === 'kedai', menit = diKedai ? 10 : 15;
+    return { ok: true, menit: menit, teks: (diKedai ? 'Beli ' + x.nama + ' di warung sebelah kedai ' : 'Beli ' + x.nama + ' di warung dekat ' + tempat(S) + ' ') + rp(h) + (S.fase === 'buka' && diKedai ? '. Kedai ditinggal ' + menit + ' menit.' : '.') };
+  }
   /* makanan GoFood sampai */
   function cekKiriman(S) {
-    var d = S.diri; if (!d.pesananMakan || S.hari * 1440 + S.menit < d.pesananMakan) return null;
-    d.pesananMakan = 0; d.kenyang = batas(d.kenyang + 70); d.minum = batas(d.minum + 20);
-    return 'Makanan pesanan sudah sampai dan dimakan.';
+    var d = S.diri, t = S.hari * 1440 + S.menit, teks = [];
+    if (d.pesananMakan && t >= d.pesananMakan) { d.pesananMakan = 0; d.kenyang = batas(d.kenyang + 70); d.minum = batas(d.minum + 20); teks.push('Makanan pesanan sudah sampai dan dimakan.'); }
+    if (d.kiriman && d.kiriman.length) d.kiriman = d.kiriman.filter(function (k) {
+      if (t < k.tiba) return true;
+      d.kenyang = batas(d.kenyang + k.kenyang); d.minum = batas(d.minum + k.minum); teks.push(k.nama + ' pesanan GoFood sudah sampai.'); return false;
+    });
+    return teks.length ? teks.join(' ') : null;
   }
 
   /* ---------- istirahat dan tidur ---------- */
@@ -159,6 +179,6 @@
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.melek < 15) ? 2 : 1; }
 
-  g.KK_DIRI = { siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur, beliBarang: beliBarang, beliTokenKos: beliTokenKos,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur, beliBarang: beliBarang, beliTokenKos: beliTokenKos,
     punya: punya, tempat: tempat, adaAc: adaAc, barang: barang, kameraHp: kameraHp, gantiHari: gantiHari, ramah: ramah, lambat: lambat, kota: kota };
 })(window);

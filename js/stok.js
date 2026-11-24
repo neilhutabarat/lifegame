@@ -6,7 +6,8 @@
   /* setelan tempat belanja */
   var TEMPAT = {
     pasar: { nama: 'Pasar', kali: 0.95, bayar: ['tunai'], ongkos: 20000, ongkosNama: 'Ojek pulang-pergi', makanWaktu: 60,
-      ket: 'Paling murah, bayar tunai. Harus dijemput ke pasar: naik ojek pulang-pergi sekitar 1 jam, atau pakai motor sendiri. Buka sampai pukul 12.00.' },
+      kaliSore: 1.03, namaSore: 'Swalayan',
+      ket: 'Paling murah, bayar tunai. Harus dijemput: naik ojek pulang-pergi sekitar 1 jam, atau pakai kendaraan sendiri. Pasar buka sampai pukul 12.00; setelah itu belanja ke swalayan, sekitar 8% lebih mahal.' },
     grosir: { nama: 'Grosir', kali: 1.05, bayar: ['tunai', 'qris', 'transfer'], ongkos: 10000, ongkosNama: 'Ongkir antar', antarMenit: 120,
       ket: 'Toko grosir, pangkalan gas, dan depot air sekitar. Sedikit lebih mahal, diantar sekitar 2 jam.' },
     online: { nama: 'Online', kali: 0.9, bayar: ['qris', 'transfer'], ongkos: 15000, ongkosNama: 'Ongkir', antarHari: [2, 3],
@@ -39,10 +40,12 @@
     var l = KAL.lebaranTahun(KAL.tgl(S.hari).y);
     return l != null && S.hari >= l - 14 && S.hari <= l + 3;
   }
+  function sore(S) { var m = S.menit % 1440; return m >= 720 || m < 300; }
+  function namaTempat(S, tempat) { return tempat === 'pasar' && sore(S) ? TEMPAT.pasar.namaSore : TEMPAT[tempat].nama; }
   function harga(S, id, tempat) {
     var b = M.BARANG[id], f = b.tetap ? 1 : S.faktor[id];
     if (jelangLebaran(S) && (id === 'gula' || id === 'uht' || id === 'skm' || id === 'aren')) f *= 1.08;
-    return bulat500(b.harga * f * (b.tetap ? 1 : TEMPAT[tempat].kali));
+    return bulat500(b.harga * f * (b.tetap ? 1 : tempat === 'pasar' && sore(S) ? TEMPAT.pasar.kaliSore : TEMPAT[tempat].kali));
   }
   /* harga minggu ini dibanding harga awal, untuk ditampilkan */
   function perubahan(S, id) { return Math.round((S.faktor[id] - 1) * 100); }
@@ -109,25 +112,26 @@
 
   /* ---------- belanja ---------- */
   /* keranjang: { id: jumlah kemasan }. bayar: tunai | qris | transfer | tempo */
-  function hitung(S, tempat, keranjang) {
+  function hitung(S, tempat, keranjang, siapa) {
     var t = TEMPAT[tempat], sub = 0, isi = 0;
     for (var id in keranjang) if (keranjang[id] > 0) { sub += harga(S, id, tempat) * keranjang[id]; isi++; }
     var ongkos = isi ? t.ongkos : 0;
-    if (tempat === 'pasar' && ((g.KK_MOTOR && g.KK_MOTOR.punya(S)) || (g.KK_MOBIL && g.KK_MOBIL.punya(S)))) ongkos = 0; /* pakai motor sendiri: bayar bensin, bukan ojek */
+    if (tempat === 'pasar' && siapa !== 'karyawan' && ((g.KK_MOTOR && g.KK_MOTOR.punya(S)) || (g.KK_MOBIL && g.KK_MOBIL.punya(S)))) ongkos = 0; /* pakai motor sendiri: bayar bensin, bukan ojek */
     return { sub: sub, ongkos: ongkos, total: sub + ongkos };
   }
   function salesMampir(S) {
     var d = KAL.tgl(S.hari).dow;
     return (d === 1 || d === 4) && S.menit >= 600 && S.menit < 720 && !KAL.apakahLibur(S.hari);
   }
-  function beli(S, tempat, keranjang, bayar) {
-    var t = TEMPAT[tempat], h = hitung(S, tempat, keranjang), U = g.KK_UANG;
+  /* siapa: 'sendiri' atau 'karyawan' (khusus pasar). Saat kedai buka, pergi sendiri berarti kedai tutup sebentar */
+  function beli(S, tempat, keranjang, bayar, siapa) {
+    var t = TEMPAT[tempat], h = hitung(S, tempat, keranjang, siapa), U = g.KK_UANG;
     if (!h.sub) return 'Keranjang masih kosong.';
     if (t.bayar.indexOf(bayar) < 0) return 'Cara bayar ini tidak bisa di ' + t.nama + '.';
     var perjalanan = null;
-    if (tempat === 'pasar') {
-      if (S.fase === 'buka') return 'Kedai sedang buka. Belanja ke pasar sebelum kedai buka.';
-      if (S.menit >= 720) return 'Pasar sudah tutup. Pasar buka sampai pukul 12.00.';
+    if (tempat === 'pasar' && siapa === 'karyawan') perjalanan = 'karyawan';
+    else if (tempat === 'pasar') {
+      if (S.ojek && S.ojek.online) return 'Sedang narik ojol. Berhenti narik dulu.';
       if (g.KK_MOTOR && g.KK_MOTOR.punya(S)) { if (!g.KK_MOTOR.cukup(S, 6)) return 'Bensin motor tidak cukup ke pasar. Isi bensin dulu.'; perjalanan = g.KK_MOTOR; }
       else if (g.KK_MOBIL && g.KK_MOBIL.punya(S)) { if (!g.KK_MOBIL.cukup(S, 6)) return 'Bensin mobil tidak cukup ke pasar. Isi bensin dulu.'; perjalanan = g.KK_MOBIL; }
     }
@@ -143,13 +147,12 @@
       if (sisa > S.uang.kecil) { dariBesar = Math.min(S.uang.besar, h.total); sisa = h.total - dariBesar; }
       S.uang.besar -= dariBesar; S.uang.kecil -= sisa;
     } else if (bayar === 'qris') {
-      if (S.merchant.tersedia < h.total) return 'Saldo ' + U.qrisIni(S).app + ' yang bisa dipakai tidak cukup.';
-      S.merchant.tersedia -= h.total;
+      if (!U.bayarQris(S, h.total)) return 'Tidak ada saldo QRIS yang cukup untuk ' + rp(h.total) + '. Satu pembayaran tidak bisa digabung dari dua aplikasi.';
     } else if (bayar === 'transfer') {
-      var total = h.total + N.biFast;
+      var bf = U.biayaTransfer(S), total = h.total + bf;
       if (S.bank.saldo < total) return 'Saldo rekening tidak cukup.';
-      S.bank.saldo -= total;
-      S.bank.mutasi.unshift({ n: S.hari, ket: 'Belanja ' + t.nama + ' (termasuk BI-FAST)', jml: -total });
+      S.bank.saldo -= total; U.catatTransfer(S);
+      S.bank.mutasi.unshift({ n: S.hari, ket: 'Belanja ' + namaTempat(S, tempat) + (bf ? ' (termasuk BI-FAST)' : ' (transfer gratis)'), jml: -total });
     } else if (bayar === 'tempo') {
       S.tagihanSales.push({ jml: h.total, jatuhTempo: S.hari + t.tempoHari, dibayar: false, denda: 0 });
     }
@@ -163,6 +166,7 @@
     if (tempat === 'pasar' || tempat === 'sales') {
       masukStok(S, barang, bagiOngkos);
       var lama = t.makanWaktu || 0;
+      if (perjalanan === 'karyawan') return { ok: true, waktu: lama, karyawan: true };
       if (perjalanan) { var r = perjalanan.jalan(S, 6, 1); lama = 30 + r.menit; }
       return { ok: true, waktu: lama };
     }
@@ -177,10 +181,10 @@
   }
   function bayarSales(S, i) {
     var t = S.tagihanSales[i]; if (!t || t.dibayar) return 'Tagihan tidak ditemukan.';
-    var total = t.jml + t.denda + N.biFast;
+    var bf = g.KK_UANG.biayaTransfer(S), total = t.jml + t.denda + bf;
     if (S.bank.saldo < total) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= total; t.dibayar = true;
-    S.bank.mutasi.unshift({ n: S.hari, ket: 'Bayar tagihan sales (termasuk BI-FAST)', jml: -total });
+    S.bank.saldo -= total; t.dibayar = true; g.KK_UANG.catatTransfer(S);
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Bayar tagihan sales' + (bf ? ' (termasuk BI-FAST)' : ''), jml: -total });
     return true;
   }
 
@@ -234,7 +238,7 @@
     return kabar;
   }
 
-  g.KK_STOK = { TEMPAT: TEMPAT, siapkan: siapkan, harga: harga, perubahan: perubahan, pakaiBahan: pakaiBahan, ambil: ambil, ada: ada,
+  g.KK_STOK = { TEMPAT: TEMPAT, sore: sore, namaTempat: namaTempat, siapkan: siapkan, harga: harga, perubahan: perubahan, pakaiBahan: pakaiBahan, ambil: ambil, ada: ada,
     sisaTeks: sisaTeks, barangDari: barangDari, kurangResep: kurangResep, pakaiResep: pakaiResep, menipis: menipis, hitung: hitung, beli: beli, bayarSales: bayarSales, salesMampir: salesMampir,
     jalan: jalan, gantiHari: gantiHari, UHT_TAHAN_HARI: UHT_TAHAN_HARI };
 })(window);

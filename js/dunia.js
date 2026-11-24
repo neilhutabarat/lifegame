@@ -53,7 +53,7 @@
       var r = rataMaps(S), jml = d.ulasan.length;
       f *= 1 + (jml ? (r - 3.8) * 0.18 : 0) + Math.log(1 + jml) / Math.LN10 * 0.08 + d.maps.foto * 0.01;
     }
-    f *= 1 + (d.sosmed.ig + d.sosmed.tiktok) / 8000;
+    f *= 1 + (d.sosmed.ig + d.sosmed.tiktok + (d.sosmed.threads || 0)) / 8000;
     if (n <= d.sosmed.viralSampai) f *= 1.8;
     if (n <= d.sosmed.iklanSampai) f *= 1.1;
     if (n <= d.sosmed.endorseSampai) f *= 1.25;
@@ -146,13 +146,14 @@
     var so = S.dunia.sosmed;
     if (so.postHari === S.hari && so.postJenis && so.postJenis.indexOf(jenis) >= 0) return 'Sudah posting di sini hari ini. Besok lagi supaya tidak dianggap spam.';
     var jamBagus = S.menit >= 1140 && S.menit <= 1260 ? 1.5 : S.menit >= 690 && S.menit <= 780 ? 1.2 : 0.8;
-    var tren = acak(M.MENU).id === so.tren ? 1.3 : 1, dasar = jenis === 'tiktok' ? 60 : 35;
+    var tren = acak(M.MENU).id === so.tren ? 1.3 : 1, dasar = jenis === 'tiktok' ? 60 : jenis === 'threads' ? 25 : 35;
+    var akun = jenis === 'tiktok' ? 'tiktok' : jenis === 'threads' ? 'threads' : 'ig';
     var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200) * (g.KK_DIRI ? g.KK_DIRI.kameraHp(S) : 1));
-    so[jenis === 'tiktok' ? 'tiktok' : 'ig'] += baru;
+    so[akun] = (so[akun] || 0) + baru;
     if (so.postHari !== S.hari) { so.postHari = S.hari; so.postJenis = []; }
     so.postJenis.push(jenis);
-    var viral = Math.random() < (jenis === 'tiktok' ? 0.04 : 0.02) * jamBagus;
-    if (viral) { so.viralSampai = S.hari + 2; so[jenis === 'tiktok' ? 'tiktok' : 'ig'] += 800; }
+    var viral = Math.random() < (jenis === 'tiktok' ? 0.04 : jenis === 'threads' ? 0.03 : 0.02) * jamBagus;
+    if (viral) { so.viralSampai = S.hari + 2; so[akun] += 800; }
     return { ok: true, baru: baru, viral: viral, jangkauan: baru * (15 + Math.floor(Math.random() * 20)) };
   }
   function siaran(S) { if (S.dunia.sosmed.siaranHari === S.hari) return 'Siaran hari ini sudah dikirim.'; if (S.dunia.langganan < 5) return 'Belum cukup pelanggan langganan di daftar kontak (minimal 5).'; S.dunia.sosmed.siaranHari = S.hari; return true; }

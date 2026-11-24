@@ -54,14 +54,18 @@
   }
 
   /* bensin dan servis dibayar dari rekening (kartu debit di SPBU dan bengkel resmi) */
-  function isiBensin(S) {
+  function isiBensin(S, jenis, liter) {
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
-    var liter = Math.round((m.tangki - m.isi * m.tangki) * 10) / 10; if (liter < 1) return 'Tangki sudah penuh.';
-    var biaya = Math.round(liter * M().hargaBbm(S, m.bbm) / 100) * 100;
+    var RON = M().RON;
+    if (m.bbm === 'solar') jenis = 'solar'; else jenis = RON[jenis] ? jenis : m.bbm;
+    var kosong = Math.round((m.tangki - m.isi * m.tangki) * 10) / 10; if (kosong < 1) return 'Tangki sudah penuh.';
+    liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
+    var biaya = Math.round(liter * M().hargaBbm(S, jenis) / 100) * 100;
     if (S.bank.saldo < biaya) return 'Saldo rekening tidak cukup untuk bensin ' + rp(biaya) + '.';
-    S.bank.saldo -= biaya; M().catatBank(S, 'Isi ' + N.bbm.nama[m.bbm] + ' ' + liter.toLocaleString('id-ID') + ' L', -biaya);
-    m.isi = 1; S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
-    return { ok: true, liter: liter, biaya: biaya };
+    S.bank.saldo -= biaya; M().catatBank(S, 'Isi ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L', -biaya);
+    m.isi = Math.min(1, m.isi + liter / m.tangki); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
+    m.ngelitik = jenis !== 'solar' && RON[jenis] < RON[m.bbm];
+    return { ok: true, liter: liter, biaya: biaya, jenis: jenis };
   }
   function servis(S) {
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
@@ -93,7 +97,7 @@
     if (!cukup(S, km)) return { ok: false, alasan: 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
     var menit = Math.round(km / kecepatan(S) * 60) + 5 * (stop || 1), kabar = [];
     m.isi = Math.max(0, m.isi - km / m.kml / m.tangki); m.km += km;
-    if (Math.random() < 0.002 + telatServis(S) / 1000 * 0.01) {
+    if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + telatServis(S) / 1000 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;
       if (S.bank.saldo >= bengkel) { S.bank.saldo -= bengkel; M().catatBank(S, 'Derek dan bengkel ' + m.nama, -bengkel); }
       S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; kabar.push('Mobil mogok di jalan. Derek dan bengkel ' + rp(bengkel) + ', telat sekitar 1,5 jam.');
