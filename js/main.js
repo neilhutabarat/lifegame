@@ -1,7 +1,7 @@
 /* main.js — alur game: pilih kota dan QRIS, jam berjalan, buka-tutup kedai, racik dan jualan, laporan malam, kalender, simpan otomatis. */
 (function () {
   'use strict';
-  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG;
+  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG, STOK = window.KK_STOK;
   var MENIT_PER_DETIK = 1.875;          /* 1x: 15 jam kedai = 8 menit nyata */
   var TAHUN_DASAR = 2022;               /* tahun Masehi 2023 = tahun ke-1 */
   var HARI_PERTAMA = KAL.dn(2023, 1, 2); /* Senin pertama */
@@ -74,6 +74,7 @@
     d.uang = d.uang || { laci: 0, merchant: 0 };
     d.hariIni = d.hariIni || JUAL.hariBaru();
     d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
+    STOK.siapkan(d);
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
@@ -116,7 +117,9 @@
     $('h-antre').textContent = JUAL.antre().length;
     if (paksa || Math.floor(S.menit) % 60 === 0) {
       var isi = KAL.hariIni(S.hari).filter(function (x) { return x.jenis !== 'suasana' || x.nama !== 'Car Free Day pagi' || S.menit < 600; });
-      $('h-chip').innerHTML = isi.map(function (x) {
+      var tipis = S.fase !== 'malam' ? STOK.menipis(S) : [];
+      $('h-chip').innerHTML = (tipis.length ? '<span class="chip libur">Stok menipis: ' + esc(tipis.map(function (id) { return MN.BARANG[id].nama.split(' (')[0].replace('Biji kopi robusta sangrai', 'Kopi').replace('Cup plastik 16 oz + tutup + sedotan', 'Cup plastik').replace('Cup kertas 8 oz + tutup', 'Cup kertas'); }).join(', ')) + '</span>' : '') +
+        isi.map(function (x) {
         var label = x.jenis === 'libur' ? 'Libur: ' + x.nama : x.jenis === 'cuti' ? 'Cuti bersama: ' + x.nama : x.nama;
         return '<span class="chip ' + x.jenis + '">' + esc(label) + '</span>';
       }).join('');
@@ -150,8 +153,9 @@
     S.riwayat.push({ hari: S.hari, dilayani: h.dilayani, pergi: h.pergi, omzet: h.omzetTunai + h.omzetQris, laba: labaKotor(h) });
     if (S.riwayat.length > 60) S.riwayat.shift();
     S.fase = 'pagi';
-    var kabar = UANG.gantiHari(S, S.hari, S.hari + 1);
+    var nLama = S.hari, kabar = UANG.gantiHari(S, S.hari, S.hari + 1);
     S.hari += 1; S.hariKe += 1; S.menit = 360; S.hariIni = JUAL.hariBaru(); JUAL.kosongkan();
+    kabar = STOK.gantiHari(S, nLama, S.hari).concat(kabar);
     if (KAL.tgl(S.hari).y !== S.tahunOmzet) { S.tahunOmzet = KAL.tgl(S.hari).y; S.omzetTahun = 0; }
     tutupLembar(); simpan(); perbaruiHUD(true); perbaruiAksi();
     var lib = KAL.hariIni(S.hari).filter(function (x) { return x.jenis === 'libur' || x.jenis === 'cuti'; });
@@ -176,7 +180,7 @@
     var label = x.jenis === 'libur' ? 'Libur nasional' : x.jenis === 'cuti' ? 'Cuti bersama' : x.jenis === 'musim' ? 'Musim' : x.jenis === 'event' ? 'Event' : 'Suasana';
     return '<li class="' + x.jenis + '"><span>' + esc(x.nama) + '</span><span>' + label + '</span></li>';
   }
-  function labaKotor(h) { return h.omzetTunai + h.omzetQris - h.mdr - h.hpp - h.terbuang; }
+  function labaKotor(h) { return h.omzetTunai + h.omzetQris - h.mdr - h.hpp - h.terbuang - (h.rusak || 0) - (h.operasional || 0); }
   function baris(a, b, kls) { return '<li' + (kls ? ' class="' + kls + '"' : '') + '><span>' + a + '</span><span>' + b + '</span></li>'; }
   function ringkasanJualan() {
     var h = S.hariIni, omzet = h.omzetTunai + h.omzetQris, q = qrisIni();
@@ -190,7 +194,9 @@
       baris('Omzet QRIS', rupiah(h.omzetQris)) +
       baris('Potongan MDR QRIS', '−' + rupiah(h.mdr)) +
       baris('HPP bahan terjual', '−' + rupiah(h.hpp)) +
-      (h.terbuang ? baris('Bahan terbuang', '−' + rupiah(h.terbuang), 'rugi') : '') +
+      (h.terbuang ? baris('Bahan terbuang saat racik', '−' + rupiah(h.terbuang), 'rugi') : '') +
+      (h.rusak ? baris('Stok rusak (es mencair, susu basi)', '−' + rupiah(h.rusak), 'rugi') : '') +
+      (h.operasional ? baris('Gas dan air untuk air panas', '−' + rupiah(h.operasional)) : '') +
       baris('<b>Laba kotor</b>', '<b>' + rupiah(labaKotor(h)) + '</b>', 'total') + '</ul>' +
       (laris.length ? '<h3 class="subjudul">Menu terlaris</h3><ul class="daftar angka">' + laris.map(function (m) { return baris(esc(m.nama), h.menu[m.id] + ' gelas'); }).join('') + '</ul>' : '') +
       '<h3 class="subjudul">Uang sekarang</h3><ul class="daftar angka">' +
@@ -198,7 +204,9 @@
       baris(esc(q.app) + ': bisa ditarik', rupiah(S.merchant.tersedia)) +
       baris(esc(q.app) + ': cair hari kerja berikutnya', rupiah(UANG.merchantTotal(S) - S.merchant.tersedia)) +
       baris('Rekening ' + esc(UANG.bankIni(S).nama), rupiah(S.bank.saldo)) + '</ul>' +
-      '<p class="catatan">Omzet ' + rupiah(omzet) + ' hari ini. Belanja bahan, sewa, listrik, dan gaji mulai dihitung di versi berikutnya.</p>';
+      (h.belanja ? '<p class="catatan">Belanja bahan hari ini ' + rupiah(h.belanja) + ' (uang keluar, sudah masuk stok).</p>' : '') +
+      (STOK.menipis(S).length ? '<div class="isbat peringatan">Stok menipis: ' + STOK.menipis(S).map(function (id) { return esc(MN.BARANG[id].nama) + ' (' + STOK.sisaTeks(S, id) + ')'; }).join(', ') + '. Belanja lewat HP.</div>' : '') +
+      '<p class="catatan">Omzet ' + rupiah(omzet) + ' hari ini. Sewa, listrik, dan gaji mulai dihitung di versi berikutnya.</p>';
   }
   function kapan(lagi) { return lagi === 0 ? 'hari ini' : lagi === 1 ? 'besok' : lagi + ' hari lagi'; }
 
@@ -286,7 +294,7 @@
   }
 
   /* ---------- HP dalam game ---------- */
-  var app = { nama: null, pesan: '', salah: false, kurPlafon: 10e6, kurTenor: 24 };
+  var app = { nama: null, pesan: '', salah: false, kurPlafon: 10e6, kurTenor: 24, tab: 'pasar', keranjang: { pasar: {}, grosir: {}, online: {}, sales: {} } };
   function hasilAksi(r, berhasil) { app.pesan = r === true ? berhasil : r; app.salah = r !== true; if (r === true) { simpan(); perbaruiHUD(true); } }
   function pesanApp() { return app.pesan ? '<p class="racik-pesan ' + (app.salah ? 'salah' : 'siap') + '">' + esc(app.pesan) + '</p>' : ''; }
   function tombolUang(aksi, jumlah) { return jumlah.map(function (j) { return '<button type="button" class="chip-tombol" data-aksi="' + aksi + ':' + j + '">' + (j === 'semua' ? 'Semua' : rupiah(j)) + '</button>'; }).join(''); }
@@ -297,6 +305,8 @@
     { id: 'bank', nama: function () { return UANG.bankIni(S).app; }, warna: function () { return UANG.bankIni(S).warna; }, huruf: function () { return UANG.bankIni(S).nama.charAt(0); } },
     { id: 'merchant', nama: function () { return UANG.qrisIni(S).app; }, warna: function () { return UANG.qrisIni(S).warna; }, huruf: function () { return UANG.qrisIni(S).nama.charAt(0); } },
     { id: 'laci', nama: function () { return 'Laci kas'; }, warna: function () { return '#b97a46'; }, huruf: function () { return 'Rp'; } },
+    { id: 'belanja', nama: function () { return 'Belanja'; }, warna: function () { return '#1f8a80'; }, huruf: function () { return 'B'; } },
+    { id: 'stok', nama: function () { return 'Stok'; }, warna: function () { return '#5b6b73'; }, huruf: function () { return STOK.menipis(S).length ? '!' : 'S'; } },
     { id: 'pajak', nama: function () { return 'M-Pajak'; }, warna: function () { return '#f2a516'; }, huruf: function () { return '%'; } },
     { id: 'oss', nama: function () { return 'OSS'; }, warna: function () { return '#2f8f5b'; }, huruf: function () { return 'NIB'; } },
     { id: 'kalender', nama: function () { return 'Kalender'; }, warna: function () { return '#d9443a'; }, huruf: function () { return KAL.tgl(S.hari).d; } }
@@ -315,6 +325,8 @@
     else if (app.nama === 'laci') html = layarLaci();
     else if (app.nama === 'pajak') html = layarPajak();
     else if (app.nama === 'oss') html = layarOss();
+    else if (app.nama === 'belanja') html = layarBelanja();
+    else if (app.nama === 'stok') html = layarStok();
     bukaLembar('hp', html);
   }
   function layarBank() {
@@ -375,9 +387,63 @@
       ? '<div class="saldo-besar"><small>NIB terbit ' + namaTanggal(S.nib.n) + '</small><b>' + esc(S.nib.nomor) + '</b></div><p class="catatan">NIB dipakai untuk mengajukan KUR dan nanti untuk naik ke ruko.</p>'
       : '<p class="catatan">Nomor Induk Berusaha didaftarkan gratis lewat OSS. Tanpa NIB, kedai tidak bisa mengajukan KUR.</p><div style="margin-top:12px"><button type="button" class="aksi" data-aksi="nib:1">Daftar NIB gratis</button></div>');
   }
+  var NAMA_BAYAR = { tunai: function () { return 'Bayar tunai dari laci'; }, qris: function () { return 'Bayar pakai ' + UANG.qrisIni(S).app; },
+    transfer: function () { return 'Transfer dari ' + UANG.bankIni(S).nama + ' (+' + rupiah(N.biFast) + ')'; }, tempo: function () { return 'Pesan, bayar 14 hari lagi'; } };
+  function layarBelanja() {
+    var tab = app.tab, T = STOK.TEMPAT[tab], kr = app.keranjang[tab];
+    var html = kepalaApp('Belanja', 'Harga minggu ini') +
+      '<div class="chip-baris">' + ['pasar', 'grosir', 'online', 'sales'].map(function (t) { return '<button type="button" class="chip-tombol' + (t === tab ? ' pilih' : '') + '" data-aksi="tab:' + t + '">' + STOK.TEMPAT[t].nama + '</button>'; }).join('') + '</div>' +
+      '<p class="catatan">' + esc(T.ket) + '</p>' + pesanApp();
+    var tagihan = S.tagihanSales.map(function (t, i) { return { t: t, i: i }; }).filter(function (x) { return !x.t.dibayar; });
+    var listTagihan = tab === 'sales' && tagihan.length ? '<h3 class="subjudul">Tagihan sales</h3><ul class="daftar angka">' + tagihan.map(function (x) {
+      return '<li><span>' + rupiah(x.t.jml) + '<small>Jatuh tempo ' + namaTanggal(x.t.jatuhTempo) + (x.t.denda ? ' · denda ' + rupiah(x.t.denda) : '') + '</small></span><span><button type="button" class="chip-tombol" data-aksi="bayarSales:' + x.i + '">Bayar</button></span></li>';
+    }).join('') + '</ul>' : '';
+    if (tab === 'sales' && !STOK.salesMampir(S)) return html + listTagihan;
+    if (tab === 'pasar' && (S.fase === 'buka' || S.menit >= 720)) html += '<p class="racik-pesan salah">' + (S.fase === 'buka' ? 'Kedai sedang buka. Belanja pasar bisa dilakukan pagi sebelum kedai buka.' : 'Pasar sudah tutup.') + '</p>';
+    html += '<ul class="daftar belanja">' + MN.URUT_BARANG.filter(function (id) { return MN.BARANG[id].ada.indexOf(tab) >= 0; }).map(function (id) {
+      var b = MN.BARANG[id], h = STOK.harga(S, id, tab), ubah = b.tetap ? 0 : STOK.perubahan(S, id), n = kr[id] || 0;
+      return '<li><span><b>' + esc(b.nama) + '</b><small>' + esc(b.merek) + ' · ' + esc(b.kemasan) + ' · stok ' + STOK.sisaTeks(S, id) + '</small>' +
+        '<small class="harga">' + rupiah(h) + (ubah ? ' <em class="' + (ubah > 0 ? 'naik' : 'turun') + '">' + (ubah > 0 ? '▲ ' : '▼ ') + Math.abs(ubah) + '%</em>' : '') + '</small></span>' +
+        '<span class="langkah"><button type="button" data-aksi="kurang:' + id + '" aria-label="Kurangi">−</button><output>' + n + '</output><button type="button" data-aksi="tambah:' + id + '" aria-label="Tambah">+</button></span></li>';
+    }).join('') + '</ul>';
+    var hit = STOK.hitung(S, tab, kr);
+    if (hit.sub) html += '<ul class="daftar angka" style="margin-top:10px">' + baris('Belanjaan', rupiah(hit.sub)) + (hit.ongkos ? baris(esc(T.ongkosNama), rupiah(hit.ongkos)) : '') + baris('<b>Total</b>', '<b>' + rupiah(hit.total) + '</b>', 'total') + '</ul>' +
+      (T.minimal && hit.sub < T.minimal ? '<p class="racik-pesan salah">Minimal pesanan ' + rupiah(T.minimal) + ', kurang ' + rupiah(T.minimal - hit.sub) + '.</p>' : '') +
+      '<div class="bayar-baris">' + T.bayar.map(function (c) { return '<button type="button" class="aksi kecil" data-aksi="beli:' + c + '">' + esc(NAMA_BAYAR[c]()) + '</button>'; }).join('') + '</div>';
+    else if (S.belanjaTerakhir[tab]) html += '<div style="margin-top:12px"><button type="button" class="tombol-lain gelap" data-aksi="ulangi:1">Isi seperti belanja terakhir</button></div>';
+    return html + listTagihan;
+  }
+  function layarStok() {
+    var html = kepalaApp('Stok', 'Bahan dan kemasan di kedai') + '<ul class="daftar angka">' + MN.URUT_BARANG.map(function (id) {
+      var b = MN.BARANG[id], tipis = STOK.menipis(S).indexOf(id) >= 0;
+      return baris(esc(b.nama) + '<small>Nilai ' + rupiah(S.stok[id].nilai) + '</small>', STOK.sisaTeks(S, id), tipis ? 'rugi' : '');
+    }).join('') + '</ul>';
+    if (S.uhtBuka.sisa > 0) html += '<p class="catatan">Susu UHT terbuka ' + Math.round(S.uhtBuka.sisa) + ' ml, basi ' + Math.max(0, STOK.UHT_TAHAN_HARI - (S.hari - S.uhtBuka.hari)) + ' hari lagi.</p>';
+    html += '<p class="catatan">Es batu di cool box mencair sedikit demi sedikit dan habis semalam, jadi es dibeli tiap hari. Biji kopi paling enak dipakai dalam sebulan setelah dibuka.</p>';
+    if (S.kiriman.length) html += '<h3 class="subjudul">Dalam perjalanan</h3><ul class="daftar angka">' + S.kiriman.map(function (k) {
+      return baris(esc(k.dari) + '<small>' + k.barang.map(function (x) { return x.n + '× ' + esc(MN.BARANG[x.id].nama); }).join(', ') + '</small>', (k.tiba.hari === S.hari ? 'hari ini ' : namaTanggal(k.tiba.hari) + ' ') + jam(k.tiba.menit));
+    }).join('') + '</ul>';
+    return html;
+  }
+  function gelapSebentar() { var el = $('gelap'); el.hidden = false; el.classList.remove('jalan'); void el.offsetWidth; el.classList.add('jalan'); setTimeout(function () { el.hidden = true; }, 1300); }
+  function belanja(cara) {
+    var tab = app.tab, r = STOK.beli(S, tab, app.keranjang[tab], cara);
+    if (r === true || (r && r.ok)) {
+      app.keranjang[tab] = {};
+      if (r.waktu) { gelapSebentar(); S.menit += r.waktu; hasilAksi(true, 'Pulang dari pasar pukul ' + jam(S.menit) + '. Belanjaan sudah masuk stok.'); }
+      else if (r.tiba) hasilAksi(true, 'Pesanan dibuat. Sampai ' + (r.tiba.hari === S.hari ? 'hari ini' : namaTanggal(r.tiba.hari)) + ' sekitar pukul ' + jam(r.tiba.menit) + '.');
+      else hasilAksi(true, 'Barang dari sales sudah masuk stok. Tagihan dibayar 14 hari lagi.');
+    } else hasilAksi(r);
+  }
   function aksiHP(nama, nilai) {
     var v = nilai === 'semua' ? Infinity : +nilai;
-    if (nama === 'setor') hasilAksi(UANG.setor(S, v === Infinity ? UANG.laci(S) : v), 'Setor tunai berhasil.');
+    if (nama === 'tab') { app.tab = nilai; app.pesan = ''; }
+    else if (nama === 'tambah') { var k = app.keranjang[app.tab]; k[nilai] = Math.min(50, (k[nilai] || 0) + 1); app.pesan = ''; }
+    else if (nama === 'kurang') { var k2 = app.keranjang[app.tab]; k2[nilai] = Math.max(0, (k2[nilai] || 0) - 1); app.pesan = ''; }
+    else if (nama === 'ulangi') { app.keranjang[app.tab] = JSON.parse(JSON.stringify(S.belanjaTerakhir[app.tab] || {})); app.pesan = ''; }
+    else if (nama === 'beli') belanja(nilai);
+    else if (nama === 'bayarSales') hasilAksi(STOK.bayarSales(S, +nilai), 'Tagihan sales lunas.');
+    else if (nama === 'setor') hasilAksi(UANG.setor(S, v === Infinity ? UANG.laci(S) : v), 'Setor tunai berhasil.');
     else if (nama === 'tarik') hasilAksi(UANG.tarik(S, v), 'Tarik tunai berhasil, uang masuk laci.');
     else if (nama === 'tukar') hasilAksi(UANG.tukarReceh(S, v), 'Uang besar sudah ditukar ke uang kecil.');
     else if (nama === 'tarikMerchant') hasilAksi(UANG.tarikMerchant(S), 'Saldo sudah masuk rekening.');
@@ -386,7 +452,7 @@
     else if (nama === 'kurPlafon') { app.kurPlafon = v; app.pesan = ''; }
     else if (nama === 'kurTenor') { app.kurTenor = v; app.pesan = ''; }
     else if (nama === 'ajukanKur') hasilAksi(UANG.ajukanKur(S, app.kurPlafon, app.kurTenor), 'Pengajuan KUR dikirim. Hasilnya keluar dalam ' + N.kur.hariProses + ' hari.');
-    var gulir = $('lembar-isi').scrollTop; bukaHP(app.nama); $('lembar-isi').scrollTop = gulir;
+    var gulir = $('lembar-isi').scrollTop; bukaHP(app.nama); $('lembar-isi').scrollTop = (nama === 'beli' || nama === 'tab') ? 0 : gulir;
   }
 
   /* ---------- racik ---------- */
@@ -408,7 +474,6 @@
     if (layar === 'main') $('bawah').hidden = false;
     perbaruiAksi();
   }
-  function biayaGelas(o) { return o.racik.reduce(function (t, b) { var r = resepPunya(o.menu, b); return t + MN.biaya(b, r ? r[1] : 1); }, 0); }
   function lengkap(o) { return o.menu.resep.every(function (r) { return o.racik.indexOf(r[0]) >= 0; }); }
   function gambarRacik(pesan, salah) {
     var o = R.o, m = o.menu;
@@ -426,34 +491,46 @@
     }).join('');
     $('r-bahan').innerHTML = MN.URUT_BAHAN.map(function (id) {
       var b = MN.BAHAN[id], dipakai = o.racik.indexOf(id) >= 0;
-      return '<button type="button" class="bahan' + (dipakai ? ' dipakai' : '') + '" data-bahan="' + id + '"><i style="background:' + b.warna + '"></i>' + esc(b.nama) + '</button>';
+      var brg = STOK.barangDari(id), kosong = !STOK.ada(S, brg, id === 'air' ? MN.AIR_PANAS.galon : (MN.TAP_STOK[id] || 1)) || (id === 'air' && !STOK.ada(S, 'gas', MN.AIR_PANAS.gas));
+      return '<button type="button" class="bahan' + (dipakai ? ' dipakai' : '') + (kosong ? ' habis' : '') + '" data-bahan="' + id + '"><i style="background:' + b.warna + '"></i>' + esc(b.nama) +
+        '<small>' + (kosong ? 'habis' : STOK.sisaTeks(S, brg)) + '</small></button>';
     }).join('');
     var p = $('r-pesan'); p.textContent = pesan || (o.racik.length ? (lengkap(o) ? 'Gelas jadi. Serahkan ke pembeli.' : 'Tambahkan bahan sesuai resep.') : 'Ambil cup dulu.');
     p.className = 'racik-pesan' + (salah ? ' salah' : lengkap(o) ? ' siap' : '');
     $('r-serah').disabled = !lengkap(o);
     $('r-buang').disabled = !o.racik.length;
   }
+  function habis(nama) { return gambarRacik(nama + ' habis. Belanja dulu lewat HP.', true); }
+  function buangSalah(id, jml, alasan) {
+    var x = STOK.pakaiBahan(S, id, jml); if (!x.ok) return habis(x.habis);
+    var rugi = x.biaya + x.operasional; S.hariIni.terbuang += rugi;
+    return gambarRacik(MN.BAHAN[id].nama + ' ' + alasan + ', terbuang ' + rupiah(rugi) + '.', true);
+  }
   function tapBahan(id) {
     if (!R) return;
-    var o = R.o, b = MN.BAHAN[id], r = resepPunya(o.menu, id);
+    var o = R.o, b = MN.BAHAN[id], r = resepPunya(o.menu, id), x;
+    o.biaya = o.biaya || 0;
     if (!o.racik.length) {
       if (b.jenis !== 'cup') return gambarRacik('Ambil cup dulu.', true);
-      if (!r) { S.hariIni.terbuang += MN.biaya(id, 1); return gambarRacik(b.nama + ' salah untuk menu ini, terbuang ' + rupiah(MN.biaya(id, 1)) + '.', true); }
-      o.racik.push(id); ADEGAN.racikSaja(); return gambarRacik();
+      if (!r) return buangSalah(id, 1, 'salah untuk menu ini');
+      x = STOK.pakaiBahan(S, id, 1); if (!x.ok) return habis(x.habis);
+      o.racik.push(id); o.biaya += x.biaya; ADEGAN.racikSaja(); return gambarRacik();
     }
     if (b.jenis === 'cup') return gambarRacik('Cup sudah ada.', true);
     if (o.racik.indexOf(id) >= 0) return gambarRacik(b.nama + ' sudah masuk.', true);
-    if (!r) { var rugi = MN.biaya(id, b.porsi); S.hariIni.terbuang += rugi; return gambarRacik(b.nama + ' tidak ada di resep, terbuang ' + rupiah(rugi) + '.', true); }
-    o.racik.push(id); ADEGAN.racikSaja(); gambarRacik();
+    if (!r) return buangSalah(id, b.porsi, 'tidak ada di resep');
+    x = STOK.pakaiBahan(S, id, r[1]); if (!x.ok) return habis(x.habis);
+    o.racik.push(id); o.biaya += x.biaya; S.hariIni.operasional = (S.hariIni.operasional || 0) + x.operasional;
+    ADEGAN.racikSaja(); gambarRacik();
   }
   function buangGelas() {
     if (!R || !R.o.racik.length) return;
-    var rugi = biayaGelas(R.o); S.hariIni.terbuang += rugi; R.o.racik = [];
+    var rugi = R.o.biaya || 0; S.hariIni.terbuang += rugi; R.o.racik = []; R.o.biaya = 0;
     gambarRacik('Gelas dibuang, rugi ' + rupiah(rugi) + '.', true);
   }
   function serahkan() {
     if (!R || !lengkap(R.o)) return;
-    var o = R.o, hasil = JUAL.layani(S, o, biayaGelas(o));
+    var o = R.o, hasil = JUAL.layani(S, o, o.biaya || 0);
     if (hasil === false) toast('Uang kecil di laci tidak cukup untuk kembalian. Pembeli batal.', 2600);
     else if (typeof hasil === 'string' && hasil.indexOf('QRIS') >= 0) toast('Kembalian kurang, pembeli bayar pakai QRIS.', 2200);
     var lanjutO = JUAL.depan();
@@ -471,6 +548,8 @@
       dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec;
       S.menit += dMenit;
       if (S.fase === 'buka') JUAL.langkah(S, dMenit);
+      var kabarStok = STOK.jalan(S, dMenit);
+      if (kabarStok.length) { toast(kabarStok.join(' '), 2600); perbaruiHUD(true); if (R) gambarRacik(); }
       if (S.fase === 'pagi' && S.menit >= S.jamBuka * 60) bukaKedai(true);
       if (S.fase === 'buka' && S.menit >= S.jamTutup * 60) tutupKedai();
       if (S.menit - menitSimpan >= 30) simpan();

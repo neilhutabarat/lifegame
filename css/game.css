@@ -186,3 +186,26 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .daftar.kabar li span { white-space: normal !important; color: var(--tinta) !important; font-size: 14px !important; font-weight: 700; line-height: 1.4; }
 .meteran { height: 10px; border-radius: 5px; background: rgba(29,43,51,.1); overflow: hidden; margin-top: 10px; }
 .meteran i { display: block; height: 100%; background: var(--kunyit); }
+
+/* ---------- tahap 4: belanja dan stok ---------- */
+.bahan small { font-size: 10px; font-weight: 700; color: var(--tinta-pudar); }
+.bahan.habis { background: rgba(217,68,58,.1); }
+.bahan.habis small { color: var(--merah-libur); font-weight: 800; }
+.daftar.belanja li { align-items: center; }
+.daftar.belanja li > span:first-child { min-width: 0; }
+.daftar.belanja b { display: block; font-size: 14px; }
+.daftar.belanja small { display: block; font-size: 11.5px; color: var(--tinta-pudar); font-weight: 700; margin-top: 1px; white-space: normal; }
+.daftar.belanja small.harga { color: var(--tinta); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.daftar.belanja em { font-style: normal; font-size: 11px; }
+.daftar.belanja em.naik { color: var(--merah-libur); }
+.daftar.belanja em.turun { color: var(--kontainer-tua); }
+.daftar.belanja .langkah { flex: none; }
+.daftar.belanja .langkah button { width: 32px; height: 32px; }
+.daftar.belanja .langkah output { min-width: 22px; font-size: 15px; }
+.bayar-baris { display: grid; gap: 8px; margin-top: 12px; }
+.aksi.kecil { font-size: 16px; padding: 12px 14px; }
+.tombol-lain.gelap { width: 100%; background: rgba(29,43,51,.08); color: var(--tinta); }
+.isbat.peringatan { background: rgba(217,68,58,.1); color: var(--merah-libur); }
+#gelap { position: absolute; inset: 0; background: #0b1018; opacity: 0; pointer-events: none; z-index: 5; }
+#gelap.jalan { animation: gelap 1.3s ease-in-out; }
+@keyframes gelap { 0% { opacity: 0; } 35%, 65% { opacity: .92; } 100% { opacity: 0; } }

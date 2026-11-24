@@ -16,7 +16,28 @@
     cokelat: { porsi: 25, nama: 'Cokelat', takaran: '25 g', harga: 105, perGram: true, warna: '#6b3b25' },
     teh: { porsi: 3, nama: 'Teh', takaran: '3 g', harga: 33, perGram: true, warna: '#b8622a' }
   };
-  var URUT_BAHAN = ['cupPlastik', 'cupKertas', 'es', 'air', 'kopi', 'teh', 'cokelat', 'uht', 'skm', 'gula', 'aren'];
+  /* barang yang dibeli (rancangan bagian "Bahan & harga pemasok"); isi dalam satuan stok: g, ml, atau buah.
+     harga = harga tengah November 2026 untuk satu kemasan. ada = tempat belanja yang menjual. */
+  var BARANG = {
+    kopi: { nama: 'Biji kopi robusta sangrai', merek: 'Sidikalang', kemasan: '1 kg', isi: 1000, satuan: 'g', harga: 165000, ada: ['pasar', 'grosir', 'online', 'sales'] },
+    uht: { nama: 'Susu UHT full cream', merek: 'Ultra Milk', kemasan: '1 L', isi: 1000, satuan: 'ml', harga: 21000, ada: ['grosir', 'online', 'sales'] },
+    skm: { nama: 'Susu kental manis', merek: 'Frisian Flag', kemasan: '490 g', isi: 490, satuan: 'g', harga: 13000, ada: ['pasar', 'grosir', 'online', 'sales'] },
+    gula: { nama: 'Gula pasir', merek: 'Gulaku', kemasan: '1 kg', isi: 1000, satuan: 'g', harga: 20000, ada: ['pasar', 'grosir', 'online'] },
+    aren: { nama: 'Gula aren cair', merek: 'Merek lokal', kemasan: '1 L', isi: 1000, satuan: 'ml', harga: 50000, ada: ['pasar', 'grosir', 'online'] },
+    cokelat: { nama: 'Cokelat bubuk', merek: 'Van Houten', kemasan: '1 kg', isi: 1000, satuan: 'g', harga: 105000, ada: ['grosir', 'online', 'sales'] },
+    teh: { nama: 'Teh tubruk', merek: 'Merek lokal', kemasan: '1 kg', isi: 1000, satuan: 'g', harga: 33000, ada: ['pasar', 'grosir', 'online'] }, /* perkiraan */
+    es: { nama: 'Es batu kristal', merek: 'Pabrik es lokal', kemasan: '10 kg', isi: 10000, satuan: 'g', harga: 15000, ada: ['pasar', 'grosir'] },
+    cupPlastik: { nama: 'Cup plastik 16 oz + tutup + sedotan', merek: 'Grosir kemasan', kemasan: '50 set', isi: 50, satuan: 'buah', harga: 45000, ada: ['grosir', 'online', 'sales'] },
+    cupKertas: { nama: 'Cup kertas 8 oz + tutup', merek: 'Grosir kemasan', kemasan: '50 set', isi: 50, satuan: 'buah', harga: 50000, ada: ['grosir', 'online', 'sales'] },
+    gas: { nama: 'LPG 3 kg (tukar tabung)', merek: 'Pertamina', kemasan: '1 tabung', isi: 3000, satuan: 'g', harga: 22000, tetap: true, ada: ['grosir'] },
+    galon: { nama: 'Air galon isi ulang', merek: 'Depot isi ulang', kemasan: '19 L', isi: 19000, satuan: 'ml', harga: 7000, tetap: true, ada: ['grosir'] }
+  };
+  var URUT_BARANG = ['kopi', 'uht', 'skm', 'gula', 'aren', 'cokelat', 'teh', 'es', 'cupPlastik', 'cupKertas', 'gas', 'galon'];
+  /* satu tap bahan = berapa satuan stok. Air panas memakai air galon dan gas (biaya operasional, bukan HPP). */
+  var TAP_STOK = { es: 150, air: 0, cupPlastik: 1, cupKertas: 1 };
+  var AIR_PANAS = { galon: 150, gas: 20 }; /* setelan: 1 tabung 3 kg cukup sekitar 150 gelas */
+
+  var URUT_BAHAN =['cupPlastik', 'cupKertas', 'es', 'air', 'kopi', 'teh', 'cokelat', 'uht', 'skm', 'gula', 'aren'];
 
   /* resep: [bahan, jumlah takaran dalam gram/ml/buah]; cup selalu pertama */
   var MENU = [
@@ -49,5 +70,5 @@
   var KERAMAIAN = [0.15, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2, 0.8, 1, 0.7, 0.5, 0.6, 0.9, 0.8, 0.5, 0.6, 0.9, 1, 0.8, 1, 1, 0.8, 0.5, 0.3];
   var PEMBELI_PER_HARI = 40; /* kedai tahap 1 di pinggir jalan, buka 07.00–22.00 (setelan) */
 
-  g.KK_MENU = { BAHAN: BAHAN, URUT_BAHAN: URUT_BAHAN, MENU: MENU, PEMBELI: PEMBELI, campuran: campuran, KERAMAIAN: KERAMAIAN, PEMBELI_PER_HARI: PEMBELI_PER_HARI, biaya: biaya };
+  g.KK_MENU = { BARANG: BARANG, URUT_BARANG: URUT_BARANG, TAP_STOK: TAP_STOK, AIR_PANAS: AIR_PANAS, BAHAN: BAHAN, URUT_BAHAN: URUT_BAHAN, MENU: MENU, PEMBELI: PEMBELI, campuran: campuran, KERAMAIAN: KERAMAIAN, PEMBELI_PER_HARI: PEMBELI_PER_HARI, biaya: biaya };
 })(typeof window !== 'undefined' ? window : this);
