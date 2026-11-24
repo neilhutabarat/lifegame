@@ -1,6 +1,6 @@
 /* sw.js — supaya game tetap jalan tanpa internet. Naikkan VERSI setiap rilis. */
-var VERSI = 'kk-4-0';
-var BERKAS = ['./', 'index.html', 'css/game.css', 'js/data/nyata.js', 'js/data/menu.js', 'js/kalender.js', 'js/simpan.js', 'js/uang.js', 'js/stok.js', 'js/jualan.js', 'js/adegan.js', 'js/main.js', 'manifest.webmanifest', 'img/ikon-192.png', 'img/ikon-512.png'];
+var VERSI = 'kk-5-0';
+var BERKAS = ['./', 'index.html', 'css/game.css', 'js/data/nyata.js', 'js/data/menu.js', 'js/kalender.js', 'js/simpan.js', 'js/uang.js', 'js/stok.js', 'js/motor.js', 'js/antar.js', 'js/jualan.js', 'js/adegan.js', 'js/main.js', 'manifest.webmanifest', 'img/ikon-192.png', 'img/ikon-512.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(VERSI).then(function (c) { return c.addAll(BERKAS); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (k) { return Promise.all(k.filter(function (x) { return x !== VERSI; }).map(function (x) { return caches.delete(x); })); }));

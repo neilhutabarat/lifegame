@@ -1,7 +1,7 @@
 /* main.js — alur game: pilih kota dan QRIS, jam berjalan, buka-tutup kedai, racik dan jualan, laporan malam, kalender, simpan otomatis. */
 (function () {
   'use strict';
-  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG, STOK = window.KK_STOK;
+  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG, STOK = window.KK_STOK, MOTOR = window.KK_MOTOR, ANTAR = window.KK_ANTAR;
   var MENIT_PER_DETIK = 1.875;          /* 1x: 15 jam kedai = 8 menit nyata */
   var TAHUN_DASAR = 2022;               /* tahun Masehi 2023 = tahun ke-1 */
   var HARI_PERTAMA = KAL.dn(2023, 1, 2); /* Senin pertama */
@@ -12,7 +12,7 @@
   var kal = { y: 0, m: 0, pilih: null };
 
   /* ---------- format ---------- */
-  function rupiah(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+  function rupiah(n) { n = Math.round(n); return (n < 0 ? '−Rp' : 'Rp') + Math.abs(n).toLocaleString('id-ID'); }
   function dua(n) { return (n < 10 ? '0' : '') + n; }
   function jam(menit) { var m = Math.floor(menit) % 1440; return dua(Math.floor(m / 60)) + '.' + dua(m % 60); }
   function namaTanggal(n, panjang) { var t = KAL.tgl(n); return (panjang ? N.namaHari[t.dow] + ', ' : '') + t.d + ' ' + N.namaBulan[t.m - 1]; }
@@ -38,7 +38,7 @@
     if (nama === 'kota') isiKota();
     if (nama === 'qris') isiQris();
     if (nama === 'bank') isiBank();
-    if (nama === 'main') { perbaruiHUD(true); perbaruiAksi(); }
+    if (nama === 'main') { perbaruiHUD(true); perbaruiAksi(); perbaruiPesanan(); }
   }
   function isiLayarAwal() {
     var lama = SIMPAN.baca();
@@ -74,7 +74,7 @@
     d.uang = d.uang || { laci: 0, merchant: 0 };
     d.hariIni = d.hariIni || JUAL.hariBaru();
     d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
-    STOK.siapkan(d);
+    STOK.siapkan(d); MOTOR.siapkan(d); ANTAR.siapkan(d);
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
@@ -155,9 +155,9 @@
     S.fase = 'pagi';
     var nLama = S.hari, kabar = UANG.gantiHari(S, S.hari, S.hari + 1);
     S.hari += 1; S.hariKe += 1; S.menit = 360; S.hariIni = JUAL.hariBaru(); JUAL.kosongkan();
-    kabar = STOK.gantiHari(S, nLama, S.hari).concat(kabar);
+    kabar = STOK.gantiHari(S, nLama, S.hari).concat(kabar, MOTOR.gantiHari(S, nLama, S.hari), ANTAR.gantiHari(S, nLama, S.hari));
     if (KAL.tgl(S.hari).y !== S.tahunOmzet) { S.tahunOmzet = KAL.tgl(S.hari).y; S.omzetTahun = 0; }
-    tutupLembar(); simpan(); perbaruiHUD(true); perbaruiAksi();
+    tutupLembar(); simpan(); perbaruiHUD(true); perbaruiAksi(); perbaruiPesanan();
     var lib = KAL.hariIni(S.hari).filter(function (x) { return x.jenis === 'libur' || x.jenis === 'cuti'; });
     toast(namaTanggal(S.hari, true) + (lib.length ? '. ' + (lib[0].jenis === 'libur' ? 'Libur ' : 'Cuti bersama ') + lib[0].nama + '.' : '.'), 2600);
     if (kabar.length) bukaLembar('kabar', kepala('Kabar pagi', namaTanggal(S.hari, true)) +
@@ -180,23 +180,37 @@
     var label = x.jenis === 'libur' ? 'Libur nasional' : x.jenis === 'cuti' ? 'Cuti bersama' : x.jenis === 'musim' ? 'Musim' : x.jenis === 'event' ? 'Event' : 'Suasana';
     return '<li class="' + x.jenis + '"><span>' + esc(x.nama) + '</span><span>' + label + '</span></li>';
   }
-  function labaKotor(h) { return h.omzetTunai + h.omzetQris - h.mdr - h.hpp - h.terbuang - (h.rusak || 0) - (h.operasional || 0); }
+  function omzetTotal(h) { return h.omzetTunai + h.omzetQris + (h.omzetTransfer || 0) + (h.omzetOjol || 0); }
+  function labaKotor(h) {
+    return omzetTotal(h) + (h.ongkir || 0) - h.mdr - (h.komisi || 0) - h.hpp - h.terbuang - (h.rusak || 0) - (h.operasional || 0) -
+      (h.kurir || 0) - (h.bensin || 0) - (h.bengkel || 0) - (h.listrikMotor || 0) - (h.refund || 0);
+  }
   function baris(a, b, kls) { return '<li' + (kls ? ' class="' + kls + '"' : '') + '><span>' + a + '</span><span>' + b + '</span></li>'; }
   function ringkasanJualan() {
-    var h = S.hariIni, omzet = h.omzetTunai + h.omzetQris, q = qrisIni();
+    var h = S.hariIni, omzet = omzetTotal(h), q = qrisIni();
     var laris = MN.MENU.filter(function (m) { return h.menu[m.id]; }).sort(function (a, b) { return h.menu[b.id] - h.menu[a.id]; });
     return '<h3 class="subjudul">Penjualan</h3><ul class="daftar angka">' +
-      baris('Pembeli dilayani', h.dilayani + ' orang') +
+      baris('Gelas terjual', h.dilayani + ' gelas') +
+      (h.antar ? baris('Pesanan antar selesai', h.antar + ' pesanan') : '') +
       baris('Pergi karena kelamaan', h.pergi + ' orang', h.pergi ? 'rugi' : '') +
       (h.penuh ? baris('Batal karena antrean penuh', h.penuh + ' orang', 'rugi') : '') +
       (h.tanpaKembalian ? baris('Kembalian tidak cukup', h.tanpaKembalian + ' kali', 'rugi') : '') +
       baris('Omzet tunai', rupiah(h.omzetTunai)) +
       baris('Omzet QRIS', rupiah(h.omzetQris)) +
+      (h.omzetTransfer ? baris('Omzet transfer (pesanan)', rupiah(h.omzetTransfer)) : '') +
+      (h.omzetOjol ? baris('Omzet GoFood/GrabFood/ShopeeFood', rupiah(h.omzetOjol)) : '') +
+      (h.ongkir ? baris('Ongkir dari pembeli', rupiah(h.ongkir)) : '') +
+      (h.komisi ? baris('Komisi aplikasi pesan-antar', '−' + rupiah(h.komisi)) : '') +
       baris('Potongan MDR QRIS', '−' + rupiah(h.mdr)) +
       baris('HPP bahan terjual', '−' + rupiah(h.hpp)) +
       (h.terbuang ? baris('Bahan terbuang saat racik', '−' + rupiah(h.terbuang), 'rugi') : '') +
       (h.rusak ? baris('Stok rusak (es mencair, susu basi)', '−' + rupiah(h.rusak), 'rugi') : '') +
       (h.operasional ? baris('Gas dan air untuk air panas', '−' + rupiah(h.operasional)) : '') +
+      (h.kurir ? baris('Ongkos kurir ' + esc(N.kurir.nama), '−' + rupiah(h.kurir)) : '') +
+      (h.bensin ? baris('Bensin', '−' + rupiah(h.bensin)) : '') +
+      (h.listrikMotor ? baris('Cas motor listrik', '−' + rupiah(h.listrikMotor)) : '') +
+      (h.bengkel ? baris('Bengkel dan perawatan motor', '−' + rupiah(h.bengkel)) : '') +
+      (h.refund ? baris('Uang kembali (cup tumpah)', '−' + rupiah(h.refund), 'rugi') : '') +
       baris('<b>Laba kotor</b>', '<b>' + rupiah(labaKotor(h)) + '</b>', 'total') + '</ul>' +
       (laris.length ? '<h3 class="subjudul">Menu terlaris</h3><ul class="daftar angka">' + laris.map(function (m) { return baris(esc(m.nama), h.menu[m.id] + ' gelas'); }).join('') + '</ul>' : '') +
       '<h3 class="subjudul">Uang sekarang</h3><ul class="daftar angka">' +
@@ -280,6 +294,11 @@
       '<div class="atur-baris"><div><b>Jam tutup</b><span>Lalu laporan malam muncul</span></div><div class="langkah"><button type="button" data-jam="tutup:-1" aria-label="Kurangi jam tutup">−</button><output>' + jam(S.jamTutup * 60) + '</output><button type="button" data-jam="tutup:1" aria-label="Tambah jam tutup">+</button></div></div>' +
       '<div class="atur-baris"><div><b>UMK ' + esc(k.nama) + '</b><span>Patokan gaji karyawan, berlaku 2026</span></div><b>' + rupiah(k.umk) + '</b></div>' +
       '<div class="atur-baris"><div><b>QRIS</b><span>' + esc(qrisIni().transfer) + '</span></div><b>' + esc(qrisIni().nama) + '</b></div>' +
+      '<h3 class="subjudul">Ongkir antar</h3>' +
+      langkahAtur('Tarif per km', 'ongkir:tarifKm', rupiah(S.aturAntar.tarifKm)) +
+      langkahAtur('Ongkir minimum', 'ongkir:minimum', rupiah(S.aturAntar.minimum)) +
+      langkahAtur('Gratis ongkir mulai', 'ongkir:gratisGelas', S.aturAntar.gratisGelas + ' gelas') +
+      langkahAtur('Jarak antar maksimal', 'ongkir:maksKm', S.aturAntar.maksKm + ' km') +
       '<h3 class="subjudul">Menu & harga</h3><ul class="daftar angka">' + MN.MENU.map(function (m) {
         return baris(esc(m.nama) + '<small>HPP ' + rupiah(m.hpp) + ' · laba ' + Math.round((1 - m.hpp / m.harga) * 100) + '%</small>', rupiah(m.harga));
       }).join('') + '</ul>' +
@@ -287,7 +306,15 @@
       '<button type="button" class="bahaya" data-ulang>' + (konfirmasiUlang ? 'Tekan sekali lagi untuk menghapus simpanan' : 'Mulai ulang dari awal') + '</button>' +
       '<p class="catatan">Versi uji tahap 2: jualan inti.</p>');
   }
+  function langkahAtur(judul, kunci, nilai) {
+    return '<div class="atur-baris"><div><b>' + esc(judul) + '</b></div><div class="langkah"><button type="button" data-jam="' + kunci + ':-1" aria-label="Kurangi">−</button><output>' + esc(nilai) + '</output><button type="button" data-jam="' + kunci + ':1" aria-label="Tambah">+</button></div></div>';
+  }
+  var LANGKAH_ONGKIR = { tarifKm: [500, 0, 5000], minimum: [1000, 0, 15000], gratisGelas: [1, 1, 20], maksKm: [1, 2, 8] };
   function ubahJam(apa, d) {
+    if (apa.indexOf('ongkir.') === 0) {
+      var k = apa.slice(7), L = LANGKAH_ONGKIR[k]; S.aturAntar[k] = Math.max(L[1], Math.min(L[2], S.aturAntar[k] + d * L[0]));
+      simpan(); var g0 = $('lembar-isi').scrollTop; bukaAtur(); $('lembar-isi').scrollTop = g0; return;
+    }
     if (apa === 'buka') S.jamBuka = Math.max(5, Math.min(S.jamTutup - 4, S.jamBuka + d));
     else S.jamTutup = Math.max(S.jamBuka + 4, Math.min(24, S.jamTutup + d));
     simpan(); perbaruiHUD(true); bukaAtur();
@@ -307,6 +334,9 @@
     { id: 'laci', nama: function () { return 'Laci kas'; }, warna: function () { return '#b97a46'; }, huruf: function () { return 'Rp'; } },
     { id: 'belanja', nama: function () { return 'Belanja'; }, warna: function () { return '#1f8a80'; }, huruf: function () { return 'B'; } },
     { id: 'stok', nama: function () { return 'Stok'; }, warna: function () { return '#5b6b73'; }, huruf: function () { return STOK.menipis(S).length ? '!' : 'S'; } },
+    { id: 'wa', nama: function () { return 'WhatsApp'; }, warna: function () { return '#25d366'; }, huruf: function () { var n = ANTAR.aktif(S).filter(function (p) { return p.status === 'baru'; }).length; return n ? String(n) : 'WA'; } },
+    { id: 'ojol', nama: function () { return 'Mitra pesan-antar'; }, warna: function () { return '#00aa13'; }, huruf: function () { return 'Food'; } },
+    { id: 'motor', nama: function () { return 'Motor'; }, warna: function () { return '#d9443a'; }, huruf: function () { return 'M'; } },
     { id: 'pajak', nama: function () { return 'M-Pajak'; }, warna: function () { return '#f2a516'; }, huruf: function () { return '%'; } },
     { id: 'oss', nama: function () { return 'OSS'; }, warna: function () { return '#2f8f5b'; }, huruf: function () { return 'NIB'; } },
     { id: 'kalender', nama: function () { return 'Kalender'; }, warna: function () { return '#d9443a'; }, huruf: function () { return KAL.tgl(S.hari).d; } }
@@ -327,6 +357,9 @@
     else if (app.nama === 'oss') html = layarOss();
     else if (app.nama === 'belanja') html = layarBelanja();
     else if (app.nama === 'stok') html = layarStok();
+    else if (app.nama === 'motor') html = layarMotor();
+    else if (app.nama === 'kredit') html = layarKredit();
+    else if (app.nama === 'ojol') html = layarOjol();
     bukaLembar('hp', html);
   }
   function layarBank() {
@@ -387,6 +420,62 @@
       ? '<div class="saldo-besar"><small>NIB terbit ' + namaTanggal(S.nib.n) + '</small><b>' + esc(S.nib.nomor) + '</b></div><p class="catatan">NIB dipakai untuk mengajukan KUR dan nanti untuk naik ke ruko.</p>'
       : '<p class="catatan">Nomor Induk Berusaha didaftarkan gratis lewat OSS. Tanpa NIB, kedai tidak bisa mengajukan KUR.</p><div style="margin-top:12px"><button type="button" class="aksi" data-aksi="nib:1">Daftar NIB gratis</button></div>');
   }
+  /* ---------- aplikasi Motor dan Mitra pesan-antar ---------- */
+  function persenBar(v) { return '<div class="meteran"><i style="width:' + Math.max(0, Math.min(100, v)).toFixed(0) + '%"></i></div>'; }
+  function layarMotor() {
+    var tab = app.motorTab || (S.motor ? 'garasi' : 'dealer'), m = S.motor, html = kepalaApp('Motor', S.motor ? S.motor.nama : 'Belum punya motor') +
+      '<div class="chip-baris">' + [['garasi', 'Garasi'], ['dealer', 'Dealer'], ['bekas', 'Bekas']].map(function (t) { return '<button type="button" class="chip-tombol' + (t[0] === tab ? ' pilih' : '') + '" data-aksi="motorTab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>' + pesanApp();
+    if (tab === 'garasi') {
+      if (!m) return html + '<p class="catatan">Tanpa motor, belanja ke pasar naik ojek ' + rupiah(N.ojek.pasar) + ' pulang-pergi, dan pesanan antar harus pakai kurir ' + esc(N.kurir.nama) + '. Pesanan tunai tidak bisa diantar.</p>';
+      var listrik = m.bbm === 'listrik', hb = MOTOR.hargaBbm(S, m.bbm), oli = N.rawat.oliKm - (m.km - m.kmOli), sv = N.rawat.servisKm - (m.km - m.kmServis), pjk = MOTOR.tagihanPajak(S);
+      html += '<div class="saldo-besar"><small>' + (listrik ? 'Baterai' : 'Bensin ' + N.bbm.nama[m.bbm]) + '</small><b>' + (listrik ? Math.round(m.baterai) + ' km' : m.isi.toFixed(1).replace('.', ',') + ' / ' + String(m.tangki).replace('.', ',') + ' L') + '</b>' + persenBar(listrik ? m.baterai / m.jarakPenuh * 100 : m.isi / m.tangki * 100) + '</div>' +
+        '<ul class="daftar angka">' + baris('Kilometer', Math.round(m.km).toLocaleString('id-ID') + ' km') + (listrik ? '' : baris('Konsumsi', m.kml + ' km/liter')) +
+        baris('Ganti oli', oli >= 0 ? 'dalam ' + Math.round(oli).toLocaleString('id-ID') + ' km' : 'lewat ' + Math.round(-oli).toLocaleString('id-ID') + ' km', oli < 0 ? 'rugi' : '') +
+        baris('Servis berkala', sv >= 0 ? 'dalam ' + Math.round(sv).toLocaleString('id-ID') + ' km' : 'lewat ' + Math.round(-sv).toLocaleString('id-ID') + ' km', sv < 0 ? 'rugi' : '') +
+        baris('Peluang mogok per perjalanan', (MOTOR.peluangMogok(S) * 100).toFixed(1).replace('.', ',') + '%') +
+        baris('Muatan', MOTOR.muatan(S) + ' cup') +
+        (m.bekas ? baris('Kondisi', 'Bekas ' + m.bekas.tahun + ', ' + m.bekas.kondisi) : '') +
+        (m.kredit ? baris('Angsuran', rupiah(m.kredit.angsuran) + ' tiap tanggal ' + m.kredit.tempo + ', sisa ' + m.kredit.sisa + ' bulan' + (m.kredit.tunggakan ? ', nunggak ' + rupiah(m.kredit.tunggakan) : ''), m.kredit.tunggakan ? 'rugi' : '') : '') +
+        baris('Pajak tahunan', pjk ? 'jatuh tempo ' + namaTanggal(m.pajakTempo) : (m.pajakTempo - S.hari) + ' hari lagi') + '</ul>' +
+        '<div class="chip-baris">' + (listrik ? '' : '<button type="button" class="chip-tombol" data-aksi="bensin:1">Isi penuh (' + rupiah(hb) + '/L)</button>') +
+        '<button type="button" class="chip-tombol" data-aksi="oli:1">Ganti oli ' + rupiah(N.rawat.oli) + '</button><button type="button" class="chip-tombol" data-aksi="servis:1">Servis ' + rupiah(N.rawat.servis) + '</button>' +
+        (pjk ? '<button type="button" class="chip-tombol" data-aksi="pajakMotor:1">Bayar pajak ' + rupiah(pjk) + '</button>' : '') + '</div>' +
+        '<h3 class="subjudul">Perlengkapan antar</h3><ul class="daftar angka">' + N.aksesoris.map(function (a) {
+          return '<li><span>' + esc(a.nama) + '<small>' + esc(a.ket) + '</small></span><span>' + (m.aks[a.id] ? 'terpasang' : '<button type="button" class="chip-tombol" data-aksi="aks:' + a.id + '">' + rupiah(a.harga) + '</button>') + '</span></li>';
+        }).join('') + '</ul><p class="catatan">Bensin, oli, servis, dan perlengkapan dibayar tunai dari laci.</p>';
+      return html;
+    }
+    if (tab === 'dealer') return html + '<ul class="daftar belanja">' + N.motor.map(function (x) {
+      return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? 'Listrik, sekitar ' + x.jarakPenuh + ' km sekali cas' : '±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm]) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
+        '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></span></li>';
+    }).join('') + '</ul><p class="catatan">Harga OTR November 2026. Beli tunai dari rekening bank.</p>';
+    return html + '<ul class="daftar belanja">' + S.pasarBekas.unit.map(function (u, i) {
+      var b = N.motorBekas.filter(function (x) { return x.id === u.id; })[0];
+      return '<li><span><b>' + esc(b.nama.replace(' (bekas)', '')) + ' ' + u.tahun + '</b><small>' + u.km.toLocaleString('id-ID') + ' km · kondisi ' + u.kondisi + ' · ' + esc(b.kelebihan) + '</small><small class="harga">' + rupiah(u.harga) + '</small></span>' +
+        '<span><button type="button" class="chip-tombol pilih" data-aksi="bekas:' + i + '">Beli</button></span></li>';
+    }).join('') + '</ul><p class="catatan">Iklan motor bekas berganti tiap minggu. Kondisi kurang berarti lebih sering mogok.</p>';
+  }
+  function layarKredit() {
+    var x = N.motor.filter(function (m) { return m.id === app.kreditMotor; })[0], dp = app.kreditDp || 0.1, tenor = app.kreditTenor || 35, k = MOTOR.hitungKredit(x.harga, dp, tenor);
+    return kepala('Kredit ' + x.nama, N.kreditMotor.leasing + ' · OTR ' + rupiah(x.harga), '<button type="button" class="panah" data-app="motor" aria-label="Kembali">‹</button>') + pesanApp() +
+      '<h3 class="subjudul">Uang muka</h3><div class="chip-baris">' + N.kreditMotor.dp.map(function (d) { return '<button type="button" class="chip-tombol' + (d === dp ? ' pilih' : '') + '" data-aksi="kreditDp:' + d + '">' + Math.round(d * 100) + '%</button>'; }).join('') + '</div>' +
+      '<h3 class="subjudul">Tenor</h3><div class="chip-baris">' + N.kreditMotor.tenor.map(function (t) { return '<button type="button" class="chip-tombol' + (t === tenor ? ' pilih' : '') + '" data-aksi="kreditTenor:' + t + '">' + t + ' bulan</button>'; }).join('') + '</div>' +
+      '<ul class="daftar angka" style="margin-top:10px">' + baris('Uang muka', rupiah(k.dp)) + baris('<b>Angsuran</b>', '<b>' + rupiah(k.angsuran) + ' sebulan</b>', 'total') + baris('Total dibayar', rupiah(k.total)) + '</ul>' +
+      '<div style="margin-top:12px"><button type="button" class="aksi" data-aksi="kredit:1">Ajukan kredit</button></div>' +
+      '<p class="catatan">Perkiraan: bunga flat sekitar 1,8% sebulan plus asuransi. Angsuran dipotong dari rekening tiap bulan; telat kena denda harian dan tercatat di riwayat kredit. Menunggak 3 bulan, motor ditarik.</p>';
+  }
+  function layarOjol() {
+    var cair = S.payout.reduce(function (t, x) { return t + x.jml; }, 0);
+    return kepalaApp('Mitra pesan-antar', 'GoFood, GrabFood, ShopeeFood') + pesanApp() +
+      '<ul class="daftar pesanan">' + N.platform.map(function (pl) {
+        var st = S.platform[pl.id], ket = st.status === 'aktif' ? 'Aktif. Pesanan masuk saat kedai buka.' : st.status === 'proses' ? 'Sedang diverifikasi, aktif ' + namaTanggal(st.aktifPada) + '.' : 'Belum terdaftar.';
+        return '<li class="kartu-pesanan"><div><b><i class="tanda-qris" style="background:' + pl.warna + '"></i>' + esc(pl.nama) + '</b><small>' + esc(pl.app) + ' · komisi ' + Math.round(pl.komisi * 100) + '%</small><small class="status">' + esc(ket) + '</small></div>' +
+          '<div class="chip-baris">' + (st.status === 'tidak' ? '<button type="button" class="chip-tombol pilih" data-aksi="daftarOjol:' + pl.id + '">Daftar</button>' :
+            [10, 20, 30].map(function (mk) { return '<button type="button" class="chip-tombol' + (mk === st.markup ? ' pilih' : '') + '" data-aksi="markup:' + pl.id + '-' + mk + '">Harga +' + mk + '%</button>'; }).join('')) + '</div></li>';
+      }).join('') + '</ul>' +
+      '<p class="catatan">Harga di aplikasi biasanya dinaikkan untuk menutup komisi. Contoh Kopsu Aren ' + rupiah(18000) + ' dengan +20% jadi ' + rupiah(21500) + ' di aplikasi. Pendapatan cair ke rekening hari kerja berikutnya' + (cair ? '; sedang menunggu cair ' + rupiah(cair) : '') + '.</p>';
+  }
+
   var NAMA_BAYAR = { tunai: function () { return 'Bayar tunai dari laci'; }, qris: function () { return 'Bayar pakai ' + UANG.qrisIni(S).app; },
     transfer: function () { return 'Transfer dari ' + UANG.bankIni(S).nama + ' (+' + rupiah(N.biFast) + ')'; }, tempo: function () { return 'Pesan, bayar 14 hari lagi'; } };
   function layarBelanja() {
@@ -442,6 +531,20 @@
     else if (nama === 'kurang') { var k2 = app.keranjang[app.tab]; k2[nilai] = Math.max(0, (k2[nilai] || 0) - 1); app.pesan = ''; }
     else if (nama === 'ulangi') { app.keranjang[app.tab] = JSON.parse(JSON.stringify(S.belanjaTerakhir[app.tab] || {})); app.pesan = ''; }
     else if (nama === 'beli') belanja(nilai);
+    else if (nama === 'motorTab') { app.motorTab = nilai; app.pesan = ''; }
+    else if (nama === 'tunai') { hasilAksi(MOTOR.beliTunai(S, nilai), 'Motor sudah di garasi. Bensin diisi sedikit dari dealer.'); if (S.motor) app.motorTab = 'garasi'; }
+    else if (nama === 'kreditPilih') { app.kreditMotor = nilai; app.pesan = ''; app.nama = 'kredit'; }
+    else if (nama === 'kreditDp') { app.kreditDp = +nilai; app.pesan = ''; }
+    else if (nama === 'kreditTenor') { app.kreditTenor = +nilai; app.pesan = ''; }
+    else if (nama === 'kredit') { hasilAksi(MOTOR.beliKredit(S, app.kreditMotor, app.kreditDp || 0.1, app.kreditTenor || 35), 'Kredit disetujui. Motor sudah di garasi.'); if (S.motor) { app.nama = 'motor'; app.motorTab = 'garasi'; } }
+    else if (nama === 'bekas') { hasilAksi(MOTOR.beliBekas(S, +nilai), 'Motor bekas sudah di garasi.'); if (S.motor) app.motorTab = 'garasi'; }
+    else if (nama === 'bensin') { var rb = MOTOR.isiBensin(S); hasilAksi(rb && rb.ok ? true : rb, rb && rb.ok ? 'Isi ' + rb.liter.toFixed(1).replace('.', ',') + ' liter, ' + rupiah(rb.biaya) + '.' : ''); }
+    else if (nama === 'oli') hasilAksi(MOTOR.rawat(S, 'oli'), 'Oli sudah diganti.');
+    else if (nama === 'servis') hasilAksi(MOTOR.rawat(S, 'servis'), 'Motor sudah diservis.');
+    else if (nama === 'aks') hasilAksi(MOTOR.beliAks(S, nilai), 'Perlengkapan sudah terpasang.');
+    else if (nama === 'pajakMotor') hasilAksi(MOTOR.bayarPajak(S), 'Pajak motor lunas setahun.');
+    else if (nama === 'daftarOjol') hasilAksi(ANTAR.daftar(S, nilai), 'Pendaftaran dikirim. Verifikasi sekitar 3 hari.');
+    else if (nama === 'markup') { var pm = nilai.split('-'); ANTAR.aturMarkup(S, pm[0], +pm[1]); simpan(); app.pesan = ''; }
     else if (nama === 'bayarSales') hasilAksi(STOK.bayarSales(S, +nilai), 'Tagihan sales lunas.');
     else if (nama === 'setor') hasilAksi(UANG.setor(S, v === Infinity ? UANG.laci(S) : v), 'Setor tunai berhasil.');
     else if (nama === 'tarik') hasilAksi(UANG.tarik(S, v), 'Tarik tunai berhasil, uang masuk laci.');
@@ -462,6 +565,7 @@
   function bukaRacik() {
     var o = JUAL.depan(); if (!o || S.fase !== 'buka') return;
     if (R && R.o === o) return;
+    if (R && R.pesanan) tutupRacik();
     if (R) R.o.keadaan = 'antre';
     R = { o: o }; o.keadaan = 'dilayani';
     $('app').classList.add('meracik'); $('racik').hidden = false; $('bawah').hidden = true;
@@ -469,6 +573,7 @@
   }
   function tutupRacik() {
     if (!R) return;
+    if (R.pesanan && R.o.biaya) { S.hariIni.terbuang += R.o.biaya; toast('Racik pesanan ditunda, gelas yang setengah jadi dibuang.'); }
     if (R.o.keadaan === 'dilayani') R.o.keadaan = 'antre';
     R = null; $('app').classList.remove('meracik'); $('racik').hidden = true;
     if (layar === 'main') $('bawah').hidden = false;
@@ -477,8 +582,9 @@
   function lengkap(o) { return o.menu.resep.every(function (r) { return o.racik.indexOf(r[0]) >= 0; }); }
   function gambarRacik(pesan, salah) {
     var o = R.o, m = o.menu;
-    $('r-nama').textContent = m.nama;
-    $('r-harga').textContent = rupiah(m.harga) + ' · bayar ' + (o.bayar === 'qris' ? 'QRIS' : 'tunai');
+    $('r-nama').textContent = m.nama + (R.item ? ' ×' + R.item.qty : '');
+    $('r-harga').textContent = R.pesanan ? judulPesanan(R.pesanan) + ' · ' + R.item.qty + ' gelas' : rupiah(m.harga) + ' · bayar ' + (o.bayar === 'qris' ? 'QRIS' : 'tunai');
+    $('r-serah').textContent = R.pesanan ? (R.item.qty > 1 ? 'Siapkan ' + R.item.qty + ' gelas' : 'Siapkan') : 'Serahkan';
     $('r-resep').innerHTML = m.resep.map(function (r) {
       var b = MN.BAHAN[r[0]], ok = o.racik.indexOf(r[0]) >= 0;
       var jml = b.jenis === 'cup' || r[0] === 'es' || r[0] === 'air' ? '' : ' ' + r[1] + (b.perMl ? ' ml' : ' g');
@@ -530,6 +636,7 @@
   }
   function serahkan() {
     if (!R || !lengkap(R.o)) return;
+    if (R.pesanan) return siapkanPesanan();
     var o = R.o, hasil = JUAL.layani(S, o, o.biaya || 0);
     if (hasil === false) toast('Uang kecil di laci tidak cukup untuk kembalian. Pembeli batal.', 2600);
     else if (typeof hasil === 'string' && hasil.indexOf('QRIS') >= 0) toast('Kembalian kurang, pembeli bayar pakai QRIS.', 2200);
@@ -537,6 +644,112 @@
     if (lanjutO) { R = { o: lanjutO }; lanjutO.keadaan = 'dilayani'; gambarRacik(); }
     else tutupRacik();
     perbaruiHUD(true);
+  }
+
+  /* ---------- pesanan antar ---------- */
+  function judulPesanan(p) {
+    return p.jenis === 'wa' ? 'WhatsApp ' + p.nama : p.jenis === 'ojol' ? ANTAR.namaPlatform(p) + ' ' + p.nama : p.nama;
+  }
+  function racikPesanan(id) {
+    var p = ANTAR.cari(S, id); if (!p) return;
+    if (S.fase === 'malam') return toast('Kedai sudah tutup.');
+    var x = ANTAR.itemBerikut(p); if (!x) return;
+    if (R) { if (R.o.keadaan === 'dilayani' && !R.pesanan) R.o.keadaan = 'antre'; R = null; }
+    tutupLembar();
+    R = { pesanan: p, item: x, o: { menu: ANTAR.menuDari(x.menu), racik: [], biaya: 0, keadaan: 'dilayani', bayar: p.bayar } };
+    $('app').classList.add('meracik'); $('racik').hidden = false; $('bawah').hidden = true;
+    gambarRacik('');
+  }
+  function siapkanPesanan() {
+    var p = R.pesanan, x = R.item, o = R.o, sisa = x.qty - 1;
+    if (p.status === 'batal') { R.o.biaya = 0; S.hariIni.terbuang += o.biaya; tutupRacik(); return toast('Pesanan ini sudah dibatalkan.'); }
+    var kurang = sisa > 0 ? STOK.kurangResep(S, o.menu, sisa) : null;
+    if (kurang) return gambarRacik(kurang + ' tidak cukup untuk ' + x.qty + ' gelas. Belanja dulu.', true);
+    var tambahan = sisa > 0 ? STOK.pakaiResep(S, o.menu, sisa) : { biaya: 0, operasional: 0 };
+    S.hariIni.operasional = (S.hariIni.operasional || 0) + tambahan.operasional;
+    ANTAR.itemSiap(S, p, x, o.biaya + tambahan.biaya);
+    ADEGAN.racikSaja();
+    var lanjutX = ANTAR.itemBerikut(p);
+    if (lanjutX) { R = { pesanan: p, item: lanjutX, o: { menu: ANTAR.menuDari(lanjutX.menu), racik: [], biaya: 0, keadaan: 'dilayani', bayar: p.bayar } }; return gambarRacik('Lanjut menu berikutnya di pesanan ini.'); }
+    R.o.biaya = 0; tutupRacik();
+    toast(p.jenis === 'ojol' ? 'Pesanan ' + judulPesanan(p) + ' siap, menunggu driver.' : 'Pesanan ' + judulPesanan(p) + ' siap diantar.', 2400);
+    perbaruiPesanan();
+  }
+  function perbaruiPesanan() {
+    var a = ANTAR.aktif(S), b = $('b-pesanan');
+    if (!a.length) { b.hidden = true; return; }
+    var baru = a.filter(function (p) { return p.status === 'baru'; }).length, racik = a.filter(function (p) { return p.status === 'racik'; }).length, siap = a.filter(function (p) { return p.status === 'siap' && p.jenis !== 'ojol'; }).length;
+    var bagian = []; if (baru) bagian.push(baru + ' baru'); if (racik) bagian.push(racik + ' perlu diracik'); if (siap) bagian.push(siap + ' siap antar');
+    b.hidden = false; b.classList.toggle('ada-baru', baru > 0);
+    b.textContent = 'Pesanan antar · ' + (bagian.join(' · ') || a.length + ' berjalan');
+  }
+  function kartuPesanan(p) {
+    var gelas = ANTAR.jumlahGelas(p), nilai = ANTAR.nilaiMenu(p), tw = ANTAR.waktu(S);
+    var isi = p.items.map(function (x) { return x.qty + '× ' + ANTAR.menuDari(x.menu).pendek + (x.siap >= x.qty ? ' ✓' : ''); }).join(', ');
+    var info = p.jarak.toLocaleString('id-ID') + ' km · ' + (p.jenis === 'ojol' ? 'harga aplikasi ' + rupiah(nilai) : rupiah(nilai) + (p.ongkir ? ' + ongkir ' + rupiah(p.ongkir) : ' · gratis ongkir') + ' · bayar ' + (p.bayar === 'qris' ? 'QRIS' : p.bayar));
+    var status = '', tombol = '';
+    if (p.jenis === 'besar') info += ' · untuk ' + (Math.floor(p.untuk / 1440) === S.hari ? 'hari ini' : namaTanggal(Math.floor(p.untuk / 1440))) + ' pukul ' + jam(p.untuk % 1440);
+    if (p.status === 'baru') {
+      status = p.jenis === 'besar' ? 'Minta ' + p.minta + '. Bayar transfer setelah sampai.' : 'Balas dalam ' + Math.max(1, Math.ceil(15 - (tw - p.dibuat))) + ' menit atau pembeli batal.';
+      tombol = '<button type="button" class="chip-tombol pilih" data-psn="terima:' + p.id + '">Terima</button><button type="button" class="chip-tombol" data-psn="tolak:' + p.id + '">Tolak</button>';
+    } else if (p.status === 'racik') {
+      status = p.jenis === 'ojol' ? 'Driver datang pukul ' + jam(p.driver % 1440) + '. Batal kalau lewat ' + jam((p.dibuat + 30) % 1440) + '.' : 'Perlu diracik ' + gelas + ' gelas.';
+      tombol = '<button type="button" class="chip-tombol pilih" data-psn="racik:' + p.id + '">Racik</button>';
+    } else if (p.status === 'siap') {
+      if (p.jenis === 'ojol') status = 'Siap. Driver mengambil pukul ' + jam(Math.max(p.driver, tw) % 1440) + '.';
+      else {
+        status = 'Siap sejak ' + jam(p.siapPada % 1440) + '.';
+        tombol = '<button type="button" class="chip-tombol pilih" data-psn="sendiri:' + p.id + '">Antar sendiri</button>' +
+          (p.bayar !== 'tunai' ? '<button type="button" class="chip-tombol" data-psn="kurir:' + p.id + '">' + esc(N.kurir.nama) + ' ' + rupiah(ANTAR.tarifKurir(p.jarak)) + '</button>' : '');
+      }
+    } else if (p.status === 'jalan') status = esc(N.kurir.nama) + ' mengantar, sampai sekitar pukul ' + jam(p.eta % 1440) + '.';
+    return '<li class="kartu-pesanan ' + p.jenis + '"><div><b>' + esc(judulPesanan(p)) + '</b><small>' + esc(isi) + '</small><small>' + esc(info) + '</small><small class="status">' + esc(status) + '</small></div>' +
+      (tombol ? '<div class="chip-baris">' + tombol + '</div>' : '') + '</li>';
+  }
+  function bukaPesanan(pesan) {
+    var a = ANTAR.aktif(S), siapSendiri = a.filter(function (p) { return p.status === 'siap' && p.jenis !== 'ojol'; });
+    var urut = { baru: 0, racik: 1, siap: 2, jalan: 3 };
+    a.sort(function (x, y) { return urut[x.status] - urut[y.status]; });
+    var selesaiHariIni = S.pesanan.filter(function (p) { return (p.status === 'selesai' || p.status === 'batal') && Math.floor((p.selesai || p.dibuat) / 1440) === S.hari; });
+    bukaLembar('pesanan', kepala('Pesanan antar', 'WhatsApp, aplikasi pesan-antar, dan pesanan besar') +
+      (pesan ? '<p class="racik-pesan ' + (pesan.salah ? 'salah' : 'siap') + '">' + esc(pesan.teks) + '</p>' : '') +
+      (siapSendiri.length > 1 ? '<div style="margin:6px 0 10px"><button type="button" class="aksi kecil" data-psn="semua:1">Antar ' + siapSendiri.length + ' pesanan sekaligus</button></div>' : '') +
+      (a.length ? '<ul class="daftar pesanan">' + a.map(kartuPesanan).join('') + '</ul>' : '<p class="catatan">Belum ada pesanan. Pesanan WhatsApp datang saat kedai buka; daftar ke GoFood, GrabFood, atau ShopeeFood lewat HP untuk pesanan dari aplikasi.</p>') +
+      (selesaiHariIni.length ? '<h3 class="subjudul">Hari ini</h3><ul class="daftar angka">' + selesaiHariIni.map(function (p) { return baris(esc(judulPesanan(p)), p.status === 'selesai' ? 'selesai' : esc(p.alasan || 'batal'), p.status === 'batal' ? 'rugi' : ''); }).join('') + '</ul>' : '') +
+      '<p class="catatan">Pesanan tunai harus diantar sendiri. Antar sendiri saat kedai buka berarti kedai ditinggal: pembeli yang antre bisa pergi.</p>');
+  }
+  function lompatWaktu(menit) {
+    gelapSebentar();
+    var kabar = [];
+    for (var i = 0; i < menit; i++) {
+      if (S.fase === 'buka' && S.menit + 1 >= S.jamTutup * 60) break;
+      S.menit += 1;
+      if (S.fase === 'buka') JUAL.langkah(S, 1);
+      STOK.jalan(S, 1);
+      kabar = kabar.concat(ANTAR.jalan(S, 1, MN.KERAMAIAN[Math.floor(S.menit / 60) % 24]));
+    }
+    return kabar;
+  }
+  function aksiPesanan(nama, id) {
+    var r, kabar;
+    if (nama === 'terima') r = ANTAR.terima(S, id);
+    else if (nama === 'tolak') r = ANTAR.tolak(S, id);
+    else if (nama === 'racik') return racikPesanan(id);
+    else if (nama === 'kurir') r = ANTAR.pakaiKurir(S, id);
+    else if (nama === 'sendiri' || nama === 'semua') {
+      var ids = nama === 'semua' ? ANTAR.aktif(S).filter(function (p) { return p.status === 'siap' && p.jenis !== 'ojol'; }).map(function (p) { return p.id; }) : [id];
+      if (R) tutupRacik();
+      r = ANTAR.antarSendiri(S, ids);
+      if (r && r.ok) {
+        kabar = r.kabar.concat(lompatWaktu(r.menit));
+        simpan(); perbaruiHUD(true); perbaruiPesanan();
+        return bukaLembar('hasil', kepala('Pulang mengantar', 'Pukul ' + jam(S.menit)) + '<ul class="daftar kabar">' + kabar.map(function (k) { return '<li><span>' + esc(k) + '</span></li>'; }).join('') + '</ul>' +
+          '<div style="margin-top:16px"><button type="button" class="aksi" data-tutup>Kembali ke kedai</button></div>');
+      }
+    }
+    if (r === true) { simpan(); perbaruiHUD(true); }
+    perbaruiPesanan();
+    bukaPesanan(r === true ? null : { teks: r, salah: true });
   }
 
   /* ---------- putaran waktu ---------- */
@@ -548,8 +761,8 @@
       dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec;
       S.menit += dMenit;
       if (S.fase === 'buka') JUAL.langkah(S, dMenit);
-      var kabarStok = STOK.jalan(S, dMenit);
-      if (kabarStok.length) { toast(kabarStok.join(' '), 2600); perbaruiHUD(true); if (R) gambarRacik(); }
+      var kabarStok = STOK.jalan(S, dMenit).concat(ANTAR.jalan(S, dMenit, MN.KERAMAIAN[Math.floor(S.menit / 60) % 24]));
+      if (kabarStok.length) { toast(kabarStok.join(' '), 2600); perbaruiHUD(true); perbaruiPesanan(); if (R) gambarRacik(); }
       if (S.fase === 'pagi' && S.menit >= S.jamBuka * 60) bukaKedai(true);
       if (S.fase === 'buka' && S.menit >= S.jamTutup * 60) tutupKedai();
       if (S.menit - menitSimpan >= 30) simpan();
@@ -561,7 +774,7 @@
       perbaruiHUD();
     }
     var ruang = layar !== 'main' ? 0 : R ? $('racik').offsetHeight : $('bawah').offsetHeight;
-    ADEGAN.gambar(main ? { menit: S.menit, buka: S.fase === 'buka', kecepatan: S.kec, jalan: !lembar && S.kec > 0 && S.fase !== 'malam', pembeli: JUAL.semua(), dMenit: dMenit, ruangBawah: ruang }
+    ADEGAN.gambar(main ? { menit: S.menit, buka: S.fase === 'buka', kecepatan: S.kec, jalan: !lembar && S.kec > 0 && S.fase !== 'malam', pembeli: JUAL.semua(), dMenit: dMenit, ruangBawah: ruang, motorParkir: S.motor ? S.motor.id : null }
       : { menit: 1050, buka: true, kecepatan: 1, jalan: true, pembeli: [], dMenit: 0 }, t);
     requestAnimationFrame(putar);
   }
@@ -593,6 +806,7 @@
     $('r-tunda').onclick = tutupRacik;
     $('b-kal').onclick = function () { bukaKalender(); };
     $('b-hp').onclick = function () { app.pesan = ''; bukaHP('beranda'); };
+    $('b-pesanan').onclick = function () { bukaPesanan(); };
     $('h-uang').onclick = function () { if (S && S.fase !== 'pagi') bukaLaporanSementara(); };
     $('b-atur').onclick = function () { konfirmasiUlang = false; bukaAtur(); };
     document.querySelector('.kec').onclick = function (e) {
@@ -603,11 +817,12 @@
       if (e.target === $('lembar') || e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
       if ((b = e.target.closest('[data-besok]'))) return besok();
-      if ((b = e.target.closest('[data-app]'))) { app.pesan = ''; return bukaHP(b.dataset.app); }
+      if ((b = e.target.closest('[data-psn]'))) { var ps = b.dataset.psn.split(':'); return aksiPesanan(ps[0], ps.slice(1).join(':')); }
+      if ((b = e.target.closest('[data-app]'))) { app.pesan = ''; if (b.dataset.app === 'wa') return bukaPesanan(); return bukaHP(b.dataset.app); }
       if ((b = e.target.closest('[data-aksi]'))) { var pa = b.dataset.aksi.split(':'); return aksiHP(pa[0], pa[1]); }
       if ((b = e.target.closest('[data-bulan]'))) { var m = kal.m + (+b.dataset.bulan), y = kal.y; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } return bukaKalender(y, m); }
       if ((b = e.target.closest('[data-tg]'))) { kal.pilih = +b.dataset.tg; return bukaKalender(kal.y, kal.m); }
-      if ((b = e.target.closest('[data-jam]'))) { var p = b.dataset.jam.split(':'); return ubahJam(p[0], +p[1]); }
+      if ((b = e.target.closest('[data-jam]'))) { var p = b.dataset.jam.split(':'); if (p.length === 3) return ubahJam('ongkir.' + p[1], +p[2]); return ubahJam(p[0], +p[1]); }
       if ((b = e.target.closest('[data-ulang]'))) {
         if (!konfirmasiUlang) { konfirmasiUlang = true; return bukaAtur(); }
         SIMPAN.hapus(); S = null; konfirmasiUlang = false; JUAL.kosongkan(); tutupLembar(); tampil('awal');

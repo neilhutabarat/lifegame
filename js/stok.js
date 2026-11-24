@@ -6,7 +6,7 @@
   /* setelan tempat belanja */
   var TEMPAT = {
     pasar: { nama: 'Pasar', kali: 0.95, bayar: ['tunai'], ongkos: 20000, ongkosNama: 'Ojek pulang-pergi', makanWaktu: 60,
-      ket: 'Paling murah, bayar tunai. Harus dijemput ke pasar (ojek pulang-pergi, sekitar 1 jam). Buka sampai pukul 12.00.' },
+      ket: 'Paling murah, bayar tunai. Harus dijemput ke pasar: naik ojek pulang-pergi sekitar 1 jam, atau pakai motor sendiri. Buka sampai pukul 12.00.' },
     grosir: { nama: 'Grosir', kali: 1.05, bayar: ['tunai', 'qris', 'transfer'], ongkos: 10000, ongkosNama: 'Ongkir antar', antarMenit: 120,
       ket: 'Toko grosir, pangkalan gas, dan depot air sekitar. Sedikit lebih mahal, diantar sekitar 2 jam.' },
     online: { nama: 'Online', kali: 0.9, bayar: ['qris', 'transfer'], ongkos: 15000, ongkosNama: 'Ongkir', antarHari: [2, 3],
@@ -73,6 +73,22 @@
     }
     return { ok: true, biaya: ambil(S, bahan, butuh), operasional: 0 };
   }
+  /* bahan resep untuk n gelas: { idStok: jumlah } */
+  function butuhResep(menu, n) {
+    var b = {};
+    menu.resep.forEach(function (r) {
+      if (r[0] === 'air') { b.galon = (b.galon || 0) + M.AIR_PANAS.galon * n; b.gas = (b.gas || 0) + M.AIR_PANAS.gas * n; return; }
+      b[r[0]] = (b[r[0]] || 0) + (M.TAP_STOK[r[0]] != null ? M.TAP_STOK[r[0]] * r[1] : r[1]) * n;
+    });
+    return b;
+  }
+  /* nama barang yang kurang, atau null kalau cukup */
+  function kurangResep(S, menu, n) { var b = butuhResep(menu, n); for (var id in b) if (!ada(S, id, b[id])) return M.BARANG[id].nama; return null; }
+  function pakaiResep(S, menu, n) {
+    var hasil = { biaya: 0, operasional: 0 };
+    for (var i = 0; i < n; i++) menu.resep.forEach(function (r) { var x = pakaiBahan(S, r[0], r[1]); hasil.biaya += x.biaya || 0; hasil.operasional += x.operasional || 0; });
+    return hasil;
+  }
   function sisaTeks(S, id) {
     var s = S.stok[id].jml, b = M.BARANG[id];
     if (b.satuan === 'buah') return Math.floor(s) + ' buah';
@@ -94,7 +110,9 @@
   function hitung(S, tempat, keranjang) {
     var t = TEMPAT[tempat], sub = 0, isi = 0;
     for (var id in keranjang) if (keranjang[id] > 0) { sub += harga(S, id, tempat) * keranjang[id]; isi++; }
-    return { sub: sub, ongkos: isi ? t.ongkos : 0, total: sub + (isi ? t.ongkos : 0) };
+    var ongkos = isi ? t.ongkos : 0;
+    if (tempat === 'pasar' && g.KK_MOTOR && g.KK_MOTOR.punya(S)) ongkos = 0; /* pakai motor sendiri: bayar bensin, bukan ojek */
+    return { sub: sub, ongkos: ongkos, total: sub + ongkos };
   }
   function salesMampir(S) {
     var d = KAL.tgl(S.hari).dow;
@@ -104,9 +122,11 @@
     var t = TEMPAT[tempat], h = hitung(S, tempat, keranjang), U = g.KK_UANG;
     if (!h.sub) return 'Keranjang masih kosong.';
     if (t.bayar.indexOf(bayar) < 0) return 'Cara bayar ini tidak bisa di ' + t.nama + '.';
+    var perjalanan = null;
     if (tempat === 'pasar') {
       if (S.fase === 'buka') return 'Kedai sedang buka. Belanja ke pasar sebelum kedai buka.';
       if (S.menit >= 720) return 'Pasar sudah tutup. Pasar buka sampai pukul 12.00.';
+      if (g.KK_MOTOR && g.KK_MOTOR.punya(S)) { if (!g.KK_MOTOR.cukup(S, 6)) return 'Bensin motor tidak cukup ke pasar. Isi bensin dulu.'; perjalanan = true; }
     }
     if (tempat === 'sales') {
       if (!salesMampir(S)) return 'Sales tidak sedang di kedai. Sales mampir Senin dan Kamis pukul 10.00–12.00.';
@@ -137,7 +157,12 @@
     S.belanjaTerakhir[tempat] = JSON.parse(JSON.stringify(keranjang));
     /* ongkos kirim atau ojek dibagi rata ke nilai stok */
     var bagiOngkos = h.ongkos / barang.length;
-    if (tempat === 'pasar' || tempat === 'sales') { masukStok(S, barang, bagiOngkos); return { ok: true, waktu: t.makanWaktu || 0 }; }
+    if (tempat === 'pasar' || tempat === 'sales') {
+      masukStok(S, barang, bagiOngkos);
+      var lama = t.makanWaktu || 0;
+      if (perjalanan) { var r = g.KK_MOTOR.jalan(S, 6, 1); lama = 30 + r.menit; }
+      return { ok: true, waktu: lama };
+    }
     var tiba = tempat === 'grosir' ? { hari: S.hari, menit: S.menit + t.antarMenit } :
       { hari: S.hari + t.antarHari[0] + Math.floor(Math.random() * (t.antarHari[1] - t.antarHari[0] + 1)), menit: 600 + Math.floor(Math.random() * 300) };
     if (tiba.menit >= 1440) { tiba.hari++; tiba.menit -= 1440; }
@@ -207,6 +232,6 @@
   }
 
   g.KK_STOK = { TEMPAT: TEMPAT, siapkan: siapkan, harga: harga, perubahan: perubahan, pakaiBahan: pakaiBahan, ambil: ambil, ada: ada,
-    sisaTeks: sisaTeks, barangDari: barangDari, menipis: menipis, hitung: hitung, beli: beli, bayarSales: bayarSales, salesMampir: salesMampir,
+    sisaTeks: sisaTeks, barangDari: barangDari, kurangResep: kurangResep, pakaiResep: pakaiResep, menipis: menipis, hitung: hitung, beli: beli, bayarSales: bayarSales, salesMampir: salesMampir,
     jalan: jalan, gantiHari: gantiHari, UHT_TAHAN_HARI: UHT_TAHAN_HARI };
 })(window);

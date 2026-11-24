@@ -209,3 +209,16 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 #gelap { position: absolute; inset: 0; background: #0b1018; opacity: 0; pointer-events: none; z-index: 5; }
 #gelap.jalan { animation: gelap 1.3s ease-in-out; }
 @keyframes gelap { 0% { opacity: 0; } 35%, 65% { opacity: .92; } 100% { opacity: 0; } }
+
+/* ---------- tahap 5: motor dan pesanan antar ---------- */
+.pesanan-pill { justify-self: center; padding: 9px 16px; border-radius: 999px; background: rgba(29,43,51,.92); color: #fff; font-weight: 800; font-size: 13.5px; box-shadow: 0 6px 16px -8px rgba(0,0,0,.6); }
+.pesanan-pill.ada-baru { background: #25a35a; animation: denyut 1.2s ease-in-out infinite; }
+.daftar.pesanan li { display: grid; gap: 8px; align-items: start; }
+.kartu-pesanan b { display: block; font-size: 15px; }
+.kartu-pesanan small { display: block; font-size: 12px; color: var(--tinta-pudar); font-weight: 700; margin-top: 2px; white-space: normal !important; }
+.kartu-pesanan small.status { color: var(--kontainer-tua); }
+.kartu-pesanan .chip-baris { margin-top: 0; }
+.kartu-pesanan.ojol { box-shadow: inset 3px 0 0 #00aa13; }
+.kartu-pesanan.besar { box-shadow: inset 3px 0 0 var(--kunyit); }
+.tombol-tegak { display: grid; gap: 6px; flex: none; }
+.saldo-besar .meteran { background: rgba(255,255,255,.18); margin-top: 8px; }

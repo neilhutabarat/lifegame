@@ -9,6 +9,8 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 - `js/adegan.js` — adegan kedai di kanvas 2D
 - `js/uang.js` — laci, merchant QRIS, bank, pajak, KUR
 - `js/stok.js` — stok, belanja, harga bergerak, kiriman
+- `js/motor.js` — motor, kredit, bensin, perawatan
+- `js/antar.js` — pesanan antar dan platform
 - `js/jualan.js` — pembeli datang, antre, bayar
 - `js/data/menu.js` — bahan, resep, HPP, jenis pembeli
 - `js/main.js` — alur game
@@ -20,4 +22,5 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 2. Jualan inti: menu, pembeli antre, racik dengan tap, bayar tunai dan QRIS, laporan malam ✔
 3. Uang: laci (uang kecil dan besar), QRIS cair hari kerja berikutnya, bank, biaya admin, PPh final, NIB, KUR ✔
 4. Belanja dan stok: pasar, grosir, online, sales; harga bergerak tiap Senin; es mencair, susu basi ✔
-5. Motor dan antar (berikutnya)
+5. Motor dan antar: dealer, kredit, bekas, bensin, oli, servis, pajak; pesanan WhatsApp, GoFood/GrabFood/ShopeeFood, pesanan besar; antar sendiri atau kurir ✔
+6. Karyawan (berikutnya)

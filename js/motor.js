@@ -1,0 +1,200 @@
+/* motor.js — beli motor (tunai, kredit, bekas), bensin, perawatan, pajak tahunan, dan perjalanan.
+   Rancangan bagian "Motor & bensin". Angka bertanda "perkiraan" atau "setelan" disetel di tahap 10. */
+(function (g) {
+  'use strict';
+  var N = g.KK_NYATA, KAL = g.KK_KAL, R = N.rawat, KR = N.kreditMotor;
+  var KECEPATAN = { biasa: 25, pulangKantor: 18, hujan: 15 };
+
+  function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+  function wilayah(S) { var k = N.kota.filter(function (x) { return x.id === S.kota; })[0]; return (k && k.bbm) || 'sumatera'; }
+  function catatBank(S, ket, jml, n) { S.bank.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket, jml: jml }); if (S.bank.mutasi.length > 40) S.bank.mutasi.length = 40; }
+
+  function siapkan(S) {
+    if (S.motor === undefined) S.motor = null;
+    S.bbmFaktor = S.bbmFaktor || { pertamax: 1, turbo: 1 };
+    if (!S.pasarBekas) bekasBaru(S);
+    return S;
+  }
+  function hargaBbm(S, jenis) {
+    if (jenis === 'listrik') return R.tarifListrik;
+    var h = N.bbm[wilayah(S)][jenis];
+    return jenis === 'pertalite' ? h : Math.round(h * (S.bbmFaktor[jenis] || 1) / 50) * 50;
+  }
+  function punya(S) { return !!S.motor; }
+
+  /* ---------- beli ---------- */
+  function motorBaru(model) {
+    return { id: model.id, nama: model.nama, harga: model.harga, kml: model.kml, bbm: model.bbm, tangki: model.tangki || 0, muat: model.muat,
+      jarakPenuh: model.jarakPenuh || 0, kwh: model.kwh || 0, kuat: !!model.kuat, olisamping: !!model.olisamping,
+      isi: model.bbm === 'listrik' ? 0 : 1, baterai: model.bbm === 'listrik' ? model.jarakPenuh : 0, km: 0, kmOli: 0, kmServis: 0, bekas: null, aks: {}, kredit: null };
+  }
+  function cekGarasi(S) { if (S.motor) return 'Sudah punya ' + S.motor.nama + '. Satu motor dulu untuk sekarang.'; return null; }
+  function beliTunai(S, id) {
+    var e = cekGarasi(S); if (e) return e;
+    var m = N.motor.filter(function (x) { return x.id === id; })[0];
+    if (S.bank.saldo < m.harga) return 'Saldo rekening tidak cukup untuk beli tunai ' + rp(m.harga) + '.';
+    S.bank.saldo -= m.harga; catatBank(S, 'Beli ' + m.nama + ' tunai', -m.harga);
+    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365;
+    return true;
+  }
+  function hitungKredit(harga, dp, tenor) {
+    var uangMuka = Math.round(harga * dp / 100000) * 100000, pokok = harga - uangMuka;
+    var angsuran = Math.round((pokok * (1 + KR.bungaFlat * tenor) / tenor + harga * KR.asuransi) / 1000) * 1000;
+    return { dp: uangMuka, angsuran: angsuran, total: uangMuka + angsuran * tenor };
+  }
+  function beliKredit(S, id, dp, tenor) {
+    var e = cekGarasi(S); if (e) return e;
+    if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
+    var m = N.motor.filter(function (x) { return x.id === id; })[0], k = hitungKredit(m.harga, dp, tenor);
+    if (S.bank.saldo < k.dp) return 'Saldo rekening tidak cukup untuk uang muka ' + rp(k.dp) + '.';
+    S.bank.saldo -= k.dp; catatBank(S, 'Uang muka kredit ' + m.nama, -k.dp);
+    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365;
+    S.motor.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    return true;
+  }
+  function bekasBaru(S) {
+    var unit = [];
+    for (var i = 0; i < 4; i++) {
+      var b = N.motorBekas[i === 0 ? 0 : 1 + Math.floor(Math.random() * (N.motorBekas.length - 1))];
+      if (i === 1 && Math.random() < 0.5) b = N.motorBekas[0];
+      var tahun = b.tahun[0] + Math.floor(Math.random() * (b.tahun[1] - b.tahun[0] + 1));
+      var kondisi = ['baik', 'sedang', 'kurang'][Math.floor(Math.random() * 3)];
+      var mutu = { baik: 0.8, sedang: 0.45, kurang: 0.15 }[kondisi] + (Math.random() - 0.5) * 0.2;
+      var harga = Math.round((b.min + (b.maks - b.min) * Math.max(0, Math.min(1, mutu))) / 100000) * 100000;
+      unit.push({ id: b.id, tahun: tahun, kondisi: kondisi, km: 15000 + Math.floor(Math.random() * 60000), harga: harga });
+    }
+    S.pasarBekas = { minggu: Math.floor(S.hari / 7), unit: unit };
+  }
+  function beliBekas(S, i) {
+    var e = cekGarasi(S); if (e) return e;
+    var u = S.pasarBekas.unit[i]; if (!u) return 'Unit sudah laku.';
+    var b = N.motorBekas.filter(function (x) { return x.id === u.id; })[0];
+    if (S.bank.saldo < u.harga) return 'Saldo rekening tidak cukup.';
+    S.bank.saldo -= u.harga; catatBank(S, 'Beli ' + b.nama + ' ' + u.tahun, -u.harga);
+    var m = motorBaru({ id: b.id, nama: b.nama.replace(' (bekas)', '') + ' ' + u.tahun, harga: u.harga, kml: b.kml, bbm: b.bbm, tangki: b.tangki, muat: b.muat, kuat: b.kuat, olisamping: b.olisamping });
+    m.bekas = { kondisi: u.kondisi, tahun: u.tahun }; m.km = u.km; m.kmOli = u.km - Math.floor(Math.random() * 2500); m.kmServis = u.km - Math.floor(Math.random() * 5000);
+    m.pajakTempo = S.hari + 30 + Math.floor(Math.random() * 300);
+    S.motor = m; S.pasarBekas.unit.splice(i, 1);
+    return true;
+  }
+
+  /* ---------- bensin, perawatan, aksesoris ---------- */
+  function isiBensin(S) {
+    var m = S.motor; if (!m) return 'Belum punya motor.';
+    if (m.bbm === 'listrik') return 'Motor listrik dicas di kedai tiap malam.';
+    var liter = Math.round((m.tangki - m.isi) * 100) / 100; if (liter < 0.2) return 'Tangki sudah penuh.';
+    var biaya = Math.round(liter * hargaBbm(S, m.bbm) / 100) * 100;
+    if (g.KK_UANG.laci(S) < biaya) return 'Uang di laci tidak cukup untuk bensin ' + rp(biaya) + '.';
+    bayarLaci(S, biaya); m.isi = m.tangki; S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
+    return { ok: true, liter: liter, biaya: biaya };
+  }
+  function bayarLaci(S, jml) {
+    var dariBesar = Math.min(S.uang.besar, Math.floor(jml / 50000) * 50000), sisa = jml - dariBesar;
+    if (sisa > S.uang.kecil) { dariBesar = Math.min(S.uang.besar, jml); sisa = jml - dariBesar; }
+    S.uang.besar -= dariBesar; S.uang.kecil -= sisa;
+  }
+  function rawat(S, jenis) {
+    var m = S.motor; if (!m) return 'Belum punya motor.';
+    var biaya = jenis === 'oli' ? R.oli : R.servis;
+    if (g.KK_UANG.laci(S) < biaya) return 'Uang di laci tidak cukup.';
+    bayarLaci(S, biaya); S.hariIni.bengkel = (S.hariIni.bengkel || 0) + biaya;
+    if (jenis === 'oli') m.kmOli = m.km; else { m.kmServis = m.km; m.kmOli = m.km; }
+    return true;
+  }
+  function beliAks(S, id) {
+    var m = S.motor; if (!m) return 'Belum punya motor.';
+    var a = N.aksesoris.filter(function (x) { return x.id === id; })[0];
+    if (m.aks[id]) return 'Sudah terpasang.';
+    if (g.KK_UANG.laci(S) < a.harga) return 'Uang di laci tidak cukup.';
+    bayarLaci(S, a.harga); m.aks[id] = true; S.hariIni.belanja = (S.hariIni.belanja || 0) + a.harga;
+    return true;
+  }
+  function bayarPajak(S) {
+    var m = S.motor; if (!m) return 'Belum punya motor.';
+    var t = tagihanPajak(S); if (!t) return 'Pajak belum jatuh tempo.';
+    if (S.bank.saldo < t) return 'Saldo rekening tidak cukup.';
+    S.bank.saldo -= t; catatBank(S, 'Pajak tahunan ' + m.nama + ' (PKB + SWDKLLJ)', -t);
+    m.pajakTempo += 365; m.dendaPajak = 0; return true;
+  }
+  function tagihanPajak(S) {
+    var m = S.motor; if (!m || S.hari < m.pajakTempo - 30) return 0;
+    return Math.round(m.harga * R.pkb / 1000) * 1000 + R.swdkllj + (m.dendaPajak || 0);
+  }
+  function muatan(S) {
+    var m = S.motor; if (!m) return 0;
+    return Math.max(m.muat, m.aks.box ? 20 : 0, m.aks.tas ? 12 : 0);
+  }
+  function telatOli(S) { var m = S.motor; return m ? Math.max(0, m.km - m.kmOli - R.oliKm) : 0; }
+  function telatServis(S) { var m = S.motor; return m ? Math.max(0, m.km - m.kmServis - R.servisKm) : 0; }
+  function peluangMogok(S) {
+    var m = S.motor; if (!m) return 0;
+    var p = m.bekas ? { baik: 0.01, sedang: 0.025, kurang: 0.05 }[m.bekas.kondisi] : 0.003;
+    if (m.olisamping) p += 0.01;
+    p += (telatOli(S) + telatServis(S)) / 1000 * 0.02;
+    return Math.min(0.35, p);
+  }
+
+  /* ---------- perjalanan (km pulang-pergi) ---------- */
+  function kecepatan(S) {
+    var menit = S.menit % 1440;
+    if (menit >= 990 && menit <= 1110) return KECEPATAN.pulangKantor;
+    return KECEPATAN.biasa;
+  }
+  function cukup(S, km) {
+    var m = S.motor; if (!m) return false;
+    return m.bbm === 'listrik' ? m.baterai >= km : m.isi >= km / m.kml * (m.olisamping ? 1 : 1);
+  }
+  /* jalan: kurangi bensin, tambah km, hitung waktu dan kejadian */
+  function jalan(S, km, stop) {
+    var m = S.motor;
+    if (!cukup(S, km)) return { ok: false, alasan: m.bbm === 'listrik' ? 'Baterai motor tidak cukup.' : 'Bensin tidak cukup. Isi bensin dulu di aplikasi Motor.' };
+    var menit = Math.round(km / kecepatan(S) * 60) + 3 * (stop || 1), kabar = [];
+    if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml);
+    if (m.olisamping) S.hariIni.bensin = (S.hariIni.bensin || 0) + Math.round(km / m.kml * 3000); /* oli samping 2-tak, perkiraan */
+    m.km += km;
+    if (Math.random() < peluangMogok(S)) {
+      var bengkel = 50000 + Math.floor(Math.random() * 3) * 50000;
+      menit += 60; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; bayarLaci(S, Math.min(bengkel, g.KK_UANG.laci(S)));
+      kabar.push('Motor mogok di jalan. Ke bengkel ' + rp(bengkel) + ', telat sekitar 1 jam.');
+    }
+    return { ok: true, menit: menit, kabar: kabar };
+  }
+
+  /* ---------- ganti hari ---------- */
+  function gantiHari(S, nLama, nBaru) {
+    var kabar = [], tB = KAL.tgl(nBaru), m = S.motor;
+    if (tB.d === 1) {
+      ['pertamax', 'turbo'].forEach(function (j) { S.bbmFaktor[j] = Math.max(0.9, Math.min(1.15, S.bbmFaktor[j] * (1 + (Math.random() - 0.5) * 0.06))); });
+      kabar.push('Harga Pertamax bulan ini ' + rp(hargaBbm(S, 'pertamax')) + ' per liter.');
+    }
+    if (Math.floor(nBaru / 7) !== S.pasarBekas.minggu) bekasBaru(S);
+    if (!m) return kabar;
+    if (m.bbm === 'listrik' && m.baterai < m.jarakPenuh) {
+      var kwh = (m.jarakPenuh - m.baterai) / m.jarakPenuh * m.kwh, biaya = Math.round(kwh * R.tarifListrik);
+      m.baterai = m.jarakPenuh; S.hariIni.listrikMotor = (S.hariIni.listrikMotor || 0) + biaya;
+    }
+    var k = m.kredit;
+    if (k && k.sisa > 0) {
+      if (tB.d === k.tempo) {
+        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; catatBank(S, 'Angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('Angsuran motor ' + rp(k.angsuran) + ' dipotong dari rekening. Sisa ' + k.sisa + ' bulan.'); }
+        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('Saldo kurang untuk angsuran motor. Denda harian berjalan dan tercatat di riwayat kredit.'); }
+      }
+      if (k.tunggakan > 0) {
+        k.denda += Math.round(k.tunggakan * KR.dendaHarian);
+        var bayar = Math.min(k.tunggakan + k.denda, S.bank.saldo);
+        if (bayar >= k.tunggakan + k.denda) { S.bank.saldo -= bayar; catatBank(S, 'Tunggakan + denda angsuran motor', -bayar, nBaru); kabar.push('Tunggakan motor dan denda ' + rp(bayar) + ' sudah dibayar.'); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; }
+        else if (k.bulanTelat >= KR.tarikSetelahBulan) { kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.'); S.motor = null; return kabar; }
+      }
+      if (k.sisa === 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('Kredit motor lunas. BPKB diambil di ' + KR.leasing + '.'); }
+    }
+    if (nBaru === m.pajakTempo - 14) kabar.push('Pajak tahunan ' + m.nama + ' jatuh tempo 2 minggu lagi.');
+    if (nBaru > m.pajakTempo && (nBaru - m.pajakTempo) % 30 === 1) { m.dendaPajak = (m.dendaPajak || 0) + Math.round(m.harga * R.pkb * R.dendaPajak); kabar.push('Pajak motor telat, denda bertambah.'); }
+    if (telatOli(S) > 0 && tB.dow === 1) kabar.push('Oli motor sudah lewat waktunya. Motor lebih sering mogok.');
+    return kabar;
+  }
+
+  g.KK_MOTOR = { siapkan: siapkan, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
+    beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
+    muatan: muatan, telatOli: telatOli, telatServis: telatServis, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan,
+    gantiHari: gantiHari, bayarLaci: bayarLaci };
+})(window);
