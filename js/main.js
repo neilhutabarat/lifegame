@@ -2833,7 +2833,7 @@
     var dMenit = 0, depanLama = main ? JUAL.depan() : null;
     var narik = main && S.ojek.online, trv = !!(main && S.travel && S.travel.aktif), tr = !!(main && (S.transit || S.hbRun));
     if (main && !lembar && !document.hidden && S.kec > 0 && !animasi) {
-      dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && S.ojek.trip ? OJEK.CEPAT_TRIP : 1) * (trv ? TRAVEL.cepatWaktu(S) : 1) * (S.transit ? S.transit.mult : S.hbRun ? S.hbRun.mult : 1);
+      dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && (S.ojek.trip || (S.hiburan && !S.ojek.tawaran)) ? OJEK.CEPAT_TRIP : 1) * (trv ? (S.hiburan && S.travel.status === 'tunggu' && S.travel.tujuan && S.travel.antri.length < TRAVEL.kursi(S) ? OJEK.CEPAT_TRIP : TRAVEL.cepatWaktu(S)) : 1) * (S.transit ? S.transit.mult : S.hbRun ? S.hbRun.mult : 1);
       if (S.transit) dMenit = Math.min(dMenit, S.transit.sisa); else if (S.hbRun) dMenit = Math.min(dMenit, S.hbRun.sisa);
       S.menit += dMenit;
       if (S.fase === 'buka' && !S.tutupSementara) JUAL.langkah(S, dMenit);

@@ -164,7 +164,7 @@
     var kosong = Math.round((m.tangki - m.isi) * 100) / 100; if (kosong < 0.2) return 'Tangki sudah penuh.';
     liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
     var biaya = Math.round(liter * hargaBbm(S, jenis) / 100) * 100;
-    if (!bayarTunaiMotor(S, biaya)) return (S.usaha && S.usaha.berhentiSewa ? 'Uang di dompet & rekening' : 'Uang di laci & dompet') + ' tidak cukup untuk bensin ' + rp(biaya) + '.';
+    if (!bayarTunaiMotor(S, biaya)) return 'Uang di dompet & rekening' + ' tidak cukup untuk bensin ' + rp(biaya) + '.';
     m.isi = Math.min(m.tangki, m.isi + liter); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
     m.ngelitik = RON[jenis] < RON[m.bbm];
     return { ok: true, liter: liter, biaya: biaya, jenis: jenis, ngelitik: m.ngelitik };

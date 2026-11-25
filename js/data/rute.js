@@ -92,7 +92,7 @@
   }
   function gigiInfo(S, jenis, id) {
     var gi = id || gigiEfektif(S, jenis), t = (jenis === 'mobil' ? GIGI : GIGI_MOTOR)[gi - 1];
-    return { id: gi, nama: t.nama, lo: t.lo, hi: t.hi, mid: (t.lo + t.hi) / 2, boros: t.boros, khusus: !!t.khusus };
+    return { id: gi, nama: t.nama, lo: t.lo, hi: t.hi, mid: (t.lo + t.hi) / 2, boros: t.boros * (jenis === 'mobil' ? 1.2 : 1.15) /* angka pabrik lebih irit dari pemakaian kota nyata: macet, stop-go, boncengan */, khusus: !!t.khusus };
   }
   function bolehKhususJalan(S) { var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S), jam = (S.menit % 1440) / 60; return !hujan && (jam >= 22 || jam < 5); }
   function nama(id) { return KOTA[id] ? KOTA[id].nama : id; }

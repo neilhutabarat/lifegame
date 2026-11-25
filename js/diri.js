@@ -213,7 +213,7 @@
         var pakaiOjek = S.ojek && S.ojek.online;
         var sedangTrip = pakaiOjek && S.ojek.trip;
         /* saat narik ojek membuka Google Maps / Apple Maps GPS + layar terang -> baterai jauh lebih boros sesuai kapasitas mAh HP */
-        var lajuKuras = sedangTrip ? 13.5 : pakaiOjek ? 9.8 : 3.6;
+        var lajuKuras = sedangTrip ? 8 : pakaiOjek ? 4.5 : 1.2; /* %/jam HP 5000 mAh: Maps+layar ±8, ojol standby ±4,5, HP diam ±1,2 */
         var turunBat = (5000 / mah) * lajuKuras * j;
         var sblm = S.hp.baterai;
         S.hp.baterai = Math.max(0, S.hp.baterai - turunBat);
@@ -731,7 +731,7 @@
     var cekK = pakaiKuota(S, 0.15);
     if (cekK !== true) return cekK;
     var hm = hpAktif(S);
-    var kuras = Math.round((5000 / (hm.mah || 5000)) * 9);
+    var kuras = Math.round((5000 / (hm.mah || 5000)) * 7);
     S.hp.baterai = Math.max(0, S.hp.baterai - kuras);
     S.diri.stamina = batas(S.diri.stamina + a.stamina);
     if (S.gadget && S.gadget[hm.id]) S.gadget[hm.id].pakai = (S.gadget[hm.id].pakai || 0) + 1;
@@ -1305,15 +1305,15 @@
   }
   /* hiburan HP saat menunggu: kuota terpakai per menit permainan (GB) */
   var HIBURAN = {
-    youtube: { nama: 'Nonton YouTube', gbMenit: 0.012, bat: 0.28 },
-    tiktok: { nama: 'Scroll TikTok / Reels', gbMenit: 0.008, bat: 0.25 },
-    unduh: { nama: 'Unduh file besar', gbMenit: 0.06, bat: 0.18 }
+    youtube: { nama: 'Nonton YouTube', gbMenit: 0.012, bat: 0.12 },
+    tiktok: { nama: 'Scroll TikTok / Reels', gbMenit: 0.008, bat: 0.11 },
+    unduh: { nama: 'Unduh file besar', gbMenit: 0.06, bat: 0.08 }
   };
   function hiburanJalan(S, dMenit) {
     var h = S.hiburan && HIBURAN[S.hiburan]; if (!h || !S.hp) return null;
     var r = pakaiKuota(S, h.gbMenit * dMenit);
     if (r !== true) { S.hiburan = null; return r; }
-    S.hp.baterai = Math.max(0, S.hp.baterai - h.bat * dMenit);
+    S.hp.baterai = Math.max(0, S.hp.baterai - h.bat * dMenit * (5000 / ((hpAktif(S) && hpAktif(S).mah) || 5000)));
     return null;
   }
   /* menikahi teman: pindah ke daftar keluarga */
