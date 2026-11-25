@@ -325,3 +325,6 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .kartu-hud.tanggal { display: flex; align-items: center; gap: 8px; }
 .kartu-hud.tanggal .tgl-teks { display: grid; min-width: 0; }
 .kartu-hud.tanggal .foto-hud { display: block; width: 36px; height: 36px; font-size: 0; }
+
+.diri > span.bisa-tap { cursor: pointer; border-radius: 6px; }
+.diri > span.bisa-tap:active { background: rgba(31,138,128,.15); }

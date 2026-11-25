@@ -64,6 +64,15 @@
     { id: 5, nama: '5', lo: 60, hi: 100, boros: 1.3 },
     { id: 6, nama: '⚡', lo: 100, hi: 200, boros: 2.0, khusus: true }
   ];
+  /* percepatan motor dan kendaraan umum selain mobil travel */
+  var GIGI_MOTOR = [
+    { id: 1, nama: '1', lo: 10, hi: 20, boros: 0.8 },
+    { id: 2, nama: '2', lo: 20, hi: 30, boros: 0.85 },
+    { id: 3, nama: '3', lo: 30, hi: 40, boros: 0.9 },
+    { id: 4, nama: '4', lo: 40, hi: 50, boros: 1.0 },
+    { id: 5, nama: '5', lo: 60, hi: 80, boros: 1.3 },
+    { id: 6, nama: '⚡', lo: 80, hi: 120, boros: 1.9, khusus: true }
+  ];
   var VMAX = { hatch: 140, mpv: 160, suv: 170, van: 160, sedan: 200, sport: 220 };
   var ISTIRAHAT = {
     menepi: { nama: 'Menepi tidur sebentar', menit: 20, biaya: 0, stamina: 22 },
@@ -73,6 +82,19 @@
   };
   var DASAR = { perKm: 520, tetap: 25000, minimal: 50000, tambahLaut: 40000 };
 
+  /* gigi yang sedang berlaku untuk perjalanan sehari-hari (ojek, pulang, berangkat). Hujan membatasi sampai 4, gigi ⚡ hanya malam 22.00-05.00 tanpa hujan */
+  function gigiEfektif(S, jenis) {
+    var gi = Math.max(1, Math.min(6, Math.round(S.gigiJalan || 2)));
+    var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S), jam = (S.menit % 1440) / 60;
+    if (hujan && gi > 4) gi = 4;
+    if (gi === 6 && (hujan || !(jam >= 22 || jam < 5))) gi = 5;
+    return gi;
+  }
+  function gigiInfo(S, jenis, id) {
+    var gi = id || gigiEfektif(S, jenis), t = (jenis === 'mobil' ? GIGI : GIGI_MOTOR)[gi - 1];
+    return { id: gi, nama: t.nama, lo: t.lo, hi: t.hi, mid: (t.lo + t.hi) / 2, boros: t.boros, khusus: !!t.khusus };
+  }
+  function bolehKhususJalan(S) { var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S), jam = (S.menit % 1440) / 60; return !hujan && (jam >= 22 || jam < 5); }
   function nama(id) { return KOTA[id] ? KOTA[id].nama : id; }
   function ruasAntara(a, b) { for (var i = 0; i < RUAS.length; i++) { var r = RUAS[i]; if ((r.a === a && r.b === b) || (r.a === b && r.b === a)) return r; } return null; }
   function tetangga(id) {
@@ -102,5 +124,5 @@
     var t = Math.max(DASAR.minimal, j.km * DASAR.perKm + DASAR.tetap) + (j.laut ? DASAR.tambahLaut : 0);
     return bulat5k(t);
   }
-  g.KK_RUTE = { kota: KOTA, ruas: RUAS, gigi: GIGI, vmax: VMAX, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
+  g.KK_RUTE = { kota: KOTA, ruas: RUAS, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
 })(window);

@@ -741,11 +741,24 @@
     }
     cx.restore();
   }
+  function gambarHbUmum(s, t) {
+    /* pertemuan di luar pasangan sah: kamar digelapkan dan waktu berjalan */
+    var ug = Math.min(1, s.hbAnim.u || 0);
+    cx.fillStyle = 'rgba(30,12,28,' + Math.min(0.7, 0.2 + ug).toFixed(2) + ')'; cx.fillRect(0, 0, W, H);
+    cx.fillStyle = '#ff5c8a'; cx.font = '800 26px system-ui, sans-serif'; cx.textAlign = 'center';
+    for (var hg = 0; hg < 7; hg++) { var fg = (t / 26 + hg * 25) % 100; cx.globalAlpha = Math.max(0, 1 - fg / 100); cx.fillText('♥', 60 + hg * 40 + Math.sin(t / 500 + hg) * 10, 420 - fg * 1.4); }
+    cx.globalAlpha = 1;
+    var jg = s.menit % 1440, jt = ('0' + Math.floor(jg / 60)).slice(-2) + '.' + ('0' + Math.floor(jg % 60)).slice(-2);
+    cx.font = '800 18px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,12,28,.7)'; cx.fillStyle = '#fff';
+    cx.strokeText('Pukul ' + jt, W / 2, 200); cx.fillText('Pukul ' + jt, W / 2, 200);
+    kotakBulat(70, 222, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 222, Math.max(8, 220 * ug), 8, 4, '#ff5c8a');
+  }
   function gambarPenghuniRumah(s, t, xKasur, yKasur, yLantai) {
     var kel = s.keluargaRumah || [];
     var pas = kel.filter(function (k) { return k.pasangan; })[0] || null;
     var anakList = kel.filter(function (k) { return !k.pasangan; });
     /* animasi HB: istri berbaring di kasur, suami naik ke atas istri dengan efek hati sebelum layar gelap */
+    if (s.hbAnim && !pas) { gambarHbUmum(s, t); return; }
     if (s.hbAnim && pas) {
       var u = Math.min(1, s.hbAnim.u || 0);
       var imIstri = imPasangan(), imSuami = imPemain();
@@ -755,8 +768,8 @@
       kotakBulat(kx - 10, ky - 8, 44, 24, 9, '#ffffff');
       kotakBulat(kx + 38, ky - 6, 94, 48, 12, 'rgba(233,30,99,.22)');
       /* Tahap 1 (u < 0.45): suami naik ke atas kasur; Tahap 2 (u >= 0.45): berpelukan posisi atas & bawah */
-      var naik = Math.min(1, u / 0.45);
-      var peluk = u > 0.45 ? (u - 0.45) / 0.55 : 0;
+      var naik = Math.min(1, u / 0.1);
+      var peluk = u > 0.1 ? (u - 0.1) / 0.9 : 0;
       var ayun = peluk > 0 ? Math.sin(t / 190) * 2.5 : 0;
       var istriX = kx + 48, istriY = ky + 16;
       var suamiX = kx + 124 - naik * 74 + ayun * 0.6;
@@ -781,18 +794,21 @@
         kotakBulat(suamiX, suamiY, 42, 14, 6, '#2f6fb0');
         bulat(suamiX, suamiY, 10.5, '#f1c39b');
       }
-      cx.fillStyle = '#e91e63'; cx.font = '800 20px system-ui, sans-serif'; cx.textAlign = 'center';
-      for (var hi = 0; hi < 5; hi++) {
-        var hy = suamiY - 26 - ((t / 22 + hi * 14) % 42);
-        cx.globalAlpha = Math.max(0.25, 1 - (((t / 22 + hi * 14) % 42) / 42));
-        cx.fillText('♥', istriX + (hi - 2) * 16, hy);
+      /* lampu diredupkan pelan-pelan, kamar tetap kelihatan */
+      if (peluk > 0.05) { cx.fillStyle = 'rgba(40,10,30,' + Math.min(0.5, peluk * 1.2).toFixed(2) + ')'; cx.fillRect(0, 0, W, H); }
+      cx.fillStyle = '#ff5c8a'; cx.font = '800 26px system-ui, sans-serif'; cx.textAlign = 'center';
+      for (var hi = 0; hi < 9; hi++) {
+        var fase = (t / 26 + hi * 21) % 90, hy = suamiY - 34 - fase;
+        cx.globalAlpha = Math.max(0, 1 - fase / 90);
+        cx.fillText('♥', istriX + Math.sin(t / 500 + hi) * 14 + (hi - 4) * 17, hy);
       }
       cx.globalAlpha = 1;
-      /* layar mulai meredup perlahan menjelang skip waktu */
-      if (peluk > 0.35) {
-        cx.fillStyle = 'rgba(8,10,18,' + Math.min(0.88, (peluk - 0.35) * 1.45).toFixed(2) + ')';
-        cx.fillRect(0, 0, W, H);
-      }
+      /* judul dan jam yang berjalan cepat, seperti saat narik */
+      var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
+      cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(40,10,30,.7)'; cx.fillStyle = '#fff';
+      cx.strokeText('Waktu berdua bersama ' + pas.nama, W / 2, 190); cx.fillText('Waktu berdua bersama ' + pas.nama, W / 2, 190);
+      cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 214); cx.fillText('Pukul ' + jj, W / 2, 214);
+      kotakBulat(70, 232, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 232, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
       return;
     }
     /* karakter utama saat bangun atau tidur */
@@ -1266,6 +1282,7 @@
     anim.kedip -= dt; if (anim.kedip < -3400 - Math.random() * 1500) anim.kedip = 140;
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
+    if (s.hbAnim && s.posisi !== 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); cx.fillStyle = '#2a1a26'; cx.fillRect(0, 0, W, H); gambarHbUmum(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.transit) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPerjalanan(s, t, dt); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.travel) {
@@ -1313,10 +1330,8 @@
       gambarJalan(trotoar, jalan);
       gambarTiang(dasarKedai, dasarRuko - 270);
       if (s.berhentiSewa) {
-        /* mode driver: tidak ada kedai, hanya pangkalan di tepi jalan */
+        /* mode driver: tidak ada kedai, hanya jalan raya dan pemain di tepi jalan */
         kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
-        kotak(214, dasarKedai - 70, 4, 70, '#59656d'); kotakBulat(160, dasarKedai - 102, 110, 34, 8, '#00aa13');
-        cx.font = '800 14px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText('PANGKALAN', 215, dasarKedai - 85);
         if (!s.ojek || s.ojek.status === 'standby') gambarPotretAi(imPemain(), 258, dasarKedai - 30, 24, t, { gerak: 5, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
       } else {
       gambarPisang(132, dasarKedai, t);

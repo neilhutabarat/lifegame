@@ -225,14 +225,18 @@
   }
   function cukup(S, km) {
     var m = S.motor; if (!m) return false;
-    return m.bbm === 'listrik' ? m.baterai >= km : m.isi >= km / m.kml * (m.olisamping ? 1 : 1);
+    return m.bbm === 'listrik' ? m.baterai >= km : m.isi >= km / m.kml * borosGigi(S);
   }
+  /* gigi (percepatan) mempengaruhi kecepatan dan pemakaian bensin */
+  function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'motor') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
+  function borosGigi(S) { return gigi(S).boros; }
+  function kmhGigi(S) { return gigi(S).mid * kecepatan(S) / KECEPATAN.biasa; }
   /* jalan: kurangi bensin, tambah km, hitung waktu dan kejadian */
   function jalan(S, km, stop) {
     var m = S.motor;
     if (!cukup(S, km)) return { ok: false, alasan: m.bbm === 'listrik' ? 'Baterai motor tidak cukup.' : 'Bensin tidak cukup. Isi bensin dulu di aplikasi Motor.' };
-    var menit = Math.round(km / kecepatan(S) * 60) + 3 * (stop || 1), kabar = [];
-    if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml);
+    var menit = Math.round(km / kmhGigi(S) * 60) + 3 * (stop || 1), kabar = [];
+    if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml * borosGigi(S));
     if (m.olisamping) S.hariIni.bensin = (S.hariIni.bensin || 0) + Math.round(km / m.kml * 3000); /* oli samping 2-tak, perkiraan */
     m.km += km;
     if (Math.random() < peluangMogok(S)) {
@@ -283,6 +287,6 @@
 
   g.KK_MOTOR = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
     beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
-    muatan: muatan, telatOli: telatOli, telatServis: telatServis, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan,
+    muatan: muatan, telatOli: telatOli, telatServis: telatServis, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi,
     gantiHari: gantiHari, bayarLaci: bayarLaci, RON: RON, nilaiJual: nilaiJual, jual: jual, lunasi: lunasi, catatBank: catatBank };
 })(window);

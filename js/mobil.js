@@ -173,12 +173,14 @@
     if (menit >= 990 && menit <= 1110) return KECEPATAN.pulangKantor;
     return KECEPATAN.biasa;
   }
-  function cukup(S, km) { var m = S.mobil; return !!m && m.isi * m.tangki >= km / m.kml; }
+  function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
+  function kmhGigi(S) { return gigi(S).mid * kecepatan(S) / KECEPATAN.biasa; }
+  function cukup(S, km) { var m = S.mobil; return !!m && m.isi * m.tangki >= km / m.kml * gigi(S).boros; }
   function jalan(S, km, stop) {
     var m = S.mobil;
     if (!cukup(S, km)) return { ok: false, alasan: 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
-    var menit = Math.round(km / kecepatan(S) * 60) + 5 * (stop || 1), kabar = [];
-    m.isi = Math.max(0, m.isi - km / m.kml / m.tangki); m.km += km;
+    var menit = Math.round(km / kmhGigi(S) * 60) + 5 * (stop || 1), kabar = [];
+    m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
     if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + telatServis(S) / 1000 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;
       if (S.bank.saldo >= bengkel) { S.bank.saldo -= bengkel; M().catatBank(S, 'Derek dan bengkel ' + m.nama, -bengkel); }
@@ -213,5 +215,5 @@
   }
 
   g.KK_MOBIL = { siapkan: siapkan, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, lunasi: lunasi,
-    isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, kecepatan: kecepatan, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
+    isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);
