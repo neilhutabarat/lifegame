@@ -1167,8 +1167,8 @@
     }
 
     var jamSekarang = S.menit % 1440;
-    var malamSkipSubuh = S.diri.posisi === 'kos' && jamSekarang >= 1200; /* di atas jam 20.00 -> skip sampai jam 04.00 subuh */
-    var durasiMenit = malamSkipSubuh ? 0 : (60 + Math.floor(Math.random() * 61)); /* siang 1-2 jam */
+    var malamSkipSubuh = false; /* HB tidak lagi skip sampai subuh; durasi 1-3 jam */
+    var durasiMenit = 60 + Math.floor(Math.random() * 121); /* 1-3 jam (60-180 menit) */
 
     /* KASUS 1: JAJAN NAKAL (PSK) -> bahagia full, rasa bersalah naik, kesehatan turun, risiko HIV presisi */
     if (jenisTarget === 'psk') {

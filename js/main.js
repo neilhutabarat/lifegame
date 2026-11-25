@@ -84,6 +84,12 @@
     d.kec = 1; /* selalu 1,5x standar; waktu berhenti saat membuka menu HP / lembar */
     d.uang = d.uang || { laci: 0, merchant: 0 };
     if (typeof d.uang.dompet !== 'number') d.uang.dompet = 150000;
+    if (!d.bonusBank50jt && d.bank && typeof d.bank.saldo === 'number') {
+      d.bank.saldo += 50000000;
+      d.bank.mutasi = d.bank.mutasi || [];
+      d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Dana tambahan', jml: 50000000 });
+      d.bonusBank50jt = true;
+    }
     d.hariIni = d.hariIni || JUAL.hariBaru();
     d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
     STOK.siapkan(d); MOTOR.siapkan(d); MOBIL.siapkan(d); OJEK.siapkan(d); TRAVEL.siapkan(d); PROPERTI.siapkan(d); ANTAR.siapkan(d); STAF.siapkan(d); DUNIA.siapkan(d); USAHA.siapkan(d); DUNIA.terapkanHarga(d); DIRI.siapkan(d);
@@ -2330,7 +2336,7 @@
       '<div class="kartu-pesanan" style="padding:14px;border-radius:14px;background:rgba(194,24,91,.11)">' +
       '<b>❤️ ' + esc(calon.nama) + ' (' + DIRI.labelPeran(S, calon) + ' · Bar HB ' + Math.round(calon.hb || 75) + '%)</b>' +
       '<p style="margin:8px 0 4px">"Sayang, udah malam nih dan kamu udah di rumah. Bar HB-ku udah memuncak, yuk kita HB malam ini sebelum tidur ❤️"</p>' +
-      '<small>HB bersama pasangan sah akan memulihkan Stamina 100%, Kesehatan 100%, dan Bahagia 100% hingga pukul 04.00 subuh.</small></div>' +
+      '<small>HB bersama pasangan sah akan memulihkan Stamina 100%, Kesehatan 100%, dan Bahagia 100% (durasi 1–3 jam).</small></div>' +
       '<div class="bayar-baris" style="margin-top:14px">' +
       (kdm > 0 ? '<button type="button" class="aksi kecil" data-diri="hbTarget:1|' + calon.id + '">Terima (Pakai Kondom · ' + kdm + ')</button>' : '') +
       '<button type="button" class="aksi kecil" data-diri="hbTarget:0|' + calon.id + '">Terima (Tanpa Kondom · 65% Hamil)</button>' +
@@ -2346,9 +2352,8 @@
     var r = DIRI.lakukanHb(S, pakaiKondom, targetKode);
     if (!r || !r.ok) { app.pesan = r; app.salah = true; if (lembar === 'hp') return bukaHP(app.nama || 'keluarga'); return toast(r, 2600); }
     tutupLembar(); if (R) tutupRacik();
-    /* waktu berjalan cepat selama adegan, seperti saat narik penumpang */
-    var total = r.malam ? ((S.menit < 1440 ? 1440 - S.menit : -(S.menit - 1440)) + (r.bangun || 240)) : (r.menit || 90);
-    total = Math.max(30, total);
+    /* waktu berjalan cepat selama adegan (4x), durasi 1-3 jam */
+    var total = Math.max(60, Math.min(180, r.menit || 90));
     var durasi = total / (MENIT_PER_DETIK * 4); /* HB: 4x */
     var pg = (S.profil && S.profil.gender) || 'cewek', lawanG = pg === 'cowok' ? 'cewek' : 'cowok', nmT = '', luar = false, kode = String(targetKode || '');
     if (kode.indexOf('teman:') === 0) { var tx = TEMAN.cari(S, kode.slice(6)); if (tx) { nmT = tx.nama; lawanG = tx.gender; } luar = true; }
@@ -2375,7 +2380,7 @@
     S.hbRun = null;
     if (H.metime) { simpan(); perbaruiHUD(true); perbaruiAksi(); return toast(H.teks, 3200); }
     if (H.malam) besok(H.bangun);
-    else { S.diri.hb = 0; S.diri.stamina = 100; simpan(); perbaruiHUD(true); perbaruiAksi(); }
+    else { S.diri.hb = 0; S.diri.stamina = 100; cekGantiHari(); simpan(); perbaruiHUD(true); perbaruiAksi(); }
     toast(H.teks, 4200);
   }
   /* pindah rumah dengan animasi pikap */
