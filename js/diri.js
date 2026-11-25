@@ -115,10 +115,17 @@
       return { ok: true, menit: 2, teks: d.posisi === 'kos' ? (punya(S, 'dispenser') ? 'Minum dari dispenser.' : 'Beli air mineral Rp4.000.') : 'Minum air dari galon kedai.' };
     }
     if (jenis === 'kopi') {
-      if (d.posisi !== 'kedai') return 'Bikin kopi di kedai.';
+      if (d.posisi !== 'kedai') return 'Bikin minuman sendiri di kedai.';
       if (!g.KK_STOK.ada(S, 'kopi', 15)) return 'Stok kopi habis.';
-      g.KK_STOK.ambil(S, 'kopi', 15); d.melek = batas(d.melek + 25); d.minum = batas(d.minum + 10);
-      return { ok: true, menit: 5, teks: 'Ngopi dulu. Rasa kantuk berkurang.' };
+      g.KK_STOK.ambil(S, 'kopi', 15); d.melek = batas(d.melek + 28); d.minum = batas(d.minum + 18);
+      return { ok: true, menit: 5, teks: 'Ngopi dari stok kedai. Rasa kantuk berkurang.' };
+    }
+    if (jenis === 'kopisusu') {
+      if (d.posisi !== 'kedai') return 'Bikin minuman sendiri di kedai.';
+      if (!g.KK_STOK.ada(S, 'kopi', 15) || !g.KK_STOK.ada(S, 'uht', 100)) return 'Stok kopi atau susu UHT kurang.';
+      g.KK_STOK.ambil(S, 'kopi', 15); g.KK_STOK.ambil(S, 'uht', 100);
+      d.melek = batas(d.melek + 34); d.minum = batas(d.minum + 30); d.kenyang = batas(d.kenyang + 10);
+      return { ok: true, menit: 5, teks: 'Minum kopi susu buatan kedai sendiri. Segar dan tidak ngantuk lagi!' };
     }
     return 'Tidak dikenal.';
   }
@@ -136,8 +143,9 @@
       return { ok: true, menit: 0, teks: 'Pesan ' + x.nama + ' lewat GoFood ' + rp(biaya) + ' termasuk ongkir. Sampai sekitar ' + N.makanOjol.tunggu + ' menit lagi.' };
     }
     var h = hargaItem(S, x);
-    if (!bayarTunai(S, h)) return 'Uang di laci tidak cukup.';
+    if (!bayarTunai(S, h)) return 'Uang di dompet & laci tidak cukup.';
     d.kenyang = batas(d.kenyang + x.kenyang); d.minum = batas(d.minum + x.minum);
+    if (x.melek) d.melek = batas(d.melek + x.melek);
     var diKedai = d.posisi === 'kedai', menit = diKedai ? 10 : 15;
     return { ok: true, menit: menit, teks: (diKedai ? 'Beli ' + x.nama + ' di warung sebelah kedai ' : 'Beli ' + x.nama + ' di warung dekat ' + tempat(S) + ' ') + rp(h) + (S.fase === 'buka' && diKedai ? '. Kedai ditinggal ' + menit + ' menit.' : '.') };
   }
@@ -218,27 +226,46 @@
   }
 
   /* ---------- isi kos, toko game & jual barang ---------- */
+  /* diskon tanggal kembar (1.1, 2.2, ..., 11.11, 12.12) untuk Shopee dan Tokopedia */
+  function diskonToko(S, toko) {
+    var tk = KAL.tanggalKembar ? KAL.tanggalKembar(S.hari) : null;
+    if (!tk) return 0;
+    var besar = tk === '11.11' || tk === '12.12';
+    if (toko === 'shopee') return besar ? 0.25 : 0.18;
+    return besar ? 0.20 : 0.12;
+  }
+  function hargaToko(S, b, toko) {
+    var d = diskonToko(S, toko);
+    if (!d) return b.harga;
+    return Math.round(b.harga * (1 - d) / 5000) * 5000;
+  }
   function bayarBelanja(S, harga, ket, caraBayar) {
     if (caraBayar === 'kk') {
       var err = g.KK_UANG.pakaiKk(S, harga, ket);
       return err === true ? true : err;
     }
+    if (caraBayar === 'dompet') {
+      if (!g.KK_UANG.bayarDompet || !g.KK_UANG.bayarDompet(S, harga)) return 'Uang di dompet pribadi tidak cukup.';
+      return true;
+    }
     if (S.bank.saldo < harga) return 'Saldo rekening tidak cukup.';
     S.bank.saldo -= harga; S.bank.mutasi.unshift({ n: S.hari, ket: ket, jml: -harga });
     return true;
   }
-  function beliBarang(S, id, caraBayar) {
+  function beliBarang(S, id, caraBayar, toko) {
     var b = barang(id); if (!b) return 'Barang tidak dikenal.';
     if (id === 'ps5' || id === 'ps5disc') return beliKonsol(S, id, caraBayar);
     if (punya(S, id) && !b.banyak) return 'Sudah punya ' + b.nama + '.';
     if (b.rumah && S.rumah.jenis !== 'rumah') return b.nama + ' tidak muat di kamar kos. Butuh rumah sendiri.';
     if (b.butuh && !punya(S, b.butuh)) return b.nama + ' butuh ' + barang(b.butuh).nama + ' dulu.';
-    var by = bayarBelanja(S, b.harga, 'Tokopedia: ' + b.nama + ' (' + b.merek + ')', caraBayar);
+    var namaToko = toko === 'shopee' ? 'Shopee' : 'Tokopedia';
+    var h = hargaToko(S, b, toko || 'tokopedia');
+    var by = bayarBelanja(S, h, namaToko + ': ' + b.nama + ' (' + b.merek + ')', caraBayar);
     if (by !== true) return by;
     S.rumah.barang[id] = b.banyak ? (S.rumah.barang[id] || 0) + 1 : true;
     S.rumah.infoBarang = S.rumah.infoBarang || {};
-    S.rumah.infoBarang[id] = { dibeli: S.hari, pakai: 0, hargaBeli: b.harga };
-    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + b.harga;
+    S.rumah.infoBarang[id] = { dibeli: S.hari, pakai: 0, hargaBeli: h };
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
     return true;
   }
   function infoUmurBarang(S, id) {
@@ -396,7 +423,7 @@
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.melek < 15) ? 2 : 1; }
 
-  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,

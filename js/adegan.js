@@ -141,24 +141,32 @@
     kotak(x - 2, y - 44, 4, 24, '#5e8c3a');
   }
 
-  /* skala barista disamakan dengan skala pembeli (kepala r=11, badan 22x26) */
-  function gambarBarista(x, y, t) {
+  /* skala barista disamakan dengan skala pembeli (kepala r=11, badan 22x26) + menyesuaikan gender cewek/cowok */
+  function gambarBarista(x, y, t, gender) {
     var bob = Math.sin(t / 420) * 0.9, p = anim.pantulBarista, sk = 1 + Math.sin(p * 18) * 0.08 * p;
+    var cewek = gender === 'cewek';
     cx.save(); cx.translate(x, y + bob); cx.scale(0.68 / sk, 0.68 * sk);
+    /* rambut belakang untuk cewek */
+    if (cewek) { kotakBulat(-18, -28, 36, 30, 12, '#2a1d1a'); }
     /* badan dan celemek */
-    kotakBulat(-17, -6, 34, 30, 10, '#2c3e50');
+    kotakBulat(-17, -6, 34, 30, 10, cewek ? '#7a3e54' : '#2c3e50');
     kotakBulat(-11, -2, 22, 26, 6, '#f2a516');
     /* kepala */
     bulat(0, -24, 17, '#f1c39b');
     cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(0, -27, 17, Math.PI * 1.05, Math.PI * 1.95); cx.fill();
-    /* topi */
+    if (cewek) {
+      /* poni samping manis */
+      kotak(-17, -27, 6, 18, '#2a1d1a'); kotak(11, -27, 6, 18, '#2a1d1a');
+    }
+    /* topi barista */
     kotakBulat(-16, -44, 32, 12, 6, '#155e57'); kotak(2, -35, 20, 4, '#155e57');
     /* mata berkedip */
     var tutup = anim.kedip > 0;
     cx.fillStyle = '#2a1d1a';
     if (tutup) { cx.fillRect(-8, -23, 6, 1.6); cx.fillRect(3, -23, 6, 1.6); }
     else { bulat(-5, -22, 2.4, '#2a1d1a'); bulat(6, -22, 2.4, '#2a1d1a'); }
-    bulat(-10, -16, 3, 'rgba(230,120,110,.35)'); bulat(11, -16, 3, 'rgba(230,120,110,.35)');
+    bulat(-10, -16, 3.2, cewek ? 'rgba(235,110,120,.45)' : 'rgba(230,120,110,.35)');
+    bulat(11, -16, 3.2, cewek ? 'rgba(235,110,120,.45)' : 'rgba(230,120,110,.35)');
     cx.strokeStyle = '#2a1d1a'; cx.lineWidth = 1.4; cx.beginPath(); cx.arc(0.5, -16, 3.5, 0.2, Math.PI - 0.2); cx.stroke();
     cx.restore();
   }
@@ -213,8 +221,8 @@
     kotak(bx + 14, by + 30, 14, 20, '#2f2f33');
     if (anim.rolling > 0.35) {
       var ekstra = Math.min(2, Math.max(0, (s.staf || 0)));
-      for (var e = 0; e < ekstra; e++) { cx.save(); cx.translate(e === 0 ? bx + 28 : bx + bw - 28, by + bh - 4); gambarBarista(0, 0, t + 900 * (e + 1)); cx.restore(); }
-      gambarBarista(bx + bw / 2, by + bh - 4, t);
+      for (var e = 0; e < ekstra; e++) { cx.save(); cx.translate(e === 0 ? bx + 28 : bx + bw - 28, by + bh - 4); gambarBarista(0, 0, t + 900 * (e + 1), e % 2 ? 'cewek' : 'cowok'); cx.restore(); }
+      gambarBarista(bx + bw / 2, by + bh - 4, t, s.gender);
     }
     /* rolling door */
     var tutup = (1 - anim.rolling) * bh;
@@ -587,18 +595,11 @@
     });
   }
 
-  /* motor milik kedai, diparkir di tepi jalan */
-  var WARNA_MOTOR = { dazz: '#2f6fb0', revo: '#d9443a', mio: '#7a4fa0', beat: '#e8e4da', gear: '#2b2b2b', supra: '#2f6fb0', vario: '#d9443a', icon: '#7fd3e8', nmax: '#3b3f46', rxking: '#2b2b2b', 'beat-bekas': '#d9443a', 'supra-bekas': '#2b2b2b' };
+  /* motor milik kedai, desain sesuai bentuk asli (Scoopy/Vespa retro, Satria FU ayago, NMAX/PCX maxi, Vario/BeAT skutik, RX-King, Sport) */
+  var WARNA_MOTOR = { dazz: '#2f6fb0', revo: '#d9443a', mio: '#7a4fa0', beat: '#e8e4da', gear: '#2b2b2b', supra: '#2f6fb0', scoopy: '#f0e2c8', vario: '#d9443a', vario160: '#1f2328', mxking: '#1f57a8', aerox: '#232830', icon: '#7fd3e8', nmax: '#3b3f46', pcx160: '#f4f2ec', vespa: '#529b8e', satriafu: '#1e64b8', rxking: '#2b2b2b', 'beat-bekas': '#d9443a', 'supra-bekas': '#2b2b2b' };
   function gambarParkir(x, y, id, m) {
-    cx.save(); cx.translate(x, y); cx.scale(-1, 1);
-    cx.fillStyle = 'rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(0, 12, 28, 4, 0, 0, Math.PI * 2); cx.fill();
-    bulat(-17, 6, 8, '#1b1b1b'); bulat(17, 6, 8, '#1b1b1b'); bulat(-17, 6, 3.5, '#9aa3a6'); bulat(17, 6, 3.5, '#9aa3a6');
-    var w = WARNA_MOTOR[id] || '#d9443a';
-    if (id === 'rxking') { kotakBulat(-14, -10, 24, 9, 4, w); kotakBulat(-4, -16, 16, 8, 4, w); kotak(-16, -4, 30, 4, '#9aa3a6'); kotak(-20, -14, 14, 5, '#3b2a22'); }
-    else { kotakBulat(-20, -6, 38, 11, 5, w); kotakBulat(-18, -14, 18, 7, 3, '#2b2b2b'); }
-    kotak(12, -20, 3, 16, '#333'); kotak(8, -22, 10, 3, '#333');
-    cx.restore();
-    if (gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.3).toFixed(2) + ')'; cx.fillRect(x - 32, y - 26, 64, 44); }
+    gambarMotorKu(x, y + 12, id, { kiri: true }, 0);
+    if (gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.28).toFixed(2) + ')'; cx.fillRect(x - 34, y - 28, 68, 48); }
   }
 
   /* ---------- kamar kos ---------- */
@@ -717,25 +718,65 @@
     else if (gp > 0.5) { cx.fillStyle = 'rgba(255,230,180,.06)'; cx.fillRect(0, 0, W, H); }
   }
 
-  /* ---------- motor sendiri, ngojek, mobil, pindahan ---------- */
+  /* ---------- motor sendiri (bentuk vektor asli per jenis), ngojek, mobil, pindahan ---------- */
   var SPORT = { gsxr150: '#2f6fb0', cbr150: '#d9443a', r15: '#2f6fb0', mt25: '#3b3f46', cbr250: '#d9443a', ninja250: '#4fa53a', r25: '#2f6fb0', zx25r: '#4fa53a', zx4rr: '#4fa53a', zx6r: '#4fa53a', zx10r: '#4fa53a', cbr1000: '#d9443a', h2: '#2b2f36', r6: '#2f6fb0', 'cbr250-bekas': '#d9443a' };
+  var RETRO = { scoopy: 1, vespa: 1 }, MAXI = { nmax: 1, pcx160: 1 }, AYAGO = { satriafu: 1, mxking: 1 };
   /* motor menghadap kanan; dasar = permukaan jalan */
   function gambarMotorKu(x, y, id, o, t) {
     o = o || {};
-    var sport = !!SPORT[id], w = SPORT[id] || WARNA_MOTOR[id] || '#d9443a', putar = o.jalan ? t / 60 : 0;
+    var sport = !!SPORT[id], retro = !!RETRO[id], maxi = !!MAXI[id], ayago = !!AYAGO[id];
+    var w = SPORT[id] || WARNA_MOTOR[id] || '#d9443a', putar = o.jalan ? t / 60 : 0;
     cx.save(); cx.translate(x, y); if (o.kiri) cx.scale(-1, 1);
-    cx.fillStyle = 'rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(0, 1, 30, 4, 0, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = 'rgba(0,0,0,.26)'; cx.beginPath(); cx.ellipse(0, 1, 31, 4.2, 0, 0, Math.PI * 2); cx.fill();
     [-20, 20].forEach(function (rx) {
-      bulat(rx, -9, 9, '#1b1b1b'); bulat(rx, -9, 4, '#9aa3a6');
-      cx.strokeStyle = '#6b7378'; cx.lineWidth = 1; cx.beginPath();
-      for (var j = 0; j < 3; j++) { var a = putar + j * Math.PI / 3; cx.moveTo(rx + Math.cos(a) * 7, -9 + Math.sin(a) * 7); cx.lineTo(rx - Math.cos(a) * 7, -9 - Math.sin(a) * 7); }
+      bulat(rx, -9, 9, '#191b1e'); bulat(rx, -9, 5, '#9aa3a6');
+      cx.strokeStyle = '#485058'; cx.lineWidth = 1.2; cx.beginPath();
+      for (var j = 0; j < 3; j++) { var a = putar + j * Math.PI / 3; cx.moveTo(rx + Math.cos(a) * 5, -9 + Math.sin(a) * 5); cx.lineTo(rx - Math.cos(a) * 5, -9 - Math.sin(a) * 5); }
       cx.stroke();
+      bulat(rx, -9, 1.8, '#e8ecef');
     });
+    cx.strokeStyle = '#5a626a'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(-25, -9); cx.lineTo(-8, -7); cx.stroke();
     if (sport) {
-      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-14, -14); cx.lineTo(8, -16); cx.lineTo(24, -30); cx.lineTo(18, -12); cx.lineTo(-4, -8); cx.closePath(); cx.fill();
-      kotakBulat(-24, -26, 22, 6, 3, '#2b2b2b'); kotak(-26, -28, 10, 4, w);
-      cx.fillStyle = 'rgba(150,200,230,.75)'; cx.beginPath(); cx.moveTo(18, -30); cx.lineTo(24, -30); cx.lineTo(20, -38); cx.closePath(); cx.fill();
-    } else { kotakBulat(-22, -20, 40, 11, 5, w); kotakBulat(-20, -28, 22, 8, 3, '#2b2b2b'); kotak(14, -36, 3, 18, '#333'); kotak(10, -38, 10, 3, '#333'); }
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-25, -23); cx.lineTo(-5, -22); cx.lineTo(10, -28); cx.lineTo(25, -22); cx.lineTo(19, -10); cx.lineTo(-8, -10); cx.closePath(); cx.fill();
+      kotakBulat(-23, -24, 15, 4.5, 2, '#1f2226');
+      kotakBulat(-2, -29, 14, 7.5, 3, w);
+      cx.fillStyle = 'rgba(165,215,245,.78)'; cx.beginPath(); cx.moveTo(16, -27); cx.lineTo(24, -22); cx.lineTo(20, -34); cx.closePath(); cx.fill();
+      cx.strokeStyle = '#b9933a'; cx.lineWidth = 2.4; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(15, -25); cx.stroke();
+    } else if (id === 'rxking') {
+      /* RX-King: tangki kotak khas, mesin sirip, jok lurus, knalpot krom */
+      kotak(-16, -15, 30, 5, '#8c949b');
+      kotakBulat(-22, -23, 20, 6, 2.5, '#2b2420');
+      kotakBulat(-2, -28, 16, 10, 2, w); /* tangki kotak */
+      bulat(18, -26, 4.5, '#ffe89c'); /* lampu bulat */
+      cx.strokeStyle = '#b8bfc4'; cx.lineWidth = 2.2; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(14, -29); cx.stroke();
+    } else if (retro) {
+      /* Scoopy / Vespa: bodi belakang membulat, tameng depan melengkung, lampu bulat */
+      cx.fillStyle = w; cx.beginPath(); cx.ellipse(-10, -17, 15, 9, 0, 0, Math.PI * 2); cx.fill();
+      kotakBulat(-21, -26, 18, 6, 3, '#6b4226'); /* jok cokelat retro */
+      kotakBulat(8, -29, 11, 20, 5, w); /* tameng depan melengkung */
+      bulat(20, -25, 4.2, '#fff2b8'); /* lampu depan bundar */
+      cx.strokeStyle = '#8d969b'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(14, -29); cx.stroke();
+    } else if (maxi) {
+      /* NMAX / PCX: bodi panjang gagah + windshield tinggi */
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-26, -21); cx.lineTo(-2, -20); cx.lineTo(7, -14); cx.lineTo(16, -28); cx.lineTo(25, -24); cx.lineTo(20, -10); cx.lineTo(-21, -10); cx.closePath(); cx.fill();
+      kotakBulat(-23, -25, 23, 6, 3, '#222');
+      cx.fillStyle = 'rgba(180,220,245,.72)'; cx.beginPath(); cx.moveTo(16, -27); cx.lineTo(23, -25); cx.lineTo(20, -37); cx.lineTo(15, -35); cx.closePath(); cx.fill();
+      cx.strokeStyle = '#4a525a'; cx.lineWidth = 2.2; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(16, -26); cx.stroke();
+    } else if (ayago) {
+      /* Satria FU / MX King: ayam jago ramping, shock depan panjang tegak, buntut runcing */
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-24, -22); cx.lineTo(12, -20); cx.lineTo(16, -13); cx.lineTo(-10, -13); cx.closePath(); cx.fill();
+      kotakBulat(-22, -25, 22, 5, 2, '#1d1f23');
+      cx.strokeStyle = '#9aa3a6'; cx.lineWidth = 2.4; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(12, -31); cx.stroke();
+      kotakBulat(12, -31, 8, 6, 2, w); /* batok lampu kecil khas ayago */
+      kotak(19, -29, 3, 3.5, '#fff4b8');
+    } else {
+      /* Skutik harian & bebek (BeAT, Vario 125/160, Aerox, Supra, Revo) */
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-23, -21); cx.lineTo(-3, -20); cx.lineTo(3, -12); cx.lineTo(12, -12); cx.lineTo(15, -29); cx.lineTo(23, -25); cx.lineTo(19, -10); cx.lineTo(-19, -10); cx.closePath(); cx.fill();
+      kotakBulat(-21, -24, 19, 5.5, 2.5, '#222');
+      kotak(13, -32, 4, 6, '#333');
+      cx.strokeStyle = '#555'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(15, -27); cx.stroke();
+      kotak(21, -24, 3, 4, '#fff4b8');
+    }
     if (o.muatan === 'paket') { kotak(-30, -44, 20, 16, '#c8a06a'); kotak(-30, -38, 20, 2, '#a5844f'); }
     if (o.muatan === 'makanan') { kotakBulat(-34, -50, 24, 24, 3, '#1f9a3f'); kotak(-32, -42, 20, 3, '#f3f1ea'); }
     if (o.bonceng) orangMotor(-14, '#5f7f9a', '#f6f6f2', false);
@@ -755,26 +796,28 @@
   }
   var WARNA_MOBIL = { granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', calya: '#b8bcc0', agya: '#d9443a', avanza: '#e8e4da', rush: '#2b2f36', veloz: '#8a2a2a', zenix: '#d8d4cc', fortuner: '#2b2f36', camry: '#3a3f46', gr86: '#d9443a', alphard: '#f3f1ea', landcruiser: '#2b2f36' };
   function gambarMobil(x, y, bentuk, id, kiri, roda) {
-    var w = WARNA_MOBIL[id] || '#e8e4da', kaca = 'rgba(120,160,190,.85)';
+    var w = WARNA_MOBIL[id] || '#e8e4da', pt = roda ? roda / 60 : 0;
     cx.save(); cx.translate(x, y); if (kiri) cx.scale(-1, 1);
-    cx.fillStyle = 'rgba(0,0,0,.28)'; cx.beginPath(); cx.ellipse(0, 1, 64, 5, 0, 0, Math.PI * 2); cx.fill();
-    var tinggi = { pikap: 40, hatch: 36, mpv: 46, suv: 50, sedan: 34, sport: 28, van: 54 }[bentuk] || 40;
-    if (bentuk === 'pikap') {
-      kotakBulat(14, -50, 44, 38, 6, w); kotak(20, -46, 30, 16, kaca); kotak(-58, -26, 72, 14, w); kotak(-58, -34, 72, 4, '#9aa3a6');
-      kotak(-50, -44, 22, 16, '#c8a06a');
+    if (id === 'hilux') {
+      /* Hilux Rangga: pikap bermoncong (bonnet) */
+      cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(0, 2, 64, 5, 0, 0, Math.PI * 2); cx.fill();
+      kotakBulat(-58, -24, 62, 16, 3, w); kotak(-58, -26, 62, 3, '#8d969b');
+      kotakBulat(4, -24, 54, 16, 4, w);
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(4, -24); cx.lineTo(8, -44); cx.lineTo(30, -44); cx.lineTo(42, -24); cx.closePath(); cx.fill();
+      cx.fillStyle = 'rgba(130,175,205,.88)'; cx.beginPath(); cx.moveTo(10, -25); cx.lineTo(13, -40); cx.lineTo(28, -40); cx.lineTo(37, -25); cx.closePath(); cx.fill();
+      kotak(54, -20, 5, 6, '#fff6cc'); kotak(-59, -20, 4, 6, '#e03c31');
+      [-36, 38].forEach(function (rx) { bulat(rx, -7, 11.5, '#181a1d'); bulat(rx, -7, 6, '#b9c2ca'); });
+    } else if (bentuk === 'van') {
+      /* Alphard: boxy MPV mewah + aksen krom + grille besar */
+      gambarMobilRealistis('mpv', w, pt, false);
+      kotak(52, -28, 7, 18, '#c9b37a'); kotak(-56, -15, 112, 2.5, '#c9b37a');
+    } else if (bentuk === 'sport') {
+      /* GR 86: sports coupe ceper + spoiler belakang */
+      gambarMobilRealistis('sedan', w, pt, false);
+      kotak(-56, -32, 12, 3, '#1f2328'); kotak(-52, -29, 3, 5, '#1f2328');
     } else {
-      kotakBulat(-60, -tinggi * 0.55 - 12, 120, tinggi * 0.55, 8, w);
-      cx.fillStyle = w; cx.beginPath();
-      var atas = -tinggi - 10, dpn = bentuk === 'sport' ? 10 : bentuk === 'sedan' ? 18 : 34, blk = bentuk === 'van' || bentuk === 'mpv' || bentuk === 'suv' ? -56 : bentuk === 'hatch' ? -50 : -34;
-      cx.moveTo(blk, -tinggi * 0.55 - 10); cx.lineTo(blk + 4, atas); cx.lineTo(dpn - 12, atas); cx.lineTo(dpn + 8, -tinggi * 0.55 - 10); cx.closePath(); cx.fill();
-      cx.fillStyle = kaca; cx.beginPath(); cx.moveTo(blk + 6, -tinggi * 0.55 - 12); cx.lineTo(blk + 9, atas + 4); cx.lineTo(dpn - 14, atas + 4); cx.lineTo(dpn + 2, -tinggi * 0.55 - 12); cx.closePath(); cx.fill();
-      kotak((blk + dpn) / 2 - 2, atas + 2, 3, tinggi * 0.45, w);
-      if (bentuk === 'van') { kotak(-60, -14, 120, 3, '#c9b37a'); kotak(48, -tinggi * 0.55 - 6, 10, 10, '#c9b37a'); }
-      if (bentuk === 'suv') kotak(blk + 6, atas - 4, dpn - blk - 22, 3, '#3b3f46');
+      gambarMobilRealistis(bentuk, w, pt, false);
     }
-    var pt = roda ? roda / 60 : 0;
-    [-38, 38].forEach(function (rx) { bulat(rx, -9, 11, '#1b1b1b'); bulat(rx, -9, 5, '#b8c0c6'); cx.strokeStyle = '#6b7378'; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(rx + Math.cos(pt) * 5, -9 + Math.sin(pt) * 5); cx.lineTo(rx - Math.cos(pt) * 5, -9 - Math.sin(pt) * 5); cx.stroke(); });
-    kotak(56, -tinggi * 0.4 - 6, 5, 6, '#ffe58f'); kotak(-61, -tinggi * 0.4 - 6, 4, 6, '#d9443a');
     cx.restore();
   }
   /* adegan jalan raya saat mengantar order ojol */

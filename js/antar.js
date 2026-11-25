@@ -71,7 +71,7 @@
   function jalan(S, dMenit, pengali) {
     var kabar = [], t = waktu(S);
     if (S.fase === 'buka' && !S.tutupAntre && !S.tutupSementara && dMenit > 0) {
-      var promo = S.promoAktif ? 1.4 : 1;
+      var promo = S.promoAktif ? (1.3 + Math.random() * 0.2) : 1;
       var aktifWa = S.pesanan.filter(function (p) { return p.jenis === 'wa' && p.status !== 'selesai' && p.status !== 'batal'; }).length;
       if (aktifWa < 4 && Math.random() < WA_PER_JAM * pengali * promo * (g.KK_DUNIA ? g.KK_DUNIA.faktorAntar(S) : 1) * (g.KK_USAHA && S.usaha ? g.KK_USAHA.faktorAntar(S) : 1) * dMenit / 60) { S.pesanan.push(buatWa(S)); kabar.push('Pesanan WhatsApp baru.'); }
       N.platform.forEach(function (pl) {

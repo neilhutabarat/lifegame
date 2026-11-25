@@ -9,12 +9,29 @@
   function wilayah(S) { var k = N.kota.filter(function (x) { return x.id === S.kota; })[0]; return (k && k.bbm) || 'sumatera'; }
   function catatBank(S, ket, jml, n) { S.bank.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket, jml: jml }); if (S.bank.mutasi.length > 40) S.bank.mutasi.length = 40; }
 
+  function sinkronAktif(S) {
+    S.armadaMotor = S.armadaMotor || [];
+    if (!S.armadaMotor.length) { S.motorAktif = 0; S.motor = null; return; }
+    if (S.motorAktif == null || S.motorAktif < 0 || S.motorAktif >= S.armadaMotor.length) S.motorAktif = 0;
+    S.motor = S.armadaMotor[S.motorAktif];
+  }
   function siapkan(S) {
-    if (S.motor === undefined) S.motor = null;
+    if (!S.armadaMotor) {
+      S.armadaMotor = S.motor ? [S.motor] : [];
+      S.motorAktif = 0;
+    }
+    sinkronAktif(S);
     S.bbmFaktor = S.bbmFaktor || { pertamax: 1, turbo: 1 };
     if (!S.pasarBekas) bekasBaru(S);
     return S;
   }
+  function pilihAktif(S, idx) {
+    if (!S.armadaMotor || !S.armadaMotor[idx]) return 'Motor tidak ditemukan.';
+    S.motorAktif = idx;
+    sinkronAktif(S);
+    return true;
+  }
+  function jumlah(S) { return S.armadaMotor ? S.armadaMotor.length : (S.motor ? 1 : 0); }
   function hargaBbm(S, jenis) {
     if (jenis === 'listrik') return R.tarifListrik;
     if (jenis === 'solar') return N.solar;
@@ -29,7 +46,11 @@
       jarakPenuh: model.jarakPenuh || 0, kwh: model.kwh || 0, kuat: !!model.kuat, olisamping: !!model.olisamping,
       isi: model.bbm === 'listrik' ? 0 : 1, baterai: model.bbm === 'listrik' ? model.jarakPenuh : 0, km: 0, kmOli: 0, kmServis: 0, bekas: null, aks: {}, kredit: null };
   }
-  function cekGarasi(S) { if (S.motor) return 'Sudah punya ' + S.motor.nama + '. Satu motor dulu untuk sekarang.'; return null; }
+  function cekGarasi(S) {
+    S.armadaMotor = S.armadaMotor || (S.motor ? [S.motor] : []);
+    if (S.armadaMotor.length >= 5) return 'Garasi motor penuh (maksimal 5 unit). Jual salah satu kalau mau beli lagi.';
+    return null;
+  }
   function bayarDealer(S, jml, ket, cara) {
     if (cara === 'kk') {
       var err = g.KK_UANG.pakaiKk(S, jml, 'Dealer Motor: ' + ket);
@@ -39,12 +60,19 @@
     S.bank.saldo -= jml; catatBank(S, ket, -jml);
     return true;
   }
+  function tambahArmada(S, m) {
+    S.armadaMotor = S.armadaMotor || [];
+    S.armadaMotor.push(m);
+    S.motorAktif = S.armadaMotor.length - 1;
+    sinkronAktif(S);
+  }
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = N.motor.filter(function (x) { return x.id === id; })[0];
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
-    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365; S.motor.dibeli = S.hari;
+    var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
+    tambahArmada(S, unit);
     return true;
   }
   /* nilai jual ke pedagang (perkiraan, data jualKendaraan) */
@@ -53,11 +81,15 @@
     var f = k.bekas ? 0.85 : J.awal; f -= J.perTahun * tahun + J.perKm * k.km;
     return Math.round(k.harga * Math.max(J.min, Math.min(k.bekas ? 0.9 : J.awal, f)) / 100000) * 100000;
   }
-  function jual(S) {
-    var m = S.motor; if (!m) return 'Belum punya motor.';
+  function jual(S, idx) {
+    var i = idx != null ? +idx : (S.motorAktif || 0);
+    var m = (S.armadaMotor && S.armadaMotor[i]) || S.motor;
+    if (!m) return 'Belum punya motor.';
     if (m.kredit) return 'Motor masih kredit. Lunasi dulu sebelum dijual.';
-    if (S.ojek && S.ojek.online) return 'Matikan aplikasi driver dulu.';
-    var h = nilaiJual(S, m); S.bank.saldo += h; catatBank(S, 'Jual ' + m.nama, h); S.motor = null;
+    if (S.ojek && S.ojek.online && i === (S.motorAktif || 0)) return 'Matikan aplikasi driver dulu.';
+    var h = nilaiJual(S, m); S.bank.saldo += h; catatBank(S, 'Jual ' + m.nama, h);
+    if (S.armadaMotor && S.armadaMotor.length) { S.armadaMotor.splice(i, 1); S.motorAktif = 0; sinkronAktif(S); }
+    else S.motor = null;
     return { ok: true, harga: h };
   }
   function lunasi(S) {
@@ -79,8 +111,9 @@
     var m = N.motor.filter(function (x) { return x.id === id; })[0], k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
     if (by !== true) return by;
-    S.motor = motorBaru(m); S.motor.pajakTempo = S.hari + 365; S.motor.dibeli = S.hari;
-    S.motor.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
+    unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    tambahArmada(S, unit);
     return true;
   }
   function bekasBaru(S) {
@@ -106,7 +139,7 @@
     var m = motorBaru({ id: b.id, nama: b.nama.replace(' (bekas)', '') + ' ' + u.tahun, harga: u.harga, kml: b.kml, bbm: b.bbm, tangki: b.tangki, muat: b.muat, kuat: b.kuat, olisamping: b.olisamping });
     m.dibeli = S.hari; m.bekas = { kondisi: u.kondisi, tahun: u.tahun }; m.km = u.km; m.kmOli = u.km - Math.floor(Math.random() * 2500); m.kmServis = u.km - Math.floor(Math.random() * 5000);
     m.pajakTempo = S.hari + 30 + Math.floor(Math.random() * 300);
-    S.motor = m; S.pasarBekas.unit.splice(i, 1);
+    tambahArmada(S, m); S.pasarBekas.unit.splice(i, 1);
     return true;
   }
 
@@ -233,7 +266,7 @@
     return kabar;
   }
 
-  g.KK_MOTOR = { siapkan: siapkan, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
+  g.KK_MOTOR = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
     beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
     muatan: muatan, telatOli: telatOli, telatServis: telatServis, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan,
     gantiHari: gantiHari, bayarLaci: bayarLaci, RON: RON, nilaiJual: nilaiJual, jual: jual, lunasi: lunasi, catatBank: catatBank };

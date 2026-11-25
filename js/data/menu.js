@@ -90,7 +90,14 @@
     { id: 'tahu', nama: 'Tahu balado', pendek: 'Tahu Balado', harga: 12000, aktifAwal: true, cemilan: true, bisaSuhu: false, warna: '#d9534f',
       resep: [['wadahMakan', 1], ['tahu', 2]] },
     { id: 'miegoreng', nama: 'Mie goreng sosis telur', pendek: 'Mie Sosis Telur', harga: 18000, aktifAwal: true, cemilan: true, bisaSuhu: false, warna: '#d98a2b',
-      resep: [['wadahMakan', 1], ['mie', 1], ['sosisTelur', 1]] }
+      resep: [['wadahMakan', 1], ['mie', 1], ['sosisTelur', 1]] },
+    /* menu takjil khusus bulan Ramadan (otomatis dijual pukul 16.00 saat Ramadan) */
+    { id: 'kolak', nama: 'Kolak pisang ubi', pendek: 'Kolak Takjil', harga: 10000, aktifAwal: true, cemilan: true, takjil: true, bisaSuhu: false, warna: '#c68642',
+      resep: [['cupPlastik', 1], ['aren', 25], ['uht', 100]] },
+    { id: 'esbuah', nama: 'Es buah segar takjil', pendek: 'Es Buah', harga: 12000, aktifAwal: true, cemilan: true, takjil: true, bisaSuhu: false, warna: '#e0675a',
+      resep: [['cupPlastik', 1], ['es', 1], ['skm', 25], ['gula', 15]] },
+    { id: 'gorengantakjil', nama: 'Paket gorengan takjil', pendek: 'Gorengan Takjil', harga: 10000, aktifAwal: true, cemilan: true, takjil: true, bisaSuhu: false, warna: '#e0a94c',
+      resep: [['wadahMakan', 1], ['tahu', 2]] }
   ];
   /* sesuaikan resep berdasarkan suhu yang diminta pembeli (panas pakai cup kertas + air panas; dingin pakai cup plastik + es) */
   function resepSuhu(menu, panas) {

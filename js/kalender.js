@@ -173,6 +173,23 @@
     return null;
   }
 
+  function apakahRamadan(n) {
+    var t = tgl(n), r = ramadanTahun(t.y);
+    if (r && n >= r.awal && n <= r.akhir) return n - r.awal + 1;
+    return 0;
+  }
+  function tanggalKembar(n) {
+    var t = tgl(n);
+    return t.m === t.d ? (t.d + '.' + t.m) : null;
+  }
+  function usia(n, ttl) {
+    if (!ttl) return 24;
+    var p = String(ttl).split('-');
+    if (p.length !== 3) return 24;
+    var t = tgl(n), u = t.y - (+p[0]);
+    if (t.m < (+p[1]) || (t.m === (+p[1]) && t.d < (+p[2]))) u--;
+    return Math.max(15, u);
+  }
   function musim(m) {
     if (m >= 11 || m <= 3) return 'Musim hujan';
     if (m >= 6 && m <= 9) return 'Musim kemarau';
@@ -192,7 +209,7 @@
     if (t.m === 12 && t.d === 31) out.push({ nama: 'Malam tahun baru', jenis: 'event' });
     if (t.m === 2 && t.d === 14) out.push({ nama: 'Valentine', jenis: 'event' });
     if (t.m === 10 && t.d === 1) out.push({ nama: 'Hari Kopi Sedunia', jenis: 'event' });
-    if (t.m >= 9 && t.m === t.d) out.push({ nama: 'Promo tanggal kembar ' + t.d + '.' + t.m, jenis: 'event' });
+    if (t.m === t.d) out.push({ nama: 'Promo tanggal kembar ' + t.d + '.' + t.m, jenis: 'event' });
     if (t.dow === 6) out.push({ nama: 'Malam Minggu', jenis: 'suasana' });
     if (t.dow === 0) out.push({ nama: 'Car Free Day pagi', jenis: 'suasana' });
     if (t.d >= 25 || t.d <= 5) out.push({ nama: 'Tanggal muda', jenis: 'suasana' });
@@ -220,6 +237,7 @@
   }
 
   var api = { dn: dn, tgl: tgl, kunci: kunci, liburTahun: liburTahun, hariIni: hariIni, apakahLibur: apakahLibur,
+    apakahRamadan: apakahRamadan, tanggalKembar: tanggalKembar, usia: usia,
     berikutnya: berikutnya, ramadanTahun: ramadanTahun, lebaranTahun: lebaranTahun, faseBulan: faseBulan, paskah: paskah };
   g.KK_KAL = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

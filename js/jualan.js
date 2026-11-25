@@ -25,7 +25,7 @@
     else if (isi.some(function (x) { return x.jenis === 'libur'; })) m *= 1.1;
     else if (isi.some(function (x) { return x.jenis === 'cuti'; })) m *= 1.05;
     if (ada(isi, 'Musim mudik')) m *= 0.6;
-    if (ada(isi, 'Ramadan')) m *= jam >= 6 && jam < 17 ? 0.3 : jam < 20 ? 1.8 : 1;
+    if (ada(isi, 'Ramadan')) m *= jam >= 16 && jam < 19 ? 2.2 : jam >= 19 && jam < 22 ? 1.5 : 0.15;
     if (ada(isi, 'Malam Minggu') && jam >= 18) m *= 1.3;
     if (ada(isi, 'Tanggal muda')) m *= 1.1;
     if (ada(isi, 'Tanggal tua')) m *= 0.85;
@@ -35,7 +35,11 @@
   }
 
   function menuAktifList(S) {
-    return M.MENU.filter(function (m) { return !g.KK_USAHA || g.KK_USAHA.menuDijual(S, m.id); });
+    var ramadan = KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0;
+    return M.MENU.filter(function (m) {
+      if (m.takjil && !ramadan) return false;
+      return !g.KK_USAHA || g.KK_USAHA.menuDijual(S, m.id);
+    });
   }
   function pilihSuhu(menu, jam, isi) {
     if (menu.cemilan) return false;
@@ -47,13 +51,17 @@
     if (jam < 10) pPanas += 0.22;
     if (ada(isi, 'Musim hujan')) pPanas += 0.15;
     if (ada(isi, 'Musim kemarau')) pPanas -= 0.18;
-    if (ada(isi, 'Ramadan') && jam >= 17 && jam < 20) pPanas -= 0.22;
+    if (ada(isi, 'Ramadan') && jam >= 16 && jam < 20) pPanas -= 0.22;
     return Math.random() < Math.max(0.08, Math.min(0.9, pPanas));
   }
   /* pilih menu: pembeli bisa menginginkan menu yang sedang tidak dijual -> ganti ke menu lain yang dijual, atau batal beli */
   function pilihMenu(S, jenis, jam) {
-    var suka = {}, isi = isiHari(S), k;
+    var suka = {}, isi = isiHari(S), k, ramadan = KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0;
     for (k in M.PEMBELI[jenis].suka) suka[k] = M.PEMBELI[jenis].suka[k];
+    if (ramadan) {
+      var bobotTakjil = jam >= 16 && jam < 19 ? 45 : 18;
+      suka.kolak = bobotTakjil; suka.esbuah = bobotTakjil; suka.gorengantakjil = bobotTakjil;
+    }
     var id = pilihBobot(suka);
     var m = M.MENU.filter(function (x) { return x.id === id; })[0] || M.MENU[0];
     var aktif = menuAktifList(S);
@@ -158,6 +166,7 @@
     S.omzetTahun = (S.omzetTahun || 0) + h;
     S.pajak.omzetBulan += h;
     hi.hpp += biayaBahan; hi.dilayani++;
+    S.gelasBulanIni = (S.gelasBulanIni || 0) + 1;
     hi.menu[o.menu.id] = (hi.menu[o.menu.id] || 0) + 1;
     var kDuduk = kursiKosong(S);
     var mauDuduk = kDuduk >= 0 && Math.random() < (o.jenis === 'mahasiswa' || o.jenis === 'konten' || o.jenis === 'keluarga' ? 0.65 : 0.4);

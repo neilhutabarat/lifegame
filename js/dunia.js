@@ -201,8 +201,9 @@
     if (d.cuaca) kabar.push('Prakiraan cuaca: hujan sekitar pukul ' + Math.floor(d.cuaca.mulai / 60) + '.00–' + Math.floor(d.cuaca.selesai / 60) + '.00.');
     if (d.maps.status === 'proses' && nBaru >= d.maps.aktifPada) { d.maps.status = 'aktif'; kabar.push('Kedai sudah muncul di Google Maps.'); }
     if (t.dow === 1) {
-      d.sosmed.tren = acak(M.MENU).id;
-      kabar.push('Tren minggu ini di media sosial: ' + M.MENU.filter(function (m) { return m.id === d.sosmed.tren; })[0].nama + '.');
+      var mBaru = acak(M.MENU);
+      d.sosmed.tren = mBaru ? mBaru.id : 'aren';
+      kabar.push('Tren minggu ini di media sosial: ' + (mBaru ? mBaru.nama : 'Kopi gula aren') + '.');
       if (d.ulasan.some(function (u) { return u.palsu; }) && Math.random() < 0.3) {
         d.ulasan = d.ulasan.filter(function (u) { return !u.palsu; }); d.palsuKetahuan++;
         for (var i = 0; i < 3; i++) d.ulasan.push({ bintang: 1, teks: 'Ulasannya banyak yang palsu. Jangan percaya bintangnya.', hari: nBaru, nama: acak(N.namaOrang), balas: false });

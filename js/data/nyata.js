@@ -44,6 +44,11 @@
     makanan: [
       { id: 'nasi', nama: 'Nasi bungkus', kali: 1, kenyang: 65, minum: 10 },
       { id: 'padang', nama: 'Nasi Padang (rendang & gulai)', kali: 1.6, kenyang: 85, minum: 10 },
+      { id: 'bakso', nama: 'Bakso urat + mie', kali: 1.15, kenyang: 70, minum: 20 },
+      { id: 'mietiau', nama: 'Mie tiau / kwetiau goreng', kali: 1.25, kenyang: 75, minum: 5 },
+      { id: 'soto', nama: 'Soto ayam + nasi', kali: 1.15, kenyang: 72, minum: 22 },
+      { id: 'nasgor', nama: 'Nasi goreng spesial', kali: 1.2, kenyang: 78, minum: 5 },
+      { id: 'sate', nama: 'Sate ayam 10 tusuk + lontong', kali: 1.45, kenyang: 76, minum: 5 },
       { id: 'geprek', nama: 'Nasi ayam geprek', kali: 1.2, kenyang: 75, minum: 5 },
       { id: 'mie', nama: 'Mie ayam', kali: 0.9, kenyang: 55, minum: 10 },
       { id: 'roti', nama: 'Roti dan susu kotak', harga: 12000, kenyang: 30, minum: 20 },
@@ -52,33 +57,43 @@
     /* beli aset usaha sendiri: kontainer milik sendiri (sewa lahan tetap 45%), beli lahan (mahal, bebas sewa selamanya) */
     asetUsaha: { beliKontainer: 25000000, porsiSewaLahan: 0.45, beliLahanDasar: 250000000, sewaRukoBulan: 5000000, pindahRuko: 15000000 },
     minuman: [
-      { id: 'air', nama: 'Air mineral 600 ml', harga: 4000, kenyang: 0, minum: 35 },
-      { id: 'esteh', nama: 'Es teh manis', harga: 5000, kenyang: 5, minum: 40 },
-      { id: 'jus', nama: 'Jus buah', harga: 12000, kenyang: 10, minum: 45 }
+      { id: 'air', nama: 'Air mineral 600 ml', harga: 4000, kenyang: 0, minum: 35, melek: 4 },
+      { id: 'esteh', nama: 'Es teh manis', harga: 5000, kenyang: 5, minum: 40, melek: 8 },
+      { id: 'kopibotol', nama: 'Kopi susu dingin (minimarket)', harga: 10000, kenyang: 5, minum: 30, melek: 28 },
+      { id: 'energi', nama: 'Minuman berenergi dingin', harga: 8000, kenyang: 0, minum: 25, melek: 35 },
+      { id: 'jus', nama: 'Jus buah', harga: 12000, kenyang: 10, minum: 45, melek: 12 }
     ],
     ojekKos: 12000, jarakKos: 3, /* perkiraan: kos ke kedai */
-    /* barang untuk kos/rumah. PS5: harga resmi Oktober 2026 (detikInet); lainnya perkiraan pasar */
+    /* barang untuk kos/rumah dengan kategori rapi untuk Tokopedia & Shopee */
+    kategoriToko: [
+      { id: 'semua', nama: 'Semua' },
+      { id: 'elektronik', nama: 'Elektronik' },
+      { id: 'dapur', nama: 'Dapur' },
+      { id: 'perabot', nama: 'Perabot' },
+      { id: 'gadget', nama: 'Gadget' },
+      { id: 'hiburan', nama: 'Hiburan' }
+    ],
     barangRumah: [
-      { id: 'kipas', nama: 'Kipas angin berdiri', merek: 'Miyako', harga: 250000, watt: 0.04, ket: 'Tidur sedikit lebih nyenyak kalau AC mati' },
-      { id: 'kulkas', nama: 'Kulkas 1 pintu', merek: 'Sharp', harga: 1800000, watt: 0.05, ket: 'Simpan minuman dingin, minum lebih murah' },
-      { id: 'ricecooker', nama: 'Rice cooker', merek: 'Miyako', harga: 350000, watt: 0, ket: 'Masak sendiri, makan lebih murah' },
-      { id: 'dispenser', nama: 'Dispenser + galon', merek: 'Miyako', harga: 300000, watt: 0, ket: 'Minum di kos hampir gratis' },
-      { id: 'karpet', nama: 'Karpet dan bantal duduk', merek: 'Lokal', harga: 150000, watt: 0, ket: 'Kamar lebih nyaman' },
-      { id: 'tv', nama: 'TV LED 32 inci', merek: 'Xiaomi', harga: 2000000, watt: 0.06, ket: 'Istirahat sambil nonton, stamina pulih lebih cepat' },
-      { id: 'ps5', nama: 'PS5 Slim Digital', merek: 'Sony', harga: 9999000, watt: 0.2, butuh: 'tv', ket: 'Main game di kos. Butuh TV' },
-      { id: 'ps5disc', nama: 'PS5 Slim Disc', merek: 'Sony', harga: 11399000, watt: 0.2, butuh: 'tv', ket: 'Bisa pakai kaset. Butuh TV' },
-      { id: 'kaset', nama: 'Kaset game PS5', merek: 'Sony', harga: 1029000, watt: 0, butuh: 'ps5disc', banyak: true, ket: 'Game baru, main lebih seru' },
-      { id: 'hp2', nama: 'HP kelas menengah', merek: 'Samsung Galaxy A', harga: 4500000, watt: 0, ket: 'Kamera lebih bagus: posting media sosial lebih ramai' },
-      { id: 'hp3', nama: 'HP flagship', merek: 'iPhone', harga: 22000000, watt: 0, butuh: 'hp2', ket: 'Kamera terbaik: konten paling bagus' },
+      { id: 'kipas', kat: 'elektronik', nama: 'Kipas angin berdiri', merek: 'Miyako', harga: 250000, watt: 0.04, ket: 'Tidur sedikit lebih nyenyak kalau AC mati' },
+      { id: 'kulkas', kat: 'dapur', nama: 'Kulkas 1 pintu', merek: 'Sharp', harga: 1800000, watt: 0.05, ket: 'Simpan minuman dingin, minum lebih murah' },
+      { id: 'ricecooker', kat: 'dapur', nama: 'Rice cooker', merek: 'Miyako', harga: 350000, watt: 0, ket: 'Masak sendiri, makan lebih murah' },
+      { id: 'dispenser', kat: 'dapur', nama: 'Dispenser + galon', merek: 'Miyako', harga: 300000, watt: 0, ket: 'Minum di kos hampir gratis' },
+      { id: 'karpet', kat: 'perabot', nama: 'Karpet dan bantal duduk', merek: 'Lokal', harga: 150000, watt: 0, ket: 'Kamar lebih nyaman' },
+      { id: 'tv', kat: 'hiburan', nama: 'TV LED 32 inci', merek: 'Xiaomi', harga: 2000000, watt: 0.06, ket: 'Istirahat sambil nonton, stamina pulih lebih cepat' },
+      { id: 'ps5', kat: 'hiburan', nama: 'PS5 Slim Digital', merek: 'Sony', harga: 9999000, watt: 0.2, butuh: 'tv', ket: 'Main game di kos. Butuh TV' },
+      { id: 'ps5disc', kat: 'hiburan', nama: 'PS5 Slim Disc', merek: 'Sony', harga: 11399000, watt: 0.2, butuh: 'tv', ket: 'Bisa pakai kaset. Butuh TV' },
+      { id: 'kaset', kat: 'hiburan', nama: 'Kaset game PS5', merek: 'Sony', harga: 1029000, watt: 0, butuh: 'ps5disc', banyak: true, ket: 'Game baru, main lebih seru' },
+      { id: 'hp2', kat: 'gadget', nama: 'HP kelas menengah', merek: 'Samsung Galaxy A', harga: 4500000, watt: 0, ket: 'Kamera lebih bagus: posting media sosial lebih ramai' },
+      { id: 'hp3', kat: 'gadget', nama: 'HP flagship', merek: 'iPhone', harga: 22000000, watt: 0, butuh: 'hp2', ket: 'Kamera terbaik: konten paling bagus' },
       /* hanya muat di rumah (perkiraan harga pasar) */
-      { id: 'ac', nama: 'AC 1/2 PK + pasang', merek: 'Panasonic', harga: 3700000, watt: 0, rumah: true, ket: 'Rumah tidak ada AC bawaan. Tidur lebih nyenyak' },
-      { id: 'springbed', nama: 'Spring bed 160×200', merek: 'Lokal', harga: 3500000, watt: 0, rumah: true, ket: 'Tidur memulihkan stamina lebih banyak' },
-      { id: 'sofa', nama: 'Sofa 3 dudukan', merek: 'Informa', harga: 3000000, watt: 0, rumah: true, ket: 'Istirahat di rumah lebih cepat pulih' },
-      { id: 'mejamakan', nama: 'Meja makan 4 kursi', merek: 'Informa', harga: 2200000, watt: 0, rumah: true, ket: 'Makan di rumah lebih kenyang' },
-      { id: 'kompor', nama: 'Kompor gas + tabung 3 kg', merek: 'Rinnai', harga: 650000, watt: 0, rumah: true, ket: 'Masak sendiri di rumah' },
-      { id: 'mesincuci', nama: 'Mesin cuci 2 tabung', merek: 'Sharp', harga: 1900000, watt: 0, rumah: true, ket: 'Cuci baju sendiri di rumah' },
-      { id: 'kulkas2', nama: 'Kulkas 2 pintu', merek: 'Samsung', harga: 4500000, watt: 0, rumah: true, ket: 'Stok minuman dingin lebih banyak' },
-      { id: 'tv55', nama: 'TV 55 inci 4K', merek: 'Samsung', harga: 7000000, watt: 0, rumah: true, ket: 'Main PS dan nonton lebih puas' }
+      { id: 'ac', kat: 'elektronik', nama: 'AC 1/2 PK + pasang', merek: 'Panasonic', harga: 3700000, watt: 0, rumah: true, ket: 'Rumah tidak ada AC bawaan. Tidur lebih nyenyak' },
+      { id: 'springbed', kat: 'perabot', nama: 'Spring bed 160×200', merek: 'Lokal', harga: 3500000, watt: 0, rumah: true, ket: 'Tidur memulihkan stamina lebih banyak' },
+      { id: 'sofa', kat: 'perabot', nama: 'Sofa 3 dudukan', merek: 'Informa', harga: 3000000, watt: 0, rumah: true, ket: 'Istirahat di rumah lebih cepat pulih' },
+      { id: 'mejamakan', kat: 'perabot', nama: 'Meja makan 4 kursi', merek: 'Informa', harga: 2200000, watt: 0, rumah: true, ket: 'Makan di rumah lebih kenyang' },
+      { id: 'kompor', kat: 'dapur', nama: 'Kompor gas + tabung 3 kg', merek: 'Rinnai', harga: 650000, watt: 0, rumah: true, ket: 'Masak sendiri di rumah' },
+      { id: 'mesincuci', kat: 'elektronik', nama: 'Mesin cuci 2 tabung', merek: 'Sharp', harga: 1900000, watt: 0, rumah: true, ket: 'Cuci baju sendiri di rumah' },
+      { id: 'kulkas2', kat: 'dapur', nama: 'Kulkas 2 pintu', merek: 'Samsung', harga: 4500000, watt: 0, rumah: true, ket: 'Stok minuman dingin lebih banyak' },
+      { id: 'tv55', kat: 'hiburan', nama: 'TV 55 inci 4K', merek: 'Samsung', harga: 7000000, watt: 0, rumah: true, ket: 'Main PS dan nonton lebih puas' }
     ],
 
     /* menjual barang kos/rumah bekas (perkiraan): buka kotak turun ke 75%, lalu turun 12% setahun dan 0,15% tiap pemakaian */
@@ -93,28 +108,58 @@
       { id: 'ps5', nama: 'PS5 Slim Digital Edition', merek: 'Sony', bekas: false, digital: true, harga: 9999000, watt: 0.2, pulih: 20, ket: 'Baru, garansi resmi Sony Indonesia. Main game digital PS Store' },
       { id: 'ps5disc', nama: 'PS5 Slim Disc Edition', merek: 'Sony', bekas: false, harga: 11399000, watt: 0.2, pulih: 20, ket: 'Baru, garansi resmi Sony Indonesia. Bisa kaset Blu-ray PS5 & PS4' }
     ],
-    /* kaset / game original tiap konsol (PS1–PS4 original bekas terawat, PS5 original baru) */
+    /* kaset / game original tiap konsol (45 judul ikonik PS1–PS5: PS1–PS4 original bekas terawat, PS5 original baru) */
     gameKonsol: [
-      { id: 'g_ps1_we4', konsol: 'ps1', nama: 'Winning Eleven 4 (CD Original)', harga: 120000, bonus: 3, ket: 'Sepak bola klasik PS1, CD original NTSC-J' },
-      { id: 'g_ps1_ctr', konsol: 'ps1', nama: 'Crash Team Racing (CD Original)', harga: 175000, bonus: 4, ket: 'Balap kart legendaris, CD original Black Label' },
-      { id: 'g_ps1_re2', konsol: 'ps1', nama: 'Resident Evil 2 DualShock (2 CD Original)', harga: 280000, bonus: 5, ket: '2 keping CD original lengkap manual' },
-      { id: 'g_ps1_suikoden2', konsol: 'ps1', nama: 'Suikoden II (CD Original Langka)', harga: 850000, bonus: 6, langka: true, ket: 'JRPG kolektor original, harga jual kembali stabil' },
-      { id: 'g_ps2_gtasa', konsol: 'ps2', nama: 'GTA: San Andreas (DVD Original)', harga: 150000, bonus: 4, ket: 'DVD original lengkap peta Los Santos' },
-      { id: 'g_ps2_we10', konsol: 'ps2', nama: 'Winning Eleven 10 (DVD Original)', harga: 95000, bonus: 3, ket: 'DVD original Konami' },
-      { id: 'g_ps2_re4', konsol: 'ps2', nama: 'Resident Evil 4 (DVD Original)', harga: 160000, bonus: 4, ket: 'DVD original Capcom' },
-      { id: 'g_ps2_gow2', konsol: 'ps2', nama: 'God of War II (DVD Original)', harga: 185000, bonus: 5, ket: 'DVD original 2-layer Sony Computer Entertainment' },
-      { id: 'g_ps3_gtav', konsol: 'ps3', nama: 'Grand Theft Auto V (BD Original)', harga: 140000, bonus: 4, ket: 'Blu-ray Disc original Rockstar Games' },
-      { id: 'g_ps3_tlou', konsol: 'ps3', nama: 'The Last of Us (BD Original)', harga: 165000, bonus: 5, ket: 'Blu-ray Disc original Naughty Dog' },
-      { id: 'g_ps3_pes18', konsol: 'ps3', nama: 'PES 2018 (BD Original)', harga: 110000, bonus: 3, ket: 'Blu-ray Disc original Konami' },
-      { id: 'g_ps3_rdr', konsol: 'ps3', nama: 'Red Dead Redemption (BD Original)', harga: 155000, bonus: 4, ket: 'Blu-ray Disc original lengkap peta' },
-      { id: 'g_ps4_gowr', konsol: 'ps4', nama: 'God of War Ragnarök (BD Original)', harga: 380000, bonus: 5, ket: 'Blu-ray Disc original Region 3 Asia' },
-      { id: 'g_ps4_rdr2', konsol: 'ps4', nama: 'Red Dead Redemption 2 (2 BD Original)', harga: 320000, bonus: 5, ket: '2 keping Blu-ray Disc original Data & Play' },
-      { id: 'g_ps4_fc25', konsol: 'ps4', nama: 'EA Sports FC 25 (BD Original)', harga: 420000, bonus: 4, ket: 'Blu-ray Disc original EA Sports' },
-      { id: 'g_ps4_got', konsol: 'ps4', nama: "Ghost of Tsushima Director's Cut (BD Original)", harga: 350000, bonus: 5, ket: 'Blu-ray Disc original Sucker Punch' },
-      { id: 'g_ps5_fc26', konsol: 'ps5', nama: 'EA Sports FC 26 (PS5 Original)', harga: 1029000, bonus: 6, ket: 'Game baru PS5 resmi' },
-      { id: 'g_ps5_spider2', konsol: 'ps5', nama: "Marvel's Spider-Man 2 (PS5 Original)", harga: 1029000, bonus: 7, ket: 'Game eksklusif PS5 resmi Sony' },
-      { id: 'g_ps5_wukong', konsol: 'ps5', nama: 'Black Myth: Wukong (PS5 Original)', harga: 899000, bonus: 7, ket: 'Action RPG populer PS5' },
-      { id: 'g_ps5_gt7', konsol: 'ps5', nama: 'Gran Turismo 7 (PS5 Original)', harga: 1029000, bonus: 6, ket: 'Simulasi balap resmi PlayStation Studios' }
+      /* PS1 */
+      { id: 'g_ps1_we4', konsol: 'ps1', format: 'CD-ROM Original', bekas: true, nama: 'Winning Eleven 4', harga: 120000, stamina: 4, ket: 'Sepak bola klasik PS1, CD original NTSC-J' },
+      { id: 'g_ps1_ctr', konsol: 'ps1', format: 'CD-ROM Original', bekas: true, nama: 'Crash Team Racing (CTR)', harga: 175000, stamina: 5, ket: 'Balap kart legendaris, CD original Black Label' },
+      { id: 'g_ps1_pepsiman', konsol: 'ps1', format: 'CD-ROM Original', bekas: true, nama: 'PepsiMan', harga: 320000, stamina: 5, ket: 'Aksi lari ikonik rental PS1, CD original Jepang' },
+      { id: 'g_ps1_hmbtn', konsol: 'ps1', format: 'CD-ROM Original', bekas: true, nama: 'Harvest Moon: Back to Nature', harga: 260000, stamina: 6, ket: 'Simulasi kebun legendaris, CD original lengkap manual' },
+      { id: 'g_ps1_re2', konsol: 'ps1', format: '2× CD-ROM Original', bekas: true, nama: 'Resident Evil 2 DualShock', harga: 280000, stamina: 5, ket: '2 keping CD original Leon & Claire' },
+      { id: 'g_ps1_ff7', konsol: 'ps1', format: '3× CD-ROM Original', bekas: true, nama: 'Final Fantasy VII', harga: 450000, stamina: 6, ket: '3 keping CD original Squaresoft' },
+      { id: 'g_ps1_mgs', konsol: 'ps1', format: '2× CD-ROM Original', bekas: true, nama: 'Metal Gear Solid', harga: 350000, stamina: 5, ket: 'Stealth legendaris Konami, 2 CD original' },
+      { id: 'g_ps1_tekken3', konsol: 'ps1', format: 'CD-ROM Original', bekas: true, nama: 'Tekken 3', harga: 190000, stamina: 5, ket: 'Fighting klasik Namco, CD original' },
+      { id: 'g_ps1_suikoden2', konsol: 'ps1', format: 'CD-ROM Original', bekas: true, nama: 'Suikoden II (Kolektor)', harga: 850000, stamina: 7, langka: true, ket: 'JRPG kolektor original langka, harga jual stabil' },
+      /* PS2 */
+      { id: 'g_ps2_gtasa', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'GTA: San Andreas', harga: 150000, stamina: 6, ket: 'DVD original lengkap peta Los Santos' },
+      { id: 'g_ps2_we10', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Winning Eleven 10', harga: 95000, stamina: 4, ket: 'DVD original Konami' },
+      { id: 'g_ps2_re4', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Resident Evil 4', harga: 160000, stamina: 5, ket: 'DVD original Capcom' },
+      { id: 'g_ps2_gow2', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'God of War II', harga: 185000, stamina: 6, ket: 'DVD original 2-layer Sony Computer Entertainment' },
+      { id: 'g_ps2_bully', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Bully (Canis Canem Edit)', harga: 175000, stamina: 5, ket: 'Petualangan sekolah Rockstar, DVD original' },
+      { id: 'g_ps2_nfsmw', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Need for Speed: Most Wanted', harga: 165000, stamina: 5, ket: 'Balap liar BMW M3 GTR, DVD original EA' },
+      { id: 'g_ps2_downhill', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Downhill Domination', harga: 195000, stamina: 5, ket: 'Balap sepeda gunung favorit rental PS2' },
+      { id: 'g_ps2_gh3', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Guitar Hero III: Legends of Rock', harga: 140000, stamina: 5, ket: 'Musik rock klasik PS2, DVD original' },
+      { id: 'g_ps2_kh2', konsol: 'ps2', format: 'DVD-ROM Original', bekas: true, nama: 'Kingdom Hearts II', harga: 180000, stamina: 6, ket: 'Action RPG Square Enix, DVD original' },
+      /* PS3 */
+      { id: 'g_ps3_gtav', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'Grand Theft Auto V', harga: 140000, stamina: 6, ket: 'Blu-ray Disc original Rockstar Games' },
+      { id: 'g_ps3_tlou', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'The Last of Us', harga: 165000, stamina: 6, ket: 'Blu-ray Disc original Naughty Dog' },
+      { id: 'g_ps3_pes18', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'PES 2018', harga: 110000, stamina: 4, ket: 'Blu-ray Disc original Konami' },
+      { id: 'g_ps3_rdr', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'Red Dead Redemption', harga: 155000, stamina: 5, ket: 'Blu-ray Disc original lengkap peta' },
+      { id: 'g_ps3_uncharted2', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'Uncharted 2: Among Thieves', harga: 120000, stamina: 5, ket: 'Action adventure GOTY PS3' },
+      { id: 'g_ps3_gow3', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'God of War III', harga: 145000, stamina: 6, ket: 'Blu-ray Disc original Santa Monica Studio' },
+      { id: 'g_ps3_mgs4', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'Metal Gear Solid 4', harga: 160000, stamina: 5, ket: 'Eksklusif PS3 Kojima Productions' },
+      { id: 'g_ps3_gt6', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'Gran Turismo 6', harga: 135000, stamina: 5, ket: 'Simulasi balap 1.200 mobil Polyphony' },
+      { id: 'g_ps3_ds1', konsol: 'ps3', format: 'Blu-ray Original', bekas: true, nama: 'Dark Souls: Prepare to Die', harga: 210000, stamina: 6, ket: 'Action RPG menantang FromSoftware' },
+      /* PS4 */
+      { id: 'g_ps4_gowr', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: 'God of War Ragnarök', harga: 380000, stamina: 7, ket: 'Blu-ray Disc original Region 3 Asia' },
+      { id: 'g_ps4_rdr2', konsol: 'ps4', format: '2× Blu-ray Original', bekas: true, nama: 'Red Dead Redemption 2', harga: 320000, stamina: 7, ket: '2 keping Blu-ray Disc original Data & Play' },
+      { id: 'g_ps4_fc25', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: 'EA Sports FC 25', harga: 420000, stamina: 6, ket: 'Blu-ray Disc original EA Sports' },
+      { id: 'g_ps4_got', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: "Ghost of Tsushima Director's Cut", harga: 350000, stamina: 7, ket: 'Blu-ray Disc original Sucker Punch' },
+      { id: 'g_ps4_witcher3', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: 'The Witcher 3: Complete Edition', harga: 260000, stamina: 7, ket: 'RPG open-world + semua DLC' },
+      { id: 'g_ps4_p5r', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: 'Persona 5 Royal', harga: 340000, stamina: 6, ket: 'JRPG populer Atlus, BD original' },
+      { id: 'g_ps4_bloodborne', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: 'Bloodborne', harga: 230000, stamina: 6, ket: 'Eksklusif PS4 FromSoftware' },
+      { id: 'g_ps4_uncharted4', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: "Uncharted 4: A Thief's End", harga: 185000, stamina: 6, ket: 'Blu-ray Disc original Naughty Dog' },
+      { id: 'g_ps4_hzd', konsol: 'ps4', format: 'Blu-ray Original', bekas: true, nama: 'Horizon Zero Dawn Complete', harga: 195000, stamina: 6, ket: 'Open-world robot dinosaurus Guerrilla' },
+      /* PS5 */
+      { id: 'g_ps5_fc26', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: 'EA Sports FC 26', harga: 1029000, stamina: 7, ket: 'Game baru PS5 resmi bersegel' },
+      { id: 'g_ps5_spider2', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: "Marvel's Spider-Man 2", harga: 1029000, stamina: 8, ket: 'Game eksklusif PS5 resmi Sony' },
+      { id: 'g_ps5_wukong', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: 'Black Myth: Wukong', harga: 899000, stamina: 8, ket: 'Action RPG populer PS5' },
+      { id: 'g_ps5_gt7', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: 'Gran Turismo 7', harga: 1029000, stamina: 7, ket: 'Simulasi balap resmi PlayStation Studios' },
+      { id: 'g_ps5_ff7r', konsol: 'ps5', format: '2× PS5 BD Original', bekas: false, nama: 'Final Fantasy VII Rebirth', harga: 1029000, stamina: 8, ket: 'JRPG epik PS5 Square Enix' },
+      { id: 'g_ps5_elden', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: 'Elden Ring: Shadow of the Erdtree', harga: 949000, stamina: 8, ket: 'GOTY Open-World RPG FromSoftware' },
+      { id: 'g_ps5_astro', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: 'Astro Bot', harga: 879000, stamina: 7, ket: 'Platformer pemenang GOTY PS5' },
+      { id: 'g_ps5_demons', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: "Demon's Souls Remake", harga: 899000, stamina: 7, ket: 'Remake grafis generasi baru PS5' },
+      { id: 'g_ps5_cyberpunk', konsol: 'ps5', format: 'PS5 BD Original', bekas: false, nama: 'Cyberpunk 2077 Ultimate Edition', harga: 849000, stamina: 8, ket: 'Termasuk ekspansi Phantom Liberty' }
     ],
 
     /* kartu kredit bank: aturan Bank Indonesia (bunga maksimal 1,75% sebulan, bayar minimal 5% atau Rp50.000,
@@ -158,10 +203,17 @@
       { id: 'beat', nama: 'Honda BeAT CBS', harga: 19380000, kml: 60, bbm: 'pertalite', tangki: 4.2, muat: 4, kelebihan: 'Paling irit, gampang dijual lagi' },
       { id: 'gear', nama: 'Yamaha Gear 125', harga: 19495000, kml: 50, bbm: 'pertalite', tangki: 4.2, muat: 6, kelebihan: 'Dek rata, muat banyak cup' },
       { id: 'supra', nama: 'Honda Supra X 125', harga: 21500000, kml: 55, bbm: 'pertalite', tangki: 4, muat: 4, kelebihan: 'Kuat untuk jalan rusak', kuat: true },
+      { id: 'scoopy', nama: 'Honda Scoopy Prestige', harga: 23250000, kml: 59, bbm: 'pertalite', tangki: 4.2, muat: 6, kelebihan: 'Desain retro ikonik, irit dan nyaman' },
       { id: 'vario', nama: 'Honda Vario 125', harga: 24810000, kml: 50, bbm: 'pertalite', tangki: 5.5, muat: 6, kelebihan: 'Bagasi besar' },
+      { id: 'mxking', nama: 'Yamaha MX King 150', harga: 27325000, kml: 48, bbm: 'pertamax', tangki: 4.2, muat: 4, kelebihan: 'Bebek sport 150 cc bertenaga' },
       { id: 'icon', nama: 'Honda ICON e:', harga: 28000000, kml: 0, bbm: 'listrik', jarakPenuh: 60, kwh: 1.5, muat: 4, kelebihan: 'Ongkos jalan paling murah, jarak tempuh terbatas' },
+      { id: 'aerox', nama: 'Yamaha Aerox 155 Connected', harga: 28580000, kml: 43, bbm: 'pertamax', tangki: 5.5, muat: 4, kelebihan: 'Skutik sporty bertenaga, keren dipakai harian' },
+      { id: 'vario160', nama: 'Honda Vario 160 ABS', harga: 30450000, kml: 46, bbm: 'pertamax', tangki: 5.5, muat: 6, kelebihan: 'Skutik 160 cc bertenaga, dek rata lega' },
       { id: 'nmax', nama: 'Yamaha NMAX 155', harga: 32175000, kml: 40, bbm: 'pertamax', tangki: 7.1, muat: 6, kelebihan: 'Nyaman jarak jauh, menaikkan gengsi' },
+      { id: 'pcx160', nama: 'Honda PCX 160 CBS', harga: 33750000, kml: 45, bbm: 'pertamax', tangki: 8.1, muat: 6, kelebihan: 'Maxi skutik elegan, tangki besar & bagasi 30 L' },
+      { id: 'vespa', nama: 'Vespa Primavera 150 i-get', harga: 54100000, kml: 40, bbm: 'pertamax', tangki: 7, muat: 4, kelebihan: 'Skutik retro premium Italia, gengsi tinggi' },
       /* motor sport: harga OTR Jakarta varian termurah (oto.com, November 2026; Yamaha dari Moladin Oktober 2026). km/l dan tangki perkiraan */
+      { id: 'satriafu', kelas: 'sport', nama: 'Suzuki Satria F150 (FU)', harga: 29165000, kml: 40, bbm: 'pertamax', tangki: 4, muat: 2, kelebihan: 'Ayam jago DOHC 150 cc legendaris, lincah dan kencang' },
       { id: 'gsxr150', kelas: 'sport', nama: 'Suzuki GSX-R150', harga: 35800000, kml: 40, bbm: 'pertamax', tangki: 11, muat: 2, kelebihan: 'Sport 150 cc termurah' },
       { id: 'cbr150', kelas: 'sport', nama: 'Honda CBR150R', harga: 39730000, kml: 40, bbm: 'pertamax', tangki: 12, muat: 2, kelebihan: 'Sport fairing harian' },
       { id: 'r15', kelas: 'sport', nama: 'Yamaha R15', harga: 42200000, kml: 40, bbm: 'pertamax', tangki: 11, muat: 2, kelebihan: 'Sport 155 cc paling dicari' },
@@ -217,6 +269,41 @@
     /* ojek online (sisi pengemudi). Potongan aplikasi 8% mulai 1 Juli 2026 (Perpres 27/2026).
        Zona I (Sumatera, Jawa selain Jabodetabek): tarif awal Rp8.000–10.000, lanjutan Rp2.500/km (Metro TV, Juli 2026).
        Zona II (Jabodetabek): Rp2.600–2.700/km, minimal Rp13.000–13.500 (KP 564/2022). Frekuensi order: setelan */
+    /* bisnis mobil: GoCar/GrabCar dalam kota, Travel antarkota (tarif per penumpang), & Jasa Angkutan pikap */
+    bisnisMobil: {
+      potonganCar: 0.1,
+      kaliTarifCar: 2.3,
+      kapasitas: { hatch: 4, sedan: 4, sport: 2, mpv: 7, suv: 7, van: 7, pikap: 0 },
+      ruteTravel: {
+        medan: [
+          { id: 'mdn-parapat', tujuan: 'Danau Toba / Parapat', km: 175, ongkos: 200000, jam: 4 },
+          { id: 'mdn-pekanbaru', tujuan: 'Pekanbaru', km: 620, ongkos: 450000, jam: 10 },
+          { id: 'mdn-jambi', tujuan: 'Kota Jambi', km: 920, ongkos: 600000, jam: 14 }
+        ],
+        pekanbaru: [
+          { id: 'pku-bukittinggi', tujuan: 'Bukittinggi / Padang', km: 220, ongkos: 220000, jam: 5 },
+          { id: 'pku-jambi', tujuan: 'Kota Jambi', km: 430, ongkos: 350000, jam: 8 },
+          { id: 'pku-medan', tujuan: 'Medan', km: 620, ongkos: 450000, jam: 10 }
+        ],
+        jambi: [
+          { id: 'jmb-palembang', tujuan: 'Palembang', km: 275, ongkos: 250000, jam: 6 },
+          { id: 'jmb-pekanbaru', tujuan: 'Pekanbaru', km: 430, ongkos: 350000, jam: 8 },
+          { id: 'jmb-medan', tujuan: 'Medan', km: 920, ongkos: 600000, jam: 14 }
+        ],
+        jakarta: [
+          { id: 'jkt-bandung', tujuan: 'Bandung', km: 150, ongkos: 200000, jam: 3.5 },
+          { id: 'jkt-semarang', tujuan: 'Semarang', km: 440, ongkos: 380000, jam: 7 },
+          { id: 'jkt-lampung', tujuan: 'Bandar Lampung', km: 240, ongkos: 350000, jam: 6 }
+        ]
+      },
+      angkutan: [
+        { id: 'ang-kos', nama: 'Pindahan kamar kos / kontrakan', km: 14, bayar: 220000, jam: 1.5 },
+        { id: 'ang-pasar', nama: 'Angkut sayur & buah ke pasar induk', km: 24, bayar: 300000, jam: 2 },
+        { id: 'ang-material', nama: 'Antar bahan bangunan (semen & besi)', km: 18, bayar: 350000, jam: 2 },
+        { id: 'ang-rumah', nama: 'Pindahan rumah satu keluarga', km: 32, bayar: 550000, jam: 3 },
+        { id: 'ang-luarkota', nama: 'Ekspedisi barang ke kota tetangga', km: 120, bayar: 950000, jam: 4.5 }
+      ]
+    },
     ojol: {
       potongan: 0.08,
       zona: { 1: { minimal: 10000, kmMinimal: 4, perKm: 2500 }, 2: { minimal: 13250, kmMinimal: 4, perKm: 2650 } },

@@ -5,11 +5,11 @@
   var M = g.KK_MENU, N = g.KK_NYATA, KAL = g.KK_KAL;
   /* setelan tempat belanja */
   var TEMPAT = {
-    pasar: { nama: 'Pasar', kali: 0.95, bayar: ['tunai'], ongkos: 20000, ongkosNama: 'Ojek pulang-pergi', makanWaktu: 60,
+    pasar: { nama: 'Pasar', kali: 0.95, bayar: ['tunai', 'dompet', 'transfer'], ongkos: 20000, ongkosNama: 'Ojek pulang-pergi', makanWaktu: 60,
       kaliSore: 1.03, namaSore: 'Swalayan',
-      ket: 'Paling murah, bayar tunai. Harus dijemput: naik ojek pulang-pergi sekitar 1 jam, atau pakai kendaraan sendiri. Pasar buka sampai pukul 12.00; setelah itu belanja ke swalayan, sekitar 8% lebih mahal.' },
-    grosir: { nama: 'Grosir', kali: 1.05, bayar: ['tunai', 'qris', 'transfer'], ongkos: 10000, ongkosNama: 'Ongkir antar', antarMenit: 120,
-      ket: 'Toko grosir, pangkalan gas, dan depot air sekitar. Sedikit lebih mahal, diantar sekitar 2 jam.' },
+      ket: 'Paling murah, bisa bayar dari laci, dompet pribadi, atau transfer/QRIS bank. Harus dijemput: naik ojek pulang-pergi sekitar 1 jam, atau pakai kendaraan sendiri. Pasar buka sampai pukul 12.00; setelah itu belanja ke swalayan.' },
+    grosir: { nama: 'Grosir', kali: 1.05, bayar: ['tunai', 'dompet', 'qris', 'transfer'], ongkos: 10000, ongkosNama: 'Ongkir antar', antarMenit: 120,
+      ket: 'Toko grosir, pangkalan gas, dan depot air sekitar. Bisa bayar laci, dompet pribadi, QRIS, atau transfer bank. Diantar sekitar 2 jam.' },
     online: { nama: 'Online', kali: 0.9, bayar: ['qris', 'transfer', 'kk'], ongkos: 15000, ongkosNama: 'Ongkir', antarHari: [2, 3],
       ket: 'Shopee dan Tokopedia. Harga promo, sampai 2–3 hari. Bisa bayar pakai QRIS, transfer, atau kartu kredit.' },
     sales: { nama: 'Sales', kali: 1, bayar: ['tempo'], ongkos: 0, minimal: 300000, tempoHari: 14, denda: 0.05,
@@ -158,6 +158,8 @@
       var dariBesar = Math.min(S.uang.besar, Math.floor(h.total / 50000) * 50000), sisa = h.total - dariBesar;
       if (sisa > S.uang.kecil) { dariBesar = Math.min(S.uang.besar, h.total); sisa = h.total - dariBesar; }
       S.uang.besar -= dariBesar; S.uang.kecil -= sisa;
+    } else if (bayar === 'dompet') {
+      if (!U.bayarDompet || !U.bayarDompet(S, h.total)) return 'Uang di dompet pribadi tidak cukup untuk ' + rp(h.total) + '.';
     } else if (bayar === 'qris') {
       if (!U.bayarQris(S, h.total)) return 'Tidak ada saldo QRIS yang cukup untuk ' + rp(h.total) + '. Satu pembayaran tidak bisa digabung dari dua aplikasi.';
     } else if (bayar === 'transfer') {
