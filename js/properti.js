@@ -6,29 +6,130 @@
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function M() { return g.KK_MOTOR; }
-  function dataKota(S) { return P.kota[S.kota] || P.kota.jambi; }
+  /* daftar kota & daerah seluruh Indonesia untuk beli properti (gabungan peta rute + kota utama Nusantara) */
+  var KOTA_EXTRA = {
+    denpasar: { nama: 'Denpasar (Bali)', pulau: 'Bali', skala: 1.35 },
+    makassar: { nama: 'Makassar', pulau: 'Sulawesi', skala: 1.05 },
+    balikpapan: { nama: 'Balikpapan', pulau: 'Kalimantan', skala: 1.15 },
+    manado: { nama: 'Manado', pulau: 'Sulawesi', skala: 0.95 },
+    banjarmasin: { nama: 'Banjarmasin', pulau: 'Kalimantan', skala: 0.95 },
+    pontianak: { nama: 'Pontianak', pulau: 'Kalimantan', skala: 0.95 },
+    malang: { nama: 'Malang', pulau: 'Jawa', skala: 1.05 },
+    solo: { nama: 'Solo (Surakarta)', pulau: 'Jawa', skala: 0.95 },
+    jayapura: { nama: 'Jayapura (Papua)', pulau: 'Papua', skala: 1.15 }
+  };
+  function daftarKota() {
+    var out = [], seen = {};
+    if (g.KK_RUTE && g.KK_RUTE.kota) {
+      Object.keys(g.KK_RUTE.kota).forEach(function (id) {
+        var k = g.KK_RUTE.kota[id]; seen[id] = 1;
+        out.push({ id: id, nama: k.nama, pulau: k.pulau || 'Indonesia' });
+      });
+    }
+    Object.keys(KOTA_EXTRA).forEach(function (id) {
+      if (!seen[id]) out.push({ id: id, nama: KOTA_EXTRA[id].nama, pulau: KOTA_EXTRA[id].pulau });
+    });
+    return out;
+  }
+  function namaKota(id) {
+    if (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[id]) return g.KK_RUTE.kota[id].nama;
+    if (KOTA_EXTRA[id]) return KOTA_EXTRA[id].nama;
+    var k = N.kota.filter(function (x) { return x.id === id; })[0];
+    return k ? k.nama : id;
+  }
+  function dataKota(S, kotaId) {
+    var id = kotaId || S.kota;
+    if (P.kota[id]) return P.kota[id];
+    var rk = g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[id];
+    var sk = KOTA_EXTRA[id] ? KOTA_EXTRA[id].skala : (rk ? (rk.tema === 'metropolis' ? 1.45 : rk.tema === 'kotaBesar' ? 1.15 : 0.95) : 1.0);
+    return {
+      subsidi: id === 'jakarta' ? 185e6 : 166e6,
+      komersial: Math.round(450e6 * sk / 10e6) * 10e6,
+      mewah: Math.round(2400e6 * sk / 50e6) * 50e6,
+      tanahM2: Math.round(1000000 * sk / 100000) * 100000,
+      jarak: { subsidi: 13, komersial: 6, mewah: 4 }
+    };
+  }
+  function buatRuangan(tipe) {
+    var namaList = tipe === 'mewah'
+      ? ['Ruang Keluarga', 'Kamar Utama', 'Kamar 2', 'Kamar 3', 'Kamar Ipar', 'Dapur', 'Garasi']
+      : tipe === 'komersial'
+        ? ['Ruang Tamu', 'Kamar Utama', 'Kamar 2', 'Kamar Ipar', 'Dapur']
+        : ['Ruang Tamu', 'Kamar Utama', 'Kamar 2', 'Dapur'];
+    return namaList.map(function (nm) { return { nama: nm, isi: [] }; });
+  }
+  var PERABOT_RUANG = [
+    { id: 'kasur_single', nama: 'Kasur Busa Single 90×200', harga: 950000, kat: 'Kasur', sync: null },
+    { id: 'kasur_queen', nama: 'Springbed Queen 160×200', harga: 3500000, kat: 'Kasur', sync: 'springbed' },
+    { id: 'kasur_king', nama: 'Springbed King 180×200', harga: 5500000, kat: 'Kasur', sync: 'springbed' },
+    { id: 'kasur_superking', nama: 'King Koil Super King 200×200', harga: 12000000, kat: 'Kasur', sync: 'springbed' },
+    { id: 'ac_half', nama: 'AC 1/2 PK Low Watt + Instalasi', harga: 3700000, kat: 'Elektronik', sync: 'ac' },
+    { id: 'ac_1pk', nama: 'AC 1 PK Inverter + Instalasi', harga: 5200000, kat: 'Elektronik', sync: 'ac' },
+    { id: 'tv_43', nama: 'Smart TV 43" 4K + Pasang', harga: 4200000, kat: 'Elektronik', sync: 'tv' },
+    { id: 'lemari_3p', nama: 'Lemari Pakaian 3 Pintu', harga: 1850000, kat: 'Perabot', sync: 'lemari3pintu' },
+    { id: 'sofa_l', nama: 'Sofa L-Shape Ruang Tamu', harga: 3200000, kat: 'Perabot', sync: 'sofa' },
+    { id: 'kulkas_2p', nama: 'Kulkas 2 Pintu + Instalasi', harga: 4500000, kat: 'Dapur', sync: 'kulkas2' },
+    { id: 'kompor_set', nama: 'Kompor Tanam + Kitchen Set', harga: 4800000, kat: 'Dapur', sync: 'kompor' },
+    { id: 'mesincuci_fl', nama: 'Mesin Cuci Front Loading', harga: 3800000, kat: 'Elektronik', sync: 'mesincuci' }
+  ];
   function siapkan(S) {
     if (!S.properti) S.properti = { rumah: null, tanah: [], pernahRumah: false, mulai: S.hari };
+    var r = S.properti.rumah;
+    if (r) {
+      if (!r.kota) r.kota = S.kota;
+      if (!r.ruangan || !r.ruangan.length) r.ruangan = buatRuangan(r.tipe || 'subsidi');
+      if (typeof r.tagihanAir !== 'number') r.tagihanAir = 0;
+    }
     return S;
   }
-  function harga(S, tipe) { return dataKota(S)[tipe]; }
+  function harga(S, tipe, kotaId) { return dataKota(S, kotaId)[tipe]; }
   function anuitas(pokok, bungaTahun, bulan) { var r = bungaTahun / 12; return r ? pokok * r / (1 - Math.pow(1 + r, -bulan)) : pokok / bulan; }
-  function npoptkp(S) { return S.kota === 'jakarta' ? P.npoptkpJakarta : P.npoptkp; }
-  function bphtb(S, h) { return Math.max(0, Math.round((h - npoptkp(S)) * P.bphtb)); }
+  function npoptkp(S, kotaId) { return (kotaId || S.kota) === 'jakarta' ? P.npoptkpJakarta : P.npoptkp; }
+  function bphtb(S, h, kotaId) { return Math.max(0, Math.round((h - npoptkp(S, kotaId)) * P.bphtb)); }
+  function hitungTagihanAir(S, tipe) {
+    var dasar = tipe === 'mewah' ? 240000 : tipe === 'komersial' ? 115000 : 65000;
+    var jmlOrang = 1 + (S.keluarga ? S.keluarga.length : 0);
+    return dasar + jmlOrang * 20000;
+  }
+  function bayarAir(S) {
+    var r = S.properti && S.properti.rumah;
+    if (!r) return 'Belum punya rumah.';
+    var tg = r.tagihanAir || 0;
+    if (tg <= 0) return 'Tagihan air ledeng (PDAM) bulan ini sudah lunas.';
+    if (S.bank.saldo >= tg) { S.bank.saldo -= tg; M().catatBank(S, 'Tagihan air ledeng PDAM', -tg); }
+    else if ((S.uang.dompet || 0) >= tg) { S.uang.dompet -= tg; }
+    else return 'Saldo tidak cukup untuk bayar PDAM (' + rp(tg) + ').';
+    r.tagihanAir = 0; S.hariIni.pribadi = (S.hariIni.pribadi || 0) + tg;
+    return { ok: true, teks: 'Tagihan air ledeng (PDAM) ' + rp(tg) + ' lunas.' };
+  }
+  function instalPerabot(S, ruangIdx, itemId) {
+    var r = S.properti && S.properti.rumah;
+    if (!r) return 'Beli rumah dulu untuk instalasi perabot ruangan.';
+    siapkan(S);
+    var rg = r.ruangan[ruangIdx]; if (!rg) return 'Ruangan tidak ditemukan.';
+    var it = PERABOT_RUANG.filter(function (x) { return x.id === itemId; })[0]; if (!it) return 'Perabot tidak ditemukan.';
+    if (S.bank.saldo >= it.harga) { S.bank.saldo -= it.harga; M().catatBank(S, 'Instal ' + it.nama + ' di ' + rg.nama, -it.harga); }
+    else if ((S.uang.dompet || 0) >= it.harga) { S.uang.dompet -= it.harga; }
+    else return 'Saldo tidak cukup untuk beli & instal ' + it.nama + ' (' + rp(it.harga) + ').';
+    rg.isi.push({ id: it.id, nama: it.nama, hari: S.hari });
+    if (it.sync && S.rumah && S.rumah.barang) S.rumah.barang[it.sync] = true;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + it.harga;
+    return { ok: true, teks: it.nama + ' berhasil dibeli dan diinstal di ' + rg.nama + '!' };
+  }
 
   /* penghasilan sebulan: rata-rata laba kedai + ngojek 30 hari terakhir */
   function penghasilan(S) {
     var r = (S.riwayat || []).slice(-30); if (!r.length) return 0;
     return Math.round(r.reduce(function (t, x) { return t + (x.laba || 0) + (x.ojek || 0); }, 0) / r.length * 30);
   }
-  function hitung(S, tipe, dp, tenorTahun, tunai) {
-    var h = harga(S, tipe), K = P.komersial;
-    if (tunai) { var b = bphtb(S, h), n = Math.round(h * 0.01); return { harga: h, tunai: true, bphtb: b, notaris: n, bayarAwal: h + b + n, angsuran: 0 }; }
+  function hitung(S, tipe, dp, tenorTahun, tunai, kotaId) {
+    var h = harga(S, tipe, kotaId), K = P.komersial;
+    if (tunai) { var b = bphtb(S, h, kotaId), n = Math.round(h * 0.01); return { harga: h, tunai: true, bphtb: b, notaris: n, bayarAwal: h + b + n, angsuran: 0 }; }
     if (tipe === 'subsidi') {
       var dpS = Math.round(h * P.subsidi.dp), pokokS = h - dpS, angS = Math.round(anuitas(pokokS, P.subsidi.bunga, tenorTahun * 12) / 100) * 100;
       return { harga: h, dp: dpS, pokok: pokokS, bunga: P.subsidi.bunga, biaya: P.subsidi.biayaAkad, bphtb: 0, bayarAwal: dpS + P.subsidi.biayaAkad, angsuran: angS, tenor: tenorTahun * 12 };
     }
-    var uangMuka = Math.round(h * dp / 1e6) * 1e6, pokok = h - uangMuka, bb = bphtb(S, h);
+    var uangMuka = Math.round(h * dp / 1e6) * 1e6, pokok = h - uangMuka, bb = bphtb(S, h, kotaId);
     var biaya = Math.round(pokok * K.provisi + h * K.notaris);
     var ang = Math.round(anuitas(pokok, K.bungaFix, tenorTahun * 12) / 100) * 100;
     var angFloat = Math.round(anuitas(pokok * 0.93, K.bungaFloating, tenorTahun * 12 - K.tahunFix * 12) / 100) * 100; /* perkiraan sisa pokok setelah masa tetap */
@@ -48,15 +149,16 @@
     daftar.push({ teks: 'Saldo rekening untuk uang muka dan biaya ' + rp(x.bayarAwal), ok: S.bank.saldo >= x.bayarAwal });
     return daftar;
   }
-  function ajukan(S, tipe, dp, tenorTahun, tunai) {
+  function ajukan(S, tipe, dp, tenorTahun, tunai, kotaId) {
     if (S.properti.rumah) return 'Sudah punya rumah. Jual dulu kalau mau ganti.';
     if (tipe === 'subsidi' && tunai) return 'Rumah subsidi hanya lewat KPR FLPP.';
-    var x = hitung(S, tipe, dp, tenorTahun, tunai), s = syarat(S, tipe, x), gagal = s.filter(function (y) { return !y.ok; });
+    var kId = kotaId || S.kota, x = hitung(S, tipe, dp, tenorTahun, tunai, kId), s = syarat(S, tipe, x), gagal = s.filter(function (y) { return !y.ok; });
     if (gagal.length) return (tunai ? '' : 'Bank menolak: ') + gagal[0].teks + '.';
     var T = P.tipe[tipe];
     S.bank.saldo -= x.bayarAwal;
-    M().catatBank(S, (tunai ? 'Beli tunai ' : 'Uang muka + biaya KPR ') + T.nama, -x.bayarAwal);
-    S.properti.rumah = { tipe: tipe, nama: T.nama, harga: x.harga, status: 'akad', kunciPada: S.hari + P.akadHari, dihuni: false, dibeli: S.hari,
+    M().catatBank(S, (tunai ? 'Beli tunai ' : 'Uang muka + biaya KPR ') + T.nama + ' (' + namaKota(kId) + ')', -x.bayarAwal);
+    S.properti.rumah = { tipe: tipe, kota: kId, nama: T.nama, harga: x.harga, status: 'akad', kunciPada: S.hari + P.akadHari, dihuni: false, dibeli: S.hari,
+      ruangan: buatRuangan(tipe), tagihanAir: 0,
       kpr: tunai ? null : { angsuran: x.angsuran, pokok: x.pokok, bunga: x.bunga, fixSampai: tipe === 'subsidi' ? Infinity : S.hari + P.komersial.tahunFix * 365, sisa: x.tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0 } };
     S.properti.pernahRumah = true;
     return { ok: true, kunci: S.properti.rumah.kunciPada };
@@ -123,6 +225,17 @@
     var kabar = [], r = S.properti.rumah, tB = KAL.tgl(nBaru);
     if (!r) return kabar;
     if (r.status === 'akad' && nBaru >= r.kunciPada) { r.status = 'siap'; kabar.push('Kunci ' + r.nama + ' sudah diterima. Pindah lewat aplikasi Properti.'); }
+    /* tagihan air ledeng (PDAM) bulanan setiap tanggal 1 */
+    if (tB.d === 1 && r.status === 'siap') {
+      var air = hitungTagihanAir(S, r.tipe);
+      if (S.bank.saldo >= air && !(r.tagihanAir > 0)) {
+        S.bank.saldo -= air; M().catatBank(S, 'Tagihan air ledeng PDAM', -air, nBaru);
+        kabar.push('Tagihan air ledeng (PDAM) bulanan ' + rp(air) + ' dibayar otomatis.');
+      } else {
+        r.tagihanAir = (r.tagihanAir || 0) + air;
+        kabar.push('💧 Tagihan air ledeng (PDAM) ' + rp(r.tagihanAir) + ' belum dibayar! Bayar di aplikasi Properti.');
+      }
+    }
     var k = r.kpr;
     if (k && k.sisa > 0 && tB.d === k.tempo) {
       if (r.tipe !== 'subsidi' && nBaru >= k.fixSampai && k.bunga !== P.komersial.bungaFloating) {
@@ -148,6 +261,7 @@
     return kabar;
   }
 
-  g.KK_PROPERTI = { siapkan: siapkan, harga: harga, hitung: hitung, syarat: syarat, ajukan: ajukan, pindah: pindah, penghasilan: penghasilan, nilaiRumah: nilaiRumah,
-    sisaPokok: sisaPokok, jualRumah: jualRumah, hargaTanah: hargaTanah, beliTanah: beliTanah, nilaiTanah: nilaiTanah, jualTanah: jualTanah, bphtb: bphtb, gantiHari: gantiHari };
+  g.KK_PROPERTI = { siapkan: siapkan, daftarKota: daftarKota, namaKota: namaKota, dataKota: dataKota, harga: harga, hitung: hitung, syarat: syarat, ajukan: ajukan, pindah: pindah, penghasilan: penghasilan, nilaiRumah: nilaiRumah,
+    sisaPokok: sisaPokok, jualRumah: jualRumah, hargaTanah: hargaTanah, beliTanah: beliTanah, nilaiTanah: nilaiTanah, jualTanah: jualTanah, bphtb: bphtb, gantiHari: gantiHari,
+    PERABOT_RUANG: PERABOT_RUANG, hitungTagihanAir: hitungTagihanAir, bayarAir: bayarAir, instalPerabot: instalPerabot };
 })(window);

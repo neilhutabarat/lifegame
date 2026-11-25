@@ -895,22 +895,46 @@
   }
   /* ---------- aplikasi Properti ---------- */
   function layarProperti() {
-    var P = N.properti, r = S.properti.rumah, gaji = PROPERTI.penghasilan(S), html = kepalaApp('Properti', 'Rumah dan tanah di ' + kotaIni().nama) + pesanApp();
-    html += '<ul class="daftar angka">' + baris('Tempat tinggal', S.rumah.jenis === 'rumah' ? esc(r ? r.nama : 'Rumah') : 'Kos ' + rupiah(S.rumah.sewa) + ' sebulan') + baris('Penghasilan sebulan (narik)', rupiah(gaji)) + '</ul>';
+    var P = N.properti, r = S.properti.rumah, gaji = PROPERTI.penghasilan(S), kotaPilih = app.kotaProp || S.kota;
+    var html = kepalaApp('Properti', 'Rumah & tanah seluruh Indonesia') + pesanApp();
+    html += '<ul class="daftar angka">' + baris('Tempat tinggal', S.rumah.jenis === 'rumah' ? esc(r ? r.nama + ' (' + PROPERTI.namaKota(r.kota || S.kota) + ')' : 'Rumah') : 'Kos ' + rupiah(S.rumah.sewa) + ' sebulan') + baris('Penghasilan sebulan (narik)', rupiah(gaji)) + '</ul>';
     if (r) {
-      var k = r.kpr;
-      html += '<h3 class="subjudul">' + esc(r.nama) + '</h3><ul class="daftar angka">' +
+      var k = r.kpr, kotaR = r.kota || S.kota, dkR = PROPERTI.dataKota(S, kotaR), airEst = PROPERTI.hitungTagihanAir(S, r.tipe);
+      var ruangList = r.ruangan || [], ruangIdx = Math.min(app.ruangProp || 0, Math.max(0, ruangList.length - 1));
+      html += '<h3 class="subjudul">' + esc(r.nama) + ' · ' + esc(PROPERTI.namaKota(kotaR)) + '</h3><ul class="daftar angka">' +
         baris('Status', r.status === 'akad' ? 'kunci ' + namaTanggal(r.kunciPada) : r.dihuni ? 'ditempati' : 'kunci diterima') +
         baris('Harga beli', rupiah(r.harga)) + baris('Perkiraan nilai sekarang', rupiah(PROPERTI.nilaiRumah(S))) +
         (k ? baris('Angsuran KPR<small>tiap tanggal ' + k.tempo + ', bunga ' + (k.bunga * 100).toFixed(2).replace('.', ',') + '%</small>', rupiah(k.angsuran)) + baris('Sisa pokok<small>' + k.sisa + ' bulan lagi</small>', rupiah(k.pokok)) + (k.tunggakan ? baris('Tunggakan', rupiah(k.tunggakan), 'rugi') : '') : baris('Kepemilikan', 'lunas, sertifikat di tangan')) +
-        baris('Jarak ke pusat kota', N.properti.kota[S.kota].jarak[r.tipe] + ' km') + '</ul><div class="chip-baris">' +
+        baris('Air ledeng (PDAM)', r.tagihanAir > 0 ? ('Belum lunas: ' + rupiah(r.tagihanAir)) : ('Lunas (±' + rupiah(airEst) + '/bln)'), r.tagihanAir > 0 ? 'rugi' : '') +
+        baris('Jarak ke pusat kota', dkR.jarak[r.tipe] + ' km') + '</ul><div class="chip-baris">' +
+        (r.tagihanAir > 0 ? '<button type="button" class="chip-tombol pilih" data-aksi="bayarAir:1">💧 Bayar PDAM ' + rupiah(r.tagihanAir) + '</button>' : '') +
         (r.status === 'siap' && !r.dihuni ? '<button type="button" class="chip-tombol pilih" data-aksi="pindahRumah:1">Pindah ke rumah' + (MOBIL.pikap(S) ? ' (pakai pikap)' : ' (jasa pindahan ' + rupiah(P.jasaPindahan) + ')') + '</button>' : '') +
         (r.status === 'siap' ? '<button type="button" class="chip-tombol" data-aksi="jualRumah:1">' + (app.yakinJualRumah ? 'Yakin jual? Tap lagi' : 'Jual rumah') + '</button>' : '') + '</div>';
+      /* Daftar ruangan rumah (kosongan -> instalasi perabot per ruangan) */
+      if (ruangList.length) {
+        html += '<h3 class="subjudul">Ruangan Rumah & Instalasi Perabot</h3><ul class="daftar angka">' +
+          ruangList.map(function (rg) {
+            var isiTeks = rg.isi && rg.isi.length ? rg.isi.map(function (x) { return x.nama; }).join(', ') : 'Kosongan';
+            return baris(esc(rg.nama), esc(isiTeks));
+          }).join('') + '</ul>' +
+          '<small style="display:block;margin:8px 0 4px"><b>Pilih ruangan untuk instalasi perabot:</b></small><div class="chip-baris">' +
+          ruangList.map(function (rg, idx) {
+            return '<button type="button" class="chip-tombol' + (idx === ruangIdx ? ' pilih' : '') + '" data-aksi="pilihRuang:' + idx + '">' + esc(rg.nama) + '</button>';
+          }).join('') + '</div>' +
+          '<ul class="daftar belanja">' + (PROPERTI.PERABOT_RUANG || []).map(function (it) {
+            return '<li><span><b>' + esc(it.nama) + '</b><small>' + esc(it.kat) + ' · pasang di ' + esc(ruangList[ruangIdx].nama) + '</small><small class="harga">' + rupiah(it.harga) + '</small></span><span><button type="button" class="chip-tombol pilih" data-aksi="instalRuang:' + ruangIdx + '|' + it.id + '">Beli & Instal</button></span></li>';
+          }).join('') + '</ul>';
+      }
     } else {
       var tipe = app.tipeRumah || 'subsidi', tunai = !!app.rumahTunai && tipe !== 'subsidi', dp = app.dpRumah || (tipe === 'subsidi' ? P.subsidi.dp : P.komersial.dp[0]), tenor = app.tenorRumah || 20;
-      var x = PROPERTI.hitung(S, tipe, dp, tenor, tunai), T = P.tipe[tipe];
-      html += '<h3 class="subjudul">Beli rumah</h3>' + chipTab('tipeRumah', [['subsidi', 'Subsidi'], ['komersial', 'Komersial'], ['mewah', 'Mewah']], tipe) +
-        '<p class="catatan">' + esc(T.nama) + ' (' + T.luas + '), ' + esc(T.ket) + '. Harga ' + rupiah(x.harga) + ', jarak ke pusat kota ' + N.properti.kota[S.kota].jarak[tipe] + ' km.</p>' +
+      var x = PROPERTI.hitung(S, tipe, dp, tenor, tunai, kotaPilih), T = P.tipe[tipe], dkP = PROPERTI.dataKota(S, kotaPilih);
+      var semuaKota = PROPERTI.daftarKota ? PROPERTI.daftarKota() : [];
+      html += '<h3 class="subjudul">Pilih Kota / Daerah Indonesia (' + semuaKota.length + ' kota)</h3><div class="chip-baris" style="max-height:115px;overflow-y:auto">' +
+        semuaKota.map(function (kt) {
+          return '<button type="button" class="chip-tombol' + (kt.id === kotaPilih ? ' pilih' : '') + '" data-aksi="kotaProp:' + kt.id + '">' + esc(kt.nama) + '</button>';
+        }).join('') + '</div>' +
+        '<h3 class="subjudul">Beli rumah di ' + esc(PROPERTI.namaKota(kotaPilih)) + '</h3>' + chipTab('tipeRumah', [['subsidi', 'Subsidi'], ['komersial', 'Komersial'], ['mewah', 'Mewah']], tipe) +
+        '<p class="catatan">' + esc(T.nama) + ' (' + T.luas + '), ' + esc(T.ket) + '. Harga ' + rupiah(x.harga) + ', jarak ke pusat kota ' + dkP.jarak[tipe] + ' km. Ruangan awal kosongan, bisa beli & instal kasur/AC/TV per ruangan.</p>' +
         (tipe === 'subsidi' ? '' : chipTab('rumahTunai', [['0', 'KPR'], ['1', 'Tunai']], tunai ? '1' : '0')) +
         (tunai ? '' : (tipe === 'subsidi' ? '' : '<h3 class="subjudul">Uang muka</h3>' + chipTab('dpRumah', P.komersial.dp.map(function (d) { return [d, Math.round(d * 100) + '%']; }), dp)) +
           '<h3 class="subjudul">Tenor</h3>' + chipTab('tenorRumah', P[tipe === 'subsidi' ? 'subsidi' : 'komersial'].tenor.map(function (t) { return [t, t + ' tahun']; }), tenor)) +
@@ -1886,11 +1910,15 @@
     else if (nama === 'onlineDriver') return mulaiNarik(nilai);
     else if (nama === 'offlineDriver') return berhentiNarik();
     else if (nama === 'tarikDriver') { var td = OJEK.tarikSaldo(S, nilai === '1' ? 'bank' : nilai); hasilAksi(td && td.ok ? true : td, td && td.ok ? rupiah(td.jml) + ' ' + (td.ket || 'berhasil ditarik') + '.' : ''); }
+    else if (nama === 'kotaProp') { app.kotaProp = nilai; app.pesan = ''; }
+    else if (nama === 'pilihRuang') { app.ruangProp = +nilai; app.pesan = ''; }
+    else if (nama === 'bayarAir') { var rba2 = PROPERTI.bayarAir(S); hasilAksi(rba2 && rba2.ok ? true : rba2, rba2 && rba2.teks); }
+    else if (nama === 'instalRuang') { var pir = nilai.split('|'), rir = PROPERTI.instalPerabot(S, +pir[0], pir[1]); hasilAksi(rir && rir.ok ? true : rir, rir && rir.teks); }
     else if (nama === 'tipeRumah') { app.tipeRumah = nilai; app.dpRumah = null; app.pesan = ''; }
     else if (nama === 'rumahTunai') { app.rumahTunai = nilai === '1'; app.pesan = ''; }
     else if (nama === 'dpRumah') { app.dpRumah = +nilai; app.pesan = ''; }
     else if (nama === 'tenorRumah') { app.tenorRumah = +nilai; app.pesan = ''; }
-    else if (nama === 'beliRumah') { var tp = app.tipeRumah || 'subsidi', br = PROPERTI.ajukan(S, tp, app.dpRumah || (tp === 'subsidi' ? N.properti.subsidi.dp : N.properti.komersial.dp[0]), app.tenorRumah || 20, !!app.rumahTunai && tp !== 'subsidi');
+    else if (nama === 'beliRumah') { var tp = app.tipeRumah || 'subsidi', br = PROPERTI.ajukan(S, tp, app.dpRumah || (tp === 'subsidi' ? N.properti.subsidi.dp : N.properti.komersial.dp[0]), app.tenorRumah || 20, !!app.rumahTunai && tp !== 'subsidi', app.kotaProp || S.kota);
       hasilAksi(br && br.ok ? true : br, br && br.ok ? 'Disetujui! Akad dan serah terima kunci ' + namaTanggal(br.kunci) + '.' : ''); }
     else if (nama === 'pindahRumah') return pindahRumah('rumah');
     else if (nama === 'jualRumah') {
