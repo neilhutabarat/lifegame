@@ -17,13 +17,15 @@
   };
   var MELELEH_PER_JAM = 0.02;    /* setelan tahap 10: es di cool box */
   var UHT_TAHAN_HARI = 3;        /* susu UHT setelah dibuka, di kulkas */
-  var STOK_AWAL = { kopi: 1000, uht: 6000, skm: 1960, gula: 2000, aren: 1000, cokelat: 1000, teh: 1000, es: 10000, cupPlastik: 100, cupKertas: 50, gas: 3000, galon: 19000, kentang: 1500, tahu: 20, mie: 20, sosisTelur: 15, wadahMakan: 50 }; /* setelan */
+  var STOK_AWAL = { kopi: 1000, uht: 6000, skm: 1960, gula: 2000, aren: 1000, cokelat: 0, es: 10000, cupPlastik: 100, cupKertas: 50, gas: 3000, galon: 19000, kentang: 1500, tahu: 20, mie: 20, sosisTelur: 15, wadahMakan: 50 }; /* setelan */
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function bulat500(n) { return Math.round(n / 500) * 500; }
 
   function siapkan(S) {
     if (S.stok) {
+      Object.keys(S.stok).forEach(function (id) { if (!M.BARANG[id]) delete S.stok[id]; });
+      if (S.faktor) Object.keys(S.faktor).forEach(function (id) { if (!M.BARANG[id]) delete S.faktor[id]; });
       M.URUT_BARANG.forEach(function (id) {
         if (!S.stok[id]) {
           var b = M.BARANG[id], jml = STOK_AWAL[id] || 0;
@@ -94,10 +96,23 @@
     var b = {};
     daftarResep(menu, panas).forEach(function (r) {
       if (r[0] === 'air') { b.galon = (b.galon || 0) + M.AIR_PANAS.galon * n; b.gas = (b.gas || 0) + M.AIR_PANAS.gas * n; return; }
-      var id = M.BAHAN[r[0]].stok || r[0];
+      var bh = M.BAHAN[r[0]]; if (!bh) return;
+      var id = bh.stok || r[0];
+      if (!M.BARANG[id]) return;
       b[id] = (b[id] || 0) + (M.TAP_STOK[r[0]] != null ? M.TAP_STOK[r[0]] * r[1] : r[1]) * n;
     });
     return b;
+  }
+  /* daftar id bahan stok yang benar-benar dipakai oleh menu yang sedang dijual */
+  function bahanDijual(S) {
+    var perlu = {}, rmd = KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0;
+    M.MENU.forEach(function (m) {
+      if (m.takjil && !rmd) return;
+      if (g.KK_USAHA && !g.KK_USAHA.menuDijual(S, m.id)) return;
+      var varian = (!m.cemilan && m.bisaSuhu) ? [butuhResep(m, 1, true), butuhResep(m, 1, false)] : [butuhResep(m, 1)];
+      varian.forEach(function (b) { for (var id in b) perlu[id] = true; });
+    });
+    return perlu;
   }
   /* nama barang yang kurang, atau null kalau cukup */
   function kurangResep(S, menu, n, panas) { var b = butuhResep(menu, n, panas); for (var id in b) if (!ada(S, id, b[id])) return M.BARANG[id].nama; return null; }
@@ -116,9 +131,9 @@
   function barangDari(bahan) { return bahan === 'air' ? 'galon' : (M.BAHAN[bahan] && M.BAHAN[bahan].stok) || bahan; }
   /* cukup untuk berapa gelas lagi (perkiraan kasar dari takaran resep terbesar) */
   function menipis(S) {
-    var hasil = [];
-    var batas = { kopi: 150, uht: 1500, skm: 250, gula: 200, aren: 150, cokelat: 150, teh: 30, es: 2000, cupPlastik: 10, cupKertas: 6, gas: 300, galon: 1500, kentang: 300, tahu: 4, mie: 4, sosisTelur: 3, wadahMakan: 8 };
-    M.URUT_BARANG.forEach(function (id) { if (S.stok[id].jml < batas[id]) hasil.push(id); });
+    var hasil = [], perlu = bahanDijual(S);
+    var batas = { kopi: 150, uht: 1500, skm: 250, gula: 200, aren: 150, cokelat: 150, es: 2000, cupPlastik: 10, cupKertas: 6, gas: 300, galon: 1500, kentang: 300, tahu: 4, mie: 4, sosisTelur: 3, wadahMakan: 8 };
+    M.URUT_BARANG.forEach(function (id) { if (perlu[id] && S.stok[id].jml < batas[id]) hasil.push(id); });
     return hasil;
   }
 
@@ -256,6 +271,6 @@
   }
 
   g.KK_STOK = { TEMPAT: TEMPAT, sore: sore, namaTempat: namaTempat, siapkan: siapkan, harga: harga, perubahan: perubahan, pakaiBahan: pakaiBahan, ambil: ambil, ada: ada,
-    sisaTeks: sisaTeks, barangDari: barangDari, kurangResep: kurangResep, pakaiResep: pakaiResep, menipis: menipis, hitung: hitung, beli: beli, bayarSales: bayarSales, salesMampir: salesMampir,
+    sisaTeks: sisaTeks, barangDari: barangDari, butuhResep: butuhResep, bahanDijual: bahanDijual, kurangResep: kurangResep, pakaiResep: pakaiResep, menipis: menipis, hitung: hitung, beli: beli, bayarSales: bayarSales, salesMampir: salesMampir,
     jalan: jalan, gantiHari: gantiHari, UHT_TAHAN_HARI: UHT_TAHAN_HARI };
 })(window);

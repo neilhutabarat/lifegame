@@ -571,7 +571,7 @@
   function layarBank() {
     var b = UANG.bankIni(S), k = S.kur, kk = S.kk || {};
     var kur = k.status === 'menunggu' ? 'Pengajuan ' + rupiah(k.plafon) + ' sedang diproses' : k.status === 'aktif' ? 'Angsuran ' + rupiah(k.angsuran) + ' tiap tanggal ' + k.tempo + ', sisa ' + k.sisa + ' bulan' + (k.tunggakan ? ', tunggakan ' + rupiah(k.tunggakan) : '') : k.status === 'lunas' ? 'Lunas' : 'Belum punya';
-    var infoKk = !kk.aktif ? 'Belum punya · bunga maks 1,75% sebulan (aturan BI)' : (kk.blokir ? 'Diblokir sementara · ' : '') + 'Limit ' + rupiah(kk.limit) + ' · sisa ' + rupiah(UANG.sisaLimitKk(S)) + (kk.tagihan > 0 ? ' · tagihan ' + rupiah(kk.tagihan) : '');
+    var infoKk = !kk.status || kk.status === 'tidak' ? 'Belum punya · bunga maks 1,75% sebulan (aturan BI)' : (kk.status === 'blokir' ? 'Diblokir sementara · ' : '') + 'Limit ' + rupiah(kk.limit) + ' · sisa ' + rupiah(UANG.sisaLimitKk(S)) + (kk.tagihan > 0 ? ' · tagihan ' + rupiah(kk.tagihan + (kk.denda || 0)) : '');
     return kepalaApp(b.app, 'Rekening ' + b.nama + ' · ' + (S.namaPemain || 'Pemilik')) +
       '<div class="saldo-besar"><small>Saldo</small><b>' + rupiah(S.bank.saldo) + '</b></div>' + pesanApp() +
       (!UANG.bolehKeAtm(S) ? '<div class="chip-baris" style="margin-bottom:8px"><button type="button" class="chip-tombol pilih" data-aksi="tutupSementara:1">Tutup sementara kedai untuk ke ATM</button></div>' :
@@ -591,7 +591,7 @@
   function layarKartuKredit() {
     var b = UANG.bankIni(S), kk = S.kk, K = N.kartuKredit;
     var html = kepala('Kartu kredit ' + b.nama, 'Aturan BI: bunga maks 1,75%/bln · min bayar 5%', '<button type="button" class="panah" data-app="bank" aria-label="Kembali ke bank">‹</button>') + pesanApp();
-    if (!kk.aktif) {
+    if (!kk.status || kk.status === 'tidak') {
       var syarat = UANG.syaratKk(S), calonLimit = UANG.hitungLimitKk(S), gaji = UANG.penghasilanKk(S);
       html += '<ul class="daftar syarat">' + syarat.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'belum') + '"><span>' + (x.ok ? '✓ ' : '✗ ') + esc(x.teks) + '</span></li>'; }).join('') + '</ul>' +
         '<ul class="daftar angka" style="margin-top:10px">' +
@@ -605,22 +605,23 @@
         '<p class="catatan">Kartu kredit bisa dipakai belanja di Tokopedia, dealer motor & mobil (tunai maupun DP), dan Toko Game. Tagihan dicetak tiap tanggal 1 dan jatuh tempo tanggal 18.</p>';
       return html;
     }
-    var sisa = UANG.sisaLimitKk(S), terpakai = kk.tagihan + kk.pakai;
-    var kurangMin = Math.max(0, kk.minBayar - kk.dibayarBulan);
+    var sisa = UANG.sisaLimitKk(S), totalTagih = (kk.tagihan || 0) + (kk.denda || 0), terpakai = totalTagih + (kk.pakai || 0);
+    var dibayar = kk.dibayarBulanIni || 0;
+    var kurangMin = Math.max(0, (kk.minBayar || 0) - dibayar);
     html += '<div class="saldo-besar"><small>Sisa limit tersedia</small><b>' + rupiah(sisa) + '</b>' + persenBar(kk.limit ? sisa / kk.limit * 100 : 0) + '</div>' +
-      (kk.blokir ? '<p class="racik-pesan salah">Kartu diblokir sementara karena menunggak pembayaran minimum. Bayar minimal ' + rupiah(kurangMin || kk.tagihan) + ' untuk membuka blokir.</p>' : '') +
+      (kk.status === 'blokir' ? '<p class="racik-pesan salah">Kartu diblokir sementara karena menunggak pembayaran minimum. Bayar minimal ' + rupiah(kurangMin || totalTagih) + ' untuk membuka blokir.</p>' : '') +
       '<ul class="daftar angka">' +
       baris('Limit kartu', rupiah(kk.limit)) +
       baris('Total limit terpakai', rupiah(terpakai), terpakai > 0 ? 'keluar' : '') +
-      baris('Pemakaian bulan berjalan<small>cetak tagihan tanggal 1</small>', rupiah(kk.pakai)) +
-      baris('<b>Tagihan tercetak</b><small>jatuh tempo tanggal ' + K.jatuhTempo + '</small>', '<b>' + rupiah(kk.tagihan) + '</b>', kk.tagihan > 0 ? 'total' : '') +
-      (kk.tagihan > 0 ? baris('Pembayaran minimum (5%)', rupiah(kurangMin) + (kk.dibayarBulan > 0 ? ' (sudah dibayar ' + rupiah(kk.dibayarBulan) + ')' : ''), kurangMin > 0 ? 'rugi' : '') : '') +
+      baris('Pemakaian bulan berjalan<small>cetak tagihan tanggal 1</small>', rupiah(kk.pakai || 0)) +
+      baris('<b>Tagihan tercetak' + (kk.denda ? ' (+denda)' : '') + '</b><small>jatuh tempo tanggal ' + K.jatuhTempo + '</small>', '<b>' + rupiah(totalTagih) + '</b>', totalTagih > 0 ? 'total' : '') +
+      (totalTagih > 0 ? baris('Pembayaran minimum (5%)', rupiah(kurangMin) + (dibayar > 0 ? ' (sudah dibayar ' + rupiah(dibayar) + ')' : ''), kurangMin > 0 ? 'rugi' : '') : '') +
       '</ul>';
-    if (kk.tagihan > 0 || kk.pakai > 0) {
+    if (totalTagih > 0 || (kk.pakai || 0) > 0) {
       html += '<h3 class="subjudul">Bayar tagihan dari rekening</h3><div class="chip-baris">' +
-        (kk.tagihan > 0 ? '<button type="button" class="chip-tombol pilih" data-aksi="bayarKk:penuh">Bayar penuh ' + rupiah(kk.tagihan) + '</button>' : '') +
-        (kk.tagihan > 0 && kurangMin > 0 && kurangMin < kk.tagihan ? '<button type="button" class="chip-tombol" data-aksi="bayarKk:minimal">Bayar minimal 5% (' + rupiah(kurangMin) + ')</button>' : '') +
-        (kk.pakai > 0 ? '<button type="button" class="chip-tombol" data-aksi="bayarKk:semua">Lunasi semua ' + rupiah(terpakai) + '</button>' : '') +
+        (totalTagih > 0 ? '<button type="button" class="chip-tombol pilih" data-aksi="bayarKk:penuh">Bayar penuh ' + rupiah(totalTagih) + '</button>' : '') +
+        (totalTagih > 0 && kurangMin > 0 && kurangMin < totalTagih ? '<button type="button" class="chip-tombol" data-aksi="bayarKk:minimal">Bayar minimal 5% (' + rupiah(kurangMin) + ')</button>' : '') +
+        ((kk.pakai || 0) > 0 ? '<button type="button" class="chip-tombol" data-aksi="bayarKk:semua">Lunasi semua ' + rupiah(terpakai) + '</button>' : '') +
         '</div>';
     }
     html += '<div class="chip-baris" style="margin-top:8px"><button type="button" class="chip-tombol" data-aksi="naikLimitKk:1">Ajukan naik limit</button></div>' +
@@ -933,19 +934,24 @@
         return '<button type="button" class="chip-tombol' + (racikan[kunci] === o[0] ? ' pilih' : '') + '"' + (bisa ? '' : ' disabled') + ' data-aksi="racikan:' + kunci + '-' + (o[0] || '') + '">' + o[1] + '</button>';
       }).join('') + '</div>';
     };
-    var jmlAktif = MN.MENU.filter(function (m) { return USAHA.menuDijual(S, m.id); }).length;
-    var daftarMenuHtml = '<h3 class="subjudul">Daftar menu kopi (bebas jual / hentikan)</h3><ul class="daftar belanja">' + MN.MENU.map(function (m) {
+    var rmdMenu = KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0;
+    var menuAturList = MN.MENU.filter(function (m) { return !m.takjil || rmdMenu; });
+    var jmlAktif = menuAturList.filter(function (m) { return USAHA.menuDijual(S, m.id); }).length;
+    if (!{ kopi: 1, espresso: 1, cokelat: 1 }[racikan.dasar]) racikan.dasar = 'kopi';
+    if (racikan.susu && !{ uht: 1, skm: 1, foam: 1 }[racikan.susu]) racikan.susu = 'uht';
+    if (racikan.manis && !{ gula: 1, aren: 1 }[racikan.manis]) racikan.manis = 'aren';
+    var daftarMenuHtml = '<h3 class="subjudul">Daftar menu (bebas jual / hentikan)</h3><ul class="daftar belanja">' + menuAturList.map(function (m) {
       var aktif = USAHA.menuDijual(S, m.id);
-      return '<li' + (aktif ? '' : ' class="redup"') + '><span><b>' + esc(m.nama) + (m.spesial ? ' · Spesial' : m.sendiri ? ' · Racikanmu' : '') + '</b><small>Bisa Panas & Dingin · HPP ' + rupiah(m.hpp) + ' · jual ' + rupiah(m.harga) + '</small></span>' +
+      return '<li' + (aktif ? '' : ' class="redup"') + '><span><b>' + esc(m.nama) + (m.spesial ? ' · Spesial' : m.sendiri ? ' · Racikanmu' : m.takjil ? ' · Takjil Ramadan' : m.cemilan ? ' · Cemilan' : '') + '</b><small>' + (m.cemilan ? 'Hangat' : 'Bisa Panas & Dingin') + ' · HPP ' + rupiah(m.hpp) + ' · jual ' + rupiah(m.harga) + '</small></span>' +
         '<span><button type="button" class="chip-tombol' + (aktif ? ' pilih' : '') + '" data-aksi="toggleMenu:' + m.id + '">' + (aktif ? 'Dijual ✓' : 'Tidak dijual') + '</button></span></li>';
-    }).join('') + '</ul><p class="catatan">Menu yang dimatikan tidak tampil saat meracik. Kalau ada pembeli mencari menu yang sedang tidak dijual, sebagian akan pindah beli kopi lain dan sebagian batal beli.</p>';
-    return kepalaApp('Racik & atur menu', jmlAktif + ' dari ' + MN.MENU.length + ' menu sedang dijual') + pesanApp() +
+    }).join('') + '</ul><p class="catatan">Menu yang dimatikan tidak tampil saat meracik dan bahannya otomatis disembunyikan dari toko Belanja. Kalau pembeli mencari menu yang sedang tidak dijual, sebagian pindah menu lain dan sebagian batal beli.</p>';
+    return kepalaApp('Racik & atur menu', jmlAktif + ' dari ' + menuAturList.length + ' menu sedang dijual') + pesanApp() +
       daftarMenuHtml +
       '<h3 class="subjudul">Buat racikan menu baru (' + S.menuSendiri.length + '/6)</h3>' +
       pil('Panas atau es', 'panas', [[true, 'Panas'], [false, 'Es']]) +
-      pil('Dasar', 'dasar', [['kopi', 'Kopi tubruk'], ['espresso', 'Espresso', true], ['teh', 'Teh'], ['matcha', 'Matcha'], ['cokelat', 'Cokelat']]) +
-      pil('Susu', 'susu', [['', 'Tanpa susu'], ['uht', 'Susu UHT'], ['oat', 'Susu oat'], ['skm', 'Kental manis'], ['foam', 'Foam', true]]) +
-      pil('Pemanis', 'manis', [['', 'Tanpa gula'], ['gula', 'Gula pasir'], ['aren', 'Gula aren'], ['sirup', 'Sirup rasa']]) +
+      pil('Dasar', 'dasar', [['kopi', 'Kopi tubruk'], ['espresso', 'Espresso', true], ['cokelat', 'Cokelat']]) +
+      pil('Susu', 'susu', [['', 'Tanpa susu'], ['uht', 'Susu UHT'], ['skm', 'Kental manis'], ['foam', 'Foam', true]]) +
+      pil('Pemanis', 'manis', [['', 'Tanpa gula'], ['gula', 'Gula pasir'], ['aren', 'Gula aren']]) +
       '<div class="saldo-besar" style="margin-top:14px"><small>Nama menu</small><b style="font-size:24px">' + esc(USAHA.namaUsul(racikan)) + '</b></div>' +
       '<ul class="daftar angka">' + baris('HPP', rupiah(hpp)) + '</ul>' +
       '<div class="atur-baris"><div><b>Harga jual</b><span>laba ' + Math.round((1 - hpp / harga) * 100) + '%</span></div><div class="langkah"><button type="button" data-aksi="racikanHarga:-1" aria-label="Turunkan">−</button><output>' + rupiah(harga) + '</output><button type="button" data-aksi="racikanHarga:1" aria-label="Naikkan">+</button></div></div>' +
@@ -979,10 +985,15 @@
     var namaToko = toko === 'shopee' ? 'Shopee' : 'Tokopedia';
     var diRumah = S.rumah.jenis === 'rumah', kat = app.tokoKat || 'semua';
     var tk = KAL.tanggalKembar(S.hari), dsk = DIRI.diskonToko(S, toko);
-    var daftarB = N.barangRumah.filter(function (b) { return (!b.toko || b.toko === toko) && (kat === 'semua' || b.kat === kat); });
+    var barangToko = N.barangRumah.filter(function (b) { return b.id !== 'ps5' && b.id !== 'ps5disc' && b.id !== 'kaset' && (!b.toko || b.toko === toko); });
+    var katAda = (N.kategoriToko || [{ id: 'semua', nama: 'Semua' }]).filter(function (c) {
+      return c.id === 'semua' || barangToko.some(function (b) { return b.kat === c.id; });
+    });
+    if (!katAda.some(function (c) { return c.id === kat; })) kat = 'semua';
+    var daftarB = barangToko.filter(function (b) { return kat === 'semua' || b.kat === kat; });
     return kepalaApp(namaToko, (diRumah ? 'Isi rumah' : 'Isi kamar kos') + (tk ? ' · Promo ' + tk : '')) +
       (tk ? '<div class="isbat" style="margin-top:0;margin-bottom:8px">Promo Tanggal Kembar ' + tk + ' ' + namaToko + '! Diskon otomatis ' + Math.round(dsk * 100) + '% semua barang hari ini.</div>' : '') +
-      chipTab('tokoKat', (N.kategoriToko || [{ id: 'semua', nama: 'Semua' }]).map(function (c) { return [c.id, c.nama]; }), kat) +
+      chipTab('tokoKat', katAda.map(function (c) { return [c.id, c.nama]; }), kat) +
       pesanApp() + '<ul class="daftar belanja">' + daftarB.map(function (b) {
       var punya = !!S.rumah.barang[b.id], jml = S.rumah.barang[b.id];
       var info = punya ? DIRI.infoUmurBarang(S, b.id) : null;
@@ -1287,7 +1298,7 @@
 
   var NAMA_BAYAR = { tunai: function () { return 'Bayar tunai dari laci'; }, dompet: function () { return 'Bayar dari dompet pribadi'; }, qris: function () { return 'Bayar pakai saldo QRIS'; },
     transfer: function () { var bf = UANG.biayaTransfer(S); return 'Transfer dari ' + UANG.bankIni(S).nama + (bf ? ' (+' + rupiah(bf) + ')' : ' (gratis)'); },
-    kk: function () { return 'Kartu kredit ' + UANG.bankIni(S).nama + (S.kk && S.kk.aktif ? ' (sisa ' + rupiahPendek(UANG.sisaLimitKk(S)) + ')' : ' (belum aktif)'); },
+    kk: function () { return 'Kartu kredit ' + UANG.bankIni(S).nama + (S.kk && S.kk.status === 'aktif' ? ' (sisa ' + rupiahPendek(UANG.sisaLimitKk(S)) + ')' : ' (belum aktif)'); },
     tempo: function () { return 'Pesan, bayar 14 hari lagi'; } };
   function layarBelanja() {
     var tab = app.tab, T = STOK.TEMPAT[tab], kr = app.keranjang[tab];
@@ -1300,12 +1311,15 @@
     }).join('') + '</ul>' : '';
     if (tab === 'sales' && !STOK.salesMampir(S)) return html + listTagihan;
     if (tab === 'pasar' && STOK.sore(S)) html += '<p class="racik-pesan">Pasar sudah tutup. Belanja ke swalayan, harganya sedikit lebih mahal.</p>';
-    html += '<ul class="daftar belanja">' + MN.URUT_BARANG.filter(function (id) { return MN.BARANG[id].ada.indexOf(tab) >= 0; }).map(function (id) {
+    var dijual = STOK.bahanDijual ? STOK.bahanDijual(S) : null;
+    var daftarBelanja = MN.URUT_BARANG.filter(function (id) { return MN.BARANG[id].ada.indexOf(tab) >= 0 && (!dijual || dijual[id]); });
+    html += daftarBelanja.length ? '<ul class="daftar belanja">' + daftarBelanja.map(function (id) {
       var b = MN.BARANG[id], h = STOK.harga(S, id, tab), ubah = b.tetap ? 0 : STOK.perubahan(S, id), n = kr[id] || 0;
       return '<li><span><b>' + esc(b.nama) + '</b><small>' + esc(b.merek) + ' · ' + esc(b.kemasan) + ' · stok ' + STOK.sisaTeks(S, id) + '</small>' +
         '<small class="harga">' + rupiah(h) + (ubah ? ' <em class="' + (ubah > 0 ? 'naik' : 'turun') + '">' + (ubah > 0 ? '▲ ' : '▼ ') + Math.abs(ubah) + '%</em>' : '') + '</small></span>' +
         '<span class="langkah"><button type="button" data-aksi="kurang:' + id + '" aria-label="Kurangi">−</button><output>' + n + '</output><button type="button" data-aksi="tambah:' + id + '" aria-label="Tambah">+</button></span></li>';
-    }).join('') + '</ul>';
+    }).join('') + '</ul>' : '<p class="catatan">Tidak ada bahan untuk menu yang sedang dijual di tempat ini. Aktifkan menu terlebih dahulu di Racik & atur menu.</p>';
+    html += '<p class="catatan" style="margin-top:8px">Store hanya menampilkan bahan dari menu makanan & minuman yang sedang dijual di kedai agar tidak bingung menyetok.</p>';
     var hit = STOK.hitung(S, tab, kr);
     if (hit.sub) html += '<ul class="daftar angka" style="margin-top:10px">' + baris('Belanjaan', rupiah(hit.sub)) + (hit.ongkos ? baris(esc(T.ongkosNama), rupiah(hit.ongkos)) : '') + baris('<b>Total</b>', '<b>' + rupiah(hit.total) + '</b>', 'total') + '</ul>' +
       (T.minimal && hit.sub < T.minimal ? '<p class="racik-pesan salah">Minimal pesanan ' + rupiah(T.minimal) + ', kurang ' + rupiah(T.minimal - hit.sub) + '.</p>' : '') +
@@ -1321,9 +1335,11 @@
       (k ? '<button type="button" class="aksi kecil" data-aksi="beli:tunai-karyawan">Suruh ' + esc(k.nama) + ' (ojek ' + rupiah(STOK.TEMPAT.pasar.ongkos) + ')</button>' : '');
   }
   function layarStok() {
-    var html = kepalaApp('Stok', 'Bahan dan kemasan di kedai') + '<ul class="daftar angka">' + MN.URUT_BARANG.map(function (id) {
+    var dijual = STOK.bahanDijual ? STOK.bahanDijual(S) : {};
+    var urut = MN.URUT_BARANG.filter(function (id) { return dijual[id] || (S.stok[id] && S.stok[id].jml > 0); });
+    var html = kepalaApp('Stok', 'Bahan & kemasan untuk menu yang dijual') + '<ul class="daftar angka">' + urut.map(function (id) {
       var b = MN.BARANG[id], tipis = STOK.menipis(S).indexOf(id) >= 0;
-      return baris(esc(b.nama) + '<small>Nilai ' + rupiah(S.stok[id].nilai) + '</small>', STOK.sisaTeks(S, id), tipis ? 'rugi' : '');
+      return baris(esc(b.nama) + (dijual[id] ? '' : '<small>(menu sedang dimatikan)</small>') + '<small>Nilai ' + rupiah(S.stok[id].nilai) + '</small>', STOK.sisaTeks(S, id), tipis ? 'rugi' : '');
     }).join('') + '</ul>';
     if (S.uhtBuka.sisa > 0) html += '<p class="catatan">Susu UHT terbuka ' + Math.round(S.uhtBuka.sisa) + ' ml, basi ' + Math.max(0, STOK.UHT_TAHAN_HARI - (S.hari - S.uhtBuka.hari)) + ' hari lagi.</p>';
     html += '<p class="catatan">Es batu di cool box mencair sedikit demi sedikit dan habis semalam, jadi es dibeli tiap hari. Biji kopi paling enak dipakai dalam sebulan setelah dibuka.</p>';
@@ -1687,7 +1703,7 @@
       if (p.status === 'batal') { S.hariIni.terbuang += biaya; R.o.keadaan = 'x'; tutupRacik(); return toast('Pesanan ini sudah dibatalkan.'); }
       ANTAR.itemSiap(S, p, R.item, biaya);
       var lanjutX = ANTAR.itemBerikut(p);
-      if (lanjutX) { R = { pesanan: p, item: lanjutX, o: { menu: ANTAR.menuDari(lanjutX.menu), keadaan: 'dilayani', bayar: p.bayar } }; return gambarRacik('Lanjut menu berikutnya di pesanan ini.'); }
+      if (lanjutX) { R = { pesanan: p, item: lanjutX, o: { menu: ANTAR.menuDari(lanjutX.menu), panas: !!lanjutX.panas, keadaan: 'dilayani', bayar: p.bayar } }; return gambarRacik('Lanjut menu berikutnya di pesanan ini.'); }
       R.o.keadaan = 'x'; tutupRacik();
       toast(p.jenis === 'ojol' ? 'Pesanan ' + judulPesanan(p) + ' siap, menunggu driver.' : 'Pesanan ' + judulPesanan(p) + ' siap diantar.', 2400);
       return perbaruiPesanan();
@@ -1711,7 +1727,7 @@
     var x = ANTAR.itemBerikut(p); if (!x) return;
     if (R) { if (R.o.keadaan === 'dilayani' && !R.pesanan) R.o.keadaan = 'antre'; R = null; }
     tutupLembar();
-    R = { pesanan: p, item: x, o: { menu: ANTAR.menuDari(x.menu), keadaan: 'dilayani', bayar: p.bayar } };
+    R = { pesanan: p, item: x, o: { menu: ANTAR.menuDari(x.menu), panas: !!x.panas, keadaan: 'dilayani', bayar: p.bayar } };
     $('app').classList.add('meracik'); $('racik').hidden = false;
     gambarRacik('');
   }

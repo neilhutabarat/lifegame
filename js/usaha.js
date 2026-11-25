@@ -34,7 +34,12 @@
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function siapkan(S, lokasi) {
     if (!S.usaha) S.usaha = { lokasi: lokasi || 'jalan', tier: 1, alat: {}, kwh: 0, padam: false, bangun: null, cabang: [], tunggakanSewa: 0, sewaTahunTempo: null };
-    S.menuSendiri = S.menuSendiri || [];
+    S.menuSendiri = (S.menuSendiri || []).filter(function (c) {
+      return c && c.resep && c.resep.every(function (r) {
+        var b = M.BAHAN[r[0]];
+        return !!b && (r[0] === 'air' || !!M.BARANG[b.stok || r[0]]);
+      });
+    });
     if (!S.menuAktif) {
       S.menuAktif = {};
       M.MENU.forEach(function (m) { S.menuAktif[m.id] = !!m.aktifAwal; });
@@ -216,12 +221,12 @@
   function susunResep(pilih) {
     var r = [[pilih.panas ? 'cupKertas' : 'cupPlastik', 1]];
     if (!pilih.panas) r.push(['es', 1]);
-    var porsi = { kopi: 15, espresso: 18, teh: 3, matcha: 5, cokelat: 25, uht: 150, oat: 150, skm: 30, foam: 60, gula: 15, aren: 25, sirup: 20 };
-    [pilih.dasar, pilih.susu, pilih.manis].forEach(function (b) { if (b) r.push([b, porsi[b]]); });
+    var porsi = { kopi: 15, espresso: 18, cokelat: 25, uht: 150, skm: 30, foam: 60, gula: 15, aren: 25 };
+    [pilih.dasar, pilih.susu, pilih.manis].forEach(function (b) { if (b && porsi[b]) r.push([b, porsi[b]]); });
     if (pilih.panas && !pilih.susu && pilih.dasar !== 'cokelat') r.push(['air', 1]);
     return r;
   }
-  var NAMA_BAGIAN = { kopi: 'Kopi', espresso: 'Espresso', teh: 'Teh', matcha: 'Matcha', cokelat: 'Cokelat', uht: 'Susu', oat: 'Oat', skm: 'Susu Manis', foam: 'Latte', gula: '', aren: 'Aren', sirup: 'Sirup' };
+  var NAMA_BAGIAN = { kopi: 'Kopi', espresso: 'Espresso', cokelat: 'Cokelat', uht: 'Susu', skm: 'Susu Manis', foam: 'Latte', gula: '', aren: 'Aren' };
   function namaUsul(pilih) {
     var n = (pilih.panas ? '' : 'Es ') + NAMA_BAGIAN[pilih.dasar];
     if (pilih.dasar === 'espresso' && pilih.susu === 'foam') n = (pilih.panas ? '' : 'Es ') + 'Caffe Latte';

@@ -72,14 +72,14 @@
     var pikap = g.KK_MOBIL && g.KK_MOBIL.pikap(S), biaya = pikap || paksa ? 0 : P.jasaPindahan;
     if (biaya && S.bank.saldo < biaya) return 'Saldo rekening tidak cukup untuk jasa pindahan ' + rp(biaya) + '.';
     if (biaya) { S.bank.saldo -= biaya; M().catatBank(S, 'Jasa pindahan (pikap + 2 orang)', -biaya); S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya; }
-    var barang = S.rumah.barang;
+    var barang = S.rumah.barang, infoBarang = S.rumah.infoBarang || {};
     if (ke === 'rumah') {
       r.dihuni = true;
-      S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S).jarak[r.tipe] };
+      S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S).jarak[r.tipe] };
     } else {
       if (r) r.dihuni = false;
-      S.rumah = { jenis: 'kos', sewa: kos.kos, kwh: 10, barang: barang, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false, jarak: N.jarakKos };
-      Object.keys(barang).forEach(function (id) { var b = g.KK_DIRI.barang(id); if (b && b.rumah) delete barang[id]; });
+      S.rumah = { jenis: 'kos', sewa: kos.kos, kwh: 10, barang: barang, infoBarang: infoBarang, wifi: false, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false, jarak: N.jarakKos };
+      Object.keys(barang).forEach(function (id) { var b = g.KK_DIRI.barang(id); if (b && b.rumah) { delete barang[id]; delete infoBarang[id]; } });
       if (S.bank.saldo >= kos.kos) { S.bank.saldo -= kos.kos; M().catatBank(S, 'Sewa kos bulan pertama', -kos.kos); }
     }
     return { ok: true, menit: 180, biaya: biaya, pikap: pikap,

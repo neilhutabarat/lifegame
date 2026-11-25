@@ -424,7 +424,7 @@
     k[b]++; k.setia = Math.min(100, k.setia + 10); return true;
   }
   function pecat(S, id) {
-    var k = cari(S, id), tahun = Math.floor((S.hari - k.mulai) / 365), pesangon = k.paruh ? 0 : k.gaji * Math.min(9, tahun + 1);
+    var k = cari(S, id), tahun = Math.max(0, Math.floor((S.hari - k.mulai) / 365)), pesangon = k.paruh ? 0 : k.gaji * Math.min(9, tahun + 1);
     var sisa = k.paruh ? 0 : Math.round(k.gaji * (KAL.tgl(S.hari).d / 30)) + k.lemburBulan;
     var total = Math.round(pesangon + sisa + (k.gajiTelat || 0));
     if (total && !bayarBank(S, total, 'Pesangon dan sisa gaji ' + k.nama, S.hari)) return 'Saldo rekening kurang untuk pesangon ' + rp(total) + '.';

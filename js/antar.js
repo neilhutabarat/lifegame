@@ -38,14 +38,23 @@
   }
   function menuDari(id) { return M.MENU.filter(function (m) { return m.id === id; })[0] || M.MENU[0]; }
   function pilihMenu(S) {
-    var aktif = M.MENU.filter(function (m) { return !g.KK_USAHA || g.KK_USAHA.menuDijual(S, m.id); });
-    var sumber = aktif.length ? aktif : M.MENU;
+    var rmd = KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0;
+    var aktif = M.MENU.filter(function (m) {
+      if (m.takjil && !rmd) return false;
+      return !g.KK_USAHA || g.KK_USAHA.menuDijual(S, m.id);
+    });
+    var sumber = aktif.length ? aktif : M.MENU.filter(function (m) { return !m.takjil; });
     return acak(sumber).id;
+  }
+  function pilihSuhuItem(m) {
+    if (!m || m.cemilan) return false;
+    if (!m.bisaSuhu && m.sendiri) return !!m.panas;
+    return Math.random() < ((m.id === 'hitam' || m.id === 'espresso' || m.id === 'arabica') ? 0.6 : 0.3);
   }
   function isiAcak(S, maks) {
     var n = 1 + Math.floor(Math.random() * maks), peta = {};
     for (var i = 0; i < n; i++) { var id = pilihMenu(S); peta[id] = (peta[id] || 0) + 1; }
-    return Object.keys(peta).map(function (id) { return { menu: id, qty: peta[id], siap: 0 }; });
+    return Object.keys(peta).map(function (id) { return { menu: id, qty: peta[id], siap: 0, panas: pilihSuhuItem(menuDari(id)) }; });
   }
 
   function buatWa(S) {
@@ -63,7 +72,7 @@
   function buatBesar(S, nBesok) {
     var qty = 10 + Math.floor(Math.random() * 16), jarak = Math.round((0.8 + Math.random() * 4) * 10) / 10;
     var peta = {}; for (var i = 0; i < qty; i++) { var id = pilihMenu(S); peta[id] = (peta[id] || 0) + 1; }
-    return { id: ++nomor + '-' + S.hari, jenis: 'besar', nama: acak(N.kantor), items: Object.keys(peta).map(function (id) { return { menu: id, qty: peta[id], siap: 0 }; }),
+    return { id: ++nomor + '-' + S.hari, jenis: 'besar', nama: acak(N.kantor), items: Object.keys(peta).map(function (id) { return { menu: id, qty: peta[id], siap: 0, panas: pilihSuhuItem(menuDari(id)) }; }),
       jarak: jarak, status: 'baru', dibuat: waktu(S), untuk: nBesok * 1440 + acak([600, 660, 780, 900]), bayar: 'transfer', ongkir: 0, minta: 'gratis ongkir', biaya: 0 };
   }
 
@@ -125,7 +134,7 @@
     item.siap = item.qty; p.biaya += biaya;
     if (!itemBerikut(p)) { p.status = 'siap'; p.siapPada = waktu(S); if (p.jenis === 'ojol') p.driver = Math.max(p.driver, waktu(S) + 2); }
   }
-  function adaEs(p) { return p.items.some(function (x) { return !x.panas && x.menu !== 'hitam' && x.menu !== 'espresso'; }); }
+  function adaEs(p) { return p.items.some(function (x) { var m = menuDari(x.menu); return !m.cemilan && !x.panas; }); }
 
   /* antar sendiri beberapa pesanan siap sekaligus. Hasil: { ok, menit, kabar } atau teks alasan */
   function antarSendiri(S, ids) {
@@ -154,7 +163,10 @@
         p.items[0] = { menu: x.menu, qty: x.qty, siap: x.siap, refund: refund };
         kabar.push('Satu cup ' + menuDari(x.menu).pendek + ' tumpah di jalan. Uangnya dikembalikan ' + rp(refund) + '.');
         S.hariIni.refund = (S.hariIni.refund || 0) + refund;
-        if (p.bayar === 'tunai') S.uang.kecil -= refund; else S.bank.saldo -= refund;
+        if (p.bayar === 'tunai') {
+          var drB = Math.min(S.uang.besar, Math.floor(refund / 50000) * 50000), ss = Math.min(S.uang.kecil, refund - drB);
+          S.uang.besar -= drB; S.uang.kecil = Math.max(0, S.uang.kecil - ss);
+        } else S.bank.saldo -= refund;
       }
       if (p.jenis === 'besar' && tiba > p.untuk + 30) { komplain(S, 'Pesanan acara datang terlambat.'); kabar.push(p.nama + ' kecewa karena pesanan terlambat.'); }
       selesai(S, p, kabar, null);

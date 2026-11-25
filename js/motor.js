@@ -256,7 +256,12 @@
         k.denda += Math.round(k.tunggakan * KR.dendaHarian);
         var bayar = Math.min(k.tunggakan + k.denda, S.bank.saldo);
         if (bayar >= k.tunggakan + k.denda) { S.bank.saldo -= bayar; catatBank(S, 'Tunggakan + denda angsuran motor', -bayar, nBaru); kabar.push('Tunggakan motor dan denda ' + rp(bayar) + ' sudah dibayar.'); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; }
-        else if (k.bulanTelat >= KR.tarikSetelahBulan) { kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.'); S.motor = null; return kabar; }
+        else if (k.bulanTelat >= KR.tarikSetelahBulan) {
+          kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.');
+          if (S.armadaMotor && S.armadaMotor.length) { S.armadaMotor.splice(S.motorAktif || 0, 1); S.motorAktif = 0; sinkronAktif(S); }
+          else S.motor = null;
+          return kabar;
+        }
       }
       if (k.sisa === 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('Kredit motor lunas. BPKB diambil di ' + KR.leasing + '.'); }
     }

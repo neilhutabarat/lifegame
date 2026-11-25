@@ -13,6 +13,7 @@
   function siapkan(S) {
     if (!S.diri) S.diri = { kenyang: 80, minum: 80, stamina: 90, melek: 90, posisi: 'kedai', bangun: 360, ketiduran: 0 };
     if (!S.rumah) S.rumah = { jenis: 'kos', sewa: kota(S).kos, kwh: 10, barang: {}, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false };
+    if (typeof S.rumah.kwh !== 'number' || isNaN(S.rumah.kwh)) { S.rumah.kwh = 10; S.rumah.padam = false; }
     if (S.rumah.jarak == null) S.rumah.jarak = N.jarakKos;
     S.rumah.infoBarang = S.rumah.infoBarang || {};
     S.game = S.game || { konsol: {}, kaset: {}, pasar: null };
@@ -181,7 +182,7 @@
     }
     if (jenis === 'masak') {
       if (d.posisi !== 'kos' || !(punya(S, 'ricecooker') || punya(S, 'kompor'))) return 'Masak sendiri butuh rice cooker atau kompor.';
-      if (!bayarTunai(S, 7000)) return 'Uang di laci tidak cukup untuk beras dan lauk.';
+      if (!bayarTunai(S, 7000)) return 'Uang di dompet dan laci tidak cukup untuk beras dan lauk.';
       catatPakai(S, 'ricecooker'); catatPakai(S, 'kompor'); catatPakai(S, 'mejamakan');
       d.kenyang = batas(d.kenyang + 60 + (punya(S, 'mejamakan') ? 10 : 0) + (punya(S, 'kompor') ? 5 : 0));
       return { ok: true, menit: 40, teks: 'Masak nasi dan telur di ' + tempat(S) + ', sekitar Rp7.000.' };
@@ -274,7 +275,7 @@
     var kAktif = jenis === 'ps' ? konsolTerbaik(S) : null;
     var km = kAktif ? konsolModel(kAktif.id) : null;
     var gAktif = jenis === 'ps' ? gameTerbaik(S) : null;
-    var stamPs = (km ? km.stamina : 16) + (gAktif ? gAktif.stamina : S.rumah.barang.kaset ? 6 : 0);
+    var stamPs = (km ? (km.pulih || km.stamina || 16) : 16) + (gAktif ? gAktif.stamina : S.rumah.barang.kaset ? 6 : 0);
     var naik = jenis === 'ps' ? stamPs + besar : jenis === 'tv' ? 14 + besar : 20;
     if (jenis === 'ps') {
       if (kAktif) { kAktif.pakai = (kAktif.pakai || 0) + 1; catatPakai(S, kAktif.id); }
@@ -286,7 +287,7 @@
     d.stamina = batas(d.stamina + naik);
     if (jenis === 'tidurSiang') d.melek = batas(d.melek + 25);
     else d.melek = batas(d.melek - 3);
-    var kwPs = km ? km.kw : 0.2;
+    var kwPs = km ? (km.watt || km.kw || 0.2) : 0.2;
     listrikKos(S, 60, jenis === 'tidurSiang', jenis === 'ps' ? kwPs + 0.06 : jenis === 'tv' ? 0.06 : 0);
     var teksPs = 'Main ' + (kAktif ? kAktif.nama : 'PS') + (gAktif ? ' (' + gAktif.nama + ')' : '') + ' satu jam. Pikiran segar lagi (+' + naik + ' stamina).';
     return { ok: true, menit: 60, teks: jenis === 'ps' ? teksPs : jenis === 'tv' ? 'Nonton TV satu jam.' : 'Tidur siang satu jam.' };
@@ -423,7 +424,7 @@
     if (punyaKonsol(S, km.id)) return 'Sudah punya ' + km.nama + '.';
     var byBaru = bayarBelanja(S, km.harga, 'Toko Game: ' + km.nama + ' (Baru)', caraBayar);
     if (byBaru !== true) return byBaru;
-    S.game.konsol[km.id] = { id: km.id, nama: km.nama, merek: km.merek, hargaBeli: km.harga, dibeli: S.hari, pakai: 0, bekas: false, kondisi: 'Baru Resmi', ketKondisi: 'Baru bersegel garansi resmi Sony Indonesia', tahun: km.tahun[0], kelengkapan: km.kelengkapan };
+    S.game.konsol[km.id] = { id: km.id, nama: km.nama, merek: km.merek, hargaBeli: km.harga, dibeli: S.hari, pakai: 0, bekas: false, kondisi: 'Baru Resmi', ketKondisi: 'Baru bersegel garansi resmi Sony Indonesia', tahun: km.tahun ? km.tahun[0] : 2023, kelengkapan: km.kelengkapan || 'Unit baru + DualSense + kabel' };
     S.rumah.barang[km.id] = true;
     S.rumah.infoBarang[km.id] = { dibeli: S.hari, pakai: 0, hargaBeli: km.harga };
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + km.harga;
@@ -445,6 +446,7 @@
     var h = nilaiJualKonsol(S, id);
     delete S.game.konsol[id];
     delete S.rumah.barang[id];
+    if (S.sewaBarang) delete S.sewaBarang['konsol:' + id];
     if (S.rumah.infoBarang) delete S.rumah.infoBarang[id];
     S.bank.saldo += h;
     S.bank.mutasi.unshift({ n: S.hari, ket: 'Jual konsol: ' + k.nama, jml: h });

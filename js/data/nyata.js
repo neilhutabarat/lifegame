@@ -133,7 +133,7 @@
       { id: 'realmec55', jenis: 'hp', tahun: 2023, merek: 'Realme', nama: 'Realme C55 NFC', ram: 6, storage: 128, mah: 5000, watt: 33, kamera: 1.15, harga: 2299000, ket: 'Mini Capsule · Kamera 64 MP · SuperVOOC 33W' },
       { id: 'redminote12p', jenis: 'hp', tahun: 2023, merek: 'Xiaomi', nama: 'Redmi Note 12 Pro 5G', ram: 8, storage: 256, mah: 5000, watt: 67, kamera: 1.3, harga: 4399000, ket: 'Sony IMX766 OIS · P-OLED 120Hz · Turbo Charge 67W' },
       { id: 'opporeno10', jenis: 'hp', tahun: 2023, merek: 'OPPO', nama: 'OPPO Reno10 5G', ram: 8, storage: 256, mah: 5000, watt: 67, kamera: 1.35, harga: 5999000, ket: 'Telephoto Portrait 32 MP · 3D Curved AMOLED · SuperVOOC 67W' },
-      { id: 'galaxya54', jenis: 'hp', tahun: '2023', tahunRilis: 2023, merek: 'Samsung', nama: 'Samsung Galaxy A54 5G', ram: 8, storage: 256, mah: 5000, watt: 25, kamera: 1.4, harga: 5999000, ket: 'Super AMOLED 120Hz · IP67 Tahan Air · Kamera OIS Nightography' },
+      { id: 'galaxya54', jenis: 'hp', tahun: 2023, merek: 'Samsung', nama: 'Samsung Galaxy A54 5G', ram: 8, storage: 256, mah: 5000, watt: 25, kamera: 1.4, harga: 5999000, ket: 'Super AMOLED 120Hz · IP67 Tahan Air · Kamera OIS Nightography' },
       { id: 'iphone15', jenis: 'hp', tahun: 2023, merek: 'Apple', nama: 'Apple iPhone 15', ram: 6, storage: 128, mah: 3349, watt: 20, kamera: 1.65, harga: 13999000, ket: 'A16 Bionic · Dynamic Island · Kamera Utama 48 MP · USB-C' },
       { id: 's23ultra', jenis: 'hp', tahun: 2023, merek: 'Samsung', nama: 'Samsung Galaxy S23 Ultra 5G', ram: 12, storage: 256, mah: 5000, watt: 45, kamera: 1.8, harga: 19999000, ket: 'Snapdragon 8 Gen 2 · Kamera 200 MP Space Zoom · S-Pen bawaan' },
       { id: 'iphone15pm', jenis: 'hp', tahun: 2023, merek: 'Apple', nama: 'iPhone 15 Pro Max', ram: 8, storage: 256, mah: 4422, watt: 27, kamera: 1.9, harga: 24999000, ket: 'Titanium · A17 Pro · 5× Tetraprism Zoom · ProRes Video' },
@@ -176,8 +176,8 @@
       { id: 'ps2', nama: 'PlayStation 2 Slim Original', merek: 'Sony', bekas: true, min: 450000, maks: 750000, tahun: [2004, 2012], watt: 0.03, pulih: 14, ket: 'PS2 Slim SCPH-90006 original optik sehat + stik DualShock 2 ori mesin' },
       { id: 'ps3', nama: 'PlayStation 3 Slim OFW Original', merek: 'Sony', bekas: true, min: 1350000, maks: 2100000, tahun: [2010, 2015], watt: 0.09, pulih: 16, ket: 'PS3 Slim Official Firmware (OFW) original untuk kaset Blu-ray asli' },
       { id: 'ps4', nama: 'PlayStation 4 Slim 1TB OFW Original', merek: 'Sony', bekas: true, min: 2600000, maks: 3700000, tahun: [2017, 2022], watt: 0.15, pulih: 18, ket: 'PS4 Slim 1TB OFW original + DualShock 4 ori mesin' },
-      { id: 'ps5', nama: 'PS5 Slim Digital Edition', merek: 'Sony', bekas: false, digital: true, harga: 9999000, watt: 0.2, pulih: 20, ket: 'Baru, garansi resmi Sony Indonesia. Main game digital PS Store' },
-      { id: 'ps5disc', nama: 'PS5 Slim Disc Edition', merek: 'Sony', bekas: false, harga: 11399000, watt: 0.2, pulih: 20, ket: 'Baru, garansi resmi Sony Indonesia. Bisa kaset Blu-ray PS5 & PS4' }
+      { id: 'ps5', nama: 'PS5 Slim Digital Edition', merek: 'Sony', bekas: false, digital: true, tahun: [2023, 2026], harga: 9999000, watt: 0.2, pulih: 20, kelengkapan: 'Unit baru segel resmi + 1× DualSense Ori + kabel HDMI/USB', ket: 'Baru, garansi resmi Sony Indonesia. Main game digital PS Store' },
+      { id: 'ps5disc', nama: 'PS5 Slim Disc Edition', merek: 'Sony', bekas: false, tahun: [2023, 2026], harga: 11399000, watt: 0.2, pulih: 20, kelengkapan: 'Unit baru segel resmi + 1× DualSense Ori + kabel HDMI/USB', ket: 'Baru, garansi resmi Sony Indonesia. Bisa kaset Blu-ray PS5 & PS4' }
     ],
     /* kaset / game original tiap konsol (45 judul ikonik PS1–PS5: PS1–PS4 original bekas terawat, PS5 original baru) */
     gameKonsol: [

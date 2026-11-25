@@ -458,9 +458,11 @@
 
   /* ---------- pembeli ---------- */
   var BAJU = ['#e0675a', '#3f7fbf', '#7a9e4a', '#e0a33a', '#8a6bb8'];
+  var PAYUNG = ['#1f8a80', '#d9443a', '#2f6fb0', '#f2a516', '#7a4fa0'];
   var X_DEPAN = 222, JARAK = 36, KURSI_X = [57, 101, 21], kotakDepan = null;
-  function gambarOrang(o, yKaki, t, menit) {
+  function gambarOrang(o, yKaki, t, menit, hujan) {
     var x = o.x, jalan = Math.abs(o.x - o.tx) > 1.5, duduk = o.keadaan === 'duduk' && !jalan;
+    var bawaPayung = !!(hujan && !duduk && o.jenis !== 'ojol');
     var langkahK = jalan ? Math.sin(t / 90 + o.id) : 0, r = o.rupa;
     var bob = duduk ? 0 : jalan ? Math.abs(langkahK) * 2 : Math.sin(t / 500 + o.id) * 0.8;
     var lompat = o.lompat > 0 ? Math.sin((1 - o.lompat) * Math.PI) * 8 : 0;
@@ -506,23 +508,38 @@
     cx.strokeStyle = '#2a1d1a'; cx.lineWidth = 1.2; cx.beginPath();
     if (o.marah) cx.arc(x + ex, yk + 8, 3, Math.PI + 0.3, -0.3); else if (o.bawaCup) cx.arc(x + ex, yk + 4, 3.2, 0.2, Math.PI - 0.2); else { cx.moveTo(x - 2 + ex, yk + 6); cx.lineTo(x + 2 + ex, yk + 6); }
     cx.stroke();
-    /* tangan: HP pembuat konten, cup kopi (menyeruput saat duduk!) */
+    /* tangan: HP pembuat konten, cup kopi (menyeruput saat duduk!), atau payung saat hari hujan */
     if (o.jenis === 'konten' && !o.bawaCup) { kotak(x + 9 * hadap - 2, yBadan - 4, 5, 9, '#222'); kotak(x + 9 * hadap - 1, yBadan - 3, 3, 6, '#7fd3e8'); }
     if (o.bawaCup) {
       var seruput = duduk ? Math.max(0, Math.sin(t / 900 + o.id * 2)) * 9 : 0;
       gambarCup(x + (duduk ? 11 : 13) * hadap, yBadan + 14 - seruput, o.menu, 0.85, o.panas, t);
     }
+    if (bawaPayung) {
+      var px = x + 3 * hadap, py = yk - 22, wp = PAYUNG[o.id % PAYUNG.length];
+      /* gagang payung dipegang tangan */
+      cx.strokeStyle = '#3b2f2a'; cx.lineWidth = 1.8;
+      cx.beginPath(); cx.moveTo(x + 9 * hadap, yBadan + 8); cx.lineTo(px, py - 14); cx.stroke();
+      /* ujung atas payung */
+      kotak(px - 1, py - 24, 2, 6, '#2b2420');
+      /* tudung payung melengkung */
+      cx.fillStyle = wp;
+      cx.beginPath(); cx.arc(px, py, 20, Math.PI, 0); cx.closePath(); cx.fill();
+      /* garis jari-jari payung agar realistis */
+      cx.strokeStyle = 'rgba(255,255,255,.32)'; cx.lineWidth = 1;
+      cx.beginPath(); cx.moveTo(px, py - 20); cx.quadraticCurveTo(px - 8, py - 10, px - 10, py); cx.moveTo(px, py - 20); cx.quadraticCurveTo(px + 8, py - 10, px + 10, py); cx.stroke();
+    }
     /* rasa sabar dan pesanan (lengkap dengan Panas / Es) */
     if (o.keadaan === 'antre' || o.keadaan === 'dilayani') {
+      var geserAtas = bawaPayung ? 24 : 0;
       if (o.keadaan === 'antre') {
         var sisa = Math.max(0, 1 - (menit - o.tiba) / o.sabar);
-        kotakBulat(x - 13, yk - 22, 26, 5, 2.5, 'rgba(0,0,0,.35)');
-        kotakBulat(x - 12, yk - 21, Math.max(2, 24 * sisa), 3, 1.5, sisa > 0.5 ? '#4fbf6a' : sisa > 0.25 ? '#f2a516' : '#d9443a');
+        kotakBulat(x - 13, yk - 22 - geserAtas, 26, 5, 2.5, 'rgba(0,0,0,.35)');
+        kotakBulat(x - 12, yk - 21 - geserAtas, Math.max(2, 24 * sisa), 3, 1.5, sisa > 0.5 ? '#4fbf6a' : sisa > 0.25 ? '#f2a516' : '#d9443a');
       }
       if (o.slot === 0) {
         var teksPesanan = o.menu.cemilan ? o.menu.pendek : o.menu.pendek + (o.panas ? ' · Panas' : ' · Es');
         cx.font = '800 11.5px "Baloo 2", "Nunito", system-ui, sans-serif';
-        var tw = cx.measureText(teksPesanan).width + 16, bxx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), byy = yk - 52;
+        var tw = cx.measureText(teksPesanan).width + 16, bxx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), byy = yk - 52 - geserAtas;
         kotakBulat(bxx, byy, tw, 24, 10, o.keadaan === 'dilayani' ? '#f2a516' : '#fbfaf6');
         cx.fillStyle = o.keadaan === 'dilayani' ? '#f2a516' : '#fbfaf6';
         cx.beginPath(); cx.moveTo(x - 5, byy + 23); cx.lineTo(x + 5, byy + 23); cx.lineTo(x, byy + 30); cx.closePath(); cx.fill();
@@ -912,7 +929,7 @@
     var daftar = s.pembeli || [];
     aturPembeli(daftar, s.dMenit || 0, dt);
     kotakDepan = null;
-    daftar.slice().sort(function (a, b) { return (b.slot || 0) - (a.slot || 0); }).forEach(function (o) { gambarOrang(o, yKaki, t, m); });
+    daftar.slice().sort(function (a, b) { return (b.slot || 0) - (a.slot || 0); }).forEach(function (o) { gambarOrang(o, yKaki, t, m, s.hujan); });
     /* cup terbang dari konter ke tangan pembeli */
     anim.cup = anim.cup.filter(function (c) {
       c.u += dt / 420; var u = Math.min(1, c.u), x = c.x0 + (c.x1 - c.x0) * u, y = kotakKedai.by + kotakKedai.bh - 6 + (yKaki - 30 - kotakKedai.by - kotakKedai.bh + 6) * u - Math.sin(u * Math.PI) * 34;
