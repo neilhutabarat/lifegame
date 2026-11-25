@@ -121,8 +121,10 @@
     if (!paksa && kunciHUD === hudTerakhir) return; hudTerakhir = kunciHUD;
     $('h-jam').textContent = jam(S.menit);
     $('h-hari').textContent = namaTanggal(S.hari, true);
-    var hf = $('h-foto'); if (hf && hf.dataset.k !== srcPemain()) { hf.dataset.k = srcPemain(); hf.innerHTML = fotoWajah(srcPemain(), 36).replace(/^<span[^>]*>|<\/span>$/g, ''); }
-    var thn = KAL.tgl(S.hari).y, uPemain = KAL.usia(S.hari, S.profil && S.profil.tglLahir);
+    var uPemain = KAL.usia(S.hari, S.profil && S.profil.tglLahir), gPemain = (S.profil && S.profil.gender) || 'cewek';
+    var kFoto = (ADEGAN && ADEGAN.pilihChar) ? ADEGAN.pilihChar(S.namaPemain, gPemain, uPemain) : srcPemain();
+    var hf = $('h-foto'); if (hf && hf.dataset.k !== kFoto) { hf.dataset.k = kFoto; hf.innerHTML = fotoWajah(srcPemain(), 36, null, S.namaPemain, gPemain, uPemain).replace(/^<span[^>]*>|<\/span>$/g, ''); }
+    var thn = KAL.tgl(S.hari).y;
     $('h-tahun').textContent = thn + ' · Hari ke-' + S.hariKe + ' · ' + uPemain + ' thn';
     var ramadan = KAL.apakahRamadan(S.hari);
     var st = $('h-status');
@@ -441,7 +443,7 @@
     bukaLembar('atur',
       kepala('Pengaturan', k.nama + ' (' + thn + ')') +
       '<h3 class="subjudul">Identitas pemain</h3>' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' + fotoWajah(srcPemain(), 60) + '<div><b>' + esc(S.namaPemain || 'Driver') + '</b></div></div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' + fotoWajah(srcPemain(), 60, null, S.namaPemain, pr.gender, usia) + '<div><b>' + esc(S.namaPemain || 'Driver') + '</b></div></div>' +
         '<div class="atur-baris" style="display:block"><div><b>Nama pemain</b><span>Nama pemilik rekening</span></div><input id="in-pemain" class="input-teks" type="text" maxlength="24" value="' + esc(S.namaPemain || 'Pemilik') + '"></div>' +
       '<div class="atur-baris"><div><b>Gender karakter</b><span>Memengaruhi tampilan karakter</span></div><div class="chip-baris" style="margin:0"><button type="button" class="chip-tombol' + (pr.gender === 'cewek' ? ' pilih' : '') + '" data-gender="cewek">Cewek</button><button type="button" class="chip-tombol' + (pr.gender === 'cowok' ? ' pilih' : '') + '" data-gender="cowok">Cowok</button></div></div>' +
       '<div class="atur-baris" style="display:block"><div><b>Tanggal lahir (TTL)</b><span>Tahun game ' + thn + ' · Usia saat ini: <b>' + usia + ' tahun</b></span></div><input id="in-ttl" class="input-teks" type="date" value="' + esc(pr.tglLahir || '1999-05-15') + '"><div style="margin-top:8px"><button type="button" class="chip-tombol pilih" data-simpan-nama>Simpan profil & nama</button></div></div>' +
@@ -1021,7 +1023,7 @@
     if (!daftar.length) return html + '<p class="catatan">Belum ada teman. Istri atau suami yang diceraikan akan masuk ke sini sebagai mantan.</p>';
     html += '<h3 class="subjudul">Daftar</h3><ul class="daftar pesanan">' + daftar.map(function (x) {
       var usia = KAL.usia(S.hari, x.tglLahir), bisaHb = x.hubungan > TEMAN.MIN_HB;
-      return '<li class="kartu-pesanan"><div style="display:flex;align-items:center;gap:10px">' + fotoWajah(x.gender === 'cowok' ? 'char-pemain' : 'char-istri', 44, 'rgba(31,138,128,.4)') +
+      return '<li class="kartu-pesanan"><div style="display:flex;align-items:center;gap:10px">' + fotoWajah(x.gender === 'cowok' ? 'char-pemain' : 'char-istri', 44, 'rgba(31,138,128,.4)', x.nama, x.gender, usia, x.peran) +
         '<div><b>' + esc(x.nama) + ' (' + TEMAN.PERAN[x.peran] + ' · ' + (x.gender === 'cowok' ? 'Cowok' : 'Cewek') + ' · ' + usia + ' thn)</b><small>Hubungan: <b>' + Math.round(x.hubungan) + '%</b> · ' + (x.hubungan >= 70 ? 'baik' : x.hubungan >= 40 ? 'biasa' : 'buruk') + '</small></div></div>' +
         '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol" data-aksi="tmInteraksi:' + x.id + '|hubungi">Hubungi</button><button type="button" class="chip-tombol" data-aksi="tmInteraksi:' + x.id + '|traktir">Traktir Rp50rb</button><button type="button" class="chip-tombol" data-aksi="tmInteraksi:' + x.id + '|ribut">Ribut</button></div>' +
         '<div class="chip-baris">' + ['teman', 'sahabat', 'pacar', 'mantan'].map(function (r) { return '<button type="button" class="chip-tombol' + (x.peran === r ? ' pilih' : '') + '" data-aksi="tmPeranUbah:' + x.id + '|' + r + '">' + TEMAN.PERAN[r] + '</button>'; }).join('') + '</div>' +
@@ -1468,7 +1470,7 @@
             }).join('') + '</div>' : '');
         }
         var fotoKel = isPas ? srcPasangan() : isIpar ? 'char-adik-ipar' : 'char-anak';
-        return '<li class="kartu-pesanan"><div style="display:flex;align-items:center;gap:10px">' + fotoWajah(fotoKel, 48, 'rgba(194,24,91,.35)') + '<div><b>' + esc(kl.nama) + esc(gelarDisp) + ' (' + peranLabel + ' · ' + jk + ' · ' + usia + ' thn)' + esc(teksHamil) + esc(teksSakit) + '</b>' +
+        return '<li class="kartu-pesanan"><div style="display:flex;align-items:center;gap:10px">' + fotoWajah(fotoKel, 48, 'rgba(194,24,91,.35)', kl.nama, kl.gender, usia, kl.peran) + '<div><b>' + esc(kl.nama) + esc(gelarDisp) + ' (' + peranLabel + ' · ' + jk + ' · ' + usia + ' thn)' + esc(teksHamil) + esc(teksSakit) + '</b>' +
           '<small>TTL: ' + esc(kl.tglLahir) + ' · Usia di tahun ' + thn + ': <b>' + usia + ' tahun</b> · Kebahagiaan: <b>' + Math.round(kl.bahagia || 85) + '%</b></small></div></div>' +
           '<div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="in-nama-' + esc(kl.id) + '" class="input-teks" type="text" maxlength="24" style="margin:0;flex:1" value="' + esc(kl.nama) + '"><button type="button" class="chip-tombol pilih" data-aksi="simpanNamaKel:' + kl.id + '">Simpan nama</button></div>' +
           '<div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="in-ttl-' + esc(kl.id) + '" class="input-teks" type="date" style="margin:0;flex:1" value="' + esc(kl.tglLahir) + '">' +
@@ -2631,14 +2633,18 @@
     if (lembar === 'diri') bukaDiri();
   }
   /* foto wajah bundar: potret AI dipotong ke muka. Pemain mengikuti gender, pasangan sebaliknya */
-  function fotoWajah(src, ukuran, bingkai) {
-    var jenis = /pemain/.test(src) ? 'cowok' : /anak/.test(src) ? 'anak' : 'cewek';
+  function fotoWajah(src, ukuran, bingkai, nama, gender, usia, peran) {
+    var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');
+    var pChar = peran || (/anak/.test(src) ? 'anak' : '');
+    var kunci = (ADEGAN && ADEGAN.pilihChar) ? ADEGAN.pilihChar(nama, gChar, usia, pChar) : null;
+    var jenis = gChar === 'cowok' ? 'cowok' : /anak/.test(src) ? 'anak' : 'cewek';
     var kulit = '#f1c39b', rambut = jenis === 'cowok' ? '#2a1d1a' : jenis === 'anak' ? '#3b2a20' : '#4a2c2a', bg = jenis === 'cowok' ? '#cfe6e3' : '#f6d3dc';
     var hair = jenis === 'cowok' ? '<path d="M14 30c0-12 8-18 18-18s18 6 18 18c-4-6-10-8-18-8s-14 2-18 8z" fill="' + rambut + '"/>'
       : jenis === 'anak' ? '<path d="M13 32c0-13 8-19 19-19s19 6 19 19c-3-7-9-9-19-9s-16 2-19 9z" fill="' + rambut + '"/><circle cx="16" cy="22" r="5" fill="' + rambut + '"/><circle cx="48" cy="22" r="5" fill="' + rambut + '"/>'
       : '<path d="M12 44c-2-20 6-33 20-33s22 13 20 33c-3-5-4-12-4-18-8 0-14-3-16-8-3 6-8 8-16 8 0 6-1 13-4 18z" fill="' + rambut + '"/>';
     var svg = '<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="' + bg + '"/><path d="M10 64c2-12 10-16 22-16s20 4 22 16z" fill="' + (jenis === 'cowok' ? '#1f8a80' : '#e91e63') + '"/><circle cx="32" cy="32" r="14" fill="' + kulit + '"/>' + hair + '<circle cx="26" cy="33" r="1.8" fill="#2a1d1a"/><circle cx="38" cy="33" r="1.8" fill="#2a1d1a"/><path d="M27 39q5 4 10 0" stroke="#b5524a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
-    return '<span class="foto-wajah" style="width:' + ukuran + 'px;height:' + ukuran + 'px;border-color:' + (bingkai || 'rgba(31,138,128,.55)') + '">' + svg + '</span>';
+    var img = kunci ? '<img src="img/char-' + kunci + '.jpg" alt="" onerror="this.style.display=\'none\'">' : '';
+    return '<span class="foto-wajah" style="width:' + ukuran + 'px;height:' + ukuran + 'px;border-color:' + (bingkai || 'rgba(31,138,128,.55)') + '">' + svg + img + '</span>';
   }
   function srcPemain() { return (S && S.profil && S.profil.gender === 'cowok') ? 'char-pemain' : 'char-istri'; }
   function srcPasangan() { return (S && S.profil && S.profil.gender === 'cowok') ? 'char-istri' : 'char-pemain'; }

@@ -5,7 +5,7 @@
   var cv, cx, W = 360, H = 640, dpr = 1;
   var anim = { rolling: 0, pantulKedai: 0, pantulBarista: 0, kedip: 0, motor: [], tMotor: 0, angkat: 0, teks: [], cup: [] };
   var ruko = [];
-  var bgImgs = {}, charImgs = {};
+  var bgImgs = {}, charImgs = {}, charFullImgs = {};
   function muatBg(kunci, src) {
     var im = new Image();
     im.onload = function () { bgImgs[kunci] = im; };
@@ -16,10 +16,43 @@
     im.onload = function () { charImgs[kunci] = im; };
     im.src = src;
   }
-  /* foto pemain mengikuti gender: cowok memakai potret barista, cewek memakai potret perempuan; pasangan sebaliknya */
+  function muatCharFull(kunci, src) {
+    var im = new Image();
+    im.onload = function () { charFullImgs[kunci] = im; };
+    im.src = src;
+  }
+  var DAFTAR_CHAR = ['neil-aura', 'ferry', 'cewek-1', 'cewek-2', 'cewek-3', 'cowok-1', 'cowok-2', 'remaja-cewek', 'remaja-cowok', 'anak-cewek', 'anak-cowok'];
+  DAFTAR_CHAR.forEach(function (k) {
+    muatChar(k, 'img/char-' + k + '.jpg');
+    muatCharFull(k, 'img/char-' + k + '-full.png');
+  });
+  function hashNama(teks) {
+    var h = 0, s = String(teks || '');
+    for (var i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+    return h;
+  }
+  function pilihKunciChar(nama, gender, usia, peran) {
+    var nm = String(nama || '').trim().toLowerCase();
+    if (nm === 'neil aura' || nm.indexOf('neil aura') >= 0) return 'neil-aura';
+    if (nm === 'ferry ananda' || nm.indexOf('ferry ananda') >= 0) return 'ferry';
+    var cw = gender === 'cowok';
+    if ((usia != null && usia < 12) || (peran === 'anak' && (usia == null || usia < 12))) return cw ? 'anak-cowok' : 'anak-cewek';
+    if (usia != null && usia < 20) return cw ? 'remaja-cowok' : 'remaja-cewek';
+    var pool = cw ? ['cowok-1', 'cowok-2'] : ['cewek-1', 'cewek-2', 'cewek-3'];
+    return pool[hashNama(nm || (cw ? 'c' : 'p')) % pool.length];
+  }
+  function imChar(nama, gender, usia, peran) { return charImgs[pilihKunciChar(nama, gender, usia, peran)]; }
+  function imCharFull(nama, gender, usia, peran) { return charFullImgs[pilihKunciChar(nama, gender, usia, peran)]; }
   var genderPemain = 'cewek';
-  function imPemain() { return genderPemain === 'cowok' ? charImgs.pemain : charImgs.istri; }
-  function imPasangan() { return genderPemain === 'cowok' ? charImgs.istri : charImgs.pemain; }
+  function imPemain(s) {
+    if (s && s.namaPemain) return imChar(s.namaPemain, s.gender || genderPemain);
+    return genderPemain === 'cowok' ? charImgs['cowok-1'] : charImgs['cewek-1'];
+  }
+  function imPasangan(s) {
+    var pas = s && s.keluargaRumah ? s.keluargaRumah.filter(function (k) { return k.pasangan; })[0] : null;
+    if (pas) return imChar(pas.nama, pas.gender, pas.usia, pas.peran);
+    return genderPemain === 'cowok' ? charImgs['cewek-1'] : charImgs['cowok-1'];
+  }
   function gambarPotretAi(im, x, y, r, t, o) {
     if (!im || !im.naturalWidth) return false;
     o = o || {};
@@ -788,12 +821,17 @@
     if (v === 'sofa') { var fl = 0.35 + Math.abs(Math.sin(t / 310)) * 0.25; kotakBulat(120, 268, 120, 34, 8, 'rgba(120,200,255,' + fl.toFixed(2) + ')'); }
     if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
-    /* karakter */
+    /* karakter: pakai foto karakter asli/AI, fallback ke kepala vektor bila belum termuat */
     var g2 = Math.sin(t / 210 + 1.1) * 6;
     var sepasang = (v === 'pelukan') ? [[158, cy - 10 - Math.abs(goyang), -0.12 + irama * 0.06], [204, cy - Math.abs(g2), 0.12 - irama * 0.06]] : (v === 'sofa' || v === 'balkon') ? [[150 + irama * 3, cy - Math.abs(goyang), -0.1 + irama * 0.05], [212 + irama * 3, cy + 4 - Math.abs(g2), 0.14 - irama * 0.05]] : [[140, cy + 6 - Math.abs(goyang), -0.22 + irama * 0.07], [218, cy + 6 - Math.abs(g2) * 0.6, 0.22 - irama * 0.07]];
     var rr = v === 'pelukan' ? 30 : 27;
-    kepalaV(sepasang[0][0], sepasang[0][1], rr, gA, sepasang[0][2]);
-    kepalaV(sepasang[1][0], sepasang[1][1], rr, gB, sepasang[1][2]);
+    var imA = imChar(s.namaPemain, gA), imB = imChar(A.nama, gB);
+    if (!gambarPotretAi(imA, sepasang[0][0], sepasang[0][1], rr, t, { diam: true, zoom: 1.35, bingkai: '#ff5c8a', ekspresi: 'hati' })) {
+      kepalaV(sepasang[0][0], sepasang[0][1], rr, gA, sepasang[0][2]);
+    }
+    if (!gambarPotretAi(imB, sepasang[1][0], sepasang[1][1], rr, t + 300, { diam: true, zoom: 1.35, bingkai: '#ff5c8a', ekspresi: 'hati' })) {
+      kepalaV(sepasang[1][0], sepasang[1][1], rr, gB, sepasang[1][2]);
+    }
     /* penutup: selimut atau kaca buram */
     if (v === 'mandi') { cx.fillStyle = 'rgba(235,245,250,.78)'; cx.fillRect(60, cy + 34, 240, 260); for (var dr = 0; dr < 14; dr++) { cx.fillStyle = 'rgba(255,255,255,.55)'; cx.fillRect(70 + dr * 17, (t / 8 + dr * 53) % 300 + 80, 2, 12); } }
     else if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.9)'; kotakBulat(100, cy + 44, 160, 200, 40, 'rgba(40,20,50,.9)'); }
@@ -812,6 +850,36 @@
     cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
     kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
   }
+  function gambarKarakterPenuh(im, x, yKaki, tinggi, t, o) {
+    if (!im || !im.naturalWidth) return false;
+    o = o || {};
+    var gerakX = o.diam ? 0 : Math.sin(t / 1500 + x * 0.05) * (o.gerak != null ? o.gerak : 4);
+    var napas = o.diam ? 1 : 1 + Math.sin(t / 520 + x * 0.02) * 0.015;
+    var dw = tinggi * (im.naturalWidth / im.naturalHeight), dh = tinggi;
+    var px = x + gerakX, py = yKaki;
+    cx.save();
+    cx.fillStyle = 'rgba(0,0,0,.22)';
+    cx.beginPath(); cx.ellipse(px, py + 2, Math.max(14, dw * 0.42), 5, 0, 0, Math.PI * 2); cx.fill();
+    cx.translate(px, py);
+    cx.scale(1, napas);
+    cx.drawImage(im, -dw / 2, -dh, dw, dh);
+    if (o.ikonEkspresi) {
+      var ey = -dh + 10 + Math.sin(t / 320 + x) * 2;
+      bulat(dw * 0.35 + 6, ey, 9.5, '#ffffff');
+      cx.strokeStyle = o.bingkai || '#1f8a80'; cx.lineWidth = 1.4;
+      cx.beginPath(); cx.arc(dw * 0.35 + 6, ey, 9.5, 0, Math.PI * 2); cx.stroke();
+      cx.font = '11px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(o.ikonEkspresi, dw * 0.35 + 6, ey + 0.5);
+    }
+    if (o.label) {
+      cx.font = '800 10px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center';
+      var tw = Math.max(36, cx.measureText(o.label).width + 12);
+      kotakBulat(-tw / 2, 6, tw, 15, 7, 'rgba(18,25,29,.82)');
+      cx.fillStyle = '#fff'; cx.fillText(o.label, 0, 14.5);
+    }
+    cx.restore();
+    return true;
+  }
   function gambarPenghuniRumah(s, t, xKasur, yKasur, yLantai) {
     var kel = s.keluargaRumah || [];
     var pas = kel.filter(function (k) { return k.pasangan; })[0] || null;
@@ -820,12 +888,12 @@
     if (s.hbAnim) { gambarAdeganHb(s, t); return; }
     /* karakter utama saat bangun atau tidur */
     if (s.tidur) {
-      if (!gambarPotretAi(imPemain(), xKasur + 36, yKasur + 4, 21, t, { diam: true, bingkai: '#5b6b73', ikonEkspresi: '💤', label: s.namaPemain || 'Tidur' })) {
+      if (!gambarPotretAi(imPemain(s), xKasur + 36, yKasur + 4, 21, t, { diam: true, zoom: 1.35, bingkai: '#5b6b73', ikonEkspresi: '💤', label: s.namaPemain || 'Tidur' })) {
         bulat(xKasur + 24, yKasur, 11.5, '#f1c39b');
         cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 24, yKasur - 3, 11.5, Math.PI, 0); cx.fill();
       }
       if (pas) {
-        if (!gambarPotretAi(imPasangan(), xKasur + 84, yKasur + 6, 20, t, { diam: true, bingkai: '#e91e63', ikonEkspresi: '💤', label: pas.nama })) {
+        if (!gambarPotretAi(imChar(pas.nama, pas.gender, pas.usia, pas.peran), xKasur + 84, yKasur + 6, 20, t, { diam: true, zoom: 1.35, bingkai: '#e91e63', ikonEkspresi: '💤', label: pas.nama })) {
           bulat(xKasur + 52, yKasur + 2, 10.5, '#f1c39b');
           cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 52, yKasur - 1, 10.5, Math.PI, 0); cx.fill();
         }
@@ -835,24 +903,26 @@
       cx.fillText('Z', xKasur + 60, yKasur - 40 - (t / 50) % 14);
     } else {
       var ekspPemain = s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : s.hbTinggi ? '❤️' : ['😊', '☕', '✨'][Math.floor(t / 4000) % 3];
-      if (!gambarPotretAi(imPemain(), 102, yLantai + 84, 28, t, { gerak: 12, bingkai: '#1f8a80', ekspresi: 'senang', ikonEkspresi: ekspPemain, label: s.namaPemain || 'Kamu' })) {
+      var imP = imCharFull(s.namaPemain, s.gender || 'cewek');
+      if (!gambarKarakterPenuh(imP, 95, yLantai + 138, 132, t, { gerak: 5, bingkai: '#1f8a80', ikonEkspresi: ekspPemain, label: s.namaPemain || 'Kamu' })) {
         gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
       }
       if (pas) {
         var ekspPas = pas.hamil ? '🤰' : s.hbTinggi ? '😘' : ['🥰', '😊', '💕'][Math.floor(t / 4500) % 3];
-        if (!gambarPotretAi(imPasangan(), 186, yLantai + 84, 27, t + 400, { gerak: 9, bingkai: '#e91e63', ekspresi: 'hati', ikonEkspresi: ekspPas, label: pas.nama + (pas.hamil ? ' 🤰' : '') })) {
+        var imPas = imCharFull(pas.nama, pas.gender, pas.usia, pas.peran);
+        if (!gambarKarakterPenuh(imPas, 185, yLantai + 140, 128, t + 400, { gerak: 4, bingkai: '#e91e63', ikonEkspresi: ekspPas, label: pas.nama + (pas.hamil ? ' 🤰' : '') })) {
           gambarKarakterRumah(196, yLantai + 104, pas.gender, t + 400, { baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a', hamil: !!pas.hamil, label: pas.nama });
         }
       }
     }
-    /* anak-anak & ipar yang berada di rumah memakai potret AI anime bergerak & berekspresi */
+    /* anak-anak & ipar yang berada di rumah tampil penuh sesuai usia */
     anakList.slice(0, 4).forEach(function (an, i) {
       var isIpar = an.peran === 'adik_ipar' || an.peran === 'kakak_ipar';
-      var rFoto = isIpar ? 25 : (an.usia < 2 ? 17 : an.usia < 6 ? 20 : 23);
-      var ax = 258 + (i % 2) * 56 - Math.floor(i / 2) * 165, ay = yLantai + 92 + Math.floor(i / 2) * 52;
-      var imAn = isIpar ? charImgs.adik_ipar : charImgs.anak;
+      var tinggiAn = isIpar ? (an.usia < 20 ? 116 : 126) : (an.usia < 3 ? 68 : an.usia < 7 ? 84 : an.usia < 12 ? 98 : an.usia < 18 ? 116 : 126);
+      var ax = 262 + (i % 2) * 52 - Math.floor(i / 2) * 160, ay = yLantai + 142 + Math.floor(i / 2) * 34;
+      var imAn = imCharFull(an.nama, an.gender, an.usia, an.peran);
       var ekspAn = isIpar ? ['😉', '✨', '🌸'][Math.floor((t + i * 900) / 4200) % 3] : ['😄', '🌟', '🎵'][Math.floor((t + i * 700) / 3800) % 3];
-      if (!gambarPotretAi(imAn, ax, ay, rFoto, t + 700 * (i + 1), { gerak: 10, bingkai: isIpar ? '#ff70a6' : '#f2a516', ikonEkspresi: ekspAn, label: an.nama + ' (' + an.usia + 't)' })) {
+      if (!gambarKarakterPenuh(imAn, ax, ay, tinggiAn, t + 700 * (i + 1), { gerak: 4, bingkai: isIpar ? '#ff70a6' : '#f2a516', ikonEkspresi: ekspAn, label: an.nama + ' (' + an.usia + 't)' })) {
         var sk = an.usia < 2 ? 0.52 : an.usia < 5 ? 0.64 : an.usia < 10 ? 0.76 : an.usia < 15 ? 0.88 : 0.96;
         gambarKarakterRumah(ax, ay, an.gender, t + 700 * (i + 1), { skala: sk, baju: an.gender === 'cewek' ? '#f2a516' : '#4fa55a', label: an.nama + ' (' + an.usia + 't)' });
       }
@@ -1277,7 +1347,11 @@
     if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t); }
     var goyang = Math.sin(t / 90) * 1.2;
     if (f.kend === 'mobil') { var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(W * 0.46, jalan + 84 + goyang, mob.bentuk, mob.id, false, t * 0.6); }
-    else if (f.kend === 'kaki') gambarKarakterRumah(W * 0.45, jalan + 78, s.gender === 'cowok' ? 'cowok' : 'cewek', t * 2.4, { skala: 1.5, label: s.namaPemain || 'Kamu' });
+    else if (f.kend === 'kaki') {
+      if (!gambarKarakterPenuh(imCharFull(s.namaPemain, s.gender), W * 0.45, jalan + 88, 126, t * 2.4, { label: s.namaPemain || 'Kamu' })) {
+        gambarKarakterRumah(W * 0.45, jalan + 78, s.gender === 'cowok' ? 'cowok' : 'cewek', t * 2.4, { skala: 1.5, label: s.namaPemain || 'Kamu' });
+      }
+    }
     else gambarMotorKu(W * 0.42, jalan + 52 + goyang, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, bonceng: f.kend === 'ojek' }, t);
     if (gp > 0.4) { var gr = cx.createRadialGradient(W * 0.46 + 70, jalan + 50, 0, W * 0.46 + 70, jalan + 50, 100); gr.addColorStop(0, 'rgba(255,240,190,.45)'); gr.addColorStop(1, 'rgba(255,240,190,0)'); cx.fillStyle = gr; cx.fillRect(W * 0.4, jalan - 20, 240, 140); }
     if (s.hujan) hujanTravel(s, t);
@@ -1372,7 +1446,7 @@
       if (s.berhentiSewa) {
         /* mode driver: tidak ada kedai, hanya jalan raya dan pemain di tepi jalan */
         kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
-        if (!s.ojek || s.ojek.status === 'standby') gambarPotretAi(imPemain(), 258, dasarKedai - 30, 24, t, { gerak: 5, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
+        if (!s.ojek || s.ojek.status === 'standby') gambarPotretAi(imPemain(s), 258, dasarKedai - 30, 24, t, { gerak: 5, zoom: 1.3, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
       } else {
       gambarPisang(132, dasarKedai, t);
       kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
@@ -1443,5 +1517,5 @@
   }
 
   function racikSaja() { anim.pantulBarista = 1; }
-  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja };
+  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja, pilihChar: pilihKunciChar };
 })(window);
