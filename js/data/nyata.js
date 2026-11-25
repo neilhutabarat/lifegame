@@ -424,6 +424,64 @@
       { id: 'grabfood', nama: 'GrabFood', app: 'GrabMerchant', warna: '#00b14f', komisi: 0.2 },
       { id: 'shopeefood', nama: 'ShopeeFood', app: 'ShopeeFood Merchant', warna: '#ee4d2d', komisi: 0.2 }
     ],
+    /* apotek dunia nyata (Kimia Farma / K-24): obat-obatan, vitamin, dan kontrasepsi (harga pasar Indonesia) */
+    apotek: [
+      { id: 'paracetamol', kat: 'obat', nama: 'Sanmol / Paracetamol 500 mg', kemasan: '1 strip (10 tab)', harga: 10000, sembuh: ['demam', 'pusing'], ket: 'Meredakan demam, sakit kepala, dan pegal' },
+      { id: 'tolakangin', kat: 'obat', nama: 'Tolak Angin Cair Sidomuncul', kemasan: '1 kotak (5 sachet)', harga: 22000, sembuh: ['masukangin', 'demam'], ket: 'Sembuhkan masuk angin akibat kehujanan atau begadang' },
+      { id: 'bodrex', kat: 'obat', nama: 'Bodrex Flu & Batuk PE', kemasan: '1 strip (4 kaplet)', harga: 12000, sembuh: ['flu', 'masukangin'], ket: 'Meredakan flu, pilek, dan batuk akibat cuaca' },
+      { id: 'promag', kat: 'obat', nama: 'Promag / Mylanta Tablet', kemasan: '1 strip (10 tab)', harga: 10000, sembuh: ['maag'], ket: 'Mengatasi sakit maag / asam lambung karena telat makan' },
+      { id: 'enervon', kat: 'vitamin', nama: 'Enervon-C / Imboost Force', kemasan: '1 strip (10 tab)', harga: 45000, kebalHari: 3, stamina: 25, ket: 'Vitamin daya tahan tubuh (+25 stamina & kebal sakit 3 hari)' },
+      { id: 'dokter', kat: 'obat', nama: 'Berobat ke Klinik / Dokter Umum + Resep', kemasan: '1× konsultasi & obat', harga: 150000, sembuhSemua: true, ket: 'Menyembuhkan semua jenis sakit termasuk sakit berat / kecapekan parah' },
+      { id: 'kondom_sutra', kat: 'kb', nama: 'Kondom Sutra Classic', kemasan: '1 kotak (isi 3)', harga: 14000, stokKb: 'kondom', isi: 3, ket: 'Pengaman sekali pakai (isi 3) untuk mencegah kehamilan saat HB' },
+      { id: 'kondom_durex', kat: 'kb', nama: 'Kondom Durex Extra Safe', kemasan: '1 kotak (isi 3)', harga: 35000, stokKb: 'kondom', isi: 3, ket: 'Pengaman premium (isi 3) ekstra nyaman & aman saat HB' },
+      { id: 'pil_kb', kat: 'kb', nama: 'Pil KB Andalan', kemasan: '1 strip (28 hari)', harga: 18000, kbHari: 28, ket: 'Kontrasepsi harian efektif 28 hari mencegah kehamilan' },
+      { id: 'suntik_kb', kat: 'kb', nama: 'Suntik KB 3 Bulan (Bidan / Klinik)', kemasan: '1× suntik (90 hari)', harga: 45000, kbHari: 90, ket: 'Perlindungan kontrasepsi jangka panjang selama 90 hari' },
+      { id: 'testpack', kat: 'kb', nama: 'Test Pack Kehamilan Sensitif', kemasan: '1 strip', harga: 25000, cekHamil: true, ket: 'Cek kehamilan secara akurat di rumah' },
+      { id: 'folamil', kat: 'vitamin', nama: 'Folamil Genio (Vitamin Ibu Hamil)', kemasan: '1 botol (30 kapsul)', harga: 145000, vitaminHamil: true, ket: 'Nutrisi asam folat & DHA untuk kesehatan ibu hamil dan janin' }
+    ],
+    penyakit: [
+      { id: 'masukangin', nama: 'Masuk angin', berat: false, obat: 'Tolak Angin / Bodrex', sebab: 'kehujanan atau angin malam' },
+      { id: 'flu', nama: 'Flu & batuk', berat: false, obat: 'Bodrex Flu & Batuk', sebab: 'perubahan cuaca hujan' },
+      { id: 'demam', nama: 'Demam & meriang', berat: false, obat: 'Paracetamol / Sanmol', sebab: 'kelelahan dan kurang istirahat' },
+      { id: 'maag', nama: 'Asam lambung / Maag', berat: false, obat: 'Promag / Mylanta', sebab: 'sering telat makan' },
+      { id: 'tifus', nama: 'Kelelahan berat (Gejala Tifus)', berat: true, obat: 'Berobat ke Klinik / Dokter', sebab: 'beraktivitas berlebihan tanpa istirahat' }
+    ],
+    /* biaya rumah tangga nyata (sudah mencakup makan suami, istri, dan anak di rumah) */
+    rumahTangga: [
+      { id: 'harian', nama: 'Belanja Harian (1 hari)', hari: 1, dasar: 55000, perAnak: 15000, ket: 'Uang belanja dapur harian untuk makan sekeluarga di rumah' },
+      { id: 'mingguan', nama: 'Belanja Mingguan (7 hari)', hari: 7, dasar: 360000, perAnak: 95000, ket: 'Lebih hemat untuk kebutuhan makan di rumah selama seminggu' },
+      { id: 'bulanan', nama: 'Belanja Bulanan (30 hari)', hari: 30, dasar: 1450000, perAnak: 380000, ket: 'Stok beras, lauk, & dapur penuh 1 bulan untuk makan gratis di rumah' }
+    ],
+    /* pendidikan kuliah pasangan (harga UKT/semester asli di Indonesia) */
+    pendidikanPasangan: [
+      { id: 'd3_bidan', nama: 'D3 Kebidanan / Keperawatan', semester: 6, ukt: 3500000, gelar: 'A.Md.Keb / A.Md.Kep', ket: '6 semester (3 thn) · Membuka profesi Perawat / Bidan' },
+      { id: 's1_ekonomi', nama: 'S1 Akuntansi / Manajemen', semester: 8, ukt: 4200000, gelar: 'S.E.', ket: '8 semester (4 thn) · Membuka profesi Akuntan / Staf Bank' },
+      { id: 's1_ti', nama: 'S1 Teknik Informatika', semester: 8, ukt: 5000000, gelar: 'S.Kom.', ket: '8 semester (4 thn) · Membuka profesi Programmer / IT' },
+      { id: 's1_dokter', nama: 'S1 Kedokteran + Profesi Dokter', semester: 10, ukt: 12500000, gelar: 'dr.', ket: '10 semester (5 thn) · Membuka profesi Dokter Umum (gaji tinggi)' }
+    ],
+    /* pekerjaan pasangan di luar rumah atas izin karakter utama (gaji bulanan nyata Indonesia) */
+    kerjaPasangan: [
+      { id: 'admin_toko', nama: 'Admin Online Shop / CS', gaji: 2800000, butuh: null, ket: 'Kerja ringan harian, tanpa syarat gelar kuliah' },
+      { id: 'guru_les', nama: 'Guru Les / Bimbel', gaji: 2600000, butuh: null, ket: 'Mengajar bimbel sore, waktu fleksibel' },
+      { id: 'kasir_mini', nama: 'Karyawan Minimarket / Retail', gaji: 3300000, butuh: null, ket: 'Gaji tetap bulanan setara retail modern' },
+      { id: 'staf_kantor', nama: 'Staf Administrasi Kantor', gaji: 4200000, butuh: null, ket: 'Kerja kantoran Senin–Jumat' },
+      { id: 'perawat', nama: 'Perawat / Bidan Klinik & RS', gaji: 5200000, butuh: 'd3_bidan', ket: 'Butuh lulus D3 Kebidanan / Keperawatan' },
+      { id: 'akuntan', nama: 'Akuntan / Staf Perbankan', gaji: 7200000, butuh: 's1_ekonomi', ket: 'Butuh lulus S1 Akuntansi / Manajemen' },
+      { id: 'programmer', nama: 'Software Engineer / IT', gaji: 11500000, butuh: 's1_ti', ket: 'Butuh lulus S1 Teknik Informatika' },
+      { id: 'dokter', nama: 'Dokter Umum (Klinik & RS)', gaji: 18000000, butuh: 's1_dokter', ket: 'Butuh lulus S1 Kedokteran + Profesi Dokter' }
+    ],
+    /* pendidikan anak sesuai usia nyata di Indonesia (4 thn PAUD/TK, 6 thn SD, 12 thn SMP, 15 thn SMA, 18 thn Kuliah) */
+    sekolahAnak: [
+      { id: 'paud', nama: 'PAUD / TK', minUsia: 4, maksUsia: 5, pangkal: 1200000, spp: 250000, ket: 'Usia 4–5 tahun · Bermain sambil belajar membaca & berhitung' },
+      { id: 'sd_negeri', nama: 'SD Negeri', minUsia: 6, maksUsia: 11, pangkal: 450000, spp: 0, ket: 'Usia 6–11 tahun · SPP gratis pemerintah (biaya seragam & buku Rp450rb)' },
+      { id: 'sd_swasta', nama: 'SD Swasta / Terpadu', minUsia: 6, maksUsia: 11, pangkal: 4500000, spp: 650000, ket: 'Usia 6–11 tahun · Fasilitas lengkap & ekstrakurikuler' },
+      { id: 'smp_negeri', nama: 'SMP Negeri', minUsia: 12, maksUsia: 14, pangkal: 600000, spp: 0, ket: 'Usia 12–14 tahun · SPP gratis pemerintah (seragam & perlengkapan)' },
+      { id: 'smp_swasta', nama: 'SMP Swasta', minUsia: 12, maksUsia: 14, pangkal: 6500000, spp: 850000, ket: 'Usia 12–14 tahun · Program bilingual & pembinaan prestasi' },
+      { id: 'sma_negeri', nama: 'SMA / SMK Negeri', minUsia: 15, maksUsia: 17, pangkal: 750000, spp: 0, ket: 'Usia 15–17 tahun · SPP gratis / terjangkau (seragam & buku)' },
+      { id: 'sma_swasta', nama: 'SMA Swasta Unggulan', minUsia: 15, maksUsia: 17, pangkal: 8000000, spp: 1100000, ket: 'Usia 15–17 tahun · Persiapan perguruan tinggi' },
+      { id: 'kuliah_anak', nama: 'Kuliah S1 Universitas', minUsia: 18, maksUsia: 24, pangkal: 4500000, spp: 750000, ket: 'Usia 18+ tahun · UKT kuliah perguruan tinggi' }
+    ],
+
     namaOrang: ['Budi', 'Siti', 'Rina', 'Andi', 'Dewi', 'Fajar', 'Putri', 'Rizky', 'Nadia', 'Yoga', 'Intan', 'Bayu', 'Lestari', 'Hendra', 'Maya', 'Tono', 'Sari', 'Dimas', 'Wulan', 'Agus', 'Ucok', 'Butet', 'Rudi', 'Fitri'],
     namaCewek: ['Siti', 'Rina', 'Dewi', 'Putri', 'Nadia', 'Intan', 'Lestari', 'Maya', 'Sari', 'Wulan', 'Butet', 'Fitri', 'Ayu', 'Citra', 'Nisa', 'Tiara', 'Amelia', 'Dinda'],
     namaCowok: ['Budi', 'Andi', 'Fajar', 'Rizky', 'Yoga', 'Bayu', 'Hendra', 'Tono', 'Dimas', 'Agus', 'Ucok', 'Rudi', 'Arif', 'Bagus', 'Reza', 'Wahyu', 'Ilham', 'Dedi'],

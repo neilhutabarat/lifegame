@@ -632,6 +632,83 @@
     if (gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.28).toFixed(2) + ')'; cx.fillRect(x - 34, y - 28, 68, 48); }
   }
 
+  /* ---------- karakter di dalam rumah / kos (pemain, pasangan, anak sesuai usia, tidur & animasi HB) ---------- */
+  function gambarKarakterRumah(x, y, gender, t, o) {
+    o = o || {};
+    var sk = o.skala || 1, cewek = gender === 'cewek', bob = Math.sin(t / 480 + x) * 1.1;
+    var baju = o.baju || (cewek ? '#c86a84' : '#2f6fb0');
+    cx.save(); cx.translate(x, y + bob); cx.scale(sk, sk);
+    cx.fillStyle = 'rgba(0,0,0,.16)'; cx.beginPath(); cx.ellipse(0, 1, 13, 3.5, 0, 0, Math.PI * 2); cx.fill();
+    kotak(-6, -16, 5, 16, '#33414d'); kotak(1, -16, 5, 16, '#33414d');
+    if (cewek) { kotakBulat(-12, -46, 24, 24, 9, '#2a1d1a'); }
+    kotakBulat(-11, -41, 22, 26, 7, baju);
+    if (o.hamil) { bulat(7, -23, 7, baju); }
+    bulat(0, -51, 11, '#f1c39b');
+    cx.fillStyle = '#2a1d1a';
+    cx.beginPath(); cx.arc(0, -53, 11.5, Math.PI * 1.02, Math.PI * 1.98); cx.fill();
+    if (cewek) { kotak(-12, -53, 4.5, 14, '#2a1d1a'); kotak(7.5, -53, 4.5, 14, '#2a1d1a'); }
+    bulat(-4, -50, 1.6, '#2a1d1a'); bulat(4, -50, 1.6, '#2a1d1a');
+    bulat(-7, -47, 2.2, 'rgba(235,110,120,.4)'); bulat(7, -47, 2.2, 'rgba(235,110,120,.4)');
+    cx.strokeStyle = '#2a1d1a'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(0, -47, 3, 0.2, Math.PI - 0.2); cx.stroke();
+    if (o.label) {
+      cx.font = '800 10px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center';
+      cx.fillStyle = 'rgba(29,43,51,.8)'; cx.fillText(o.label, 0, -68);
+    }
+    cx.restore();
+  }
+  function gambarPenghuniRumah(s, t, xKasur, yKasur, yLantai) {
+    var kel = s.keluargaRumah || [];
+    var pas = kel.filter(function (k) { return k.pasangan; })[0] || null;
+    var anakList = kel.filter(function (k) { return !k.pasangan; });
+    /* animasi HB: istri berbaring di kasur, suami naik ke atas istri dengan efek hati sebelum layar gelap */
+    if (s.hbAnim && pas) {
+      var u = Math.min(1, s.hbAnim.u || 0);
+      var istriDiKasur = pas.gender === 'cewek' ? pas : { nama: s.namaPemain || 'Istri', gender: 'cewek' };
+      var suamiNaik = pas.gender === 'cowok' ? pas : { nama: s.namaPemain || 'Suami', gender: 'cowok' };
+      /* istri berbaring di tempat tidur */
+      bulat(xKasur + 26, yKasur + 2, 11, '#f1c39b');
+      cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 26, yKasur, 11.5, Math.PI, 0); cx.fill();
+      kotakBulat(xKasur + 36, yKasur - 3, 46, 15, 7, '#c86a84');
+      /* suami bergerak naik ke atas istri di tempat tidur */
+      var sx = xKasur + 96 - u * 56, sy = yKasur - 28 + Math.sin(u * Math.PI) * -10 + u * 16;
+      kotakBulat(sx + 10, sy + 2, 42, 14, 6, '#2f6fb0');
+      bulat(sx, sy + 7, 10.5, '#f1c39b');
+      cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(sx, sy + 4, 10.5, Math.PI, 0); cx.fill();
+      /* simbol hati lembut melayang */
+      cx.fillStyle = '#e91e63'; cx.font = '800 18px system-ui, sans-serif'; cx.textAlign = 'center';
+      for (var hi = 0; hi < 3; hi++) {
+        var hy = yKasur - 34 - ((t / 28 + hi * 16) % 34);
+        cx.globalAlpha = Math.max(0.2, 1 - (((t / 28 + hi * 16) % 34) / 34));
+        cx.fillText('♥', xKasur + 48 + (hi - 1) * 20, hy);
+      }
+      cx.globalAlpha = 1;
+      return;
+    }
+    /* karakter utama saat bangun atau tidur */
+    if (s.tidur) {
+      bulat(xKasur + 24, yKasur, 11.5, '#f1c39b');
+      cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 24, yKasur - 3, 11.5, Math.PI, 0); cx.fill();
+      if (pas) {
+        bulat(xKasur + 52, yKasur + 2, 10.5, '#f1c39b');
+        cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 52, yKasur - 1, 10.5, Math.PI, 0); cx.fill();
+      }
+      cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif';
+      cx.fillText('z', xKasur + 46, yKasur - 24 - (t / 40) % 12);
+      cx.fillText('Z', xKasur + 60, yKasur - 40 - (t / 50) % 14);
+    } else {
+      gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
+      if (pas) {
+        gambarKarakterRumah(196, yLantai + 104, pas.gender, t + 400, { baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a', hamil: !!pas.hamil, label: pas.nama });
+      }
+    }
+    /* anak-anak yang berada di rumah (skala tubuh tumbuh sesuai usia!) */
+    anakList.slice(0, 4).forEach(function (an, i) {
+      var sk = an.usia < 2 ? 0.52 : an.usia < 5 ? 0.64 : an.usia < 10 ? 0.76 : an.usia < 15 ? 0.88 : 0.96;
+      var ax = 248 + (i % 2) * 44 - Math.floor(i / 2) * 165, ay = yLantai + 112 + Math.floor(i / 2) * 18;
+      gambarKarakterRumah(ax, ay, an.gender, t + 700 * (i + 1), { skala: sk, baju: an.gender === 'cewek' ? '#f2a516' : '#4fa55a', label: an.nama + ' (' + an.usia + 't)' });
+    });
+  }
+
   /* ---------- kamar kos ---------- */
   /* ---------- rumah sendiri: denah ringkas supaya barang terlihat di atas tombol bawah ---------- */
   function gambarRumah(s, t) {
@@ -674,13 +751,10 @@
     if (b.springbed) { kotakBulat(10, lantai + 20, 12, 82, 4, '#6b4a2e'); kotakBulat(14, lantai + 50, 156, 56, 10, '#6b4a2e'); kotakBulat(18, lantai + 36, 148, 34, 10, '#f3f1ea'); kotakBulat(22, lantai + 28, 44, 22, 10, '#fff'); kotakBulat(66, lantai + 40, 98, 28, 8, '#c86a5a'); }
     else { kotakBulat(14, lantai + 70, 156, 30, 8, '#e9e2cf'); kotakBulat(18, lantai + 58, 148, 22, 8, '#f3f1ea'); kotakBulat(22, lantai + 50, 42, 18, 8, '#fff'); kotakBulat(66, lantai + 60, 98, 20, 8, '#a5b88a'); }
     var yKepala = b.springbed ? lantai + 34 : lantai + 54;
-    if (s.tidur) {
-      bulat(42, yKepala, 11, '#f1c39b'); cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(42, yKepala - 3, 11, Math.PI, 0); cx.fill();
-      cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif'; cx.fillText('z', 64, yKepala - 24 - (t / 40) % 12); cx.fillText('Z', 76, yKepala - 40 - (t / 50) % 14);
-    }
     if (b.sofa) { kotakBulat(184, lantai + 84, 150, 46, 14, '#5b7a8c'); kotakBulat(190, lantai + 70, 138, 28, 12, '#6d8ea1'); }
     if (b.mejamakan) { kotakBulat(18, lantai + 112, 18, 26, 3, '#a86c3c'); kotak(36, lantai + 112, 80, 7, '#8f5a31'); kotak(42, lantai + 119, 5, 20, '#6b4a2e'); kotak(104, lantai + 119, 5, 20, '#6b4a2e'); kotakBulat(118, lantai + 112, 18, 26, 3, '#a86c3c'); }
     if (b.kipas) { kotak(178, lantai + 30, 4, 50, '#3b3f46'); bulat(180, lantai + 24, 16, '#dfeef3'); cx.save(); cx.translate(180, lantai + 24); cx.rotate(t / 60); kotak(-2, -13, 4, 26, '#9ab'); kotak(-13, -2, 26, 4, '#9ab'); cx.restore(); }
+    gambarPenghuniRumah(s, t, 18, yKepala, lantai);
     if (s.tidur) { cx.fillStyle = 'rgba(10,18,45,.45)'; cx.fillRect(0, 0, W, H); }
     else if (gp > 0.5) { cx.fillStyle = 'rgba(255,230,180,.06)'; cx.fillRect(0, 0, W, H); }
   }
@@ -715,12 +789,6 @@
       kotakBulat(24, lantai + 14, 192, 40, 10, '#f3f1ea'); kotakBulat(30, lantai + 4, 54, 24, 10, '#ffffff');
       kotakBulat(84, lantai + 18, 130, 34, 8, b.springbed ? '#c86a5a' : '#6aa0c8'); /* selimut */
     }
-    if (s.tidur) {
-      if (rumah && !b.springbed) cx.translate(0, 34);
-      bulat(58, lantai + 12, 13, '#f1c39b'); cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(58, lantai + 9, 13, Math.PI, 0); cx.fill();
-      cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif'; cx.fillText('z', 84, lantai - 14 - (t / 40) % 12); cx.fillText('Z', 96, lantai - 30 - (t / 50) % 14);
-      if (rumah && !b.springbed) cx.translate(0, -34);
-    }
     if (b.karpet) kotakBulat(150, lantai + 120, 150, 50, 10, '#b85c4a');
     if (b.kipas) { kotak(250, lantai + 40, 4, 60, '#3b3f46'); bulat(252, lantai + 34, 18, '#dfeef3'); cx.save(); cx.translate(252, lantai + 34); cx.rotate(t / 60); kotak(-2, -15, 4, 30, '#9ab'); kotak(-15, -2, 30, 4, '#9ab'); cx.restore(); }
     if (b.kulkas2) { kotakBulat(240, lantai - 40, 52, 136, 5, '#d8dde1'); kotak(265, lantai - 36, 2, 128, '#b8c0c6'); kotak(258, lantai + 10, 3, 18, '#8d969b'); kotak(270, lantai + 10, 3, 18, '#8d969b'); }
@@ -743,6 +811,8 @@
     if (b.mejamakan) { kotak(290, lantai + 196, 62, 8, '#8f5a31'); kotak(296, lantai + 204, 5, 40, '#6b4a2e'); kotak(340, lantai + 204, 5, 40, '#6b4a2e'); kotakBulat(286, lantai + 176, 14, 30, 3, '#a86c3c'); kotakBulat(342, lantai + 176, 14, 30, 3, '#a86c3c'); }
     if (b.mesincuci) { kotakBulat(20, lantai + 188, 70, 58, 6, '#eef1f3'); bulat(42, lantai + 214, 13, '#bcd3e0'); bulat(72, lantai + 214, 9, '#bcd3e0'); kotak(24, lantai + 192, 62, 6, '#c8ced3'); }
     if (b.kompor) { kotak(60, lantai + 120, 70, 8, '#a5adb3'); kotak(64, lantai + 128, 62, 30, '#d9dcde'); bulat(80, lantai + 118, 6, '#2b2b2b'); bulat(110, lantai + 118, 6, '#2b2b2b'); kotakBulat(134, lantai + 126, 18, 30, 6, '#7fb069'); }
+    /* tampilkan karakter utama, pasangan (istri/suami), anak-anak, serta animasi tidur / HB di kamar kos */
+    gambarPenghuniRumah(s, t, 34, lantai + 12, lantai + 14);
     /* gelap malam bila lampu dimatikan saat tidur */
     if (s.tidur) { cx.fillStyle = 'rgba(10,18,45,.45)'; cx.fillRect(0, 0, W, H); }
     else if (gp > 0.5) { cx.fillStyle = 'rgba(255,230,180,.06)'; cx.fillRect(0, 0, W, H); }

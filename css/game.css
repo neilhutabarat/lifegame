@@ -257,11 +257,13 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 @keyframes isiGelas { from { height: 0; } to { height: 64px; } }
 
 /* ---------- kebutuhan pemain dan kos ---------- */
-.diri { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 6px 12px 7px; text-align: left; }
-.diri > span { font-size: 10.5px; font-weight: 800; color: var(--tinta-pudar); display: grid; gap: 3px; }
+.diri { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 6px 10px 7px; text-align: left; }
+.diri > span { font-size: 10px; font-weight: 800; color: var(--tinta-pudar); display: grid; gap: 3px; }
 .diri .meteran { display: block; height: 6px; margin: 0; }
 .diri .meteran i { background: var(--kontainer); }
 .diri .meteran.kritis i { background: var(--merah-libur); }
+.diri .meteran.hb i { background: #e91e63; }
+.ikon.aktif-home { background: var(--kontainer); color: #fff; }
 #app.meracik .diri { display: none; }
 .kos-aksi { justify-content: center; margin: 0; }
 .kos-aksi .chip-tombol { background: rgba(251,250,246,.94); }
