@@ -1,4 +1,4 @@
-# Kopi Kontainer
+# The Driver
 
 Game HP simulasi usaha kedai kopi kontainer berlatar dunia nyata Indonesia masa kini. Layar tegak, semua aksi lewat tap.
 Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
@@ -47,3 +47,5 @@ O2. Peta antarkota nyata: jarak, tol, kapal penyeberangan, tarif standar yang bi
 O3–O5. Travel mobil: tunggu penumpang penuh, jemput di kota yang sama, percepatan 1–5 dan ⚡ (malam/sepi), bensin, tilang, ban bocor, penumpang minta cepat atau santai, menepi/rumah makan/rehat 2 jam/penginapan ✔
 O6. Pemandangan tiap kota, jalan bergulir, kapal ✔
 P1. Stamina dan melek digabung jadi satu bar, bar bensin di samping baterai HP, potret karakter dipotong ke wajah dan mengikuti gender, adegan jalan tanpa latar kedai, perjalanan pulang/berangkat beranimasi sesuai jarak ✔
+P2. Bar bensin motor turun saat jalan, percepatan 6 tingkat untuk semua kendaraan (motor 10–20 … 80–120 km/j), popup isi bensin & charge HP di HUD, 24 tipe HP baru, tombol Semua di setor tunai, adegan HB berjalan cepat ✔
+P3. Kedai dihapus total: judul jadi "The Driver", menu HP kedai (stok, belanja, mitra pesan-antar, karyawan, racik, usaha, maps, medsos, OSS, pajak, QRIS merchant) dan pengaturan kedai dibuang; simpanan lama otomatis jadi mode driver ✔

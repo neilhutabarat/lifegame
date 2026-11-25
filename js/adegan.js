@@ -1068,6 +1068,15 @@
     cx.restore();
   }
   /* adegan jalan raya saat mengantar order ojol */
+  function gambarLatarAwal(s, t) {
+    var m = s.menit % 1440, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.02) % lebar, gp = gelap(m);
+    gambarLangit(m, t);
+    cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
+    kotak(0, dasarRuko, W, jalan - dasarRuko, 'rgba(185,178,166,.55)');
+    kotak(0, jalan, W, H - jalan, 'rgba(68,72,78,.8)');
+    var g3 = (t * 0.1) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
+    if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.35).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
+  }
   function gambarJalanRaya(s, t) {
     var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
     var gp = gelap(m);
@@ -1283,6 +1292,7 @@
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
     if (s.hbAnim && s.posisi !== 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); cx.fillStyle = '#2a1a26'; cx.fillRect(0, 0, W, H); gambarHbUmum(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.latarAwal) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarLatarAwal(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.transit) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPerjalanan(s, t, dt); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.travel) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Kopi Kontainer</title>
+<title>The Driver</title>
 <meta name="theme-color" content="#12191d">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="img/ikon-192.png">
@@ -35,7 +35,6 @@
   <div id="toast" hidden></div>
 
   <footer id="bawah" hidden>
-    <button id="b-pesanan" class="pesanan-pill" type="button" hidden>Pesanan antar</button>
     <div id="kedai-aksi" class="chip-baris kos-aksi" hidden></div>
     <div id="kos-aksi" class="chip-baris kos-aksi" hidden></div>
     <div id="ojek-panel" class="ojek-panel" hidden></div>
@@ -49,11 +48,7 @@
         <button id="b-hp" class="ikon" type="button" aria-label="HP: ojol, bank, apotek, keluarga">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
         </button>
-        <button id="b-antar" class="ikon" type="button" aria-label="Pesanan antar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5 12 13l8.5-4.5M12 13v7"/></svg>
-          <span id="b-antar-lencana" class="lencana" hidden>0</span>
-        </button>
-        <button id="b-atur" class="ikon" type="button" aria-label="Atur usaha">
+        <button id="b-atur" class="ikon" type="button" aria-label="Pengaturan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
         </button>
       </div>
@@ -61,18 +56,16 @@
   </footer>
 
   <section id="layar-awal" class="layar">
-    <h1 class="judul-game">Kopi Kontainer<small>Buka kedai kopi dari kontainer kecil di pinggir jalan.</small></h1>
+    <h1 class="judul-game">The Driver<small>Narik ojol & travel, jaga badan, bangun hidupmu di jalan.</small></h1>
     <div class="tombol-dua">
-      <div id="layar-awal-cover" style="width:min(420px,92vw);margin:0 auto 14px;border-radius:18px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.15)"><img src="img/cover.jpg" alt="Kopi Kontainer" style="display:block;width:100%;height:auto;object-fit:cover"></div>
       <button id="b-lanjut" class="aksi" type="button" hidden>Lanjutkan</button>
-      <button id="b-baru-driver" class="aksi" type="button">Mulai sebagai driver ojol &amp; travel</button>
-      <button id="b-baru" class="tombol-lain" type="button">Mulai sebagai pemilik kedai</button>
+      <button id="b-baru-driver" class="aksi" type="button">Mulai</button>
     </div>
     <p id="info-simpan" class="kecil"></p>
   </section>
 
   <section id="layar-kota" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:32px">Buka di kota mana?<small>Kota menentukan gaji karyawan, sewa, dan selera pembeli.</small></h1>
+    <h1 class="judul-game" style="font-size:32px">Mulai di kota mana?<small>Kota menentukan tarif, jarak, dan suasana jalan.</small></h1>
     <div id="kota-daftar" class="kota-daftar"></div>
     <button id="b-kembali" class="tombol-lain" type="button">Kembali</button>
   </section>
@@ -84,13 +77,13 @@
   </section>
 
   <section id="layar-qris" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:32px">Terima QRIS lewat apa?<small>Pembeli bisa bayar dari aplikasi apa pun. Uangnya masuk ke saldo merchant yang kamu pilih, lalu dipindah ke bank.</small></h1>
+    <h1 class="judul-game" style="font-size:32px">Dompet digital utama?<small>Dipakai menerima bayaran penumpang non-tunai, lalu dipindah ke bank.</small></h1>
     <div id="qris-daftar" class="kota-daftar"></div>
     <button id="b-kembali-qris" class="tombol-lain" type="button">Kembali</button>
   </section>
 
   <section id="layar-bank" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:32px">Rekening usaha di bank mana?<small>Uang QRIS dipindah ke sini. Sewa, gaji, cicilan, dan pajak dibayar dari sini. Modal kerja awal Rp5.000.000 masuk ke rekening ini.</small></h1>
+    <h1 class="judul-game" style="font-size:32px">Rekening di bank mana?<small>Tabungan, cicilan, dan tagihan dibayar dari sini. Modal awal Rp5.000.000 masuk ke rekening ini.</small></h1>
     <div id="bank-daftar" class="kota-daftar"></div>
     <button id="b-kembali-bank" class="tombol-lain" type="button">Kembali</button>
   </section>

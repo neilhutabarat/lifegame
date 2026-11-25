@@ -1,6 +1,6 @@
 {
-  "name": "Kopi Kontainer",
-  "short_name": "Kopi Kontainer",
+  "name": "The Driver",
+  "short_name": "The Driver",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
