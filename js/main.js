@@ -501,9 +501,6 @@
     { id: 'pasarpokok', nama: function () { return 'Pasar Pokok'; }, warna: function () { return '#d87a16'; },
       ikon: function () { return svgIkon('<path d="M4 10h16l-1.5 9.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 10z"/><path d="M8 10V6.5a4 4 0 0 1 8 0V10"/>'); },
       badge: function () { return (!S.rumahTangga || (S.rumahTangga.aktifSampai || -1) < S.hari) ? '!' : ''; } },
-    { id: 'rentalps', nama: function () { return 'Usaha Rental PS'; }, warna: function () { return '#1565c0'; },
-      ikon: function () { return svgIkon('<rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 12h4M9 10v4"/><circle cx="15" cy="11" r="1" fill="currentColor"/><circle cx="17.5" cy="13" r="1" fill="currentColor"/>'); },
-      badge: function () { return S.rentalPs && S.rentalPs.aktif ? (S.rentalPs.padam ? '!' : String(S.rentalPs.unit.length)) : ''; } },
     { id: 'bank', nama: function () { return UANG.bankIni(S).app; }, warna: function () { return UANG.bankIni(S).warna; },
       ikon: function () { return svgIkon('<path d="M3 10h18M5 10v8M10 10v8M14 10v8M19 10v8M2 18h20M12 3 2 8v2h20V8z"/>'); } },
     { id: 'laci', nama: function () { return (S.usaha && S.usaha.berhentiSewa) ? 'Dompet pribadi' : 'Laci & dompet'; }, warna: function () { return '#b97a46'; },
@@ -597,7 +594,7 @@
     var kur = k.status === 'menunggu' ? 'Pengajuan ' + rupiah(k.plafon) + ' sedang diproses' : k.status === 'aktif' ? 'Angsuran ' + rupiah(k.angsuran) + ' tiap tanggal ' + k.tempo + ', sisa ' + k.sisa + ' bulan' + (k.tunggakan ? ', tunggakan ' + rupiah(k.tunggakan) : '') : k.status === 'lunas' ? 'Lunas' : 'Belum punya';
     var infoKk = !kk.status || kk.status === 'tidak' ? 'Belum punya · bunga maks 1,75% sebulan (aturan BI)' : (kk.status === 'blokir' ? 'Diblokir sementara · ' : '') + 'Limit ' + rupiah(kk.limit) + ' · sisa ' + rupiah(UANG.sisaLimitKk(S)) + (kk.tagihan > 0 ? ' · tagihan ' + rupiah(kk.tagihan + (kk.denda || 0)) : '');
     return kepalaApp(b.app, 'Rekening ' + b.nama + ' · ' + (S.namaPemain || 'Pemilik')) +
-      '<div class="saldo-besar"><small>Saldo Rekening Utama (Belanja & Gaji Karyawan)</small><b>' + rupiah(S.bank.saldo) + '</b></div>' +
+      '<div class="saldo-besar"><small>Saldo Rekening Utama</small><b>' + rupiah(S.bank.saldo) + '</b></div>' +
       '<div class="saldo-besar" style="background:#5e35b1"><small>Tabungan Khusus (Aman, tidak tertarik otomatis jika tidak diambil sendiri)</small><b>' + rupiah(S.bank.tabunganGaji || 0) + '</b></div>' + pesanApp() +
       '<h3 class="subjudul">Sisihkan ke Tabungan Khusus</h3><div class="chip-baris">' + tombolUang('isiTabGaji', [250000, 500000, 1200000, 3000000]) + '</div>' +
       ((S.bank.tabunganGaji || 0) > 0 ? '<h3 class="subjudul">Ambil Sendiri dari Tabungan Khusus ke Rekening Utama</h3><div class="chip-baris">' + tombolUang('tarikTabGaji', [250000, 1000000, 'semua']) + '</div>' : '') +
@@ -784,7 +781,7 @@
       return html + chipTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + '<ul class="daftar belanja">' + N.motor.filter(function (x) { return (x.kelas || 'harian') === kls; }).map(function (x) {
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? 'Listrik, sekitar ' + x.jarakPenuh + ' km sekali cas' : '±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm]) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></span></li>';
-      }).join('') + '</ul><p class="catatan">Harga OTR 2026 varian termurah. Bisa punya sampai 5 motor (dipakai sendiri dan karyawan kurir untuk antar pesanan). Bisa bayar dari rekening, kartu kredit, atau cicilan leasing.</p>';
+      }).join('') + '</ul><p class="catatan">Harga OTR 2026 varian termurah. Bisa punya sampai 5 motor. Bisa bayar dari rekening, kartu kredit, atau cicilan leasing.</p>';
     }
     if (tab === 'mobil') {
       var km2 = app.kelasMobil || 'pikap';
@@ -865,13 +862,13 @@
         return '<li><span><b>' + esc(pl.app) + '</b><small>' + esc(pl.layanan.penumpang + ', ' + pl.layanan.barang + ', ' + pl.layanan.makanan) + '</small></span><span class="chip-baris" style="margin:0">' + st + '</span></li>';
       }).join('') + '</ul>' +
       (o.online ? '<div style="margin-top:12px"><button type="button" class="aksi" data-aksi="offlineDriver:1">Berhenti narik</button></div>' : '') +
-      '<p class="catatan">Narik pakai motor sendiri, butuh SIM C dan STNK. Kamu menunggu order di samping kedai; order masuk lebih sering pagi, jam makan siang, dan pulang kerja, apalagi saat hujan. Penumpang yang bayar tunai masuk laci, potongan aplikasinya diambil dari saldo driver. Order yang sering dilewati membuat order berikutnya lebih jarang hari itu.</p>';
+      '<p class="catatan">Narik pakai motor sendiri, butuh SIM C dan STNK. Kamu menunggu order di pinggir jalan; order masuk lebih sering pagi, jam makan siang, dan pulang kerja, apalagi saat hujan. Penumpang yang bayar tunai masuk laci, potongan aplikasinya diambil dari saldo driver. Order yang sering dilewati membuat order berikutnya lebih jarang hari itu.</p>';
     return html;
   }
   /* ---------- aplikasi Properti ---------- */
   function layarProperti() {
     var P = N.properti, r = S.properti.rumah, gaji = PROPERTI.penghasilan(S), html = kepalaApp('Properti', 'Rumah dan tanah di ' + kotaIni().nama) + pesanApp();
-    html += '<ul class="daftar angka">' + baris('Tempat tinggal', S.rumah.jenis === 'rumah' ? esc(r ? r.nama : 'Rumah') : 'Kos ' + rupiah(S.rumah.sewa) + ' sebulan') + baris('Penghasilan sebulan (laba kedai + ngojek)', rupiah(gaji)) + '</ul>';
+    html += '<ul class="daftar angka">' + baris('Tempat tinggal', S.rumah.jenis === 'rumah' ? esc(r ? r.nama : 'Rumah') : 'Kos ' + rupiah(S.rumah.sewa) + ' sebulan') + baris('Penghasilan sebulan (narik)', rupiah(gaji)) + '</ul>';
     if (r) {
       var k = r.kpr;
       html += '<h3 class="subjudul">' + esc(r.nama) + '</h3><ul class="daftar angka">' +
@@ -885,7 +882,7 @@
       var tipe = app.tipeRumah || 'subsidi', tunai = !!app.rumahTunai && tipe !== 'subsidi', dp = app.dpRumah || (tipe === 'subsidi' ? P.subsidi.dp : P.komersial.dp[0]), tenor = app.tenorRumah || 20;
       var x = PROPERTI.hitung(S, tipe, dp, tenor, tunai), T = P.tipe[tipe];
       html += '<h3 class="subjudul">Beli rumah</h3>' + chipTab('tipeRumah', [['subsidi', 'Subsidi'], ['komersial', 'Komersial'], ['mewah', 'Mewah']], tipe) +
-        '<p class="catatan">' + esc(T.nama) + ' (' + T.luas + '), ' + esc(T.ket) + '. Harga ' + rupiah(x.harga) + ', jarak ke kedai ' + N.properti.kota[S.kota].jarak[tipe] + ' km.</p>' +
+        '<p class="catatan">' + esc(T.nama) + ' (' + T.luas + '), ' + esc(T.ket) + '. Harga ' + rupiah(x.harga) + ', jarak ke pusat kota ' + N.properti.kota[S.kota].jarak[tipe] + ' km.</p>' +
         (tipe === 'subsidi' ? '' : chipTab('rumahTunai', [['0', 'KPR'], ['1', 'Tunai']], tunai ? '1' : '0')) +
         (tunai ? '' : (tipe === 'subsidi' ? '' : '<h3 class="subjudul">Uang muka</h3>' + chipTab('dpRumah', P.komersial.dp.map(function (d) { return [d, Math.round(d * 100) + '%']; }), dp)) +
           '<h3 class="subjudul">Tenor</h3>' + chipTab('tenorRumah', P[tipe === 'subsidi' ? 'subsidi' : 'komersial'].tenor.map(function (t) { return [t, t + ' tahun']; }), tenor)) +
@@ -1009,7 +1006,7 @@
   function layarPln() {
     var u = S.usaha, t = USAHA.tempat(S), meter = app.meter || 'kos';
     var html = kepalaApp('PLN Mobile', 'Token listrik prabayar') + pesanApp() +
-      '<div class="chip-baris"><button type="button" class="chip-tombol' + (meter === 'kos' ? ' pilih' : '') + '" data-aksi="meter:kos">Meteran ' + DIRI.tempat(S) + '</button><button type="button" class="chip-tombol' + (meter === 'kedai' ? ' pilih' : '') + '" data-aksi="meter:kedai">Meteran kedai</button></div>';
+      '<div class="chip-baris"><button type="button" class="chip-tombol' + (meter === 'kos' ? ' pilih' : '') + '" data-aksi="meter:kos">Meteran ' + DIRI.tempat(S) + '</button></div>';
     if (meter === 'kedai' && t.listrik !== 'token') return html + '<p class="catatan">Kedai masih numpang listrik ke pemilik lahan, dibayar ' + rupiah(t.listrikBulan) + ' sebulan bersama sewa. Meteran prabayar sendiri dipasang saat naik ke kontainer 20 kaki.</p>';
     var kwh = meter === 'kos' ? S.rumah.kwh : u.kwh, padam = meter === 'kos' ? S.rumah.padam : u.padam;
     var namaMeter = meter === 'kos' ? DIRI.tempat(S) : 'kedai';
@@ -1278,7 +1275,7 @@
         baris('Sisa kuota internet (presisi)<small>dipakai saat buka sosmed, WA & Google/Apple Maps ojol</small>', kuotaPresisi, kuotaGb < 1 && !wifi ? 'rugi' : '') +
         baris('Status koneksi sekarang', wifi ? 'Terhubung WiFi (Bebas Kuota)' : 'Data Seluler (Pakai Kuota)') +
         baris('WiFi di ' + DIRI.tempat(S), S.rumah.wifi ? 'Terpasang (' + rupiah(wfInfo.hargaBulan) + '/bln)' : 'Belum pasang') +
-        baris('WiFi di kedai', USAHA.punya(S, 'wifi') ? 'Terpasang' : 'Belum pasang (pasang di menu Usaha)') + '</ul>' +
+        '</ul>' +
         '<h3 class="subjudul">Isi Pulsa ' + esc(noHp) + ' (Memperpanjang Masa Aktif Kartu)</h3><div class="chip-baris">' +
         N.paketData.pulsa.map(function (nom) {
           return '<button type="button" class="chip-tombol" data-aksi="beliPulsa:' + nom + '-bank">Pulsa ' + (nom / 1000) + 'rb (Bank)</button>' +
@@ -1528,7 +1525,7 @@
     var html = kepalaApp('Pasar Pokok Rumah Tangga', pas ? 'Bisa belanja sendiri atau suruh ' + pas.nama : 'Belanja kebutuhan dapur rumah') + pesanApp() +
       '<div class="saldo-besar" style="background:#d87a16"><small>Stok Dapur & Kebutuhan Pokok Rumah Tangga</small><b>' +
       (rtAktif ? 'Cukup untuk makan gratis s/d ' + namaTanggal(S.rumahTangga.aktifSampai) : 'Stok dapur kosong · Belanja sekarang') + '</b></div>' +
-      '<p class="catatan" style="margin-top:4px;margin-bottom:8px">Pembayaran hanya memakai <b>Dompet Pribadi</b> atau <b>Rekening Bank</b> (tidak pernah memakai uang laci kedai). Jika menyuruh pasangan belanja, kamu tidak kehilangan waktu kerja!</p>' +
+      '<p class="catatan" style="margin-top:4px;margin-bottom:8px">Pembayaran hanya memakai <b>Dompet Pribadi</b> atau <b>Rekening Bank</b> . Jika menyuruh pasangan belanja, kamu tidak kehilangan waktu kerja!</p>' +
       '<ul class="daftar belanja">' + (N.pasarPokok || []).map(function (it) {
         return '<li><span><b>' + esc(it.nama) + '</b><small>Stok makan rumah <b>+' + it.hariDapur + ' hari</b> · ' + esc(it.ket) + '</small><small class="harga">' + rupiah(it.harga) + '</small></span>' +
           '<span class="tombol-tegak">' +
