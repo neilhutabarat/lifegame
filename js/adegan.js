@@ -5,6 +5,26 @@
   var cv, cx, W = 360, H = 640, dpr = 1;
   var anim = { rolling: 0, pantulKedai: 0, pantulBarista: 0, kedip: 0, motor: [], tMotor: 0, angkat: 0, teks: [], cup: [] };
   var ruko = [];
+  var bgImgs = {};
+  function muatBg(kunci, src) {
+    var im = new Image();
+    im.onload = function () { bgImgs[kunci] = im; };
+    im.src = src;
+  }
+  muatBg('siang', 'img/bg-kedai-siang.jpg');
+  muatBg('hujan', 'img/bg-kedai-hujan.jpg');
+  muatBg('rumah', 'img/bg-rumah.jpg');
+  function gambarBgCover(im, alpha) {
+    if (!im || !im.naturalWidth) return false;
+    var rImg = im.naturalWidth / im.naturalHeight, rCv = W / H;
+    var dw = W, dh = H, dx = 0, dy = 0;
+    if (rImg > rCv) { dh = H; dw = H * rImg; dx = (W - dw) / 2; }
+    else { dw = W; dh = W / rImg; dy = (H - dh) / 2; }
+    if (alpha != null && alpha < 1) cx.globalAlpha = alpha;
+    cx.drawImage(im, dx, dy, dw, dh);
+    cx.globalAlpha = 1;
+    return true;
+  }
 
   /* angka acak tetap supaya ruko dan jendela selalu sama */
   function acak(seed) { var x = Math.sin(seed * 999.13) * 43758.5453; return x - Math.floor(x); }
@@ -973,7 +993,7 @@
 
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.ojek && s.ojek.status !== 'standby' && s.motorId) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarJalanRaya(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
-    if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); if (gambarBgCover(bgImgs.rumah, 0.35)) {} gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
     /* angkat adegan saat panel racik menutupi kaki pembeli */
     var skala = cv.getBoundingClientRect().width / W || 1;
@@ -986,6 +1006,8 @@
     var gp = gelap(m);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     gambarJalan(trotoar, jalan);
+    var bgKedai = (s.hujan || gp > 0.35) ? bgImgs.hujan : bgImgs.siang;
+    gambarBgCover(bgKedai, 0.32);
     gambarTiang(dasarKedai, dasarRuko - 270);
     gambarPisang(132, dasarKedai, t);
     kotakKedai = gambarKedai(160, dasarKedai, s, t, m);

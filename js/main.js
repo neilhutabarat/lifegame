@@ -426,6 +426,7 @@
     bukaLembar('atur',
       kepala('Atur usaha', (S.namaToko || 'Kopi Kontainer') + ' · ' + k.nama + ' (' + thn + ')') +
       '<h3 class="subjudul">Identitas toko & pemain</h3>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><img src="img/char-pemain.jpg" alt="Pemain" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid rgba(31,138,128,.55)"><div><b>' + esc(S.namaPemain || 'Pemilik') + '</b><br><small>' + esc(S.namaToko || 'Kopi Kontainer') + ' · ' + usia + ' tahun</small></div></div>' +
       '<div class="atur-baris" style="display:block"><div><b>Nama toko</b><span>Ditampilkan di papan kontainer, Google Maps, dan laporan</span></div><input id="in-toko" class="input-teks" type="text" maxlength="24" value="' + esc(S.namaToko || 'Kopi Kontainer') + '"></div>' +
       '<div class="atur-baris" style="display:block"><div><b>Nama pemain</b><span>Nama pemilik rekening dan usaha</span></div><input id="in-pemain" class="input-teks" type="text" maxlength="24" value="' + esc(S.namaPemain || 'Pemilik') + '"></div>' +
       '<div class="atur-baris"><div><b>Gender karakter</b><span>Memengaruhi tampilan barista di kedai</span></div><div class="chip-baris" style="margin:0"><button type="button" class="chip-tombol' + (pr.gender === 'cewek' ? ' pilih' : '') + '" data-gender="cewek">Cewek</button><button type="button" class="chip-tombol' + (pr.gender === 'cowok' ? ' pilih' : '') + '" data-gender="cowok">Cowok</button></div></div>' +
@@ -1475,8 +1476,9 @@
               return '<button type="button" class="chip-tombol' + (aktifS ? ' pilih' : '') + '" data-aksi="sekolahAnak:' + kl.id + '|' + sk.id + '">' + esc(sk.nama) + (aktifS ? ' ✓' : ' (' + rupiahPendek(sk.pangkal) + ')') + '</button>';
             }).join('') + '</div>' : '');
         }
-        return '<li class="kartu-pesanan"><div><b>' + esc(kl.nama) + esc(gelarDisp) + ' (' + peranLabel + ' · ' + jk + ' · ' + usia + ' thn)' + esc(teksHamil) + esc(teksSakit) + '</b>' +
-          '<small>TTL: ' + esc(kl.tglLahir) + ' · Usia di tahun ' + thn + ': <b>' + usia + ' tahun</b> · Kebahagiaan: <b>' + Math.round(kl.bahagia || 85) + '%</b></small></div>' +
+        var fotoKel = isPas ? 'img/char-istri.jpg' : isIpar ? 'img/char-adik-ipar.jpg' : 'img/char-anak.jpg';
+        return '<li class="kartu-pesanan"><div style="display:flex;align-items:center;gap:10px"><img src="' + fotoKel + '" alt="' + esc(kl.nama) + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(194,24,91,.35)"><div><b>' + esc(kl.nama) + esc(gelarDisp) + ' (' + peranLabel + ' · ' + jk + ' · ' + usia + ' thn)' + esc(teksHamil) + esc(teksSakit) + '</b>' +
+          '<small>TTL: ' + esc(kl.tglLahir) + ' · Usia di tahun ' + thn + ': <b>' + usia + ' tahun</b> · Kebahagiaan: <b>' + Math.round(kl.bahagia || 85) + '%</b></small></div></div>' +
           '<div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="in-ttl-' + esc(kl.id) + '" class="input-teks" type="date" style="margin:0;flex:1" value="' + esc(kl.tglLahir) + '">' +
           '<button type="button" class="chip-tombol pilih" data-aksi="simpanTtlKel:' + kl.id + '">Simpan TTL</button></div>' +
           detail +
