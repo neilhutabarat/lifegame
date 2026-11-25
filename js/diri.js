@@ -4,14 +4,16 @@
   'use strict';
   var N = g.KK_NYATA, KAL = g.KK_KAL;
   /* turun per jam saat bangun (setelan) */
-  var TURUN = { kenyang: 5, minum: 7, melek: 4.5, stamina: 3 };
+  var TURUN = { kenyang: 5, minum: 7, stamina: 4.2 };
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function kota(S) { return N.kota.filter(function (k) { return k.id === S.kota; })[0]; }
   function batas(x) { return Math.max(0, Math.min(100, x)); }
 
   function siapkan(S) {
-    if (!S.diri) S.diri = { kenyang: 80, minum: 80, stamina: 90, melek: 90, hb: 25, kesehatan: 100, rasaBersalah: 0, hiv: false, posisi: 'kedai', bangun: 360, ketiduran: 0, sakit: null, kebalSampai: -1, hamil: null };
+    if (!S.diri) S.diri = { kenyang: 80, minum: 80, stamina: 90, hb: 25, kesehatan: 100, rasaBersalah: 0, hiv: false, posisi: 'kedai', bangun: 360, ketiduran: 0, sakit: null, kebalSampai: -1, hamil: null };
+    if (typeof S.diri.melek === 'number') { S.diri.stamina = Math.round(((+S.diri.stamina || 0) + S.diri.melek) / 2); }
+    delete S.diri.melek; /* stamina dan melek digabung jadi satu: stamina */
     if (typeof S.diri.hb !== 'number' || isNaN(S.diri.hb)) S.diri.hb = 25;
     if (typeof S.diri.kesehatan !== 'number' || isNaN(S.diri.kesehatan)) S.diri.kesehatan = 100;
     if (typeof S.diri.rasaBersalah !== 'number' || isNaN(S.diri.rasaBersalah)) S.diri.rasaBersalah = 0;
@@ -139,7 +141,6 @@
     var d = S.diri, j = dMenit / 60, kabar = [];
     d.kenyang = batas(d.kenyang - TURUN.kenyang * j);
     d.minum = batas(d.minum - TURUN.minum * j);
-    d.melek = batas(d.melek - TURUN.melek * j);
     /* HB bar (gairah/kedekatan pasangan) perlahan meningkat sepanjang hari */
     var lajuHb = 2.2 * (d.stamina > 45 && !d.sakit ? 1.15 : 0.65);
     d.hb = batas((d.hb || 0) + lajuHb * j);
@@ -185,11 +186,11 @@
       var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S);
       var diluarHujan = hujan && d.posisi !== 'kos' && !(S.mobil && !S.ojek.online);
       var pSakit = 0, idPenyakit = 'demam';
-      if (d.stamina < 12 && d.melek < 15) { pSakit = 0.08; idPenyakit = 'tifus'; }
+      if (d.stamina < 12) { pSakit = 0.08; idPenyakit = 'tifus'; }
       else if (d.kenyang < 8) { pSakit = 0.06; idPenyakit = 'maag'; }
       else if (diluarHujan && S.ojek && S.ojek.online) { pSakit = 0.055; idPenyakit = Math.random() < 0.5 ? 'masukangin' : 'flu'; }
       else if (diluarHujan) { pSakit = 0.025; idPenyakit = 'masukangin'; }
-      else if (d.stamina < 18 || d.melek < 12) { pSakit = 0.035; idPenyakit = 'demam'; }
+      else if (d.stamina < 18) { pSakit = 0.035; idPenyakit = 'demam'; }
       if (pSakit > 0 && Math.random() < pSakit * j) {
         var pk = (N.penyakit || []).filter(function (x) { return x.id === idPenyakit; })[0] || { id: 'demam', nama: 'Demam & meriang', berat: false, obat: 'Paracetamol' };
         d.sakit = { id: pk.id, nama: pk.nama, berat: !!pk.berat, sampai: S.hari + (pk.berat ? 5 : 3) };
@@ -242,7 +243,7 @@
         S.dunia.kotor = Math.max(0, S.dunia.kotor - dMenit * 0.25 * bantu.length);
       }
     }
-    if (d.melek < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
+    if (d.stamina < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
     if (d.stamina < 3) { d.ketiduran = 120; kabar.push('Kamu kelelahan dan harus istirahat 2 jam.'); d.stamina = 20; }
     /* Auto Makan & Minum hemat biaya (jika diaktifkan pemain) */
     if (S.autoMakanMinum && j > 0) {
@@ -317,14 +318,14 @@
     if (jenis === 'kopi') {
       if (d.posisi !== 'kedai') return 'Bikin minuman sendiri di kedai.';
       if (!g.KK_STOK.ada(S, 'kopi', 15)) return 'Stok kopi habis.';
-      g.KK_STOK.ambil(S, 'kopi', 15); d.melek = batas(d.melek + 28); d.minum = batas(d.minum + 18);
+      g.KK_STOK.ambil(S, 'kopi', 15); d.stamina = batas(d.stamina + 22); d.minum = batas(d.minum + 18);
       return { ok: true, menit: 5, teks: 'Ngopi dari stok kedai. Rasa kantuk berkurang.' };
     }
     if (jenis === 'kopisusu') {
       if (d.posisi !== 'kedai') return 'Bikin minuman sendiri di kedai.';
       if (!g.KK_STOK.ada(S, 'kopi', 15) || !g.KK_STOK.ada(S, 'uht', 100)) return 'Stok kopi atau susu UHT kurang.';
       g.KK_STOK.ambil(S, 'kopi', 15); g.KK_STOK.ambil(S, 'uht', 100);
-      d.melek = batas(d.melek + 34); d.minum = batas(d.minum + 30); d.kenyang = batas(d.kenyang + 10);
+      d.stamina = batas(d.stamina + 26); d.minum = batas(d.minum + 30); d.kenyang = batas(d.kenyang + 10);
       return { ok: true, menit: 5, teks: 'Minum kopi susu buatan kedai sendiri. Segar dan tidak ngantuk lagi!' };
     }
     return 'Tidak dikenal.';
@@ -345,7 +346,7 @@
     var h = hargaItem(S, x);
     if (!bayarTunai(S, h)) return 'Uang tunai di dompet pribadi tidak cukup (' + rp(h) + '). Tarik tunai ke dompet dulu atau pesan lewat GoFood.';
     d.kenyang = batas(d.kenyang + x.kenyang); d.minum = batas(d.minum + x.minum);
-    if (x.melek) d.melek = batas(d.melek + x.melek);
+    if (x.melek) d.stamina = batas(d.stamina + x.melek);
     var diKedai = d.posisi === 'kedai', menit = diKedai ? 10 : 15;
     return { ok: true, menit: menit, teks: (diKedai ? 'Beli ' + x.nama + ' di warung sebelah kedai ' : 'Beli ' + x.nama + ' di warung dekat ' + tempat(S) + ' ') + rp(h) + (S.fase === 'buka' && diKedai ? '. Kedai ditinggal ' + menit + ' menit.' : '.') };
   }
@@ -405,8 +406,6 @@
       catatPakai(S, 'tv55'); catatPakai(S, 'tv'); catatPakai(S, 'sofa'); catatPakai(S, 'karpet');
     }
     d.stamina = batas(d.stamina + naik);
-    if (jenis === 'tidurSiang') d.melek = batas(d.melek + 25);
-    else d.melek = batas(d.melek - 3);
     var kwPs = km ? (km.watt || km.kw || 0.2) : 0.2;
     listrikKos(S, 60, jenis === 'tidurSiang', jenis === 'ps' ? kwPs + 0.06 : jenis === 'tv' ? 0.06 : 0);
     var teksPs = 'Main ' + (kAktif ? kAktif.nama : 'PS') + (gAktif ? ' (' + gAktif.nama + ')' : '') + ' satu jam. Pikiran segar lagi (+' + naik + ' stamina).';
@@ -420,8 +419,7 @@
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
     if (S.hp && !S.rumah.padam) { S.hp.baterai = 100; S.hp.cas = false; }
     var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.7) * (punya(S, 'springbed') ? 1.1 : S.rumah.jenis === 'rumah' ? 0.9 : 1) * (punya(S, 'airpurifier') ? 1.05 : 1);
-    d.melek = batas(d.melek + jam * 14 * mutu);
-    d.stamina = batas(d.stamina + jam * 11 * mutu);
+    d.stamina = batas(d.stamina + jam * 14 * mutu);
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
     return { jam: jam, ac: ac, mutu: mutu };
   }
@@ -1112,7 +1110,7 @@
   }
   /* HB (Hubungan Suami-Istri / Poligami / Selingkuh dengan Adik Ipar atau Karyawan / Jajan Nakal PSK)
      - Peluang hamil tanpa kontrasepsi: 65% (0.65)
-     - HB dengan pasangan sah: Stamina 100%, Melek 100%, Kesehatan 100%, Bahagia 100%, HB bar 0%, Rasa bersalah 0
+     - HB dengan pasangan sah: Stamina 100%, Kesehatan 100%, Bahagia 100%, HB bar 0%, Rasa bersalah 0
      - HB dengan PSK (jajan nakal): Bahagia 100%, muncul Rasa Bersalah, Kesehatan menurun;
        Risiko HIV: jika kesehatan < 50% -> 89% tanpa kondom, 30% dengan kondom; jika kesehatan >= 50% -> 1,3% (0.013) dengan kondom, 18% tanpa kondom
      - Selingkuh (dengan adik ipar / karyawan / PSK saat punya pasangan sah) berisiko ketahuan & memicu Perceraian! */
@@ -1183,7 +1181,6 @@
       }
       S.diri.hb = 0;
       S.diri.stamina = 100;
-      S.diri.melek = 100;
       S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 45);
       S.diri.kesehatan = Math.max(10, Math.round(kesSebelum - (pakaiKondom ? 16 : 24)));
       var teksPsk = 'Jajan nakal selesai (' + rp(biayaPsk) + '). Bahagia penuh, namun muncul Rasa Bersalah (' + S.diri.rasaBersalah + '%) dan Kesehatan menurun ke ' + S.diri.kesehatan + '%!';
@@ -1202,14 +1199,13 @@
     if (jenisTarget === 'staf' && stafTarget) {
       S.diri.hb = 0;
       S.diri.stamina = 100;
-      S.diri.melek = 100;
       stafTarget.setia = 100;
       var hamilStaf = false;
       if (!pakaiKondom && stafTarget.gender === 'cewek' && !stafTarget.hamil && Math.random() < 0.65) {
         stafTarget.hamil = { mulai: S.hari, lahir: S.hari + 270 };
         hamilStaf = true;
       }
-      var teksStaf = 'Hubungan rahasia bersama karyawan ' + stafTarget.nama + ' selesai. Stamina & Melek penuh 100%, kesetiaan ' + stafTarget.nama + ' naik ke 100%!' +
+      var teksStaf = 'Hubungan rahasia bersama karyawan ' + stafTarget.nama + ' selesai. Stamina penuh 100%, kesetiaan ' + stafTarget.nama + ' naik ke 100%!' +
         (hamilStaf ? ' ⚠️ Tanpa pengaman (peluang 65%): ' + stafTarget.nama + ' positif HAMIL anakmu!' : '');
       var psSah2 = pasanganAktif(S);
       if (psSah2) {
@@ -1227,7 +1223,6 @@
     var terlindungi = !!pakaiKondom || kbAktif;
     S.diri.hb = 0;
     S.diri.stamina = 100;
-    S.diri.melek = 100;
     p.bahagia = 100;
     p.hb = 0;
     if (jenisTarget === 'pasangan') {
@@ -1246,7 +1241,7 @@
         hamilBaru = true;
       }
     }
-    var teks = 'Momen intim bersama ' + p.nama + ' (' + labelPeran(S, p) + ') selesai' + (pakaiGerigi ? ' (memakai Kondom Bergerigi — kepuasan maksimal!)' : '') + '. HB bar 0%, Stamina, Melek' + (jenisTarget === 'pasangan' ? ', Kesehatan & Kebahagiaan' : ' & Bahagia') + ' penuh 100%!' +
+    var teks = 'Momen intim bersama ' + p.nama + ' (' + labelPeran(S, p) + ') selesai' + (pakaiGerigi ? ' (memakai Kondom Bergerigi — kepuasan maksimal!)' : '') + '. HB bar 0%, Stamina' + (jenisTarget === 'pasangan' ? ', Kesehatan & Kebahagiaan' : ' & Bahagia') + ' penuh 100%!' +
       (malamSkipSubuh ? ' Tidur nyenyak hingga pukul 04.00 subuh.' : ' (' + durasiMenit + ' menit).') +
       (terlindungi ? ' (Aman memakai ' + (pakaiKondom ? 'kondom' : 'KB') + ').' : ' (Tanpa kontrasepsi — peluang hamil 65%).');
     if (jenisTarget === 'ipar') {
@@ -1623,7 +1618,7 @@
   }
   /* pemain sedang melayani: stamina rendah atau sakit membuat lambat dan kurang ramah */
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
-  function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.melek < 15 || d.sakit) ? 2 : 1; }
+  function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
 
   g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,

@@ -66,10 +66,10 @@
   ];
   var VMAX = { hatch: 140, mpv: 160, suv: 170, van: 160, sedan: 200, sport: 220 };
   var ISTIRAHAT = {
-    menepi: { nama: 'Menepi tidur sebentar', menit: 20, biaya: 0, melek: 25, stamina: 5 },
-    makan: { nama: 'Rumah makan', menit: 45, biaya: 40000, kenyang: 70, minum: 60, melek: 8, stamina: 8 },
-    rehat: { nama: 'Rehat 2 jam', menit: 120, biaya: 0, melek: 45, stamina: 30 },
-    penginapan: { nama: 'Penginapan (tidur 7 jam)', menit: 420, biaya: 250000, melek: 100, stamina: 100 }
+    menepi: { nama: 'Menepi tidur sebentar', menit: 20, biaya: 0, stamina: 22 },
+    makan: { nama: 'Rumah makan', menit: 45, biaya: 40000, kenyang: 70, minum: 60, stamina: 12 },
+    rehat: { nama: 'Rehat 2 jam', menit: 120, biaya: 0, stamina: 55 },
+    penginapan: { nama: 'Penginapan (tidur 7 jam)', menit: 420, biaya: 250000, stamina: 100 }
   };
   var DASAR = { perKm: 520, tetap: 25000, minimal: 50000, tambahLaut: 40000 };
 

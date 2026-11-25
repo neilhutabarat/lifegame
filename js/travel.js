@@ -108,7 +108,7 @@
     var rc = rencana(S, T.tujuan); if (!rc) return 'Rute tidak ditemukan.';
     var wajib = rc.tol + rc.laut;
     if (dana(S) < wajib) return 'Uang untuk tol dan kapal kurang. Butuh sekitar ' + rp(wajib) + '.';
-    if (S.diri.stamina < 12 || S.diri.melek < 12) return 'Kamu terlalu capek dan ngantuk untuk menyetir jauh. Istirahat dulu.';
+    if (S.diri.stamina < 12) return 'Kamu terlalu capek dan ngantuk untuk menyetir jauh. Istirahat dulu.';
     var m = S.mobil;
     if (m.isi * m.tangki < 3) return 'Bensin hampir habis. Isi dulu di aplikasi Kendaraan.';
     var pnp = T.antri.length;
@@ -190,7 +190,7 @@
     if (w >= (T.peringatanLagi || 0) && (d.kenyang < 22 || d.minum < 22)) { T.peringatanLagi = w + 150; kabar.push((d.minum < d.kenyang ? 'Kamu mulai haus.' : 'Kamu mulai lapar.') + ' Berhenti di rumah makan.'); }
     /* henti otomatis sebelum badan ambruk (sebelum sistem ketiduran bekerja) */
     if (w >= (T.jedaAuto || 0)) {
-      var auto = d.kenyang <= 6 || d.minum <= 6 ? 'makan' : d.stamina < 14 ? 'rehat' : d.melek < 14 ? 'menepi' : null;
+      var auto = d.kenyang <= 6 || d.minum <= 6 ? 'makan' : d.stamina < 14 ? 'rehat' : null;
       if (auto) {
         var h = ISTI(S, auto); if (!(h && h.ok) && auto === 'makan') h = ISTI(S, 'menepi');
         if (h && h.ok) { T.lompat += h.menit; kabar.push('Kamu berhenti otomatis: ' + h.teks); }
@@ -208,7 +208,7 @@
   function langkahKapal(S, dMenit) {
     var T = S.travel, tr = T.trip, kabar = [], d = S.diri;
     tr.sisaKapal -= dMenit; tr.menitGerak += dMenit;
-    d.stamina = Math.min(100, d.stamina + dMenit * 0.12); d.melek = Math.min(100, d.melek + dMenit * 0.18); /* tidur di kapal */
+    d.stamina = Math.min(100, d.stamina + dMenit * 0.18); /* tidur di kapal */
     if (tr.sisaKapal <= 0) {
       tr.kmSelesai += tr.ruas[tr.idx].km; tr.idx++; T.status = 'jalan';
       if (tr.idx >= tr.ruas.length) return selesaiTrip(S);
@@ -237,7 +237,7 @@
     T.konfirmasiInap = false;
     if (x.biaya > 0) { if (dana(S) < x.biaya) return 'Uang tidak cukup (' + rp(x.biaya) + ').'; bayar(S, x.biaya, jenis === 'makan' ? 'Makan di rumah makan' : x.nama); }
     if (x.kenyang) d.kenyang = Math.min(100, d.kenyang + x.kenyang); if (x.minum) d.minum = Math.min(100, d.minum + x.minum);
-    d.melek = Math.min(100, d.melek + x.melek); d.stamina = Math.min(100, d.stamina + x.stamina);
+    d.stamina = Math.min(100, d.stamina + (x.stamina || 0) + (x.melek || 0));
     if (tr) {
       var t2 = T.trip; t2.menitHenti += x.menit;
       if (pnp) {

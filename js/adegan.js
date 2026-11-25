@@ -23,6 +23,10 @@
   muatChar('istri', 'img/char-istri.jpg');
   muatChar('anak', 'img/char-anak.jpg');
   muatChar('adik_ipar', 'img/char-adik-ipar.jpg');
+  /* foto pemain mengikuti gender: cowok memakai potret barista, cewek memakai potret perempuan; pasangan sebaliknya */
+  var genderPemain = 'cewek';
+  function imPemain() { return genderPemain === 'cowok' ? charImgs.pemain : charImgs.istri; }
+  function imPasangan() { return genderPemain === 'cowok' ? charImgs.istri : charImgs.pemain; }
   function gambarPotretAi(im, x, y, r, t, o) {
     if (!im || !im.naturalWidth) return false;
     o = o || {};
@@ -38,9 +42,10 @@
     cx.rotate(rot);
     cx.scale(napas, napas);
     cx.beginPath(); cx.arc(0, 0, r, 0, Math.PI * 2); cx.closePath(); cx.clip();
-    var s = Math.max((r * 2) / im.naturalWidth, (r * 2) / im.naturalHeight);
+    /* potongan wajah: perbesar dan geser ke atas supaya yang terlihat muka, bukan seluruh badan */
+    var s = Math.max((r * 2) / im.naturalWidth, (r * 2) / im.naturalHeight) * (o.zoom || 1.7);
     var dw = im.naturalWidth * s, dh = im.naturalHeight * s;
-    cx.drawImage(im, -dw / 2, -dh / 2, dw, dh);
+    cx.drawImage(im, -dw / 2, -dh * 0.4, dw, dh);
     /* efek kedip mata atau rona pipi/ekspresi lembut */
     if (!o.diam && anim.kedip > 0) {
       cx.fillStyle = 'rgba(255,220,210,.22)';
@@ -743,7 +748,7 @@
     /* animasi HB: istri berbaring di kasur, suami naik ke atas istri dengan efek hati sebelum layar gelap */
     if (s.hbAnim && pas) {
       var u = Math.min(1, s.hbAnim.u || 0);
-      var imIstri = charImgs.istri, imSuami = charImgs.pemain;
+      var imIstri = imPasangan(), imSuami = imPemain();
       /* kasur sebagai panggung HB di bagian tengah-kiri kamar */
       var kx = xKasur + 28, ky = yKasur + 32;
       kotakBulat(kx - 16, ky - 14, 156, 62, 14, 'rgba(255,244,246,.82)');
@@ -792,12 +797,12 @@
     }
     /* karakter utama saat bangun atau tidur */
     if (s.tidur) {
-      if (!gambarPotretAi(charImgs.pemain, xKasur + 36, yKasur + 4, 21, t, { diam: true, bingkai: '#5b6b73', ikonEkspresi: '💤', label: s.namaPemain || 'Tidur' })) {
+      if (!gambarPotretAi(imPemain(), xKasur + 36, yKasur + 4, 21, t, { diam: true, bingkai: '#5b6b73', ikonEkspresi: '💤', label: s.namaPemain || 'Tidur' })) {
         bulat(xKasur + 24, yKasur, 11.5, '#f1c39b');
         cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 24, yKasur - 3, 11.5, Math.PI, 0); cx.fill();
       }
       if (pas) {
-        if (!gambarPotretAi(charImgs.istri, xKasur + 84, yKasur + 6, 20, t, { diam: true, bingkai: '#e91e63', ikonEkspresi: '💤', label: pas.nama })) {
+        if (!gambarPotretAi(imPasangan(), xKasur + 84, yKasur + 6, 20, t, { diam: true, bingkai: '#e91e63', ikonEkspresi: '💤', label: pas.nama })) {
           bulat(xKasur + 52, yKasur + 2, 10.5, '#f1c39b');
           cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 52, yKasur - 1, 10.5, Math.PI, 0); cx.fill();
         }
@@ -807,12 +812,12 @@
       cx.fillText('Z', xKasur + 60, yKasur - 40 - (t / 50) % 14);
     } else {
       var ekspPemain = s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : s.hbTinggi ? '❤️' : ['😊', '☕', '✨'][Math.floor(t / 4000) % 3];
-      if (!gambarPotretAi(charImgs.pemain, 102, yLantai + 84, 28, t, { gerak: 12, bingkai: '#1f8a80', ekspresi: 'senang', ikonEkspresi: ekspPemain, label: s.namaPemain || 'Kamu' })) {
+      if (!gambarPotretAi(imPemain(), 102, yLantai + 84, 28, t, { gerak: 12, bingkai: '#1f8a80', ekspresi: 'senang', ikonEkspresi: ekspPemain, label: s.namaPemain || 'Kamu' })) {
         gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
       }
       if (pas) {
         var ekspPas = pas.hamil ? '🤰' : s.hbTinggi ? '😘' : ['🥰', '😊', '💕'][Math.floor(t / 4500) % 3];
-        if (!gambarPotretAi(charImgs.istri, 186, yLantai + 84, 27, t + 400, { gerak: 9, bingkai: '#e91e63', ekspresi: 'hati', ikonEkspresi: ekspPas, label: pas.nama + (pas.hamil ? ' 🤰' : '') })) {
+        if (!gambarPotretAi(imPasangan(), 186, yLantai + 84, 27, t + 400, { gerak: 9, bingkai: '#e91e63', ekspresi: 'hati', ikonEkspresi: ekspPas, label: pas.nama + (pas.hamil ? ' 🤰' : '') })) {
           gambarKarakterRumah(196, yLantai + 104, pas.gender, t + 400, { baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a', hamil: !!pas.hamil, label: pas.nama });
         }
       }
@@ -1050,8 +1055,7 @@
   function gambarJalanRaya(s, t) {
     var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
     var gp = gelap(m);
-    var bgJ = (s.hujan || gp > 0.35) ? bgImgs.hujan : bgImgs.siang;
-    if (!gambarBgCover(bgJ, 1.0)) {
+    {
       gambarLangit(m, t);
       cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
       if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
@@ -1225,11 +1229,36 @@
     teksTengah('Kapal ' + RUTE_NAMA(f.dari) + ' → ' + RUTE_NAMA(f.ke), 182, 16);
   }
 
+  /* perjalanan pulang atau berangkat antar tempat: jalan kota bergulir, jarak sisa terlihat */
+  function gambarPerjalanan(s, t, dt) {
+    var f = s.transit, m = s.menit % 1440, gp = gelap(m), jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44;
+    var kaki = f.kend === 'kaki';
+    tJarak += dt * (kaki ? 0.1 : 0.34); var geser = tJarak % lebar;
+    gambarLangit(m, t);
+    cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
+    if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
+    kotak(0, dasarRuko, W, jalan - dasarRuko, 'rgba(185,178,166,.9)');
+    var g2 = (geser * 3.2) % 20; for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b');
+    kotak(0, jalan, W, H - jalan, s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)');
+    var g3 = (geser * 3.4) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
+    if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
+    if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t); }
+    var goyang = Math.sin(t / 90) * 1.2;
+    if (f.kend === 'mobil') { var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(W * 0.46, jalan + 84 + goyang, mob.bentuk, mob.id, false, t * 0.6); }
+    else if (f.kend === 'kaki') gambarKarakterRumah(W * 0.45, jalan + 78, s.gender === 'cowok' ? 'cowok' : 'cewek', t * 2.4, { skala: 1.5, label: s.namaPemain || 'Kamu' });
+    else gambarMotorKu(W * 0.42, jalan + 52 + goyang, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, bonceng: f.kend === 'ojek' }, t);
+    if (gp > 0.4) { var gr = cx.createRadialGradient(W * 0.46 + 70, jalan + 50, 0, W * 0.46 + 70, jalan + 50, 100); gr.addColorStop(0, 'rgba(255,240,190,.45)'); gr.addColorStop(1, 'rgba(255,240,190,0)'); cx.fillStyle = gr; cx.fillRect(W * 0.4, jalan - 20, 240, 140); }
+    if (s.hujan) hujanTravel(s, t);
+    var kePulang = f.ke === 'kos', sisa = Math.max(0, f.km * (1 - f.u));
+    teksTengah(kePulang ? 'Pulang ke rumah' : 'Berangkat ke kedai', 182, 18);
+    teksTengah(sisa.toFixed(1).replace('.', ',') + ' km lagi · total ' + String(f.km).replace('.', ',') + ' km', 208, 13);
+    kotakBulat(60, 228, 240, 8, 4, 'rgba(29,43,51,.45)'); kotakBulat(60, 228, Math.max(8, 240 * Math.min(1, f.u)), 8, 4, '#f2a516');
+  }
   var kotakKedai = null, kotakBarista = null, tAkhir = 0;
   /* s: { menit, buka (bool), kecepatan } */
   function gambar(s, t) {
     if (!cx) return;
-    var dt = tAkhir ? Math.min(100, t - tAkhir) : 16; tAkhir = t;
+    var dt = tAkhir ? Math.min(100, t - tAkhir) : 16; tAkhir = t; genderPemain = s.gender || 'cewek';
     anim.rolling += ((s.buka ? 1 : 0) - anim.rolling) * Math.min(1, dt / 260);
     if (Math.abs(anim.rolling - (s.buka ? 1 : 0)) < 0.003) anim.rolling = s.buka ? 1 : 0;
     anim.pantulKedai = Math.max(0, anim.pantulKedai - dt / 600);
@@ -1238,6 +1267,7 @@
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.transit) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPerjalanan(s, t, dt); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.travel) {
       cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
       if (s.travel.mode === 'jalan') gambarJalanTravel(s, t, dt); else if (s.travel.mode === 'kapal') gambarKapalTravel(s, t); else gambarPoolTravel(s, t);
@@ -1254,7 +1284,7 @@
     cx.setTransform(f, 0, 0, f, 0, -anim.angkat * f);
     var gp = gelap(m);
     var bgKedai = (s.hujan || gp > 0.35) ? bgImgs.hujan : bgImgs.siang;
-    var adaBgKedai = gambarBgCover(bgKedai, 1.0);
+    var adaBgKedai = !s.berhentiSewa && gambarBgCover(bgKedai, 1.0);
     if (adaBgKedai) {
       if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.25).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
       /* saat menggunakan background AI: tampilkan papan nama toko & karakter AI di konter tanpa menempelkan kontainer/tiang/kursi vektor lama */
@@ -1265,12 +1295,12 @@
       cx.fillText(namaTokoAi.slice(0, 24), kX + kW / 2, kY);
       if (s.buka && !s.berhentiSewa) {
         var ekspBarista = s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : (s.pembeli && s.pembeli.length > 0) ? '☕' : '😊';
-        gambarPotretAi(charImgs.pemain, kX + kW / 2, kY + 56, 25, t, { gerak: 8, bingkai: '#1f8a80', ekspresi: 'senang', ikonEkspresi: ekspBarista, label: s.namaPemain || 'Barista' });
-        if ((s.staf || 0) > 0) gambarPotretAi(charImgs.istri, kX + kW / 2 - 52, kY + 60, 20, t + 600, { gerak: 5, bingkai: '#f2a516', ikonEkspresi: '✨', label: 'Staf' });
+        gambarPotretAi(imPemain(), kX + kW / 2, kY + 56, 25, t, { gerak: 8, bingkai: '#1f8a80', ekspresi: 'senang', ikonEkspresi: ekspBarista, label: s.namaPemain || 'Barista' });
+        if ((s.staf || 0) > 0) gambarPotretAi(imPasangan(), kX + kW / 2 - 52, kY + 60, 20, t + 600, { gerak: 5, bingkai: '#f2a516', ikonEkspresi: '✨', label: 'Staf' });
         if (s.anakBantu && s.anakBantu.length) gambarPotretAi(charImgs.anak, kX + kW / 2 + 52, kY + 62, 19, t + 900, { gerak: 6, bingkai: '#e91e63', ikonEkspresi: '😄', label: 'Bantu' });
         kotakBarista = { x: kX + kW / 2 - 28, y: kY + 28, w: 56, h: 56 };
       } else if (s.berhentiSewa && (!s.ojek || s.ojek.status === 'standby')) {
-        gambarPotretAi(charImgs.pemain, 280, dasarKedai - 24, 24, t, { gerak: 6, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: '🛵', label: s.namaPemain || 'Driver' });
+        gambarPotretAi(imPemain(), 280, dasarKedai - 24, 24, t, { gerak: 6, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: '🛵', label: s.namaPemain || 'Driver' });
         kotakBarista = null;
       } else {
         kotakBarista = null;
@@ -1282,6 +1312,13 @@
       if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
       gambarJalan(trotoar, jalan);
       gambarTiang(dasarKedai, dasarRuko - 270);
+      if (s.berhentiSewa) {
+        /* mode driver: tidak ada kedai, hanya pangkalan di tepi jalan */
+        kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
+        kotak(214, dasarKedai - 70, 4, 70, '#59656d'); kotakBulat(160, dasarKedai - 102, 110, 34, 8, '#00aa13');
+        cx.font = '800 14px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText('PANGKALAN', 215, dasarKedai - 85);
+        if (!s.ojek || s.ojek.status === 'standby') gambarPotretAi(imPemain(), 258, dasarKedai - 30, 24, t, { gerak: 5, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
+      } else {
       gambarPisang(132, dasarKedai, t);
       kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
       var nyala = s.buka && !s.padam ? Math.max(gp, 0.15) : 0;
@@ -1290,6 +1327,7 @@
       gambarKursi(44, dasarKedai + 4, wk[0]); gambarKursi(88, dasarKedai + 8, wk[1]);
       if ((s.tier || 1) >= 2) { gambarKursi(8, dasarKedai + 10, wk[1]); kotak(20, dasarKedai - 22, 30, 4, s.kayu ? '#b97a46' : '#e8e4da'); }
       kotak(60, dasarKedai - 26, 34, 4, '#e8e4da'); kotak(74, dasarKedai - 22, 4, 24, '#c8c2b4');
+      }
     }
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.32).toFixed(3) + ')'; cx.fillRect(0, trotoar, W, H - trotoar); }
     var daftar = s.pembeli || [];

@@ -46,3 +46,4 @@ O1. Mulai sebagai driver, kedai jadi usaha sampingan (opsional) ✔
 O2. Peta antarkota nyata: jarak, tol, kapal penyeberangan, tarif standar yang bisa dinaik-turunkan ✔
 O3–O5. Travel mobil: tunggu penumpang penuh, jemput di kota yang sama, percepatan 1–5 dan ⚡ (malam/sepi), bensin, tilang, ban bocor, penumpang minta cepat atau santai, menepi/rumah makan/rehat 2 jam/penginapan ✔
 O6. Pemandangan tiap kota, jalan bergulir, kapal ✔
+P1. Stamina dan melek digabung jadi satu bar, bar bensin di samping baterai HP, potret karakter dipotong ke wajah dan mengikuti gender, adegan jalan tanpa latar kedai, perjalanan pulang/berangkat beranimasi sesuai jarak ✔
