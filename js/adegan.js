@@ -821,17 +821,23 @@
     if (v === 'sofa') { var fl = 0.35 + Math.abs(Math.sin(t / 310)) * 0.25; kotakBulat(120, 268, 120, 34, 8, 'rgba(120,200,255,' + fl.toFixed(2) + ')'); }
     if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
-    /* karakter: pakai foto karakter asli/AI, fallback ke kepala vektor bila belum termuat */
+    /* karakter: tampilkan badan penuh dari bahu ke atas di balik selimut/kaca buram, tanpa gelembung bulat */
     var g2 = Math.sin(t / 210 + 1.1) * 6;
-    var sepasang = (v === 'pelukan') ? [[158, cy - 10 - Math.abs(goyang), -0.12 + irama * 0.06], [204, cy - Math.abs(g2), 0.12 - irama * 0.06]] : (v === 'sofa' || v === 'balkon') ? [[150 + irama * 3, cy - Math.abs(goyang), -0.1 + irama * 0.05], [212 + irama * 3, cy + 4 - Math.abs(g2), 0.14 - irama * 0.05]] : [[140, cy + 6 - Math.abs(goyang), -0.22 + irama * 0.07], [218, cy + 6 - Math.abs(g2) * 0.6, 0.22 - irama * 0.07]];
+    var sepasang = (v === 'pelukan') ? [[152, cy - 10 - Math.abs(goyang), -0.1 + irama * 0.05], [208, cy - Math.abs(g2), 0.1 - irama * 0.05]] : (v === 'sofa' || v === 'balkon') ? [[146 + irama * 3, cy - Math.abs(goyang), -0.08 + irama * 0.04], [214 + irama * 3, cy + 4 - Math.abs(g2), 0.1 - irama * 0.04]] : [[138, cy + 6 - Math.abs(goyang), -0.15 + irama * 0.06], [220, cy + 6 - Math.abs(g2) * 0.6, 0.15 - irama * 0.06]];
     var rr = v === 'pelukan' ? 30 : 27;
-    var imA = imChar(s.namaPemain, gA), imB = imChar(A.nama, gB);
-    if (!gambarPotretAi(imA, sepasang[0][0], sepasang[0][1], rr, t, { diam: true, zoom: 1.35, bingkai: '#ff5c8a', ekspresi: 'hati' })) {
-      kepalaV(sepasang[0][0], sepasang[0][1], rr, gA, sepasang[0][2]);
+    var imFullA = imCharFull(s.namaPemain, gA), imFullB = imCharFull(A.nama, gB);
+    function gambarTubuhHb(imF, px, py, rot, gDef) {
+      if (imF && imF.naturalWidth) {
+        var th = 165, tw = th * (imF.naturalWidth / imF.naturalHeight);
+        cx.save(); cx.translate(px, py + 32); cx.rotate(rot);
+        cx.drawImage(imF, -tw / 2, -62, tw, th);
+        cx.restore();
+      } else {
+        kepalaV(px, py, rr, gDef, rot);
+      }
     }
-    if (!gambarPotretAi(imB, sepasang[1][0], sepasang[1][1], rr, t + 300, { diam: true, zoom: 1.35, bingkai: '#ff5c8a', ekspresi: 'hati' })) {
-      kepalaV(sepasang[1][0], sepasang[1][1], rr, gB, sepasang[1][2]);
-    }
+    gambarTubuhHb(imFullA, sepasang[0][0], sepasang[0][1], sepasang[0][2], gA);
+    gambarTubuhHb(imFullB, sepasang[1][0], sepasang[1][1], sepasang[1][2], gB);
     /* penutup: selimut atau kaca buram */
     if (v === 'mandi') { cx.fillStyle = 'rgba(235,245,250,.78)'; cx.fillRect(60, cy + 34, 240, 260); for (var dr = 0; dr < 14; dr++) { cx.fillStyle = 'rgba(255,255,255,.55)'; cx.fillRect(70 + dr * 17, (t / 8 + dr * 53) % 300 + 80, 2, 12); } }
     else if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.9)'; kotakBulat(100, cy + 44, 160, 200, 40, 'rgba(40,20,50,.9)'); }
@@ -1446,7 +1452,12 @@
       if (s.berhentiSewa) {
         /* mode driver: tidak ada kedai, hanya jalan raya dan pemain di tepi jalan */
         kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
-        if (!s.ojek || s.ojek.status === 'standby') gambarPotretAi(imPemain(s), 258, dasarKedai - 30, 24, t, { gerak: 5, zoom: 1.3, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
+        if (!s.ojek || s.ojek.status === 'standby') {
+          var imStand = imCharFull(s.namaPemain, s.gender);
+          if (!gambarKarakterPenuh(imStand, 258, dasarKedai + 6, 118, t, { gerak: 4, bingkai: '#00aa13', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' })) {
+            gambarPotretAi(imPemain(s), 258, dasarKedai - 30, 24, t, { gerak: 5, zoom: 1.3, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
+          }
+        }
       } else {
       gambarPisang(132, dasarKedai, t);
       kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
