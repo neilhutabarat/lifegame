@@ -132,7 +132,7 @@
     if (u.tier >= 3 && t.dow === 6 && S.menit >= 1140) f *= 1.3; /* musik akustik malam Minggu */
     if (punya(S, 'tv') && S.menit >= 1140 && (t.dow === 2 || t.dow === 5) && S.hari % 3 === 0) f *= 1.4; /* nobar */
     if (punya(S, 'kursiKayu')) f *= 1.05;
-    if (S.promoAktif) f *= 1.3 + Math.random() * 0.2; /* promo +30% sampai +50% */
+    if (S.promoAktif) f *= 1.5 + Math.random() * 0.3; /* promo +50% sampai +80% */
     return f;
   }
   function campuran(S, peta) {

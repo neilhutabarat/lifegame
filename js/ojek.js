@@ -77,7 +77,7 @@
     if (g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)) r *= 1.6;
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
-    if (S.promoAktif) r *= 1.3 + Math.random() * 0.2; /* promo +30% sampai +50% */
+    if (S.promoAktif) r *= 1.5 + Math.random() * 0.3; /* promo +50% sampai +80% */
     return r * Math.max(0.6, 1 - S.ojek.tolak * 0.05);
   }
   function jeda(S) { return Math.max(3, -Math.log(1 - Math.random()) * 60 / laju(S)); }

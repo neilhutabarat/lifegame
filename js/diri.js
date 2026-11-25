@@ -244,6 +244,21 @@
     }
     if (d.melek < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
     if (d.stamina < 3) { d.ketiduran = 120; kabar.push('Kamu kelelahan dan harus istirahat 2 jam.'); d.stamina = 20; }
+    /* Auto Makan & Minum hemat biaya (jika diaktifkan pemain) */
+    if (S.autoMakanMinum && j > 0) {
+      if (d.minum < 30) {
+        var rmAuto = (d.posisi === 'kos' && punya(S, 'dispenser')) ? makan(S, 'air')
+          : (d.posisi === 'kedai' && g.KK_STOK && g.KK_STOK.ada(S, 'galon', 300)) ? makan(S, 'air')
+          : ((S.uang && S.uang.dompet >= 4000) ? beli(S, 'air', 'warung') : null);
+        if (rmAuto && rmAuto.ok) kabar.push('Auto Minum: ' + rmAuto.teks);
+      }
+      if (d.kenyang < 30) {
+        var rkAuto = (d.posisi === 'kos' && S.rumahTangga && (S.rumahTangga.aktifSampai || -1) >= S.hari) ? makanDiRumah(S)
+          : (d.posisi === 'kos' && (punya(S, 'ricecooker') || punya(S, 'kompor')) && S.uang && S.uang.dompet >= 7000) ? makan(S, 'masak')
+          : ((S.uang && S.uang.dompet >= 5000) ? beli(S, 'gorengan', 'warung') : null);
+        if (rkAuto && rkAuto.ok) kabar.push('Auto Makan: ' + rkAuto.teks);
+      }
+    }
     return kabar;
   }
   /* pemakaian listrik kos (kW): kulkas 24 jam, AC saat di kos, TV/PS saat dipakai */
@@ -1415,7 +1430,7 @@
     var fLokasi = (lok && lok.ramai) || 1.1;
     var jmlKaset = Object.keys(rpObj.kaset || {}).length + Object.keys((S.game && S.game.kaset) || {}).length;
     var bonusKaset = Math.min(1.45, 0.85 + jmlKaset * 0.04);
-    var bonusPromo = S.promoAktif ? 1.35 : 1;
+    var bonusPromo = S.promoAktif ? (1.5 + Math.random() * 0.3) : 1;
     var fPenjaga = (rpObj.penjaga || 0) > 0 ? Math.min(1.25, 0.9 + rpObj.penjaga * 0.15) : 0.7;
     var okupansi = Math.min(0.95, 0.42 * fLokasi * bonusKaset * bonusPromo * fPenjaga);
     var j = dMenit / 60;
