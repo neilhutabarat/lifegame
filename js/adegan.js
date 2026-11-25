@@ -734,76 +734,67 @@
     }
     cx.restore();
   }
-  function gambarHbUmum(s, t) {
-    /* pertemuan di luar pasangan sah: kamar digelapkan dan waktu berjalan */
-    var ug = Math.min(1, s.hbAnim.u || 0);
-    cx.fillStyle = 'rgba(30,12,28,' + Math.min(0.7, 0.2 + ug).toFixed(2) + ')'; cx.fillRect(0, 0, W, H);
-    cx.fillStyle = '#ff5c8a'; cx.font = '800 26px system-ui, sans-serif'; cx.textAlign = 'center';
-    for (var hg = 0; hg < 7; hg++) { var fg = (t / 26 + hg * 25) % 100; cx.globalAlpha = Math.max(0, 1 - fg / 100); cx.fillText('♥', 60 + hg * 40 + Math.sin(t / 500 + hg) * 10, 420 - fg * 1.4); }
+  /* kepala vektor sederhana (mata terpejam, pipi merona) */
+  function kepalaV(x, y, r, jenis, rot) {
+    var rambut = jenis === 'cowok' ? '#2a1d1a' : '#4a2c2a';
+    cx.save(); cx.translate(x, y); cx.rotate(rot || 0);
+    if (jenis !== 'cowok') { cx.fillStyle = rambut; cx.beginPath(); cx.ellipse(0, r * 0.35, r * 1.18, r * 1.35, 0, 0, Math.PI * 2); cx.fill(); }
+    bulat(0, 0, r, '#f1c39b');
+    cx.fillStyle = rambut; cx.beginPath(); cx.arc(0, -r * 0.05, r * 1.05, Math.PI * 1.02, Math.PI * 1.98); cx.lineTo(r * 0.9, -r * 0.2); cx.quadraticCurveTo(0, -r * 0.55, -r * 0.9, -r * 0.2); cx.fill();
+    cx.strokeStyle = '#3a2420'; cx.lineWidth = 1.6; cx.lineCap = 'round';
+    cx.beginPath(); cx.arc(-r * 0.36, r * 0.1, r * 0.17, 0.15 * Math.PI, 0.85 * Math.PI); cx.stroke();
+    cx.beginPath(); cx.arc(r * 0.36, r * 0.1, r * 0.17, 0.15 * Math.PI, 0.85 * Math.PI); cx.stroke();
+    cx.fillStyle = 'rgba(255,110,140,.45)'; cx.beginPath(); cx.arc(-r * 0.6, r * 0.38, r * 0.17, 0, 7); cx.arc(r * 0.6, r * 0.38, r * 0.17, 0, 7); cx.fill();
+    cx.strokeStyle = '#b5524a'; cx.beginPath(); cx.arc(0, r * 0.38, r * 0.2, 0.2 * Math.PI, 0.8 * Math.PI); cx.stroke();
+    cx.restore();
+  }
+  var HB_JUDUL = { kamar: 'Malam hangat berdua', sofa: 'Berdua di depan TV', hotel: 'Kamar hotel', mandi: 'Berdua di balik uap', pelukan: 'Pelukan hangat', balkon: 'Angin malam di balkon' };
+  /* adegan HB sinematik: latar berbeda tiap varian, kedua karakter hanya terlihat dari bahu ke atas, bagian bawah tertutup selimut atau kaca buram */
+  function gambarAdeganHb(s, t) {
+    var A = s.hbAnim || {}, u = Math.min(1, A.u || 0), v = A.varian || 'kamar', gA = s.gender || 'cewek', gB = A.gB || (gA === 'cowok' ? 'cewek' : 'cowok');
+    var ayun = Math.sin(t / 420) * 2.2, cy = 330;
+    /* latar */
+    var gr = cx.createLinearGradient(0, 0, 0, H);
+    if (v === 'hotel') { gr.addColorStop(0, '#2a1240'); gr.addColorStop(1, '#4a1e50'); }
+    else if (v === 'sofa') { gr.addColorStop(0, '#16303a'); gr.addColorStop(1, '#244a50'); }
+    else if (v === 'mandi') { gr.addColorStop(0, '#6b8fa0'); gr.addColorStop(1, '#a9c4cf'); }
+    else if (v === 'pelukan') { gr.addColorStop(0, '#ff9a6a'); gr.addColorStop(1, '#6a3a6e'); }
+    else if (v === 'balkon') { gr.addColorStop(0, '#0b1230'); gr.addColorStop(1, '#2a2f5a'); }
+    else { gr.addColorStop(0, '#2b1a2a'); gr.addColorStop(1, '#4a2a38'); }
+    cx.fillStyle = gr; cx.fillRect(0, 0, W, H);
+    if (v === 'hotel') { cx.fillStyle = '#ff5c8a'; kotakBulat(120, 276, 120, 26, 8, '#ff5c8a'); cx.fillStyle = '#fff'; cx.font = '800 18px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.globalAlpha = 0.75 + Math.sin(t / 260) * 0.25; cx.fillText('HOTEL', 180, 290); cx.globalAlpha = 1; }
+    if (v === 'sofa') { var fl = 0.35 + Math.abs(Math.sin(t / 310)) * 0.25; kotakBulat(120, 268, 120, 34, 8, 'rgba(120,200,255,' + fl.toFixed(2) + ')'); }
+    if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
+    if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
+    /* karakter */
+    var sepasang = (v === 'pelukan') ? [[158, cy - 10 + ayun, -0.12], [204, cy + ayun, 0.12]] : (v === 'sofa' || v === 'balkon') ? [[150 + ayun * 0.4, cy, -0.1], [212, cy + 4, 0.14]] : [[140, cy + 6, -0.22 + ayun * 0.01], [218, cy + 6, 0.22]];
+    var rr = v === 'pelukan' ? 30 : 27;
+    kepalaV(sepasang[0][0], sepasang[0][1], rr, gA, sepasang[0][2]);
+    kepalaV(sepasang[1][0], sepasang[1][1], rr, gB, sepasang[1][2]);
+    /* penutup: selimut atau kaca buram */
+    if (v === 'mandi') { cx.fillStyle = 'rgba(235,245,250,.78)'; cx.fillRect(60, cy + 34, 240, 260); for (var dr = 0; dr < 14; dr++) { cx.fillStyle = 'rgba(255,255,255,.55)'; cx.fillRect(70 + dr * 17, (t / 8 + dr * 53) % 300 + 80, 2, 12); } }
+    else if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.9)'; kotakBulat(100, cy + 44, 160, 200, 40, 'rgba(40,20,50,.9)'); }
+    else { cx.fillStyle = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'balkon' ? '#3a3f78' : '#b04a68'; kotakBulat(70, cy + 34 + ayun * 0.5, 220, 230, 30, cx.fillStyle); cx.fillStyle = 'rgba(255,255,255,.12)'; kotakBulat(80, cy + 42, 200, 14, 7, 'rgba(255,255,255,.12)'); }
+    /* uap / hati */
+    cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
+    for (var hg = 0; hg < 8; hg++) { var fg = (t / 24 + hg * 22) % 100; cx.globalAlpha = Math.max(0, 1 - fg / 100) * 0.9; cx.fillStyle = v === 'mandi' ? '#ffffff' : '#ff5c8a'; cx.font = '800 ' + (v === 'mandi' ? 22 : 26) + 'px system-ui, sans-serif'; cx.fillText(v === 'mandi' ? '○' : '♥', 70 + hg * 31 + Math.sin(t / 500 + hg) * 12, cy - 40 - fg * 1.5); }
     cx.globalAlpha = 1;
-    var jg = s.menit % 1440, jt = ('0' + Math.floor(jg / 60)).slice(-2) + '.' + ('0' + Math.floor(jg % 60)).slice(-2);
-    cx.font = '800 18px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,12,28,.7)'; cx.fillStyle = '#fff';
-    cx.strokeText('Pukul ' + jt, W / 2, 200); cx.fillText('Pukul ' + jt, W / 2, 200);
-    kotakBulat(70, 222, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 222, Math.max(8, 220 * ug), 8, 4, '#ff5c8a');
+    var dim = Math.min(0.45, u * 0.7); cx.fillStyle = 'rgba(20,6,20,' + dim.toFixed(2) + ')'; cx.fillRect(0, 0, W, H);
+    /* judul, jam, progres */
+    var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
+    cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,12,28,.75)'; cx.fillStyle = '#fff';
+    cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif';
+    var jd = (HB_JUDUL[v] || 'Waktu berdua') + (A.nama ? ' · ' + A.nama : '');
+    cx.strokeText(jd, W / 2, 212); cx.fillText(jd, W / 2, 212);
+    cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
+    kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
   }
   function gambarPenghuniRumah(s, t, xKasur, yKasur, yLantai) {
     var kel = s.keluargaRumah || [];
     var pas = kel.filter(function (k) { return k.pasangan; })[0] || null;
     var anakList = kel.filter(function (k) { return !k.pasangan; });
     /* animasi HB: istri berbaring di kasur, suami naik ke atas istri dengan efek hati sebelum layar gelap */
-    if (s.hbAnim && !pas) { gambarHbUmum(s, t); return; }
-    if (s.hbAnim && pas) {
-      var u = Math.min(1, s.hbAnim.u || 0);
-      var imIstri = imPasangan(), imSuami = imPemain();
-      /* kasur sebagai panggung HB di bagian tengah-kiri kamar */
-      var kx = xKasur + 28, ky = yKasur + 32;
-      kotakBulat(kx - 16, ky - 14, 156, 62, 14, 'rgba(255,244,246,.82)');
-      kotakBulat(kx - 10, ky - 8, 44, 24, 9, '#ffffff');
-      kotakBulat(kx + 38, ky - 6, 94, 48, 12, 'rgba(233,30,99,.22)');
-      /* Tahap 1 (u < 0.45): suami naik ke atas kasur; Tahap 2 (u >= 0.45): berpelukan posisi atas & bawah */
-      var naik = Math.min(1, u / 0.1);
-      var peluk = u > 0.1 ? (u - 0.1) / 0.9 : 0;
-      var ayun = peluk > 0 ? Math.sin(t / 190) * 2.5 : 0;
-      var istriX = kx + 48, istriY = ky + 16;
-      var suamiX = kx + 124 - naik * 74 + ayun * 0.6;
-      var suamiY = ky - 12 + naik * 6 - Math.sin(naik * Math.PI) * 18 + peluk * 6 + ayun;
-      if (imIstri && imIstri.naturalWidth && imSuami && imSuami.naturalWidth) {
-        /* posisi bawah: istri berbaring di kasur */
-        gambarPotretAi(imIstri, istriX, istriY, 24, t, { diam: true, bingkai: '#e91e63', ekspresi: 'hati', ikonEkspresi: '❤️', label: pas.nama });
-        /* lengan memeluk saat posisi atas-bawah */
-        if (peluk > 0.1) {
-          cx.save();
-          cx.strokeStyle = 'rgba(233,30,99,.75)'; cx.lineWidth = 4; cx.lineCap = 'round';
-          cx.beginPath(); cx.arc(istriX, (istriY + suamiY) / 2, 27, -0.5, 0.5); cx.stroke();
-          cx.beginPath(); cx.arc(istriX, (istriY + suamiY) / 2, 27, Math.PI - 0.5, Math.PI + 0.5); cx.stroke();
-          cx.restore();
-        }
-        /* posisi atas: suami naik & memeluk dari atas */
-        gambarPotretAi(imSuami, suamiX, suamiY, 24, t, { diam: true, bingkai: '#1f8a80', ekspresi: 'hati', ikonEkspresi: '💕', label: s.namaPemain || 'Kamu' });
-      } else {
-        bulat(xKasur + 26, yKasur + 2, 11, '#f1c39b');
-        cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 26, yKasur, 11.5, Math.PI, 0); cx.fill();
-        kotakBulat(xKasur + 36, yKasur - 3, 46, 15, 7, '#c86a84');
-        kotakBulat(suamiX, suamiY, 42, 14, 6, '#2f6fb0');
-        bulat(suamiX, suamiY, 10.5, '#f1c39b');
-      }
-      /* lampu diredupkan pelan-pelan, kamar tetap kelihatan */
-      if (peluk > 0.05) { cx.fillStyle = 'rgba(40,10,30,' + Math.min(0.5, peluk * 1.2).toFixed(2) + ')'; cx.fillRect(0, 0, W, H); }
-      cx.fillStyle = '#ff5c8a'; cx.font = '800 26px system-ui, sans-serif'; cx.textAlign = 'center';
-      for (var hi = 0; hi < 9; hi++) {
-        var fase = (t / 26 + hi * 21) % 90, hy = suamiY - 34 - fase;
-        cx.globalAlpha = Math.max(0, 1 - fase / 90);
-        cx.fillText('♥', istriX + Math.sin(t / 500 + hi) * 14 + (hi - 4) * 17, hy);
-      }
-      cx.globalAlpha = 1;
-      /* judul dan jam yang berjalan cepat, seperti saat narik */
-      var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
-      cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(40,10,30,.7)'; cx.fillStyle = '#fff';
-      cx.strokeText('Waktu berdua bersama ' + pas.nama, W / 2, 190); cx.fillText('Waktu berdua bersama ' + pas.nama, W / 2, 190);
-      cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 214); cx.fillText('Pukul ' + jj, W / 2, 214);
-      kotakBulat(70, 232, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 232, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
-      return;
-    }
+    if (s.hbAnim) { gambarAdeganHb(s, t); return; }
     /* karakter utama saat bangun atau tidur */
     if (s.tidur) {
       if (!gambarPotretAi(imPemain(), xKasur + 36, yKasur + 4, 21, t, { diam: true, bingkai: '#5b6b73', ikonEkspresi: '💤', label: s.namaPemain || 'Tidur' })) {
@@ -1284,7 +1275,7 @@
     anim.kedip -= dt; if (anim.kedip < -3400 - Math.random() * 1500) anim.kedip = 140;
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
-    if (s.hbAnim && s.posisi !== 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); cx.fillStyle = '#2a1a26'; cx.fillRect(0, 0, W, H); gambarHbUmum(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.hbAnim && s.posisi !== 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); cx.fillStyle = '#2a1a26'; cx.fillRect(0, 0, W, H); gambarAdeganHb(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.latarAwal) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarLatarAwal(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.transit) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPerjalanan(s, t, dt); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }

@@ -158,7 +158,7 @@
       S.keluarga.forEach(function (kl) {
         if (!adalahPasangan(kl)) return;
         kl.hb = batas((kl.hb == null ? 30 : kl.hb) + 2.5 * j);
-        if (d.posisi === 'kos' && (S.menit % 1440) >= 1200 && kl.lokasi !== 'kedai' && !kl.sakit && !d.sakit && kl.hb >= 65 && S.ajakanHbHari !== S.hari) {
+        if (d.posisi === 'kos' && (S.menit % 1440) >= 1200 && kl.lokasi !== 'kedai' && !kl.sakit && !(kl.keluar && (S.hari * 24 + Math.floor(S.menit / 60)) < kl.keluar.sampai) && !d.sakit && kl.hb >= 65 && S.ajakanHbHari !== S.hari) {
           S.ajakanHbHari = S.hari;
           S.ajakanHbPasanganId = kl.id;
         }
@@ -831,6 +831,7 @@
       S.bank.mutasi.unshift({ n: S.hari, ket: 'Harta gono-gini / mut\'ah perceraian (' + kl.nama + ')', jml: -gonoGini });
     }
     S.keluarga = (S.keluarga || []).filter(function (x) { return x.id !== kl.id; });
+    if (g.KK_TEMAN) g.KK_TEMAN.tambahMantan(S, kl, alasan);
     S.diri.stamina = Math.max(10, S.diri.stamina - 20);
     return { ok: true, nama: kl.nama, gonoGini: gonoGini, teks: 'Perceraian dengan ' + kl.nama + (alasan ? ' (' + alasan + ')' : '') + ' resmi tercatat. Pembagian harta gono-gini: ' + rp(gonoGini) + '.' };
   }
@@ -1116,6 +1117,11 @@
       p = (S.keluarga || []).filter(function (x) { return x.id === iid; })[0];
       if (!p) return 'Adik/kakak ipar tidak ditemukan.';
       jenisTarget = 'ipar';
+    } else if (String(targetKode || '').indexOf('teman:') === 0) {
+      var tid = String(targetKode).slice(6);
+      var tcek = g.KK_TEMAN.syaratHb(S, tid);
+      if (typeof tcek === 'string') return tcek;
+      stafTarget = tcek; jenisTarget = 'teman';
     } else if (targetKode) {
       p = (S.keluarga || []).filter(function (x) { return x.id === targetKode; })[0];
       if (p && adalahIpar(p)) jenisTarget = 'ipar';
@@ -1127,9 +1133,20 @@
       if (!p) return 'Kamu belum memiliki pasangan (Istri/Suami). Tambahkan dulu di aplikasi Keluarga.';
       if (p.lokasi === 'kedai') return p.nama + ' masih di kedai. Minta pulang ke rumah dulu di aplikasi Keluarga.';
       if (S.diri.sakit || p.sakit) return 'Salah satu sedang sakit. Obati dulu di Apotek agar sehat kembali.';
+      if (g.KK_TEMAN.sedangKeluar(p, S)) return p.nama + ' sedang tidak di rumah (' + g.KK_TEMAN.alasanTeks(p) + '). Suruh pulang dulu di aplikasi Keluarga.';
+      if (jenisTarget === 'ipar' && g.KK_TEMAN.hubunganKl(p) <= g.KK_TEMAN.MIN_HB) return 'Hubungan dengan ' + p.nama + ' baru ' + Math.round(g.KK_TEMAN.hubunganKl(p)) + '%. Butuh di atas ' + g.KK_TEMAN.MIN_HB + '%.';
+      if (jenisTarget === 'pasangan' && g.KK_TEMAN.hubunganKl(p) < 25) return p.nama + ' lagi marah besar dan menolak. Perbaiki hubungan dulu.';
     }
 
     var biayaPsk = 300000;
+    if (jenisTarget === 'teman') {
+      var hotel = g.KK_TEMAN.HOTEL;
+      if (!bayarTunai(S, hotel)) {
+        if (S.bank.saldo < hotel) return 'Uang tidak cukup untuk kamar hotel (' + rp(hotel) + ').';
+        S.bank.saldo -= hotel; S.bank.mutasi.unshift({ n: S.hari, ket: 'Kamar hotel', jml: -hotel });
+        S.hariIni.pribadi = (S.hariIni.pribadi || 0) + hotel;
+      }
+    }
     if (jenisTarget === 'psk') {
       if (!bayarTunai(S, biayaPsk)) {
         if (S.bank.saldo < biayaPsk) return 'Uang di dompet maupun rekening tidak cukup untuk jajan nakal (' + rp(biayaPsk) + ').';
@@ -1180,6 +1197,23 @@
       return { ok: true, malam: malamSkipSubuh, menit: durasiMenit, bangun: 240, kenaHiv: kenaHivBaru, teks: teksPsk };
     }
 
+    /* KASUS 1B: TEMAN / SAHABAT / PACAR / MANTAN (hotel) */
+    if (jenisTarget === 'teman' && stafTarget) {
+      var tm = stafTarget, sebelum = typeof S.diri.kesehatan === 'number' ? S.diri.kesehatan : 100;
+      S.diri.hb = 0; S.diri.stamina = 100; tm.hubungan = Math.min(100, tm.hubungan + 8);
+      if (!pakaiKondom) S.diri.kesehatan = Math.max(10, Math.round(sebelum - 8));
+      var teksT = 'Waktu berdua bersama ' + tm.nama + ' (' + g.KK_TEMAN.PERAN[tm.peran].toLowerCase() + ') di hotel selesai. Stamina penuh, hubungan ' + Math.round(tm.hubungan) + '%.' + (pakaiKondom ? ' (Aman memakai kondom).' : ' (Tanpa pengaman, kesehatan turun).');
+      var psT = pasanganAktif(S);
+      if (psT) {
+        S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 30);
+        if (Math.random() < 0.3) {
+          var crT = ceraiPasangan(S, psT.id, 'Ketahuan selingkuh dengan ' + tm.nama);
+          if (crT && crT.ok) teksT += ' 💔 ' + psT.nama + ' mengetahuinya dan resmi MENCERAIKANMU! (Gono-gini ' + rp(crT.gonoGini) + ').';
+        }
+      }
+      return { ok: true, malam: false, menit: 90, bangun: 240, teks: teksT, tempat: 'hotel', nama: tm.nama };
+    }
+
     /* KASUS 2: SELINGKUH DENGAN KARYAWAN LAWAN JENIS */
     if (jenisTarget === 'staf' && stafTarget) {
       S.diri.hb = 0;
@@ -1210,6 +1244,7 @@
     S.diri.stamina = 100;
     p.bahagia = 100;
     p.hb = 0;
+    if (jenisTarget === 'pasangan') { g.KK_TEMAN.resetTolak(S, p.id); p.ketahuan = null; }
     if (jenisTarget === 'pasangan') {
       /* HB dengan pasangan sah: kesehatan full, stamina full, bahagia full, rasa bersalah hilang */
       S.diri.kesehatan = 100;
