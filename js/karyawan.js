@@ -45,6 +45,16 @@
     if (k.bensinInsentif == null) k.bensinInsentif = 0;
     if (k.hariKerjaTotal == null) k.hariKerjaTotal = 0;
     if (!k.xp) k.xp = { racik: 0, cepat: 0, ramah: 0 };
+    if (!k.gender) k.gender = (N.namaCewek && N.namaCewek.indexOf(k.nama) >= 0) ? 'cewek' : 'cowok';
+    if (!k.tahunLahir) {
+      var thnS = (S && S.hari) ? KAL.tgl(S.hari).y : 2023;
+      k.tahunLahir = thnS - (20 + (k.nama ? k.nama.length % 10 : 3));
+    }
+  }
+  function usiaKaryawan(S, k) {
+    var thn = (S && S.hari) ? KAL.tgl(S.hari).y : 2023;
+    var tl = k.tahunLahir || (thn - 22);
+    return Math.max(17, thn - tl);
   }
 
   /* ---------- pelamar ---------- */
@@ -53,9 +63,13 @@
     for (var i = 0; i < a.length; i++) { r -= a[i][1]; if (r <= 0) { agama = a[i]; break; } }
     var bintang = function () { return 1 + Math.floor(Math.random() * 4); };
     var racik = bintang(), cepat = bintang();
+    var gender = Math.random() < 0.5 ? 'cewek' : 'cowok';
+    var daftarNama = gender === 'cewek' ? (N.namaCewek || N.namaOrang) : (N.namaCowok || N.namaOrang);
+    var usia = 18 + Math.floor(Math.random() * 16);
+    var tahunLahir = KAL.tgl(S.hari).y - usia;
     /* gaji wajar UMKM rendah: mulai Rp1,2 juta sampai Rp2,2 juta sesuai skill */
     var minta = paruh ? 0 : Math.round((PATOKAN_UMKM + (racik + cepat - 2) * 120000 + Math.random() * 200000) / 50000) * 50000;
-    return { id: 'p' + (++nomor) + '-' + S.hari, nama: acak(N.namaOrang), agama: agama[0], hariRaya: agama[2], paruh: !!paruh,
+    return { id: 'p' + (++nomor) + '-' + S.hari, nama: acak(daftarNama), gender: gender, tahunLahir: tahunLahir, agama: agama[0], hariRaya: agama[2], paruh: !!paruh,
       punyaMotorPribadi: Math.random() < 0.8,
       cepat: cepat, ramah: bintang(), racik: racik, jujur: 2 + Math.floor(Math.random() * 4), minta: minta, sampai: S.hari + 3 };
   }
@@ -73,7 +87,7 @@
     var b = S.jamBuka || 7, t = S.jamTutup || 22;
     var jm = p.paruh ? Math.max(b, t - 5) : b;
     var jp = p.paruh ? Math.min(t, jm + JAM_PARUH) : Math.min(t, b + JAM_SIF);
-    var k = { id: 'k' + (++nomor) + '-' + S.hari, nama: p.nama, agama: p.agama, hariRaya: p.hariRaya, paruh: p.paruh,
+    var k = { id: 'k' + (++nomor) + '-' + S.hari, nama: p.nama, gender: p.gender || 'cewek', tahunLahir: p.tahunLahir || (KAL.tgl(S.hari).y - 22), agama: p.agama, hariRaya: p.hariRaya, paruh: p.paruh,
       punyaMotorPribadi: p.punyaMotorPribadi !== false, bensinInsentif: 0, hariKerjaTotal: 0, xp: { racik: 0, cepat: 0, ramah: 0 },
       cepat: p.cepat, ramah: p.ramah, racik: p.racik, jujur: p.jujur, gaji: p.minta, upahPerJam: 10000, mulai: S.hari + 1,
       tugas: ['barista'], sif: p.paruh ? 'ramai' : 'pagi', jamMasuk: jm, jamPulang: jp, libur: 0,
@@ -418,7 +432,7 @@
     return { ok: true, total: total };
   }
 
-  g.KK_STAF = { TUGAS: TUGAS, PATOKAN_UMKM: PATOKAN_UMKM, BIAYA_LOWONGAN: BIAYA_LOWONGAN, BIAYA_KURSUS: BIAYA_KURSUS, siapkan: siapkan, pasangLowongan: pasangLowongan, terima: terima, tolak: tolak,
+  g.KK_STAF = { TUGAS: TUGAS, PATOKAN_UMKM: PATOKAN_UMKM, BIAYA_LOWONGAN: BIAYA_LOWONGAN, BIAYA_KURSUS: BIAYA_KURSUS, siapkan: siapkan, usiaKaryawan: usiaKaryawan, pasangLowongan: pasangLowongan, terima: terima, tolak: tolak,
     jamKerja: jamKerja, masuk: masuk, hadir: hadir, ada: ada, punyaTugas: punyaTugas, kerja: kerja, gantiHari: gantiHari, biayaHarian: biayaHarian,
     aturTugas: aturTugas, aturSif: aturSif, aturJam: aturJam, aturLibur: aturLibur, aturTunjangan: aturTunjangan, aturTarget: aturTarget, aturGaji: aturGaji, kursus: kursus, pecat: pecat, cari: cari, umk: umk, kelasUsaha: kelasUsaha, bpjsPersen: bpjsPersen };
 })(window);

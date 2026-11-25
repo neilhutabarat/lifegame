@@ -74,26 +74,97 @@
       { id: 'hiburan', nama: 'Hiburan' }
     ],
     barangRumah: [
-      { id: 'kipas', kat: 'elektronik', nama: 'Kipas angin berdiri', merek: 'Miyako', harga: 250000, watt: 0.04, ket: 'Tidur sedikit lebih nyenyak kalau AC mati' },
-      { id: 'kulkas', kat: 'dapur', nama: 'Kulkas 1 pintu', merek: 'Sharp', harga: 1800000, watt: 0.05, ket: 'Simpan minuman dingin, minum lebih murah' },
-      { id: 'ricecooker', kat: 'dapur', nama: 'Rice cooker', merek: 'Miyako', harga: 350000, watt: 0, ket: 'Masak sendiri, makan lebih murah' },
-      { id: 'dispenser', kat: 'dapur', nama: 'Dispenser + galon', merek: 'Miyako', harga: 300000, watt: 0, ket: 'Minum di kos hampir gratis' },
-      { id: 'karpet', kat: 'perabot', nama: 'Karpet dan bantal duduk', merek: 'Lokal', harga: 150000, watt: 0, ket: 'Kamar lebih nyaman' },
-      { id: 'tv', kat: 'hiburan', nama: 'TV LED 32 inci', merek: 'Xiaomi', harga: 2000000, watt: 0.06, ket: 'Istirahat sambil nonton, stamina pulih lebih cepat' },
-      { id: 'ps5', kat: 'hiburan', nama: 'PS5 Slim Digital', merek: 'Sony', harga: 9999000, watt: 0.2, butuh: 'tv', ket: 'Main game di kos. Butuh TV' },
-      { id: 'ps5disc', kat: 'hiburan', nama: 'PS5 Slim Disc', merek: 'Sony', harga: 11399000, watt: 0.2, butuh: 'tv', ket: 'Bisa pakai kaset. Butuh TV' },
-      { id: 'kaset', kat: 'hiburan', nama: 'Kaset game PS5', merek: 'Sony', harga: 1029000, watt: 0, butuh: 'ps5disc', banyak: true, ket: 'Game baru, main lebih seru' },
-      { id: 'hp2', kat: 'gadget', nama: 'HP kelas menengah', merek: 'Samsung Galaxy A', harga: 4500000, watt: 0, ket: 'Kamera lebih bagus: posting media sosial lebih ramai' },
-      { id: 'hp3', kat: 'gadget', nama: 'HP flagship', merek: 'iPhone', harga: 22000000, watt: 0, butuh: 'hp2', ket: 'Kamera terbaik: konten paling bagus' },
-      /* hanya muat di rumah (perkiraan harga pasar) */
-      { id: 'ac', kat: 'elektronik', nama: 'AC 1/2 PK + pasang', merek: 'Panasonic', harga: 3700000, watt: 0, rumah: true, ket: 'Rumah tidak ada AC bawaan. Tidur lebih nyenyak' },
-      { id: 'springbed', kat: 'perabot', nama: 'Spring bed 160×200', merek: 'Lokal', harga: 3500000, watt: 0, rumah: true, ket: 'Tidur memulihkan stamina lebih banyak' },
-      { id: 'sofa', kat: 'perabot', nama: 'Sofa 3 dudukan', merek: 'Informa', harga: 3000000, watt: 0, rumah: true, ket: 'Istirahat di rumah lebih cepat pulih' },
-      { id: 'mejamakan', kat: 'perabot', nama: 'Meja makan 4 kursi', merek: 'Informa', harga: 2200000, watt: 0, rumah: true, ket: 'Makan di rumah lebih kenyang' },
-      { id: 'kompor', kat: 'dapur', nama: 'Kompor gas + tabung 3 kg', merek: 'Rinnai', harga: 650000, watt: 0, rumah: true, ket: 'Masak sendiri di rumah' },
-      { id: 'mesincuci', kat: 'elektronik', nama: 'Mesin cuci 2 tabung', merek: 'Sharp', harga: 1900000, watt: 0, rumah: true, ket: 'Cuci baju sendiri di rumah' },
-      { id: 'kulkas2', kat: 'dapur', nama: 'Kulkas 2 pintu', merek: 'Samsung', harga: 4500000, watt: 0, rumah: true, ket: 'Stok minuman dingin lebih banyak' },
-      { id: 'tv55', kat: 'hiburan', nama: 'TV 55 inci 4K', merek: 'Samsung', harga: 7000000, watt: 0, rumah: true, ket: 'Main PS dan nonton lebih puas' }
+      /* Katalog Tokopedia (Elektronik rumah tangga, Perabot besar, Hiburan TV & PS, Peralatan rumah) */
+      { id: 'kipas', toko: 'tokopedia', kat: 'elektronik', nama: 'Kipas angin berdiri 16 inci', merek: 'Miyako', harga: 250000, watt: 0.04, ket: 'Tidur sedikit lebih nyenyak kalau AC mati' },
+      { id: 'kulkas', toko: 'tokopedia', kat: 'dapur', nama: 'Kulkas 1 pintu Shine Series', merek: 'Sharp', harga: 1800000, watt: 0.05, ket: 'Simpan minuman dingin, minum lebih murah' },
+      { id: 'dispenser', toko: 'tokopedia', kat: 'dapur', nama: 'Dispenser galon bawah + galon', merek: 'Miyako', harga: 300000, watt: 0, ket: 'Minum di kos hampir gratis' },
+      { id: 'tv', toko: 'tokopedia', kat: 'hiburan', nama: 'Google TV LED 32 inci HD', merek: 'Xiaomi', harga: 2000000, watt: 0.06, ket: 'Istirahat sambil nonton, stamina pulih lebih cepat' },
+      { id: 'ps5', toko: 'tokopedia', kat: 'hiburan', nama: 'PS5 Slim Digital Edition', merek: 'Sony', harga: 9999000, watt: 0.2, butuh: 'tv', ket: 'Main game di kos. Butuh TV' },
+      { id: 'ps5disc', toko: 'tokopedia', kat: 'hiburan', nama: 'PS5 Slim Disc Edition', merek: 'Sony', harga: 11399000, watt: 0.2, butuh: 'tv', ket: 'Bisa pakai kaset Blu-ray. Butuh TV' },
+      { id: 'kaset', toko: 'tokopedia', kat: 'hiburan', nama: 'Kaset game PS5 Original', merek: 'Sony', harga: 1029000, watt: 0, butuh: 'ps5disc', banyak: true, ket: 'Game baru, main lebih seru' },
+      { id: 'airpurifier', toko: 'tokopedia', kat: 'elektronik', nama: 'Air Purifier Plasmacluster', merek: 'Sharp', harga: 1650000, watt: 0.03, ket: 'Udara kamar bersih & segar, tidur makin sehat' },
+      { id: 'microwave', toko: 'tokopedia', kat: 'dapur', nama: 'Microwave Oven Low Watt 20L', merek: 'Panasonic', harga: 1450000, watt: 0.02, ket: 'Hangatkan makanan cepat di kamar' },
+      { id: 'polygon', toko: 'tokopedia', kat: 'hiburan', nama: 'Sepeda Lipat Urbano 3', merek: 'Polygon', harga: 4800000, watt: 0, sewaHarian: 55000, ket: 'Olahraga pagi & bisa disewakan harian' },
+      /* khusus rumah di Tokopedia */
+      { id: 'ac', toko: 'tokopedia', kat: 'elektronik', nama: 'AC 1/2 PK Low Watt + pasang', merek: 'Panasonic', harga: 3700000, watt: 0, rumah: true, ket: 'Rumah tidak ada AC bawaan. Tidur lebih nyenyak' },
+      { id: 'springbed', toko: 'tokopedia', kat: 'perabot', nama: 'Spring bed Pocket 160×200', merek: 'King Koil / Lokal', harga: 3500000, watt: 0, rumah: true, ket: 'Tidur memulihkan stamina lebih banyak' },
+      { id: 'sofa', toko: 'tokopedia', kat: 'perabot', nama: 'Sofa L-Shape 3 dudukan', merek: 'Informa', harga: 3000000, watt: 0, rumah: true, ket: 'Istirahat di rumah lebih cepat pulih' },
+      { id: 'mejamakan', toko: 'tokopedia', kat: 'perabot', nama: 'Set meja makan kayu 4 kursi', merek: 'Informa', harga: 2200000, watt: 0, rumah: true, ket: 'Makan di rumah lebih kenyang' },
+      { id: 'mesincuci', toko: 'tokopedia', kat: 'elektronik', nama: 'Mesin cuci 2 tabung 8 kg', merek: 'Sharp', harga: 1900000, watt: 0, rumah: true, ket: 'Cuci baju sendiri di rumah' },
+      { id: 'kulkas2', toko: 'tokopedia', kat: 'dapur', nama: 'Kulkas 2 pintu Twin Cooling', merek: 'Samsung', harga: 4500000, watt: 0, rumah: true, ket: 'Stok minuman dingin lebih banyak' },
+      { id: 'tv55', toko: 'tokopedia', kat: 'hiburan', nama: 'Smart TV 55 inci Crystal 4K', merek: 'Samsung', harga: 7000000, watt: 0, rumah: true, ket: 'Main PS dan nonton lebih puas' },
+      { id: 'waterheater', toko: 'tokopedia', kat: 'elektronik', nama: 'Water Heater Listrik 15L', merek: 'Ariston', harga: 2100000, watt: 0.04, rumah: true, ket: 'Mandi air hangat di rumah, badan segar' },
+      { id: 'hometheater', toko: 'tokopedia', kat: 'hiburan', nama: 'Home Theater Soundbar 5.1ch', merek: 'Sony', harga: 4200000, watt: 0.05, rumah: true, butuh: 'tv', ket: 'Suara bioskop di ruang keluarga' },
+      { id: 'kursipijat', toko: 'tokopedia', kat: 'perabot', nama: 'Kursi Pijat Elektrik Smart', merek: 'Ogawa', harga: 14500000, watt: 0.06, rumah: true, ket: 'Pijat seluruh badan di rumah, stamina cepat pulih' },
+
+      /* Katalog Shopee (Dapur modern, Perabot kos estetik, Kreator Konten, Audio & Gaya hidup) */
+      { id: 'ricecooker', toko: 'shopee', kat: 'dapur', nama: 'Rice cooker digital HD4515', merek: 'Philips', harga: 350000, watt: 0, ket: 'Masak sendiri di kos/rumah, makan lebih murah' },
+      { id: 'karpet', toko: 'shopee', kat: 'perabot', nama: 'Karpet bulu lembut & beanbag', merek: 'Informa / Lokal', harga: 150000, watt: 0, ket: 'Kamar lebih nyaman buat rebahan' },
+      { id: 'kompor', toko: 'shopee', kat: 'dapur', nama: 'Kompor gas 2 tungku + tabung 3 kg', merek: 'Rinnai', harga: 650000, watt: 0, rumah: true, ket: 'Masak lengkap sendiri di rumah' },
+      { id: 'airfryer', toko: 'shopee', kat: 'dapur', nama: 'Digital Air Fryer Low Watt 4.1L', merek: 'Philips', harga: 1150000, watt: 0.02, ket: 'Goreng tanpa minyak, praktis di kamar' },
+      { id: 'blender', toko: 'shopee', kat: 'dapur', nama: 'Blender & Juicer 3-in-1', merek: 'Miyako', harga: 320000, watt: 0, ket: 'Bikin jus segar di kos/rumah' },
+      { id: 'mesinkopirumah', toko: 'shopee', kat: 'dapur', nama: 'Mesin Kopi Kapsul Dolce Gusto', merek: 'Nescafé / Krups', harga: 1350000, watt: 0.02, ket: 'Seduh kopi kapsul pagi hari di kamar' },
+      { id: 'robotvacuum', toko: 'shopee', kat: 'elektronik', nama: 'Robot Vacuum Mop 2 Lite', merek: 'Xiaomi', harga: 2850000, watt: 0.03, ket: 'Sapu & pel lantai kamar otomatis' },
+      { id: 'ringlight', toko: 'shopee', kat: 'gadget', nama: 'Ring Light LED 18" + Tripod Pro', merek: 'Brica / Takara', harga: 350000, watt: 0.01, bonusKamera: 0.15, ket: 'Konten TikTok & IG kedai tampak terang (+15% jangkauan)' },
+      { id: 'speakerjbl', toko: 'shopee', kat: 'hiburan', nama: 'Speaker Bluetooth Flip 6 Waterproof', merek: 'JBL', harga: 1850000, watt: 0, ket: 'Dengar musik bass mantap saat istirahat' },
+      { id: 'kursigaming', toko: 'shopee', kat: 'perabot', nama: 'Kursi Gaming Ergonomis Reclining', merek: 'Fantech / Rexus', harga: 2400000, watt: 0, ket: 'Main game & santai makin nyaman tanpa pegal' },
+      { id: 'smartwatch', toko: 'shopee', kat: 'gadget', nama: 'Watch Fit 3 AMOLED NFC', merek: 'Huawei', harga: 1799000, watt: 0, ket: 'Pantau kebugaran & notifikasi order lebih sigap' },
+      { id: 'osmoaction', toko: 'shopee', kat: 'gadget', nama: 'Kamera Vlog Osmo Action 4 4K', merek: 'DJI', harga: 5399000, watt: 0, bonusKamera: 0.35, sewaHarian: 95000, ket: 'Kamera vlog 4K stabil (+35% sosmed) & bisa disewakan' },
+      { id: 'proyektor', toko: 'shopee', kat: 'hiburan', nama: 'Smart Proyektor Mini Full HD Android', merek: 'Wanbo / Xiaomi', harga: 1650000, watt: 0.04, sewaHarian: 65000, ket: 'Nonton layar lebar di dinding kamar & bisa disewakan' }
+    ],
+
+    /* pulsa seluler, paket kuota internet (GB), dan langganan WiFi kos/rumah */
+    paketData: {
+      pulsa: [20000, 50000, 100000, 200000],
+      kuota: [
+        { id: 'k5', gb: 5, harga: 25000, nama: 'Kuota 5 GB (Harian/Mingguan)' },
+        { id: 'k15', gb: 15, harga: 55000, nama: 'Kuota 15 GB (Combo Sakti)' },
+        { id: 'k35', gb: 35, harga: 100000, nama: 'Kuota 35 GB (Freedom Internet)' },
+        { id: 'k75', gb: 75, harga: 165000, nama: 'Kuota 75 GB (Unlimited FUP)' }
+      ],
+      wifiRumah: { nama: 'WiFi IndiHome / Biznet Fiber 50 Mbps', pasang: 150000, hargaBulan: 285000 }
+    },
+
+    /* katalog gadget asli: HP (Apple, Samsung, Xiaomi, OPPO, Realme, Infinix), Tablet, & Laptop sesuai tahun rilis asli, baterai mAh, charger Watt, RAM/Storage, dan harga pasar */
+    daftarGadget: [
+      /* HP 2023 */
+      { id: 'redmi12c', jenis: 'hp', tahun: 2023, merek: 'Xiaomi', nama: 'Xiaomi Redmi 12C', ram: 4, storage: 64, mah: 5000, watt: 10, kamera: 1.0, harga: 1399000, ket: 'Helio G85 · Layar 6,71" · Kamera 50 MP · HP awal andalan' },
+      { id: 'infinix30', jenis: 'hp', tahun: 2023, merek: 'Infinix', nama: 'Infinix Note 30', ram: 8, storage: 256, mah: 5000, watt: 45, kamera: 1.15, harga: 2199000, ket: 'Helio G99 · 120Hz · Fast Charge 45W · Speaker JBL' },
+      { id: 'realmec55', jenis: 'hp', tahun: 2023, merek: 'Realme', nama: 'Realme C55 NFC', ram: 6, storage: 128, mah: 5000, watt: 33, kamera: 1.15, harga: 2299000, ket: 'Mini Capsule · Kamera 64 MP · SuperVOOC 33W' },
+      { id: 'redminote12p', jenis: 'hp', tahun: 2023, merek: 'Xiaomi', nama: 'Redmi Note 12 Pro 5G', ram: 8, storage: 256, mah: 5000, watt: 67, kamera: 1.3, harga: 4399000, ket: 'Sony IMX766 OIS · P-OLED 120Hz · Turbo Charge 67W' },
+      { id: 'opporeno10', jenis: 'hp', tahun: 2023, merek: 'OPPO', nama: 'OPPO Reno10 5G', ram: 8, storage: 256, mah: 5000, watt: 67, kamera: 1.35, harga: 5999000, ket: 'Telephoto Portrait 32 MP · 3D Curved AMOLED · SuperVOOC 67W' },
+      { id: 'galaxya54', jenis: 'hp', tahun: '2023', tahunRilis: 2023, merek: 'Samsung', nama: 'Samsung Galaxy A54 5G', ram: 8, storage: 256, mah: 5000, watt: 25, kamera: 1.4, harga: 5999000, ket: 'Super AMOLED 120Hz · IP67 Tahan Air · Kamera OIS Nightography' },
+      { id: 'iphone15', jenis: 'hp', tahun: 2023, merek: 'Apple', nama: 'Apple iPhone 15', ram: 6, storage: 128, mah: 3349, watt: 20, kamera: 1.65, harga: 13999000, ket: 'A16 Bionic · Dynamic Island · Kamera Utama 48 MP · USB-C' },
+      { id: 's23ultra', jenis: 'hp', tahun: 2023, merek: 'Samsung', nama: 'Samsung Galaxy S23 Ultra 5G', ram: 12, storage: 256, mah: 5000, watt: 45, kamera: 1.8, harga: 19999000, ket: 'Snapdragon 8 Gen 2 · Kamera 200 MP Space Zoom · S-Pen bawaan' },
+      { id: 'iphone15pm', jenis: 'hp', tahun: 2023, merek: 'Apple', nama: 'iPhone 15 Pro Max', ram: 8, storage: 256, mah: 4422, watt: 27, kamera: 1.9, harga: 24999000, ket: 'Titanium · A17 Pro · 5× Tetraprism Zoom · ProRes Video' },
+      /* HP 2024+ */
+      { id: 'infinixgt20', jenis: 'hp', tahun: 2024, merek: 'Infinix', nama: 'Infinix GT 20 Pro 5G', ram: 12, storage: 256, mah: 5000, watt: 45, kamera: 1.35, harga: 4399000, ket: 'Dimensity 8200 Ultimate · Layar 144Hz AMOLED · Cyber Mecha' },
+      { id: 'realme13p', jenis: 'hp', tahun: 2024, merek: 'Realme', nama: 'Realme 13 Pro+ 5G', ram: 12, storage: 512, mah: 5200, watt: 80, kamera: 1.55, harga: 6499000, ket: 'Dual Sony Periscope OIS · SuperVOOC 80W · Desain Monet' },
+      { id: 'xiaomi14tp', jenis: 'hp', tahun: 2024, merek: 'Xiaomi', nama: 'Xiaomi 14T Pro Leica', ram: 12, storage: 512, mah: 5000, watt: 120, kamera: 1.75, harga: 8499000, ket: 'Lensa Leica Summilux · Dimensity 9300+ · HyperCharge 120W' },
+      { id: 'oppofindx8', jenis: 'hp', tahun: 2024, merek: 'OPPO', nama: 'OPPO Find X8 Hasselblad', ram: 12, storage: 256, mah: 5630, watt: 80, kamera: 1.85, harga: 13999000, ket: 'Kamera Hasselblad · Baterai Silicon-Carbon 5630 mAh · SuperVOOC 80W' },
+      { id: 's24ultra', jenis: 'hp', tahun: 2024, merek: 'Samsung', nama: 'Samsung Galaxy S24 Ultra 5G', ram: 12, storage: 512, mah: 5000, watt: 45, kamera: 1.95, harga: 21999000, ket: 'Rangka Titanium · Galaxy AI · Snapdragon 8 Gen 3 · 200 MP' },
+      { id: 'iphone16pm', jenis: 'hp', tahun: 2024, merek: 'Apple', nama: 'iPhone 16 Pro Max', ram: 8, storage: 256, mah: 4685, watt: 30, kamera: 2.05, harga: 25999000, ket: 'A18 Pro · Camera Control · Layar 6,9" Super Retina XDR · 4K 120fps' },
+
+      /* Tablet */
+      { id: 'mipad6', jenis: 'tablet', tahun: 2023, merek: 'Xiaomi', nama: 'Xiaomi Pad 6 11" 144Hz', ram: 8, storage: 256, mah: 8840, watt: 33, kamera: 1.2, harga: 4999000, sewaHarian: 55000, ket: 'Snapdragon 870 · Layar 2.8K 144Hz · Quad Speaker Dolby Atmos' },
+      { id: 'tabs9fe', jenis: 'tablet', tahun: 2023, merek: 'Samsung', nama: 'Samsung Galaxy Tab S9 FE', ram: 6, storage: 128, mah: 8000, watt: 45, kamera: 1.25, harga: 6499000, sewaHarian: 70000, ket: 'Termasuk S-Pen IP68 · Layar 10,9" 90Hz · Cocok desain & kasir' },
+      { id: 'ipadairm2', jenis: 'tablet', tahun: 2024, merek: 'Apple', nama: 'Apple iPad Air M2 11"', ram: 8, storage: 128, mah: 7606, watt: 20, kamera: 1.45, harga: 11999000, sewaHarian: 115000, ket: 'Chip Apple M2 · Liquid Retina · Edit konten & bisnis super lancar' },
+
+      /* Laptop */
+      { id: 'vivobook14', jenis: 'laptop', tahun: 2023, merek: 'ASUS', nama: 'ASUS Vivobook Go 14 Ryzen 3', ram: 8, storage: 256, mah: 11000, watt: 45, kamera: 1.0, harga: 6299000, sewaHarian: 65000, ket: 'AMD Ryzen 3 7320U · RAM 8 GB LPDDR5 · SSD 256 GB · Ringan 1,38 kg' },
+      { id: 'ideapad3', jenis: 'laptop', tahun: 2023, merek: 'Lenovo', nama: 'Lenovo IdeaPad Slim 3 Core i5', ram: 8, storage: 512, mah: 12500, watt: 65, kamera: 1.0, harga: 8499000, sewaHarian: 85000, ket: 'Intel Core i5-12450H · SSD 512 GB · Rapid Charge 65W' },
+      { id: 'macbookm2', jenis: 'laptop', tahun: 2023, merek: 'Apple', nama: 'MacBook Air M2 13,6"', ram: 8, storage: 256, mah: 14000, watt: 30, kamera: 1.3, harga: 16999000, sewaHarian: 150000, ket: 'Chip Apple M2 · Liquid Retina · Baterai tahan 18 jam · MagSafe 3' },
+      { id: 'rogzephyrus', jenis: 'laptop', tahun: 2024, merek: 'ASUS ROG', nama: 'ROG Zephyrus G14 OLED RTX 4060', ram: 16, storage: 1024, mah: 19000, watt: 180, kamera: 1.2, harga: 28999000, sewaHarian: 240000, ket: 'Ryzen 9 8945HS · GeForce RTX 4060 · ROG Nebula OLED 120Hz · 1 TB SSD' }
+    ],
+
+    /* aplikasi & game HP yang bisa diinstal (memakai RAM & Storage internal HP) */
+    apkHp: [
+      { id: 'kasirpro', jenis: 'bisnis', nama: 'BukuWarung & Kasir Pintar Pro', rom: 2, ram: 3, kuotaGb: 0.2, ket: 'Catat arus kas otomatis & mengurangi risiko selisih kas laci' },
+      { id: 'canva', jenis: 'kreator', nama: 'Canva Desain & Poster Menu', rom: 3, ram: 4, kuotaGb: 0.4, bonusKamera: 0.15, ket: 'Desain poster promo kedai (+15% jangkauan posting IG & Threads)' },
+      { id: 'capcut', jenis: 'kreator', nama: 'CapCut Pro Video Editor 4K', rom: 5, ram: 6, kuotaGb: 0.6, bonusKamera: 0.25, ket: 'Edit video racik kopi sinematik (+25% jangkauan TikTok & IG)' },
+      { id: 'mlbb', jenis: 'game', nama: 'Mobile Legends: Bang Bang', rom: 9, ram: 4, kuotaGb: 1.2, stamina: 10, ket: 'Push rank 30 menit di HP (+10 stamina saat istirahat)' },
+      { id: 'pubgm', jenis: 'game', nama: 'PUBG Mobile HD Resource', rom: 15, ram: 6, kuotaGb: 1.8, stamina: 13, ket: 'Main battle royale 30 menit (+13 stamina saat istirahat)' },
+      { id: 'genshin', jenis: 'game', nama: 'Genshin Impact Full Map', rom: 34, ram: 8, kuotaGb: 3.5, stamina: 17, ket: 'Jelajah open-world grafis rata kanan (+17 stamina saat istirahat)' }
     ],
 
     /* menjual barang kos/rumah bekas (perkiraan): buka kotak turun ke 75%, lalu turun 12% setahun dan 0,15% tiap pemakaian */
@@ -354,6 +425,8 @@
       { id: 'shopeefood', nama: 'ShopeeFood', app: 'ShopeeFood Merchant', warna: '#ee4d2d', komisi: 0.2 }
     ],
     namaOrang: ['Budi', 'Siti', 'Rina', 'Andi', 'Dewi', 'Fajar', 'Putri', 'Rizky', 'Nadia', 'Yoga', 'Intan', 'Bayu', 'Lestari', 'Hendra', 'Maya', 'Tono', 'Sari', 'Dimas', 'Wulan', 'Agus', 'Ucok', 'Butet', 'Rudi', 'Fitri'],
+    namaCewek: ['Siti', 'Rina', 'Dewi', 'Putri', 'Nadia', 'Intan', 'Lestari', 'Maya', 'Sari', 'Wulan', 'Butet', 'Fitri', 'Ayu', 'Citra', 'Nisa', 'Tiara', 'Amelia', 'Dinda'],
+    namaCowok: ['Budi', 'Andi', 'Fajar', 'Rizky', 'Yoga', 'Bayu', 'Hendra', 'Tono', 'Dimas', 'Agus', 'Ucok', 'Rudi', 'Arif', 'Bagus', 'Reza', 'Wahyu', 'Ilham', 'Dedi'],
     kantor: ['Kantor notaris', 'Kantor kelurahan', 'Bengkel resmi', 'Kantor asuransi', 'Panitia arisan RT', 'Kantor cabang bank', 'Klinik pratama', 'Sekolah swasta']
   };
 })(typeof window !== 'undefined' ? window : this);

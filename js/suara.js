@@ -26,10 +26,11 @@
       if (!AC) return null;
       ctx = new AC();
       masterMusik = ctx.createGain();
-      masterMusik.gain.value = setelan.musik ? 0.18 : 0;
+      /* volume musik ditingkatkan 400% (dari 0.18 ke 0.72) */
+      masterMusik.gain.value = setelan.musik ? 0.72 : 0;
       masterMusik.connect(ctx.destination);
       masterEfek = ctx.createGain();
-      masterEfek.gain.value = setelan.efek ? 0.28 : 0;
+      masterEfek.gain.value = setelan.efek ? 0.35 : 0;
       masterEfek.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') {
@@ -131,6 +132,37 @@
         67, 0, 71, 0, 74, 0, 72, 71,
         72, 0, 67, 0, 64, 0, 0, 0
       ]
+    },
+    /* RAMADAN: Gambus & Marawis bernuansa Hijaz (D - Eb - F# - G - A - Bb - C - D) sepanjang bulan puasa */
+    ramadan: {
+      tempoMs: 280,
+      akor: [
+        [62, 66, 69], [63, 67, 70], [67, 70, 74], [62, 66, 69]
+      ],
+      bas: [50, 0, 50, 57, 50, 0, 57, 0, 51, 0, 51, 58, 51, 0, 58, 0, 55, 0, 55, 62, 55, 0, 62, 0, 50, 0, 57, 0, 50, 0, 0, 0],
+      melodi: [
+        74, 75, 78, 79, 81, 0, 79, 78,
+        75, 78, 75, 74, 72, 0, 74, 0,
+        79, 81, 82, 81, 79, 78, 75, 74,
+        75, 78, 75, 74, 74, 0, 0, 0
+      ]
+    },
+    /* TAKBIRAN: Gema Takbir & Bedug Idulfitri (2 malam: malam Lebaran & malam esoknya) */
+    takbiran: {
+      tempoMs: 300,
+      akor: [
+        [62, 65, 69], [62, 65, 69], [67, 70, 74], [62, 65, 69]
+      ],
+      bas: [50, 50, 0, 50, 57, 0, 50, 0, 50, 50, 0, 50, 53, 0, 50, 0, 55, 55, 0, 55, 58, 0, 55, 0, 50, 0, 57, 50, 50, 0, 0, 0],
+      melodi: [
+        /* Allahu Akbar, Allahu Akbar, Allahu Akbar */
+        74, 74, 77, 74, 0, 74, 74, 77,
+        74, 0, 74, 77, 81, 79, 77, 0,
+        /* Laa ilaaha illallaahu wallaahu Akbar */
+        79, 81, 82, 81, 79, 77, 76, 77,
+        /* Allahu Akbar walillaahil hamd */
+        79, 77, 76, 74, 74, 0, 0, 0
+      ]
     }
   };
 
@@ -148,15 +180,22 @@
       /* Petikan arpeggio lembut di pagi hari */
       var nadaArp = akor[i % akor.length];
       mainNada(nadaArp, durKetuk * 1.6, 'triangle', 0.14, 0);
-    } else if (suasanaAktif === 'buka') {
-      /* Sinkopasi bossa nova di jam buka */
+    } else if (suasanaAktif === 'buka' || suasanaAktif === 'ramadan') {
+      /* Sinkopasi bossa nova di jam buka atau petikan gambus & marawis di bulan Ramadan */
       if (i % 8 === 0 || i % 8 === 3 || i % 8 === 6) {
         for (var a = 0; a < akor.length; a++) {
-          mainNada(akor[a], durKetuk * 1.3, 'triangle', 0.09, a * 0.012);
+          mainNada(akor[a], durKetuk * 1.3, 'triangle', 0.11, a * 0.012);
         }
       }
-      if (i % 4 === 0) mainKetukan('kick', 0.16, 0);
-      if (i % 8 === 2 || i % 8 === 5 || i % 8 === 7) mainKetukan('rim', 0.07, 0);
+      if (i % 4 === 0 || (suasanaAktif === 'ramadan' && i % 8 === 6)) mainKetukan('kick', 0.18, 0);
+      if (i % 8 === 2 || i % 8 === 5 || i % 8 === 7) mainKetukan('rim', 0.09, 0);
+    } else if (suasanaAktif === 'takbiran') {
+      /* Tabuhan bedug takbiran meriah + akor penuh */
+      if (i % 4 === 0) {
+        for (var tk = 0; tk < akor.length; tk++) mainNada(akor[tk], durKetuk * 2.5, 'triangle', 0.14, tk * 0.015);
+      }
+      if (i % 4 === 0 || i % 8 === 1 || i % 8 === 6) mainKetukan('kick', 0.28, 0);
+      if (i % 2 === 1) mainKetukan('rim', 0.12, 0);
     } else {
       /* Pad & Rhodes panjang di malam hari */
       if (i % 8 === 0) {
@@ -246,7 +285,7 @@
     simpanSetelan();
     pastikanCtx();
     if (masterMusik && ctx) {
-      masterMusik.gain.setValueAtTime(setelan.musik ? 0.18 : 0, ctx.currentTime);
+      masterMusik.gain.setValueAtTime(setelan.musik ? 0.72 : 0, ctx.currentTime);
     }
     if (setelan.musik) {
       sudahInteraksi = true;

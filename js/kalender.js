@@ -178,6 +178,16 @@
     if (r && n >= r.awal && n <= r.akhir) return n - r.awal + 1;
     return 0;
   }
+  /* takbiran selama 2 malam: malam Lebaran (H-1 mulai 18.00 sampai pagi) dan malam esoknya (hari ke-1 Lebaran malam) */
+  function apakahMalamTakbiran(n, menit) {
+    var t = tgl(n), l = lebaranTahun(t.y);
+    if (l == null) return false;
+    var m = (menit == null ? 1100 : menit) % 1440;
+    if (n === l - 1 && m >= 1080) return true;
+    if (n === l && (m < 360 || m >= 1080)) return true;
+    if (n === l + 1 && m < 300) return true;
+    return false;
+  }
   function tanggalKembar(n) {
     var t = tgl(n);
     return t.m === t.d ? (t.d + '.' + t.m) : null;
@@ -237,7 +247,7 @@
   }
 
   var api = { dn: dn, tgl: tgl, kunci: kunci, liburTahun: liburTahun, hariIni: hariIni, apakahLibur: apakahLibur,
-    apakahRamadan: apakahRamadan, tanggalKembar: tanggalKembar, usia: usia,
+    apakahRamadan: apakahRamadan, apakahMalamTakbiran: apakahMalamTakbiran, tanggalKembar: tanggalKembar, usia: usia,
     berikutnya: berikutnya, ramadanTahun: ramadanTahun, lebaranTahun: lebaranTahun, faseBulan: faseBulan, paskah: paskah };
   g.KK_KAL = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

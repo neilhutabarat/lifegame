@@ -142,9 +142,13 @@
     for (var i = 0; i < 10; i++) S.dunia.ulasan.push({ bintang: 5, teks: acak(['Mantap!', 'Recommended banget', 'Enak', 'Top']), hari: S.hari, nama: acak(N.namaOrang), balas: false, palsu: true });
     return true;
   }
-  function posting(S, jenis) {
+  function posting(S, jenis, otomatisStaf) {
     var so = S.dunia.sosmed;
     if (so.postHari === S.hari && so.postJenis && so.postJenis.indexOf(jenis) >= 0) return 'Sudah posting di sini hari ini. Besok lagi supaya tidak dianggap spam.';
+    if (!otomatisStaf && g.KK_DIRI && g.KK_DIRI.pakaiKuota) {
+      var ck = g.KK_DIRI.pakaiKuota(S, jenis === 'tiktok' ? 0.35 : 0.2);
+      if (ck !== true) return ck;
+    }
     var jamBagus = S.menit >= 1140 && S.menit <= 1260 ? 1.5 : S.menit >= 690 && S.menit <= 780 ? 1.2 : 0.8;
     var tren = acak(M.MENU).id === so.tren ? 1.3 : 1, dasar = jenis === 'tiktok' ? 60 : jenis === 'threads' ? 25 : 35;
     var akun = jenis === 'tiktok' ? 'tiktok' : jenis === 'threads' ? 'threads' : 'ig';
@@ -225,7 +229,7 @@
     /* komplain viral kalau rating rendah dan ulasan buruk tidak dibalas */
     var buruk = d.ulasan.filter(function (u) { return u.bintang <= 2 && !u.balas && nLama - u.hari <= 2; });
     if (buruk.length >= 3 && Math.random() < 0.3) { d.sosmed.ig = Math.max(0, d.sosmed.ig - 100); for (var j = 0; j < 4; j++) d.ulasan.push({ bintang: 1, teks: 'Ikut-ikutan dari postingan viral: pelayanan buruk.', hari: nBaru, nama: acak(N.namaOrang), balas: false }); kabar.push('Keluhan pembeli viral di media sosial. Balas ulasan buruk supaya tidak melebar.'); }
-    if (d.sosmed.postHari !== nLama && S.staf && S.staf.some(function (k) { return k.tugas.indexOf('sosmed') >= 0 && k.mulai <= nLama; })) { var r = posting(S, Math.random() < 0.5 ? 'ig' : 'tiktok'); if (r.ok) kabar.push('Admin media sosial memposting kemarin malam, +' + r.baru + ' pengikut.' + (r.viral ? ' Postingannya viral!' : '')); }
+    if (d.sosmed.postHari !== nLama && S.staf && S.staf.some(function (k) { return k.tugas.indexOf('sosmed') >= 0 && k.mulai <= nLama; })) { var r = posting(S, Math.random() < 0.5 ? 'ig' : 'tiktok', true); if (r.ok) kabar.push('Admin media sosial memposting kemarin malam, +' + r.baru + ' pengikut.' + (r.viral ? ' Postingannya viral!' : '')); }
     return kabar;
   }
 

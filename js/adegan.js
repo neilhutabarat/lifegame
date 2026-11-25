@@ -220,8 +220,21 @@
     kotak(bx + bw - 34, by + 34, 12, 16, '#b8bfc4'); kotak(bx + bw - 36, by + 32, 16, 4, '#8d969b');
     kotak(bx + 14, by + 30, 14, 20, '#2f2f33');
     if (anim.rolling > 0.35) {
-      var ekstra = Math.min(2, Math.max(0, (s.staf || 0)));
-      for (var e = 0; e < ekstra; e++) { cx.save(); cx.translate(e === 0 ? bx + 28 : bx + bw - 28, by + bh - 4); gambarBarista(0, 0, t + 900 * (e + 1), e % 2 ? 'cewek' : 'cowok'); cx.restore(); }
+      var stafG = s.stafGender || [];
+      var ekstra = Math.min(2, Math.max(0, stafG.length || (s.staf || 0)));
+      for (var e = 0; e < ekstra; e++) {
+        cx.save();
+        cx.translate(e === 0 ? bx + 28 : bx + bw - 28, by + bh - 4);
+        gambarBarista(0, 0, t + 900 * (e + 1), stafG[e] || (e % 2 ? 'cewek' : 'cowok'));
+        cx.restore();
+      }
+      if (s.anakBantu && s.anakBantu.length) {
+        cx.save();
+        cx.translate(bx + bw - 14, by + bh - 1);
+        cx.scale(0.82, 0.82);
+        gambarBarista(0, 0, t + 500, s.anakBantu[0]);
+        cx.restore();
+      }
       gambarBarista(bx + bw / 2, by + bh - 4, t, s.gender);
     }
     /* rolling door */

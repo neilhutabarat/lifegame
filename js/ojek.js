@@ -46,7 +46,18 @@
     o.berikut = waktu(S) + jeda(S);
     return true;
   }
-  function offline(S) { var o = S.ojek; if (o.trip) return 'Selesaikan order dulu.'; o.online = false; o.tawaran = null; return true; }
+  function offline(S, paksa) {
+    var o = S.ojek;
+    if (o.trip && !paksa) return 'Selesaikan order dulu atau tekan Batalkan order.';
+    if (o.trip) { o.trip = null; o.tolak++; }
+    o.online = false; o.tawaran = null; return true;
+  }
+  function batalTrip(S) {
+    var o = S.ojek;
+    if (!o.trip) return 'Tidak ada order yang sedang berjalan.';
+    o.trip = null; o.tolak++; o.berikut = waktu(S) + jeda(S);
+    return true;
+  }
 
   function laju(S) {
     var jam = Math.floor(S.menit / 60) % 24, r = PERMINTAAN[jam];
@@ -133,6 +144,6 @@
     return kabar;
   }
 
-  g.KK_OJEK = { siapkan: siapkan, daftar: daftar, aktif: aktif, tarif: tarif, bisaOnline: bisaOnline, online: online, offline: offline, ambil: ambil, lewati: lewati,
+  g.KK_OJEK = { siapkan: siapkan, daftar: daftar, aktif: aktif, tarif: tarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, ambil: ambil, lewati: lewati,
     kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, CEPAT_TRIP: CEPAT_TRIP };
 })(window);

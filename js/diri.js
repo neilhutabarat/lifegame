@@ -18,6 +18,27 @@
     S.game = S.game || { konsol: {}, kaset: {}, pasar: null };
     S.game.konsol = S.game.konsol || {};
     S.game.kaset = S.game.kaset || {};
+    S.hp = S.hp || { id: 'redmi12c', baterai: 95, cas: false, pulsa: 25000, kuota: 8, apk: { kasirpro: true } };
+    if (typeof S.hp.baterai !== 'number') S.hp.baterai = 95;
+    if (typeof S.hp.pulsa !== 'number') S.hp.pulsa = 25000;
+    if (typeof S.hp.kuota !== 'number') S.hp.kuota = 8;
+    S.hp.apk = S.hp.apk || { kasirpro: true };
+    S.gadget = S.gadget || {};
+    if (!S.gadget[S.hp.id]) {
+      var gm0 = gadgetModel(S.hp.id) || gadgetModel('redmi12c');
+      if (gm0) S.gadget[gm0.id] = { id: gm0.id, dibeli: S.hari, pakai: 0, hargaBeli: gm0.harga };
+    }
+    /* migrasi hp2 / hp3 lama ke daftarGadget asli */
+    if (S.rumah.barang.hp2 && !S.gadget.galaxya54) {
+      S.gadget.galaxya54 = { id: 'galaxya54', dibeli: S.hari, pakai: 0, hargaBeli: 5999000 };
+      S.hp.id = 'galaxya54';
+    }
+    if (S.rumah.barang.hp3 && !S.gadget.iphone15pm) {
+      S.gadget.iphone15pm = { id: 'iphone15pm', dibeli: S.hari, pakai: 0, hargaBeli: 24999000 };
+      S.hp.id = 'iphone15pm';
+    }
+    S.keluarga = S.keluarga || [];
+    S.sewaBarang = S.sewaBarang || {};
     Object.keys(S.rumah.barang).forEach(function (id) {
       if (!S.rumah.barang[id]) return;
       var b = barang(id);
@@ -26,11 +47,35 @@
     ['ps5', 'ps5disc'].forEach(function (kid) {
       if (S.rumah.barang[kid] && !S.game.konsol[kid]) {
         var km = konsolModel(kid);
-        if (km) S.game.konsol[kid] = { id: kid, nama: km.nama, merek: km.merek, hargaBeli: km.harga, dibeli: S.hari, pakai: 0, bekas: false, kondisi: 'baru', ketKondisi: 'Baru bersegel resmi Sony Indonesia', tahun: km.tahun[0], kelengkapan: km.kelengkapan };
+        if (km) S.game.konsol[kid] = { id: kid, nama: km.nama, merek: km.merek, hargaBeli: km.harga, dibeli: S.hari, pakai: 0, bekas: false, kondisi: 'baru', ketKondisi: 'Baru bersegel resmi Sony Indonesia', tahun: km.tahun ? km.tahun[0] : 2023, kelengkapan: km.kelengkapan };
       }
     });
     if (!S.game.pasar || S.game.pasar.minggu !== Math.floor(S.hari / 7)) acakPasarGame(S);
     return S;
+  }
+  function gadgetModel(id) { return (N.daftarGadget || []).filter(function (x) { return x.id === id; })[0]; }
+  function apkModel(id) { return (N.apkHp || []).filter(function (x) { return x.id === id; })[0]; }
+  function hpAktif(S) { return gadgetModel(S.hp && S.hp.id) || gadgetModel('redmi12c'); }
+  function adaWifi(S) {
+    if (!S.diri) return false;
+    if (S.diri.posisi === 'kos') return !!(S.rumah && S.rumah.wifi && !S.rumah.padam);
+    return !!(g.KK_USAHA && g.KK_USAHA.punya(S, 'wifi') && g.KK_USAHA.listrikNyala(S));
+  }
+  function pakaiKuota(S, gb) {
+    if (!S.hp) return true;
+    if (S.hp.baterai <= 0) return 'Baterai HP habis (0%)! Cas HP dulu di aplikasi Gadget & Kuota.';
+    if (adaWifi(S)) return true;
+    if ((S.hp.kuota || 0) >= gb) {
+      S.hp.kuota = Math.max(0, Math.round((S.hp.kuota - gb) * 100) / 100);
+      return true;
+    }
+    /* fallback potong pulsa Rp2.000 per 0.1 GB jika kuota habis */
+    var potongPulsa = Math.max(1000, Math.round(gb * 15000 / 500) * 500);
+    if ((S.hp.pulsa || 0) >= potongPulsa) {
+      S.hp.pulsa -= potongPulsa;
+      return true;
+    }
+    return 'Kuota internet & pulsa habis! Isi kuota/pulsa atau pasang WiFi dulu.';
   }
   function punya(S, id) { if (id === 'tv') return !!(S.rumah.barang.tv || S.rumah.barang.tv55); return !!S.rumah.barang[id]; }
   function tempat(S) { return S.rumah.jenis === 'rumah' ? 'rumah' : 'kos'; }
@@ -53,9 +98,43 @@
     d.minum = batas(d.minum - TURUN.minum * j);
     d.melek = batas(d.melek - TURUN.melek * j);
     var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0);
-    if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
+    if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'kursipijat') ? 18 : punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
     d.stamina = batas(d.stamina - turunStamina * j);
     listrikKos(S, dMenit, false);
+    /* baterai HP & charger sesuai mAh dan Watt asli */
+    if (S.hp) {
+      var hm = hpAktif(S), mah = (hm && hm.mah) || 5000, watt = (hm && hm.watt) || 10;
+      var bisaCas = S.hp.cas && ((d.posisi === 'kos' && !S.rumah.padam) || (d.posisi === 'kedai' && (!g.KK_USAHA || g.KK_USAHA.listrikNyala(S))));
+      if (bisaCas) {
+        /* kecepatan cas proporsional dengan Watt charger terhadap kapasitas baterai mAh */
+        var naikBat = (watt / (mah / 1000)) * (dMenit / 60) * 18;
+        var batLama = S.hp.baterai;
+        S.hp.baterai = Math.min(100, S.hp.baterai + naikBat);
+        if (batLama < 100 && S.hp.baterai >= 100) { S.hp.cas = false; kabar.push('Baterai ' + hm.nama + ' penuh 100% (charger ' + watt + 'W).'); }
+      } else {
+        if (S.hp.cas && !bisaCas) S.hp.cas = false;
+        var pakaiOjek = S.ojek && S.ojek.online;
+        var turunBat = (5000 / mah) * (pakaiOjek ? 9.5 : 4.2) * j;
+        var sblm = S.hp.baterai;
+        S.hp.baterai = Math.max(0, S.hp.baterai - turunBat);
+        if (sblm > 15 && S.hp.baterai <= 15) kabar.push('Baterai HP tinggal ' + Math.round(S.hp.baterai) + '%! Segera colok charger.');
+        if (sblm > 0 && S.hp.baterai <= 0) {
+          if (pakaiOjek && g.KK_OJEK) { g.KK_OJEK.offline(S, true); kabar.push('HP mati kehabisan baterai! Akun driver ojol otomatis offline.'); }
+          else kabar.push('Baterai HP habis (0%). Colok charger di menu HP.');
+        }
+      }
+      /* kuota terpakai perlahan saat online narik ojol tanpa WiFi */
+      if (S.ojek && S.ojek.online && !adaWifi(S)) {
+        pakaiKuota(S, 0.04 * j);
+      }
+    }
+    /* anak / keluarga yang diminta bantu kerja ringan di kedai */
+    if (S.fase === 'buka' && S.keluarga && S.keluarga.length) {
+      var bantu = S.keluarga.filter(function (kl) { return kl.lokasi === 'kedai'; });
+      if (bantu.length && S.dunia) {
+        S.dunia.kotor = Math.max(0, S.dunia.kotor - dMenit * 0.25 * bantu.length);
+      }
+    }
     if (d.melek < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
     if (d.stamina < 3) { d.ketiduran = 120; kabar.push('Kamu kelelahan dan harus istirahat 2 jam.'); d.stamina = 20; }
     return kabar;
@@ -218,7 +297,8 @@
     var ac = !S.rumah.padam && adaAc(S);
     listrikKos(S, lama, true);
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
-    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.7) * (punya(S, 'springbed') ? 1.1 : S.rumah.jenis === 'rumah' ? 0.9 : 1);
+    if (S.hp && !S.rumah.padam) { S.hp.baterai = 100; S.hp.cas = false; }
+    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.7) * (punya(S, 'springbed') ? 1.1 : S.rumah.jenis === 'rumah' ? 0.9 : 1) * (punya(S, 'airpurifier') ? 1.05 : 1);
     d.melek = batas(d.melek + jam * 14 * mutu);
     d.stamina = batas(d.stamina + jam * 11 * mutu);
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
@@ -405,9 +485,254 @@
     S.bank.mutasi.unshift({ n: S.hari, ket: 'Jual game: ' + gk.nama, jml: h });
     return { ok: true, harga: h, nama: gk.nama };
   }
-  function kameraHp(S) { return punya(S, 'hp3') ? 1.6 : punya(S, 'hp2') ? 1.3 : 1; }
+  function kameraHp(S) {
+    var hm = hpAktif(S), k = (hm && hm.kamera) || 1;
+    if (S.hp && S.hp.apk) {
+      if (S.hp.apk.capcut) k += 0.25;
+      if (S.hp.apk.canva) k += 0.15;
+    }
+    if (punya(S, 'ringlight')) k += 0.15;
+    if (punya(S, 'osmoaction')) k += 0.35;
+    return k;
+  }
 
-  /* ---------- ganti hari: sewa kos & stok pasar game bekas ---------- */
+  /* ---------- pulsa, kuota, WiFi, gadget asli (HP, tablet, laptop) & instal APK ---------- */
+  function toggleCasHp(S) {
+    if (!S.hp) return 'HP belum siap.';
+    if (!S.hp.cas) {
+      if (S.diri.posisi === 'kos' && S.rumah.padam) return 'Listrik ' + tempat(S) + ' sedang padam. Isi token PLN dulu.';
+      if (S.diri.posisi === 'kedai' && g.KK_USAHA && !g.KK_USAHA.listrikNyala(S)) return 'Listrik kedai sedang padam.';
+      if (S.hp.baterai >= 100) return 'Baterai HP sudah penuh 100%.';
+    }
+    S.hp.cas = !S.hp.cas;
+    return true;
+  }
+  function beliPulsa(S, nominal, caraBayar) {
+    var h = +nominal; if (!h || h <= 0) return 'Nominal pulsa tidak valid.';
+    var by = bayarBelanja(S, h + 1500, 'Isi pulsa seluler ' + rp(h), caraBayar || 'bank');
+    if (by !== true) return by;
+    S.hp.pulsa = (S.hp.pulsa || 0) + h;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h + 1500;
+    return true;
+  }
+  function beliKuota(S, idKuota, caraBayar) {
+    var pk = (N.paketData && N.paketData.kuota || []).filter(function (x) { return x.id === idKuota; })[0];
+    if (!pk) return 'Paket kuota tidak dikenal.';
+    if (caraBayar === 'pulsa') {
+      if ((S.hp.pulsa || 0) < pk.harga) return 'Pulsa tidak cukup (' + rp(S.hp.pulsa || 0) + '). Isi pulsa dulu atau bayar dari rekening.';
+      S.hp.pulsa -= pk.harga;
+    } else {
+      var by = bayarBelanja(S, pk.harga, 'Beli ' + pk.nama, caraBayar || 'bank');
+      if (by !== true) return by;
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + pk.harga;
+    }
+    S.hp.kuota = Math.round(((S.hp.kuota || 0) + pk.gb) * 100) / 100;
+    return true;
+  }
+  function toggleWifiRumah(S) {
+    var wf = N.paketData && N.paketData.wifiRumah;
+    if (!wf) return 'Layanan WiFi belum tersedia.';
+    if (S.rumah.wifi) {
+      S.rumah.wifi = false;
+      return true;
+    }
+    var total = wf.pasang + wf.hargaBulan;
+    if (S.bank.saldo < total) return 'Saldo rekening tidak cukup untuk biaya pasang + bulan pertama (' + rp(total) + ').';
+    S.bank.saldo -= total;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Pasang ' + wf.nama, jml: -total });
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + total;
+    S.rumah.wifi = true;
+    return true;
+  }
+  function infoStorageHp(S) {
+    var hm = hpAktif(S), sistem = Math.min(18, Math.round(hm.storage * 0.18));
+    var pakaiApk = 0, ramPakai = 1.5;
+    Object.keys((S.hp && S.hp.apk) || {}).forEach(function (id) {
+      if (!S.hp.apk[id]) return;
+      var a = apkModel(id);
+      if (a) { pakaiApk += a.rom; if (a.ram > ramPakai) ramPakai = a.ram; }
+    });
+    return { totalRom: hm.storage, terpakaiRom: sistem + pakaiApk, sisaRom: Math.max(0, hm.storage - sistem - pakaiApk), totalRam: hm.ram, butuhRamMaks: ramPakai };
+  }
+  function beliGadget(S, id, caraBayar) {
+    var gm = gadgetModel(id); if (!gm) return 'Gadget tidak dikenal.';
+    if (S.gadget && S.gadget[id]) return 'Sudah punya ' + gm.nama + '.';
+    var d = diskonToko(S, 'tokopedia');
+    var h = d ? Math.round(gm.harga * (1 - d) / 5000) * 5000 : gm.harga;
+    var by = bayarBelanja(S, h, 'Beli gadget: ' + gm.nama + ' (' + gm.merek + ')', caraBayar || 'bank');
+    if (by !== true) return by;
+    S.gadget = S.gadget || {};
+    S.gadget[id] = { id: id, dibeli: S.hari, pakai: 0, hargaBeli: h };
+    if (gm.jenis === 'hp') {
+      S.hp.id = id;
+      S.hp.baterai = 100;
+    }
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
+    return true;
+  }
+  function pakaiHp(S, id) {
+    var gm = gadgetModel(id);
+    if (!gm || gm.jenis !== 'hp' || !S.gadget || !S.gadget[id]) return 'Belum punya HP ini.';
+    S.hp.id = id;
+    return true;
+  }
+  function nilaiJualGadget(S, id) {
+    var gm = gadgetModel(id), info = S.gadget && S.gadget[id];
+    if (!gm || !info) return 0;
+    var J = N.jualBarang || { awal: 0.75, perTahun: 0.12, perPakai: 0.0015, min: 0.2 };
+    var tahun = Math.max(0, S.hari - (info.dibeli == null ? S.hari : info.dibeli)) / 365;
+    var f = Math.max(J.min, Math.min(J.awal, J.awal - J.perTahun * tahun - J.perPakai * (info.pakai || 0)));
+    return Math.round((info.hargaBeli || gm.harga) * f / 10000) * 10000;
+  }
+  function jualGadget(S, id) {
+    var gm = gadgetModel(id), info = S.gadget && S.gadget[id];
+    if (!gm || !info) return 'Belum punya gadget ini.';
+    if (gm.jenis === 'hp') {
+      var hpLain = Object.keys(S.gadget).filter(function (k) { return k !== id && gadgetModel(k) && gadgetModel(k).jenis === 'hp'; });
+      if (!hpLain.length) return 'Tidak bisa menjual satu-satunya HP milikmu. Beli HP pengganti dulu.';
+      if (S.hp.id === id) S.hp.id = hpLain[0];
+    }
+    var h = nilaiJualGadget(S, id);
+    delete S.gadget[id];
+    if (S.sewaBarang) delete S.sewaBarang['gadget:' + id];
+    S.bank.saldo += h;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Jual gadget bekas: ' + gm.nama, jml: h });
+    return { ok: true, harga: h, nama: gm.nama };
+  }
+  function instalApk(S, apkId) {
+    var a = apkModel(apkId); if (!a) return 'Aplikasi tidak dikenal.';
+    if (S.hp.apk && S.hp.apk[apkId]) return a.nama + ' sudah terinstal di HP ini.';
+    var hm = hpAktif(S), st = infoStorageHp(S);
+    if (hm.ram < a.ram) return 'RAM ' + hm.nama + ' (' + hm.ram + ' GB) tidak kuat menjalankan ' + a.nama + ' (minimal RAM ' + a.ram + ' GB). Upgrade HP dulu!';
+    if (st.sisaRom < a.rom) return 'Storage internal ' + hm.nama + ' tidak cukup (sisa ' + st.sisaRom + ' GB, butuh ' + a.rom + ' GB). Hapus APK lain atau ganti HP storage lebih besar.';
+    var cekK = pakaiKuota(S, a.kuotaGb || 0.5);
+    if (cekK !== true) return cekK;
+    S.hp.apk[apkId] = true;
+    return true;
+  }
+  function hapusApk(S, apkId) {
+    if (!S.hp || !S.hp.apk || !S.hp.apk[apkId]) return 'Aplikasi belum terinstal.';
+    delete S.hp.apk[apkId];
+    return true;
+  }
+  function mainGameHp(S, apkId) {
+    var a = apkModel(apkId);
+    if (!a || a.jenis !== 'game') return 'Game tidak dikenal.';
+    if (!S.hp.apk || !S.hp.apk[apkId]) return 'Instal ' + a.nama + ' dulu di HP.';
+    if (S.hp.baterai < 12) return 'Baterai HP terlalu lemah (' + Math.round(S.hp.baterai) + '%). Cas HP dulu.';
+    var cekK = pakaiKuota(S, 0.15);
+    if (cekK !== true) return cekK;
+    var hm = hpAktif(S);
+    var kuras = Math.round((5000 / (hm.mah || 5000)) * 9);
+    S.hp.baterai = Math.max(0, S.hp.baterai - kuras);
+    S.diri.stamina = batas(S.diri.stamina + a.stamina);
+    if (S.gadget && S.gadget[hm.id]) S.gadget[hm.id].pakai = (S.gadget[hm.id].pakai || 0) + 1;
+    return { ok: true, menit: 30, teks: 'Main ' + a.nama + ' di ' + hm.nama + ' 30 menit (+' + a.stamina + ' stamina, baterai −' + kuras + '%).' };
+  }
+
+  /* ---------- keluarga / anak (tambah karakter, bantu ringan di kedai, biaya makan/jajan/pendidikan opsional) ---------- */
+  var noKeluarga = 0;
+  function tambahKeluarga(S, nama, gender, tglLahir, peran) {
+    S.keluarga = S.keluarga || [];
+    if (S.keluarga.length >= 6) return 'Jumlah anggota keluarga sudah maksimal (6 orang).';
+    var nm = (nama || '').trim();
+    if (!nm) return 'Masukkan nama anggota keluarga dulu.';
+    var tl = tglLahir || '2013-06-15';
+    var p = peran === 'pasangan' ? 'pasangan' : 'anak';
+    S.keluarga.push({
+      id: 'kl' + (++noKeluarga) + '-' + S.hari,
+      nama: nm.slice(0, 22),
+      gender: gender === 'cowok' ? 'cowok' : 'cewek',
+      tglLahir: tl,
+      peran: p,
+      lokasi: 'rumah',
+      bahagia: 85,
+      makanHari: -1,
+      jajanHari: -1,
+      pendidikanBulan: -1
+    });
+    return true;
+  }
+  function aturLokasiKeluarga(S, id, lokasi) {
+    var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
+    if (!kl) return 'Anggota keluarga tidak ditemukan.';
+    var usia = KAL.usia(S.hari, kl.tglLahir);
+    if (lokasi === 'kedai' && usia < 7) return kl.nama + ' masih berusia ' + usia + ' tahun (terlalu kecil untuk bantu di kedai, minimal 7 tahun).';
+    kl.lokasi = lokasi === 'kedai' ? 'kedai' : 'rumah';
+    return true;
+  }
+  function beriBiayaKeluarga(S, id, jenis) {
+    var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
+    if (!kl) return 'Anggota keluarga tidak ditemukan.';
+    var mapBiaya = {
+      makan: { rp: 25000, ket: 'Uang makan ' + kl.nama, naik: 8, stam: 3 },
+      jajan: { rp: 20000, ket: 'Uang jajan ' + kl.nama, naik: 10, stam: 4 },
+      pendidikan: { rp: 350000, ket: 'Biaya sekolah / pendidikan ' + kl.nama, naik: 18, stam: 8 }
+    };
+    var b = mapBiaya[jenis]; if (!b) return 'Jenis biaya tidak dikenal.';
+    if (!bayarTunai(S, b.rp)) {
+      if (S.bank.saldo < b.rp) return 'Uang di dompet, laci, maupun rekening tidak cukup untuk ' + b.ket + ' (' + rp(b.rp) + ').';
+      S.bank.saldo -= b.rp;
+      S.bank.mutasi.unshift({ n: S.hari, ket: b.ket, jml: -b.rp });
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + b.rp;
+    }
+    kl.bahagia = Math.min(100, (kl.bahagia || 80) + b.naik);
+    if (jenis === 'makan') kl.makanHari = S.hari;
+    if (jenis === 'jajan') kl.jajanHari = S.hari;
+    if (jenis === 'pendidikan') kl.pendidikanBulan = KAL.tgl(S.hari).m;
+    S.diri.stamina = batas(S.diri.stamina + b.stam);
+    return { ok: true, teks: 'Memberi ' + b.ket.toLowerCase() + ' ' + rp(b.rp) + '. ' + kl.nama + ' senang banget (+' + b.stam + ' stamina untukmu)!' };
+  }
+  function hapusKeluarga(S, id) {
+    S.keluarga = (S.keluarga || []).filter(function (x) { return x.id !== id; });
+    return true;
+  }
+
+  /* ---------- sewakan barang yang dimiliki (PS1-PS5, motor nganggur, mobil, tablet, laptop, kamera, sepeda) ---------- */
+  var TARIF_SEWA_KONSOL = { ps1: 25000, ps2: 35000, ps3: 55000, ps4: 85000, ps5: 150000, ps5disc: 165000 };
+  function daftarBisaDisewa(S) {
+    var list = [], sw = S.sewaBarang || {};
+    /* konsol PlayStation */
+    Object.keys((S.game && S.game.konsol) || {}).forEach(function (id) {
+      var k = S.game.konsol[id], kunci = 'konsol:' + id;
+      list.push({ kunci: kunci, nama: k.nama, kat: 'Rental PS', tarif: TARIF_SEWA_KONSOL[id] || 50000, aktif: !!sw[kunci], ket: 'Disewa harian oleh anak kos/tetangga sekitar' });
+    });
+    /* motor di armada (selain yang sedang dipakai narik ojol) */
+    var armada = S.armadaMotor || (S.motor ? [S.motor] : []);
+    armada.forEach(function (m, idx) {
+      var kunci = 'motor:' + idx;
+      var tarif = Math.max(45000, Math.min(350000, Math.round((m.hargaBeli || 18000000) * 0.0032 / 5000) * 5000));
+      list.push({ kunci: kunci, nama: m.nama + ' (Motor #' + (idx + 1) + ')', kat: 'Rental Motor', tarif: tarif, aktif: !!sw[kunci], ket: idx === (S.motorAktif || 0) ? 'Motor utama (tetap bisa disewakan ke kenalan)' : 'Motor cadangan armada' });
+    });
+    /* mobil */
+    if (S.mobil) {
+      var kunciM = 'mobil:0';
+      var tarifM = Math.max(220000, Math.min(1500000, Math.round((S.mobil.hargaBeli || 200000000) * 0.0014 / 10000) * 10000));
+      list.push({ kunci: kunciM, nama: S.mobil.nama, kat: 'Rental Mobil', tarif: tarifM, aktif: !!sw[kunciM], ket: 'Lepas kunci harian dalam kota' });
+    }
+    /* tablet & laptop di S.gadget */
+    Object.keys(S.gadget || {}).forEach(function (id) {
+      var gm = gadgetModel(id);
+      if (!gm || !gm.sewaHarian) return;
+      var kunci = 'gadget:' + id;
+      list.push({ kunci: kunci, nama: gm.nama, kat: 'Sewa Gadget', tarif: gm.sewaHarian, aktif: !!sw[kunci], ket: 'Disewa mahasiswa / pekerja lepas harian' });
+    });
+    /* barang rumah/toko yang punya sewaHarian (Sepeda Polygon, DJI Osmo Action, Proyektor) */
+    N.barangRumah.forEach(function (b) {
+      if (!b.sewaHarian || !punya(S, b.id)) return;
+      var kunci = 'barang:' + b.id;
+      list.push({ kunci: kunci, nama: b.nama + ' (' + b.merek + ')', kat: 'Sewa Alat', tarif: b.sewaHarian, aktif: !!sw[kunci], ket: 'Disewakan harian lewat komunitas lokal' });
+    });
+    return list;
+  }
+  function toggleSewaBarang(S, kunci) {
+    S.sewaBarang = S.sewaBarang || {};
+    S.sewaBarang[kunci] = !S.sewaBarang[kunci];
+    if (!S.sewaBarang[kunci]) delete S.sewaBarang[kunci];
+    return true;
+  }
+
+  /* ---------- ganti hari: sewa kos, WiFi, pendapatan rental barang & stok pasar game bekas ---------- */
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], r = S.rumah, t = KAL.tgl(nBaru);
     listrikKos(S, 0, false);
@@ -415,6 +740,37 @@
     if (r.jenis === 'kos' && t.d === r.tempo) {
       if (S.bank.saldo >= r.sewa) { S.bank.saldo -= r.sewa; S.bank.mutasi.unshift({ n: nBaru, ket: 'Sewa kos bulan ini', jml: -r.sewa }); kabar.push('Sewa kos ' + rp(r.sewa) + ' sudah dibayar.'); }
       else { r.tunggakan = (r.tunggakan || 0) + r.sewa; kabar.push('Saldo kurang untuk sewa kos. Ibu kos menagih.'); }
+    }
+    /* tagihan WiFi bulanan kos/rumah */
+    if (r.wifi && t.d === r.tempo) {
+      var wf = (N.paketData && N.paketData.wifiRumah) || { nama: 'WiFi Fiber', hargaBulan: 285000 };
+      if (S.bank.saldo >= wf.hargaBulan) {
+        S.bank.saldo -= wf.hargaBulan;
+        S.bank.mutasi.unshift({ n: nBaru, ket: 'Tagihan ' + wf.nama, jml: -wf.hargaBulan });
+        kabar.push('Tagihan bulanan ' + wf.nama + ' ' + rp(wf.hargaBulan) + ' lunas.');
+      } else {
+        r.wifi = false;
+        kabar.push('Saldo kurang untuk bayar WiFi rumah/kos. Layanan WiFi diputus sementara.');
+      }
+    }
+    /* pendapatan pasif dari menyewakan barang (PS, motor, mobil, laptop/tablet, kamera, dll.) */
+    var disewa = daftarBisaDisewa(S).filter(function (x) { return x.aktif; });
+    if (disewa.length) {
+      var totalSewa = 0, namaSewa = [];
+      disewa.forEach(function (x) {
+        totalSewa += x.tarif;
+        namaSewa.push(x.nama);
+        var bag = x.kunci.split(':');
+        if (bag[0] === 'konsol' && S.game.konsol[bag[1]]) S.game.konsol[bag[1]].pakai = (S.game.konsol[bag[1]].pakai || 0) + 2;
+        else if (bag[0] === 'motor' && S.armadaMotor && S.armadaMotor[+bag[1]]) S.armadaMotor[+bag[1]].km = (S.armadaMotor[+bag[1]].km || 0) + 35;
+        else if (bag[0] === 'mobil' && S.mobil) S.mobil.km = (S.mobil.km || 0) + 60;
+        else if (bag[0] === 'gadget' && S.gadget && S.gadget[bag[1]]) S.gadget[bag[1]].pakai = (S.gadget[bag[1]].pakai || 0) + 1;
+        else if (bag[0] === 'barang') catatPakai(S, bag[1]);
+      });
+      S.bank.saldo += totalSewa;
+      S.bank.mutasi.unshift({ n: nBaru, ket: 'Pendapatan sewa/rental (' + disewa.length + ' unit)', jml: totalSewa });
+      S.hariIni.rental = totalSewa;
+      kabar.push('Pendapatan sewa barang kemarin (' + namaSewa.slice(0, 3).join(', ') + (namaSewa.length > 3 ? ', dll.' : '') + ') cair ' + rp(totalSewa) + ' ke rekening.');
     }
     if (r.kwh < 4) kabar.push('Token listrik ' + tempat(S) + ' tinggal ' + r.kwh.toFixed(1).replace('.', ',') + ' kWh.');
     return kabar;
@@ -427,5 +783,10 @@
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,
+    gadgetModel: gadgetModel, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
+    beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
+    beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
+    tambahKeluarga: tambahKeluarga, aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,
+    daftarBisaDisewa: daftarBisaDisewa, toggleSewaBarang: toggleSewaBarang,
     beliTokenKos: beliTokenKos, punya: punya, tempat: tempat, adaAc: adaAc, barang: barang, kameraHp: kameraHp, gantiHari: gantiHari, ramah: ramah, lambat: lambat, kota: kota };
 })(window);
