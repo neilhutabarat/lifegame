@@ -90,6 +90,16 @@
       d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Dana tambahan', jml: 50000000 });
       d.bonusBank50jt = true;
     }
+    if (!d.pemutihanKredit1) {
+      d.kreditBuruk = false;
+      d.pemutihanKredit1 = true;
+    }
+    if (!d.bonusBank200jt && d.bank && typeof d.bank.saldo === 'number') {
+      d.bank.saldo += 200000000;
+      d.bank.mutasi = d.bank.mutasi || [];
+      d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Tambahan modal', jml: 200000000 });
+      d.bonusBank200jt = true;
+    }
     d.hariIni = d.hariIni || JUAL.hariBaru();
     d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
     STOK.siapkan(d); MOTOR.siapkan(d); MOBIL.siapkan(d); OJEK.siapkan(d); TRAVEL.siapkan(d); PROPERTI.siapkan(d); ANTAR.siapkan(d); STAF.siapkan(d); DUNIA.siapkan(d); USAHA.siapkan(d); DUNIA.terapkanHarga(d); DIRI.siapkan(d);
@@ -764,9 +774,9 @@
       }
       var c = S.mobil;
       if (c) {
-        var pj = MOBIL.tagihanPajak(S), svm = N.rawatMobil.servisKm - (c.km - c.kmServis);
-        html += '<h3 class="subjudul">' + esc(c.nama) + '</h3><div class="saldo-besar"><small>' + (c.bbm === 'solar' ? '' : 'Bensin ') + N.bbm.nama[c.bbm] + '</small><b>' + (c.isi * c.tangki).toFixed(0) + ' / ' + c.tangki + ' L</b>' + persenBar(c.isi * 100) + '</div>' +
-          '<ul class="daftar angka">' + baris('Kilometer', Math.round(c.km).toLocaleString('id-ID') + ' km') + baris('Konsumsi', c.kml + ' km/liter') + baris('Muatan', c.muat + ' cup') +
+        var pj = MOBIL.tagihanPajak(S), svm = N.rawatMobil.servisKm - (c.km - c.kmServis), cEv = c.bbm === 'listrik';
+        html += '<h3 class="subjudul">' + esc(c.nama) + '</h3><div class="saldo-besar"><small>' + (cEv ? 'Baterai Listrik (EV)' : (c.bbm === 'solar' ? '' : 'Bensin ') + N.bbm.nama[c.bbm]) + '</small><b>' + (c.isi * c.tangki).toFixed(cEv ? 1 : 0) + ' / ' + c.tangki + (cEv ? ' kWh' : ' L') + '</b>' + persenBar(c.isi * 100) + '</div>' +
+          '<ul class="daftar angka">' + baris('Kilometer', Math.round(c.km).toLocaleString('id-ID') + ' km') + baris('Konsumsi', cEv ? (c.kml + ' km/kWh (~' + Math.round(c.kml * c.tangki) + ' km)') : (c.kml + ' km/liter')) + baris('Muatan', c.muat + ' barang') +
           '</ul>' + barRawat('Servis', svm, N.rawatMobil.servisKm) + '<ul class="daftar angka">' + (c.ngelitik ? baris('Mesin', 'ngelitik, bensin kurang sesuai', 'rugi') : '') +
           (c.kredit ? baris('Angsuran', rupiah(c.kredit.angsuran) + ' tiap tanggal ' + c.kredit.tempo + ', sisa ' + c.kredit.sisa + ' bulan' + (c.kredit.tunggakan ? ', nunggak ' + rupiah(c.kredit.tunggakan) : ''), c.kredit.tunggakan ? 'rugi' : '') : '') +
           baris('Pajak tahunan', pj ? 'jatuh tempo ' + namaTanggal(c.pajakTempo) : (c.pajakTempo - S.hari) + ' hari lagi') +
@@ -796,7 +806,7 @@
     if (tab === 'mobil') {
       var km2 = app.kelasMobil || 'pikap';
       return html + chipTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + '<ul class="daftar belanja">' + N.mobil.filter(function (x) { return x.kelas === km2; }).map(function (x) {
-        return '<li><span><b>' + esc(x.nama) + '</b><small>±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm] + ' · muat ' + x.muat + ' cup · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
+        return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? ('Listrik EV · ' + x.tangki + ' kWh (~' + Math.round(x.kml * x.tangki) + ' km/cas)') : ('±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm])) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunaiMobil:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiMobilKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditMobilPilih:' + x.id + '">Kredit</button></span></li>';
       }).join('') + '</ul><p class="catatan">Harga OTR Jabodetabek 2026, varian termurah. Bisa bayar lewat rekening, kartu kredit, atau kredit leasing. Satu mobil dalam satu waktu.</p>';
     }
@@ -2712,17 +2722,18 @@
     if (!m) return toast('Belum punya kendaraan.', 1800);
     if (!mobil && m.bbm === 'listrik') return toast('Motor listrik dicas otomatis tiap malam di tempat tinggal.', 2400);
     var tangki = m.tangki, isiL = mobil ? m.isi * tangki : m.isi, kosong = Math.max(0, Math.round((tangki - isiL) * 10) / 10);
-    var anjuran = m.bbm, jenisList = anjuran === 'solar' ? ['solar'] : ['pertalite', 'pertamax', 'turbo'];
+    var anjuran = m.bbm, ev = anjuran === 'listrik', sat = ev ? 'kWh' : 'L';
+    var jenisList = ev ? ['listrik'] : anjuran === 'solar' ? ['solar'] : ['pertalite', 'pertamax', 'turbo'];
     var jenis = app.bbmPilih && jenisList.indexOf(app.bbmPilih) >= 0 ? app.bbmPilih : anjuran, h = MOTOR.hargaBbm(S, jenis);
-    var pilih = [1, 2, 5, 10, 20].filter(function (l) { return l <= kosong + 0.01; });
-    bukaLembar('hudBensin', kepala('Isi bensin', m.nama) + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
-      '<div class="saldo-besar"><small>Isi tangki</small><b>' + isiL.toFixed(1).replace('.', ',') + ' / ' + String(tangki).replace('.', ',') + ' L</b>' + persenBar(isiL / tangki * 100) + '</div>' +
+    var pilih = (ev ? [5, 10, 20, 30] : [1, 2, 5, 10, 20]).filter(function (l) { return l <= kosong + 0.01; });
+    bukaLembar('hudBensin', kepala(ev ? 'Cas mobil listrik' : 'Isi bensin', m.nama) + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
+      '<div class="saldo-besar"><small>' + (ev ? 'Daya baterai' : 'Isi tangki') + '</small><b>' + isiL.toFixed(1).replace('.', ',') + ' / ' + String(tangki).replace('.', ',') + ' ' + sat + '</b>' + persenBar(isiL / tangki * 100) + '</div>' +
       (jenisList.length > 1 ? '<div class="chip-baris" style="margin-top:8px">' + jenisList.map(function (j) { return '<button type="button" class="chip-tombol' + (j === jenis ? ' pilih' : '') + '" data-hud="bbm:' + j + '">' + N.bbm.nama[j] + (j === anjuran ? ' ✓' : '') + '</button>'; }).join('') + '</div>' : '') +
-      (kosong < 0.2 ? '<p class="catatan">Tangki sudah penuh.</p>' :
-      '<div class="chip-baris" style="margin-top:8px">' + pilih.map(function (l) { return '<button type="button" class="chip-tombol" data-hud="isi:' + jenis + '-' + l + '">' + l + ' L · ' + rupiah(Math.round(l * h / 100) * 100) + '</button>'; }).join('') +
-        '<button type="button" class="chip-tombol" data-hud="isi:' + jenis + '-penuh">Penuh ' + String(kosong).replace('.', ',') + ' L · ' + rupiah(Math.round(kosong * h / 100) * 100) + '</button></div>' +
-      '<div class="chip-baris" style="margin-top:8px;align-items:center"><input id="in-liter" class="input-teks" type="number" inputmode="decimal" min="0.5" max="' + kosong + '" step="0.5" placeholder="Isi berapa liter?" style="margin:0;flex:1"><button type="button" class="chip-tombol pilih" data-hud="isiLiter:' + jenis + '">Isi</button></div>') +
-      '<p class="catatan" style="margin-top:6px">' + N.bbm.nama[jenis] + ' ' + rupiah(h) + ' per liter. Tanda ✓ = anjuran pabrik; bensin di bawah anjuran membuat mesin ngelitik.</p>');
+      (kosong < 0.2 ? '<p class="catatan">' + (ev ? 'Baterai sudah penuh.' : 'Tangki sudah penuh.') + '</p>' :
+      '<div class="chip-baris" style="margin-top:8px">' + pilih.map(function (l) { return '<button type="button" class="chip-tombol" data-hud="isi:' + jenis + '-' + l + '">' + l + ' ' + sat + ' · ' + rupiah(Math.round(l * h / 100) * 100) + '</button>'; }).join('') +
+        '<button type="button" class="chip-tombol" data-hud="isi:' + jenis + '-penuh">Penuh ' + String(kosong).replace('.', ',') + ' ' + sat + ' · ' + rupiah(Math.round(kosong * h / 100) * 100) + '</button></div>' +
+      '<div class="chip-baris" style="margin-top:8px;align-items:center"><input id="in-liter" class="input-teks" type="number" inputmode="decimal" min="0.5" max="' + kosong + '" step="0.5" placeholder="' + (ev ? 'Cas berapa kWh?' : 'Isi berapa liter?') + '" style="margin:0;flex:1"><button type="button" class="chip-tombol pilih" data-hud="isiLiter:' + jenis + '">' + (ev ? 'Cas' : 'Isi') + '</button></div>') +
+      '<p class="catatan" style="margin-top:6px">' + (ev ? ('Tarif listrik SPKLU ' + rupiah(h) + ' per kWh. Mobil listrik tanpa bensin dan bebas ngelitik.') : (N.bbm.nama[jenis] + ' ' + rupiah(h) + ' per liter. Tanda ✓ = anjuran pabrik; bensin di bawah anjuran membuat mesin ngelitik.')) + '</p>');
   }
   function aksiHud(nama, nilai) {
     var mobil = jenisKendaraanJalan() === 'mobil';

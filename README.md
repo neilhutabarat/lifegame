@@ -59,3 +59,4 @@ P10. Tahap A realistis: 4 interior rumah & kos nyata (kos, subsidi 36, tipe 45, 
 P11. Poles posisi & tinggi karakter di lantai rumah/kos (tidak menimpa kasur), rapikan cutout Neil Aura, siapkan lazy loader Tahap B/C (kota, tema travel, motor, mobil) & lazy cache sw.js ✔
 P12. Bersihkan sisa teks kedai/laci/gelas di kanvas transit, Properti, pesan WA pasangan, laporan harian mode driver, dan aria-label kanvas ✔
 P13. Durasi HB malam/siang dibatasi 1–3 jam (tidak lagi skip sampai 04.00) & tambah dana Rp50 juta ke rekening bank ✔
+P14. Pemutihan riwayat kredit 1× & tambahan modal Rp200 juta; perbaikan 5 mobil listrik EV (BYD M6, BYD Seal, Wuling Air ev, BinguoEV, Hyundai IONIQ 5) memakai baterai kWh & cas SPKLU ✔

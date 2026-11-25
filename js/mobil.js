@@ -10,6 +10,12 @@
   function model(id) { return N.mobil.filter(function (x) { return x.id === id; })[0]; }
   function siapkan(S) {
     if (S.mobil === undefined) S.mobil = null;
+    if (S.mobil && S.mobil.id) {
+      var ref = model(S.mobil.id);
+      if (ref && ref.bbm === 'listrik' && S.mobil.bbm !== 'listrik') {
+        S.mobil.bbm = 'listrik'; S.mobil.kml = ref.kml; S.mobil.tangki = ref.tangki; S.mobil.ngelitik = false;
+      }
+    }
     if (!S.bisnisMobil) S.bisnisMobil = { carAktif: false, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
     return S;
   }
@@ -135,18 +141,23 @@
     return { ok: true, jml: sisa };
   }
 
-  /* bensin dan servis dibayar dari rekening (kartu debit di SPBU dan bengkel resmi) */
+  /* bensin / cas listrik SPKLU dan servis dibayar dari rekening */
   function isiBensin(S, jenis, liter) {
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
-    var RON = M().RON;
-    if (m.bbm === 'solar') jenis = 'solar'; else jenis = RON[jenis] ? jenis : m.bbm;
-    var kosong = Math.round((m.tangki - m.isi * m.tangki) * 10) / 10; if (kosong < 1) return 'Tangki sudah penuh.';
+    var RON = M().RON, listrik = m.bbm === 'listrik';
+    if (listrik) jenis = 'listrik';
+    else if (m.bbm === 'solar') jenis = 'solar';
+    else jenis = RON[jenis] ? jenis : m.bbm;
+    var kosong = Math.round((m.tangki - m.isi * m.tangki) * 10) / 10;
+    if (kosong < 1) return listrik ? 'Baterai mobil sudah penuh.' : 'Tangki sudah penuh.';
     liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
     var biaya = Math.round(liter * M().hargaBbm(S, jenis) / 100) * 100;
-    if (S.bank.saldo < biaya) return 'Saldo rekening tidak cukup untuk bensin ' + rp(biaya) + '.';
-    S.bank.saldo -= biaya; M().catatBank(S, 'Isi ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L', -biaya);
-    m.isi = Math.min(1, m.isi + liter / m.tangki); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
-    m.ngelitik = jenis !== 'solar' && RON[jenis] < RON[m.bbm];
+    if (S.bank.saldo < biaya) return 'Saldo rekening tidak cukup untuk ' + (listrik ? 'cas listrik ' : 'bensin ') + rp(biaya) + '.';
+    S.bank.saldo -= biaya;
+    M().catatBank(S, listrik ? ('Cas SPKLU ' + liter.toLocaleString('id-ID') + ' kWh') : ('Isi ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L'), -biaya);
+    m.isi = Math.min(1, m.isi + liter / m.tangki);
+    S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
+    m.ngelitik = !listrik && jenis !== 'solar' && RON[jenis] < RON[m.bbm];
     return { ok: true, liter: liter, biaya: biaya, jenis: jenis };
   }
   function servis(S) {
