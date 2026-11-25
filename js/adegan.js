@@ -906,7 +906,7 @@
     } else {
       cx.fillStyle = 'rgba(18,22,28,.16)'; cx.fillRect(0, 0, W, H);
     }
-    if (!adaBgRumah) {
+    if (!adaBgKos) {
       if (!rumah || b.ac) { kotakBulat(214, lantai - 300, 112, 34, 8, '#f6f6f2'); kotak(222, lantai - 274, 96, 3, '#d6d6d0');
         bulat(312, lantai - 290, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a'); }
       if (rumah) { /* pintu dan saklar */ kotakBulat(296, lantai - 200, 58, 200, 3, rumah === 'mewah' ? '#6b4a2e' : '#9c7a52'); bulat(344, lantai - 96, 3, '#e0d3b8'); }
