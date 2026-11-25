@@ -192,9 +192,13 @@
     }
     if (ojek) { b.hidden = true; }
     else if (diKos) {
-      b.hidden = false; b.disabled = false;
-      var siapTidur = !!S.usaha.berhentiSewa || S.fase === 'malam' || (S.menit % 1440) >= 1080 || (S.ojek && S.ojek.hariIni && S.ojek.hariIni.trip > 0);
-      b.textContent = siapTidur ? 'Tidur, bangun pukul ' + jam(S.diri.bangun) : 'Berangkat ke kedai';
+      var siapTidur = S.fase === 'malam' || (S.menit % 1440) >= 1080 || (S.ojek && S.ojek.hariIni && S.ojek.hariIni.trip > 0);
+      if (S.usaha.berhentiSewa && !siapTidur) {
+        b.hidden = true;
+      } else {
+        b.hidden = false; b.disabled = false;
+        b.textContent = siapTidur ? 'Tidur, bangun pukul ' + jam(S.diri.bangun) : 'Berangkat ke kedai';
+      }
       isiKosAksi();
     }
     else if (S.fase === 'pagi') {
@@ -2261,7 +2265,9 @@
     if (ke === 'kos' && S.fase === 'buka' && !kepalaMasuk()) {
       S.tutupSementara = true;
     }
-    var km = S.rumah.jarak || N.jarakKos, menit, ket, r;
+    var km = (ke === 'kos' && OJEK.jarakRumah && (S.usaha.berhentiSewa || (S.ojek && S.ojek.pos && (S.ojek.pos.x || S.ojek.pos.y))))
+      ? Math.max(0.5, OJEK.jarakRumah(S))
+      : (S.rumah.jarak || N.jarakKos), menit, ket, r;
     var motorBisa = MOTOR.punya(S) && MOTOR.cukup(S, km), mobilBisa = MOBIL.punya(S) && MOBIL.cukup(S, km);
     if (mobilBisa && (DUNIA.hujanSekarang(S) || !motorBisa)) { r = MOBIL.jalan(S, km, 1); menit = r.menit; ket = 'naik ' + S.mobil.nama; }
     else if (motorBisa) { r = MOTOR.jalan(S, km, 1); menit = r.menit; ket = 'naik motor'; }
@@ -2276,7 +2282,7 @@
     S.diri.posisi = ke; lompatWaktu(menit);
     simpan(); perbaruiAksi(); perbaruiHUD(true);
     toast('Sampai di ' + (ke === 'kos' ? DIRI.tempat(S) : 'kedai') + ' pukul ' + jam(S.menit) + ', ' + ket + '.' + (r && r.kabar && r.kabar.length ? ' ' + r.kabar.join(' ') : ''), 2600);
-    if (ke === 'kos') cekAjakanHbPasangan();
+    if (ke === 'kos') { if (OJEK.resetPos) OJEK.resetPos(S, 0, 0); cekAjakanHbPasangan(); }
   }
   function cekAjakanHbPasangan() {
     if (!S || S.diri.posisi !== 'kos' || (S.menit % 1440) < 1200 || S.diri.sakit || lembar) return;
@@ -2343,13 +2349,20 @@
   /* ngojek */
   var panelKunci = '', tawaranUmur = 0;
   function mulaiNarik(pid) {
-    if (S.fase === 'buka' && !kepalaMasuk()) { app.pesan = 'Kedai sedang buka. Narik sebelum buka atau setelah tutup, atau tugaskan kepala toko.'; app.salah = true; return bukaHP('driver'); }
-    var e = OJEK.bisaOnline(S); if (e) { app.pesan = e; app.salah = true; return bukaHP(lembar === 'hp' ? 'driver' : 'driver'); }
+    if (!S.usaha.berhentiSewa && S.fase === 'buka' && !kepalaMasuk()) { app.pesan = 'Kedai sedang buka. Narik sebelum buka atau setelah tutup, atau tugaskan kepala toko.'; app.salah = true; return bukaHP('driver'); }
+    var e = OJEK.bisaOnline(S); if (e) { app.pesan = e; app.salah = true; return bukaHP('driver'); }
     tutupLembar(); if (R) tutupRacik();
-    if (S.diri.posisi !== 'kedai') pindah('kedai');
+    if (S.usaha.berhentiSewa) {
+      S.diri.posisi = 'kedai';
+      if (OJEK.resetPos) OJEK.resetPos(S, 0, 0);
+    } else if (S.diri.posisi !== 'kedai') {
+      pindah('kedai');
+      if (OJEK.resetPos) OJEK.resetPos(S, S.rumah.jarak || N.jarakKos, 0);
+    }
+    if (!S.kec || S.kec <= 0) S.kec = 1;
     OJEK.online(S, pid || S.ojek.platform || 'gojek'); tawaranUmur = 0; panelKunci = '';
     perbaruiAksi(); perbaruiHUD(true); simpan();
-    toast('Online di ' + OJEK.platform(S.ojek.platform).nama + '. Menunggu order di samping kedai.', 2600);
+    toast('Online di ' + OJEK.platform(S.ojek.platform).nama + '. Menunggu order (' + (OJEK.jarakRumah ? OJEK.jarakRumah(S).toLocaleString('id-ID') : 0) + ' km dari rumah).', 2600);
   }
   function berhentiNarik() {
     var r = OJEK.offline(S, true); if (r !== true) return toast(r, 2000);
@@ -2373,7 +2386,7 @@
       html = '<div class="ojek-kartu tawaran"><b>Order ' + esc(x.layanan) + (x.jarakJauh ? ' [JARAK JAUH 🔥]' : '') + ' · ' + rupiah(x.tarif) + '</b><small>Jemput ' + x.jemput.toLocaleString('id-ID') + ' km · antar ' + x.km.toLocaleString('id-ID') + ' km' + (x.tunai ? ' · bayar tunai' : '') + ' · kamu dapat ' + rupiah(x.bersih) + '</small>' +
         '<div class="meteran"><i id="ojek-sisa"></i></div><div class="ojek-tombol"><button type="button" class="chip-tombol" data-ojek="lewati">Lewati</button><button type="button" class="chip-tombol" data-ojek="berhenti">Berhenti</button><button type="button" class="aksi" data-ojek="ambil">Ambil order</button></div></div>';
     } else {
-      html = '<div class="ojek-kartu"><b>Online di ' + esc(OJEK.platform(o.platform).nama) + ' · menunggu order</b><small>Standby di samping kedai · hari ini ' + o.hariIni.trip + ' order, ' + rupiah(o.hariIni.bersih) + '</small>' +
+      html = '<div class="ojek-kartu"><b>Online di ' + esc(OJEK.platform(o.platform).nama) + ' · menunggu order</b><small>Standby · ' + (OJEK.jarakRumah ? OJEK.jarakRumah(S).toLocaleString('id-ID') : 0) + ' km dari rumah · hari ini ' + o.hariIni.trip + ' order, ' + rupiah(o.hariIni.bersih) + '</small>' +
         '<div class="ojek-tombol"><button type="button" class="chip-tombol" data-ojek="berhenti">Berhenti narik</button></div></div>';
     }
     el.innerHTML = html;
@@ -2657,7 +2670,10 @@
     };
     if ($('b-home')) $('b-home').onclick = function () {
       if (!S) return;
-      if (S.diri.posisi === 'kos') pindah('kedai');
+      if (S.diri.posisi === 'kos') {
+        if (S.usaha.berhentiSewa) return toast('Kamu sedang tidak menyewa kedai.', 1800);
+        pindah('kedai');
+      }
       else pindah('kos', true);
     };
     $('ojek-panel').onclick = function (e) { var b = e.target.closest('[data-ojek]'); if (b) aksiOjek(b.dataset.ojek); };

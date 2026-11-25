@@ -1,5 +1,5 @@
 /* sw.js — supaya game tetap jalan tanpa internet. Naikkan VERSI setiap rilis. */
-var VERSI = 'kk-23-0';
+var VERSI = 'kk-23-1';
 var BERKAS = ['./', 'index.html', 'css/game.css', 'js/data/nyata.js', 'js/data/menu.js', 'js/kalender.js', 'js/simpan.js', 'js/uang.js', 'js/diri.js', 'js/stok.js', 'js/motor.js', 'js/mobil.js', 'js/ojek.js', 'js/properti.js', 'js/antar.js', 'js/karyawan.js', 'js/dunia.js', 'js/usaha.js', 'js/jualan.js', 'js/adegan.js', 'js/suara.js', 'js/main.js', 'manifest.webmanifest', 'img/ikon-192.png', 'img/ikon-512.png', 'img/cover.jpg', 'img/bg-kedai-siang.jpg', 'img/bg-kedai-hujan.jpg', 'img/bg-rumah.jpg', 'img/char-pemain.jpg', 'img/char-istri.jpg', 'img/char-anak.jpg', 'img/char-adik-ipar.jpg'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(VERSI).then(function (c) { return c.addAll(BERKAS); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {

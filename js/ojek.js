@@ -14,10 +14,19 @@
   function platform(id) { return O.platform.filter(function (p) { return p.id === id; })[0]; }
 
   function siapkan(S) {
-    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, jauhHariIni: 0, jatahJauh: 2, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, jauhHariIni: 0, jatahJauh: 2, pos: { x: 0, y: 0 }, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
     if (S.ojek.jauhHariIni == null) S.ojek.jauhHariIni = 0;
     if (S.ojek.jatahJauh == null) S.ojek.jatahJauh = 1 + Math.floor(Math.random() * 4);
+    if (!S.ojek.pos) S.ojek.pos = { x: 0, y: 0 };
     return S;
+  }
+  function jarakRumah(S) {
+    var p = (S && S.ojek && S.ojek.pos) || { x: 0, y: 0 };
+    return Math.round(Math.hypot(p.x || 0, p.y || 0) * 10) / 10;
+  }
+  function resetPos(S, x, y) {
+    if (!S.ojek) return;
+    S.ojek.pos = { x: x || 0, y: y || 0 };
   }
   function aktif(S, pid) { var d = S.ojek.daftar[pid]; return !!d && d.status === 'aktif'; }
   function daftar(S, pid) {
@@ -95,8 +104,11 @@
       km = Math.round((1 + Math.pow(Math.random(), 1.35) * 9) * 10) / 10; /* 1 s/d 10 km */
     }
     var jemput = Math.round((0.3 + Math.random() * 1.8) * 10) / 10;
+    var arah = Math.random() * Math.PI * 2;
+    var dx = Math.round(km * Math.cos(arah) * 100) / 100;
+    var dy = Math.round(km * Math.sin(arah) * 100) / 100;
     var t = tarif(S, km), p = platform(S.ojek.platform);
-    return { jenis: jenis, layanan: p.layanan[jenis], km: km, jemput: jemput, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - O.potongan)),
+    return { jenis: jenis, layanan: p.layanan[jenis], km: km, jemput: jemput, dx: dx, dy: dy, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - O.potongan)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0 };
   }
@@ -118,9 +130,12 @@
     var o = S.ojek, tr = o.trip, x = tr.x, kabar = tr.kabar.slice(), dapat = x.bersih;
     o.dompet += x.bersih;
     if (x.tip) { o.dompet += x.tip; dapat += x.tip; kabar.push(x.nama + ' memberi tip ' + rp(x.tip) + '.'); }
+    o.pos = o.pos || { x: 0, y: 0 };
+    o.pos.x += (x.dx != null ? x.dx : x.km);
+    o.pos.y += (x.dy != null ? x.dy : 0);
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
     S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
-    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Masuk saldo ojek +' + rp(dapat) + '.');
+    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
   }
@@ -162,10 +177,10 @@
     var o = S.ojek, kabar = [];
     O.platform.forEach(function (p) { var d = o.daftar[p.id]; if (d && d.status === 'proses' && nBaru >= d.aktifPada) { d.status = 'aktif'; kabar.push('Akun ' + p.app + ' sudah aktif. Bisa mulai narik.'); } });
     if (o.hariIni.trip) kabar.push('Kemarin narik ' + o.hariIni.trip + ' order, pendapatan bersih ' + rp(o.hariIni.bersih) + '.');
-    o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.jauhHariIni = 0; o.jatahJauh = 1 + Math.floor(Math.random() * 4); o.online = false; o.tawaran = null; o.trip = null;
+    o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.jauhHariIni = 0; o.jatahJauh = 1 + Math.floor(Math.random() * 4); o.online = false; o.tawaran = null; o.trip = null; o.pos = { x: 0, y: 0 };
     return kabar;
   }
 
   g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
-    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, CEPAT_TRIP: CEPAT_TRIP };
+    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, jarakRumah: jarakRumah, resetPos: resetPos, CEPAT_TRIP: CEPAT_TRIP };
 })(window);
