@@ -63,6 +63,7 @@
     var u = S.usaha;
     if (u.berhentiSewa) return 0;
     if (u.milikLahan && !tier) return 0;
+    if (u.ruko2Lantai && !tier) return Math.round(((N.asetUsaha ? N.asetUsaha.sewaRukoBulan : 5000000) + 2500000) * faktorSewa(S) / 50000) * 50000;
     if (u.rukoBulanan && !tier) return Math.round((N.asetUsaha ? N.asetUsaha.sewaRukoBulan : 5000000) * faktorSewa(S) / 50000) * 50000;
     var t = TEMPAT[tier || u.tier];
     var dasar = t.sewa ? Math.round(t.sewa * faktorSewa(S) / 50000) * 50000 : 0;
@@ -105,6 +106,17 @@
     if (!bayar(S, total, 'Sewa ruko langsung (renovasi + sewa bulan pertama)')) return 'Saldo rekening kurang ' + rp(total - S.bank.saldo) + ' (butuh ' + rp(total) + ').';
     S.usaha.tier = 4; S.usaha.rukoBulanan = true; S.usaha.berhentiSewa = false; S.usaha.bangun = null;
     if (S.usaha.kwh < 20) S.usaha.kwh = 20;
+    return true;
+  }
+  function sewaRuko2Lantai(S) {
+    if (S.usaha.ruko2Lantai) return 'Kedai sudah menempati Ruko 2 Lantai.';
+    var sudahRuko = S.usaha.tier === 4;
+    var biayaRenov = sudahRuko ? 12000000 : 22000000;
+    var sewaAwal = Math.round(((N.asetUsaha ? N.asetUsaha.sewaRukoBulan : 5000000) + 2500000) * faktorSewa(S) / 50000) * 50000;
+    var total = biayaRenov + (sudahRuko ? 2500000 : sewaAwal);
+    if (!bayar(S, total, 'Sewa & Renovasi Ruko 2 Lantai (Lt.1 Kedai, Lt.2 Usaha Lain/Rental PS)')) return 'Saldo rekening kurang ' + rp(total - S.bank.saldo) + ' (butuh ' + rp(total) + ').';
+    S.usaha.tier = 4; S.usaha.rukoBulanan = true; S.usaha.ruko2Lantai = true; S.usaha.berhentiSewa = false; S.usaha.bangun = null;
+    if (S.usaha.kwh < 25) S.usaha.kwh = 25;
     return true;
   }
   function punya(S, id) { return !!S.usaha.alat[id]; }
@@ -290,7 +302,7 @@
   }
 
   g.KK_USAHA = { LOKASI: LOKASI, TEMPAT: TEMPAT, ALAT: ALAT, TARIF: TARIF, siapkan: siapkan, menuDijual: menuDijual, aturMenuAktif: aturMenuAktif, tempat: tempat, sewaBulan: sewaBulan, sewaTahun: sewaTahun,
-    hargaKontainer: hargaKontainer, hargaLahan: hargaLahan, beliKontainer: beliKontainer, beliLahan: beliLahan, aturBerhentiSewa: aturBerhentiSewa, sewaRukoLangsung: sewaRukoLangsung, punya: punya,
+    hargaKontainer: hargaKontainer, hargaLahan: hargaLahan, beliKontainer: beliKontainer, beliLahan: beliLahan, aturBerhentiSewa: aturBerhentiSewa, sewaRukoLangsung: sewaRukoLangsung, sewaRuko2Lantai: sewaRuko2Lantai, punya: punya,
     listrikNyala: listrikNyala, bisaEspresso: bisaEspresso, bahanTersedia: bahanTersedia, faktor: faktor, campuran: campuran, faktorAntar: faktorAntar, kecepatan: kecepatan,
     bonusRasa: bonusRasa, suasana: suasana, sabar: sabar, esTahan: esTahan, beliToken: beliToken, naikKelas: naikKelas, beliAlat: beliAlat, bukaCabang: bukaCabang,
     hasilCabang: hasilCabang, perkiraanBintang: perkiraanBintang, hppResep: hppResep, susunResep: susunResep, namaUsul: namaUsul, simpanMenu: simpanMenu, hapusMenu: hapusMenu,

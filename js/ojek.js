@@ -14,7 +14,9 @@
   function platform(id) { return O.platform.filter(function (p) { return p.id === id; })[0]; }
 
   function siapkan(S) {
-    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, jauhHariIni: 0, jatahJauh: 2, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (S.ojek.jauhHariIni == null) S.ojek.jauhHariIni = 0;
+    if (S.ojek.jatahJauh == null) S.ojek.jatahJauh = 1 + Math.floor(Math.random() * 4);
     return S;
   }
   function aktif(S, pid) { var d = S.ojek.daftar[pid]; return !!d && d.status === 'aktif'; }
@@ -22,6 +24,17 @@
     if (!g.KK_MOTOR.punya(S)) return 'Daftar driver butuh motor sendiri, SIM C, dan STNK. Beli motor dulu.';
     if (S.ojek.daftar[pid]) return 'Sudah mendaftar di ' + platform(pid).nama + '.';
     S.ojek.daftar[pid] = { status: 'proses', aktifPada: S.hari + O.verifikasiHari };
+    return true;
+  }
+  function putus(S, pid) {
+    var p = platform(pid);
+    if (!p || !S.ojek.daftar[pid]) return 'Belum terdaftar sebagai mitra ' + (p ? p.nama : pid) + '.';
+    if (S.ojek.online && S.ojek.platform === pid) offline(S, true);
+    delete S.ojek.daftar[pid];
+    if (S.ojek.platform === pid) {
+      var sisa = O.platform.filter(function (x) { return aktif(S, x.id); })[0];
+      S.ojek.platform = sisa ? sisa.id : null;
+    }
     return true;
   }
 
@@ -72,11 +85,20 @@
   function buatTawaran(S) {
     var jam = Math.floor(S.menit / 60) % 24, makan = (jam >= 11 && jam < 14) || (jam >= 18 && jam < 21);
     var r = Math.random(), jenis = r < (makan ? 0.45 : 0.15) ? 'makanan' : r < (makan ? 0.6 : 0.35) ? 'barang' : 'penumpang';
-    var km = Math.round((1.5 + Math.pow(Math.random(), 1.6) * 10) * 10) / 10, jemput = Math.round((0.3 + Math.random() * 2) * 10) / 10;
+    /* sehari-hari 1-10 km, dan 1-4 kali sehari muncul order jarak jauh hingga 30 km */
+    var bisaJauh = (S.ojek.jauhHariIni || 0) < (S.ojek.jatahJauh || 2) && Math.random() < 0.28;
+    var km;
+    if (bisaJauh) {
+      S.ojek.jauhHariIni = (S.ojek.jauhHariIni || 0) + 1;
+      km = Math.round((11 + Math.random() * 19) * 10) / 10; /* 11 s/d 30 km */
+    } else {
+      km = Math.round((1 + Math.pow(Math.random(), 1.35) * 9) * 10) / 10; /* 1 s/d 10 km */
+    }
+    var jemput = Math.round((0.3 + Math.random() * 1.8) * 10) / 10;
     var t = tarif(S, km), p = platform(S.ojek.platform);
-    return { jenis: jenis, layanan: p.layanan[jenis], km: km, jemput: jemput, tarif: t, bersih: Math.round(t * (1 - O.potongan)),
+    return { jenis: jenis, layanan: p.layanan[jenis], km: km, jemput: jemput, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - O.potongan)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
-      tip: Math.random() < 0.12 ? (2 + Math.floor(Math.random() * 4)) * 1000 : 0 };
+      tip: Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0 };
   }
   function ambil(S) {
     var o = S.ojek, x = o.tawaran; if (!x) return 'Order sudah tidak ada.';
@@ -140,10 +162,10 @@
     var o = S.ojek, kabar = [];
     O.platform.forEach(function (p) { var d = o.daftar[p.id]; if (d && d.status === 'proses' && nBaru >= d.aktifPada) { d.status = 'aktif'; kabar.push('Akun ' + p.app + ' sudah aktif. Bisa mulai narik.'); } });
     if (o.hariIni.trip) kabar.push('Kemarin narik ' + o.hariIni.trip + ' order, pendapatan bersih ' + rp(o.hariIni.bersih) + '.');
-    o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.online = false; o.tawaran = null; o.trip = null;
+    o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.jauhHariIni = 0; o.jatahJauh = 1 + Math.floor(Math.random() * 4); o.online = false; o.tawaran = null; o.trip = null;
     return kabar;
   }
 
-  g.KK_OJEK = { siapkan: siapkan, daftar: daftar, aktif: aktif, tarif: tarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, ambil: ambil, lewati: lewati,
+  g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
     kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, CEPAT_TRIP: CEPAT_TRIP };
 })(window);

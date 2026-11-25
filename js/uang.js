@@ -14,7 +14,7 @@
     if (!S.merchants) { S.merchants = {}; if (S.qris) S.merchants[S.qris] = S.merchant || { tersedia: 0, menunggu: [], tarikBulanIni: 0 }; }
     if (S.qris && !Object.keys(S.merchants).length) S.merchants[S.qris] = { tersedia: 0, menunggu: [], tarikBulanIni: 0 };
     delete S.merchant;
-    if (S.bank) { S.bank.transferBulanIni = S.bank.transferBulanIni || 0; S.bank.tarikHariIni = S.bank.tarikHariIni || 0; }
+    if (S.bank) { S.bank.transferBulanIni = S.bank.transferBulanIni || 0; S.bank.tarikHariIni = S.bank.tarikHariIni || 0; S.bank.tabunganGaji = S.bank.tabunganGaji || 0; }
     siapkanKk(S);
     return S;
   }
@@ -51,7 +51,8 @@
     if (!S.uang || typeof S.uang.kecil !== 'number') S.uang = { kecil: MODAL_RECEH, besar: lamaLaci, dompet: 250000, tukarHariIni: 0 };
     if (typeof S.uang.dompet !== 'number') S.uang.dompet = 150000;
     if (!S.merchants) { S.merchants = {}; S.merchants[S.qris || 'gopay'] = S.merchant || { tersedia: lamaMerchant, menunggu: [], tarikBulanIni: 0 }; delete S.merchant; }
-    if (!S.bank) { S.bank = { id: bankId, saldo: 0, mutasi: [], transferBulanIni: 0, tarikHariIni: 0 }; S.bank.saldo = MODAL_BANK; catat(S, 'Saldo awal (modal kerja)', MODAL_BANK); }
+    if (!S.bank) { S.bank = { id: bankId, saldo: 0, tabunganGaji: 0, mutasi: [], transferBulanIni: 0, tarikHariIni: 0 }; S.bank.saldo = MODAL_BANK; catat(S, 'Saldo awal (modal kerja)', MODAL_BANK); }
+    if (typeof S.bank.tabunganGaji !== 'number') S.bank.tabunganGaji = 0;
     S.pajak = S.pajak || { tagihan: [], omzetBulan: 0 };
     S.nib = S.nib || null;
     S.kur = S.kur || { status: 'tidak' };
@@ -103,6 +104,23 @@
     if (jml <= 0) return 'Dompet kosong.';
     S.uang.dompet -= jml;
     if (jml >= 50000) S.uang.besar += jml; else S.uang.kecil += jml;
+    return true;
+  }
+  /* Tabungan Gaji Karyawan: rekening khusus gaji agar tidak tercampur saat belanja/pembelian */
+  function isiTabunganGaji(S, jml) {
+    jml = Math.min(+jml || 0, S.bank.saldo);
+    if (jml <= 0) return 'Saldo rekening utama tidak cukup untuk dipindahkan ke Tabungan Gaji.';
+    S.bank.saldo -= jml;
+    S.bank.tabunganGaji = (S.bank.tabunganGaji || 0) + jml;
+    catat(S, 'Sisihkan ke Tabungan Gaji Karyawan', -jml);
+    return true;
+  }
+  function tarikTabunganGaji(S, jml) {
+    jml = Math.min(+jml || 0, S.bank.tabunganGaji || 0);
+    if (jml <= 0) return 'Saldo Tabungan Gaji Karyawan kosong.';
+    S.bank.tabunganGaji -= jml;
+    S.bank.saldo += jml;
+    catat(S, 'Tarik dari Tabungan Gaji Karyawan', jml);
     return true;
   }
   function saldoMerchant(m) { return m.tersedia + m.menunggu.reduce(function (t, x) { return t + x.jml; }, 0); }
@@ -365,7 +383,7 @@
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
 
   g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris,
-    biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, merchantTotal: merchantTotal,
+    biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, isiTabunganGaji: isiTabunganGaji, tarikTabunganGaji: tarikTabunganGaji, merchantTotal: merchantTotal,
     bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
     penghasilanKk: penghasilanKk, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,

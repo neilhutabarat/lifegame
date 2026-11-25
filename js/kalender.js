@@ -198,7 +198,7 @@
     if (p.length !== 3) return 24;
     var t = tgl(n), u = t.y - (+p[0]);
     if (t.m < (+p[1]) || (t.m === (+p[1]) && t.d < (+p[2]))) u--;
-    return Math.max(15, u);
+    return Math.max(0, u);
   }
   function musim(m) {
     if (m >= 11 || m <= 3) return 'Musim hujan';

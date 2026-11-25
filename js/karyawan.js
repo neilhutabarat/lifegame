@@ -213,6 +213,133 @@
     if (S.bank.saldo < jml) return false;
     S.bank.saldo -= jml; S.bank.mutasi.unshift({ n: n, ket: ket, jml: -jml }); return true;
   }
+  /* bayar gaji karyawan: utamakan dari Tabungan Gaji Karyawan dulu, baru rekening utama */
+  function bayarGajiBank(S, jml, ket, n) {
+    var tab = S.bank.tabunganGaji || 0, sld = S.bank.saldo || 0;
+    if (tab + sld < jml) return false;
+    var dariTab = Math.min(tab, jml), dariSld = jml - dariTab;
+    S.bank.tabunganGaji = tab - dariTab;
+    S.bank.saldo = sld - dariSld;
+    var infoSumber = dariTab > 0 && dariSld > 0 ? ' (Tabungan Gaji + Rekening)' : dariTab > 0 ? ' (dari Tabungan Gaji)' : '';
+    S.bank.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket + infoSumber, jml: -jml });
+    return true;
+  }
+  function totalTunggakanGaji(S) {
+    return (S.staf || []).reduce(function (t, k) { return t + (k.gajiTelat || 0); }, 0);
+  }
+  function maksHariTunggakan(S, nSekarang) {
+    var n = nSekarang == null ? S.hari : nSekarang, maks = 0;
+    (S.staf || []).forEach(function (k) {
+      if ((k.gajiTelat || 0) > 0 && k.hariMulaiTelat != null) {
+        maks = Math.max(maks, Math.max(1, n - k.hariMulaiTelat));
+      }
+    });
+    return maks;
+  }
+  function bayarTunggakanGaji(S) {
+    var tot = totalTunggakanGaji(S);
+    if (tot <= 0) return 'Tidak ada tunggakan gaji karyawan.';
+    if (!bayarGajiBank(S, tot, 'Pelunasan tunggakan gaji karyawan', S.hari)) {
+      return 'Dana di Tabungan Gaji + Rekening tidak cukup untuk melunasi tunggakan ' + rp(tot) + '.';
+    }
+    (S.staf || []).forEach(function (k) {
+      if (k.gajiTelat > 0) {
+        k.gajiTelat = 0;
+        k.hariMulaiTelat = null;
+        k.setia = Math.min(100, (k.setia || 50) + 18);
+      }
+    });
+    return { ok: true, jml: tot };
+  }
+  /* jika menunggak gaji >= 90 hari: kena kasus & jual paksa aset paling mahal milik karakter, kembalian masuk rekening */
+  function eksekusiKasusGaji90Hari(S, nBaru) {
+    var tot = totalTunggakanGaji(S);
+    if (tot <= 0) return [];
+    var daftarAset = [];
+    if (S.mobil && g.KK_MOTOR) {
+      var nmMob = S.mobil.nama;
+      var hjMob = g.KK_MOTOR.nilaiJual(S, S.mobil);
+      daftarAset.push({ jenis: 'mobil', nama: nmMob, nilai: hjMob, jual: function () { S.mobil = null; } });
+    }
+    var armada = S.armadaMotor || (S.motor ? [S.motor] : []);
+    armada.forEach(function (m, idx) {
+      var hjMot = g.KK_MOTOR ? g.KK_MOTOR.nilaiJual(S, m) : Math.round((m.harga || 15000000) * 0.6);
+      daftarAset.push({ jenis: 'motor', idx: idx, nama: m.nama, nilai: hjMot, jual: function () {
+        if (S.ojek && S.ojek.online) g.KK_OJEK.offline(S, true);
+        S.armadaMotor.splice(idx, 1);
+        S.motorAktif = 0;
+        S.motor = S.armadaMotor[0] || null;
+      } });
+    });
+    if (S.game && S.game.konsol && g.KK_DIRI) {
+      Object.keys(S.game.konsol).forEach(function (kid) {
+        var ko = S.game.konsol[kid], hjKon = g.KK_DIRI.nilaiJualKonsol(S, kid) || Math.round((ko.hargaBeli || 1000000) * 0.6);
+        daftarAset.push({ jenis: 'konsol', id: kid, nama: ko.nama, nilai: hjKon, jual: function () {
+          delete S.game.konsol[kid];
+          if (S.rumah && S.rumah.barang) delete S.rumah.barang[kid];
+        } });
+      });
+    }
+    if (S.gadget && g.KK_DIRI) {
+      var hpKeys = Object.keys(S.gadget).filter(function (gid) { var gm = g.KK_DIRI.gadgetModel(gid); return gm && gm.jenis === 'hp'; });
+      Object.keys(S.gadget).forEach(function (gid) {
+        var gm = g.KK_DIRI.gadgetModel(gid);
+        if (!gm) return;
+        if (gm.jenis === 'hp' && hpKeys.length <= 1) return; /* sisakan 1 HP paling dasar bila memungkinkan */
+        var hjGad = g.KK_DIRI.nilaiJualGadget(S, gid) || Math.round(gm.harga * 0.6);
+        daftarAset.push({ jenis: 'gadget', id: gid, nama: gm.nama, nilai: hjGad, jual: function () {
+          delete S.gadget[gid];
+          if (S.hp && S.hp.id === gid) {
+            var sisaHp = Object.keys(S.gadget).filter(function (k) { var x = g.KK_DIRI.gadgetModel(k); return x && x.jenis === 'hp'; });
+            if (sisaHp.length) S.hp.id = sisaHp[0];
+          }
+        } });
+      });
+    }
+    if (S.rumah && S.rumah.barang && g.KK_DIRI) {
+      Object.keys(S.rumah.barang).forEach(function (bid) {
+        if (!S.rumah.barang[bid] || bid === 'ps5' || bid === 'ps5disc' || bid === 'kaset') return;
+        var br = g.KK_DIRI.barang(bid);
+        if (!br) return;
+        var hjBr = g.KK_DIRI.nilaiJualBarang(S, bid) || Math.round(br.harga * 0.5);
+        daftarAset.push({ jenis: 'barang', id: bid, nama: br.nama, nilai: hjBr, jual: function () {
+          delete S.rumah.barang[bid];
+          if (S.rumah.infoBarang) delete S.rumah.infoBarang[bid];
+        } });
+      });
+    }
+    daftarAset.sort(function (a, b) { return b.nilai - a.nilai; });
+    var kabar = [];
+    if (daftarAset.length > 0) {
+      /* jual aset paling mahal pertama (dan aset berikutnya jika belum menutupi tunggakan) */
+      var terjualNama = [], totalJual = 0;
+      for (var i = 0; i < daftarAset.length && totalJual < tot; i++) {
+        var a = daftarAset[i];
+        a.jual();
+        terjualNama.push(a.nama + ' (' + rp(a.nilai) + ')');
+        totalJual += a.nilai;
+      }
+      var kembalian = Math.max(0, totalJual - tot);
+      var masihKurang = Math.max(0, tot - totalJual);
+      if (kembalian > 0) {
+        S.bank.saldo += kembalian;
+        S.bank.mutasi.unshift({ n: nBaru, ket: 'Kembalian lelang paksa aset (Kasus Gaji 90 Hari)', jml: kembalian });
+      }
+      (S.staf || []).forEach(function (k) {
+        k.gajiTelat = masihKurang > 0 ? Math.round(masihKurang / S.staf.length) : 0;
+        k.hariMulaiTelat = masihKurang > 0 ? nBaru : null;
+        k.setia = Math.max(55, k.setia);
+      });
+      kabar.push('KASUS TUNGGAKAN GAJI 90 HARI! Disnaker & karyawan menyita dan menjual paksa aset termahalmu: ' + terjualNama.join(', ') + ' senilai ' + rp(totalJual) + ' untuk melunasi tunggakan gaji ' + rp(tot) + '. Uang kembalian ' + rp(kembalian) + ' telah dikembalikan ke rekeningmu!');
+    } else {
+      /* jika sama sekali tidak punya aset, potong saldo bank/tabungan gaji yang ada */
+      var bayarAda = Math.min(tot, (S.bank.tabunganGaji || 0) + (S.bank.saldo || 0));
+      if (bayarAda > 0) bayarGajiBank(S, bayarAda, 'Sita rekening (Kasus Gaji 90 Hari)', nBaru);
+      (S.staf || []).forEach(function (k) { k.gajiTelat = Math.max(0, (k.gajiTelat || 0) - Math.round(bayarAda / Math.max(1, S.staf.length))); k.hariMulaiTelat = nBaru; });
+      kabar.push('KASUS TUNGGAKAN GAJI 90 HARI! Karyawan melaporkan tunggakan gaji ' + rp(tot) + ' ke Disnaker.');
+    }
+    return kabar;
+  }
   function bpjsPersen(S) {
     var kls = kelasUsaha(S), kedai = 0.0024 + 0.003, pekerja = 0;
     if (kls !== 'mikro') { kedai += 0.037; pekerja += 0.02; }
@@ -314,16 +441,36 @@
         var bersih = Math.round(pokok + k.lemburBulan + tambahan - potong);
         var total = bersih + Math.round(potong + iuranKedai);
         var label = 'Gaji ' + k.nama + (achieve ? ' (2× Achieve)' : '') + (tj.bpjs ? ' + BPJS' : '') + ' ' + N.namaBulan[tL.m - 1];
-        if (bayarBank(S, total, label, nBaru)) {
+        if (bayarGajiBank(S, total, label, nBaru)) {
           kabar.push(label + ': ' + rp(total) + ' sudah dibayar.' + (k.bensinInsentif ? ' (termasuk bensin ' + rp(k.bensinInsentif) + ')' : ''));
-          k.lemburBulan = 0; k.gajiTelat = 0; k.makanBulan = 0; k.bensinInsentif = 0;
+          k.lemburBulan = 0; k.makanBulan = 0; k.bensinInsentif = 0;
           if (achieve) k.setia = 100;
-        } else { k.gajiTelat = (k.gajiTelat || 0) + total; k.setia -= 25; kabar.push('Saldo rekening kurang, gaji ' + k.nama + ' telat dibayar.'); }
+        } else {
+          if (!k.gajiTelat) k.hariMulaiTelat = nBaru;
+          k.gajiTelat = (k.gajiTelat || 0) + total;
+          k.lemburBulan = 0; k.makanBulan = 0; k.bensinInsentif = 0;
+          k.setia = Math.max(20, k.setia - 15);
+          kabar.push('Dana Tabungan Gaji & Rekening kurang! Gaji ' + k.nama + ' (' + rp(total) + ') menunggak (batas maksimal 90 hari sebelum kena kasus sita aset).');
+        }
       });
       S.gelasBulanIni = 0;
-    } else S.staf.forEach(function (k) {
-      if (k.gajiTelat && bayarBank(S, k.gajiTelat, 'Gaji telat ' + k.nama, nBaru)) { kabar.push('Gaji ' + k.nama + ' yang telat sudah dibayar.'); k.gajiTelat = 0; k.lemburBulan = 0; }
-    });
+    }
+    /* otomatis lunasi tunggakan gaji jika Tabungan Gaji Karyawan sudah diisi cukup */
+    var totTunggak = totalTunggakanGaji(S);
+    if (totTunggak > 0 && (S.bank.tabunganGaji || 0) >= totTunggak) {
+      bayarGajiBank(S, totTunggak, 'Pelunasan otomatis tunggakan gaji dari Tabungan Gaji', nBaru);
+      S.staf.forEach(function (k) { k.gajiTelat = 0; k.hariMulaiTelat = null; k.setia = Math.min(100, k.setia + 15); });
+      kabar.push('Tunggakan gaji karyawan sebesar ' + rp(totTunggak) + ' otomatis dilunasi dari Tabungan Gaji Karyawan.');
+    }
+    /* cek batas 90 hari tunggakan gaji -> eksekusi kasus jual paksa aset termahal */
+    if (maksHariTunggakan(S, nBaru) >= 90) {
+      kabar = kabar.concat(eksekusiKasusGaji90Hari(S, nBaru));
+    } else if (totTunggak > 0) {
+      var hrT = maksHariTunggakan(S, nBaru);
+      if (hrT === 30 || hrT === 60 || hrT === 80 || hrT >= 85) {
+        kabar.push('PERINGATAN TUNGGAKAN GAJI: Sudah ' + hrT + '/90 hari menunggak gaji karyawan sebesar ' + rp(totTunggak) + '. Segera lunasi sebelum hari ke-90 agar aset termahalmu tidak dilelang paksa!');
+      }
+    }
     /* THR opsional (dibayar H-7 hari raya agama karyawan jika tunjangan THR aktif) */
     S.staf.forEach(function (k) {
       pastikanJadwal(S, k);
@@ -332,12 +479,35 @@
       if (hr == null || hr - 7 !== nBaru) return;
       var bulan = (nBaru - k.mulai) / 30; if (bulan < 1) return;
       var thr = Math.round(k.gaji * Math.min(1, bulan / 12) / 1000) * 1000;
-      if (bayarBank(S, thr, 'THR ' + k.nama + ' (' + k.hariRaya + ')', nBaru)) { kabar.push('THR ' + k.nama + ' ' + rp(thr) + ' dibayar menjelang ' + k.hariRaya + '.'); k.setia = Math.min(100, k.setia + 8); }
-      else { k.setia -= 25; k.gajiTelat = (k.gajiTelat || 0) + Math.round(thr * 1.05); kabar.push('THR ' + k.nama + ' telat. Kena denda 5% dan ' + k.nama + ' kecewa.'); }
+      if (bayarGajiBank(S, thr, 'THR ' + k.nama + ' (' + k.hariRaya + ')', nBaru)) { kabar.push('THR ' + k.nama + ' ' + rp(thr) + ' dibayar menjelang ' + k.hariRaya + '.'); k.setia = Math.min(100, k.setia + 8); }
+      else {
+        if (!k.gajiTelat) k.hariMulaiTelat = nBaru;
+        k.setia = Math.max(20, k.setia - 15);
+        k.gajiTelat = (k.gajiTelat || 0) + Math.round(thr * 1.05);
+        kabar.push('THR ' + k.nama + ' telat. Kena denda 5% dan masuk tunggakan gaji.');
+      }
     });
-    /* resign */
+    /* karyawan lawan jenis bisa saling berhubungan (berpacaran hingga menikah) */
+    if (S.staf.length >= 2) {
+      for (var ia = 0; ia < S.staf.length; ia++) {
+        for (var ib = ia + 1; ib < S.staf.length; ib++) {
+          var ka = S.staf[ia], kb = S.staf[ib];
+          if (ka.gender !== kb.gender && !ka.pasanganStafId && !kb.pasanganStafId && Math.random() < 0.05) {
+            ka.pasanganStafId = kb.id; ka.pasanganStafNama = kb.nama; ka.statusHubunganStaf = 'pacaran'; ka.hariPacaran = nBaru;
+            kb.pasanganStafId = ka.id; kb.pasanganStafNama = ka.nama; kb.statusHubunganStaf = 'pacaran'; kb.hariPacaran = nBaru;
+            ka.setia = Math.min(100, ka.setia + 10); kb.setia = Math.min(100, kb.setia + 10);
+            kabar.push('Asmara di kedai: Karyawanmu ' + ka.nama + ' dan ' + kb.nama + ' mulai berpacaran karena sering kerja bareng!');
+          } else if (ka.pasanganStafId === kb.id && ka.statusHubunganStaf === 'pacaran' && (nBaru - (ka.hariPacaran || nBaru)) >= 30 && Math.random() < 0.08) {
+            ka.statusHubunganStaf = 'menikah'; kb.statusHubunganStaf = 'menikah';
+            ka.setia = 100; kb.setia = 100;
+            kabar.push('KABAR BAHAGIA: Pasangan karyawanmu ' + ka.nama + ' & ' + kb.nama + ' resmi MENIKAH! Keduanya makin setia bekerja di kedaimu.');
+          }
+        }
+      }
+    }
+    /* resign (karyawan yang masih menunggak gaji tidak langsung pergi sebelum gajinya dibayar/kasus 90 hari) */
     S.staf = S.staf.filter(function (k) {
-      if (k.setia > 15) return true;
+      if (k.setia > 15 || (k.gajiTelat || 0) > 0) return true;
       kabar.push(k.nama + ' mengundurkan diri. ' + (k.gaji < umk(S) && !k.paruh ? 'Gajinya di bawah UMK dan ' : '') + 'merasa tidak betah.');
       return false;
     });
@@ -434,5 +604,6 @@
 
   g.KK_STAF = { TUGAS: TUGAS, PATOKAN_UMKM: PATOKAN_UMKM, BIAYA_LOWONGAN: BIAYA_LOWONGAN, BIAYA_KURSUS: BIAYA_KURSUS, siapkan: siapkan, usiaKaryawan: usiaKaryawan, pasangLowongan: pasangLowongan, terima: terima, tolak: tolak,
     jamKerja: jamKerja, masuk: masuk, hadir: hadir, ada: ada, punyaTugas: punyaTugas, kerja: kerja, gantiHari: gantiHari, biayaHarian: biayaHarian,
-    aturTugas: aturTugas, aturSif: aturSif, aturJam: aturJam, aturLibur: aturLibur, aturTunjangan: aturTunjangan, aturTarget: aturTarget, aturGaji: aturGaji, kursus: kursus, pecat: pecat, cari: cari, umk: umk, kelasUsaha: kelasUsaha, bpjsPersen: bpjsPersen };
+    aturTugas: aturTugas, aturSif: aturSif, aturJam: aturJam, aturLibur: aturLibur, aturTunjangan: aturTunjangan, aturTarget: aturTarget, aturGaji: aturGaji, kursus: kursus, pecat: pecat, cari: cari, umk: umk, kelasUsaha: kelasUsaha, bpjsPersen: bpjsPersen,
+    totalTunggakanGaji: totalTunggakanGaji, maksHariTunggakan: maksHariTunggakan, bayarTunggakanGaji: bayarTunggakanGaji, eksekusiKasusGaji90Hari: eksekusiKasusGaji90Hari };
 })(window);

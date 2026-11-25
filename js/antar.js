@@ -193,6 +193,10 @@
     var st = S.platform[id]; if (st.status !== 'tidak') return 'Sudah didaftarkan.';
     st.status = 'proses'; st.aktifPada = S.hari + PROSES_DAFTAR; return true;
   }
+  function putus(S, id) {
+    var st = S.platform[id]; if (!st || st.status === 'tidak') return 'Belum terdaftar di platform ini.';
+    st.status = 'tidak'; delete st.aktifPada; return true;
+  }
   function aturMarkup(S, id, nilai) { S.platform[id].markup = nilai; return true; }
 
   /* ---------- ganti hari ---------- */
@@ -227,6 +231,6 @@
   function aktif(S) { return S.pesanan.filter(function (p) { return p.status !== 'selesai' && p.status !== 'batal'; }); }
 
   g.KK_ANTAR = { siapkan: siapkan, jalan: jalan, terima: terima, tolak: tolak, cari: cari, itemBerikut: itemBerikut, itemSiap: itemSiap,
-    antarSendiri: antarSendiri, pakaiKurir: pakaiKurir, tarifKurir: tarifKurir, daftar: daftar, aturMarkup: aturMarkup, gantiHari: gantiHari,
+    antarSendiri: antarSendiri, pakaiKurir: pakaiKurir, tarifKurir: tarifKurir, daftar: daftar, putus: putus, aturMarkup: aturMarkup, gantiHari: gantiHari,
     aktif: aktif, jumlahGelas: jumlahGelas, nilaiMenu: nilaiMenu, hargaItem: hargaItem, menuDari: menuDari, namaPlatform: namaPlatform, ongkir: ongkir, waktu: waktu };
 })(window);
