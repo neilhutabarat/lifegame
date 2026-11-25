@@ -95,7 +95,21 @@
   function aturBerhentiSewa(S, berhenti) {
     if (S.usaha.milikLahan) return 'Lahan sudah milik sendiri, tidak ada biaya sewa.';
     S.usaha.berhentiSewa = !!berhenti;
-    if (!berhenti && S.usaha.tunggakanSewa > 0) S.usaha.tunggakanSewa = 0;
+    if (berhenti) {
+      /* saat tidak punya / menghentikan sewa toko, uang laci dipindah otomatis ke dompet pribadi agar tidak ada laci */
+      if (S.uang) {
+        var sisaLaci = (S.uang.kecil || 0) + (S.uang.besar || 0);
+        if (sisaLaci > 0) {
+          S.uang.dompet = (S.uang.dompet || 0) + sisaLaci;
+          S.uang.kecil = 0; S.uang.besar = 0;
+        }
+      }
+      S.tutupSementara = false;
+      S.tutupAntre = false;
+      if (S.fase === 'buka') S.fase = 'pagi';
+    } else if (S.usaha.tunggakanSewa > 0) {
+      S.usaha.tunggakanSewa = 0;
+    }
     return true;
   }
   function sewaRukoLangsung(S) {

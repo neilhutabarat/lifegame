@@ -105,6 +105,7 @@
   }
   /* daftar id bahan stok yang benar-benar dipakai oleh menu yang sedang dijual */
   function bahanDijual(S) {
+    if (S && S.usaha && S.usaha.berhentiSewa) return {}; /* saat tidak sewa kontainer/toko, bahan kedai disembunyikan */
     var perlu = {}, rmd = KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0;
     M.MENU.forEach(function (m) {
       if (m.takjil && !rmd) return;
@@ -131,6 +132,7 @@
   function barangDari(bahan) { return bahan === 'air' ? 'galon' : (M.BAHAN[bahan] && M.BAHAN[bahan].stok) || bahan; }
   /* cukup untuk berapa gelas lagi (perkiraan kasar dari takaran resep terbesar) */
   function menipis(S) {
+    if (S && S.usaha && S.usaha.berhentiSewa) return [];
     var hasil = [], perlu = bahanDijual(S);
     var batas = { kopi: 150, uht: 1500, skm: 250, gula: 200, aren: 150, cokelat: 150, es: 2000, cupPlastik: 10, cupKertas: 6, gas: 300, galon: 1500, kentang: 300, tahu: 4, mie: 4, sosisTelur: 3, wadahMakan: 8 };
     M.URUT_BARANG.forEach(function (id) { if (perlu[id] && S.stok[id].jml < batas[id]) hasil.push(id); });
@@ -223,6 +225,7 @@
   /* ---------- waktu berjalan: es meleleh, kiriman datang ---------- */
   function jalan(S, dMenit) {
     var kabar = [];
+    if (S && S.usaha && S.usaha.berhentiSewa) return kabar;
     if (dMenit > 0 && S.stok.es.jml > 0) {
       var leleh = S.stok.es.jml * (g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S) ? 0.003 : MELELEH_PER_JAM) * dMenit / 60, biaya = ambil(S, 'es', leleh);
       S.hariIni.rusak = (S.hariIni.rusak || 0) + biaya;
@@ -239,12 +242,14 @@
   /* ---------- ganti hari ---------- */
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], tB = KAL.tgl(nBaru);
-    /* es di cool box habis mencair semalam */
-    if (S.stok.es.jml > 1 && !(g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S))) { var e = S.stok.es.jml * 0.7; S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'es', e); kabar.push('Es ' + (e / 1000).toFixed(1).replace('.', ',') + ' kg mencair semalam di cool box (sekitar 70%).'); } /* setelan tahap 10 */
-    /* susu UHT yang sudah dibuka lewat 3 hari */
-    if (S.uhtBuka.sisa > 0 && nBaru - S.uhtBuka.hari >= UHT_TAHAN_HARI) {
-      var basi = Math.min(S.uhtBuka.sisa, S.stok.uht.jml); S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'uht', basi);
-      S.uhtBuka.sisa = 0; kabar.push('Susu UHT yang sudah dibuka ' + UHT_TAHAN_HARI + ' hari basi, ' + Math.round(basi) + ' ml dibuang.');
+    if (!S.usaha || !S.usaha.berhentiSewa) {
+      /* es di cool box habis mencair semalam */
+      if (S.stok.es.jml > 1 && !(g.KK_USAHA && S.usaha && g.KK_USAHA.esTahan(S))) { var e = S.stok.es.jml * 0.7; S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'es', e); kabar.push('Es ' + (e / 1000).toFixed(1).replace('.', ',') + ' kg mencair semalam di cool box (sekitar 70%).'); }
+      /* susu UHT yang sudah dibuka lewat 3 hari */
+      if (S.uhtBuka.sisa > 0 && nBaru - S.uhtBuka.hari >= UHT_TAHAN_HARI) {
+        var basi = Math.min(S.uhtBuka.sisa, S.stok.uht.jml); S.hariIni.rusak = (S.hariIni.rusak || 0) + ambil(S, 'uht', basi);
+        S.uhtBuka.sisa = 0; kabar.push('Susu UHT yang sudah dibuka ' + UHT_TAHAN_HARI + ' hari basi, ' + Math.round(basi) + ' ml dibuang.');
+      }
     }
     /* harga bergerak tiap Senin */
     if (tB.dow === 1) {

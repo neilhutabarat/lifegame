@@ -106,21 +106,21 @@
     if (jml >= 50000) S.uang.besar += jml; else S.uang.kecil += jml;
     return true;
   }
-  /* Tabungan Gaji Karyawan: rekening khusus gaji agar tidak tercampur saat belanja/pembelian */
+  /* Tabungan Khusus: tidak akan tertarik otomatis oleh sistem/gaji/pembelian kecuali diambil sendiri */
   function isiTabunganGaji(S, jml) {
     jml = Math.min(+jml || 0, S.bank.saldo);
-    if (jml <= 0) return 'Saldo rekening utama tidak cukup untuk dipindahkan ke Tabungan Gaji.';
+    if (jml <= 0) return 'Saldo rekening utama tidak cukup untuk dipindahkan ke Tabungan Khusus.';
     S.bank.saldo -= jml;
     S.bank.tabunganGaji = (S.bank.tabunganGaji || 0) + jml;
-    catat(S, 'Sisihkan ke Tabungan Gaji Karyawan', -jml);
+    catat(S, 'Sisihkan ke Tabungan Khusus', -jml);
     return true;
   }
   function tarikTabunganGaji(S, jml) {
     jml = Math.min(+jml || 0, S.bank.tabunganGaji || 0);
-    if (jml <= 0) return 'Saldo Tabungan Gaji Karyawan kosong.';
+    if (jml <= 0) return 'Saldo Tabungan Khusus kosong.';
     S.bank.tabunganGaji -= jml;
     S.bank.saldo += jml;
-    catat(S, 'Tarik dari Tabungan Gaji Karyawan', jml);
+    catat(S, 'Tarik dari Tabungan Khusus', jml);
     return true;
   }
   function saldoMerchant(m) { return m.tersedia + m.menunggu.reduce(function (t, x) { return t + x.jml; }, 0); }
@@ -134,7 +134,7 @@
   function setor(S, jml, sumber) {
     var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM';
     if (!bolehKeAtm(S)) return 'Kedai sedang buka tanpa karyawan. Tutup sementara dulu atau rekrut karyawan agar bisa ke ' + tempat + '.';
-    var dariDompet = sumber === 'dompet';
+    var dariDompet = sumber === 'dompet' || (S.usaha && S.usaha.berhentiSewa);
     jml = Math.min(jml, dariDompet ? dompet(S) : S.uang.besar + S.uang.kecil);
     if (T) { jml = Math.min(jml, T.maks); if (jml < T.min) return 'Setor di ' + tempat + ' minimal ' + rp(T.min) + '.'; if (S.bank.saldo + jml < T.biaya) return 'Saldo tidak cukup untuk biaya ' + rp(T.biaya) + '.'; }
     if (jml <= 0) return dariDompet ? 'Dompet kosong.' : 'Laci kosong.';

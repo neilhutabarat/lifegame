@@ -213,15 +213,12 @@
     if (S.bank.saldo < jml) return false;
     S.bank.saldo -= jml; S.bank.mutasi.unshift({ n: n, ket: ket, jml: -jml }); return true;
   }
-  /* bayar gaji karyawan: utamakan dari Tabungan Gaji Karyawan dulu, baru rekening utama */
+  /* bayar gaji karyawan HANYA dari rekening utama (TIDAK otomatis menarik Tabungan Khusus) */
   function bayarGajiBank(S, jml, ket, n) {
-    var tab = S.bank.tabunganGaji || 0, sld = S.bank.saldo || 0;
-    if (tab + sld < jml) return false;
-    var dariTab = Math.min(tab, jml), dariSld = jml - dariTab;
-    S.bank.tabunganGaji = tab - dariTab;
-    S.bank.saldo = sld - dariSld;
-    var infoSumber = dariTab > 0 && dariSld > 0 ? ' (Tabungan Gaji + Rekening)' : dariTab > 0 ? ' (dari Tabungan Gaji)' : '';
-    S.bank.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket + infoSumber, jml: -jml });
+    var sld = S.bank.saldo || 0;
+    if (sld < jml) return false;
+    S.bank.saldo = sld - jml;
+    S.bank.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket, jml: -jml });
     return true;
   }
   function totalTunggakanGaji(S) {
@@ -240,7 +237,7 @@
     var tot = totalTunggakanGaji(S);
     if (tot <= 0) return 'Tidak ada tunggakan gaji karyawan.';
     if (!bayarGajiBank(S, tot, 'Pelunasan tunggakan gaji karyawan', S.hari)) {
-      return 'Dana di Tabungan Gaji + Rekening tidak cukup untuk melunasi tunggakan ' + rp(tot) + '.';
+      return 'Saldo Rekening Utama tidak cukup untuk melunasi tunggakan ' + rp(tot) + '. Tarik dana dari Tabungan Khusus dulu jika perlu.';
     }
     (S.staf || []).forEach(function (k) {
       if (k.gajiTelat > 0) {
@@ -455,14 +452,8 @@
       });
       S.gelasBulanIni = 0;
     }
-    /* otomatis lunasi tunggakan gaji jika Tabungan Gaji Karyawan sudah diisi cukup */
+    /* cek batas 90 hari tunggakan gaji -> eksekusi kasus jual paksa aset termahal (Tabungan Khusus tidak disentuh otomatis) */
     var totTunggak = totalTunggakanGaji(S);
-    if (totTunggak > 0 && (S.bank.tabunganGaji || 0) >= totTunggak) {
-      bayarGajiBank(S, totTunggak, 'Pelunasan otomatis tunggakan gaji dari Tabungan Gaji', nBaru);
-      S.staf.forEach(function (k) { k.gajiTelat = 0; k.hariMulaiTelat = null; k.setia = Math.min(100, k.setia + 15); });
-      kabar.push('Tunggakan gaji karyawan sebesar ' + rp(totTunggak) + ' otomatis dilunasi dari Tabungan Gaji Karyawan.');
-    }
-    /* cek batas 90 hari tunggakan gaji -> eksekusi kasus jual paksa aset termahal */
     if (maksHariTunggakan(S, nBaru) >= 90) {
       kabar = kabar.concat(eksekusiKasusGaji90Hari(S, nBaru));
     } else if (totTunggak > 0) {

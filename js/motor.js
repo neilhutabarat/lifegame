@@ -147,6 +147,16 @@
   /* isi bensin per liter atau penuh; jenis bisa dipilih. Bensin di bawah anjuran pabrik (mis. Pertalite di motor
      yang dianjurkan Pertamax) membuat mesin ngelitik: sedikit lebih sering mogok sampai diisi bensin yang sesuai */
   var RON = { pertalite: 90, pertamax: 92, turbo: 98 };
+  function bayarTunaiMotor(S, biaya) {
+    if (S.usaha && S.usaha.berhentiSewa) {
+      if (g.KK_UANG.bayarDompet && g.KK_UANG.bayarDompet(S, biaya)) return true;
+      if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; return true; }
+      return false;
+    }
+    if (g.KK_UANG.laci(S) >= biaya) { bayarLaci(S, biaya); return true; }
+    if (g.KK_UANG.bayarDompet && g.KK_UANG.bayarDompet(S, biaya)) return true;
+    return false;
+  }
   function isiBensin(S, jenis, liter) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
     if (m.bbm === 'listrik') return 'Motor listrik dicas di kedai tiap malam.';
@@ -154,8 +164,8 @@
     var kosong = Math.round((m.tangki - m.isi) * 100) / 100; if (kosong < 0.2) return 'Tangki sudah penuh.';
     liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
     var biaya = Math.round(liter * hargaBbm(S, jenis) / 100) * 100;
-    if (g.KK_UANG.laci(S) < biaya) return 'Uang di laci tidak cukup untuk bensin ' + rp(biaya) + '.';
-    bayarLaci(S, biaya); m.isi = Math.min(m.tangki, m.isi + liter); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
+    if (!bayarTunaiMotor(S, biaya)) return (S.usaha && S.usaha.berhentiSewa ? 'Uang di dompet & rekening' : 'Uang di laci & dompet') + ' tidak cukup untuk bensin ' + rp(biaya) + '.';
+    m.isi = Math.min(m.tangki, m.isi + liter); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
     m.ngelitik = RON[jenis] < RON[m.bbm];
     return { ok: true, liter: liter, biaya: biaya, jenis: jenis, ngelitik: m.ngelitik };
   }
@@ -167,8 +177,8 @@
   function rawat(S, jenis) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
     var biaya = jenis === 'oli' ? R.oli : R.servis;
-    if (g.KK_UANG.laci(S) < biaya) return 'Uang di laci tidak cukup.';
-    bayarLaci(S, biaya); S.hariIni.bengkel = (S.hariIni.bengkel || 0) + biaya;
+    if (!bayarTunaiMotor(S, biaya)) return 'Dana tidak cukup untuk ' + jenis + ' (' + rp(biaya) + ').';
+    S.hariIni.bengkel = (S.hariIni.bengkel || 0) + biaya;
     if (jenis === 'oli') m.kmOli = m.km; else { m.kmServis = m.km; m.kmOli = m.km; }
     return true;
   }
@@ -176,8 +186,8 @@
     var m = S.motor; if (!m) return 'Belum punya motor.';
     var a = N.aksesoris.filter(function (x) { return x.id === id; })[0];
     if (m.aks[id]) return 'Sudah terpasang.';
-    if (g.KK_UANG.laci(S) < a.harga) return 'Uang di laci tidak cukup.';
-    bayarLaci(S, a.harga); m.aks[id] = true; S.hariIni.belanja = (S.hariIni.belanja || 0) + a.harga;
+    if (!bayarTunaiMotor(S, a.harga)) return 'Dana tidak cukup.';
+    m.aks[id] = true; S.hariIni.belanja = (S.hariIni.belanja || 0) + a.harga;
     return true;
   }
   function bayarPajak(S) {
