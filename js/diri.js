@@ -249,7 +249,6 @@
     if (S.autoMakanMinum && j > 0) {
       if (d.minum < 30) {
         var rmAuto = (d.posisi === 'kos' && punya(S, 'dispenser')) ? makan(S, 'air')
-          : (d.posisi === 'kedai' && g.KK_STOK && g.KK_STOK.ada(S, 'galon', 300)) ? makan(S, 'air')
           : ((S.uang && S.uang.dompet >= 4000) ? beli(S, 'air', 'warung') : null);
         if (rmAuto && rmAuto.ok) kabar.push('Auto Minum: ' + rmAuto.teks);
       }
@@ -310,23 +309,9 @@
     }
     if (jenis === 'air') {
       if (d.posisi === 'kos') { if (!punya(S, 'dispenser') && !bayarTunai(S, 4000)) return 'Uang tunai di dompet pribadi tidak cukup (Rp4.000).'; catatPakai(S, 'dispenser'); catatPakai(S, 'kulkas'); catatPakai(S, 'kulkas2'); }
-      else if (!g.KK_STOK.ada(S, 'galon', 300)) return 'Air galon kedai habis.';
-      else g.KK_STOK.ambil(S, 'galon', 300);
+      else if (!bayarTunai(S, 4000)) return 'Uang tunai di dompet pribadi tidak cukup (Rp4.000).';
       d.minum = batas(d.minum + (punya(S, 'kulkas') && d.posisi === 'kos' ? 50 : 40));
-      return { ok: true, menit: 2, teks: d.posisi === 'kos' ? (punya(S, 'dispenser') ? 'Minum dari dispenser.' : 'Beli air mineral Rp4.000 (dari dompet).') : 'Minum air dari galon kedai.' };
-    }
-    if (jenis === 'kopi') {
-      if (d.posisi !== 'kedai') return 'Bikin minuman sendiri di kedai.';
-      if (!g.KK_STOK.ada(S, 'kopi', 15)) return 'Stok kopi habis.';
-      g.KK_STOK.ambil(S, 'kopi', 15); d.stamina = batas(d.stamina + 22); d.minum = batas(d.minum + 18);
-      return { ok: true, menit: 5, teks: 'Ngopi dari stok kedai. Rasa kantuk berkurang.' };
-    }
-    if (jenis === 'kopisusu') {
-      if (d.posisi !== 'kedai') return 'Bikin minuman sendiri di kedai.';
-      if (!g.KK_STOK.ada(S, 'kopi', 15) || !g.KK_STOK.ada(S, 'uht', 100)) return 'Stok kopi atau susu UHT kurang.';
-      g.KK_STOK.ambil(S, 'kopi', 15); g.KK_STOK.ambil(S, 'uht', 100);
-      d.stamina = batas(d.stamina + 26); d.minum = batas(d.minum + 30); d.kenyang = batas(d.kenyang + 10);
-      return { ok: true, menit: 5, teks: 'Minum kopi susu buatan kedai sendiri. Segar dan tidak ngantuk lagi!' };
+      return { ok: true, menit: 2, teks: d.posisi === 'kos' ? (punya(S, 'dispenser') ? 'Minum dari dispenser.' : 'Beli air mineral Rp4.000 (dari dompet).') : 'Beli air mineral Rp4.000 (dari dompet).' };
     }
     return 'Tidak dikenal.';
   }
@@ -348,7 +333,7 @@
     d.kenyang = batas(d.kenyang + x.kenyang); d.minum = batas(d.minum + x.minum);
     if (x.melek) d.stamina = batas(d.stamina + x.melek);
     var diKedai = d.posisi === 'kedai', menit = diKedai ? 10 : 15;
-    return { ok: true, menit: menit, teks: (diKedai ? 'Beli ' + x.nama + ' di warung sebelah kedai ' : 'Beli ' + x.nama + ' di warung dekat ' + tempat(S) + ' ') + rp(h) + (S.fase === 'buka' && diKedai ? '. Kedai ditinggal ' + menit + ' menit.' : '.') };
+    return { ok: true, menit: menit, teks: ('Beli ' + x.nama + ' di warung terdekat ') + rp(h) + '.' };
   }
   /* makanan GoFood sampai */
   function cekKiriman(S) {
@@ -1462,8 +1447,36 @@
   }
 
   /* ---------- ganti hari: sewa kos, WiFi, pendapatan rental barang & stok pasar game bekas ---------- */
+  /* uang jajan harian: pilihan 10rb/20rb/50rb/100rb, tetap aktif sampai dimatikan */
+  function aturJajan(S, id, nilai) {
+    var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
+    if (!kl) return 'Anggota keluarga tidak ditemukan.';
+    nilai = +nilai || 0;
+    kl.jajanRp = (kl.jajanRp === nilai) ? 0 : nilai;
+    if (kl.jajanRp) return { ok: true, teks: 'Uang jajan ' + kl.nama + ' ' + rp(kl.jajanRp) + ' per hari, dibayar tiap pagi.' };
+    return { ok: true, teks: 'Uang jajan ' + kl.nama + ' dihentikan.' };
+  }
+  function ubahNamaKeluarga(S, id, nama) {
+    var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
+    nama = String(nama || '').trim().slice(0, 24);
+    if (!kl) return 'Karakter tidak ditemukan.';
+    if (!nama) return 'Nama tidak boleh kosong.';
+    kl.nama = nama; return { ok: true, teks: 'Nama diubah menjadi ' + nama + '.' };
+  }
+  function bayarJajanHarian(S, kabar) {
+    (S.keluarga || []).forEach(function (kl) {
+      if (!kl.jajanRp) return;
+      var b = kl.jajanRp;
+      if (bayarTunai(S, b)) { }
+      else if (S.bank.saldo >= b) { S.bank.saldo -= b; S.bank.mutasi.unshift({ n: S.hari, ket: 'Uang jajan ' + kl.nama, jml: -b }); }
+      else { kl.jajanRp = 0; kabar.push('Uang jajan ' + kl.nama + ' dihentikan karena uangmu tidak cukup.'); return; }
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + b;
+      kl.bahagia = Math.min(100, (kl.bahagia || 80) + (b >= 50000 ? 6 : b >= 20000 ? 4 : 2));
+    });
+  }
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], r = S.rumah, t = KAL.tgl(nBaru);
+    bayarJajanHarian(S, kabar);
     listrikKos(S, 0, false);
     if (!S.game || !S.game.pasar || S.game.pasar.minggu !== Math.floor(nBaru / 7)) acakPasarGame(S);
     if (r.jenis === 'kos' && t.d === r.tempo) {
@@ -1628,7 +1641,7 @@
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
-    tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
+    tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, aturJajan: aturJajan, ubahNamaKeluarga: ubahNamaKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
     kirimPesanKeluarga: kirimPesanKeluarga, belanjaPasarPokok: belanjaPasarPokok,
     aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,
     hargaRumahTangga: hargaRumahTangga, beriRumahTangga: beriRumahTangga, makanDiRumah: makanDiRumah,

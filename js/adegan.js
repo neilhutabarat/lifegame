@@ -16,13 +16,6 @@
     im.onload = function () { charImgs[kunci] = im; };
     im.src = src;
   }
-  muatBg('siang', 'img/bg-kedai-siang.jpg');
-  muatBg('hujan', 'img/bg-kedai-hujan.jpg');
-  muatBg('rumah', 'img/bg-rumah.jpg');
-  muatChar('pemain', 'img/char-pemain.jpg');
-  muatChar('istri', 'img/char-istri.jpg');
-  muatChar('anak', 'img/char-anak.jpg');
-  muatChar('adik_ipar', 'img/char-adik-ipar.jpg');
   /* foto pemain mengikuti gender: cowok memakai potret barista, cewek memakai potret perempuan; pasangan sebaliknya */
   var genderPemain = 'cewek';
   function imPemain() { return genderPemain === 'cowok' ? charImgs.pemain : charImgs.istri; }

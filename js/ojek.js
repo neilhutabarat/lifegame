@@ -6,7 +6,7 @@
   var N = g.KK_NYATA, KAL = g.KK_KAL, O = N.ojol;
   /* order per jam saat online (setelan) */
   var PERMINTAAN = [0.3, 0.3, 0.2, 0.2, 0.3, 0.8, 2.6, 3.2, 3, 1.6, 1.4, 2.2, 2.6, 2, 1.4, 1.6, 2.6, 3.2, 3, 2.4, 1.8, 1.4, 1, 0.6];
-  var CEPAT_TRIP = 6; /* waktu berjalan 6x lebih cepat saat mengantar (setelan) */
+  var CEPAT_TRIP = 8; /* waktu 8x saat narik */
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function kota(S) { return N.kota.filter(function (k) { return k.id === S.kota; })[0]; }

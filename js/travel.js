@@ -4,7 +4,7 @@
 (function (g) {
   'use strict';
   var N = g.KK_NYATA, R = g.KK_RUTE;
-  var CEPAT_JALAN = 8, CEPAT_TUNGGU = 5; /* waktu berjalan lebih cepat saat menyetir atau menunggu penumpang (setelan) */
+  var CEPAT_JALAN = 8, CEPAT_TUNGGU = 8; /* waktu berjalan lebih cepat saat menyetir atau menunggu penumpang (setelan) */
   var MULT_MIN = 0.6, MULT_MAKS = 1.6, JEMPUT_MAKS = 3;
   var JAM_RAMAI = [0.2, 0.1, 0.1, 0.2, 0.8, 1.4, 1.6, 1.4, 1.1, 1, 1, 1.1, 1.2, 1.2, 1.3, 1.5, 1.7, 1.5, 1.1, 0.8, 0.5, 0.4, 0.3, 0.2];
 
