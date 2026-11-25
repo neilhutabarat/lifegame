@@ -61,3 +61,4 @@ P12. Bersihkan sisa teks kedai/laci/gelas di kanvas transit, Properti, pesan WA 
 P13. Durasi HB malam/siang dibatasi 1–3 jam (tidak lagi skip sampai 04.00) & tambah dana Rp50 juta ke rekening bank ✔
 P14. Pemutihan riwayat kredit 1× & tambahan modal Rp200 juta; perbaikan 5 mobil listrik EV (BYD M6, BYD Seal, Wuling Air ev, BinguoEV, Hyundai IONIQ 5) memakai baterai kWh & cas SPKLU ✔
 P15. Paket 1 Kendaraan: tarif bebas Ojek & Travel + kenyamanan kendaraan, level kecepatan 1–5 sesuai top speed asli motor/mobil, odometer + lama pakai + total penghasilan kendaraan, dan bar ban + ganti ban ✔
+P16. Paket 2 Keluarga & Hotel: dompet/tabungan pasangan, nafkah wajib 40% + notice awal bulan (telat 1 bln harmonis −50%), pinjam & minta bantuan beli (>90%), anggota keluarga sekolah/jajan/kerja/di rumah, penginapan (Rp50rb+) & hotel (Rp350rb+), serta travel bayar tunai/QRIS merchant ✔

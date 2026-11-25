@@ -148,6 +148,7 @@
     o.pos.y += (x.dy != null ? x.dy : 0);
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
     if (S.motor) S.motor.totalHasil = (S.motor.totalHasil || 0) + dapat;
+    S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + dapat;
     S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
     kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);

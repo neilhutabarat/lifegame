@@ -50,6 +50,7 @@
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bersih;
     S.bisnisMobil.total.trip++; S.bisnisMobil.total.bersih += bersih;
     m.totalHasil = (m.totalHasil || 0) + bersih;
+    S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + bersih;
     S.hariIni.mobil = (S.hariIni.mobil || 0) + bersih;
     return { ok: true, menit: Math.max(25, r.menit), bersih: bersih, teks: 'Order GoCar/GrabCar selesai (' + km + ' km). Masuk saldo +' + rp(bersih) + '.' };
   }
@@ -74,6 +75,7 @@
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bersih;
     S.bisnisMobil.total.trip++; S.bisnisMobil.total.bersih += bersih;
     m.totalHasil = (m.totalHasil || 0) + bersih;
+    S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + bersih;
     S.hariIni.mobil = (S.hariIni.mobil || 0) + bersih;
     S.hariIni.bensin = (S.hariIni.bensin || 0) + biayaBbm;
     return { ok: true, menit: Math.round(rt.jam * 60), bersih: bersih, teks: 'Travel ke ' + rt.tujuan + ' selesai! ' + pnp + ' penumpang × ' + rp(rt.ongkos) + ' = ' + rp(kotor) + ', bensin ' + rp(biayaBbm) + ', bersih +' + rp(bersih) + '.' };
@@ -92,6 +94,7 @@
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bayar;
     S.bisnisMobil.total.trip++; S.bisnisMobil.total.bersih += bayar;
     m.totalHasil = (m.totalHasil || 0) + bayar;
+    S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + bayar;
     S.hariIni.mobil = (S.hariIni.mobil || 0) + bayar;
     return { ok: true, menit: Math.round(ang.jam * 60), bersih: bayar, teks: 'Jasa angkutan "' + ang.nama + '" selesai (' + ang.km + ' km). Pendapatan +' + rp(bayar) + ' masuk rekening.' };
   }

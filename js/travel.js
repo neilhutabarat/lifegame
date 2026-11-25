@@ -279,16 +279,24 @@
     var tujuan = tr.ke, dari = tr.dari, bensin = Math.max(0, tr.bensin0 - S.mobil.isi * S.mobil.tangki);
     var biayaPerjalanan = tr.tol + tr.kapal;
     if (pnp) {
-      var bersihBayar = total + tip; S.bank.saldo += bersihBayar; M().catatBank(S, 'Travel ' + R.nama(dari) + ' ke ' + R.nama(tujuan) + ' (' + pnp + ' penumpang)', bersihBayar);
+      var bersihBayar = total + tip, bayarTunai = 0, bayarQris = 0;
+      rinci.forEach(function (p) {
+        if (Math.random() < 0.5 || !(g.KK_UANG && g.KK_UANG.terimaQris)) bayarTunai += p.bayar;
+        else bayarQris += p.bayar;
+      });
+      bayarTunai += tip;
+      if (bayarTunai > 0) S.uang.dompet = (S.uang.dompet || 0) + bayarTunai;
+      if (bayarQris > 0 && g.KK_UANG && g.KK_UANG.terimaQris) g.KK_UANG.terimaQris(S, bayarQris);
       var avg = sumNilai / pnp; T.rating = Math.round((T.rating * (1 - 0.12 * Math.min(1, pnp / 3)) + avg * 0.12 * Math.min(1, pnp / 3)) * 100) / 100;
       T.hariIni.trip++; T.hariIni.bersih += bersihBayar - biayaPerjalanan; T.total.trip++; T.total.bersih += bersihBayar - biayaPerjalanan;
+      S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + Math.max(0, bersihBayar - biayaPerjalanan);
       if (S.mobil) S.mobil.totalHasil = (S.mobil.totalHasil || 0) + Math.max(0, bersihBayar - biayaPerjalanan);
     }
     T.total.km += tr.km;
     S.hariIni.travel = (S.hariIni.travel || 0) + (pnp ? total + tip - biayaPerjalanan : -biayaPerjalanan);
-    T.laporan = { dari: dari, ke: tujuan, km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10,
+    T.laporan = { dari: dari, ke: tujuan, km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10,
       kejadian: tr.kejadian.slice(), rating: T.rating, hari: S.hari };
-    kabar.push('Tiba di ' + R.nama(tujuan) + (pnp ? '. Pendapatan ' + rp(total + tip) + '.' : '.'));
+    kabar.push('Tiba di ' + R.nama(tujuan) + (pnp ? '. Pendapatan ' + rp(total + tip) + ' (Tunai ' + rp(bayarTunai || 0) + ', QRIS ' + rp(bayarQris || 0) + ' cair besok).' : '.'));
     T.di = tujuan; T.status = 'tunggu'; T.trip = null; T.antri = []; T.tujuan = null; T.jemput = 0; T.berikut = 0;
     return kabar;
   }

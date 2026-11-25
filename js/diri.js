@@ -77,8 +77,16 @@
       S.hp.id = 'iphone15pm';
     }
     S.keluarga = S.keluarga || [];
+    if (typeof S.penghasilanBulanIni !== 'number') S.penghasilanBulanIni = 0;
+    if (typeof S.utangPasangan !== 'number') S.utangPasangan = 0;
     S.keluarga.forEach(function (kl) {
-      if (adalahPasangan(kl) && typeof kl.hb !== 'number') kl.hb = 30;
+      if (adalahPasangan(kl)) {
+        if (typeof kl.hb !== 'number') kl.hb = 30;
+        if (typeof kl.dompet !== 'number') kl.dompet = 500000;
+        if (typeof kl.tabungan !== 'number') kl.tabungan = 2500000;
+      } else {
+        if (!kl.aktivitas) kl.aktivitas = 'rumah';
+      }
     });
     S.sewaBarang = S.sewaBarang || {};
     Object.keys(S.rumah.barang).forEach(function (id) {
@@ -1711,14 +1719,24 @@
           kabar.push('Saldo kurang untuk UKT kuliah ' + kl.nama + ' (' + rp(kl.kuliah.ukt) + '). Ditagih lagi minggu depan.');
         }
       }
-      /* gaji bulanan pasangan yang bekerja di luar rumah */
+      /* gaji bulanan pasangan yang bekerja: masuk dompet & tabungan pasangan sendiri */
       if (gantiBulan && kl.kerja && kl.kerja.gaji > 0) {
-        S.bank.saldo += kl.kerja.gaji;
-        S.bank.mutasi.unshift({ n: nBaru, ket: 'Gaji ' + kl.nama + ' (' + kl.kerja.nama + ')', jml: kl.kerja.gaji });
-        kabar.push('Gaji bulanan ' + kl.nama + ' (' + kl.kerja.nama + ') sebesar ' + rp(kl.kerja.gaji) + ' masuk rekening.');
+        var gP = kl.kerja.gaji, keDom = Math.round(gP * 0.3), keTab = gP - keDom;
+        kl.dompet = (kl.dompet || 0) + keDom;
+        kl.tabungan = (kl.tabungan || 0) + keTab;
+        kabar.push('Gaji bulanan ' + kl.nama + ' (' + kl.kerja.nama + ') ' + rp(gP) + ' masuk ke dompet & tabungan ' + kl.nama + '.');
       }
-      /* ulang tahun anak & SPP bulanan sekolah anak */
+      /* anggota keluarga lain yang bekerja ikut membantu kebutuhan rumah tangga; yang di rumah bantu masak & jaga rumah */
       if (!adalahPasangan(kl)) {
+        var usKl = KAL.usia(nBaru, kl.tglLahir);
+        if (gantiBulan && kl.aktivitas === 'kerja' && usKl >= 17) {
+          var bantuRt = Math.round((kota(S).umk || 4000000) * 0.35 / 10000) * 10000;
+          S.bank.saldo += bantuRt;
+          S.bank.mutasi.unshift({ n: nBaru, ket: 'Bantuan rumah tangga dari ' + kl.nama, jml: bantuRt });
+          kabar.push(kl.nama + ' bekerja dan ikut membantu biaya rumah tangga sebesar ' + rp(bantuRt) + '.');
+        } else if (kl.aktivitas === 'rumah' && usKl >= 12) {
+          kl.bahagia = Math.min(100, (kl.bahagia || 80) + 1);
+        }
         var tl = (kl.tglLahir || '').split('-');
         if (tl.length === 3 && t.m === (+tl[1]) && t.d === (+tl[2])) {
           var usB = KAL.usia(nBaru, kl.tglLahir);
@@ -1736,7 +1754,125 @@
         }
       }
     });
+    /* nafkah wajib bulanan setiap awal bulan (40% penghasilan suami) */
+    if (gantiBulan) {
+      var gPemain = (S.profil && S.profil.gender) || 'cewek';
+      var pasList = daftarPasangan(S);
+      if (pasList.length) {
+        if (gPemain === 'cowok') {
+          if (S.tagihanNafkah && !S.tagihanNafkah.lunas) {
+            pasList.forEach(function (ps) { ps.bahagia = Math.max(0, Math.round((ps.bahagia == null ? 80 : ps.bahagia) * 0.5)); });
+            kabar.push('⚠️ Kamu 1 bulan tidak memberi nafkah! Keharmonisan pasangan turun 50%.');
+          }
+          var hasilBln = Math.max(0, Math.round(S.penghasilanBulanIni || 0));
+          var jmlNafkah = Math.max(500000, Math.round(hasilBln * 0.4 / 1000) * 1000);
+          S.tagihanNafkah = { bulan: t.m, tahun: t.y, penghasilan: hasilBln, jumlah: jmlNafkah, lunas: false };
+          kabar.push('📢 Notice Nafkah Awal Bulan: 40% dari penghasilan bulan lalu (' + rp(hasilBln) + ') = ' + rp(jmlNafkah) + '. Segera bayar di aplikasi Keluarga agar keharmonisan terjaga!');
+        } else {
+          var nafkahMasuk = Math.round((kota(S).umk || 4000000) * 1.15 * 0.4 / 1000) * 1000;
+          S.bank.saldo += nafkahMasuk;
+          S.bank.mutasi.unshift({ n: nBaru, ket: 'Nafkah bulanan dari ' + pasList[0].nama, jml: nafkahMasuk });
+          kabar.push('💝 ' + pasList[0].nama + ' mengirimkan nafkah bulanan ' + rp(nafkahMasuk) + ' ke rekeningmu.');
+        }
+      }
+      S.penghasilanBulanIni = 0;
+    }
     return kabar;
+  }
+  /* ---------- keuangan pasangan, nafkah 40%, pinjam/bantuan beli, aktivitas keluarga, penginapan/hotel ---------- */
+  function bayarNafkah(S) {
+    var pas = pasanganAktif(S); if (!pas) return 'Belum punya pasangan.';
+    var tg = S.tagihanNafkah;
+    var jml = (tg && !tg.lunas) ? tg.jumlah : Math.max(500000, Math.round((S.penghasilanBulanIni || 0) * 0.4 / 1000) * 1000);
+    if (S.bank.saldo >= jml) {
+      S.bank.saldo -= jml;
+      S.bank.mutasi.unshift({ n: S.hari, ket: 'Nafkah bulanan untuk ' + pas.nama, jml: -jml });
+    } else if ((S.uang.dompet || 0) >= jml) {
+      S.uang.dompet -= jml;
+    } else return 'Uang tidak cukup untuk nafkah (' + rp(jml) + ').';
+    pas.dompet = (pas.dompet || 0) + Math.round(jml * 0.35);
+    pas.tabungan = (pas.tabungan || 0) + (jml - Math.round(jml * 0.35));
+    pas.bahagia = Math.min(100, (pas.bahagia || 80) + 12);
+    if (tg) tg.lunas = true;
+    /* uang istri dipakai untuk seluruh kebutuhan rumah tangga sebulan */
+    S.rumahTangga = { aktifSampai: Math.max((S.rumahTangga && S.rumahTangga.aktifSampai) || S.hari, S.hari) + 30, paket: 'cukup' };
+    return { ok: true, teks: 'Nafkah ' + rp(jml) + ' diberikan ke ' + pas.nama + '. Kebutuhan rumah tangga 30 hari terjamin & keharmonisan naik!' };
+  }
+  function pinjamPasangan(S, id, jml) {
+    var ps = (S.keluarga || []).filter(function (x) { return x.id === id; })[0] || pasanganAktif(S);
+    if (!ps) return 'Pasangan tidak ditemukan.';
+    jml = Math.round(+jml || 0); if (jml <= 0) return 'Masukkan nominal pinjaman.';
+    var danaPs = (ps.tabungan || 0) + (ps.dompet || 0);
+    if (danaPs < jml) return 'Tabungan & dompet ' + ps.nama + ' hanya ' + rp(danaPs) + '.';
+    var hrm = ps.bahagia == null ? 80 : ps.bahagia;
+    var peluang = hrm > 90 ? 0.96 : hrm >= 70 ? 0.72 : 0.3;
+    if (Math.random() > peluang) return ps.nama + ' belum bersedia meminjamkan uang sekarang (hubungan ' + Math.round(hrm) + '%).';
+    var drTab = Math.min(ps.tabungan || 0, jml);
+    ps.tabungan = (ps.tabungan || 0) - drTab;
+    ps.dompet = Math.max(0, (ps.dompet || 0) - (jml - drTab));
+    S.bank.saldo += jml;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Pinjam uang dari ' + ps.nama, jml: jml });
+    S.utangPasangan = (S.utangPasangan || 0) + jml;
+    return { ok: true, teks: ps.nama + ' meminjamkan ' + rp(jml) + ' ke rekeningmu. Total utang ke pasangan: ' + rp(S.utangPasangan) + '.' };
+  }
+  function bayarUtangPasangan(S, jml) {
+    var ps = pasanganAktif(S); if (!ps) return 'Pasangan tidak ditemukan.';
+    var ut = S.utangPasangan || 0; if (ut <= 0) return 'Tidak ada utang ke pasangan.';
+    jml = Math.min(ut, Math.round(+jml || ut));
+    if (S.bank.saldo >= jml) { S.bank.saldo -= jml; S.bank.mutasi.unshift({ n: S.hari, ket: 'Bayar utang ke ' + ps.nama, jml: -jml }); }
+    else if ((S.uang.dompet || 0) >= jml) { S.uang.dompet -= jml; }
+    else return 'Uang tidak cukup untuk bayar utang (' + rp(jml) + ').';
+    ps.tabungan = (ps.tabungan || 0) + jml;
+    S.utangPasangan = Math.max(0, ut - jml);
+    ps.bahagia = Math.min(100, (ps.bahagia || 80) + 5);
+    return { ok: true, teks: 'Utang ke ' + ps.nama + ' dibayar ' + rp(jml) + '. Sisa utang: ' + rp(S.utangPasangan) + '.' };
+  }
+  function mintaBantuanPasangan(S, jml) {
+    var ps = pasanganAktif(S); if (!ps) return 'Belum punya pasangan.';
+    var danaPs = (ps.tabungan || 0) + (ps.dompet || 0);
+    if (danaPs < 100000) return 'Tabungan & dompet ' + ps.nama + ' belum cukup (' + rp(danaPs) + ').';
+    jml = jml === 'semua' ? danaPs : Math.min(danaPs, Math.round(+jml || 0));
+    if (jml <= 0) return 'Nominal tidak valid.';
+    var hrm = ps.bahagia == null ? 80 : ps.bahagia;
+    var peluang = hrm > 90 ? 0.95 : hrm >= 75 ? 0.65 : 0.22;
+    if (Math.random() > peluang) {
+      return ps.nama + ' menolak bantu beli saat ini ("Hubungan kita lagi kurang harmonis, ' + Math.round(hrm) + '%"). Jaga keharmonisan >90% agar mudah setuju!';
+    }
+    var drTab = Math.min(ps.tabungan || 0, jml);
+    ps.tabungan = (ps.tabungan || 0) - drTab;
+    ps.dompet = Math.max(0, (ps.dompet || 0) - (jml - drTab));
+    S.bank.saldo += jml;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Bantuan belanja dari ' + ps.nama, jml: jml });
+    return { ok: true, teks: '❤️ ' + ps.nama + ' setuju membantu! ' + rp(jml) + ' ditransfer ke rekeningmu untuk kebutuhan belanjamu.' };
+  }
+  function aturAktivitasKeluarga(S, id, mode) {
+    var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
+    if (!kl || adalahPasangan(kl)) return 'Anggota keluarga tidak ditemukan.';
+    var us = KAL.usia(S.hari, kl.tglLahir);
+    if (mode === 'kerja' && us < 17) return kl.nama + ' masih ' + us + ' tahun (minimal 17 tahun untuk bekerja).';
+    kl.aktivitas = mode === 'kerja' ? 'kerja' : 'rumah';
+    return { ok: true, teks: kl.nama + (kl.aktivitas === 'kerja' ? ' sekarang bekerja dan ikut membantu kebutuhan rumah tangga tiap bulan.' : ' sekarang di rumah (membantu memasak & mengurus rumah).') };
+  }
+  var PENGINAPAN_LUAR = [
+    { id: 'melati', nama: 'Penginapan Melati', harga: 50000, jam: 6, stamina: 75, sehat: 2, bersalah: 0, kebal: 0, ket: 'Hemat, aman dari angin malam' },
+    { id: 'wisma', nama: 'Wisma / Losmen AC', harga: 120000, jam: 7, stamina: 90, sehat: 6, bersalah: 5, kebal: 0, ket: 'Kamar AC nyaman, tidur lebih nyenyak' },
+    { id: 'hotel3', nama: 'Hotel Bintang 3', harga: 350000, jam: 8, stamina: 100, sehat: 14, bersalah: 15, kebal: 1, ket: 'Kasur empuk + sarapan, tubuh segar & kebal sakit 1 hr' },
+    { id: 'hotel4', nama: 'Hotel Bintang 4', harga: 750000, jam: 8, stamina: 100, sehat: 22, bersalah: 25, kebal: 2, ket: 'Fasilitas lengkap, pulihkan kesehatan & kebal sakit 2 hr' },
+    { id: 'hotel5', nama: 'Hotel Bintang 5 Mewah', harga: 1800000, jam: 8, stamina: 100, sehat: 40, bersalah: 40, kebal: 3, ket: 'Kamar mewah + spa, stamina & kesehatan prima, kebal sakit 3 hr' }
+  ];
+  function menginapLuar(S, id) {
+    var x = PENGINAPAN_LUAR.filter(function (p) { return p.id === id; })[0];
+    if (!x) return 'Pilihan penginapan tidak ditemukan.';
+    if ((S.uang.dompet || 0) >= x.harga) { S.uang.dompet -= x.harga; }
+    else if (S.bank.saldo >= x.harga) { S.bank.saldo -= x.harga; S.bank.mutasi.unshift({ n: S.hari, ket: 'Menginap di ' + x.nama, jml: -x.harga }); }
+    else return 'Uang tidak cukup untuk ' + x.nama + ' (' + rp(x.harga) + ').';
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
+    S.diri.stamina = Math.min(100, Math.max(S.diri.stamina, x.stamina));
+    S.diri.kesehatan = Math.min(100, (S.diri.kesehatan == null ? 100 : S.diri.kesehatan) + x.sehat);
+    if (x.bersalah) S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - x.bersalah);
+    if (x.kebal) S.diri.kebalSampai = Math.max(S.diri.kebalSampai || -1, S.hari + x.kebal);
+    if (x.harga >= 350000) { S.diri.kenyang = Math.min(100, S.diri.kenyang + 35); S.diri.minum = Math.min(100, S.diri.minum + 35); }
+    return { ok: true, menit: x.jam * 60, teks: 'Menginap di ' + x.nama + ' (' + rp(x.harga) + ', ' + x.jam + ' jam). Stamina ' + Math.round(S.diri.stamina) + '%, kesehatan ' + Math.round(S.diri.kesehatan) + '%!' };
   }
   /* pemain sedang melayani: stamina rendah atau sakit membuat lambat dan kurang ramah */
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
@@ -1750,6 +1886,7 @@
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
+    bayarNafkah: bayarNafkah, pinjamPasangan: pinjamPasangan, bayarUtangPasangan: bayarUtangPasangan, mintaBantuanPasangan: mintaBantuanPasangan, aturAktivitasKeluarga: aturAktivitasKeluarga, PENGINAPAN_LUAR: PENGINAPAN_LUAR, menginapLuar: menginapLuar,
     tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, aturJajan: aturJajan, ENERGI: ENERGI, minumEnergi: minumEnergi, meTime: meTime, HIBURAN: HIBURAN, hiburanJalan: hiburanJalan, PAKET_NIKAH: PAKET_NIKAH, nikahiTeman: nikahiTeman, faktorPromo: faktorPromo, ubahNamaKeluarga: ubahNamaKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
     kirimPesanKeluarga: kirimPesanKeluarga, belanjaPasarPokok: belanjaPasarPokok,
     aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,
