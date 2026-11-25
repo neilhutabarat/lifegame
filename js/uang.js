@@ -254,7 +254,8 @@
   function sisaLimitKk(S) {
     siapkanKk(S);
     if (S.kk.status !== 'aktif') return 0;
-    return Math.max(0, S.kk.limit - S.kk.pakai - S.kk.tagihan - S.kk.denda);
+    var cc = S.kk.cicilan ? Math.round(S.kk.cicilan.pokok * S.kk.cicilan.sisa / S.kk.cicilan.n) : 0;
+    return Math.max(0, S.kk.limit - S.kk.pakai - S.kk.tagihan - S.kk.denda - cc);
   }
   function catatKk(S, ket, jml, n) {
     siapkanKk(S);
@@ -270,6 +271,26 @@
     S.kk.pakai += jml;
     catatKk(S, ket, -jml);
     return true;
+  }
+  /* ubah tagihan tercetak jadi cicilan tenor 3/6/9/12/18/24 bulan, bunga 1,75% sebulan (anuitas) */
+  var TENOR_KK = [3, 6, 9, 12, 18, 24];
+  function cicilanKk(tagihan, tenor) {
+    var r = N.kartuKredit.bungaBulan;
+    return Math.ceil(tagihan * r / (1 - Math.pow(1 + r, -tenor)));
+  }
+  function cicilKk(S, tenor) {
+    siapkanKk(S);
+    var k = S.kk; tenor = Number(tenor);
+    if (TENOR_KK.indexOf(tenor) < 0) return 'Tenor tidak tersedia.';
+    if (k.cicilan) return 'Masih ada cicilan kartu kredit yang berjalan.';
+    if (k.denda > 0) return 'Lunasi denda dulu sebelum mencicil.';
+    if (k.tagihan < 500000) return 'Tagihan minimal Rp500.000 untuk dicicil.';
+    var per = cicilanKk(k.tagihan, tenor);
+    k.cicilan = { n: tenor, sisa: tenor, per: per, pokok: k.tagihan };
+    catatKk(S, 'Tagihan dicicil ' + tenor + ' bulan', 0);
+    k.tagihan = 0; k.minBayar = 0; k.dibayarBulanIni = 0;
+    if (k.status === 'blokir') k.status = 'aktif';
+    return { ok: true, per: per, tenor: tenor };
   }
   function bayarKk(S, jenis) {
     siapkanKk(S);
@@ -357,6 +378,11 @@
           kk.tagihan += bunga;
           catatKk(S, 'Bunga kartu kredit 1,75%', -bunga, nBaru);
         }
+        if (kk.cicilan) {
+          kk.tagihan += kk.cicilan.per; kk.cicilan.sisa--;
+          catatKk(S, 'Cicilan kartu kredit (sisa ' + kk.cicilan.sisa + ' bln)', -kk.cicilan.per, nBaru);
+          if (kk.cicilan.sisa <= 0) kk.cicilan = null;
+        }
         kk.tagihan += kk.pakai;
         kk.pakai = 0;
         kk.dibayarBulanIni = 0;
@@ -386,7 +412,7 @@
     biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, isiTabunganGaji: isiTabunganGaji, tarikTabunganGaji: tarikTabunganGaji, merchantTotal: merchantTotal,
     bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
-    penghasilanKk: penghasilanKk, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,
+    penghasilanKk: penghasilanKk, cicilKk: cicilKk, cicilanKk: cicilanKk, TENOR_KK: TENOR_KK, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,
     gantiHari: gantiHari, bankIni: bankIni, qrisIni: qrisIni,
     hariKerja: hariKerja, BATAS_TUKAR_RECEH: BATAS_TUKAR_RECEH };
 })(window);

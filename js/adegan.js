@@ -748,11 +748,33 @@
     cx.strokeStyle = '#b5524a'; cx.beginPath(); cx.arc(0, r * 0.38, r * 0.2, 0.2 * Math.PI, 0.8 * Math.PI); cx.stroke();
     cx.restore();
   }
-  var HB_JUDUL = { kamar: 'Malam hangat berdua', sofa: 'Berdua di depan TV', hotel: 'Kamar hotel', mandi: 'Berdua di balik uap', pelukan: 'Pelukan hangat', balkon: 'Angin malam di balkon' };
+  var HB_JUDUL = { metime: 'Me time',  kamar: 'Malam hangat berdua', sofa: 'Berdua di depan TV', hotel: 'Kamar hotel', mandi: 'Berdua di balik uap', pelukan: 'Pelukan hangat', balkon: 'Angin malam di balkon' };
   /* adegan HB sinematik: latar berbeda tiap varian, kedua karakter hanya terlihat dari bahu ke atas, bagian bawah tertutup selimut atau kaca buram */
+  /* me time: kamar redup, satu siluet disorot lampu, tanpa detail (sengaja tidak eksplisit) */
+  function gambarMeTime(s, t, u, g) {
+    var gr = cx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0d0a18'); gr.addColorStop(1, '#1d1530');
+    cx.fillStyle = gr; cx.fillRect(0, 0, W, H);
+    var kb = 0.10 + Math.abs(Math.sin(t / 900)) * 0.04;
+    cx.fillStyle = 'rgba(255,214,150,' + kb.toFixed(3) + ')';
+    cx.beginPath(); cx.moveTo(150, 20); cx.lineTo(210, 20); cx.lineTo(282, 400); cx.lineTo(78, 400); cx.closePath(); cx.fill();
+    bulat(180, 18, 7, '#ffe2a8');
+    var nap = Math.sin(t / 1100) * 2, cyS = 322 + nap;
+    cx.fillStyle = '#05030a';
+    kotakBulat(90, 392, 180, 40, 12, '#05030a');
+    if (g === 'cowok') { kotakBulat(152, cyS + 4, 56, 84, 22, '#05030a'); bulat(180, cyS - 8, 22, '#05030a'); }
+    else { kotakBulat(154, cyS + 6, 52, 82, 24, '#05030a'); bulat(180, cyS - 8, 21, '#05030a'); cx.beginPath(); cx.moveTo(160, cyS - 14); cx.quadraticCurveTo(142, cyS + 32, 156, cyS + 58); cx.lineTo(166, cyS + 20); cx.closePath(); cx.fill(); }
+    var dim = Math.min(0.3, u * 0.5); cx.fillStyle = 'rgba(8,4,16,' + dim.toFixed(2) + ')'; cx.fillRect(0, 0, W, H);
+    var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
+    cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(8,4,16,.8)'; cx.fillStyle = '#fff';
+    cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif';
+    cx.strokeText('Me time', W / 2, 212); cx.fillText('Me time', W / 2, 212);
+    cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
+    kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.25)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#b79cff');
+  }
   function gambarAdeganHb(s, t) {
     var A = s.hbAnim || {}, u = Math.min(1, A.u || 0), v = A.varian || 'kamar', gA = s.gender || 'cewek', gB = A.gB || (gA === 'cowok' ? 'cewek' : 'cowok');
     var irama = Math.sin(t / 210), ayun = irama * 2.2, goyang = irama * 9, cy = 330;
+    if (v === 'metime') { gambarMeTime(s, t, u, gA); return; }
     /* latar */
     var gr = cx.createLinearGradient(0, 0, 0, H);
     if (v === 'hotel') { gr.addColorStop(0, '#2a1240'); gr.addColorStop(1, '#4a1e50'); }

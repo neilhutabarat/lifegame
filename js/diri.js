@@ -922,7 +922,7 @@
     };
     var b = mapBiaya[jenis]; if (!b) return 'Jenis biaya tidak dikenal.';
     if (!bayarTunai(S, b.rp)) {
-      if (S.bank.saldo < b.rp) return 'Uang di dompet, laci, maupun rekening tidak cukup untuk ' + b.ket + ' (' + rp(b.rp) + ').';
+      if (S.bank.saldo < b.rp) return 'Uang di dompet maupun rekening tidak cukup untuk ' + b.ket + ' (' + rp(b.rp) + ').';
       S.bank.saldo -= b.rp;
       S.bank.mutasi.unshift({ n: S.hari, ket: b.ket, jml: -b.rp });
       S.hariIni.pribadi = (S.hariIni.pribadi || 0) + b.rp;
@@ -944,7 +944,7 @@
     if (!pk) return 'Paket biaya rumah tangga tidak dikenal.';
     var h = hargaRumahTangga(S, paketId);
     if (!bayarTunai(S, h)) {
-      if (S.bank.saldo < h) return 'Saldo dompet, laci, dan rekening tidak cukup untuk ' + pk.nama + ' (' + rp(h) + ').';
+      if (S.bank.saldo < h) return 'Saldo dompet dan rekening tidak cukup untuk ' + pk.nama + ' (' + rp(h) + ').';
       S.bank.saldo -= h;
       S.bank.mutasi.unshift({ n: S.hari, ket: 'Biaya rumah tangga: ' + pk.nama, jml: -h });
       S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
