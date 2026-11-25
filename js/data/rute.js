@@ -55,25 +55,65 @@
     { a: 'semarang', b: 'surabaya', km: 350, tol: 280000 },
     { a: 'yogyakarta', b: 'surabaya', km: 320, tol: 250000 }
   ];
-  /* lima percepatan + satu khusus (km/jam) */
+  /* 5 level kecepatan mobil: 1 (0-25), 2 (25-50), 3 (50-75), 4 (75-100), 5 (100 - top speed asli mobil) */
   var GIGI = [
-    { id: 1, nama: '1', lo: 10, hi: 20, boros: 0.8 },
-    { id: 2, nama: '2', lo: 20, hi: 30, boros: 0.85 },
-    { id: 3, nama: '3', lo: 30, hi: 40, boros: 0.9 },
-    { id: 4, nama: '4', lo: 40, hi: 60, boros: 1.0 },
-    { id: 5, nama: '5', lo: 60, hi: 100, boros: 1.3 },
-    { id: 6, nama: '⚡', lo: 100, hi: 200, boros: 2.0, khusus: true }
+    { id: 1, nama: '1', lo: 0, hi: 25, boros: 0.8 },
+    { id: 2, nama: '2', lo: 25, hi: 50, boros: 0.85 },
+    { id: 3, nama: '3', lo: 50, hi: 75, boros: 0.92 },
+    { id: 4, nama: '4', lo: 75, hi: 100, boros: 1.0 },
+    { id: 5, nama: '5', lo: 100, hi: 170, boros: 1.45, ngebut: true }
   ];
-  /* percepatan motor dan kendaraan umum selain mobil travel */
+  /* 5 level kecepatan motor: 1 (0-15), 2 (15-30), 3 (30-45), 4 (45-60), 5 (60 - top speed asli motor) */
   var GIGI_MOTOR = [
-    { id: 1, nama: '1', lo: 10, hi: 20, boros: 0.8 },
-    { id: 2, nama: '2', lo: 20, hi: 30, boros: 0.85 },
-    { id: 3, nama: '3', lo: 30, hi: 40, boros: 0.9 },
-    { id: 4, nama: '4', lo: 40, hi: 50, boros: 1.0 },
-    { id: 5, nama: '5', lo: 60, hi: 80, boros: 1.3 },
-    { id: 6, nama: '⚡', lo: 80, hi: 120, boros: 1.9, khusus: true }
+    { id: 1, nama: '1', lo: 0, hi: 15, boros: 0.8 },
+    { id: 2, nama: '2', lo: 15, hi: 30, boros: 0.85 },
+    { id: 3, nama: '3', lo: 30, hi: 45, boros: 0.92 },
+    { id: 4, nama: '4', lo: 45, hi: 60, boros: 1.0 },
+    { id: 5, nama: '5', lo: 60, hi: 110, boros: 1.4, ngebut: true }
   ];
-  var VMAX = { hatch: 140, mpv: 160, suv: 170, van: 160, sedan: 200, sport: 220 };
+  var VMAX = { hatch: 160, mpv: 170, suv: 180, van: 185, sedan: 205, sport: 226, pikap: 135 };
+  var VMAX_MOBIL = {
+    granmax: 130, carry: 130, hilux: 145, l300: 130,
+    calya: 160, sigra: 160, ayla: 155, agya: 160, brio: 165, airev: 100, binguoev: 130,
+    xenia: 170, avanza: 170, ertiga: 170, terios: 170, rush: 170, xl7: 170, veloz: 175, xpander: 175, stargazer: 175,
+    bydm6: 180, creta: 180, hrv: 180, zenix: 180, jimny: 145,
+    fortuner: 185, pajerosport: 190, civicrs: 200, bydseal: 180, crv: 190, ioniq5: 185, camry: 210, gr86: 226,
+    alphard: 180, landcruiser: 210
+  };
+  var VMAX_MOTOR = {
+    dazz: 90, revo: 95, mio: 95, beat: 95, 'beat-bekas': 92, gear: 100, supra: 105, 'supra-bekas': 102,
+    scoopy: 95, vario: 108, mxking: 132, icon: 55, aerox: 122, vario160: 122, nmax: 120, pcx160: 120,
+    nex2: 95, address: 95, genio: 95, fazzio: 95, lexi155: 118, filano: 98, stylo160: 120, adv160: 120,
+    vespa: 108, vespasprint: 110, xmax250: 145, forza250: 145,
+    satriafu: 142, cb150r: 138, klx150: 115, w175: 118, crf150l: 115, wr155r: 128, gsxr150: 148,
+    cbr150: 142, r15: 145, mt25: 168, cbr250: 179, 'cbr250-bekas': 176, ninja250: 175, r25: 175, zx25r: 187,
+    rxking: 140, r6: 260, zx4rr: 220, zx6r: 265, zx10r: 299, cbr1000: 299, h2: 300
+  };
+  function vmaxKendaraan(S, jenis) {
+    if (jenis === 'mobil') {
+      var c = S && S.mobil;
+      return (c && VMAX_MOBIL[c.id]) || VMAX[(c && c.bentuk) || 'mpv'] || 170;
+    }
+    var m = S && S.motor;
+    return (m && VMAX_MOTOR[m.id]) || 100;
+  }
+  /* skor kenyamanan kendaraan (1.0 = standar, >1 = penumpang tetap mau walau tarif lebih tinggi) */
+  function nyaman(k, jenis) {
+    if (!k) return 1;
+    if (jenis === 'mobil') {
+      if (k.bentuk === 'pikap') return 0.7;
+      if (k.kelas === 'sultan') return 1.7;
+      if (k.kelas === 'mewah') return 1.45;
+      if (k.harga >= 300e6) return 1.3;
+      if (k.harga >= 220e6) return 1.18;
+      return 1.02;
+    }
+    if (k.id === 'forza250' || k.id === 'xmax250') return 1.45;
+    if (k.id === 'nmax' || k.id === 'pcx160' || k.id === 'adv160' || k.id === 'vespa' || k.id === 'vespasprint') return 1.32;
+    if (k.id === 'vario160' || k.id === 'stylo160' || k.id === 'lexi155' || k.id === 'filano' || k.id === 'aerox' || k.id === 'scoopy') return 1.16;
+    if (k.harga >= 60e6) return 1.22;
+    return 1.0;
+  }
   var ISTIRAHAT = {
     menepi: { nama: 'Menepi tidur sebentar', menit: 20, biaya: 0, stamina: 22 },
     makan: { nama: 'Rumah makan', menit: 45, biaya: 40000, kenyang: 70, minum: 60, stamina: 12 },
@@ -82,19 +122,21 @@
   };
   var DASAR = { perKm: 520, tetap: 25000, minimal: 50000, tambahLaut: 40000 };
 
-  /* gigi yang sedang berlaku untuk perjalanan sehari-hari (ojek, pulang, berangkat). Hujan membatasi sampai 4, gigi ⚡ hanya malam 22.00-05.00 tanpa hujan */
+  /* level kecepatan 1-5; hujan membatasi sampai level 4 */
   function gigiEfektif(S, jenis) {
-    var gi = Math.max(1, Math.min(6, Math.round(S.gigiJalan || 2)));
-    var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S), jam = (S.menit % 1440) / 60;
+    var gi = Math.max(1, Math.min(5, Math.round(S.gigiJalan || 2)));
+    var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S);
     if (hujan && gi > 4) gi = 4;
-    if (gi === 6 && (hujan || !(jam >= 22 || jam < 5))) gi = 5;
     return gi;
   }
   function gigiInfo(S, jenis, id) {
-    var gi = id || gigiEfektif(S, jenis), t = (jenis === 'mobil' ? GIGI : GIGI_MOTOR)[gi - 1];
-    return { id: gi, nama: t.nama, lo: t.lo, hi: t.hi, mid: (t.lo + t.hi) / 2, boros: t.boros * (jenis === 'mobil' ? 1.2 : 1.15) /* angka pabrik lebih irit dari pemakaian kota nyata: macet, stop-go, boncengan */, khusus: !!t.khusus };
+    var gi = Math.max(1, Math.min(5, id || gigiEfektif(S, jenis))), t = (jenis === 'mobil' ? GIGI : GIGI_MOTOR)[gi - 1];
+    var vmax = vmaxKendaraan(S, jenis);
+    var lo = Math.min(t.lo, Math.max(0, vmax - 5));
+    var hi = gi === 5 ? Math.max(lo + 5, vmax) : Math.min(t.hi, vmax);
+    return { id: gi, nama: t.nama, lo: lo, hi: hi, mid: Math.max(8, (lo + hi) / 2), boros: t.boros * (jenis === 'mobil' ? 1.2 : 1.15), ngebut: !!t.ngebut, vmax: vmax };
   }
-  function bolehKhususJalan(S) { var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S), jam = (S.menit % 1440) / 60; return !hujan && (jam >= 22 || jam < 5); }
+  function bolehKhususJalan(S) { var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S); return !hujan; }
   function nama(id) { return KOTA[id] ? KOTA[id].nama : id; }
   function ruasAntara(a, b) { for (var i = 0; i < RUAS.length; i++) { var r = RUAS[i]; if ((r.a === a && r.b === b) || (r.a === b && r.b === a)) return r; } return null; }
   function tetangga(id) {
@@ -124,5 +166,5 @@
     var t = Math.max(DASAR.minimal, j.km * DASAR.perKm + DASAR.tetap) + (j.laut ? DASAR.tambahLaut : 0);
     return bulat5k(t);
   }
-  g.KK_RUTE = { kota: KOTA, ruas: RUAS, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
+  g.KK_RUTE = { kota: KOTA, ruas: RUAS, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
 })(window);

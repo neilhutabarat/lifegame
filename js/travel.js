@@ -21,10 +21,10 @@
     if (!S.mobil || !g.KK_MOBIL || g.KK_MOBIL.pikap(S)) return 0;
     return Math.max(0, g.KK_MOBIL.kapasitasPenumpang(S) - 1); /* satu kursi untuk sopir */
   }
-  function gigiObj(n) { return R.gigi[Math.max(1, Math.min(6, n)) - 1]; }
+  function gigiObj(n, S) { return R.gigiInfo ? R.gigiInfo(S, 'mobil', Math.max(1, Math.min(5, n))) : R.gigi[Math.max(1, Math.min(5, n)) - 1]; }
   function hujan(S) { return !!(g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)); }
   function malam(S) { var m = S.menit % 1440; return m >= 1320 || m < 300; }
-  function bolehKhusus(S) { return malam(S) && !hujan(S) && !!S.mobil && (R.vmax[S.mobil.bentuk] || 140) >= 140; }
+  function bolehKhusus(S) { return !hujan(S) && !!S.mobil; }
 
   /* ---------- uang ---------- */
   function dana(S) { return Math.max(0, S.bank.saldo) + Math.max(0, S.uang.dompet || 0); }
@@ -39,7 +39,7 @@
   /* ---------- rencana perjalanan ---------- */
   function rencana(S, tujuan) {
     var T = siapkan(S), j = R.jalur(T.di || S.kota, tujuan); if (!j) return null;
-    var m = S.mobil, gi = gigiObj(T.gigi), std = R.tarifStandar(j), pnp = Math.max(1, T.antri.length);
+    var m = S.mobil, gi = gigiObj(T.gigi, S), std = R.tarifStandar(j), pnp = Math.max(1, T.antri.length);
     var kmhRata = j.tol > 0 ? (gi.lo + gi.hi) / 2 * 0.9 : (gi.lo + gi.hi) / 2 * 0.75; /* tol lebih lancar */
     var laut = 0, jamLaut = 0; j.ruas.forEach(function (r) { if (r.laut) { laut += r.kapalMobil + r.kapalOrang * pnp; jamLaut += r.jam + 1; } });
     var jamJalan = (j.km - j.ruas.reduce(function (a, r) { return a + (r.laut ? r.km : 0); }, 0)) / Math.max(10, kmhRata) + jamLaut;
@@ -53,7 +53,8 @@
     var T = S.travel, j = R.jalur(T.di, tujuan); if (!j) return 0;
     var jam = Math.floor(S.menit / 60) % 24, pop = (R.kota[T.di].ramai + R.kota[tujuan].ramai) / 2;
     var jarak = j.km < 150 ? 1.2 : j.km < 400 ? 1 : j.km < 900 ? 0.7 : 0.4;
-    var harga = Math.pow(1 / T.mult, 1.8), mutu = 0.6 + T.rating * 0.1;
+    var nyaman = R.nyaman ? R.nyaman(S.mobil, 'mobil') : 1;
+    var harga = Math.pow(nyaman / T.mult, 1.6), mutu = 0.6 + T.rating * 0.1;
     return 1.3 * JAM_RAMAI[jam] * pop * jarak * harga * mutu * (hujan(S) ? 0.85 : 1) * g.KK_DIRI.faktorPromo(S);
   }
   function jeda(S, tujuan) { var l = Math.max(0.05, laju(S, tujuan)); return Math.max(2, -Math.log(1 - Math.random()) * 60 / l); }
@@ -142,19 +143,17 @@
     return sibuk ? 0.45 : 0.75;
   }
   function kecepatan(S) {
-    var T = siapkan(S), n = T.gigi, ket = '', m = S.mobil;
-    if (n === 6 && !bolehKhusus(S)) { n = 5; ket = hujan(S) ? 'Hujan: gigi ⚡ tidak bisa dipakai.' : 'Gigi ⚡ hanya bisa pukul 22.00–05.00 saat jalan sepi.'; }
-    if (hujan(S) && n > 4) { n = 4; ket = 'Hujan deras: dibatasi gigi 4.'; }
-    var gi = gigiObj(n), v = gi.lo + (gi.hi - gi.lo) * (0.55 + 0.3 * Math.sin(S.menit / 5));
-    var vmax = (R.vmax[m ? m.bentuk : 'mpv'] || 140) * 0.95; if (v > vmax) v = vmax;
+    var T = siapkan(S), n = Math.max(1, Math.min(5, T.gigi || 3)), ket = '', m = S.mobil;
+    if (hujan(S) && n > 4) { n = 4; ket = 'Hujan deras: dibatasi level 4.'; }
+    var gi = gigiObj(n, S), v = gi.lo + (gi.hi - gi.lo) * (0.55 + 0.3 * Math.sin(S.menit / 5));
+    var vmax = R.vmaxKendaraan ? R.vmaxKendaraan(S, 'mobil') : (R.vmax[m ? m.bentuk : 'mpv'] || 170);
+    if (v > vmax) v = vmax;
     var mc = macet(S); if (mc < 1) { v *= mc; if (!ket) ket = mc < 0.5 ? 'Macet parah masuk kota.' : 'Jalan padat masuk kota.'; }
     return { kmh: Math.max(6, v), gigi: n, ket: ket };
   }
   function setGigi(S, n) {
-    var T = siapkan(S); n = +n; if (n < 1 || n > 6) return 'Gigi tidak ada.';
-    if (n === 6 && !bolehKhusus(S)) return hujan(S) ? 'Hujan: gigi ⚡ tidak bisa dipakai.' : 'Gigi ⚡ hanya pukul 22.00–05.00 (malam, jalan sepi) dan tidak saat hujan.';
-    if (n === 6 && S.mobil && (R.vmax[S.mobil.bentuk] || 140) < 140) return 'Mobil ini tidak kuat untuk 100+ km/jam.';
-    if (hujan(S) && n > 4) return 'Hujan deras: paling cepat gigi 4.';
+    var T = siapkan(S); n = +n; if (n < 1 || n > 5) return 'Level kecepatan 1–5.';
+    if (hujan(S) && n > 4) return 'Hujan deras: paling cepat level 4.';
     T.gigi = n; return true;
   }
 
@@ -165,7 +164,7 @@
   function langkahJalan(S, dMenit) {
     var T = S.travel, tr = T.trip, m = S.mobil, kabar = [];
     if (!m) { T.status = 'tunggu'; T.trip = null; return ['Mobil tidak ada, perjalanan dibatalkan.']; }
-    var r = tr.ruas[tr.idx], v = kecepatan(S), gi = gigiObj(v.gigi), km = Math.min(v.kmh * dMenit / 60, r.km - tr.kmRuas);
+    var r = tr.ruas[tr.idx], v = kecepatan(S), gi = gigiObj(v.gigi, S), km = Math.min(v.kmh * dMenit / 60, r.km - tr.kmRuas);
     var liter = km / m.kml * gi.boros * (m.ngelitik ? 1.08 : 1);
     if (m.isi * m.tangki < liter + 0.2) {
       var derek = Math.min(750000, dana(S)); var bayarDerek = bayar(S, derek, 'Derek dan bensin darurat');
@@ -283,6 +282,7 @@
       var bersihBayar = total + tip; S.bank.saldo += bersihBayar; M().catatBank(S, 'Travel ' + R.nama(dari) + ' ke ' + R.nama(tujuan) + ' (' + pnp + ' penumpang)', bersihBayar);
       var avg = sumNilai / pnp; T.rating = Math.round((T.rating * (1 - 0.12 * Math.min(1, pnp / 3)) + avg * 0.12 * Math.min(1, pnp / 3)) * 100) / 100;
       T.hariIni.trip++; T.hariIni.bersih += bersihBayar - biayaPerjalanan; T.total.trip++; T.total.bersih += bersihBayar - biayaPerjalanan;
+      if (S.mobil) S.mobil.totalHasil = (S.mobil.totalHasil || 0) + Math.max(0, bersihBayar - biayaPerjalanan);
     }
     T.total.km += tr.km;
     S.hariIni.travel = (S.hariIni.travel || 0) + (pnp ? total + tip - biayaPerjalanan : -biayaPerjalanan);

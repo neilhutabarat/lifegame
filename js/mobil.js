@@ -15,6 +15,8 @@
       if (ref && ref.bbm === 'listrik' && S.mobil.bbm !== 'listrik') {
         S.mobil.bbm = 'listrik'; S.mobil.kml = ref.kml; S.mobil.tangki = ref.tangki; S.mobil.ngelitik = false;
       }
+      if (S.mobil.kmBan == null) S.mobil.kmBan = S.mobil.km || 0;
+      if (S.mobil.totalHasil == null) S.mobil.totalHasil = 0;
     }
     if (!S.bisnisMobil) S.bisnisMobil = { carAktif: false, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
     return S;
@@ -47,6 +49,7 @@
     S.ojek.dompet += bersih;
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bersih;
     S.bisnisMobil.total.trip++; S.bisnisMobil.total.bersih += bersih;
+    m.totalHasil = (m.totalHasil || 0) + bersih;
     S.hariIni.mobil = (S.hariIni.mobil || 0) + bersih;
     return { ok: true, menit: Math.max(25, r.menit), bersih: bersih, teks: 'Order GoCar/GrabCar selesai (' + km + ' km). Masuk saldo +' + rp(bersih) + '.' };
   }
@@ -70,6 +73,7 @@
     m.km += rt.km;
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bersih;
     S.bisnisMobil.total.trip++; S.bisnisMobil.total.bersih += bersih;
+    m.totalHasil = (m.totalHasil || 0) + bersih;
     S.hariIni.mobil = (S.hariIni.mobil || 0) + bersih;
     S.hariIni.bensin = (S.hariIni.bensin || 0) + biayaBbm;
     return { ok: true, menit: Math.round(rt.jam * 60), bersih: bersih, teks: 'Travel ke ' + rt.tujuan + ' selesai! ' + pnp + ' penumpang × ' + rp(rt.ongkos) + ' = ' + rp(kotor) + ', bensin ' + rp(biayaBbm) + ', bersih +' + rp(bersih) + '.' };
@@ -87,13 +91,14 @@
     S.bank.saldo += bayar; M().catatBank(S, 'Jasa angkutan: ' + ang.nama, bayar);
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bayar;
     S.bisnisMobil.total.trip++; S.bisnisMobil.total.bersih += bayar;
+    m.totalHasil = (m.totalHasil || 0) + bayar;
     S.hariIni.mobil = (S.hariIni.mobil || 0) + bayar;
     return { ok: true, menit: Math.round(ang.jam * 60), bersih: bayar, teks: 'Jasa angkutan "' + ang.nama + '" selesai (' + ang.km + ' km). Pendapatan +' + rp(bayar) + ' masuk rekening.' };
   }
 
   function mobilBaru(m, S) {
     return { id: m.id, nama: m.nama, harga: m.harga, kml: m.kml, bbm: m.bbm, tangki: m.tangki, isi: 0.25, muat: m.muat, bentuk: m.bentuk, kelas: m.kelas,
-      km: 0, kmServis: 0, kredit: null, pajakTempo: S.hari + 365, dibeli: S.hari };
+      km: 0, kmServis: 0, kmBan: 0, totalHasil: 0, kredit: null, pajakTempo: S.hari + 365, dibeli: S.hari };
   }
   function cekGarasi(S) { return S.mobil ? 'Sudah punya ' + S.mobil.nama + '. Jual dulu kalau mau ganti.' : null; }
   function bayarDealer(S, jml, ket, cara) {
@@ -176,6 +181,19 @@
     S.bank.saldo -= t; M().catatBank(S, 'Pajak tahunan ' + m.nama + ' (PKB + SWDKLLJ)', -t); m.pajakTempo += 365; m.dendaPajak = 0; return true;
   }
   function telatServis(S) { var m = S.mobil; return m ? Math.max(0, m.km - m.kmServis - R.servisKm) : 0; }
+  function telatBan(S) { var m = S.mobil; return m ? Math.max(0, m.km - (m.kmBan || 0) - (R.banKm || 45000)) : 0; }
+  function hargaBan(m) {
+    if (!m) return 4200000;
+    return (R.banHarga && R.banHarga[m.kelas || 'keluarga']) || 4200000;
+  }
+  function gantiBan(S) {
+    var m = S.mobil; if (!m) return 'Belum punya mobil.';
+    var h = hargaBan(m);
+    if (S.bank.saldo < h) return 'Saldo rekening tidak cukup untuk ganti 4 ban (' + rp(h) + ').';
+    S.bank.saldo -= h; M().catatBank(S, 'Ganti 4 ban ' + m.nama, -h);
+    m.kmBan = m.km; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + h;
+    return { ok: true, biaya: h, teks: '4 ban ' + m.nama + ' diganti baru (' + rp(h) + ').' };
+  }
 
   /* perjalanan */
   function kecepatan(S) {
@@ -192,7 +210,7 @@
     if (!cukup(S, km)) return { ok: false, alasan: 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
     var menit = Math.round(km / kmhGigi(S) * 60) + 5 * (stop || 1), kabar = [];
     m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
-    if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + telatServis(S) / 1000 * 0.01) {
+    if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + (telatServis(S) + telatBan(S) * 0.5) / 1000 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;
       if (S.bank.saldo >= bengkel) { S.bank.saldo -= bengkel; M().catatBank(S, 'Derek dan bengkel ' + m.nama, -bengkel); }
       S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; kabar.push('Mobil mogok di jalan. Derek dan bengkel ' + rp(bengkel) + ', telat sekitar 1,5 jam.');
@@ -226,5 +244,5 @@
   }
 
   g.KK_MOBIL = { siapkan: siapkan, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, lunasi: lunasi,
-    isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
+    isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);

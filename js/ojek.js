@@ -14,7 +14,8 @@
   function platform(id) { return O.platform.filter(function (p) { return p.id === id; })[0]; }
 
   function siapkan(S) {
-    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, jauhHariIni: 0, jatahJauh: 2, pos: { x: 0, y: 0 }, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, mult: 1, jauhHariIni: 0, jatahJauh: 2, pos: { x: 0, y: 0 }, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (typeof S.ojek.mult !== 'number' || isNaN(S.ojek.mult)) S.ojek.mult = 1;
     if (S.ojek.jauhHariIni == null) S.ojek.jauhHariIni = 0;
     if (S.ojek.jatahJauh == null) S.ojek.jatahJauh = 1 + Math.floor(Math.random() * 4);
     if (!S.ojek.pos) S.ojek.pos = { x: 0, y: 0 };
@@ -47,11 +48,20 @@
     return true;
   }
 
-  /* tarif per zona: minimal untuk beberapa km pertama, lalu per km */
-  function tarif(S, km) {
+  /* tarif standar dunia nyata per zona, lalu dikali pengatur tarif pemain (S.ojek.mult) */
+  function tarifStandar(S, km) {
     var z = O.zona[kota(S).zona || 1];
     var t = km <= z.kmMinimal ? z.minimal : z.minimal + (km - z.kmMinimal) * z.perKm;
     return Math.round(t / 500) * 500;
+  }
+  function tarif(S, km) {
+    var mult = (S.ojek && S.ojek.mult) || 1;
+    return Math.round(tarifStandar(S, km) * mult / 500) * 500;
+  }
+  function ubahTarif(S, delta) {
+    siapkan(S);
+    S.ojek.mult = Math.round(Math.max(0.7, Math.min(1.6, (S.ojek.mult || 1) + delta)) * 100) / 100;
+    return true;
   }
   function bisaOnline(S) {
     var m = S.motor;
@@ -87,6 +97,9 @@
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
     r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
+    var mult = (S.ojek && S.ojek.mult) || 1;
+    var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(S.motor, 'motor') : 1;
+    r *= Math.max(0.25, Math.min(1.6, Math.pow(nyaman / mult, 1.5)));
     return r * Math.max(0.6, 1 - S.ojek.tolak * 0.05);
   }
   function jeda(S) { return Math.max(3, -Math.log(1 - Math.random()) * 60 / laju(S)); }
@@ -134,6 +147,7 @@
     o.pos.x += (x.dx != null ? x.dx : x.km);
     o.pos.y += (x.dy != null ? x.dy : 0);
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
+    if (S.motor) S.motor.totalHasil = (S.motor.totalHasil || 0) + dapat;
     S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
     kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
@@ -182,6 +196,6 @@
     return kabar;
   }
 
-  g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
+  g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, tarifStandar: tarifStandar, ubahTarif: ubahTarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
     kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, jarakRumah: jarakRumah, resetPos: resetPos, CEPAT_TRIP: CEPAT_TRIP };
 })(window);

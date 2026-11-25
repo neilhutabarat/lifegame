@@ -1,5 +1,5 @@
 /* sw.js — supaya game tetap jalan tanpa internet. Naikkan VERSI setiap rilis. */
-var VERSI = 'kk-24-13';
+var VERSI = 'kk-24-14';
 /* aset inti di-cache saat install; gambar (img/char-*, bg-*, kota-*, motor-*, mobil-*) di-cache otomatis saat dibuka (lazy cache) */
 var BERKAS = ['./', 'index.html', 'css/game.css', 'js/data/nyata.js', 'js/data/menu.js', 'js/data/rute.js', 'js/kalender.js', 'js/simpan.js', 'js/uang.js', 'js/diri.js', 'js/teman.js', 'js/stok.js', 'js/motor.js', 'js/mobil.js', 'js/ojek.js', 'js/travel.js', 'js/properti.js', 'js/antar.js', 'js/karyawan.js', 'js/dunia.js', 'js/usaha.js', 'js/jualan.js', 'js/adegan.js', 'js/suara.js', 'js/main.js', 'manifest.webmanifest', 'img/ikon-192.png', 'img/ikon-512.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(VERSI).then(function (c) { return c.addAll(BERKAS); })); self.skipWaiting(); });

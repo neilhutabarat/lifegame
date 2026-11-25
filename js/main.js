@@ -753,19 +753,23 @@
           }).join('') + '</div>';
       }
       if (m) {
-        var listrik = m.bbm === 'listrik', hb = MOTOR.hargaBbm(S, m.bbm), oli = N.rawat.oliKm - (m.km - m.kmOli), sv = N.rawat.servisKm - (m.km - m.kmServis), pjk = MOTOR.tagihanPajak(S);
+        var listrik = m.bbm === 'listrik', hb = MOTOR.hargaBbm(S, m.bbm), oli = N.rawat.oliKm - (m.km - m.kmOli), sv = N.rawat.servisKm - (m.km - m.kmServis), banKmM = N.rawat.banKm || 18000, sisaBanM = banKmM - (m.km - (m.kmBan || 0)), pjk = MOTOR.tagihanPajak(S);
+        var lamaM = Math.max(0, S.hari - (m.dibeli == null ? S.hari : m.dibeli)), nymM = RUTE.nyaman ? RUTE.nyaman(m, 'motor') : 1;
         html += '<h3 class="subjudul">' + esc(m.nama) + '</h3><div class="saldo-besar"><small>' + (listrik ? 'Baterai' : 'Bensin ' + N.bbm.nama[m.bbm]) + '</small><b>' + (listrik ? Math.round(m.baterai) + ' km' : m.isi.toFixed(1).replace('.', ',') + ' / ' + String(m.tangki).replace('.', ',') + ' L') + '</b>' + persenBar(listrik ? m.baterai / m.jarakPenuh * 100 : m.isi / m.tangki * 100) + '</div>' +
-          '<ul class="daftar angka">' + baris('Kilometer', Math.round(m.km).toLocaleString('id-ID') + ' km') + (listrik ? '' : baris('Konsumsi', m.kml + ' km/liter')) +
-          '</ul>' + barRawat('Oli', oli, N.rawat.oliKm) + barRawat('Servis', sv, N.rawat.servisKm) + '<ul class="daftar angka">' +
+          '<ul class="daftar angka">' + baris('Odometer', Math.round(m.km).toLocaleString('id-ID') + ' km') +
+          baris('Lama dimiliki', lamaM + ' hari' + (lamaM >= 30 ? ' (' + (lamaM / 30).toFixed(1).replace('.', ',') + ' bln)' : '')) +
+          baris('Total penghasilan', rupiah(m.totalHasil || 0)) +
+          baris('Top speed · Kenyamanan', (RUTE.vmaxKendaraan ? RUTE.vmaxKendaraan(S, 'motor') : 100) + ' km/j · ×' + nymM.toFixed(2).replace('.', ',')) +
+          (listrik ? '' : baris('Konsumsi', m.kml + ' km/liter')) +
+          '</ul>' + barRawat('Oli', oli, N.rawat.oliKm) + barRawat('Servis', sv, N.rawat.servisKm) + barRawat('Ban', sisaBanM, banKmM) + '<ul class="daftar angka">' +
           (m.ngelitik ? baris('Mesin', 'ngelitik, bensin kurang sesuai', 'rugi') : '') +
           baris('Peluang mogok per perjalanan', (MOTOR.peluangMogok(S) * 100).toFixed(1).replace('.', ',') + '%') +
-          baris('Muatan', MOTOR.muatan(S) + ' cup') +
           (m.bekas ? baris('Kondisi', 'Bekas ' + m.bekas.tahun + ', ' + m.bekas.kondisi) : '') +
           (m.kredit ? baris('Angsuran', rupiah(m.kredit.angsuran) + ' tiap tanggal ' + m.kredit.tempo + ', sisa ' + m.kredit.sisa + ' bulan' + (m.kredit.tunggakan ? ', nunggak ' + rupiah(m.kredit.tunggakan) : ''), m.kredit.tunggakan ? 'rugi' : '') : '') +
           baris('Pajak tahunan', pjk ? 'jatuh tempo ' + namaTanggal(m.pajakTempo) : (m.pajakTempo - S.hari) + ' hari lagi') +
-          baris('Harga jual ke pedagang', m.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, m))) + '</ul>' +
+          baris('Harga jual (usia & odometer)', m.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, m))) + '</ul>' +
           (listrik ? '' : '<p class="catatan">Isi bensin: ketuk bar Bensin di bagian atas layar.</p>') +
-          '<div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="oli:1">Ganti oli ' + rupiah(N.rawat.oli) + '</button><button type="button" class="chip-tombol" data-aksi="servis:1">Servis ' + rupiah(N.rawat.servis) + '</button>' +
+          '<div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="oli:1">Ganti oli ' + rupiah(N.rawat.oli) + '</button><button type="button" class="chip-tombol" data-aksi="servis:1">Servis ' + rupiah(N.rawat.servis) + '</button><button type="button" class="chip-tombol" data-aksi="banMotor:1">Ganti ban ' + rupiah(MOTOR.hargaBan(m)) + '</button>' +
           (pjk ? '<button type="button" class="chip-tombol" data-aksi="pajakMotor:1">Bayar pajak ' + rupiah(pjk) + '</button>' : '') +
           (m.kredit ? '<button type="button" class="chip-tombol" data-aksi="lunasMotor:1">Lunasi kredit</button>' : '<button type="button" class="chip-tombol" data-aksi="jualMotor:1">Jual motor</button>') + '</div>' +
           '<h3 class="subjudul">Perlengkapan antar</h3><ul class="daftar angka">' + N.aksesoris.map(function (a) {
@@ -774,15 +778,20 @@
       }
       var c = S.mobil;
       if (c) {
-        var pj = MOBIL.tagihanPajak(S), svm = N.rawatMobil.servisKm - (c.km - c.kmServis), cEv = c.bbm === 'listrik';
+        var pj = MOBIL.tagihanPajak(S), svm = N.rawatMobil.servisKm - (c.km - c.kmServis), banKmC = N.rawatMobil.banKm || 45000, sisaBanC = banKmC - (c.km - (c.kmBan || 0)), cEv = c.bbm === 'listrik';
+        var lamaC = Math.max(0, S.hari - (c.dibeli == null ? S.hari : c.dibeli)), nymC = RUTE.nyaman ? RUTE.nyaman(c, 'mobil') : 1;
         html += '<h3 class="subjudul">' + esc(c.nama) + '</h3><div class="saldo-besar"><small>' + (cEv ? 'Baterai Listrik (EV)' : (c.bbm === 'solar' ? '' : 'Bensin ') + N.bbm.nama[c.bbm]) + '</small><b>' + (c.isi * c.tangki).toFixed(cEv ? 1 : 0) + ' / ' + c.tangki + (cEv ? ' kWh' : ' L') + '</b>' + persenBar(c.isi * 100) + '</div>' +
-          '<ul class="daftar angka">' + baris('Kilometer', Math.round(c.km).toLocaleString('id-ID') + ' km') + baris('Konsumsi', cEv ? (c.kml + ' km/kWh (~' + Math.round(c.kml * c.tangki) + ' km)') : (c.kml + ' km/liter')) + baris('Muatan', c.muat + ' barang') +
-          '</ul>' + barRawat('Servis', svm, N.rawatMobil.servisKm) + '<ul class="daftar angka">' + (c.ngelitik ? baris('Mesin', 'ngelitik, bensin kurang sesuai', 'rugi') : '') +
+          '<ul class="daftar angka">' + baris('Odometer', Math.round(c.km).toLocaleString('id-ID') + ' km') +
+          baris('Lama dimiliki', lamaC + ' hari' + (lamaC >= 30 ? ' (' + (lamaC / 30).toFixed(1).replace('.', ',') + ' bln)' : '')) +
+          baris('Total penghasilan', rupiah(c.totalHasil || 0)) +
+          baris('Top speed · Kenyamanan', (RUTE.vmaxKendaraan ? RUTE.vmaxKendaraan(S, 'mobil') : 170) + ' km/j · ×' + nymC.toFixed(2).replace('.', ',')) +
+          baris('Konsumsi', cEv ? (c.kml + ' km/kWh (~' + Math.round(c.kml * c.tangki) + ' km)') : (c.kml + ' km/liter')) +
+          '</ul>' + barRawat('Servis', svm, N.rawatMobil.servisKm) + barRawat('Ban (4 roda)', sisaBanC, banKmC) + '<ul class="daftar angka">' + (c.ngelitik ? baris('Mesin', 'ngelitik, bensin kurang sesuai', 'rugi') : '') +
           (c.kredit ? baris('Angsuran', rupiah(c.kredit.angsuran) + ' tiap tanggal ' + c.kredit.tempo + ', sisa ' + c.kredit.sisa + ' bulan' + (c.kredit.tunggakan ? ', nunggak ' + rupiah(c.kredit.tunggakan) : ''), c.kredit.tunggakan ? 'rugi' : '') : '') +
           baris('Pajak tahunan', pj ? 'jatuh tempo ' + namaTanggal(c.pajakTempo) : (c.pajakTempo - S.hari) + ' hari lagi') +
-          baris('Harga jual ke pedagang', c.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, c))) + '</ul>' +
-          '<p class="catatan">Isi bensin: ketuk bar Bensin di bagian atas layar.</p>' +
-          '<div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="servisMobil:1">Servis ' + rupiah(N.rawatMobil.servis) + '</button>' +
+          baris('Harga jual (usia & odometer)', c.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, c))) + '</ul>' +
+          '<p class="catatan">' + (cEv ? 'Cas baterai EV: ketuk bar Bensin/Daya di bagian atas layar.' : 'Isi bensin: ketuk bar Bensin di bagian atas layar.') + '</p>' +
+          '<div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="servisMobil:1">Servis ' + rupiah(N.rawatMobil.servis) + '</button><button type="button" class="chip-tombol" data-aksi="banMobil:1">Ganti 4 ban ' + rupiah(MOBIL.hargaBan(c)) + '</button>' +
           (pj ? '<button type="button" class="chip-tombol" data-aksi="pajakMobil:1">Bayar pajak ' + rupiah(pj) + '</button>' : '') +
           (c.kredit ? '<button type="button" class="chip-tombol" data-aksi="lunasMobil:1">Lunasi kredit</button>' : '<button type="button" class="chip-tombol" data-aksi="jualMobil:1">Jual mobil</button>') + '</div>' +
           (MOBIL.pikap(S) ?
@@ -1892,6 +1901,8 @@
     else if (nama === 'bensin') { var pb = nilai.split('-'), rb = MOTOR.isiBensin(S, pb[0], pb[1]); hasilAksi(rb && rb.ok ? true : rb, rb && rb.ok ? 'Isi ' + N.bbm.nama[rb.jenis] + ' ' + rb.liter.toFixed(1).replace('.', ',') + ' liter, ' + rupiah(rb.biaya) + '.' + (rb.ngelitik ? ' Mesin mulai ngelitik karena bensin di bawah anjuran.' : '') : ''); }
     else if (nama === 'oli') hasilAksi(MOTOR.rawat(S, 'oli'), 'Oli sudah diganti.');
     else if (nama === 'servis') hasilAksi(MOTOR.rawat(S, 'servis'), 'Motor sudah diservis.');
+    else if (nama === 'banMotor') { var rbm = MOTOR.gantiBan(S); hasilAksi(rbm && rbm.ok ? true : rbm, rbm && rbm.teks); }
+    else if (nama === 'banMobil') { var rbc = MOBIL.gantiBan(S); hasilAksi(rbc && rbc.ok ? true : rbc, rbc && rbc.teks); }
     else if (nama === 'aks') hasilAksi(MOTOR.beliAks(S, nilai), 'Perlengkapan sudah terpasang.');
     else if (nama === 'pajakMotor') hasilAksi(MOTOR.bayarPajak(S), 'Pajak motor lunas setahun.');
     else if (nama === 'daftarOjol') hasilAksi(ANTAR.daftar(S, nilai), 'Pendaftaran dikirim. Verifikasi sekitar 3 hari.');
@@ -2433,18 +2444,18 @@
   var NAMA_JENIS = { penumpang: 'penumpang', barang: 'paket', makanan: 'makanan' };
   /* baris percepatan (gigi) untuk kendaraan sehari-hari: ojek, pulang, berangkat */
   var seretGigi = false;
-  function labelGigi(tabel, id) {
-    var x = tabel.filter(function (g) { return g.id === id; })[0] || tabel[0];
-    return 'Gigi ' + x.nama + ' · ' + x.lo + '–' + x.hi + ' km/j';
+  function labelGigi(jenis, id) {
+    var gi = RUTE.gigiInfo(S, jenis === 'mobil' ? 'mobil' : 'motor', id);
+    return 'Level ' + gi.nama + ' · ' + gi.lo + '–' + gi.hi + ' km/j';
   }
   function barisGigi(jenis) {
-    var gi = RUTE.gigiInfo(S, jenis), tabel = jenis === 'mobil' ? RUTE.gigi : RUTE.gigiMotor;
-    return '<div class="gigi-slider"><span id="gigi-label">' + labelGigi(tabel, gi.id) + '</span><input type="range" min="1" max="6" step="1" value="' + gi.id + '" data-gigi="ojek:' + jenis + '" aria-label="Kecepatan"></div>';
+    var gi = RUTE.gigiInfo(S, jenis);
+    return '<div class="gigi-slider"><span id="gigi-label">' + labelGigi(jenis, gi.id) + '</span><input type="range" min="1" max="5" step="1" value="' + gi.id + '" data-gigi="ojek:' + jenis + '" aria-label="Level kecepatan"></div>';
   }
   function jenisKendaraanJalan() { return (S.mobil && (!S.motor || (S.travel && S.travel.aktif))) ? 'mobil' : 'motor'; }
   function panelOjek(paksa) {
     var o = S.ojek, f = OJEK.fase(S), x;
-    var k = (S.gigiJalan || 2) + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
+    var k = (S.gigiJalan || 2) + '|' + (o.mult || 1) + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
     if (seretGigi || (!paksa && k === panelKunci)) return; panelKunci = k;
     var el = $('ojek-panel'), html = '';
     if (!o.online) { el.innerHTML = ''; return; }
@@ -2457,17 +2468,19 @@
       html = '<div class="ojek-kartu tawaran"><b>Order ' + esc(x.layanan) + (x.jarakJauh ? ' [JARAK JAUH 🔥]' : '') + ' · ' + rupiah(x.tarif) + '</b><small>Jemput ' + x.jemput.toLocaleString('id-ID') + ' km · antar ' + x.km.toLocaleString('id-ID') + ' km' + (x.tunai ? ' · bayar tunai' : '') + ' · kamu dapat ' + rupiah(x.bersih) + '</small>' +
         '<div class="meteran"><i id="ojek-sisa"></i></div>' + barisGigi('motor') + '<div class="ojek-tombol"><button type="button" class="chip-tombol" data-ojek="lewati">Lewati</button><button type="button" class="chip-tombol" data-ojek="berhenti">Berhenti</button><button type="button" class="aksi" data-ojek="ambil">Ambil order</button></div></div>';
     } else {
-      html = '<div class="ojek-kartu kecil"><b>Online di ' + esc(OJEK.platform(o.platform).nama) + ' · menunggu order</b><small>' + (OJEK.jarakRumah ? OJEK.jarakRumah(S).toLocaleString('id-ID') : 0) + ' km dari rumah · hari ini ' + o.hariIni.trip + ' order, ' + rupiah(o.hariIni.bersih) + '</small>' +
-        barisGigi('motor') + chipHiburan() + '<div class="ojek-tombol"><button type="button" class="chip-tombol" data-ojek="tidurJalan:2">Tidur 2 jam</button><button type="button" class="chip-tombol" data-ojek="tidurJalan:5">Tidur 5 jam</button><button type="button" class="chip-tombol" data-ojek="berhenti">Berhenti narik</button></div></div>';
+      var mO = o.mult || 1, pct = Math.round((mO - 1) * 100), lblT = pct === 0 ? 'Standar' : (pct > 0 ? '+' + pct + '%' : pct + '%');
+      html = '<div class="ojek-kartu kecil"><b>Online di ' + esc(OJEK.platform(o.platform).nama) + ' · menunggu order</b><small>' + (OJEK.jarakRumah ? OJEK.jarakRumah(S).toLocaleString('id-ID') : 0) + ' km dari rumah · hari ini ' + o.hariIni.trip + ' order, ' + rupiah(o.hariIni.bersih) + ' · Tarif ' + lblT + '</small>' +
+        barisGigi('motor') + chipHiburan() + '<div class="ojek-tombol"><button type="button" class="chip-tombol" data-ojek="tarif:-0.1">Tarif −</button><button type="button" class="chip-tombol" data-ojek="tarif:0.1">Tarif +</button><button type="button" class="chip-tombol" data-ojek="tidurJalan:2">Tidur 2j</button><button type="button" class="chip-tombol" data-ojek="tidurJalan:5">Tidur 5j</button><button type="button" class="chip-tombol" data-ojek="berhenti">Berhenti</button></div></div>';
     }
     el.innerHTML = html;
   }
   function aksiOjek(nama) {
     if (nama.indexOf('gigi:') === 0) {
-      var gn = +nama.split(':')[1];
-      if (gn === 6 && !RUTE.bolehKhususJalan(S)) { toast('Gigi ⚡ hanya malam pukul 22.00–05.00 dan tidak hujan.', 2200); panelOjek(true); return; }
+      var gn = Math.max(1, Math.min(5, +nama.split(':')[1]));
+      if (gn === 5 && !RUTE.bolehKhususJalan(S)) { toast('Hujan deras: kecepatan dibatasi sampai level 4.', 2200); panelOjek(true); return; }
       S.gigiJalan = gn; simpan(); panelOjek(true); return;
     }
+    if (nama.indexOf('tarif:') === 0) { OJEK.ubahTarif(S, +nama.split(':')[1]); simpan(); panelOjek(true); return; }
     if (nama.indexOf('tidurJalan:') === 0) return tidurJalan(+nama.split(':')[1]);
     if (nama.indexOf('hiburan:') === 0) { var hk = nama.split(':')[1]; S.hiburan = S.hiburan === hk ? null : hk; simpan(); panelOjek(true); if (S.travel && S.travel.aktif) panelTravel(true); return; }
     if (nama === 'ambil') { var r = OJEK.ambil(S); if (r !== true) toast(r, 2200); else { tawaranUmur = 0; if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {} } }
@@ -2528,7 +2541,7 @@
       html = '<div class="ojek-kartu travel"><b>Menyeberang ' + esc(RUTE.nama(f.dari)) + ' → ' + esc(RUTE.nama(f.ke)) + ' · <span id="trv-kmh"></span></b><small id="trv-info"></small><div class="meteran"><i id="trv-maju"></i></div>' +
         (travelMini ? '' : '<small>Kamu dan penumpang istirahat di kapal, badan pulih pelan.</small>') + '<div class="ojek-tombol">' + tMini + '</div></div>';
     } else {
-      var gr = '<div class="gigi-slider"><span id="gigi-label">' + labelGigi(RUTE.gigi, T.gigi) + '</span><input type="range" min="1" max="6" step="1" value="' + T.gigi + '" data-gigi="trv" aria-label="Kecepatan"></div>';
+      var gr = '<div class="gigi-slider"><span id="gigi-label">' + labelGigi('mobil', Math.min(5, T.gigi || 3)) + '</span><input type="range" min="1" max="5" step="1" value="' + Math.min(5, T.gigi || 3) + '" data-gigi="trv" aria-label="Level kecepatan"></div>';
       html = '<div class="ojek-bare"><div class="meteran"><i id="trv-maju"></i></div>' + gr + '<div class="ojek-tombol"><button type="button" class="chip-tombol" data-trv="henti">Berhenti / bensin / istirahat</button></div></div>';
     }
     el.innerHTML = html; if (f.mode !== 'kota') trvLive(f);
@@ -2568,7 +2581,7 @@
   function aksiTravel(nama, nilai) {
     var r;
     if (nama === 'mini') { travelMini = !travelMini; travelKunci = ''; return panelTravel(true); }
-    if (nama === 'gigiRel') { var gn = Math.max(1, Math.min(6, S.travel.gigi + (+nilai))); if (gn === 6 && !TRAVEL.bolehKhusus(S)) gn = 5; r = TRAVEL.setGigi(S, gn); if (r !== true) toast(r, 2000); travelKunci = ''; return panelTravel(true); }
+    if (nama === 'gigiRel') { var gn = Math.max(1, Math.min(5, S.travel.gigi + (+nilai))); r = TRAVEL.setGigi(S, gn); if (r !== true) toast(r, 2000); travelKunci = ''; return panelTravel(true); }
     if (nama === 'pilih') return bukaTujuanTravel();
     if (nama === 'henti') return bukaHentiTravel();
     if (nama === 'tujuan') { r = TRAVEL.pilihTujuan(S, nilai); if (r !== true) return bukaTujuanTravel(r); tutupLembar(); }
@@ -2993,17 +3006,20 @@
       else pindah('kos', true);
     };
     $('travel-panel').onclick = function (e) { var b = e.target.closest('[data-trv]'); if (b) { var tv = b.dataset.trv.split(':'); aksiTravel(tv[0], tv.slice(1).join(':')); } };
-    $('ojek-panel').oninput = function (e) {
+    function onSliderInput(e) {
       var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = true;
-      var jn = s.dataset.gigi === 'trv' ? RUTE.gigi : (s.dataset.gigi.split(':')[1] === 'mobil' ? RUTE.gigi : RUTE.gigiMotor), lb = $('gigi-label'); if (lb) lb.textContent = labelGigi(jn, +s.value);
-    };
-    $('ojek-panel').onchange = function (e) {
-      var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = false; var n = +s.value;
+      var jn = s.dataset.gigi === 'trv' ? 'mobil' : (s.dataset.gigi.split(':')[1] === 'mobil' ? 'mobil' : 'motor'), lb = $('gigi-label'); if (lb) lb.textContent = labelGigi(jn, +s.value);
+    }
+    function onSliderChange(e) {
+      var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = false; var n = Math.max(1, Math.min(5, +s.value));
       if (s.dataset.gigi === 'trv') {
-        if (n === 6 && !TRAVEL.bolehKhusus(S)) { toast('Gigi ⚡ hanya malam pukul 22.00–05.00 dan tidak hujan.', 2200); n = 5; }
-        var r = TRAVEL.setGigi(S, n); if (r !== true) toast(r, 2200); panelOjek(true);
+        var r = TRAVEL.setGigi(S, n); if (r !== true) toast(r, 2200); travelKunci = ''; panelTravel(true); simpan();
       } else aksiOjek('gigi:' + n);
-    };
+    }
+    $('ojek-panel').oninput = onSliderInput;
+    $('ojek-panel').onchange = onSliderChange;
+    $('travel-panel').oninput = onSliderInput;
+    $('travel-panel').onchange = onSliderChange;
     $('ojek-panel').onclick = function (e) { var b = e.target.closest('[data-ojek]'); if (b) aksiOjek(b.dataset.ojek); };
     if ($('popup-teman')) $('popup-teman').onclick = function () { this.hidden = true; this.classList.remove('muncul'); bukaHP('keluarga'); };
     $('kos-aksi').onclick = function (e) { var b = e.target.closest('[data-diri]'); if (b) { var dd = b.dataset.diri.split(':'); aksiDiri(dd[0], dd[1]); } };
