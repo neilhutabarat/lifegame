@@ -1514,7 +1514,7 @@
     pencahayaanLuar(m, t, jalan, kaki ? null : (f.kend === 'mobil' ? W * 0.46 + 46 : W * 0.42 + 28), kaki ? null : (f.kend === 'mobil' ? jalan + 62 + goyang : jalan + 24 + goyang));
     gambarHujanRealistis(s, t, jalan, 0);
     var kePulang = f.ke === 'kos', sisa = Math.max(0, f.km * (1 - f.u));
-    teksTengah(kePulang ? 'Pulang ke rumah' : 'Berangkat ke kedai', 182, 18);
+    teksTengah(kePulang ? 'Pulang ke rumah' : 'Berangkat narik', 182, 18);
     teksTengah(sisa.toFixed(1).replace('.', ',') + ' km lagi · total ' + String(f.km).replace('.', ',') + ' km', 208, 13);
     kotakBulat(60, 228, 240, 8, 4, 'rgba(29,43,51,.45)'); kotakBulat(60, 228, Math.max(8, 240 * Math.min(1, f.u)), 8, 4, '#f2a516');
   }

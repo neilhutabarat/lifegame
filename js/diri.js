@@ -170,7 +170,7 @@
         var butuhDapur = !S.rumahTangga || (S.rumahTangga.aktifSampai || -1) <= S.hari;
         var teksPesan = butuhDapur
           ? 'Sayang, stok beras & bahan dapur di rumah udah mau habis nih. Nanti belanja di Pasar Pokok HP atau suruh aku belanja ke pasar ya!'
-          : ['Sayang, lagi sibuk di kedai/narik ya? Jangan lupa makan & jaga kesehatan ya!', 'Sayang, semangat kerjanya hari ini! Nanti malam pulang ke rumah ya, aku kangen.', 'Halo sayang, gimana jualan/narik hari ini? Lancar kan?'][S.hari % 3];
+          : ['Sayang, lagi sibuk narik ya? Jangan lupa makan & jaga kesehatan ya!', 'Sayang, semangat kerjanya hari ini! Nanti malam pulang ke rumah ya, aku kangen.', 'Halo sayang, gimana narik hari ini? Lancar kan?'][S.hari % 3];
         var viaTelp = Math.random() < 0.35;
         S.pesanKeluarga = S.pesanKeluarga || [];
         S.pesanKeluarga.unshift({ hari: S.hari, jam: S.menit % 1440, dari: pUtama.nama, jenis: viaTelp ? 'Telepon Masuk' : 'WhatsApp Masuk', teks: teksPesan });

@@ -317,6 +317,22 @@
   function baris(a, b, kls) { return '<li' + (kls ? ' class="' + kls + '"' : '') + '><span>' + a + '</span><span>' + b + '</span></li>'; }
   function ringkasanJualan() {
     var h = S.hariIni, omzet = omzetTotal(h), q = qrisIni();
+    if (S.usaha && S.usaha.berhentiSewa) {
+      var totDrv = (h.ojek || 0) + (h.mobil || 0) + (h.rental || 0) - (h.bensin || 0) - (h.bengkel || 0) - (h.listrikMotor || 0);
+      return '<h3 class="subjudul">Ringkasan harian driver</h3><ul class="daftar angka">' +
+        baris('Pendapatan bersih Driver Ojol (' + (S.ojek && S.ojek.hariIni ? S.ojek.hariIni.trip : 0) + ' order)', rupiah(h.ojek || 0)) +
+        (h.mobil ? baris('Travel / Angkutan Mobil', rupiah(h.mobil)) : '') +
+        (h.rental ? baris('Sewa barang milikmu', rupiah(h.rental)) : '') +
+        (h.bensin ? baris('Bensin', '−' + rupiah(h.bensin)) : '') +
+        (h.listrikMotor ? baris('Cas motor listrik', '−' + rupiah(h.listrikMotor)) : '') +
+        (h.bengkel ? baris('Bengkel & perawatan', '−' + rupiah(h.bengkel)) : '') +
+        baris('<b>Total bersih hari ini</b>', '<b>' + rupiah(totDrv) + '</b>', 'total') + '</ul>' +
+        '<h3 class="subjudul">Saldo sekarang</h3><ul class="daftar angka">' +
+        baris('Dompet tunai', rupiah(UANG.dompet(S))) +
+        baris('Saldo e-wallet', rupiah(UANG.merchantTotal(S))) +
+        baris('Rekening ' + esc(UANG.bankIni(S).nama), rupiah(S.bank.saldo)) + '</ul>' +
+        (h.pribadi ? '<p class="catatan">Pengeluaran pribadi hari ini ' + rupiah(h.pribadi) + ' (makan, minum, kebutuhan ' + DIRI.tempat(S) + ').</p>' : '');
+    }
     var laris = MN.MENU.filter(function (m) { return h.menu[m.id]; }).sort(function (a, b) { return h.menu[b.id] - h.menu[a.id]; });
     return '<h3 class="subjudul">Penjualan</h3><ul class="daftar angka">' +
       baris('Gelas terjual', h.dilayani + ' gelas') +
@@ -862,7 +878,7 @@
         baris('Status', r.status === 'akad' ? 'kunci ' + namaTanggal(r.kunciPada) : r.dihuni ? 'ditempati' : 'kunci diterima') +
         baris('Harga beli', rupiah(r.harga)) + baris('Perkiraan nilai sekarang', rupiah(PROPERTI.nilaiRumah(S))) +
         (k ? baris('Angsuran KPR<small>tiap tanggal ' + k.tempo + ', bunga ' + (k.bunga * 100).toFixed(2).replace('.', ',') + '%</small>', rupiah(k.angsuran)) + baris('Sisa pokok<small>' + k.sisa + ' bulan lagi</small>', rupiah(k.pokok)) + (k.tunggakan ? baris('Tunggakan', rupiah(k.tunggakan), 'rugi') : '') : baris('Kepemilikan', 'lunas, sertifikat di tangan')) +
-        baris('Jarak ke kedai', N.properti.kota[S.kota].jarak[r.tipe] + ' km') + '</ul><div class="chip-baris">' +
+        baris('Jarak ke pusat kota', N.properti.kota[S.kota].jarak[r.tipe] + ' km') + '</ul><div class="chip-baris">' +
         (r.status === 'siap' && !r.dihuni ? '<button type="button" class="chip-tombol pilih" data-aksi="pindahRumah:1">Pindah ke rumah' + (MOBIL.pikap(S) ? ' (pakai pikap)' : ' (jasa pindahan ' + rupiah(P.jasaPindahan) + ')') + '</button>' : '') +
         (r.status === 'siap' ? '<button type="button" class="chip-tombol" data-aksi="jualRumah:1">' + (app.yakinJualRumah ? 'Yakin jual? Tap lagi' : 'Jual rumah') + '</button>' : '') + '</div>';
     } else {
