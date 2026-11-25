@@ -5,15 +5,50 @@
   var cv, cx, W = 360, H = 640, dpr = 1;
   var anim = { rolling: 0, pantulKedai: 0, pantulBarista: 0, kedip: 0, motor: [], tMotor: 0, angkat: 0, teks: [], cup: [] };
   var ruko = [];
-  var bgImgs = {};
+  var bgImgs = {}, charImgs = {};
   function muatBg(kunci, src) {
     var im = new Image();
     im.onload = function () { bgImgs[kunci] = im; };
     im.src = src;
   }
+  function muatChar(kunci, src) {
+    var im = new Image();
+    im.onload = function () { charImgs[kunci] = im; };
+    im.src = src;
+  }
   muatBg('siang', 'img/bg-kedai-siang.jpg');
   muatBg('hujan', 'img/bg-kedai-hujan.jpg');
   muatBg('rumah', 'img/bg-rumah.jpg');
+  muatChar('pemain', 'img/char-pemain.jpg');
+  muatChar('istri', 'img/char-istri.jpg');
+  muatChar('anak', 'img/char-anak.jpg');
+  muatChar('adik_ipar', 'img/char-adik-ipar.jpg');
+  function gambarPotretAi(im, x, y, r, t, o) {
+    if (!im || !im.naturalWidth) return false;
+    o = o || {};
+    var bob = o.diam ? 0 : Math.sin(t / 460 + x) * 1.4;
+    var cy = y + bob;
+    cx.save();
+    cx.fillStyle = 'rgba(0,0,0,.28)';
+    cx.beginPath(); cx.ellipse(x, cy + r + 4, r * 0.78, 4.5, 0, 0, Math.PI * 2); cx.fill();
+    cx.beginPath(); cx.arc(x, cy, r, 0, Math.PI * 2); cx.closePath(); cx.clip();
+    var s = Math.max((r * 2) / im.naturalWidth, (r * 2) / im.naturalHeight);
+    var dw = im.naturalWidth * s, dh = im.naturalHeight * s;
+    cx.drawImage(im, x - dw / 2, cy - dh / 2, dw, dh);
+    cx.restore();
+    cx.save();
+    cx.strokeStyle = o.bingkai || '#ffffff';
+    cx.lineWidth = o.tebal || 2.6;
+    cx.beginPath(); cx.arc(x, cy, r, 0, Math.PI * 2); cx.stroke();
+    if (o.label) {
+      cx.font = '800 10px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center';
+      var tw = Math.max(36, cx.measureText(o.label).width + 12);
+      kotakBulat(x - tw / 2, cy + r - 6, tw, 15, 7, 'rgba(18,25,29,.84)');
+      cx.fillStyle = '#fff'; cx.fillText(o.label, x, cy + r + 4.5);
+    }
+    cx.restore();
+    return true;
+  }
   function gambarBgCover(im, alpha) {
     if (!im || !im.naturalWidth) return false;
     var rImg = im.naturalWidth / im.naturalHeight, rCv = W / H;
@@ -683,18 +718,19 @@
     /* animasi HB: istri berbaring di kasur, suami naik ke atas istri dengan efek hati sebelum layar gelap */
     if (s.hbAnim && pas) {
       var u = Math.min(1, s.hbAnim.u || 0);
-      var istriDiKasur = pas.gender === 'cewek' ? pas : { nama: s.namaPemain || 'Istri', gender: 'cewek' };
-      var suamiNaik = pas.gender === 'cowok' ? pas : { nama: s.namaPemain || 'Suami', gender: 'cowok' };
-      /* istri berbaring di tempat tidur */
-      bulat(xKasur + 26, yKasur + 2, 11, '#f1c39b');
-      cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 26, yKasur, 11.5, Math.PI, 0); cx.fill();
-      kotakBulat(xKasur + 36, yKasur - 3, 46, 15, 7, '#c86a84');
-      /* suami bergerak naik ke atas istri di tempat tidur */
-      var sx = xKasur + 96 - u * 56, sy = yKasur - 28 + Math.sin(u * Math.PI) * -10 + u * 16;
-      kotakBulat(sx + 10, sy + 2, 42, 14, 6, '#2f6fb0');
-      bulat(sx, sy + 7, 10.5, '#f1c39b');
-      cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(sx, sy + 4, 10.5, Math.PI, 0); cx.fill();
-      /* simbol hati lembut melayang */
+      var imIstri = charImgs.istri, imSuami = charImgs.pemain;
+      if (imIstri && imIstri.naturalWidth && imSuami && imSuami.naturalWidth) {
+        gambarPotretAi(imIstri, xKasur + 42, yKasur + 10, 24, t, { diam: true, bingkai: '#e91e63', label: pas.nama });
+        gambarPotretAi(imSuami, xKasur + 110 - u * 46, yKasur - 12 + u * 16, 24, t, { diam: true, bingkai: '#1f8a80', label: s.namaPemain || 'Kamu' });
+      } else {
+        bulat(xKasur + 26, yKasur + 2, 11, '#f1c39b');
+        cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 26, yKasur, 11.5, Math.PI, 0); cx.fill();
+        kotakBulat(xKasur + 36, yKasur - 3, 46, 15, 7, '#c86a84');
+        var sx = xKasur + 96 - u * 56, sy = yKasur - 28 + Math.sin(u * Math.PI) * -10 + u * 16;
+        kotakBulat(sx + 10, sy + 2, 42, 14, 6, '#2f6fb0');
+        bulat(sx, sy + 7, 10.5, '#f1c39b');
+        cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(sx, sy + 4, 10.5, Math.PI, 0); cx.fill();
+      }
       cx.fillStyle = '#e91e63'; cx.font = '800 18px system-ui, sans-serif'; cx.textAlign = 'center';
       for (var hi = 0; hi < 3; hi++) {
         var hy = yKasur - 34 - ((t / 28 + hi * 16) % 34);
@@ -706,26 +742,39 @@
     }
     /* karakter utama saat bangun atau tidur */
     if (s.tidur) {
-      bulat(xKasur + 24, yKasur, 11.5, '#f1c39b');
-      cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 24, yKasur - 3, 11.5, Math.PI, 0); cx.fill();
-      if (pas) {
-        bulat(xKasur + 52, yKasur + 2, 10.5, '#f1c39b');
-        cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 52, yKasur - 1, 10.5, Math.PI, 0); cx.fill();
+      if (!gambarPotretAi(charImgs.pemain, xKasur + 36, yKasur + 4, 21, t, { diam: true, bingkai: '#5b6b73', label: s.namaPemain || 'Tidur' })) {
+        bulat(xKasur + 24, yKasur, 11.5, '#f1c39b');
+        cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 24, yKasur - 3, 11.5, Math.PI, 0); cx.fill();
       }
-      cx.fillStyle = '#5b6b73'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif';
+      if (pas) {
+        if (!gambarPotretAi(charImgs.istri, xKasur + 84, yKasur + 6, 20, t, { diam: true, bingkai: '#e91e63', label: pas.nama })) {
+          bulat(xKasur + 52, yKasur + 2, 10.5, '#f1c39b');
+          cx.fillStyle = '#2a1d1a'; cx.beginPath(); cx.arc(xKasur + 52, yKasur - 1, 10.5, Math.PI, 0); cx.fill();
+        }
+      }
+      cx.fillStyle = '#fff'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif';
       cx.fillText('z', xKasur + 46, yKasur - 24 - (t / 40) % 12);
       cx.fillText('Z', xKasur + 60, yKasur - 40 - (t / 50) % 14);
     } else {
-      gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
+      if (!gambarPotretAi(charImgs.pemain, 102, yLantai + 84, 28, t, { bingkai: '#1f8a80', label: s.namaPemain || 'Kamu' })) {
+        gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
+      }
       if (pas) {
-        gambarKarakterRumah(196, yLantai + 104, pas.gender, t + 400, { baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a', hamil: !!pas.hamil, label: pas.nama });
+        if (!gambarPotretAi(charImgs.istri, 182, yLantai + 84, 27, t + 400, { bingkai: '#e91e63', label: pas.nama + (pas.hamil ? ' 🤰' : '') })) {
+          gambarKarakterRumah(196, yLantai + 104, pas.gender, t + 400, { baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a', hamil: !!pas.hamil, label: pas.nama });
+        }
       }
     }
-    /* anak-anak yang berada di rumah (skala tubuh tumbuh sesuai usia!) */
+    /* anak-anak & ipar yang berada di rumah memakai potret AI anime */
     anakList.slice(0, 4).forEach(function (an, i) {
-      var sk = an.usia < 2 ? 0.52 : an.usia < 5 ? 0.64 : an.usia < 10 ? 0.76 : an.usia < 15 ? 0.88 : 0.96;
-      var ax = 248 + (i % 2) * 44 - Math.floor(i / 2) * 165, ay = yLantai + 112 + Math.floor(i / 2) * 18;
-      gambarKarakterRumah(ax, ay, an.gender, t + 700 * (i + 1), { skala: sk, baju: an.gender === 'cewek' ? '#f2a516' : '#4fa55a', label: an.nama + ' (' + an.usia + 't)' });
+      var isIpar = an.peran === 'adik_ipar' || an.peran === 'kakak_ipar';
+      var rFoto = isIpar ? 25 : (an.usia < 2 ? 17 : an.usia < 6 ? 20 : 23);
+      var ax = 258 + (i % 2) * 56 - Math.floor(i / 2) * 165, ay = yLantai + 92 + Math.floor(i / 2) * 52;
+      var imAn = isIpar ? charImgs.adik_ipar : charImgs.anak;
+      if (!gambarPotretAi(imAn, ax, ay, rFoto, t + 700 * (i + 1), { bingkai: isIpar ? '#ff70a6' : '#f2a516', label: an.nama + ' (' + an.usia + 't)' })) {
+        var sk = an.usia < 2 ? 0.52 : an.usia < 5 ? 0.64 : an.usia < 10 ? 0.76 : an.usia < 15 ? 0.88 : 0.96;
+        gambarKarakterRumah(ax, ay, an.gender, t + 700 * (i + 1), { skala: sk, baju: an.gender === 'cewek' ? '#f2a516' : '#4fa55a', label: an.nama + ' (' + an.usia + 't)' });
+      }
     });
   }
 
@@ -804,43 +853,37 @@
     } else {
       cx.fillStyle = 'rgba(18,22,28,.16)'; cx.fillRect(0, 0, W, H);
     }
-    /* AC di dinding: kos sudah ada; rumah harus beli */
-    if (!rumah || b.ac) { kotakBulat(214, lantai - 300, 112, 34, 8, '#f6f6f2'); kotak(222, lantai - 274, 96, 3, '#d6d6d0');
-      bulat(312, lantai - 290, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a'); }
-    if (rumah) { /* pintu dan saklar */ kotakBulat(296, lantai - 200, 58, 200, 3, rumah === 'mewah' ? '#6b4a2e' : '#9c7a52'); bulat(344, lantai - 96, 3, '#e0d3b8'); }
-    if (s.acNyala && s.tidur) { cx.strokeStyle = 'rgba(150,200,230,.5)'; cx.lineWidth = 2; for (var a = 0; a < 3; a++) { var yy = lantai - 258 + a * 10 + Math.sin(t / 300 + a) * 3; cx.beginPath(); cx.moveTo(230, yy); cx.quadraticCurveTo(270, yy + 6, 310, yy); cx.stroke(); } }
-    /* lemari bawaan kos */
-    if (!rumah) { kotakBulat(276, lantai - 170, 70, 180, 4, '#9c7a52'); kotak(310, lantai - 165, 2, 170, '#7d5f3f'); bulat(304, lantai - 80, 2.5, '#e0d3b8'); bulat(318, lantai - 80, 2.5, '#e0d3b8'); }
-    /* kasur: kos bawaan; rumah pakai kasur lantai sampai beli spring bed */
-    if (rumah && !b.springbed) { kotakBulat(20, lantai + 60, 200, 34, 8, '#e9e2cf'); kotakBulat(26, lantai + 46, 188, 26, 8, '#f3f1ea'); kotakBulat(30, lantai + 38, 50, 20, 8, '#fff'); kotakBulat(84, lantai + 48, 128, 24, 8, '#a5b88a'); }
-    else {
-      if (b.springbed) kotakBulat(16, lantai - 40, 14, 120, 4, '#6b4a2e');
-      kotakBulat(20, lantai + 30, 200, 70, 10, b.springbed ? '#6b4a2e' : '#7d5f3f');
-      kotakBulat(24, lantai + 14, 192, 40, 10, '#f3f1ea'); kotakBulat(30, lantai + 4, 54, 24, 10, '#ffffff');
-      kotakBulat(84, lantai + 18, 130, 34, 8, b.springbed ? '#c86a5a' : '#6aa0c8'); /* selimut */
+    if (!adaBgRumah) {
+      if (!rumah || b.ac) { kotakBulat(214, lantai - 300, 112, 34, 8, '#f6f6f2'); kotak(222, lantai - 274, 96, 3, '#d6d6d0');
+        bulat(312, lantai - 290, 2.5, s.acNyala ? '#4fbf6a' : '#d9443a'); }
+      if (rumah) { /* pintu dan saklar */ kotakBulat(296, lantai - 200, 58, 200, 3, rumah === 'mewah' ? '#6b4a2e' : '#9c7a52'); bulat(344, lantai - 96, 3, '#e0d3b8'); }
+      if (!rumah) { kotakBulat(276, lantai - 170, 70, 180, 4, '#9c7a52'); kotak(310, lantai - 165, 2, 170, '#7d5f3f'); bulat(304, lantai - 80, 2.5, '#e0d3b8'); bulat(318, lantai - 80, 2.5, '#e0d3b8'); }
+      if (rumah && !b.springbed) { kotakBulat(20, lantai + 60, 200, 34, 8, '#e9e2cf'); kotakBulat(26, lantai + 46, 188, 26, 8, '#f3f1ea'); kotakBulat(30, lantai + 38, 50, 20, 8, '#fff'); kotakBulat(84, lantai + 48, 128, 24, 8, '#a5b88a'); }
+      else {
+        if (b.springbed) kotakBulat(16, lantai - 40, 14, 120, 4, '#6b4a2e');
+        kotakBulat(20, lantai + 30, 200, 70, 10, b.springbed ? '#6b4a2e' : '#7d5f3f');
+        kotakBulat(24, lantai + 14, 192, 40, 10, '#f3f1ea'); kotakBulat(30, lantai + 4, 54, 24, 10, '#ffffff');
+        kotakBulat(84, lantai + 18, 130, 34, 8, b.springbed ? '#c86a5a' : '#6aa0c8');
+      }
+      if (b.karpet) kotakBulat(150, lantai + 120, 150, 50, 10, '#b85c4a');
+      if (b.kipas) { kotak(250, lantai + 40, 4, 60, '#3b3f46'); bulat(252, lantai + 34, 18, '#dfeef3'); cx.save(); cx.translate(252, lantai + 34); cx.rotate(t / 60); kotak(-2, -15, 4, 30, '#9ab'); kotak(-15, -2, 30, 4, '#9ab'); cx.restore(); }
+      if (b.kulkas2) { kotakBulat(240, lantai - 40, 52, 136, 5, '#d8dde1'); kotak(265, lantai - 36, 2, 128, '#b8c0c6'); kotak(258, lantai + 10, 3, 18, '#8d969b'); kotak(270, lantai + 10, 3, 18, '#8d969b'); }
+      else if (b.kulkas) { kotakBulat(296, lantai + 10, 50, 86, 5, '#e8ecef'); kotak(300, lantai + 40, 42, 2, '#c8ced3'); kotak(336, lantai + 20, 3, 14, '#9aa3a6'); }
+      if (b.tv || b.tv55) {
+        var besar = b.tv55 && rumah ? 1.35 : 1;
+        kotak(150, lantai + 60, 120 * besar > 140 ? 130 : 110, 30, '#7d5f3f');
+        kotakBulat(170 - (besar - 1) * 45, lantai - 10 - (besar - 1) * 58, 90 * besar, 58 * besar, 4, '#1b1b1b');
+        var nyalaTv = !s.tidur && (m >= 1080 || m < 120);
+        kotak(174 - (besar - 1) * 45, lantai - 6 - (besar - 1) * 58, 90 * besar - 8, 58 * besar - 10, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
+        kotak(210, lantai + 48, 10, 12, '#1b1b1b');
+      }
+      if (b.ricecooker) { bulat(190, lantai + 98, 12, '#f6f6f2'); kotak(180, lantai + 98, 20, 10, '#f6f6f2'); }
+      if (b.dispenser) { kotak(14, lantai + 110, 24, 40, '#f3f1ea'); kotakBulat(12, lantai + 80, 28, 32, 6, 'rgba(150,200,230,.7)'); }
+      if (b.sofa) { kotakBulat(110, lantai + 190, 170, 54, 14, '#5b7a8c'); kotakBulat(116, lantai + 176, 158, 30, 12, '#6d8ea1'); kotak(124, lantai + 240, 8, 10, '#3b2a22'); kotak(258, lantai + 240, 8, 10, '#3b2a22'); }
+      if (b.mejamakan) { kotak(290, lantai + 196, 62, 8, '#8f5a31'); kotak(296, lantai + 204, 5, 40, '#6b4a2e'); kotak(340, lantai + 204, 5, 40, '#6b4a2e'); kotakBulat(286, lantai + 176, 14, 30, 3, '#a86c3c'); kotakBulat(342, lantai + 176, 14, 30, 3, '#a86c3c'); }
+      if (b.mesincuci) { kotakBulat(20, lantai + 188, 70, 58, 6, '#eef1f3'); bulat(42, lantai + 214, 13, '#bcd3e0'); bulat(72, lantai + 214, 9, '#bcd3e0'); kotak(24, lantai + 192, 62, 6, '#c8ced3'); }
+      if (b.kompor) { kotak(60, lantai + 120, 70, 8, '#a5adb3'); kotak(64, lantai + 128, 62, 30, '#d9dcde'); bulat(80, lantai + 118, 6, '#2b2b2b'); bulat(110, lantai + 118, 6, '#2b2b2b'); kotakBulat(134, lantai + 126, 18, 30, 6, '#7fb069'); }
     }
-    if (b.karpet) kotakBulat(150, lantai + 120, 150, 50, 10, '#b85c4a');
-    if (b.kipas) { kotak(250, lantai + 40, 4, 60, '#3b3f46'); bulat(252, lantai + 34, 18, '#dfeef3'); cx.save(); cx.translate(252, lantai + 34); cx.rotate(t / 60); kotak(-2, -15, 4, 30, '#9ab'); kotak(-15, -2, 30, 4, '#9ab'); cx.restore(); }
-    if (b.kulkas2) { kotakBulat(240, lantai - 40, 52, 136, 5, '#d8dde1'); kotak(265, lantai - 36, 2, 128, '#b8c0c6'); kotak(258, lantai + 10, 3, 18, '#8d969b'); kotak(270, lantai + 10, 3, 18, '#8d969b'); }
-    else if (b.kulkas) { kotakBulat(296, lantai + 10, 50, 86, 5, '#e8ecef'); kotak(300, lantai + 40, 42, 2, '#c8ced3'); kotak(336, lantai + 20, 3, 14, '#9aa3a6'); }
-    /* meja TV */
-    if (b.tv || b.tv55) {
-      var besar = b.tv55 && rumah ? 1.35 : 1;
-      kotak(150, lantai + 60, 120 * besar > 140 ? 130 : 110, 30, '#7d5f3f');
-      kotakBulat(170 - (besar - 1) * 45, lantai - 10 - (besar - 1) * 58, 90 * besar, 58 * besar, 4, '#1b1b1b');
-      var nyalaTv = !s.tidur && (m >= 1080 || m < 120);
-      kotak(174 - (besar - 1) * 45, lantai - 6 - (besar - 1) * 58, 90 * besar - 8, 58 * besar - 10, nyalaTv ? ['#3a6fb0', '#4fa060', '#b06a3a'][Math.floor(t / 1200) % 3] : '#2b2f36');
-      kotak(210, lantai + 48, 10, 12, '#1b1b1b');
-      if (b.ps5 || b.ps5disc) { kotakBulat(240, lantai + 30, 14, 30, 4, '#f6f6f2'); kotak(244, lantai + 34, 6, 22, '#1b1b1b'); }
-      else if (b.ps4 || b.ps3 || b.ps2) { kotakBulat(238, lantai + 38, 18, 22, 2, '#1b1b1b'); kotak(240, lantai + 40, 2, 18, '#2f6fb0'); }
-      else if (b.ps1) { kotakBulat(238, lantai + 44, 20, 16, 2, '#b8bfc4'); bulat(248, lantai + 52, 5, '#9aa3a6'); }
-    }
-    if (b.ricecooker) { bulat(190, lantai + 98, 12, '#f6f6f2'); kotak(180, lantai + 98, 20, 10, '#f6f6f2'); }
-    if (b.dispenser) { kotak(14, lantai + 110, 24, 40, '#f3f1ea'); kotakBulat(12, lantai + 80, 28, 32, 6, 'rgba(150,200,230,.7)'); }
-    if (b.sofa) { kotakBulat(110, lantai + 190, 170, 54, 14, '#5b7a8c'); kotakBulat(116, lantai + 176, 158, 30, 12, '#6d8ea1'); kotak(124, lantai + 240, 8, 10, '#3b2a22'); kotak(258, lantai + 240, 8, 10, '#3b2a22'); }
-    if (b.mejamakan) { kotak(290, lantai + 196, 62, 8, '#8f5a31'); kotak(296, lantai + 204, 5, 40, '#6b4a2e'); kotak(340, lantai + 204, 5, 40, '#6b4a2e'); kotakBulat(286, lantai + 176, 14, 30, 3, '#a86c3c'); kotakBulat(342, lantai + 176, 14, 30, 3, '#a86c3c'); }
-    if (b.mesincuci) { kotakBulat(20, lantai + 188, 70, 58, 6, '#eef1f3'); bulat(42, lantai + 214, 13, '#bcd3e0'); bulat(72, lantai + 214, 9, '#bcd3e0'); kotak(24, lantai + 192, 62, 6, '#c8ced3'); }
-    if (b.kompor) { kotak(60, lantai + 120, 70, 8, '#a5adb3'); kotak(64, lantai + 128, 62, 30, '#d9dcde'); bulat(80, lantai + 118, 6, '#2b2b2b'); bulat(110, lantai + 118, 6, '#2b2b2b'); kotakBulat(134, lantai + 126, 18, 30, 6, '#7fb069'); }
     /* tampilkan karakter utama, pasangan (istri/suami), anak-anak, serta animasi tidur / HB di kamar kos */
     gambarPenghuniRumah(s, t, 34, lantai + 12, lantai + 14);
     /* gelap malam bila lampu dimatikan saat tidur */
@@ -973,6 +1016,13 @@
     if (gp > 0.4) { var gr = cx.createRadialGradient(W * 0.42 + 40, jalan + 30, 0, W * 0.42 + 40, jalan + 30, 90); gr.addColorStop(0, 'rgba(255,240,190,.45)'); gr.addColorStop(1, 'rgba(255,240,190,0)'); cx.fillStyle = gr; cx.fillRect(W * 0.42, jalan - 40, 140, 140); }
     if (s.hujan) {
       cx.fillStyle = 'rgba(30,40,60,.2)'; cx.fillRect(0, 0, W, H);
+      /* riak air hujan di jalanan aspal basah */
+      cx.strokeStyle = 'rgba(210,230,255,.35)'; cx.lineWidth = 1;
+      for (var ri = 0; ri < 12; ri++) {
+        var rx = acak(ri + 710) * W, ry = jalan + 10 + acak(ri + 810) * (H - jalan - 25);
+        var rr = 2 + ((t / 45 + ri * 5) % 10);
+        cx.beginPath(); cx.ellipse(rx, ry, rr, rr * 0.35, 0, 0, Math.PI * 2); cx.stroke();
+      }
       cx.strokeStyle = 'rgba(210,225,240,.55)'; cx.lineWidth = 1.2; cx.beginPath();
       for (var hi = 0; hi < 90; hi++) { var hx = acak(hi + 500) * (W + 40) - 20, hy = (acak(hi + 600) * (H + 60) + (t / 3) % 40 * 3) % (H + 60) - 30; cx.moveTo(hx, hy); cx.lineTo(hx - 5, hy + 12); }
       cx.stroke();
@@ -1017,26 +1067,39 @@
     cx.setTransform(f, 0, 0, f, 0, -anim.angkat * f);
     var gp = gelap(m);
     var bgKedai = (s.hujan || gp > 0.35) ? bgImgs.hujan : bgImgs.siang;
-    if (gambarBgCover(bgKedai, 1.0)) {
+    var adaBgKedai = gambarBgCover(bgKedai, 1.0);
+    if (adaBgKedai) {
       if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.25).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
-      /* jalur aspal semi-transparan agar kendaraan & pembeli menapak rapi di jalanan basah/cerah */
-      cx.fillStyle = s.hujan ? 'rgba(26,34,46,.32)' : 'rgba(55,60,68,.26)';
-      cx.fillRect(0, jalan, W, H - jalan);
+      /* saat menggunakan background AI: tampilkan papan nama toko & karakter AI di konter tanpa menempelkan kontainer/tiang/kursi vektor lama */
+      var kX = 148, kY = dasarKedai - 138, kW = 192, kH = 140;
+      var namaTokoAi = (s.namaToko && s.namaToko.trim()) ? s.namaToko.trim() : 'Kopi Kontainer';
+      kotakBulat(kX + 16, kY - 12, kW - 32, 24, 8, 'rgba(26,18,14,.86)');
+      cx.fillStyle = '#ffe3a1'; cx.font = '700 13px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(namaTokoAi.slice(0, 24), kX + kW / 2, kY);
+      if (s.buka) {
+        gambarPotretAi(charImgs.pemain, kX + kW / 2, kY + 56, 25, t, { bingkai: '#1f8a80', label: s.namaPemain || 'Barista' });
+        if ((s.staf || 0) > 0) gambarPotretAi(charImgs.istri, kX + kW / 2 - 52, kY + 60, 20, t + 600, { bingkai: '#f2a516', label: 'Staf' });
+        if (s.anakBantu && s.anakBantu.length) gambarPotretAi(charImgs.anak, kX + kW / 2 + 52, kY + 62, 19, t + 900, { bingkai: '#e91e63', label: 'Bantu' });
+        kotakBarista = { x: kX + kW / 2 - 28, y: kY + 28, w: 56, h: 56 };
+      } else {
+        kotakBarista = null;
+      }
+      kotakKedai = { x: kX, y: kY - 12, w: kW, h: kH + 12, bx: kX + 20, by: kY + 28, bw: kW - 40, bh: 54 };
     } else {
       gambarLangit(m, t);
       gambarRuko(m, dasarRuko);
       if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
       gambarJalan(trotoar, jalan);
+      gambarTiang(dasarKedai, dasarRuko - 270);
+      gambarPisang(132, dasarKedai, t);
+      kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
+      var nyala = s.buka && !s.padam ? Math.max(gp, 0.15) : 0;
+      rantaiLampu(29, dasarRuko - 238, kotakKedai.x + 6, kotakKedai.y + 4, nyala, t);
+      var wk = s.kayu ? ['#8f5a31', '#a86c3c'] : ['#d9443a', '#2f6fb0'];
+      gambarKursi(44, dasarKedai + 4, wk[0]); gambarKursi(88, dasarKedai + 8, wk[1]);
+      if ((s.tier || 1) >= 2) { gambarKursi(8, dasarKedai + 10, wk[1]); kotak(20, dasarKedai - 22, 30, 4, s.kayu ? '#b97a46' : '#e8e4da'); }
+      kotak(60, dasarKedai - 26, 34, 4, '#e8e4da'); kotak(74, dasarKedai - 22, 4, 24, '#c8c2b4');
     }
-    gambarTiang(dasarKedai, dasarRuko - 270);
-    gambarPisang(132, dasarKedai, t);
-    kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
-    var nyala = s.buka && !s.padam ? Math.max(gp, 0.15) : 0;
-    rantaiLampu(29, dasarRuko - 238, kotakKedai.x + 6, kotakKedai.y + 4, nyala, t);
-    var wk = s.kayu ? ['#8f5a31', '#a86c3c'] : ['#d9443a', '#2f6fb0'];
-    gambarKursi(44, dasarKedai + 4, wk[0]); gambarKursi(88, dasarKedai + 8, wk[1]);
-    if ((s.tier || 1) >= 2) { gambarKursi(8, dasarKedai + 10, wk[1]); kotak(20, dasarKedai - 22, 30, 4, s.kayu ? '#b97a46' : '#e8e4da'); }
-    kotak(60, dasarKedai - 26, 34, 4, '#e8e4da'); kotak(74, dasarKedai - 22, 4, 24, '#c8c2b4');
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.32).toFixed(3) + ')'; cx.fillRect(0, trotoar, W, H - trotoar); }
     var daftar = s.pembeli || [];
     aturPembeli(daftar, s.dMenit || 0, dt);
@@ -1069,6 +1132,13 @@
     anim.motor.forEach(function (mt) { gambarMotor(mt, jalan, m, t); });
     if (s.hujan) {
       cx.fillStyle = 'rgba(30,40,60,' + (s.hujan > 1 ? 0.28 : 0.18) + ')'; cx.fillRect(0, anim.angkat - 20, W, H + 40);
+      /* riak air hujan di jalanan aspal basah */
+      cx.strokeStyle = 'rgba(210,230,255,.35)'; cx.lineWidth = 1;
+      for (var ri = 0; ri < 12; ri++) {
+        var rx = acak(ri + 710) * W, ry = jalan + 10 + acak(ri + 810) * (H - jalan - 25);
+        var rr = 2 + ((t / 45 + ri * 5) % 10);
+        cx.beginPath(); cx.ellipse(rx, ry, rr, rr * 0.35, 0, 0, Math.PI * 2); cx.stroke();
+      }
       cx.strokeStyle = 'rgba(210,225,240,.55)'; cx.lineWidth = 1.2; cx.beginPath();
       var jml = s.hujan > 1 ? 140 : 80, geser = (t / 3) % 40;
       for (var hi = 0; hi < jml; hi++) { var hx = acak(hi + 500) * (W + 40) - 20, hy = (acak(hi + 600) * (H + 60) + geser * (2 + acak(hi) * 2)) % (H + 60) - 30 + anim.angkat; cx.moveTo(hx, hy); cx.lineTo(hx - 3, hy + 12); }
