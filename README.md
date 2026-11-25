@@ -22,6 +22,8 @@ Rancangan lengkap ada di dokumen "Rancangan Game Kopi Kontainer".
 - `js/suara.js` — lagu tema orisinal (pagi, jam buka, malam) dan efek suara Web Audio API
 - `js/data/menu.js` — bahan, resep, HPP, jenis pembeli
 - `js/main.js` — alur game
+- `js/data/rute.js` — peta antarkota (22 kota, jarak, tol, kapal Merak–Bakauheni), tarif standar
+- `js/travel.js` — Travel: pool, penumpang, tujuan, tarif, percepatan 1–5 dan ⚡, istirahat, laporan
 - `js/data/nyata.js` — semua nama, merek, dan angka dunia nyata (diganti di sini saat game dijual)
 - `tools/bundel.py` — gabungkan jadi satu berkas HTML untuk tautan uji
 
@@ -40,3 +42,7 @@ A. Penyempurnaan: sajikan sekali tap, harga pasaran, layar tidak mati, token PLN
 C1. Makan & minum di HP, QRIS sampai 3, SeaBank, pasar/swalayan kapan saja, bensin per liter, bar oli dan servis, Threads, dock Pesanan antar, layar HP terkunci lebar ✔
 C2. Jadwal karyawan per jam & tugas keamanan, toko game PS1–PS5 (bekas original & baru), kartu kredit aturan BI, jual barang bekas, lagu tema 3 suasana & efek suara ✔
 B. Ngojek (Gojek/Grab Driver), motor sampai moge, mobil pikap sampai sultan, KPR subsidi/komersial, pindah rumah, isi rumah, tanah ✔
+O1. Mulai sebagai driver, kedai jadi usaha sampingan (opsional) ✔
+O2. Peta antarkota nyata: jarak, tol, kapal penyeberangan, tarif standar yang bisa dinaik-turunkan ✔
+O3–O5. Travel mobil: tunggu penumpang penuh, jemput di kota yang sama, percepatan 1–5 dan ⚡ (malam/sepi), bensin, tilang, ban bocor, penumpang minta cepat atau santai, menepi/rumah makan/rehat 2 jam/penginapan ✔
+O6. Pemandangan tiap kota, jalan bergulir, kapal ✔

@@ -1096,6 +1096,135 @@
     cx.lineWidth = 5; cx.strokeStyle = 'rgba(29,43,51,.6)'; cx.strokeText('Pindahan…', W / 2, H * 0.36); cx.fillStyle = '#fbfaf6'; cx.fillText('Pindahan…', W / 2, H * 0.36);
   }
 
+  /* ---------- Travel antarkota: pemandangan tiap kota, jalan raya, kapal ---------- */
+  var tJarak = 0;
+  function poli(p, w) { cx.fillStyle = w; cx.beginPath(); cx.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) cx.lineTo(p[i], p[i + 1]); cx.closePath(); cx.fill(); }
+  function bukitLatar(dasar, tinggi, warna, off, lebar, seed) {
+    cx.fillStyle = warna; cx.beginPath(); cx.moveTo(0, dasar);
+    for (var x = 0; x <= W; x += 6) cx.lineTo(x, dasar - tinggi * (0.55 + 0.45 * Math.sin((x + off) / lebar + seed) * Math.sin((x + off) / (lebar * 2.3) + seed * 2)));
+    cx.lineTo(W, dasar); cx.closePath(); cx.fill();
+  }
+  function pohonSawit(x, d, s) {
+    kotak(x - 2 * s, d - 36 * s, 4 * s, 36 * s, '#6b4a2e'); cx.strokeStyle = '#2f7a3a'; cx.lineWidth = 3 * s; cx.lineCap = 'round';
+    for (var k = -3; k <= 3; k++) { cx.beginPath(); cx.moveTo(x, d - 36 * s); cx.quadraticCurveTo(x + k * 7 * s, d - 52 * s + Math.abs(k) * 3 * s, x + k * 12 * s, d - 36 * s + Math.abs(k) * 6 * s); cx.stroke(); }
+  }
+  function pohonBulat(x, d, s, w) { kotak(x - 2 * s, d - 18 * s, 4 * s, 18 * s, '#6b4a2e'); bulat(x, d - 26 * s, 13 * s, w || '#3f8a46'); bulat(x - 7 * s, d - 20 * s, 9 * s, w || '#4c9a52'); }
+  function gedung(x, d, w, h, warna, lampu) {
+    kotak(x, d - h, w, h, warna);
+    for (var yy = d - h + 8; yy < d - 10; yy += 14) for (var xx = x + 5; xx < x + w - 6; xx += 11) { cx.fillStyle = lampu ? 'rgba(255,226,140,.9)' : 'rgba(190,215,235,.6)'; cx.fillRect(xx, yy, 5, 7); }
+  }
+  function kubah(x, d, r, w) { cx.fillStyle = w; cx.beginPath(); cx.arc(x, d, r, Math.PI, 0); cx.fill(); kotak(x - 1.5, d - r - 9, 3, 9, '#c9a24a'); bulat(x, d - r - 10, 3, '#c9a24a'); }
+  function atapMinang(x, d, w, h, warna) { poli([x, d, x + w * 0.1, d - h * 0.55, x + w * 0.04, d - h, x + w * 0.3, d - h * 0.55, x + w * 0.5, d - h * 0.7, x + w * 0.7, d - h * 0.55, x + w * 0.96, d - h, x + w * 0.9, d - h * 0.55, x + w, d], warna); }
+  /* penanda khas tiap kota; (x, d) = tengah dan dasar, s = skala */
+  function ikonKota(id, x, d, s, gp) {
+    var lampu = gp > 0.4;
+    if (id === 'jakarta') { kotak(x - 40 * s, d - 10 * s, 80 * s, 10 * s, '#d9d4c8'); kotak(x - 5 * s, d - 130 * s, 10 * s, 120 * s, '#f1eee6'); kotak(x - 12 * s, d - 112 * s, 24 * s, 6 * s, '#d9d4c8'); bulat(x, d - 140 * s, 8 * s, '#f2b630'); poli([x - 4 * s, d - 142 * s, x, d - 160 * s, x + 4 * s, d - 142 * s], '#f28a1e'); }
+    else if (id === 'medan' || id === 'pekanbaru') { var wk = id === 'medan' ? '#2b2b30' : '#2f8f7a'; kotak(x - 55 * s, d - 40 * s, 110 * s, 40 * s, '#e8e0cc'); kubah(x, d - 40 * s, 26 * s, wk); kubah(x - 40 * s, d - 40 * s, 12 * s, wk); kubah(x + 40 * s, d - 40 * s, 12 * s, wk); kotak(x - 66 * s, d - 90 * s, 7 * s, 90 * s, '#efe8d6'); kotak(x + 59 * s, d - 90 * s, 7 * s, 90 * s, '#efe8d6'); kubah(x - 62.5 * s, d - 90 * s, 6 * s, wk); kubah(x + 62.5 * s, d - 90 * s, 6 * s, wk); }
+    else if (id === 'bandung') { kotak(x - 55 * s, d - 36 * s, 110 * s, 36 * s, '#e6d9bf'); kotak(x - 12 * s, d - 56 * s, 24 * s, 20 * s, '#d8c9a6'); kotak(x - 2 * s, d - 96 * s, 4 * s, 40 * s, '#b8a98a'); for (var q = 0; q < 6; q++) bulat(x, d - (70 + q * 5) * s, 3 * s, '#c25a3a'); }
+    else if (id === 'cirebon') { kotak(x - 50 * s, d - 40 * s, 40 * s, 40 * s, '#b4543a'); kotak(x + 10 * s, d - 40 * s, 40 * s, 40 * s, '#b4543a'); poli([x - 56 * s, d - 40 * s, x - 30 * s, d - 62 * s, x - 4 * s, d - 40 * s], '#8a3b28'); poli([x + 4 * s, d - 40 * s, x + 30 * s, d - 62 * s, x + 56 * s, d - 40 * s], '#8a3b28'); }
+    else if (id === 'semarang') { kotak(x - 50 * s, d - 44 * s, 100 * s, 44 * s, '#f2eee2'); [-1, 1].forEach(function (k) { kotak(x + k * 38 * s - 9 * s, d - 74 * s, 18 * s, 34 * s, '#f2eee2'); poli([x + k * 38 * s - 12 * s, d - 74 * s, x + k * 38 * s, d - 96 * s, x + k * 38 * s + 12 * s, d - 74 * s], '#8d5d3b'); }); for (var w3 = -40; w3 < 40; w3 += 12) kotak(x + w3 * s, d - 30 * s, 5 * s, 14 * s, '#5b7a8a'); }
+    else if (id === 'yogyakarta') { kotak(x - 24 * s, d - 12 * s, 48 * s, 12 * s, '#e6e0d0'); kotak(x - 14 * s, d - 28 * s, 28 * s, 16 * s, '#f2eee2'); kotak(x - 6 * s, d - 82 * s, 12 * s, 54 * s, '#f6f3ea'); poli([x - 8 * s, d - 82 * s, x, d - 112 * s, x + 8 * s, d - 82 * s], '#d9a63a'); }
+    else if (id === 'surabaya') { poli([x - 14 * s, d, x - 7 * s, d - 120 * s, x + 7 * s, d - 120 * s, x + 14 * s, d], '#e9e3d3'); for (var r2 = 1; r2 < 6; r2++) kotak(x - 12 * s + r2 * 0.3 * s, d - r2 * 20 * s, 24 * s - r2 * 0.7 * s, 2 * s, '#bdb6a4'); poli([x - 8 * s, d - 120 * s, x, d - 140 * s, x + 8 * s, d - 120 * s], '#c9a24a'); }
+    else if (id === 'palembang') { cx.strokeStyle = '#d34c2b'; cx.lineWidth = 2 * s; kotak(x - 90 * s, d - 22 * s, 180 * s, 6 * s, '#c8442a'); [-1, 1].forEach(function (k) { kotak(x + k * 30 * s - 5 * s, d - 90 * s, 10 * s, 70 * s, '#d9553a'); cx.beginPath(); cx.moveTo(x + k * 30 * s, d - 88 * s); cx.lineTo(x + k * 88 * s, d - 22 * s); cx.moveTo(x + k * 30 * s, d - 88 * s); cx.lineTo(x + k * 4 * s, d - 22 * s); cx.stroke(); }); }
+    else if (id === 'jambi') { kotak(x - 8 * s, d - 90 * s, 16 * s, 90 * s, '#e8dcc2'); poli([x - 40 * s, d - 40 * s, x, d - 110 * s, x + 40 * s, d - 40 * s], 'rgba(214,170,70,.92)'); kotak(x - 44 * s, d - 6 * s, 88 * s, 6 * s, '#cdbf9e'); }
+    else if (id === 'bukittinggi') { kotak(x - 17 * s, d - 80 * s, 34 * s, 80 * s, '#efe6d0'); bulat(x, d - 62 * s, 10 * s, '#fffdf2'); cx.strokeStyle = '#33414d'; cx.lineWidth = 1.4 * s; cx.beginPath(); cx.moveTo(x, d - 62 * s); cx.lineTo(x, d - 69 * s); cx.moveTo(x, d - 62 * s); cx.lineTo(x + 5 * s, d - 62 * s); cx.stroke(); atapMinang(x - 24 * s, d - 80 * s, 48 * s, 30 * s, '#9a3a2a'); }
+    else if (id === 'padang') { kotak(x - 50 * s, d - 22 * s, 100 * s, 22 * s, '#8a5a3a'); atapMinang(x - 56 * s, d - 22 * s, 112 * s, 52 * s, '#6e2f22'); }
+    else if (id === 'parapat') { cx.fillStyle = '#4aa3c8'; cx.fillRect(0, d - 12 * s, W, 12 * s); kotak(x - 34 * s, d - 22 * s, 68 * s, 22 * s, '#7a4a2e'); cx.fillStyle = '#4a2a1a'; cx.beginPath(); cx.moveTo(x - 50 * s, d - 22 * s); cx.quadraticCurveTo(x, d - 46 * s, x + 50 * s, d - 22 * s); cx.lineTo(x + 56 * s, d - 54 * s); cx.lineTo(x + 46 * s, d - 44 * s); cx.quadraticCurveTo(x, d - 66 * s, x - 46 * s, d - 44 * s); cx.lineTo(x - 56 * s, d - 54 * s); cx.closePath(); cx.fill(); }
+    else if (id === 'berastagi') { poli([x - 120 * s, d, x - 20 * s, d - 120 * s, x - 6 * s, d - 126 * s, x + 12 * s, d - 120 * s, x + 110 * s, d], '#5a6a62'); bulat(x - 8 * s, d - 136 * s, 9 * s, 'rgba(235,235,235,.8)'); bulat(x + 4 * s, d - 148 * s, 12 * s, 'rgba(235,235,235,.55)'); kotak(x + 55 * s - 4 * s, d - 40 * s, 8 * s, 40 * s, '#e8e2cf'); bulat(x + 55 * s, d - 48 * s, 12 * s, '#f28a1e'); }
+    else if (id === 'lampung' || id === 'bakauheni') { kotak(x - 14 * s, d - 56 * s, 28 * s, 56 * s, '#f6f3ea'); poli([x - 30 * s, d - 56 * s, x - 20 * s, d - 94 * s, x - 10 * s, d - 72 * s, x, d - 100 * s, x + 10 * s, d - 72 * s, x + 20 * s, d - 94 * s, x + 30 * s, d - 56 * s], '#e0b23a'); }
+    else if (id === 'merak') { kotak(x - 4 * s, d - 80 * s, 8 * s, 80 * s, '#d9553a'); kotak(x - 4 * s, d - 80 * s, 56 * s, 7 * s, '#d9553a'); kotak(x + 46 * s, d - 80 * s, 4 * s, 30 * s, '#444'); kotak(x - 70 * s, d - 28 * s, 50 * s, 28 * s, '#3b6fa0'); kotak(x - 66 * s, d - 40 * s, 22 * s, 12 * s, '#d9553a'); }
+    else if (id === 'binjai') { for (var b2 = -2; b2 <= 2; b2++) { bulat(x + b2 * 14 * s, d - 12 * s, 7 * s, '#d9302c'); kotak(x + b2 * 14 * s - 1, d - 32 * s, 2, 20 * s, '#6b4a2e'); } gedung(x - 40 * s, d, 30 * s, 50 * s, '#d9cfb8', lampu); gedung(x + 12 * s, d, 34 * s, 40 * s, '#cdbf9e', lampu); }
+    else { gedung(x - 45 * s, d, 28 * s, 56 * s, '#cfc7b4', lampu); gedung(x - 12 * s, d, 30 * s, 72 * s, '#b9c3c9', lampu); gedung(x + 22 * s, d, 26 * s, 48 * s, '#d9cfb8', lampu); }
+  }
+  /* pemandangan umum per tema, bergeser mengikuti jarak tempuh */
+  function latarTema(tema, dasar, geser, gp, m) {
+    var lampu = gp > 0.4, off = geser;
+    if (tema === 'gunung') { bukitLatar(dasar - 12, 110, '#6d8f8a', off * 0.2, 90, 1); bukitLatar(dasar - 4, 70, '#4f8a55', off * 0.45, 60, 3); for (var r = 0; r < 4; r++) { cx.fillStyle = 'rgba(90,160,80,' + (0.5 - r * 0.08) + ')'; cx.fillRect(0, dasar - 8 - r * 7, W, 3); } }
+    else if (tema === 'danau') { bukitLatar(dasar - 18, 90, '#5d7f8a', off * 0.15, 110, 5); cx.fillStyle = 'rgba(90,170,205,.85)'; cx.fillRect(0, dasar - 18, W, 18); bukitLatar(dasar, 36, '#3f7a4a', off * 0.4, 70, 2); }
+    else if (tema === 'pantai') { cx.fillStyle = 'rgba(70,160,205,.9)'; cx.fillRect(0, dasar - 30, W, 24); cx.fillStyle = 'rgba(255,255,255,.55)'; for (var w2 = 0; w2 < 7; w2++) cx.fillRect(((w2 * 70 - off * 0.3) % (W + 70) + W + 70) % (W + 70) - 35, dasar - 24 + (w2 % 3) * 6, 26, 2); kotak(0, dasar - 8, W, 8, '#e8d6a0'); for (var k = 0; k < 6; k++) pohonSawit(((k * 80 - off * 0.8) % (W + 80) + W + 80) % (W + 80) - 20, dasar, 0.8); }
+    else if (tema === 'sungai') { bukitLatar(dasar - 10, 26, '#5f8f6a', off * 0.2, 80, 4); cx.fillStyle = 'rgba(150,120,80,.9)'; cx.fillRect(0, dasar - 10, W, 12); for (var t3 = 0; t3 < 4; t3++) { var bx = ((t3 * 120 - off * 0.35) % (W + 120) + W + 120) % (W + 120) - 30; kotak(bx, dasar - 8, 34, 5, '#8a5a3a'); kotak(bx + 20, dasar - 18, 10, 10, '#f1eee6'); } }
+    else if (tema === 'sawit') { bukitLatar(dasar - 6, 30, '#5f8f55', off * 0.2, 100, 6); for (var s2 = 0; s2 < 9; s2++) pohonSawit(((s2 * 52 - off * 0.7) % (W + 52) + W + 52) % (W + 52) - 10, dasar + (s2 % 2) * 4, 0.9 + (s2 % 3) * 0.12); }
+    else if (tema === 'pelabuhan') { cx.fillStyle = 'rgba(60,130,175,.9)'; cx.fillRect(0, dasar - 22, W, 22); for (var c2 = 0; c2 < 5; c2++) { var cxk = ((c2 * 90 - off * 0.5) % (W + 90) + W + 90) % (W + 90) - 20; kotak(cxk, dasar - 18, 34, 18, ['#d9553a', '#3b6fa0', '#e0b23a', '#4a9a5a', '#8a5aa0'][c2]); kotak(cxk + 2, dasar - 32, 30, 14, ['#3b6fa0', '#d9553a', '#4a9a5a', '#e0b23a', '#d9553a'][c2]); } }
+    else if (tema === 'budaya') { bukitLatar(dasar - 8, 40, '#7b9f7a', off * 0.2, 90, 2); for (var j2 = 0; j2 < 4; j2++) { var jx = ((j2 * 110 - off * 0.55) % (W + 110) + W + 110) % (W + 110) - 40; kotak(jx, dasar - 14, 46, 14, '#8a5a3a'); poli([jx - 8, dasar - 14, jx + 23, dasar - 40, jx + 54, dasar - 14], '#6e3a24'); } pohonBulat(((50 - off * 0.8) % W + W) % W, dasar, 1.1); }
+    else { /* kota */
+      for (var g2 = 0; g2 < 8; g2++) { var gx = ((g2 * 62 - off * 0.35) % (W + 62) + W + 62) % (W + 62) - 30, th = 40 + ((g2 * 37) % 70) * (tema === 'metropolis' ? 1.6 : tema === 'kotaBesar' ? 1.2 : 0.8); gedung(gx, dasar, 36, th, ['#aab5bd', '#c3c7c9', '#9aa7b0', '#b7bfc4'][g2 % 4], lampu); }
+    }
+  }
+  function orangAntre(x, y, s, warna, koper) {
+    kotakBulat(x - 5 * s, y - 24 * s, 10 * s, 18 * s, 4 * s, warna); bulat(x, y - 29 * s, 5 * s, '#e0b48a'); kotak(x - 4 * s, y - 6 * s, 3 * s, 8 * s, '#33414d'); kotak(x + 1 * s, y - 6 * s, 3 * s, 8 * s, '#33414d');
+    if (koper) kotakBulat(x + 7 * s, y - 10 * s, 9 * s, 10 * s, 2, koper);
+  }
+  function selimutMalam(gp, a) { if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * a).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); } }
+  function hujanTravel(s, t) {
+    if (!s.hujan) return;
+    cx.fillStyle = 'rgba(30,40,60,.2)'; cx.fillRect(0, 0, W, H); cx.strokeStyle = 'rgba(210,225,240,.55)'; cx.lineWidth = 1.2; cx.beginPath();
+    for (var hi = 0; hi < 90; hi++) { var hx = acak(hi + 500) * (W + 40) - 20, hy = (acak(hi + 600) * (H + 60) + (t / 3) % 40 * 3) % (H + 60) - 30; cx.moveTo(hx, hy); cx.lineTo(hx - 5, hy + 12); }
+    cx.stroke();
+  }
+  function teksTengah(teks, y, ukuran) {
+    cx.font = '800 ' + (ukuran || 18) + 'px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.lineWidth = 5; cx.strokeStyle = 'rgba(29,43,51,.65)'; cx.strokeText(teks, W / 2, y); cx.fillStyle = '#fbfaf6'; cx.fillText(teks, W / 2, y);
+  }
+  /* geometri adegan travel: mobil selalu terlihat tepat di atas panel bawah; kota tumbuh ke atas */
+  function geomTravel(s) {
+    var skala = cv.getBoundingClientRect().width / W || 1, bawah = Math.min(H * 0.84, H - (s.ruangBawah || 0) / skala);
+    var jalanTop = bawah - 64, hor = jalanTop - 14;
+    return { bawah: bawah, jalanTop: jalanTop, hor: hor, carY: bawah - 6, sk: Math.max(0.42, Math.min(1.5, (hor - 170) / 150)) };
+  }
+  /* pool: mobil menunggu penumpang di kota */
+  function gambarPoolTravel(s, t) {
+    var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = G.hor;
+    gambarLangit(m, t); latarTema(f.tema, hor, 0, gp, m); ikonKota(f.kota, W * 0.68, hor + 2, G.sk, gp);
+    kotak(0, hor, W, G.jalanTop - hor + 6, '#c9c3b4'); kotak(0, G.jalanTop + 6, W, H - G.jalanTop, 'rgba(68,72,78,.95)');
+    cx.fillStyle = '#e9e4d4'; for (var x1 = 8; x1 < W; x1 += 60) cx.fillRect(x1, G.jalanTop + 40, 30, 3);
+    selimutMalam(gp, 0.34);
+    kotak(18, G.jalanTop - 30, 4, 34, '#59656d'); kotakBulat(6, G.jalanTop - 52, 112, 24, 6, '#6a4fd8'); cx.font = '800 13px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText('POOL TRAVEL', 62, G.jalanTop - 40);
+    var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
+    gambarMobil(W * 0.3, G.carY, mob.bentuk, mob.id, false, 0);
+    var warna = ['#d9553a', '#3b6fa0', '#4a9a5a', '#8a5aa0', '#e0b23a', '#2b8a8a'];
+    for (var i = 0; i < f.penumpang; i++) orangAntre(W * 0.54 + i * 14, G.carY - 4 + (i % 2) * 3, 1.05, warna[i % warna.length], i % 2 ? '#7a4a2e' : null);
+    teksTengah(RUTE_NAMA(f.kota) + (f.tujuan ? ' → ' + RUTE_NAMA(f.tujuan) : ''), 182, 17);
+    hujanTravel(s, t);
+  }
+  function RUTE_NAMA(id) { return g.KK_RUTE && g.KK_RUTE.nama ? g.KK_RUTE.nama(id) : id; }
+  /* jalan raya antarkota */
+  function gambarJalanTravel(s, t, dt) {
+    var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = G.hor, jt = G.jalanTop, u = f.u;
+    tJarak += dt * f.kmh * 0.0045; var geser = tJarak;
+    gambarLangit(m, t);
+    var tema = u < 0.5 ? f.temaA : f.temaB; latarTema(tema, hor, geser, gp, m);
+    if (u < 0.3) ikonKota(f.dari, 200 - u / 0.3 * 340, hor + 2, G.sk, gp);
+    if (u > 0.7) ikonKota(f.ke, 160 + (1 - u) / 0.3 * 340, hor + 2, G.sk, gp);
+    kotak(0, hor, W, jt - hor + 6, f.tol ? '#9aa3a6' : '#7d8a6a');
+    kotak(0, jt + 6, W, H - jt, s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)');
+    var g3 = (geser * 3) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jt + 36, 34, 3);
+    if (f.tol) { kotak(0, jt + 6, W, 3, '#d9d4c8'); var g4 = (geser * 2) % 120; for (var x2 = -120; x2 < W + 120; x2 += 120) { kotak(x2 - g4, jt - 26, 3, 34, '#59656d'); kotak(x2 - g4, jt - 26, 14, 3, '#59656d'); } }
+    else { var g5 = (geser * 2.4) % 100; for (var x3 = -100; x3 < W + 100; x3 += 100) pohonBulat(x3 - g5, jt + 4, 0.9, '#3f8a46'); }
+    var tx = null, tek = '';
+    if (u < 0.2) { tx = 230 - u / 0.2 * 300; tek = 'Meninggalkan ' + RUTE_NAMA(f.dari).slice(0, 14); } else if (u > 0.82) { tx = 240 - (u - 0.82) / 0.18 * 280; tek = 'Menuju ' + RUTE_NAMA(f.ke).slice(0, 15); }
+    if (tx !== null) { kotak(tx + 54, jt - 14, 4, 22, '#59656d'); kotakBulat(tx, jt - 36, 112, 22, 5, '#1f8a80'); cx.font = '800 11px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText(tek, tx + 56, jt - 25); }
+    selimutMalam(gp, 0.36);
+    var goyang = Math.sin(t / 85) * Math.min(1.4, f.kmh / 60), mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
+    var sx = -90 + ((t * (0.02 + f.kmh * 0.0004)) % (W + 300)); gambarMobil(sx, jt + 26, ['mpv', 'hatch', 'suv'][Math.floor(t / 11000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 11000) % 3], false, t);
+    gambarMobil(W * 0.46, G.carY + goyang, mob.bentuk, mob.id, false, t * (0.3 + f.kmh / 80));
+    if (gp > 0.4 || f.gigi === 6) { var gr = cx.createRadialGradient(W * 0.46 + 70, G.carY - 20, 0, W * 0.46 + 70, G.carY - 20, 100); gr.addColorStop(0, 'rgba(255,240,190,.5)'); gr.addColorStop(1, 'rgba(255,240,190,0)'); cx.fillStyle = gr; cx.fillRect(W * 0.46, G.carY - 90, 220, 110); }
+    if (f.kmh > 55) { cx.strokeStyle = 'rgba(255,255,255,' + Math.min(0.5, (f.kmh - 55) / 150) + ')'; cx.lineWidth = 1.5; for (var sl = 0; sl < 8; sl++) { var ly = jt + 12 + acak(sl + 31) * 50, lx = ((t * (0.5 + f.kmh / 100) + sl * 97) % (W + 100)); cx.beginPath(); cx.moveTo(W - lx, ly); cx.lineTo(W - lx + 30 + f.kmh / 4, ly); cx.stroke(); } }
+    hujanTravel(s, t);
+    teksTengah(RUTE_NAMA(f.dari) + ' → ' + RUTE_NAMA(f.ke), 182, 16);
+  }
+  function gambarKapalTravel(s, t) {
+    var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = Math.min(G.hor - 40, H * 0.5);
+    gambarLangit(m, t);
+    var gr = cx.createLinearGradient(0, hor, 0, H); gr.addColorStop(0, 'rgba(120,190,225,1)'); gr.addColorStop(1, 'rgba(30,90,140,1)'); cx.fillStyle = gr; cx.fillRect(0, hor, W, H - hor);
+    ikonKota(f.dari === 'bakauheni' ? 'bakauheni' : 'merak', 60 - f.u * 200, hor + 2, G.sk, gp); ikonKota(f.ke === 'merak' ? 'merak' : 'bakauheni', 330 + (1 - f.u) * 260, hor + 2, G.sk, gp);
+    var gl = Math.sin(t / 700) * 3, y0 = G.bawah - 40 + gl;
+    poli([40, y0, 320, y0, 296, y0 + 30, 64, y0 + 30], '#e8e4da'); poli([40, y0, 320, y0, 316, y0 - 8, 44, y0 - 8], '#d9553a'); kotak(226, y0 - 46, 64, 38, '#f6f3ea'); kotak(232, y0 - 38, 50, 9, '#5b7a8a'); kotak(250, y0 - 62, 14, 18, '#d9553a');
+    var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(130, y0 - 6, mob.bentuk, mob.id, false, 0);
+    cx.strokeStyle = 'rgba(255,255,255,.6)'; cx.lineWidth = 2; for (var w4 = 0; w4 < 9; w4++) { var wx = ((w4 * 52 - t * 0.05) % (W + 60) + W + 60) % (W + 60) - 30, wy = y0 + 36 + (w4 % 4) * 12; cx.beginPath(); cx.moveTo(wx, wy); cx.quadraticCurveTo(wx + 8, wy - 4, wx + 16, wy); cx.stroke(); }
+    selimutMalam(gp, 0.36); hujanTravel(s, t);
+    teksTengah('Kapal ' + RUTE_NAMA(f.dari) + ' → ' + RUTE_NAMA(f.ke), 182, 16);
+  }
+
   var kotakKedai = null, kotakBarista = null, tAkhir = 0;
   /* s: { menit, buka (bool), kecepatan } */
   function gambar(s, t) {
@@ -1109,6 +1238,11 @@
     aturMotor(dt, s.menit, s.jalan ? s.kecepatan : 0.4);
 
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.travel) {
+      cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
+      if (s.travel.mode === 'jalan') gambarJalanTravel(s, t, dt); else if (s.travel.mode === 'kapal') gambarKapalTravel(s, t); else gambarPoolTravel(s, t);
+      kotakKedai = null; kotakBarista = null; kotakDepan = null; return;
+    }
     if (s.ojek && s.ojek.status !== 'standby' && s.motorId) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarJalanRaya(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
