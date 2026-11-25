@@ -56,3 +56,4 @@ P7. Waktu mangkal 1x (8x hanya saat bawa penumpang/antar/jalan/tidur), HB & me t
 P8. Hiburan HP mempercepat waktu (8x) sampai ada penumpang; baterai HP dikalibrasi (idle ±1,2%/jam, ojol standby ±4,5%, Maps+trip ±8% untuk 5000 mAh, YouTube ±7%/jam); BBM 15% (motor) / 20% (mobil) lebih boros dari angka pabrik (kondisi kota nyata) ✔
 P9. Karakter manusia asli & foto AI: foto asli Neil Aura, karakter AI Ferry Ananda serta karakter lain sesuai nama, usia, dan gender; tampil full-body proporsional di rumah/kos dan potret karakter di adegan HB ✔
 P10. Tahap A realistis: 4 interior rumah & kos nyata (kos, subsidi 36, tipe 45, mewah 200), pencahayaan waktu nyata (subuh/pagi/senja/malam, lampu ruangan & sorot lampu kendaraan), dan hujan realistis 3 lapis + kilau aspal basah + petir ✔
+P11. Poles posisi & tinggi karakter di lantai rumah/kos (tidak menimpa kasur), rapikan cutout Neil Aura, siapkan lazy loader Tahap B/C (kota, tema travel, motor, mobil) & lazy cache sw.js ✔
