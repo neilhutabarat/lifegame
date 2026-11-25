@@ -86,7 +86,7 @@
     if (g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)) r *= 1.6;
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
-    if (S.promoAktif) r *= 1.5 + Math.random() * 0.3; /* promo +50% sampai +80% */
+    r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
     return r * Math.max(0.6, 1 - S.ojek.tolak * 0.05);
   }
   function jeda(S) { return Math.max(3, -Math.log(1 - Math.random()) * 60 / laju(S)); }
@@ -173,11 +173,12 @@
     o.dompet = 0; S.bank.saldo += j; g.KK_MOTOR.catatBank(S, 'Tarik saldo ' + (platform(o.platform || 'gojek').app), j);
     return { ok: true, jml: j, ket: 'masuk rekening ' + g.KK_UANG.bankIni(S).nama };
   }
-  function gantiHari(S, nLama, nBaru) {
-    var o = S.ojek, kabar = [];
+  function gantiHari(S, nLama, nBaru, lanjut) {
+    var o = S.ojek, kabar = [], on = o.online, tw = o.tawaran, tr = o.trip, ps = o.pos;
     O.platform.forEach(function (p) { var d = o.daftar[p.id]; if (d && d.status === 'proses' && nBaru >= d.aktifPada) { d.status = 'aktif'; kabar.push('Akun ' + p.app + ' sudah aktif. Bisa mulai narik.'); } });
     if (o.hariIni.trip) kabar.push('Kemarin narik ' + o.hariIni.trip + ' order, pendapatan bersih ' + rp(o.hariIni.bersih) + '.');
     o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.jauhHariIni = 0; o.jatahJauh = 1 + Math.floor(Math.random() * 4); o.online = false; o.tawaran = null; o.trip = null; o.pos = { x: 0, y: 0 };
+    if (lanjut) { o.online = on; o.tawaran = tw; o.trip = tr; o.pos = ps; }
     return kabar;
   }
 

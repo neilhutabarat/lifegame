@@ -335,3 +335,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .popup-bulat[hidden] { display: none; }
 @keyframes popBulat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .popup-bulat.muncul { animation: none; } }
+.ojek-bare { display: grid; gap: 6px; padding: 0; background: transparent; box-shadow: none; }
+.ojek-bare .meteran { height: 8px; margin: 0; background: rgba(255,255,255,.55); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.ojek-bare .gigi-slider { margin: 0; padding: 6px 12px; border-radius: 14px; background: rgba(251,250,246,.88); box-shadow: 0 3px 10px -4px rgba(0,0,0,.4); }
+.ojek-bare .ojek-tombol { display: flex; justify-content: flex-end; }
+.ojek-kartu.kecil { padding: 8px 12px; border-radius: 14px; background: rgba(251,250,246,.88); }
+.ojek-kartu.kecil small { margin: 2px 0 4px; font-size: 12px; }

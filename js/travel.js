@@ -54,7 +54,7 @@
     var jam = Math.floor(S.menit / 60) % 24, pop = (R.kota[T.di].ramai + R.kota[tujuan].ramai) / 2;
     var jarak = j.km < 150 ? 1.2 : j.km < 400 ? 1 : j.km < 900 ? 0.7 : 0.4;
     var harga = Math.pow(1 / T.mult, 1.8), mutu = 0.6 + T.rating * 0.1;
-    return 1.3 * JAM_RAMAI[jam] * pop * jarak * harga * mutu * (hujan(S) ? 0.85 : 1);
+    return 1.3 * JAM_RAMAI[jam] * pop * jarak * harga * mutu * (hujan(S) ? 0.85 : 1) * g.KK_DIRI.faktorPromo(S);
   }
   function jeda(S, tujuan) { var l = Math.max(0.05, laju(S, tujuan)); return Math.max(2, -Math.log(1 - Math.random()) * 60 / l); }
   function penumpangBaru(S) {

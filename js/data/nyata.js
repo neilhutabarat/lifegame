@@ -133,7 +133,7 @@
 
     /* pulsa seluler, paket kuota internet (GB), dan langganan WiFi kos/rumah */
     paketData: {
-      pulsa: [20000, 50000, 100000, 200000],
+      pulsa: [5000, 10000, 20000, 25000, 50000, 100000],
       kuota: [
         { id: 'k5', gb: 5, harga: 25000, nama: 'Kuota 5 GB (Harian/Mingguan)' },
         { id: 'k15', gb: 15, harga: 55000, nama: 'Kuota 15 GB (Combo Sakti)' },

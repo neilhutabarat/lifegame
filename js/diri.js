@@ -617,8 +617,8 @@
     var by = bayarBelanja(S, h + 1500, 'Isi pulsa seluler ' + (S.hp && S.hp.nomor || '081256000088') + ' ' + rp(h), caraBayar || 'bank');
     if (by !== true) return by;
     S.hp.pulsa = (S.hp.pulsa || 0) + h;
-    /* isi pulsa memperpanjang masa aktif kartu +30 hari */
-    var tambahHari = h >= 100000 ? 60 : h >= 50000 ? 45 : 30;
+    /* masa aktif ala Telkomsel: 5rb=7 hari, 10rb=15, 20rb=30, 25rb=40, 50rb=60, 100rb=90, 200rb=120 */
+    var tambahHari = h >= 200000 ? 120 : h >= 100000 ? 90 : h >= 50000 ? 60 : h >= 25000 ? 40 : h >= 20000 ? 30 : h >= 10000 ? 15 : h >= 5000 ? 7 : 3;
     S.hp.masaAktif = Math.max(S.hari, S.hp.masaAktif || S.hari) + tambahHari;
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h + 1500;
     return true;
@@ -1273,6 +1273,80 @@
     }
     return { ok: true, malam: malamSkipSubuh, menit: durasiMenit, bangun: 240, hamilBaru: hamilBaru, teks: teks };
   }
+  /* ---------- stamina: kopi / minuman energi (harga warung) ---------- */
+  var ENERGI = [
+    { id: 'kopisachet', nama: 'Kopi sachet seduh', harga: 4000, stamina: 14, minum: 10 },
+    { id: 'kopibotol', nama: 'Kopi susu botol', harga: 10000, stamina: 22, minum: 12 },
+    { id: 'energi', nama: 'Minuman energi (Extra Joss)', harga: 7000, stamina: 30, minum: 6 },
+    { id: 'energikaleng', nama: 'Energy drink kaleng', harga: 12000, stamina: 40, minum: 8 }
+  ];
+  function minumEnergi(S, id) {
+    var x = ENERGI.filter(function (e) { return e.id === id; })[0]; if (!x) return 'Pilihan tidak dikenal.';
+    var d = S.diri;
+    if (!bayarTunai(S, x.harga)) {
+      if (S.bank.saldo < x.harga) return 'Uang tidak cukup (' + rp(x.harga) + ').';
+      S.bank.saldo -= x.harga; S.bank.mutasi.unshift({ n: S.hari, ket: x.nama, jml: -x.harga }); S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
+    }
+    d.stamina = batas(d.stamina + x.stamina); d.minum = batas(d.minum + x.minum);
+    if (d.energiHari !== S.hari) { d.energiHari = S.hari; d.energiJml = 0; }
+    d.energiJml++;
+    var teks = x.nama + ' ' + rp(x.harga) + '. Stamina +' + x.stamina + '.';
+    if (d.energiJml > 3) { d.kesehatan = Math.max(5, (d.kesehatan == null ? 100 : d.kesehatan) - 3); teks += ' Terlalu banyak kafein, kesehatan turun.'; }
+    return { ok: true, teks: teks };
+  }
+  /* meredakan bar HB sendiri: hanya mengurangi sebagian */
+  function meTime(S) {
+    var d = S.diri;
+    if (d.posisi !== 'kos') return 'Pulang dulu ke ' + tempat(S) + '.';
+    if ((d.hb || 0) < 15) return 'Bar HB masih rendah.';
+    var kurang = 25 + Math.floor(Math.random() * 11);
+    d.hb = Math.max(0, d.hb - kurang); d.stamina = batas(d.stamina - 3);
+    return { ok: true, menit: 20, teks: 'Me time sebentar. Bar HB turun ' + kurang + '%.' };
+  }
+  /* hiburan HP saat menunggu: kuota terpakai per menit permainan (GB) */
+  var HIBURAN = {
+    youtube: { nama: 'Nonton YouTube', gbMenit: 0.012, bat: 0.28 },
+    tiktok: { nama: 'Scroll TikTok / Reels', gbMenit: 0.008, bat: 0.25 },
+    unduh: { nama: 'Unduh file besar', gbMenit: 0.06, bat: 0.18 }
+  };
+  function hiburanJalan(S, dMenit) {
+    var h = S.hiburan && HIBURAN[S.hiburan]; if (!h || !S.hp) return null;
+    var r = pakaiKuota(S, h.gbMenit * dMenit);
+    if (r !== true) { S.hiburan = null; return r; }
+    S.hp.baterai = Math.max(0, S.hp.baterai - h.bat * dMenit);
+    return null;
+  }
+  /* menikahi teman: pindah ke daftar keluarga */
+  var PAKET_NIKAH = [
+    { id: 'kua', nama: 'Akad di KUA + syukuran kecil', biaya: 3000000 },
+    { id: 'sedang', nama: 'Akad + resepsi gedung sedang', biaya: 25000000 },
+    { id: 'besar', nama: 'Pesta pernikahan besar', biaya: 100000000 }
+  ];
+  function nikahiTeman(S, id, paketId) {
+    var T = g.KK_TEMAN, x = T.cari(S, id), pk = PAKET_NIKAH.filter(function (q) { return q.id === paketId; })[0];
+    if (!x || !pk) return 'Data tidak ditemukan.';
+    if (x.hubungan <= 70) return 'Hubungan dengan ' + x.nama + ' baru ' + Math.round(x.hubungan) + '%. Butuh di atas 70% untuk menikah.';
+    if (x.peran === 'mantan') return 'Mantan tidak bisa dinikahi langsung. Ubah dulu perannya jadi pacar.';
+    var peran = x.gender === 'cewek' ? 'istri' : 'suami';
+    var pg = (S.profil && S.profil.gender) || 'cewek';
+    if (peran === 'istri' && pg === 'cewek' && false) return '';
+    if (S.bank.saldo + ((S.uang && S.uang.dompet) || 0) < pk.biaya) return 'Uang tidak cukup untuk ' + pk.nama + ' (' + rp(pk.biaya) + ').';
+    var dompet = (S.uang && S.uang.dompet) || 0, dariDompet = Math.min(dompet, pk.biaya);
+    if (dariDompet > 0 && g.KK_UANG.bayarDompet) g.KK_UANG.bayarDompet(S, dariDompet);
+    var sisa = pk.biaya - dariDompet;
+    if (sisa > 0) { S.bank.saldo -= sisa; S.bank.mutasi.unshift({ n: S.hari, ket: 'Biaya pernikahan (' + pk.nama + ')', jml: -sisa }); }
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + pk.biaya;
+    var r = tambahKeluarga(S, x.nama, x.gender, x.tglLahir, peran);
+    if (typeof r === 'string') { S.bank.saldo += sisa; return r; }
+    var baru = S.keluarga[S.keluarga.length - 1]; baru.bahagia = Math.min(100, 70 + Math.round(x.hubungan / 5));
+    T.hapus(S, id);
+    S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - 20);
+    return { ok: true, teks: 'Kamu menikahi ' + x.nama + ' (' + pk.nama + ', ' + rp(pk.biaya) + '). Selamat!' };
+  }
+  function faktorPromo(S) {
+    if (g.KK_KAL && g.KK_KAL.apakahRamadan && g.KK_KAL.apakahRamadan(S.hari) > 0) return 2; /* promo Ramadan +100% sebulan penuh */
+    return S.promoAktif ? 1.5 + Math.random() * 0.3 : 1;
+  }
   function hapusKeluarga(S, id) {
     S.keluarga = (S.keluarga || []).filter(function (x) { return x.id !== id; });
     return true;
@@ -1445,7 +1519,7 @@
     var fLokasi = (lok && lok.ramai) || 1.1;
     var jmlKaset = Object.keys(rpObj.kaset || {}).length + Object.keys((S.game && S.game.kaset) || {}).length;
     var bonusKaset = Math.min(1.45, 0.85 + jmlKaset * 0.04);
-    var bonusPromo = S.promoAktif ? (1.5 + Math.random() * 0.3) : 1;
+    var bonusPromo = faktorPromo(S);
     var fPenjaga = (rpObj.penjaga || 0) > 0 ? Math.min(1.25, 0.9 + rpObj.penjaga * 0.15) : 0.7;
     var okupansi = Math.min(0.95, 0.42 * fLokasi * bonusKaset * bonusPromo * fPenjaga);
     var j = dMenit / 60;
@@ -1676,7 +1750,7 @@
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
-    tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, aturJajan: aturJajan, ubahNamaKeluarga: ubahNamaKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
+    tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, aturJajan: aturJajan, ENERGI: ENERGI, minumEnergi: minumEnergi, meTime: meTime, HIBURAN: HIBURAN, hiburanJalan: hiburanJalan, PAKET_NIKAH: PAKET_NIKAH, nikahiTeman: nikahiTeman, faktorPromo: faktorPromo, ubahNamaKeluarga: ubahNamaKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
     kirimPesanKeluarga: kirimPesanKeluarga, belanjaPasarPokok: belanjaPasarPokok,
     aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,
     hargaRumahTangga: hargaRumahTangga, beriRumahTangga: beriRumahTangga, makanDiRumah: makanDiRumah,

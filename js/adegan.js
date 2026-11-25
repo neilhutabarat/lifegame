@@ -752,7 +752,7 @@
   /* adegan HB sinematik: latar berbeda tiap varian, kedua karakter hanya terlihat dari bahu ke atas, bagian bawah tertutup selimut atau kaca buram */
   function gambarAdeganHb(s, t) {
     var A = s.hbAnim || {}, u = Math.min(1, A.u || 0), v = A.varian || 'kamar', gA = s.gender || 'cewek', gB = A.gB || (gA === 'cowok' ? 'cewek' : 'cowok');
-    var ayun = Math.sin(t / 420) * 2.2, cy = 330;
+    var irama = Math.sin(t / 210), ayun = irama * 2.2, goyang = irama * 9, cy = 330;
     /* latar */
     var gr = cx.createLinearGradient(0, 0, 0, H);
     if (v === 'hotel') { gr.addColorStop(0, '#2a1240'); gr.addColorStop(1, '#4a1e50'); }
@@ -767,14 +767,15 @@
     if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
     /* karakter */
-    var sepasang = (v === 'pelukan') ? [[158, cy - 10 + ayun, -0.12], [204, cy + ayun, 0.12]] : (v === 'sofa' || v === 'balkon') ? [[150 + ayun * 0.4, cy, -0.1], [212, cy + 4, 0.14]] : [[140, cy + 6, -0.22 + ayun * 0.01], [218, cy + 6, 0.22]];
+    var g2 = Math.sin(t / 210 + 1.1) * 6;
+    var sepasang = (v === 'pelukan') ? [[158, cy - 10 - Math.abs(goyang), -0.12 + irama * 0.06], [204, cy - Math.abs(g2), 0.12 - irama * 0.06]] : (v === 'sofa' || v === 'balkon') ? [[150 + irama * 3, cy - Math.abs(goyang), -0.1 + irama * 0.05], [212 + irama * 3, cy + 4 - Math.abs(g2), 0.14 - irama * 0.05]] : [[140, cy + 6 - Math.abs(goyang), -0.22 + irama * 0.07], [218, cy + 6 - Math.abs(g2) * 0.6, 0.22 - irama * 0.07]];
     var rr = v === 'pelukan' ? 30 : 27;
     kepalaV(sepasang[0][0], sepasang[0][1], rr, gA, sepasang[0][2]);
     kepalaV(sepasang[1][0], sepasang[1][1], rr, gB, sepasang[1][2]);
     /* penutup: selimut atau kaca buram */
     if (v === 'mandi') { cx.fillStyle = 'rgba(235,245,250,.78)'; cx.fillRect(60, cy + 34, 240, 260); for (var dr = 0; dr < 14; dr++) { cx.fillStyle = 'rgba(255,255,255,.55)'; cx.fillRect(70 + dr * 17, (t / 8 + dr * 53) % 300 + 80, 2, 12); } }
     else if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.9)'; kotakBulat(100, cy + 44, 160, 200, 40, 'rgba(40,20,50,.9)'); }
-    else { cx.fillStyle = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'balkon' ? '#3a3f78' : '#b04a68'; kotakBulat(70, cy + 34 + ayun * 0.5, 220, 230, 30, cx.fillStyle); cx.fillStyle = 'rgba(255,255,255,.12)'; kotakBulat(80, cy + 42, 200, 14, 7, 'rgba(255,255,255,.12)'); }
+    else { cx.fillStyle = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'balkon' ? '#3a3f78' : '#b04a68'; kotakBulat(70, cy + 34 - Math.abs(goyang) * 0.6, 220, 230 + Math.abs(goyang) * 0.6, 30, cx.fillStyle); cx.fillStyle = 'rgba(255,255,255,.12)'; kotakBulat(80, cy + 42, 200, 14, 7, 'rgba(255,255,255,.12)'); }
     /* uap / hati */
     cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
     for (var hg = 0; hg < 8; hg++) { var fg = (t / 24 + hg * 22) % 100; cx.globalAlpha = Math.max(0, 1 - fg / 100) * 0.9; cx.fillStyle = v === 'mandi' ? '#ffffff' : '#ff5c8a'; cx.font = '800 ' + (v === 'mandi' ? 22 : 26) + 'px system-ui, sans-serif'; cx.fillText(v === 'mandi' ? '○' : '♥', 70 + hg * 31 + Math.sin(t / 500 + hg) * 12, cy - 40 - fg * 1.5); }
@@ -1265,7 +1266,30 @@
   }
   var kotakKedai = null, kotakBarista = null, tAkhir = 0;
   /* s: { menit, buka (bool), kecepatan } */
-  function gambar(s, t) {
+  /* suasana Ramadan: bulan sabit, bintang, lentera bergoyang di tali */
+  function hiasRamadan(s, t) {
+    cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
+    var m = s.menit % 1440, malam = m >= 1080 || m < 330, a = malam ? 1 : 0.55;
+    cx.save(); cx.globalAlpha = a;
+    /* bulan sabit */
+    cx.fillStyle = '#ffe9a6'; cx.beginPath(); cx.arc(318, 214, 15, 0, Math.PI * 2); cx.fill();
+    cx.globalCompositeOperation = 'destination-out'; cx.beginPath(); cx.arc(325, 209, 13, 0, Math.PI * 2); cx.fill(); cx.globalCompositeOperation = 'source-over';
+    for (var i = 0; i < 5; i++) { cx.globalAlpha = a * (0.4 + 0.6 * Math.abs(Math.sin(t / 600 + i * 1.7))); cx.fillStyle = '#fff6c8'; cx.beginPath(); cx.arc(268 + i * 15, 204 + (i % 2) * 14, 1.8, 0, 7); cx.fill(); }
+    cx.globalAlpha = 1;
+    /* tali lentera */
+    cx.strokeStyle = 'rgba(80,50,20,.55)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(0, 196); cx.quadraticCurveTo(W / 2, 214, W, 196); cx.stroke();
+    var warna = ['#e8433f', '#f2a516', '#1f8a80', '#e8433f', '#f2a516', '#1f8a80', '#e8433f'];
+    for (var j = 0; j < 7; j++) {
+      var x = 26 + j * 51, yT = 196 + Math.sin((x / W) * Math.PI) * 9, sw = Math.sin(t / 700 + j) * 4;
+      cx.strokeStyle = 'rgba(80,50,20,.6)'; cx.beginPath(); cx.moveTo(x, yT); cx.lineTo(x + sw, yT + 14); cx.stroke();
+      cx.fillStyle = warna[j]; cx.beginPath(); cx.moveTo(x + sw - 6, yT + 18); cx.lineTo(x + sw, yT + 12); cx.lineTo(x + sw + 6, yT + 18); cx.lineTo(x + sw + 5, yT + 30); cx.lineTo(x + sw - 5, yT + 30); cx.closePath(); cx.fill();
+      cx.fillStyle = 'rgba(255,240,170,' + (0.55 + 0.35 * Math.sin(t / 260 + j * 2)).toFixed(2) + ')'; cx.fillRect(x + sw - 2, yT + 19, 4, 8);
+      if (malam) { var gr = cx.createRadialGradient(x + sw, yT + 23, 0, x + sw, yT + 23, 22); gr.addColorStop(0, 'rgba(255,220,120,.35)'); gr.addColorStop(1, 'rgba(255,220,120,0)'); cx.fillStyle = gr; cx.fillRect(x + sw - 22, yT, 44, 46); }
+    }
+    cx.restore();
+  }
+  function gambar(s, t) { gambarInti(s, t); if (s.ramadan && !s.hbAnim && cx) hiasRamadan(s, t); }
+  function gambarInti(s, t) {
     if (!cx) return;
     var dt = tAkhir ? Math.min(100, t - tAkhir) : 16; tAkhir = t; genderPemain = s.gender || 'cewek';
     anim.rolling += ((s.buka ? 1 : 0) - anim.rolling) * Math.min(1, dt / 260);
