@@ -552,6 +552,7 @@
   }
   function bisaMulai(S) {
     if (!S.mobil) return 'Travel butuh mobil. Beli mobil keluarga atau MPV dulu di aplikasi Kendaraan.';
+    if (g.KK_MOBIL && g.KK_MOBIL.disewakan && g.KK_MOBIL.disewakan(S)) return 'Mobil utama sedang disewakan di Sewa Aset. Hentikan sewa dulu atau pilih mobil lain di Garasi.';
     if (kursi(S) < 2) return 'Mobil ini kurang cocok untuk travel (kursi penumpang kurang dari 2). Pakai hatchback, sedan, MPV, atau SUV.';
     if (S.ojek && S.ojek.online) return 'Berhenti narik ojol dulu.';
     if (!(S.usaha && S.usaha.berhentiSewa) && S.fase === 'buka') return 'Tutup kedai dulu sebelum jalan.';

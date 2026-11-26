@@ -74,6 +74,7 @@
     if (mode === 'mobil') {
       var c = S.mobil;
       if (!c) return 'Belum punya mobil untuk GoCar/GrabCar.';
+      if (g.KK_MOBIL && g.KK_MOBIL.disewakan && g.KK_MOBIL.disewakan(S)) return 'Mobil utama sedang disewakan di Sewa Aset. Hentikan sewa dulu atau ganti mobil utama di Garasi.';
       if (g.KK_MOBIL && g.KK_MOBIL.pikap(S)) return 'Mobil pikap tidak bisa untuk GoCar/GrabCar.';
       if (!g.KK_MOBIL.cukup(S, 6)) return c.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis. Cas dulu.' : 'Bensin mobil hampir habis. Isi dulu.';
       if (S.diri && S.diri.stamina < 15) return 'Stamina terlalu rendah untuk narik. Istirahat dulu.';
@@ -81,6 +82,7 @@
     }
     var m = S.motor;
     if (!m) return 'Belum punya motor.';
+    if (g.KK_MOTOR && g.KK_MOTOR.disewakan && g.KK_MOTOR.disewakan(S)) return 'Motor utama sedang disewakan di Sewa Aset. Hentikan sewa dulu atau ganti motor utama di Garasi.';
     if (!O.platform.some(function (p) { return aktif(S, p.id); })) return 'Akun driver belum aktif.';
     if (!g.KK_MOTOR.cukup(S, 6)) return m.bbm === 'listrik' ? 'Baterai motor hampir habis.' : 'Bensin motor hampir habis. Isi dulu.';
     if (S.diri && S.diri.stamina < 15) return 'Stamina terlalu rendah untuk narik. Istirahat dulu.';

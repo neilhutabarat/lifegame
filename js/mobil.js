@@ -125,6 +125,11 @@
   }
   function jumlah(S) { return S.armadaMobil ? S.armadaMobil.length : (S.mobil ? 1 : 0); }
   function punya(S) { return !!S.mobil; }
+  function disewakan(S, idx) {
+    var i = idx != null ? +idx : ((S && S.mobilAktif) || 0);
+    return !!(S && S.sewaBarang && S.sewaBarang['mobil:' + i]);
+  }
+  function siapPakai(S) { return !!S.mobil && !disewakan(S); }
   function pikap(S) { return !!S.mobil && S.mobil.bentuk === 'pikap'; }
   function kapasitasPenumpang(S, unit) {
     var m = unit || (S && S.mobil);
@@ -406,6 +411,7 @@
   }
   function jalan(S, km, stop) {
     var m = S.mobil;
+    if (disewakan(S)) return { ok: false, alasan: 'Mobil ini sedang disewakan di Sewa Aset. Hentikan sewa atau ganti mobil utama dulu.' };
     if (!cukup(S, km)) return { ok: false, alasan: m && m.bbm === 'listrik' ? 'Daya baterai mobil listrik tidak cukup. Cas dulu di SPKLU.' : 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
     var menit = Math.round(km / kmhGigi(S, km) * 60) + 5 * (stop || 1), kabar = [];
     m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
@@ -454,7 +460,7 @@
     return kabar;
   }
 
-  g.KK_MOBIL = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, beliBekas: beliBekas, bekasBaru: bekasBaru, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
+  g.KK_MOBIL = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, punya: punya, disewakan: disewakan, siapPakai: siapPakai, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, beliBekas: beliBekas, bekasBaru: bekasBaru, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
     UPGRADE_MAKS: UPGRADE_MAKS, UPGRADE_INFO: UPGRADE_INFO, biayaUpgrade: biayaUpgrade, upgrade: upgrade,
     isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);

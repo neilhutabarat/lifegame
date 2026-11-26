@@ -50,6 +50,11 @@
     return jenis === 'pertalite' ? h : Math.round(h * (S.bbmFaktor[jenis] || 1) / 50) * 50;
   }
   function punya(S) { return !!S.motor; }
+  function disewakan(S, idx) {
+    var i = idx != null ? +idx : ((S && S.motorAktif) || 0);
+    return !!(S && S.sewaBarang && S.sewaBarang['motor:' + i]);
+  }
+  function siapPakai(S) { return !!S.motor && !disewakan(S); }
 
   /* ---------- beli ---------- */
   function motorBaru(model) {
@@ -319,6 +324,7 @@
   /* jalan: kurangi bensin, tambah km, hitung waktu dan kejadian */
   function jalan(S, km, stop) {
     var m = S.motor;
+    if (disewakan(S)) return { ok: false, alasan: 'Motor ini sedang disewakan di Sewa Aset. Hentikan sewa atau ganti motor utama dulu.' };
     if (!cukup(S, km)) return { ok: false, alasan: m.bbm === 'listrik' ? 'Baterai motor tidak cukup.' : 'Bensin tidak cukup. Isi bensin dulu di aplikasi Motor.' };
     var menit = Math.round(km / kmhGigi(S, km) * 60) + 3 * (stop || 1), kabar = [];
     if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml * borosGigi(S));
@@ -388,7 +394,7 @@
     return kabar;
   }
 
-  g.KK_MOTOR = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
+  g.KK_MOTOR = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, hargaBbm: hargaBbm, punya: punya, disewakan: disewakan, siapPakai: siapPakai, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
     beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
     muatan: muatan, telatOli: telatOli, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi,
     gantiHari: gantiHari, bayarLaci: bayarLaci, RON: RON, nilaiJual: nilaiJual, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi, catatBank: catatBank };

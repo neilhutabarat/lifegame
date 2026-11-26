@@ -170,8 +170,95 @@
     return 'Kuota internet & pulsa habis! Isi kuota/pulsa di aplikasi Gadget & Kuota atau pasang WiFi.';
   }
   function punya(S, id) { if (id === 'tv') return !!(S.rumah.barang.tv || S.rumah.barang.tv55); return !!S.rumah.barang[id]; }
-  function tempat(S) { return S.rumah.jenis === 'rumah' ? 'rumah' : 'kos'; }
-  function adaAc(S) { return S.rumah.jenis !== 'rumah' || punya(S, 'ac'); }
+  function hunianInfo(id) {
+    var daf = (N && N.hunianSewa) || [];
+    return daf.filter(function (h) { return h.id === id; })[0] || daf.filter(function (h) { return h.id === 'kos_ac'; })[0] || daf[0] || { id: 'kos_ac', kat: 'kos', nama: 'Kos AC Kamar Mandi Dalam', faktorSewa: 1, jarak: 3, acBawaan: true, springbedBawaan: false, muatRumah: false, bonusTidur: 1, kwhAwal: 12 };
+  }
+  function hargaSewaHunian(S, id, kotaId) {
+    var h = hunianInfo(id);
+    var k = kotaId ? ((N.kota || []).filter(function (x) { return x.id === kotaId; })[0] || kota(S)) : kota(S);
+    var dasar = (k && k.kos) || 650000;
+    return Math.max(300000, Math.round(dasar * (h.faktorSewa || 1) / 25000) * 25000);
+  }
+  function setHunianAwal(S, id) {
+    var h = hunianInfo(id);
+    var brgLama = (S.rumah && S.rumah.barang) || {};
+    var infoLama = (S.rumah && S.rumah.infoBarang) || {};
+    S.rumah = {
+      jenis: 'kos',
+      hunianId: h.id,
+      katHunian: h.kat,
+      sewa: hargaSewaHunian(S, h.id),
+      kwh: h.kwhAwal || 12,
+      barang: brgLama,
+      infoBarang: infoLama,
+      wifi: false,
+      tempo: Math.min(28, KAL.tgl(S.hari).d),
+      padam: false,
+      jarak: h.jarak || N.jarakKos
+    };
+    return S.rumah;
+  }
+  function pindahHunianSewa(S, id) {
+    var h = hunianInfo(id);
+    if (S.rumah && S.rumah.jenis !== 'rumah' && (S.rumah.hunianId || 'kos_ac') === h.id) return 'Kamu sudah tinggal di ' + h.nama + '.';
+    var sewaBaru = hargaSewaHunian(S, h.id);
+    if (S.bank.saldo < sewaBaru && ((S.uang && S.uang.dompet) || 0) < sewaBaru) {
+      return 'Butuh uang sewa bulan pertama ' + rp(sewaBaru) + ' untuk pindah ke ' + h.nama + '.';
+    }
+    if (S.bank.saldo >= sewaBaru) {
+      S.bank.saldo -= sewaBaru;
+      S.bank.mutasi.unshift({ n: S.hari, ket: 'Sewa bulan pertama ' + h.nama, jml: -sewaBaru });
+    } else {
+      S.uang.dompet -= sewaBaru;
+    }
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + sewaBaru;
+    if (S.properti && S.properti.daftarRumah) S.properti.daftarRumah.forEach(function (rm) { rm.dihuni = false; });
+    var brg = (S.rumah && S.rumah.barang) || {}, inf = (S.rumah && S.rumah.infoBarang) || {};
+    var wifiLama = !!(S.rumah && S.rumah.wifi);
+    if (!h.muatRumah) {
+      Object.keys(brg).forEach(function (bid) {
+        var bm = barang(bid);
+        if (bm && bm.rumah) { delete brg[bid]; delete inf[bid]; }
+      });
+    }
+    S.rumah = {
+      jenis: 'kos',
+      hunianId: h.id,
+      katHunian: h.kat,
+      sewa: sewaBaru,
+      kwh: Math.max((S.rumah && S.rumah.kwh) || 0, h.kwhAwal || 12),
+      barang: brg,
+      infoBarang: inf,
+      wifi: wifiLama,
+      tempo: Math.min(28, KAL.tgl(S.hari).d),
+      padam: false,
+      jarak: h.jarak || N.jarakKos
+    };
+    return { ok: true, menit: 90, teks: 'Pindah ke ' + h.nama + ' (' + rp(sewaBaru) + '/bln) selesai! Suasana hunian baru siap ditempati.' };
+  }
+  function tempat(S) {
+    if (S.rumah && S.rumah.jenis === 'rumah') return 'rumah';
+    var kh = (S.rumah && S.rumah.katHunian) || hunianInfo(S.rumah && S.rumah.hunianId).kat;
+    return kh === 'apartemen' ? 'apartemen' : kh === 'kontrakan' ? 'kontrakan' : 'kos';
+  }
+  function adaAc(S) {
+    if (punya(S, 'ac')) return true;
+    if (S.rumah && S.rumah.jenis === 'rumah') return false;
+    var h = hunianInfo(S.rumah && S.rumah.hunianId);
+    return !!h.acBawaan;
+  }
+  function adaSpringbed(S) {
+    if (punya(S, 'springbed')) return true;
+    if (S.rumah && S.rumah.jenis === 'rumah') return false;
+    var h = hunianInfo(S.rumah && S.rumah.hunianId);
+    return !!h.springbedBawaan;
+  }
+  function muatBarangRumah(S) {
+    if (S.rumah && S.rumah.jenis === 'rumah') return true;
+    var h = hunianInfo(S.rumah && S.rumah.hunianId);
+    return !!h.muatRumah;
+  }
   function barang(id) { return N.barangRumah.filter(function (b) { return b.id === id; })[0]; }
   function konsolModel(id) { return (N.konsolGame || []).filter(function (k) { return k.id === id; })[0]; }
   function gameModel(id) { return (N.gameKonsol || []).filter(function (x) { return x.id === id; })[0]; }
@@ -489,7 +576,8 @@
     listrikKos(S, lama, true);
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
     if (S.hp && !S.rumah.padam) { S.hp.baterai = 100; S.hp.cas = false; }
-    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.7) * (punya(S, 'springbed') ? 1.1 : S.rumah.jenis === 'rumah' ? 0.9 : 1) * (punya(S, 'airpurifier') ? 1.05 : 1);
+    var spb = adaSpringbed(S), bnsH = (S.rumah && S.rumah.jenis !== 'rumah') ? (hunianInfo(S.rumah && S.rumah.hunianId).bonusTidur || 1) : 0.92;
+    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * (punya(S, 'airpurifier') ? 1.05 : 1);
     d.stamina = batas(d.stamina + jam * 14 * mutu);
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
     return { jam: jam, ac: ac, mutu: mutu };
@@ -526,7 +614,7 @@
     var b = barang(id); if (!b) return 'Barang tidak dikenal.';
     if (id === 'ps5' || id === 'ps5disc') return beliKonsol(S, id, caraBayar);
     if (punya(S, id) && !b.banyak) return 'Sudah punya ' + b.nama + '.';
-    if (b.rumah && S.rumah.jenis !== 'rumah') return b.nama + ' tidak muat di kamar kos. Butuh rumah sendiri.';
+    if (b.rumah && !muatBarangRumah(S)) return b.nama + ' tidak muat di kamar kos ini. Pindah ke kontrakan, apartemen besar, atau beli rumah sendiri.';
     if (b.butuh && !punya(S, b.butuh)) return b.nama + ' butuh ' + barang(b.butuh).nama + ' dulu.';
     var namaToko = toko === 'shopee' ? 'Shopee' : 'Tokopedia';
     var h = hargaToko(S, b, toko || 'tokopedia');
@@ -1554,7 +1642,10 @@
     armada.forEach(function (m, idx) {
       var kunci = 'motor:' + idx;
       var tarif = Math.max(45000, Math.min(350000, Math.round((m.harga || m.hargaBeli || 18000000) * 0.0032 / 5000) * 5000));
-      list.push({ kunci: kunci, nama: m.nama + (armada.length > 1 ? ' (Motor #' + (idx + 1) + ')' : ''), kat: 'Rental Motor', tarif: tarif, aktif: !!sw[kunci], ket: idx === (S.motorAktif || 0) ? 'Motor utama (tetap bisa disewakan ke kenalan)' : 'Motor cadangan armada' });
+      var ketMtr = sw[kunci]
+        ? 'Sedang disewa orang (tidak bisa dipakai narik ojol selama disewakan)'
+        : (idx === (S.motorAktif || 0) ? 'Motor utama · selama disewakan tidak bisa dipakai ngojol' : 'Motor cadangan armada · lepas kunci harian');
+      list.push({ kunci: kunci, nama: m.nama + (armada.length > 1 ? ' (Motor #' + (idx + 1) + ')' : ''), kat: 'Rental Motor', tarif: tarif, aktif: !!sw[kunci], ket: ketMtr });
     });
     /* semua mobil di armada */
     var armadaC = S.armadaMobil || (S.mobil ? [S.mobil] : []);
@@ -1590,10 +1681,36 @@
   }
   function toggleSewaBarang(S, kunci) {
     S.sewaBarang = S.sewaBarang || {};
-    if (!S.sewaBarang[kunci] && String(kunci || '').indexOf('mobil:') === 0 && S.travel && S.travel.supir) {
+    if (!S.sewaBarang[kunci] && String(kunci || '').indexOf('motor:') === 0) {
+      var idxMt = +String(kunci).slice(6);
+      if (S.ojek && S.ojek.online && S.ojek.mode !== 'mobil' && idxMt === (S.motorAktif || 0)) {
+        return 'Motor ini sedang dipakai narik ojol! Berhenti narik dulu jika ingin menyewakannya.';
+      }
+      S.sewaBarang[kunci] = true;
+      /* jika motor utama disewakan dan ada motor lain yang tidak disewakan, otomatis alihkan motor utama */
+      if (idxMt === (S.motorAktif || 0) && S.armadaMotor && S.armadaMotor.length > 1 && g.KK_MOTOR && g.KK_MOTOR.pilihAktif) {
+        for (var mi = 0; mi < S.armadaMotor.length; mi++) {
+          if (mi !== idxMt && !S.sewaBarang['motor:' + mi]) { g.KK_MOTOR.pilihAktif(S, mi); break; }
+        }
+      }
+      return true;
+    }
+    if (!S.sewaBarang[kunci] && String(kunci || '').indexOf('mobil:') === 0) {
       var idxM = +String(kunci).slice(6);
-      var spPakai = S.travel.supir.filter(function (sp) { return sp && sp.aktif && sp.mobilIdx === idxM; })[0];
-      if (spPakai) return 'Mobil ini sedang dipakai Supir Travel ' + spPakai.nama + '. Alihkan mobil supir dulu di aplikasi Travel jika ingin disewakan.';
+      if (idxM === (S.mobilAktif || 0) && ((S.ojek && S.ojek.online && S.ojek.mode === 'mobil') || (S.travel && S.travel.aktif))) {
+        return 'Mobil ini sedang kamu pakai jalan (GoCar/Travel)! Berhenti dulu sebelum menyewakannya.';
+      }
+      if (S.travel && S.travel.supir) {
+        var spPakai = S.travel.supir.filter(function (sp) { return sp && sp.aktif && sp.mobilIdx === idxM; })[0];
+        if (spPakai) return 'Mobil ini sedang dipakai Supir Travel ' + spPakai.nama + '. Alihkan mobil supir dulu di aplikasi Travel jika ingin disewakan.';
+      }
+      S.sewaBarang[kunci] = true;
+      if (idxM === (S.mobilAktif || 0) && S.armadaMobil && S.armadaMobil.length > 1 && g.KK_MOBIL && g.KK_MOBIL.pilihAktif) {
+        for (var ci = 0; ci < S.armadaMobil.length; ci++) {
+          if (ci !== idxM && !S.sewaBarang['mobil:' + ci]) { g.KK_MOBIL.pilihAktif(S, ci); break; }
+        }
+      }
+      return true;
     }
     S.sewaBarang[kunci] = !S.sewaBarang[kunci];
     if (!S.sewaBarang[kunci]) delete S.sewaBarang[kunci];
@@ -2472,5 +2589,5 @@
     infoLokasiRental: infoLokasiRental, bukaRentalPs: bukaRentalPs, beliTvRentalPs: beliTvRentalPs, tambahUnitRentalPs: tambahUnitRentalPs,
     aturTarifRentalPs: aturTarifRentalPs, beliKasetRentalPs: beliKasetRentalPs, aturPenjagaRentalPs: aturPenjagaRentalPs,
     stokMinumRentalPs: stokMinumRentalPs, beliTokenRentalPs: beliTokenRentalPs, jalanRentalPs: jalanRentalPs,
-    beliTokenKos: beliTokenKos, punya: punya, tempat: tempat, adaAc: adaAc, barang: barang, kameraHp: kameraHp, gantiHari: gantiHari, ramah: ramah, lambat: lambat, kota: kota };
+    beliTokenKos: beliTokenKos, punya: punya, tempat: tempat, adaAc: adaAc, adaSpringbed: adaSpringbed, muatBarangRumah: muatBarangRumah, hunianInfo: hunianInfo, hargaSewaHunian: hargaSewaHunian, setHunianAwal: setHunianAwal, pindahHunianSewa: pindahHunianSewa, barang: barang, kameraHp: kameraHp, gantiHari: gantiHari, ramah: ramah, lambat: lambat, kota: kota };
 })(window);

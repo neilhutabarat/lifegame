@@ -169,6 +169,19 @@
       { id: 'jus', nama: 'Jus buah', harga: 12000, kenyang: 10, minum: 45, melek: 12 }
     ],
     ojekKos: 12000, jarakKos: 3, /* perkiraan: kos ke kedai */
+    /* Pilihan tempat tinggal awal & sewa bulanan (Kos, Kontrakan, Apartemen) dengan suasana interior berbeda.
+       faktorSewa dikalikan harga kos acuan kota (dibulatkan Rp25.000). */
+    hunianSewa: [
+      { id: 'kos_hemat', kat: 'kos', nama: 'Kos Kipas Kamar Mandi Luar', faktorSewa: 0.65, jarak: 3.5, acBawaan: false, springbedBawaan: false, muatRumah: false, bonusTidur: 0.92, kwhAwal: 10, suasana: 'Dinding krem sederhana, kasur busa lantai, kipas angin, jendela teralis menghadap gang.' },
+      { id: 'kos_ac', kat: 'kos', nama: 'Kos AC Kamar Mandi Dalam', faktorSewa: 1.0, jarak: 3, acBawaan: true, springbedBawaan: false, muatRumah: false, bonusTidur: 1.0, kwhAwal: 12, suasana: 'Dinding biru sejuk, ranjang kayu single, AC split 1/2 PK, jendela menghadap atap kota.' },
+      { id: 'kos_eksklusif', kat: 'kos', nama: 'Kos Eksklusif Full Furnished', faktorSewa: 1.75, jarak: 2.2, acBawaan: true, springbedBawaan: true, muatRumah: false, bonusTidur: 1.12, kwhAwal: 18, suasana: 'Panel kayu WPC hangat, lantai granit, springbed empuk, AC dingin & jendela kaca lebar.' },
+      { id: 'kontrakan_petak', kat: 'kontrakan', nama: 'Kontrakan 3 Petak Teras', faktorSewa: 1.35, jarak: 4.5, acBawaan: false, springbedBawaan: false, muatRumah: true, bonusTidur: 0.96, kwhAwal: 15, suasana: 'Dinding hijau muda khas kontrakan, jendela nako teras tanaman, ruang lega muat kompor.' },
+      { id: 'kontrakan_1kt', kat: 'kontrakan', nama: 'Kontrakan Rumah 1 Kamar', faktorSewa: 2.1, jarak: 4, acBawaan: false, springbedBawaan: true, muatRumah: true, bonusTidur: 1.05, kwhAwal: 20, suasana: 'Rumah asri dinding gading, ranjang kayu nyaman, jendela menghadap pohon komplek.' },
+      { id: 'kontrakan_2kt', kat: 'kontrakan', nama: 'Kontrakan Keluarga 2KT + Carport', faktorSewa: 3.1, jarak: 3.5, acBawaan: true, springbedBawaan: true, muatRumah: true, bonusTidur: 1.15, kwhAwal: 25, suasana: 'Rumah kontrakan luas berpagar, AC ruang utama, lantai granit & muat semua perabot.' },
+      { id: 'apt_rusunami', kat: 'apartemen', nama: 'Apartemen Rusunami Studio', faktorSewa: 2.4, jarak: 2.5, acBawaan: true, springbedBawaan: false, muatRumah: false, bonusTidur: 1.06, kwhAwal: 20, suasana: 'Unit vertikal minimalis abu-putih, lantai vinyl, AC & jendela kaca lantai menengah.' },
+      { id: 'apt_studio', kat: 'apartemen', nama: 'Apartemen Studio City View', faktorSewa: 3.8, jarak: 1.5, acBawaan: true, springbedBawaan: true, muatRumah: true, bonusTidur: 1.18, kwhAwal: 25, suasana: 'Lantai parket kayu hangat, pantry modern, lampu gantung & kaca penuh menghadap gedung kota.' },
+      { id: 'apt_2br', kat: 'apartemen', nama: 'Apartemen 2BR Corner Suite', faktorSewa: 6.2, jarak: 1.2, acBawaan: true, springbedBawaan: true, muatRumah: true, bonusTidur: 1.26, kwhAwal: 35, suasana: 'Suite sudut mewah marmer & walnut, springbed king, panorama langit & lampu malam metropolis.' }
+    ],
     /* barang untuk kos/rumah dengan kategori rapi untuk Tokopedia & Shopee */
     kategoriToko: [
       { id: 'semua', nama: 'Semua' },
