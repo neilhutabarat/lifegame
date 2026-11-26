@@ -157,7 +157,7 @@
     var e = cekGarasi(S); if (e) return e;
     if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = N.motor.filter(function (x) { return x.id === id; })[0], k = hitungKredit(m.harga, dp, tenor);
-    var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
+    var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;
     var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
     unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), terbayarSampai: blnNo(S.hari), tunggakan: 0, bulanTelat: 0, denda: 0 };

@@ -1163,6 +1163,7 @@
       var iid = String(targetKode).slice(5);
       p = (S.keluarga || []).filter(function (x) { return x.id === iid; })[0];
       if (!p) return 'Adik/kakak ipar tidak ditemukan.';
+      if (p.gender === ((S.profil && S.profil.gender) || 'cowok')) return 'HB hanya bisa dilakukan dengan lawan jenis.';
       jenisTarget = 'ipar';
     } else if (String(targetKode || '').indexOf('teman:') === 0) {
       var tid = String(targetKode).slice(6);
@@ -1251,7 +1252,7 @@
     if (jenisTarget === 'teman' && stafTarget) {
       var tm = stafTarget, sebelum = typeof S.diri.kesehatan === 'number' ? S.diri.kesehatan : 100;
       var adaFpT = tm.foreplayHari === S.hari;
-      S.diri.hb = 0; S.diri.stamina = 100; tm.hubungan = Math.min(100, tm.hubungan + (adaFpT ? 14 : 8));
+      S.diri.hb = 0; S.diri.stamina = 100; tm.hb = 0; tm.hubungan = Math.min(100, tm.hubungan + (adaFpT ? 14 : 8));
       tm.perasaan = Math.min(100, (tm.perasaan == null ? 50 : tm.perasaan) + (adaFpT ? 30 : 18));
       tm.foreplayHari = -1;
       if (!pakaiKondom) S.diri.kesehatan = Math.max(10, Math.round(sebelum - 8));
@@ -1391,8 +1392,8 @@
     if (x.hubungan <= 70) return 'Hubungan dengan ' + x.nama + ' baru ' + Math.round(x.hubungan) + '%. Butuh di atas 70% untuk menikah.';
     if (x.peran === 'mantan') return 'Mantan tidak bisa dinikahi langsung. Ubah dulu perannya jadi pacar.';
     var peran = x.gender === 'cewek' ? 'istri' : 'suami';
-    var pg = (S.profil && S.profil.gender) || 'cewek';
-    if (peran === 'istri' && pg === 'cewek' && false) return '';
+    var pg = (S.profil && S.profil.gender) || 'cowok';
+    if (x.gender === pg) return 'Menikah hanya bisa dengan lawan jenis.';
     if (S.bank.saldo + ((S.uang && S.uang.dompet) || 0) < pk.biaya) return 'Uang tidak cukup untuk ' + pk.nama + ' (' + rp(pk.biaya) + ').';
     var r = tambahKeluarga(S, x.nama, x.gender, x.tglLahir, peran);
     if (typeof r === 'string') return r;
@@ -2248,6 +2249,8 @@
     if (!target) return 'Karakter tidak ditemukan.';
     var usia = KAL.usia(S.hari, target.tglLahir);
     var isPas = !isTeman && adalahPasangan(target);
+    var gPem = (S.profil && S.profil.gender) || 'cowok';
+    if (!isPas && target.gender === gPem) return 'Aksi mesra hanya bisa dilakukan dengan lawan jenis.';
     if (!isPas && usia < 18) return 'Aksi ini hanya untuk karakter dewasa (18 tahun ke atas).';
     if (!isTeman && !isPas && target.peran === 'anak') return 'Aksi mesra tidak bisa dilakukan ke anak.';
     if (!isTeman) {
@@ -2268,24 +2271,26 @@
         return target.nama + ' masih canggung (butuh perasaan ≥40% atau bahagia ≥55%).';
       }
       target.perasaan = Math.min(100, pr + (isPas ? 15 : 16));
+      target.hb = Math.min(100, (target.hb == null ? 30 : target.hb) + 15);
       if (isTeman) target.hubungan = Math.min(100, hub + 8);
-      else { target.bahagia = Math.min(100, hub + (isPas ? 10 : 8)); target.hb = Math.min(100, (target.hb || 30) + 12); }
+      else target.bahagia = Math.min(100, hub + (isPas ? 10 : 8));
       S.diri.hb = Math.min(100, (S.diri.hb || 0) + 12);
       S.diri.stamina = Math.min(100, (S.diri.stamina || 50) + 5);
       if (!isPas && punyaPas) S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 6);
-      return { ok: true, menit: 12, teks: '💋 Ciuman hangat bersama ' + target.nama + '! Bar Perasaan naik ke ' + Math.round(target.perasaan) + '% (' + labelPerasaan(target.perasaan) + '), suasana makin mesra.' };
+      return { ok: true, menit: 12, teks: '💋 Ciuman hangat bersama ' + target.nama + '! Bar Perasaan naik ke ' + Math.round(target.perasaan) + '% (' + labelPerasaan(target.perasaan) + '), Bar HB ' + Math.round(target.hb) + '%.' };
     }
 
     if (aksi === 'foreplay') {
       if (isPas && pr < 40) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman dulu sampai perasaan minimal 40%!';
       if (!isPas && pr < 55 && hub < 60) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman atau lebih akrab dulu (perasaan ≥55% atau hubungan ≥60%).';
       target.perasaan = Math.min(100, pr + 22);
+      target.hb = Math.min(100, (target.hb == null ? 30 : target.hb) + 28);
       if (isTeman) target.hubungan = Math.min(100, hub + 12);
-      else { target.bahagia = Math.min(100, hub + 14); target.hb = Math.min(100, (target.hb || 30) + 28); }
+      else target.bahagia = Math.min(100, hub + 14);
       target.foreplayHari = S.hari;
       S.diri.hb = Math.min(100, (S.diri.hb || 0) + 25);
       if (!isPas && punyaPas) S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 12);
-      return { ok: true, menit: 25, teks: '🔥 Foreplay romantis bersama ' + target.nama + '! Bar Perasaan ' + Math.round(target.perasaan) + '% (' + labelPerasaan(target.perasaan) + ') · Siap lanjut HB dengan kepuasan maksimal!' };
+      return { ok: true, menit: 25, teks: '🔥 Foreplay romantis bersama ' + target.nama + '! Bar Perasaan ' + Math.round(target.perasaan) + '%, Bar HB ' + Math.round(target.hb) + '% · Siap lanjut HB dengan kepuasan maksimal!' };
     }
     return 'Aksi tidak dikenal.';
   }

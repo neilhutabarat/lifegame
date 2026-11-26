@@ -1362,7 +1362,9 @@
     var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
     var gp = gelap(m);
     var imKota = muatLazily(kotaImgs, s.kota, 'img/kota-' + s.kota + '.jpg');
-    if (!gambarLatarGulir(imKota, dasarRuko + 12, t * 0.06)) {
+    var temaK = (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[s.kota] && g.KK_RUTE.kota[s.kota].tema) || 'kota';
+    var imLatarJalan = imKota || muatLazily(temaImgs, temaK, 'img/tema-' + temaK + '.jpg') || muatLazily(temaImgs, 'kotaBesar', 'img/tema-kotaBesar.jpg');
+    if (!gambarLatarGulir(imLatarJalan, dasarRuko + 12, t * 0.06)) {
       gambarLangit(m, t);
       cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
     }
@@ -1649,13 +1651,15 @@
       kotakKedai = { x: kX, y: kY - 12, w: kW, h: kH + 12, bx: kX + 20, by: kY + 28, bw: kW - 40, bh: 54 };
     } else {
       var imKotaS = muatLazily(kotaImgs, s.kota, 'img/kota-' + s.kota + '.jpg');
-      if (!gambarLatarGulir(imKotaS, dasarRuko + 12, 0)) {
+      var temaKs = (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[s.kota] && g.KK_RUTE.kota[s.kota].tema) || 'kota';
+      var imStandby = imKotaS || muatLazily(temaImgs, temaKs, 'img/tema-' + temaKs + '.jpg') || muatLazily(temaImgs, 'kotaBesar', 'img/tema-kotaBesar.jpg');
+      if (!gambarLatarGulir(imStandby, dasarRuko + 12, 0)) {
         gambarLangit(m, t);
         gambarRuko(m, dasarRuko);
       }
       if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
       gambarJalan(trotoar, jalan);
-      if (!imKotaS) gambarTiang(dasarKedai, dasarRuko - 270);
+      if (!imStandby) gambarTiang(dasarKedai, dasarRuko - 270);
       if (s.berhentiSewa) {
         /* mode driver: tidak ada kedai, hanya jalan raya dan pemain di tepi jalan */
         kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;

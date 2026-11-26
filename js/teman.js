@@ -1,4 +1,5 @@
-/* teman.js — daftar Teman (teman, sahabat, pacar, mantan), pasangan keluar rumah, dan perselingkuhan pasangan. */
+/* teman.js — daftar Teman (teman, sahabat, pacar, mantan), 50 karakter bawaan (1990–2010),
+   Bar HB semua karakter, pacaran antar teman (khusus lawan jenis / non-LGBT), pasangan keluar rumah, dan perselingkuhan. */
 (function (g) {
   'use strict';
   var PERAN = { teman: 'Teman', sahabat: 'Sahabat', pacar: 'Pacar', mantan: 'Mantan' };
@@ -6,27 +7,173 @@
   var NAMA_P = ['Sinta', 'Dewi', 'Maya', 'Rina', 'Putri', 'Nadia', 'Lestari', 'Wulan'];
   var HOTEL = 350000, MIN_HB = 70;
 
+  /* 50 karakter bawaan (30 cewek & 20 cowok) kelahiran beragam 1990–2010 */
+  var KARAKTER_BAWAAN = [
+    /* 30 Karakter Cewek (1990–2010) */
+    { id: 'npc_c01', nama: 'Nadia Kusuma', gender: 'cewek', tglLahir: '1990-04-12', peran: 'teman', kerja: 'Pegawai Bank', hub: 52, pr: 45, hb: 38 },
+    { id: 'npc_c02', nama: 'Sinta Wulandari', gender: 'cewek', tglLahir: '1991-08-23', peran: 'sahabat', kerja: 'Perawat RS', hub: 66, pr: 55, hb: 42 },
+    { id: 'npc_c03', nama: 'Dewi Anggraini', gender: 'cewek', tglLahir: '1992-02-17', peran: 'teman', kerja: 'Guru SD', hub: 48, pr: 40, hb: 30 },
+    { id: 'npc_c04', nama: 'Maya Puspitasari', gender: 'cewek', tglLahir: '1992-11-05', peran: 'teman', kerja: 'Pengusaha Kuliner', hub: 55, pr: 48, hb: 45 },
+    { id: 'npc_c05', nama: 'Rina Marlina', gender: 'cewek', tglLahir: '1993-06-29', peran: 'teman', kerja: 'Admin Kantor', hub: 50, pr: 42, hb: 35 },
+    { id: 'npc_c06', nama: 'Putri Maharani', gender: 'cewek', tglLahir: '1994-01-14', peran: 'sahabat', kerja: 'Desainer Grafis', hub: 64, pr: 52, hb: 48 },
+    { id: 'npc_c07', nama: 'Lestari Ningrum', gender: 'cewek', tglLahir: '1994-09-08', peran: 'teman', kerja: 'Apoteker', hub: 46, pr: 38, hb: 28 },
+    { id: 'npc_c08', nama: 'Wulan Kartika', gender: 'cewek', tglLahir: '1995-03-21', peran: 'teman', kerja: 'Kasir Minimarket', hub: 54, pr: 46, hb: 40 },
+    { id: 'npc_c09', nama: 'Ayu Pratiwi', gender: 'cewek', tglLahir: '1995-12-03', peran: 'teman', kerja: 'Marketing Properti', hub: 58, pr: 50, hb: 52 },
+    { id: 'npc_c10', nama: 'Citra Permata', gender: 'cewek', tglLahir: '1996-05-19', peran: 'teman', kerja: 'Barista Kafe', hub: 60, pr: 54, hb: 44 },
+    { id: 'npc_c11', nama: 'Intan Sari', gender: 'cewek', tglLahir: '1996-10-27', peran: 'teman', kerja: 'Bidan Klinik', hub: 45, pr: 35, hb: 32 },
+    { id: 'npc_c12', nama: 'Dina Oktaviani', gender: 'cewek', tglLahir: '1997-07-11', peran: 'teman', kerja: 'Teller Bank', hub: 52, pr: 44, hb: 46 },
+    { id: 'npc_c13', nama: 'Fitri Handayani', gender: 'cewek', tglLahir: '1998-02-04', peran: 'sahabat', kerja: 'Akuntan', hub: 65, pr: 58, hb: 38 },
+    { id: 'npc_c14', nama: 'Tiara Ramadhani', gender: 'cewek', tglLahir: '1998-08-16', peran: 'teman', kerja: 'Owner Olshop', hub: 56, pr: 49, hb: 50 },
+    { id: 'npc_c15', nama: 'Nabila Azzahra', gender: 'cewek', tglLahir: '1999-03-30', peran: 'teman', kerja: 'Content Creator', hub: 58, pr: 52, hb: 55 },
+    { id: 'npc_c16', nama: 'Shinta Melati', gender: 'cewek', tglLahir: '1999-11-18', peran: 'teman', kerja: 'Resepsionis Hotel', hub: 50, pr: 43, hb: 41 },
+    { id: 'npc_c17', nama: 'Vina Safitri', gender: 'cewek', tglLahir: '2000-04-25', peran: 'teman', kerja: 'Customer Service', hub: 49, pr: 41, hb: 36 },
+    { id: 'npc_c18', nama: 'Rani Puspita', gender: 'cewek', tglLahir: '2000-09-12', peran: 'teman', kerja: 'Make Up Artist', hub: 53, pr: 47, hb: 49 },
+    { id: 'npc_c19', nama: 'Gita Larasati', gender: 'cewek', tglLahir: '2001-01-28', peran: 'teman', kerja: 'Staf HRD', hub: 47, pr: 39, hb: 33 },
+    { id: 'npc_c20', nama: 'Salsa Amelia', gender: 'cewek', tglLahir: '2001-06-15', peran: 'teman', kerja: 'Fotografer', hub: 55, pr: 48, hb: 44 },
+    { id: 'npc_c21', nama: 'Bella Clarissa', gender: 'cewek', tglLahir: '2002-05-07', peran: 'teman', kerja: 'Model Katalog', hub: 51, pr: 46, hb: 54 },
+    { id: 'npc_c22', nama: 'Yulia Rahmawati', gender: 'cewek', tglLahir: '2002-12-20', peran: 'teman', kerja: 'Mahasiswi S1', hub: 48, pr: 40, hb: 31 },
+    { id: 'npc_c23', nama: 'Dinda Kirana', gender: 'cewek', tglLahir: '2003-03-09', peran: 'teman', kerja: 'Mahasiswi Ekonomi', hub: 54, pr: 45, hb: 43 },
+    { id: 'npc_c24', nama: 'Aulia Putri', gender: 'cewek', tglLahir: '2003-10-02', peran: 'teman', kerja: 'Admin Marketplace', hub: 46, pr: 37, hb: 29 },
+    { id: 'npc_c25', nama: 'Kirana Dewi', gender: 'cewek', tglLahir: '2004-07-19', peran: 'teman', kerja: 'Barista Part-Time', hub: 52, pr: 44, hb: 39 },
+    { id: 'npc_c26', nama: 'Mela Febrianti', gender: 'cewek', tglLahir: '2005-02-14', peran: 'teman', kerja: 'Mahasiswi', hub: 45, pr: 36, hb: 34 },
+    { id: 'npc_c27', nama: 'Syifa Nuraini', gender: 'cewek', tglLahir: '2006-08-26', peran: 'teman', kerja: 'Mahasiswi Baru', hub: 44, pr: 35, hb: 26 },
+    { id: 'npc_c28', nama: 'Zahra Khairunnisa', gender: 'cewek', tglLahir: '2007-04-03', peran: 'teman', kerja: 'Mahasiswi Baru', hub: 42, pr: 33, hb: 22 },
+    { id: 'npc_c29', nama: 'Keisha Amanda', gender: 'cewek', tglLahir: '2008-11-11', peran: 'teman', kerja: 'Pelajar SMA', hub: 40, pr: 30, hb: 15 },
+    { id: 'npc_c30', nama: 'Nayla Salsabila', gender: 'cewek', tglLahir: '2010-05-22', peran: 'teman', kerja: 'Pelajar SMA', hub: 40, pr: 30, hb: 10 },
+    /* 20 Karakter Cowok (1990–2010) */
+    { id: 'npc_l01', nama: 'Dimas Pratama', gender: 'cowok', tglLahir: '1990-07-18', peran: 'sahabat', kerja: 'Mekanik Bengkel', hub: 68, pr: 50, hb: 44 },
+    { id: 'npc_l02', nama: 'Rizky Ramadhan', gender: 'cowok', tglLahir: '1991-03-09', peran: 'teman', kerja: 'Driver Travel', hub: 60, pr: 45, hb: 48 },
+    { id: 'npc_l03', nama: 'Fajar Nugroho', gender: 'cowok', tglLahir: '1992-09-25', peran: 'teman', kerja: 'Karyawan Swasta', hub: 52, pr: 38, hb: 36 },
+    { id: 'npc_l04', nama: 'Bayu Setiawan', gender: 'cowok', tglLahir: '1993-01-11', peran: 'teman', kerja: 'Sales Mobil', hub: 55, pr: 42, hb: 50 },
+    { id: 'npc_l05', nama: 'Andre Wijaya', gender: 'cowok', tglLahir: '1994-06-04', peran: 'sahabat', kerja: 'Pengusaha Bengkel', hub: 64, pr: 48, hb: 42 },
+    { id: 'npc_l06', nama: 'Hendra Saputra', gender: 'cowok', tglLahir: '1995-10-20', peran: 'teman', kerja: 'Kurir Ekspedisi', hub: 50, pr: 36, hb: 39 },
+    { id: 'npc_l07', nama: 'Yoga Mahendra', gender: 'cowok', tglLahir: '1996-02-15', peran: 'teman', kerja: 'Programmer', hub: 49, pr: 35, hb: 45 },
+    { id: 'npc_l08', nama: 'Reza Pahlevi', gender: 'cowok', tglLahir: '1997-08-08', peran: 'teman', kerja: 'Barista', hub: 56, pr: 44, hb: 52 },
+    { id: 'npc_l09', nama: 'Arif Hidayat', gender: 'cowok', tglLahir: '1998-04-27', peran: 'teman', kerja: 'Teknisi AC', hub: 51, pr: 39, hb: 37 },
+    { id: 'npc_l10', nama: 'Bagas Kurniawan', gender: 'cowok', tglLahir: '1999-12-13', peran: 'teman', kerja: 'Fotografer', hub: 53, pr: 41, hb: 46 },
+    { id: 'npc_l11', nama: 'Galih Santoso', gender: 'cowok', tglLahir: '2000-05-30', peran: 'teman', kerja: 'Ojol Senior', hub: 58, pr: 43, hb: 41 },
+    { id: 'npc_l12', nama: 'Ilham Fauzi', gender: 'cowok', tglLahir: '2001-09-02', peran: 'teman', kerja: 'Editor Video', hub: 48, pr: 36, hb: 38 },
+    { id: 'npc_l13', nama: 'Kevin Gunawan', gender: 'cowok', tglLahir: '2002-03-19', peran: 'teman', kerja: 'Mahasiswa IT', hub: 50, pr: 38, hb: 47 },
+    { id: 'npc_l14', nama: 'Naufal Hakim', gender: 'cowok', tglLahir: '2003-11-06', peran: 'teman', kerja: 'Mahasiswa Teknik', hub: 47, pr: 35, hb: 35 },
+    { id: 'npc_l15', nama: 'Raka Aditya', gender: 'cowok', tglLahir: '2004-06-23', peran: 'teman', kerja: 'Atlet Futsal', hub: 52, pr: 40, hb: 49 },
+    { id: 'npc_l16', nama: 'Taufik Akbar', gender: 'cowok', tglLahir: '2005-01-17', peran: 'teman', kerja: 'Mahasiswa', hub: 46, pr: 34, hb: 33 },
+    { id: 'npc_l17', nama: 'Bima Arya', gender: 'cowok', tglLahir: '2006-07-10', peran: 'teman', kerja: 'Mahasiswa Baru', hub: 45, pr: 33, hb: 28 },
+    { id: 'npc_l18', nama: 'Daffa Alfarizi', gender: 'cowok', tglLahir: '2007-10-28', peran: 'teman', kerja: 'Mahasiswa Baru', hub: 43, pr: 31, hb: 24 },
+    { id: 'npc_l19', nama: 'Farhan Maulana', gender: 'cowok', tglLahir: '2009-02-09', peran: 'teman', kerja: 'Pelajar SMA', hub: 41, pr: 30, hb: 15 },
+    { id: 'npc_l20', nama: 'Rafi Alamsyah', gender: 'cowok', tglLahir: '2010-08-14', peran: 'teman', kerja: 'Pelajar SMA', hub: 40, pr: 28, hb: 10 }
+  ];
+
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function acak(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function siap(S) { if (!S.teman) S.teman = []; return S.teman; }
-  function cari(S, id) { return siap(S).filter(function (x) { return x.id === id; })[0]; }
+  function batas(v) { return Math.max(0, Math.min(100, v)); }
+  function usiaTeman(S, x) {
+    try { return g.KK_KAL.usia(S.hari || 0, x.tglLahir || '1998-01-01'); } catch (e) { return 24; }
+  }
+  function normTeman(x) {
+    if (!x) return;
+    if (typeof x.hb !== 'number' || isNaN(x.hb)) x.hb = 30;
+    if (typeof x.perasaan !== 'number' || isNaN(x.perasaan)) x.perasaan = x.hubungan || 40;
+    if (x.gender !== 'cowok' && x.gender !== 'cewek') x.gender = 'cewek';
+  }
+  function siap(S) {
+    if (!S.teman) S.teman = [];
+    if (!S.seedTeman50) isiKarakterBawaan(S);
+    S.teman.forEach(normTeman);
+    validasiPasanganNpc(S);
+    return S.teman;
+  }
+  function cari(S, id) { return (S.teman || []).filter(function (x) { return x.id === id; })[0]; }
   function pasanganList(S) { return (S.keluarga || []).filter(function (k) { return k.peran === 'istri' || k.peran === 'suami' || k.peran === 'pasangan'; }); }
   function anakList(S) { return (S.keluarga || []).filter(function (k) { return k.peran === 'anak'; }); }
   function nomorJam(S) { return S.hari * 24 + Math.floor(S.menit / 60); }
 
+  /* lepas hubungan pacaran antar NPC pada karakter x */
+  function lepasPacarNpc(S, x) {
+    if (!x || !x.pacarId) return;
+    var p = cari(S, x.pacarId);
+    if (p && p.pacarId === x.id) { p.pacarId = null; p.pacarNama = ''; }
+    x.pacarId = null; x.pacarNama = '';
+  }
+  /* validasi ketat: pacaran antar teman HANYA boleh lawan jenis (cowok × cewek, NO LGBT) */
+  function validasiPasanganNpc(S) {
+    var daf = S.teman || [];
+    daf.forEach(function (a) {
+      if (!a.pacarId) return;
+      var b = cari(S, a.pacarId);
+      if (!b || b.id === a.id || a.gender === b.gender || a.peran === 'pacar' || b.peran === 'pacar') {
+        a.pacarId = null; a.pacarNama = '';
+        if (b && b.pacarId === a.id) { b.pacarId = null; b.pacarNama = ''; }
+      } else {
+        a.pacarNama = b.nama;
+        b.pacarId = a.id; b.pacarNama = a.nama;
+      }
+    });
+  }
+  /* isi 50 karakter bawaan (kelahiran 1990–2010) satu kali & pasangkan 6 pasangan heteroseksual awal */
+  function isiKarakterBawaan(S) {
+    S.teman = S.teman || [];
+    var ada = {};
+    S.teman.forEach(function (x) { ada[x.id] = true; });
+    KARAKTER_BAWAAN.forEach(function (k) {
+      if (ada[k.id]) return;
+      S.teman.push({
+        id: k.id, nama: k.nama, gender: k.gender, peran: k.peran || 'teman',
+        tglLahir: k.tglLahir, kerja: k.kerja || '',
+        hubungan: k.hub, perasaan: k.pr, hb: k.hb,
+        pacarId: null, pacarNama: '', interaksiHari: -1
+      });
+    });
+    /* 6 pasangan pacaran awal antar teman (strictly cowok × cewek) */
+    var pasangAwal = [
+      ['npc_l01', 'npc_c01'], ['npc_l03', 'npc_c03'], ['npc_l05', 'npc_c07'],
+      ['npc_l07', 'npc_c11'], ['npc_l10', 'npc_c17'], ['npc_l13', 'npc_c22']
+    ];
+    pasangAwal.forEach(function (pr) {
+      var a = cari(S, pr[0]), b = cari(S, pr[1]);
+      if (a && b && a.gender !== b.gender && !a.pacarId && !b.pacarId && a.peran !== 'pacar' && b.peran !== 'pacar') {
+        a.pacarId = b.id; a.pacarNama = b.nama;
+        b.pacarId = a.id; b.pacarNama = a.nama;
+      }
+    });
+    S.seedTeman50 = true;
+  }
+
   function tambah(S, nama, gender, peran, tglLahir) {
     nama = String(nama || '').trim().slice(0, 24);
     if (!nama) return 'Isi nama dulu.';
+    var gChar = gender === 'cowok' ? 'cowok' : 'cewek';
+    var gPem = (S.profil && S.profil.gender) || 'cowok';
     if (!PERAN[peran] || peran === 'mantan') peran = 'teman';
-    var x = { id: 'tm' + Date.now().toString(36) + Math.floor(Math.random() * 999), nama: nama, gender: gender === 'cowok' ? 'cowok' : 'cewek', peran: peran,
-      tglLahir: tglLahir || '1998-01-01', hubungan: peran === 'pacar' ? 60 : peran === 'sahabat' ? 65 : 45, perasaan: peran === 'pacar' ? 65 : peran === 'sahabat' ? 45 : 25, interaksiHari: -1 };
+    if (peran === 'pacar' && gChar === gPem) return 'Pacaran hanya bisa dengan lawan jenis.';
+    var x = { id: 'tm' + Date.now().toString(36) + Math.floor(Math.random() * 999), nama: nama, gender: gChar, peran: peran,
+      tglLahir: tglLahir || '1998-01-01', hubungan: peran === 'pacar' ? 60 : peran === 'sahabat' ? 65 : 45,
+      perasaan: peran === 'pacar' ? 65 : peran === 'sahabat' ? 45 : 25, hb: 30, pacarId: null, pacarNama: '', interaksiHari: -1 };
     siap(S).push(x);
     return { ok: true, teks: nama + ' ditambahkan sebagai ' + PERAN[peran].toLowerCase() + '.' };
   }
-  function ubahPeran(S, id, peran) { var x = cari(S, id); if (!x) return 'Tidak ditemukan.'; if (!PERAN[peran]) return 'Peran tidak dikenal.'; x.peran = peran; return { ok: true, teks: x.nama + ' sekarang ' + PERAN[peran].toLowerCase() + '.' }; }
-  function ubahNama(S, id, nama) { var x = cari(S, id); nama = String(nama || '').trim().slice(0, 24); if (!x) return 'Tidak ditemukan.'; if (!nama) return 'Nama tidak boleh kosong.'; x.nama = nama; return { ok: true, teks: 'Nama diubah menjadi ' + nama + '.' }; }
+  function ubahPeran(S, id, peran) {
+    var x = cari(S, id); if (!x) return 'Tidak ditemukan.';
+    if (!PERAN[peran]) return 'Peran tidak dikenal.';
+    var gPem = (S.profil && S.profil.gender) || 'cowok';
+    if (peran === 'pacar' && x.gender === gPem) return 'Pacaran hanya bisa dengan lawan jenis.';
+    if (peran === 'pacar' && x.pacarId) lepasPacarNpc(S, x);
+    x.peran = peran;
+    return { ok: true, teks: x.nama + ' sekarang ' + PERAN[peran].toLowerCase() + '.' };
+  }
+  function ubahNama(S, id, nama) {
+    var x = cari(S, id); nama = String(nama || '').trim().slice(0, 24);
+    if (!x) return 'Tidak ditemukan.'; if (!nama) return 'Nama tidak boleh kosong.';
+    x.nama = nama;
+    if (x.pacarId) { var p = cari(S, x.pacarId); if (p) p.pacarNama = nama; }
+    return { ok: true, teks: 'Nama diubah menjadi ' + nama + '.' };
+  }
   function ubahTtl(S, id, ttl) { var x = cari(S, id); if (!x) return 'Tidak ditemukan.'; if (!/^\d{4}-\d{2}-\d{2}$/.test(ttl || '')) return 'Tanggal lahir tidak valid.'; x.tglLahir = ttl; return { ok: true, teks: 'Tanggal lahir ' + x.nama + ' disimpan.' }; }
-  function hapus(S, id) { S.teman = siap(S).filter(function (x) { return x.id !== id; }); return true; }
+  function hapus(S, id) {
+    var x = cari(S, id);
+    if (x) lepasPacarNpc(S, x);
+    S.teman = siap(S).filter(function (t) { return t.id !== id; });
+    return true;
+  }
 
   /* interaksi: hubungi (gratis, sekali sehari), traktir (Rp50.000), ribut */
   function interaksi(S, id, jenis, bayar) {
@@ -36,12 +183,14 @@
       x.interaksiHari = S.hari;
       var naik = x.hubungan < 30 && Math.random() < 0.4 ? 1 : 5; x.hubungan = Math.min(100, x.hubungan + naik);
       x.perasaan = Math.min(100, (x.perasaan == null ? 30 : x.perasaan) + 4);
+      x.hb = batas((x.hb == null ? 30 : x.hb) + 3);
       return { ok: true, teks: 'Ngobrol dengan ' + x.nama + '. Hubungan ' + Math.round(x.hubungan) + '% · Perasaan ' + Math.round(x.perasaan) + '%.' };
     }
     if (jenis === 'traktir') {
       if (!bayar(50000, 'Traktir ' + x.nama)) return 'Uang tidak cukup untuk traktir (Rp50.000).';
       x.hubungan = Math.min(100, x.hubungan + 10);
       x.perasaan = Math.min(100, (x.perasaan == null ? 30 : x.perasaan) + 10);
+      x.hb = batas((x.hb == null ? 30 : x.hb) + 6);
       return { ok: true, teks: 'Traktir ' + x.nama + ' Rp50.000. Hubungan ' + Math.round(x.hubungan) + '% · Perasaan ' + Math.round(x.perasaan) + '%.' };
     }
     if (jenis === 'ribut') { x.hubungan = Math.max(0, x.hubungan - 20); x.perasaan = Math.max(0, (x.perasaan == null ? 30 : x.perasaan) - 18); return { ok: true, teks: 'Kamu ribut dengan ' + x.nama + '. Hubungan ' + Math.round(x.hubungan) + '%.' }; }
@@ -49,8 +198,48 @@
   }
   function tambahMantan(S, kl, alasan) {
     var x = { id: 'tm' + Date.now().toString(36) + Math.floor(Math.random() * 999), nama: kl.nama, gender: kl.gender || 'cewek', peran: 'mantan', tglLahir: kl.tglLahir || '1998-01-01',
-      hubungan: Math.max(5, Math.min(70, Math.round((kl.bahagia || 60) - (/selingkuh/i.test(alasan || '') ? 45 : 25)))), perasaan: 25, interaksiHari: -1 };
+      hubungan: Math.max(5, Math.min(70, Math.round((kl.bahagia || 60) - (/selingkuh/i.test(alasan || '') ? 45 : 25)))), perasaan: 25, hb: 35, pacarId: null, pacarNama: '', interaksiHari: -1 };
     siap(S).push(x); return x;
+  }
+
+  /* harian: naikkan Bar HB semua karakter teman & simulasi pacaran antar teman (khusus cowok × cewek) */
+  function gantiHari(S, nLama, nBaru) {
+    var daf = siap(S), kabar = [];
+    if (!daf.length) return kabar;
+    var sudahCek = {};
+    daf.forEach(function (x) {
+      var u = usiaTeman(S, x);
+      if (u >= 17) x.hb = batas((x.hb == null ? 30 : x.hb) + 7 + Math.floor(Math.random() * 10));
+      /* update pasangan NPC yang sudah pacaran (khusus lawan jenis) */
+      if (x.pacarId && !sudahCek[x.id]) {
+        var p = cari(S, x.pacarId);
+        if (p && p.gender !== x.gender) {
+          sudahCek[x.id] = true; sudahCek[p.id] = true;
+          if (Math.random() < 0.03) {
+            lepasPacarNpc(S, x);
+            kabar.push('💔 Kabar teman: ' + x.nama + ' & ' + p.nama + ' baru saja putus.');
+          } else if ((x.hb || 0) >= 75 && (p.hb || 0) >= 75 && Math.random() < 0.5) {
+            x.hb = Math.max(10, (x.hb || 50) - 55);
+            p.hb = Math.max(10, (p.hb || 50) - 55);
+          }
+        }
+      }
+    });
+    /* peluang terbentuk pasangan baru antar teman jomblo (strictly cowok × cewek, usia >= 17) */
+    var jombloL = daf.filter(function (x) { return x.gender === 'cowok' && !x.pacarId && x.peran !== 'pacar' && usiaTeman(S, x) >= 17; });
+    var jombloP = daf.filter(function (x) { return x.gender === 'cewek' && !x.pacarId && x.peran !== 'pacar' && usiaTeman(S, x) >= 17; });
+    var jumlahPacaran = daf.filter(function (x) { return !!x.pacarId; }).length;
+    if (jombloL.length && jombloP.length && jumlahPacaran < Math.floor(daf.length * 0.55) && Math.random() < 0.22) {
+      var l = acak(jombloL), uL = usiaTeman(S, l);
+      var cocokP = jombloP.filter(function (p) { return Math.abs(usiaTeman(S, p) - uL) <= 8; });
+      var p = cocokP.length ? acak(cocokP) : acak(jombloP);
+      if (l && p && l.gender === 'cowok' && p.gender === 'cewek') {
+        l.pacarId = p.id; l.pacarNama = p.nama;
+        p.pacarId = l.id; p.pacarNama = l.nama;
+        kabar.push('💑 Kabar teman: ' + l.nama + ' & ' + p.nama + ' sekarang resmi pacaran!');
+      }
+    }
+    return kabar;
   }
 
   /* ---------- pasangan keluar rumah dan selingkuh ---------- */
@@ -97,7 +286,7 @@
       var bahagia = hubunganKl(p), tolak = p.tolak || 0;
       /* bekerja kalau diizinkan */
       if (p.kerja && dow >= 1 && dow <= 5 && h === 8) { p.keluar = { alasan: 'kerja', sampai: jamNo + 8, anak: [] }; return; }
-      /* selingkuh karena sering ditolak atau hubungan buruk */
+      /* selingkuh karena sering ditolak atau hubungan buruk (hanya dengan lawan jenis) */
       if ((tolak >= 3 || bahagia < 35) && h >= 10 && h <= 22) {
         var peluang = Math.min(0.3, 0.04 * Math.max(0, tolak - 2) + (bahagia < 35 ? 0.06 : 0));
         if (Math.random() < peluang) {
@@ -139,14 +328,19 @@
     return kabar;
   }
 
-  /* HB dengan teman/pacar/mantan: butuh hubungan di atas 70% dan biaya kamar hotel */
+  /* HB dengan teman/pacar/mantan: butuh hubungan di atas 70%, lawan jenis, dan usia >= 18 */
   function syaratHb(S, id) {
     var x = cari(S, id); if (!x) return 'Tidak ditemukan.';
+    var gPem = (S.profil && S.profil.gender) || 'cowok';
+    if (x.gender === gPem) return 'HB hanya bisa dilakukan dengan lawan jenis.';
+    if (usiaTeman(S, x) < 18) return x.nama + ' masih di bawah 18 tahun.';
     if (x.hubungan <= MIN_HB) return 'Hubungan dengan ' + x.nama + ' baru ' + Math.round(x.hubungan) + '%. Butuh di atas ' + MIN_HB + '%.';
     return x;
   }
 
-  g.KK_TEMAN = { PERAN: PERAN, HOTEL: HOTEL, MIN_HB: MIN_HB, tambah: tambah, ubahPeran: ubahPeran, ubahNama: ubahNama, ubahTtl: ubahTtl, hapus: hapus, interaksi: interaksi, tambahMantan: tambahMantan,
+  g.KK_TEMAN = { PERAN: PERAN, HOTEL: HOTEL, MIN_HB: MIN_HB, KARAKTER_BAWAAN: KARAKTER_BAWAAN,
+    tambah: tambah, ubahPeran: ubahPeran, ubahNama: ubahNama, ubahTtl: ubahTtl, hapus: hapus, interaksi: interaksi, tambahMantan: tambahMantan,
+    isiKarakterBawaan: isiKarakterBawaan, lepasPacarNpc: lepasPacarNpc, validasiPasanganNpc: validasiPasanganNpc, gantiHari: gantiHari,
     cari: cari, siap: siap, tolakHb: tolakHb, resetTolak: resetTolak, izinKerja: izinKerja, kirimPulang: kirimPulang, konfrontasi: konfrontasi, jalan: jalan, cekPulang: cekPulang,
     sedangKeluar: sedangKeluar, alasanTeks: alasanTeks, syaratHb: syaratHb, hubunganKl: hubunganKl, rp: rp };
 })(window);

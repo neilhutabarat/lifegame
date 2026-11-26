@@ -25,6 +25,7 @@
     if (ref) {
       if (!(c.kml > 0)) c.kml = ref.kml || 12;
       if (!(c.tangki > 0)) c.tangki = ref.tangki || 45;
+      if (ref.kursi) c.kursi = ref.kursi;
     }
     if (typeof c.isi !== 'number' || isNaN(c.isi)) c.isi = 0.5;
     if (c.isi > 1) c.isi = Math.min(1, c.isi / (c.tangki || 45));
@@ -55,9 +56,14 @@
   function jumlah(S) { return S.armadaMobil ? S.armadaMobil.length : (S.mobil ? 1 : 0); }
   function punya(S) { return !!S.mobil; }
   function pikap(S) { return !!S.mobil && S.mobil.bentuk === 'pikap'; }
-  function kapasitasPenumpang(S) {
-    if (!S.mobil || !N.bisnisMobil) return 0;
-    return N.bisnisMobil.kapasitas[S.mobil.bentuk] || 0;
+  function kapasitasPenumpang(S, unit) {
+    var m = unit || (S && S.mobil);
+    if (!m) return 0;
+    if (m.bentuk === 'pikap') return 0;
+    var ref = model(m.id);
+    if (m.kursi > 0) return m.kursi;
+    if (ref && ref.kursi > 0) return ref.kursi;
+    return (N.bisnisMobil && N.bisnisMobil.kapasitas[m.bentuk]) || 0;
   }
   function daftarCar(S) {
     if (!S.mobil) return 'Belum punya mobil.';
@@ -132,7 +138,7 @@
   }
 
   function mobilBaru(m, S) {
-    return { id: m.id, nama: m.nama, harga: m.harga, kml: m.kml, bbm: m.bbm, tangki: m.tangki, isi: 0.25, muat: m.muat, bentuk: m.bentuk, kelas: m.kelas,
+    return { id: m.id, nama: m.nama, harga: m.harga, kml: m.kml, bbm: m.bbm, tangki: m.tangki, kursi: m.kursi || 0, isi: 0.25, muat: m.muat, bentuk: m.bentuk, kelas: m.kelas,
       km: 0, kmServis: 0, kmBan: 0, totalHasil: 0, kredit: null, pajakTempo: S.hari + 365, dibeli: S.hari };
   }
   function cekGarasi(S) {
@@ -170,7 +176,7 @@
     var e = cekGarasi(S); if (e) return e;
     if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = model(id), k = hitungKredit(m.harga, dp, tenor);
-    var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
+    var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;
     var unit = mobilBaru(m, S);
     unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), terbayarSampai: blnNo(S.hari), tunggakan: 0, bulanTelat: 0, denda: 0 };
