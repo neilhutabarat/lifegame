@@ -358,13 +358,13 @@
     var t = Math.max(DASAR.minimal, j.km * DASAR.perKm + DASAR.tetap) + (j.laut ? DASAR.tambahLaut : 0);
     return bulat5k(t);
   }
-  /* kondisi jalan asli: memengaruhi kecepatan efektif, konsumsi BBM, goyangan, dan risiko ban bocor */
+  /* kondisi jalan asli: memengaruhi kecepatan efektif, batas aman realistis jalan (vMaxJalan km/j), konsumsi BBM, dan risiko ban bocor */
   var KONDISI_JALAN = {
-    tol: { nama: 'Jalan Tol Mulus', faktorV: 1.08, boros: 0.96, risikoBan: 0.6 },
-    mulus: { nama: 'Aspal Mulus', faktorV: 1.0, boros: 1.0, risikoBan: 1.0 },
-    bergelombang: { nama: 'Aspal Bergelombang / Tambalan', faktorV: 0.80, boros: 1.08, risikoBan: 1.65 },
-    rusak: { nama: 'Jalan Rusak / Berlubang Berat', faktorV: 0.58, boros: 1.18, risikoBan: 2.8 },
-    tanah: { nama: 'Jalan Tanah / Berlumpur Pedalaman', faktorV: 0.42, boros: 1.28, risikoBan: 3.6 }
+    tol: { nama: 'Jalan Tol Mulus', faktorV: 1.0, vMaxJalan: 160, boros: 0.96, risikoBan: 0.6 },
+    mulus: { nama: 'Aspal Mulus', faktorV: 0.76, vMaxJalan: 92, boros: 1.0, risikoBan: 1.0 },
+    bergelombang: { nama: 'Aspal Bergelombang / Tambalan', faktorV: 0.62, vMaxJalan: 72, boros: 1.08, risikoBan: 1.65 },
+    rusak: { nama: 'Jalan Rusak / Berlubang Berat', faktorV: 0.45, vMaxJalan: 50, boros: 1.18, risikoBan: 2.8 },
+    tanah: { nama: 'Jalan Tanah / Berlumpur Pedalaman', faktorV: 0.32, vMaxJalan: 35, boros: 1.28, risikoBan: 3.6 }
   };
   function infoKondisi(r) {
     var k = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');

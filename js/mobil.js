@@ -282,7 +282,12 @@
     return KECEPATAN.biasa;
   }
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
-  function kmhGigi(S) { return gigi(S).mid * kecepatan(S) / KECEPATAN.biasa; }
+  function kmhGigi(S, km) {
+    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa;
+    /* batas realistis kecepatan rata-rata di jalan kota (<35 km: maks 68 km/j) & lintas luar kota (>=35 km: maks 90 km/j) */
+    var batas = (km || 0) >= 35 ? 90 : 68;
+    return Math.max(8, Math.min(batas, v));
+  }
   function cukup(S, km) {
     var m = S.mobil;
     if (!m || !(m.kml > 0) || !(m.tangki > 0)) return false;
@@ -292,7 +297,7 @@
   function jalan(S, km, stop) {
     var m = S.mobil;
     if (!cukup(S, km)) return { ok: false, alasan: m && m.bbm === 'listrik' ? 'Daya baterai mobil listrik tidak cukup. Cas dulu di SPKLU.' : 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
-    var menit = Math.round(km / kmhGigi(S) * 60) + 5 * (stop || 1), kabar = [];
+    var menit = Math.round(km / kmhGigi(S, km) * 60) + 5 * (stop || 1), kabar = [];
     m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
     if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + (telatServis(S) + telatBan(S) * 0.5) / 1000 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;

@@ -199,19 +199,45 @@
     return jml - sisa;
   }
 
+  /* ---------- perhitungan kecepatan realistis per ruas (dipakai seragam oleh rencana, jalan, estimasi, dan ideal) ---------- */
+  function kecepatanRuas(S, r, levelGigi, pakaiVariasi, kenaHujan) {
+    var n = Math.max(1, Math.min(5, levelGigi || 3)), ket = '', m = S.mobil;
+    var isHujan = kenaHujan != null ? !!kenaHujan : hujan(S);
+    if (isHujan && n > 4) { n = 4; ket = 'Hujan deras: dibatasi level 4.'; }
+    var gi = gigiObj(n, S);
+    var v = pakaiVariasi
+      ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.16 * Math.sin(S.menit / 5))
+      : (gi.lo + gi.hi) / 2;
+    var vmax = R.vmaxKendaraan ? R.vmaxKendaraan(S, 'mobil') : (R.vmax[m ? m.bentuk : 'mpv'] || 170);
+    if (v > vmax) v = vmax;
+    var kdJ = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 0.76, vMaxJalan: 92, nama: 'Aspal Mulus' };
+    var fK = kdJ.faktorV * (r && r.kondisi === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
+    v *= fK;
+    var batasJalan = (kdJ.vMaxJalan || 92) * (r && r.kondisi === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
+    if (v > batasJalan) v = batasJalan;
+    if (r && (r.kondisi === 'tanah' || r.kondisi === 'rusak' || r.kondisi === 'bergelombang')) {
+      ket = kdJ.nama + (r.kondisi === 'tanah' && isHujan ? ' (becek lumpur!)' : '');
+    }
+    return { kmh: Math.max(6, v), gigi: n, ket: ket, batasJalan: batasJalan };
+  }
+
   /* ---------- rencana perjalanan ---------- */
   function rencana(S, tujuan) {
     var T = siapkan(S), j = R.jalur(T.di || S.kota, tujuan); if (!j) return null;
     var m = S.mobil, gi = gigiObj(T.gigi, S), std = R.tarifStandar(j), pnp = Math.max(1, T.antri.length);
-    var kmhRata = j.tol > 0 ? (gi.lo + gi.hi) / 2 * 0.9 : (gi.lo + gi.hi) / 2 * 0.75; /* tol lebih lancar */
     var laut = 0, jamLaut = 0, kondisiTerburuk = 'mulus', bobotKond = { tol: 0, mulus: 1, bergelombang: 2, rusak: 3, tanah: 4 };
     var jamDarat = 0, liter = 0;
-    j.ruas.forEach(function (r) {
+    j.ruas.forEach(function (r, idxR) {
       if (r.laut) { laut += r.kapalMobil + r.kapalOrang * pnp; jamLaut += r.jam + 1; return; }
-      var kd = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 1, boros: 1 };
+      var kd = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 0.76, vMaxJalan: 92, boros: 1 };
       var kId = r.kondisi || (r.tol > 0 ? 'tol' : 'mulus');
       if ((bobotKond[kId] || 1) > (bobotKond[kondisiTerburuk] || 1)) kondisiTerburuk = kId;
-      jamDarat += r.km / Math.max(8, kmhRata * kd.faktorV);
+      var vr = kecepatanRuas(S, r, T.gigi, false, false);
+      /* perhitungkan perlambatan keluar/masuk kota ramai (~14 km di ujung ruas jika kota ramai) */
+      var kA = R.kota[j.simpul[idxR]], kB = R.kota[j.simpul[idxR + 1]];
+      var kmPadat = Math.min(r.km, ((kA && kA.ramai >= 1.1) ? Math.min(14, r.km / 2) : 0) + ((kB && kB.ramai >= 1.1) ? Math.min(14, r.km / 2) : 0));
+      var kmLancar = Math.max(0, r.km - kmPadat);
+      jamDarat += kmLancar / vr.kmh + kmPadat / Math.max(6, vr.kmh * 0.72);
       if (m) liter += (r.km / m.kml) * gi.boros * kd.boros;
     });
     var jamJalan = jamDarat + jamLaut;
@@ -316,23 +342,12 @@
     return sibuk ? 0.45 : 0.75;
   }
   function kecepatan(S) {
-    var T = siapkan(S), n = Math.max(1, Math.min(5, T.gigi || 3)), ket = '', m = S.mobil;
-    if (hujan(S) && n > 4) { n = 4; ket = 'Hujan deras: dibatasi level 4.'; }
-    var gi = gigiObj(n, S), v = gi.lo + (gi.hi - gi.lo) * (0.55 + 0.3 * Math.sin(S.menit / 5));
-    var vmax = R.vmaxKendaraan ? R.vmaxKendaraan(S, 'mobil') : (R.vmax[m ? m.bentuk : 'mpv'] || 170);
-    if (v > vmax) v = vmax;
-    var mc = macet(S); if (mc < 1) { v *= mc; if (!ket) ket = mc < 0.5 ? 'Macet parah masuk kota.' : 'Jalan padat masuk kota.'; }
-    if (T.trip) {
-      var rJalan = T.trip.ruas[T.trip.idx], kdJ = R.infoKondisi ? R.infoKondisi(rJalan) : null;
-      if (kdJ) {
-        var fK = kdJ.faktorV * (rJalan && rJalan.kondisi === 'tanah' && hujan(S) ? 0.72 : 1);
-        v *= fK;
-        if (rJalan && (rJalan.kondisi === 'tanah' || rJalan.kondisi === 'rusak' || rJalan.kondisi === 'bergelombang')) {
-          ket = kdJ.nama + (rJalan.kondisi === 'tanah' && hujan(S) ? ' (becek lumpur!)' : '');
-        }
-      }
-    }
-    return { kmh: Math.max(6, v), gigi: n, ket: ket };
+    var T = siapkan(S), rJalan = T.trip ? T.trip.ruas[T.trip.idx] : null;
+    var res = kecepatanRuas(S, rJalan, T.gigi || 3, true);
+    var v = res.kmh, ket = res.ket;
+    var mc = macet(S);
+    if (mc < 1) { v *= mc; if (!ket) ket = mc < 0.5 ? 'Macet parah masuk kota.' : 'Jalan padat masuk kota.'; }
+    return { kmh: Math.max(6, v), gigi: res.gigi, ket: ket, batasJalan: res.batasJalan };
   }
   function setGigi(S, n) {
     var T = siapkan(S); n = +n; if (n < 1 || n > 5) return 'Level kecepatan 1–5.';
@@ -359,10 +374,11 @@
     if (!tr.peringatan && m.isi < 0.12) { tr.peringatan = true; kabar.push(evM ? 'Daya baterai tinggal sedikit. Tekan Berhenti untuk cas di SPKLU.' : 'Bensin tinggal sedikit. Tekan Berhenti untuk isi di SPBU.'); }
     if (m.isi > 0.3) tr.peringatan = false;
     var jamFrac = dMenit / 60, r2 = Math.random();
-    if (v.gigi === 5 && v.kmh > 115 && r2 < 0.02 * jamFrac) {
+    var ngebutBatas = v.gigi === 5 && (v.kmh > 115 || (r.tol <= 0 && v.kmh >= (v.batasJalan || 90) * 0.92));
+    if (ngebutBatas && r2 < 0.02 * jamFrac) {
       var denda = bayar(S, 500000, 'Tilang kecepatan'); tambahKejadian(T, 'Kena tilang karena ngebut. Denda ' + rp(denda) + '.', denda, 15, 0.6);
       kabar.push('Kena tilang ngebut, denda ' + rp(denda) + '.');
-    } else if (v.gigi === 5 && v.kmh > 125 && r2 < 0.028 * jamFrac) {
+    } else if (ngebutBatas && r2 < 0.028 * jamFrac) {
       var rusak = bayar(S, 2000000, 'Perbaikan senggolan jalan'); tambahKejadian(T, 'Senggolan saat ngebut. Perbaikan ' + rp(rusak) + '.', rusak, 40, 2);
       kabar.push('Mobil menyenggol pembatas saat ngebut. Perbaikan ' + rp(rusak) + '.');
     } else if (r2 < (0.004 * (kdR.risikoBan || 1) + (g.KK_MOBIL.telatServis(S) / 1000) * 0.01) * jamFrac) {
@@ -443,7 +459,13 @@
   function selesaiTrip(S) {
     var T = S.travel, tr = T.trip, kabar = [], pnp = T.antri.length, total = 0, tip = 0, sumNilai = 0, rinci = [];
     var menitTotal = (waktu(S) - tr.mulai) + (T.lompat || 0); if (menitTotal < 1) menitTotal = tr.menitGerak + tr.menitHenti;
-    var tolRuas = tr.tolAsal > 0, ideal = tr.km / (tolRuas ? 70 : 55) * 60, telat = menitTotal / Math.max(30, ideal);
+    /* waktu tempuh ideal sesuai kondisi jalan & kapal sebenarnya (patokan Level 4) */
+    var jamIdeal = 0;
+    tr.ruas.forEach(function (rr) {
+      if (rr.laut) jamIdeal += rr.jam + 1;
+      else jamIdeal += rr.km / kecepatanRuas(S, rr, 4, false, false).kmh;
+    });
+    var ideal = Math.max(30, jamIdeal * 60), telat = menitTotal / ideal;
     var gm = tr.gigiMenit, gerak = Math.max(1, tr.menitGerak), pangsa5 = (gm[5] + gm[6]) / gerak, pangsa6 = gm[6] / gerak, pangsa1 = (gm[1] + gm[2]) / gerak;
     T.antri.forEach(function (p) {
       var n = 5 - tr.penalti - (tr.penaltiTipe[p.tipe] || 0), bayarKursi = tr.tarifKursi, ket = '';
@@ -501,12 +523,20 @@
     if (T.status === 'jalan' || T.status === 'kapal') return CEPAT_JALAN;
     return T.tujuan && T.antri.length < kursi(S) ? CEPAT_TUNGGU : 1;
   }
-  function estimasi(S) { /* sisa jam perjalanan dengan kecepatan sekarang */
+  function estimasi(S) { /* sisa jam perjalanan realistis sesuai sisa tiap ruas & kondisi jalan */
     var T = S.travel, tr = T && T.trip; if (!tr) return 0;
-    var v = kecepatan(S).kmh, sisaKapal = T.status === 'kapal' ? Math.max(0, tr.sisaKapal) / 60 : 0, kmSisa = Math.max(0, tr.km - tr.kmSelesai);
-    tr.ruas.slice(tr.idx).forEach(function (r) { if (r.laut) kmSisa -= r.km; });
-    var jamLautDepan = 0; tr.ruas.slice(T.status === 'kapal' ? tr.idx + 1 : tr.idx).forEach(function (r) { if (r.laut) jamLautDepan += r.jam + 1; });
-    return Math.max(0, kmSisa) / Math.max(6, v) + sisaKapal + jamLautDepan;
+    var totalJam = 0;
+    for (var i = tr.idx; i < tr.ruas.length; i++) {
+      var rr = tr.ruas[i];
+      if (rr.laut) {
+        totalJam += (i === tr.idx && T.status === 'kapal') ? Math.max(0, tr.sisaKapal) / 60 : (rr.jam + 1);
+      } else {
+        var sisaRuas = i === tr.idx ? Math.max(0, rr.km - tr.kmRuas) : rr.km;
+        var vR = kecepatanRuas(S, rr, T.gigi || 3, false).kmh;
+        totalJam += sisaRuas / Math.max(6, vR);
+      }
+    }
+    return totalJam;
   }
 
   g.KK_TRAVEL = { siapkan: siapkan, kursi: kursi, bisaMulai: bisaMulai, mulai: mulai, selesaiParkir: selesaiParkir, pilihTujuan: pilihTujuan, ubahTarif: ubahTarif, jemput: jemput, berangkat: berangkat,
