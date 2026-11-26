@@ -7,7 +7,13 @@
   var TURUN = { kenyang: 5, minum: 7, stamina: 4.2 };
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
-  function kota(S) { return N.kota.filter(function (k) { return k.id === S.kota; })[0]; }
+  function kota(S) {
+    var k = N.kota.filter(function (x) { return x.id === S.kota; })[0];
+    if (k) return k;
+    var rk = g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[S.kota];
+    if (rk) return { id: S.kota, nama: rk.nama, provinsi: rk.prov || rk.pulau || 'Indonesia', umk: 3600000, bbm: rk.pulau === 'Jawa' ? 'jawa' : 'sumatera', kos: 650000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: rk.tema === 'metropolis' ? 2 : 1 };
+    return N.kota[0];
+  }
   function batas(x) { return Math.max(0, Math.min(100, x)); }
 
   function siapkan(S) {

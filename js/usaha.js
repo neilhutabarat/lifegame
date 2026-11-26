@@ -187,7 +187,7 @@
   /* token prabayar asli: bayar = nominal + admin; kWh = nominal dipotong PPJ dibagi tarif */
   function token(S, nominal) {
     var k = N.kota.filter(function (x) { return x.id === S.kota; })[0];
-    return { bayar: nominal + N.pln.admin, kwh: Math.round(nominal / (1 + (k.ppj || 0.03)) / N.pln.tarif * 10) / 10 };
+    return { bayar: nominal + N.pln.admin, kwh: Math.round(nominal / (1 + ((k && k.ppj) || 0.03)) / N.pln.tarif * 10) / 10 };
   }
 
   /* ---------- naik kelas, alat, cabang ---------- */

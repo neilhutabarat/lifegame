@@ -17,6 +17,8 @@
     if (!S.travel.total.km) S.travel.total.km = 0;
     if (!S.travel.supir) S.travel.supir = [];
     if (!S.travel.pelamar || !S.travel.pelamar.length) S.travel.pelamar = buatPelamarSupir(S);
+    /* jika tidak sedang aktif travel, selalu sinkronkan kota asal pool dengan kota tempat tinggal sekarang */
+    if (!S.travel.aktif || (!S.travel.trip && !R.kota[S.travel.di])) S.travel.di = S.kota;
     return S.travel;
   }
   function buatPelamarSupir(S) {
@@ -242,14 +244,15 @@
   }
   function mulai(S) {
     var e = bisaMulai(S); if (e) return e;
-    var T = siapkan(S); T.aktif = true; T.di = T.di || S.kota; T.status = 'tunggu'; T.tujuan = null; T.antri = []; T.jemput = 0; T.trip = null;
+    var T = siapkan(S); T.aktif = true; T.di = S.kota; T.status = 'tunggu'; T.tujuan = null; T.antri = []; T.jemput = 0; T.trip = null;
     return true;
   }
-  function selesaiParkir(S) {
+  function selesaiParkir(S, paksa) {
     var T = siapkan(S);
     if (T.status === 'jalan' || T.status === 'kapal') return 'Mobil sedang di jalan.';
-    if (T.di !== S.kota) return 'Kamu masih di ' + R.nama(T.di) + '. Pulang dulu ke ' + R.nama(S.kota) + ' untuk berhenti.';
-    T.aktif = false; T.antri = []; T.tujuan = null; return true;
+    var punyaRumahDiSini = !!(S.properti && S.properti.daftarRumah && S.properti.daftarRumah.some(function (r) { return r.status === 'siap' && r.kota === T.di; }));
+    if (!paksa && T.di !== S.kota && !punyaRumahDiSini) return 'Kamu masih di ' + R.nama(T.di) + '. Pulang dulu ke ' + R.nama(S.kota) + ' atau tekan Pulang ke Kota Asal.';
+    T.aktif = false; T.di = S.kota; T.antri = []; T.tujuan = null; return true;
   }
   function pilihTujuan(S, id) {
     var T = siapkan(S); if (T.status !== 'tunggu') return 'Mobil sedang di jalan.';

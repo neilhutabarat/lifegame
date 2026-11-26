@@ -91,6 +91,14 @@
       if (typeof r.tagihanAir !== 'number') r.tagihanAir = 0;
     });
     sinkronRumahUtama(S);
+    /* sinkronkan S.kota dan posisi pool travel jika pemain sedang menghuni rumah di kota lain */
+    var huni = S.properti.daftarRumah.filter(function (x) { return x.dihuni; })[0];
+    if (huni && huni.kota && S.rumah && S.rumah.jenis === 'rumah' && S.kota !== huni.kota) {
+      S.kota = huni.kota;
+      if (S.travel && !S.travel.trip) {
+        S.travel.di = S.kota; S.travel.tujuan = null; S.travel.antri = [];
+      }
+    }
     return S;
   }
   var WILAYAH = {
@@ -227,6 +235,11 @@
     list.forEach(function (x) { x.dihuni = false; });
     if (ke === 'rumah') {
       r.dihuni = true;
+      if (r.kota) S.kota = r.kota;
+      if (S.travel && !S.travel.trip) {
+        S.travel.di = S.kota; S.travel.tujuan = null; S.travel.antri = [];
+        if (S.travel.aktif && S.travel.status === 'tunggu') S.travel.aktif = false;
+      }
       sinkronRumahUtama(S);
       var jrkWil = (WILAYAH[r.wilayah] && WILAYAH[r.wilayah].jarakTambah) || 0;
       S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S, r.kota).jarak[r.tipe] + jrkWil };

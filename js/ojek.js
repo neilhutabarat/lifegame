@@ -9,7 +9,10 @@
   var CEPAT_TRIP = 8; /* waktu 8x saat narik */
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
-  function kota(S) { return N.kota.filter(function (k) { return k.id === S.kota; })[0]; }
+  function kota(S) {
+    if (g.KK_DIRI && g.KK_DIRI.kota) return g.KK_DIRI.kota(S);
+    return N.kota.filter(function (k) { return k.id === S.kota; })[0] || N.kota[0];
+  }
   function waktu(S) { return S.hari * 1440 + S.menit; }
   function platform(id) { return O.platform.filter(function (p) { return p.id === id; })[0]; }
 

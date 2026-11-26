@@ -14,7 +14,7 @@
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function acak(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function umk(S) { return N.kota.filter(function (k) { return k.id === S.kota; })[0].umk; }
+  function umk(S) { var k = N.kota.filter(function (x) { return x.id === S.kota; })[0]; return (k && k.umk) || 3600000; }
   function upahJam(gaji) { return gaji / 173; }
   function kelasUsaha(S) { var o = S.omzetTahun || 0; return o > 15e9 ? 'menengah' : o > 2e9 ? 'kecil' : 'mikro'; }
 

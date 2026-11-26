@@ -18,7 +18,7 @@
   function jam(menit) { var m = Math.floor(menit) % 1440; return dua(Math.floor(m / 60)) + '.' + dua(m % 60); }
   function namaTanggal(n, panjang) { var t = KAL.tgl(n); return (panjang ? N.namaHari[t.dow] + ', ' : '') + t.d + ' ' + N.namaBulan[t.m - 1]; }
   function tahunKe(n) { return KAL.tgl(n).y - TAHUN_DASAR; }
-  function kotaIni() { return N.kota.filter(function (k) { return k.id === S.kota; })[0] || N.kota[0]; }
+  function kotaIni() { return (DIRI && DIRI.kota) ? DIRI.kota(S) : (N.kota.filter(function (k) { return k.id === S.kota; })[0] || N.kota[0]); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   function toast(teks, lama) {
@@ -52,7 +52,8 @@
     if (lama && lama.v >= 1) {
       b.hidden = false; b.textContent = 'Lanjutkan';
       var k = N.kota.filter(function (x) { return x.id === lama.kota; })[0];
-      $('info-simpan').textContent = 'Simpanan: hari ke-' + lama.hariKe + ', ' + (k ? k.nama : '') + ', ' + namaTanggal(lama.hari, true) + '.';
+      var nmKotaLama = k ? k.nama : (RUTE && RUTE.nama ? RUTE.nama(lama.kota) : '');
+      $('info-simpan').textContent = 'Simpanan: hari ke-' + lama.hariKe + ', ' + nmKotaLama + ', ' + namaTanggal(lama.hari, true) + '.';
     } else { b.hidden = true; $('info-simpan').textContent = ''; }
   }
   function isiKota() {
@@ -102,7 +103,7 @@
     }
     d.hariIni = d.hariIni || JUAL.hariBaru();
     d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
-    STOK.siapkan(d); MOTOR.siapkan(d); MOBIL.siapkan(d); OJEK.siapkan(d); TRAVEL.siapkan(d); PROPERTI.siapkan(d); ANTAR.siapkan(d); STAF.siapkan(d); DUNIA.siapkan(d); USAHA.siapkan(d); DUNIA.terapkanHarga(d); DIRI.siapkan(d);
+    STOK.siapkan(d); MOTOR.siapkan(d); MOBIL.siapkan(d); OJEK.siapkan(d); PROPERTI.siapkan(d); TRAVEL.siapkan(d); ANTAR.siapkan(d); STAF.siapkan(d); DUNIA.siapkan(d); USAHA.siapkan(d); DUNIA.terapkanHarga(d); DIRI.siapkan(d);
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
@@ -2944,7 +2945,7 @@
           (rc && T.antri.length < f.kursi && T.jemput < TRAVEL.JEMPUT_MAKS ? '<button type="button" class="chip-tombol" data-trv="jemput">Jemput</button>' : '') +
           '<button type="button" class="chip-tombol" data-trv="henti">Istirahat</button></div>' +
           '<div class="ojek-tombol"><button type="button" class="aksi" data-trv="berangkat"' + (rc ? '' : ' disabled') + '>' + (T.antri.length ? 'Berangkat (' + T.antri.length + ')' : 'Berangkat kosong') + '</button>' +
-          (T.di === S.kota ? '<button type="button" class="chip-tombol" data-trv="selesai">Selesai</button>' : '') + tMini + '</div></div>';
+          (T.di === S.kota ? '<button type="button" class="chip-tombol" data-trv="selesai">Selesai</button>' : '<button type="button" class="chip-tombol" data-trv="selesaiPaksa">Selesai & Pulang ke ' + esc(RUTE.nama(S.kota)) + '</button>') + tMini + '</div></div>';
       }
     } else if (f.mode === 'kapal') {
       html = '<div class="ojek-kartu travel"><b>Menyeberang ' + esc(RUTE.nama(f.dari)) + ' → ' + esc(RUTE.nama(f.ke)) + ' · <span id="trv-kmh"></span></b><small id="trv-info"></small><div class="meteran"><i id="trv-maju"></i></div>' +
@@ -3036,14 +3037,14 @@
       r = TRAVEL.isiBensin(S, nilai);
       if (r && r.ok) { tutupLembar(); lompatWaktu(r.menit); toast(r.teks, 2400); } else return bukaHentiTravel(typeof r === 'string' ? r : 'Gagal isi bensin.');
     }
-    else if (nama === 'selesai') {
-      r = TRAVEL.selesaiParkir(S); if (r !== true) return toast(r, 2800);
+    else if (nama === 'selesai' || nama === 'selesaiPaksa') {
+      r = TRAVEL.selesaiParkir(S, nama === 'selesaiPaksa'); if (r !== true) return toast(r, 2800);
       perbaruiAksi(); toast('Travel selesai. Mobil diparkir di ' + RUTE.nama(S.kota) + '.', 2400);
     }
     travelKunci = ''; panelTravel(true); perbaruiHUD(true); simpan();
   }
   function layarTravel() {
-    var T = TRAVEL.siapkan(S), m = S.mobil, e = TRAVEL.bisaMulai(S), kota = RUTE.nama(T.di || S.kota), asal = T.di || S.kota;
+    var T = TRAVEL.siapkan(S), m = S.mobil, e = TRAVEL.bisaMulai(S), asal = T.aktif ? (T.di || S.kota) : S.kota, kota = RUTE.nama(asal);
     var tab = app.travelTab || 'sendiri', flt = app.trvFilter || 'semua';
     var html = kepalaApp('Travel antarkota', T.aktif ? 'Sedang di ' + kota : 'Siap berangkat dari ' + kota) +
       chipTab('travelTab', [['sendiri', '🚐 Travel Sendiri'], ['supir', '👨‍✈️ Supir Travel (' + (T.supir ? T.supir.length : 0) + ')']], tab) + pesanApp();
