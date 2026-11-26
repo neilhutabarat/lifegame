@@ -934,6 +934,210 @@
     }
     cx.restore();
   }
+  /* kepala profil samping tampan/cantik untuk adegan ciuman bibir & foreplay romantis (arah: 1 = hadap kanan, -1 = hadap kiri) */
+  function gambarKepalaProfil(x, y, r, gender, tp, arah, opts) {
+    opts = opts || {};
+    var cewek = gender === 'cewek';
+    var T = (tp && tp.kulitHex) ? tp : tampilanDariNama('', gender, false);
+    var kulit = T.kulitHex || '#f5cb9f', bayang = T.kulitBayang || '#d9a473';
+    var rambut = T.rambutHex || '#1c1817', kilau = T.rambutKilau || '#3e3533';
+    var gayaR = T.rambut || (cewek ? 'panjang' : 'rapi');
+    var baju = opts.baju || (cewek ? '#c85a7c' : '#1f7a72');
+    var s = r / 14;
+    cx.save();
+    cx.translate(x, y);
+    if (opts.rot) cx.rotate(opts.rot);
+    if (arah < 0) cx.scale(-1, 1);
+
+    /* rambut belakang (mengalir ke belakang kepala) */
+    if (cewek) {
+      if (gayaR === 'hijab') {
+        cx.fillStyle = baju;
+        cx.beginPath();
+        cx.arc(-2 * s, -1 * s, 15.5 * s, Math.PI * 0.55, Math.PI * 1.92);
+        cx.quadraticCurveTo(6 * s, 15 * s, -4 * s, 24 * s);
+        cx.lineTo(-18 * s, 24 * s);
+        cx.quadraticCurveTo(-20 * s, 8 * s, -16 * s, -2 * s);
+        cx.closePath(); cx.fill();
+      } else if (gayaR === 'kuncir') {
+        cx.fillStyle = rambut;
+        cx.beginPath(); cx.moveTo(-12 * s, -4 * s); cx.quadraticCurveTo(-26 * s, -2 * s, -24 * s, 16 * s);
+        cx.quadraticCurveTo(-18 * s, 10 * s, -12 * s, 3 * s); cx.closePath(); cx.fill();
+        bulat(-12.5 * s, -3 * s, 2.5 * s, '#f2a516');
+      } else if (gayaR === 'bob') {
+        cx.fillStyle = rambut;
+        cx.beginPath(); cx.arc(-2 * s, -2 * s, 14.5 * s, Math.PI * 0.6, Math.PI * 1.9);
+        cx.quadraticCurveTo(-17 * s, 10 * s, -12 * s, 16 * s); cx.lineTo(-2 * s, 14 * s); cx.closePath(); cx.fill();
+      } else {
+        /* rambut panjang / bergelombang */
+        cx.fillStyle = rambut;
+        cx.beginPath(); cx.arc(-2 * s, -2 * s, 14.8 * s, Math.PI * 0.55, Math.PI * 1.92);
+        cx.quadraticCurveTo(-21 * s, 12 * s, -16 * s, 28 * s);
+        cx.lineTo(-4 * s, 24 * s); cx.closePath(); cx.fill();
+      }
+    } else if (gayaR === 'gondrong') {
+      cx.fillStyle = rambut;
+      cx.beginPath(); cx.arc(-2 * s, -2 * s, 14.2 * s, Math.PI * 0.65, Math.PI * 1.9);
+      cx.quadraticCurveTo(-18 * s, 12 * s, -13 * s, 20 * s); cx.lineTo(-4 * s, 16 * s); cx.closePath(); cx.fill();
+    }
+
+    /* leher anatomis */
+    kotakBulat(-7.5 * s, 9.5 * s, 9.5 * s, 11 * s, 4 * s, bayang);
+
+    /* kontur kepala & profil wajah samping (dahi, hidung, bibir atas-bawah, dagu, rahang) */
+    cx.fillStyle = kulit;
+    cx.beginPath();
+    cx.moveTo(-11 * s, -2 * s);
+    cx.bezierCurveTo(-11 * s, -12.5 * s, -3 * s, -14.5 * s, 4.5 * s, -13 * s);
+    cx.quadraticCurveTo(10.5 * s, -11 * s, 11.2 * s, -4.5 * s); /* dahi */
+    cx.lineTo(14.2 * s, 0.2 * s); /* ujung hidung */
+    cx.quadraticCurveTo(14.4 * s, 1.8 * s, 11.8 * s, 2.2 * s); /* bawah hidung */
+    cx.lineTo(13.2 * s, 4.2 * s); /* bibir atas */
+    cx.lineTo(11.6 * s, 5.2 * s); /* celah bibir */
+    cx.lineTo(12.8 * s, 6.8 * s); /* bibir bawah */
+    cx.quadraticCurveTo(11.4 * s, 10.8 * s, 7.2 * s, 12.2 * s); /* dagu */
+    cx.quadraticCurveTo(-1 * s, 13.4 * s, -7.5 * s, 9.5 * s); /* rahang */
+    cx.quadraticCurveTo(-11.2 * s, 5.5 * s, -11 * s, -2 * s);
+    cx.closePath(); cx.fill();
+
+    /* rona pipi & warna bibir lembut */
+    cx.fillStyle = cewek ? 'rgba(235,105,130,.38)' : 'rgba(225,115,120,.22)';
+    cx.beginPath(); cx.ellipse(5.5 * s, 3.2 * s, 3.6 * s, 2.1 * s, 0, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = cewek ? '#d95b7a' : '#c46a6a';
+    cx.beginPath(); cx.ellipse(12.2 * s, 5.3 * s, 1.5 * s, 2.0 * s, 0.1, 0, Math.PI * 2); cx.fill();
+
+    /* alis & mata terpejam lembut dengan bulu mata */
+    cx.strokeStyle = rambut; cx.lineWidth = (cewek ? 1.1 : 1.5) * s; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(4.2 * s, -4.8 * s); cx.quadraticCurveTo(7.8 * s, -6.2 * s, 10.4 * s, -4.4 * s); cx.stroke();
+    cx.strokeStyle = '#241816'; cx.lineWidth = (cewek ? 1.4 : 1.3) * s;
+    cx.beginPath(); cx.moveTo(4.6 * s, -1.8 * s); cx.quadraticCurveTo(7.6 * s, 0.2 * s, 10.2 * s, -1.4 * s); cx.stroke();
+    if (cewek) {
+      cx.lineWidth = 1.0 * s;
+      cx.beginPath(); cx.moveTo(9.8 * s, -1.3 * s); cx.lineTo(11.4 * s, -2.3 * s); cx.stroke();
+    }
+
+    /* telinga (kecuali hijab) */
+    if (gayaR !== 'hijab') {
+      bulat(-4.5 * s, 1.8 * s, 2.6 * s, kulit);
+      cx.strokeStyle = bayang; cx.lineWidth = 0.9 * s;
+      cx.beginPath(); cx.arc(-4.5 * s, 1.8 * s, 1.3 * s, -0.8, 1.5); cx.stroke();
+    }
+
+    /* rambut atas & poni depan */
+    if (gayaR === 'hijab') {
+      cx.strokeStyle = baju; cx.lineWidth = 3.2 * s;
+      cx.beginPath(); cx.arc(-1.5 * s, -1 * s, 13.5 * s, Math.PI * 0.52, Math.PI * 1.82); cx.stroke();
+      cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = 1.1 * s;
+      cx.beginPath(); cx.arc(-1.5 * s, -1 * s, 12.2 * s, Math.PI * 0.8, Math.PI * 1.65); cx.stroke();
+    } else {
+      cx.fillStyle = rambut;
+      cx.beginPath();
+      cx.arc(-1.5 * s, -3 * s, 13.4 * s, Math.PI * 0.85, Math.PI * 1.95);
+      cx.quadraticCurveTo(8 * s, -8.5 * s, 2 * s, -6.5 * s);
+      cx.quadraticCurveTo(-4 * s, -4.5 * s, -8.5 * s, 2 * s);
+      cx.quadraticCurveTo(-13 * s, -1 * s, -13.5 * s, -3 * s);
+      cx.closePath(); cx.fill();
+      cx.strokeStyle = kilau; cx.lineWidth = 1.2 * s;
+      cx.beginPath(); cx.moveTo(-8 * s, -11 * s); cx.quadraticCurveTo(0, -14 * s, 7 * s, -10.5 * s); cx.stroke();
+      if (!cewek && gayaR === 'peci') {
+        kotakBulat(-12 * s, -17 * s, 22 * s, 8.5 * s, 2.2 * s, '#17191d');
+      }
+    }
+    cx.restore();
+  }
+  /* adegan ciuman bibir romantis profil samping */
+  function gambarCiumanBibir(cy, t, cwo, cwk) {
+    var gerak = Math.sin(t / 520);
+    var dekap = gerak * 2.2; /* gerakan lembut bernapas saat bibir saling menyentuh */
+    var yBase = cy + 92;
+    var klCwo = cwo.tp.kulitHex || '#f5cb9f', klCwk = cwk.tp.kulitHex || '#f5cb9f';
+    var bajuCwo = '#1f6f68', bajuCwk = '#c84b74';
+    /* cahaya hangat lembut di sekitar titik ciuman */
+    var glow = cx.createRadialGradient(180, cy - 2, 6, 180, cy - 2, 110);
+    glow.addColorStop(0, 'rgba(255,190,215,' + (0.34 + Math.abs(gerak) * 0.14).toFixed(2) + ')');
+    glow.addColorStop(1, 'rgba(255,120,160,0)');
+    cx.fillStyle = glow; cx.fillRect(70, cy - 112, 220, 220);
+
+    /* tubuh & bahu proporsional (kiri: cowok condong ke kanan; kanan: cewek condong ke kiri) */
+    cx.fillStyle = bajuCwo;
+    cx.beginPath();
+    cx.moveTo(68, yBase + 90); cx.lineTo(86, cy + 28);
+    cx.quadraticCurveTo(126, cy + 16, 158 + dekap * 0.5, cy + 36);
+    cx.lineTo(166, yBase + 90); cx.closePath(); cx.fill();
+
+    cx.fillStyle = bajuCwk;
+    cx.beginPath();
+    cx.moveTo(292, yBase + 90); cx.lineTo(272, cy + 32);
+    cx.quadraticCurveTo(234, cy + 20, 202 - dekap * 0.5, cy + 38);
+    cx.lineTo(194, yBase + 90); cx.closePath(); cx.fill();
+
+    /* kepala profil saling berhadapan sehingga bibir benar-benar bertemu di tengah (x = 180) */
+    gambarKepalaProfil(153.5 + dekap * 0.6, cy - 12, 29, cwo.g, cwo.tp, 1, { rot: 0.08 + gerak * 0.02, baju: bajuCwo });
+    gambarKepalaProfil(206.5 - dekap * 0.6, cy - 8, 28, cwk.g, cwk.tp, -1, { rot: -0.10 - gerak * 0.02, baju: bajuCwk });
+
+    /* tangan cowok menyentuh lembut pipi/rahang cewek & tangan cewek merangkul bahu cowok */
+    cx.strokeStyle = bajuCwo; cx.lineWidth = 14; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(118, cy + 68); cx.quadraticCurveTo(160, cy + 56, 188 - dekap * 0.4, cy + 18); cx.stroke();
+    bulat(192 - dekap * 0.4, cy + 14, 7.5, klCwo);
+
+    cx.strokeStyle = bajuCwk; cx.lineWidth = 12; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(244, cy + 72); cx.quadraticCurveTo(208, cy + 56, 162 + dekap * 0.4, cy + 44); cx.stroke();
+    bulat(158 + dekap * 0.4, cy + 44, 6.8, klCwk);
+  }
+  /* adegan foreplay terpadu (dipakai saat tombol Foreplay ditekan maupun fase awal Long Time HB) */
+  function gambarAdeganForeplay(yRanjang, t, cwo, cwk, wrnSel, wrnSelTua) {
+    var ayun = Math.sin(t / 560);
+    var usap = Math.sin(t / 420);
+    var ciumSesekali = Math.max(0, Math.sin(t / 900)) * 6;
+    var klCwo = cwo.tp.kulitHex || '#f5cb9f', klCwk = cwk.tp.kulitHex || '#f5cb9f';
+    var bajuCwo = '#1b6b63', bajuCwk = '#c84b74';
+    var yD = yRanjang + 18;
+
+    /* cahaya lilin hangat romantis */
+    var cg = cx.createRadialGradient(180, yD - 45, 10, 180, yD - 45, 145);
+    cg.addColorStop(0, 'rgba(255,195,145,.26)'); cg.addColorStop(1, 'rgba(255,120,100,0)');
+    cx.fillStyle = cg; cx.fillRect(35, yD - 190, 290, 260);
+
+    /* 1. Torso cewek bersandar nyaman di bantal kiri-tengah, tubuh sedikit miring menghadap cowok */
+    cx.fillStyle = bajuCwk;
+    cx.beginPath();
+    cx.moveTo(96, yD + 12);
+    cx.quadraticCurveTo(106, yD - 42, 138, yD - 44);
+    cx.quadraticCurveTo(166, yD - 36, 174, yD + 12);
+    cx.closePath(); cx.fill();
+
+    /* 2. Torso cowok condong mendekat dari kanan memeluk erat & penuh kasih */
+    cx.fillStyle = bajuCwo;
+    cx.beginPath();
+    cx.moveTo(176 - ciumSesekali * 0.4, yD + 12);
+    cx.quadraticCurveTo(186 - ciumSesekali * 0.5, yD - 48, 224 - ciumSesekali * 0.3, yD - 46);
+    cx.quadraticCurveTo(256, yD - 32, 262, yD + 12);
+    cx.closePath(); cx.fill();
+
+    /* 3. Kepala profil 3/4 saling berhadapan sangat dekat (sesekali saling mendekat mencium kening/pipi/bibir) */
+    gambarKepalaProfil(140 + ciumSesekali * 0.35, yD - 60 + ayun * 1.5, 24, cwk.g, cwk.tp, 1, { rot: -0.14 + ayun * 0.03, baju: bajuCwk });
+    gambarKepalaProfil(196 - ciumSesekali * 0.85, yD - 64 + ayun * 1.5, 25, cwo.g, cwo.tp, -1, { rot: 0.16 - ayun * 0.03, baju: bajuCwo });
+
+    /* 4. Lengan saling memeluk & tangan cowok mengusap lembut pipi/rambut cewek */
+    cx.strokeStyle = bajuCwk; cx.lineWidth = 10; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(132, yD - 24); cx.quadraticCurveTo(168, yD - 20, 206 - ciumSesekali * 0.4, yD - 36); cx.stroke();
+    bulat(209 - ciumSesekali * 0.4, yD - 37, 5.5, klCwk);
+
+    cx.strokeStyle = bajuCwo; cx.lineWidth = 11; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(222, yD - 20); cx.quadraticCurveTo(186, yD - 28, 156 + usap * 2.5, yD - 44 + usap * 1.8); cx.stroke();
+    bulat(154 + usap * 2.5, yD - 45 + usap * 1.8, 6, klCwo);
+
+    /* 5. Selimut lembut menutupi pinggang ke bawah secara rapi */
+    cx.fillStyle = wrnSel;
+    cx.beginPath();
+    cx.moveTo(64, yD + 4);
+    cx.quadraticCurveTo(180, yD - 8 + ayun * 2, 312, yD + 6);
+    cx.lineTo(312, yD + 52); cx.lineTo(64, yD + 52); cx.closePath(); cx.fill();
+    cx.strokeStyle = 'rgba(255,255,255,.26)'; cx.lineWidth = 4;
+    cx.beginPath(); cx.moveTo(70, yD + 4); cx.quadraticCurveTo(180, yD - 7 + ayun * 2, 306, yD + 6); cx.stroke();
+    cx.strokeStyle = wrnSelTua; cx.lineWidth = 2.2;
+    cx.beginPath(); cx.moveTo(86, yD + 24); cx.quadraticCurveTo(185, yD + 14, 294, yD + 26); cx.stroke();
+  }
   /* kepala vektor romantis (mata terpejam, pipi merona) tetapi tetap mengikuti kulit & gaya rambut karakter */
   function kepalaV(x, y, r, jenis, rot, tpCustom) {
     gambarKepalaPotret(x, y, r, jenis, tpCustom, { rot: rot || 0, merem: true, tanpaLeher: false });
@@ -1013,18 +1217,21 @@
     if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
     /* karakter & selimut: tiap lokasi punya properti & suasana berbeda (kasur kamar, kursi sofa ruang tamu, depan TV, hotel, kamar mandi, balkon) */
-    var isRanjang = v === 'kamar' || v === 'hotel' || v === 'sofa' || v === 'tv';
-    var isForeplayIntro = !!(A.isLong && u < 0.30);
+    var isRanjang = v === 'kamar' || v === 'hotel' || v === 'sofa' || v === 'tv' || v === 'foreplay';
+    var isForeplayIntro = v === 'foreplay' || !!(A.isLong && u < 0.30);
     var g2 = Math.sin(t / 210 + 1.1) * 6;
-    var dekatC = Math.abs(Math.sin(t / 460)) * 8;
     var rr = (v === 'pelukan' || v === 'ciuman') ? 30 : 27;
     var tpA = s.tampilan || tampilanDariNama(s.namaPemain || '', gA, false);
     var tpB = A.tpB || tampilanDariNama(A.nama || '', gB, false);
-    if (isRanjang) {
+    var cowokDiAtas = gA === 'cowok' ? { tp: tpA, g: 'cowok' } : { tp: tpB, g: 'cowok' };
+    var cewekDiBawah = gA === 'cewek' ? { tp: tpA, g: 'cewek' } : { tp: tpB, g: 'cewek' };
+    if (v === 'ciuman') {
+      gambarCiumanBibir(cy, t, cowokDiAtas, cewekDiBawah);
+    } else if (isRanjang) {
       var ritme = Math.sin(t / 195);
       var naikTurun = ritme * 7.5;
       var pantulKasur = Math.max(0, -ritme) * 2.0;
-      var yRanjang = (v === 'tv' ? cy + 88 : cy + 62) + pantulKasur;
+      var yRanjang = (v === 'tv' ? cy + 88 : cy + 62) + (isForeplayIntro ? 0 : pantulKasur);
       /* properti alas berbeda sesuai lokasi */
       if (v === 'sofa') {
         kotakBulat(36, yRanjang - 42, 288, 66, 14, '#325a66');
@@ -1040,30 +1247,12 @@
         kotakBulat(38, cy - 10, 22, 135, 8, v === 'hotel' ? '#4f224d' : '#5b3b2c');
         kotakBulat(46, yRanjang + 36, 276, 36, 10, v === 'hotel' ? '#3d1c3d' : '#4a3125');
         kotakBulat(54, yRanjang + 18, 262, 26, 8, '#f6f2eb');
-        kotakBulat(56, yRanjang - 10 + pantulKasur * 0.4, 62, 26, 11, '#ffffff');
+        kotakBulat(56, yRanjang - 10 + (isForeplayIntro ? 0 : pantulKasur * 0.4), 62, 26, 11, '#ffffff');
       }
-      var cowokDiAtas = gA === 'cowok' ? { tp: tpA, g: 'cowok' } : { tp: tpB, g: 'cowok' };
-      var cewekDiBawah = gA === 'cewek' ? { tp: tpA, g: 'cewek' } : { tp: tpB, g: 'cewek' };
-      var wrnSel = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'tv' ? '#3b4e8c' : '#b04a68';
-      var wrnSelTua = v === 'hotel' ? '#5c1d46' : v === 'sofa' ? '#1f4f4f' : v === 'tv' ? '#29386b' : '#8c3550';
+      var wrnSel = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'tv' ? '#3b4e8c' : v === 'foreplay' ? '#9e2a54' : '#b04a68';
+      var wrnSelTua = v === 'hotel' ? '#5c1d46' : v === 'sofa' ? '#1f4f4f' : v === 'tv' ? '#29386b' : v === 'foreplay' ? '#751c3c' : '#8c3550';
       if (isForeplayIntro) {
-        /* Fase Foreplay Long Time: duduk berpelukan hangat & saling bersandar di atas ranjang/sofa sebelum masuk selimut */
-        var peluk = Math.sin(t / 420) * 3.5;
-        var yDuduk = yRanjang + 14;
-        /* tubuh cowok (kiri) & cewek (kanan) duduk berhadapan saling memeluk */
-        kotakBulat(112 + peluk, yDuduk - 50, 44, 56, 16, '#1f7a72');
-        kotakBulat(198 - peluk, yDuduk - 46, 42, 52, 16, '#c85a7c');
-        /* lengan saling merangkul bahu & punggung */
-        cx.strokeStyle = '#1f7a72'; cx.lineWidth = 10; cx.lineCap = 'round';
-        cx.beginPath(); cx.moveTo(148 + peluk, yDuduk - 34); cx.quadraticCurveTo(176, yDuduk - 22, 208 - peluk, yDuduk - 26); cx.stroke();
-        cx.strokeStyle = '#c85a7c'; cx.lineWidth = 9;
-        cx.beginPath(); cx.moveTo(204 - peluk, yDuduk - 34); cx.quadraticCurveTo(174, yDuduk - 40, 144 + peluk, yDuduk - 38); cx.stroke();
-        /* selimut masih terlipat rapi di ujung bawah kasur */
-        kotakBulat(88, yDuduk - 2, 224, 42, 12, wrnSel);
-        kotakBulat(88, yDuduk - 4, 224, 10, 5, 'rgba(255,255,255,.22)');
-        /* kepala saling mendekat & mata terpejam hangat */
-        gambarKepalaPotret(152 + peluk, yDuduk - 66, 22, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.16, merem: true, baju: '#1f7a72' });
-        gambarKepalaPotret(198 - peluk, yDuduk - 62, 21, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.18, merem: true, baju: '#c85a7c' });
+        gambarAdeganForeplay(yRanjang, t, cowokDiAtas, cewekDiBawah, wrnSel, wrnSelTua);
       } else {
         /* Posisi tubuh proporsional: bahu & leher tersambung jelas ke kepala, seluruh tubuh tertutup selimut tebal */
         var klCwk = cewekDiBawah.tp.kulitHex || '#f5cb9f';
@@ -1139,7 +1328,7 @@
     var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
     cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,12,28,.75)'; cx.fillStyle = '#fff';
     cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif';
-    var jd = (isForeplayIntro ? 'Foreplay · Pelukan hangat' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama : '');
+    var jd = (v === 'ciuman' ? 'Ciuman hangat' : isForeplayIntro ? 'Foreplay romantis' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama : '');
     cx.strokeText(jd, W / 2, 212); cx.fillText(jd, W / 2, 212);
     cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
     kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
