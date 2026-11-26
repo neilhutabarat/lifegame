@@ -1363,7 +1363,7 @@
      - HB dengan PSK (jajan nakal): Bahagia 100%, muncul Rasa Bersalah, Kesehatan menurun;
        Risiko HIV: jika kesehatan < 50% -> 89% tanpa kondom, 30% dengan kondom; jika kesehatan >= 50% -> 1,3% (0.013) dengan kondom, 18% tanpa kondom
      - Selingkuh (dengan adik ipar / karyawan / PSK saat punya pasangan sah) berisiko ketahuan & memicu Perceraian! */
-  function lakukanHb(S, pakaiKondom, targetKode, lokasiObj) {
+  function lakukanHb(S, pakaiKondom, targetKode, lokasiObj, modeDurasi) {
     S.kesehatan = S.kesehatan || { obat: {}, kondom: 0, kondomGerigi: 0, kbSampai: -1 };
     var diHotel = !!(lokasiObj && !lokasiObj.diRumah);
     var jenisTarget = 'pasangan', p = null, stafTarget = null;
@@ -1435,8 +1435,11 @@
     }
 
     var jamSekarang = S.menit % 1440;
-    var malamSkipSubuh = false; /* HB tidak lagi skip sampai subuh; durasi 1-3 jam */
-    var durasiMenit = 60 + Math.floor(Math.random() * 121); /* 1-3 jam (60-180 menit) */
+    var malamSkipSubuh = false;
+    var isLong = modeDurasi === 'long';
+    var durasiMenit = isLong ? (110 + Math.floor(Math.random() * 51)) : (40 + Math.floor(Math.random() * 21)); /* Short Time: 40-60 mnt; Long Time + Foreplay: 110-160 mnt */
+    if (isLong && stafTarget) stafTarget.foreplayHari = S.hari;
+    if (isLong && p) p.foreplayHari = S.hari;
 
     /* KASUS 1: JAJAN NAKAL (PSK) -> bahagia full, rasa bersalah naik, kesehatan turun, risiko HIV presisi */
     if (jenisTarget === 'psk') {
@@ -1483,7 +1486,7 @@
           if (crT && crT.ok) teksT += ' 💔 ' + psT.nama + ' mengetahuinya dan resmi MENCERAIKANMU! (Gono-gini ' + rp(crT.gonoGini) + ').';
         }
       }
-      return { ok: true, malam: false, menit: 90, bangun: 240, teks: teksT, tempat: diHotel ? 'hotel' : 'rumah', nama: tm.nama };
+      return { ok: true, malam: false, menit: durasiMenit, bangun: 240, teks: (isLong ? '🔥 Long Time + Foreplay: ' : '⚡ Short Time: ') + teksT, tempat: diHotel ? 'hotel' : 'rumah', nama: tm.nama };
     }
 
     /* KASUS 2: SELINGKUH DENGAN KARYAWAN LAWAN JENIS */
@@ -1536,7 +1539,7 @@
         hamilBaru = true;
       }
     }
-    var teks = 'Momen intim bersama ' + p.nama + ' (' + labelPeran(S, p) + ') selesai' + (adaFp ? ' (didahului foreplay hangat — kepuasan & romansa maksimal!)' : '') + (pakaiGerigi ? ' (memakai Kondom Bergerigi — kepuasan maksimal!)' : '') + '. HB bar 0%, Perasaan ' + Math.round(p.perasaan) + '%, Stamina' + (jenisTarget === 'pasangan' ? ', Kesehatan & Kebahagiaan' : ' & Bahagia') + ' penuh 100%!' +
+    var teks = (isLong ? '🔥 Long Time + Foreplay bersama ' : '⚡ Short Time bersama ') + p.nama + ' (' + labelPeran(S, p) + ') selesai' + (adaFp || isLong ? ' (didahului foreplay hangat — kepuasan & romansa maksimal!)' : '') + (pakaiGerigi ? ' (memakai Kondom Bergerigi — kepuasan maksimal!)' : '') + '. HB bar 0%, Perasaan ' + Math.round(p.perasaan) + '%, Stamina' + (jenisTarget === 'pasangan' ? ', Kesehatan & Kebahagiaan' : ' & Bahagia') + ' penuh 100%!' +
       (malamSkipSubuh ? ' Tidur nyenyak hingga pukul 04.00 subuh.' : ' (' + durasiMenit + ' menit).') +
       (terlindungi ? ' (Aman memakai ' + (pakaiKondom ? 'kondom' : 'KB') + ').' : ' (Tanpa kontrasepsi — peluang hamil 65%).');
     if (jenisTarget === 'ipar') {
@@ -2560,16 +2563,17 @@
     }
     var pr = typeof target.perasaan === 'number' ? target.perasaan : (isPas ? 75 : isTeman ? (target.hubungan || 45) : 50);
     var hub = isTeman ? (target.hubungan || 45) : (target.bahagia == null ? 80 : target.bahagia);
+    var hbPenuhT = (target.hb || 0) >= 100;
     var punyaPas = !!pasanganAktif(S);
 
     if (aksi === 'ciuman') {
-      if (isPas && pr < 20 && hub < 25) return target.nama + ' masih kesal (perasaan ' + Math.round(pr) + '%). Perbaiki hubungan atau ajak jalan-jalan dulu.';
-      if (!isPas && isTeman && pr < 35 && hub < 50) {
+      if (!hbPenuhT && isPas && pr < 20 && hub < 25) return target.nama + ' masih kesal (perasaan ' + Math.round(pr) + '%). Perbaiki hubungan atau ajak jalan-jalan dulu.';
+      if (!hbPenuhT && !isPas && isTeman && pr < 35 && hub < 50) {
         target.hubungan = Math.max(0, hub - 3);
-        return target.nama + ' menghindar malu: "Eh, kita belum sedekat itu..." (butuh hubungan ≥50% atau perasaan ≥35%).';
+        return target.nama + ' menghindar malu: "Eh, kita belum sedekat itu..." (butuh hubungan ≥50%, perasaan ≥35%, atau Bar HB 100%).';
       }
-      if (!isPas && !isTeman && pr < 40 && hub < 55) {
-        return target.nama + ' masih canggung (butuh perasaan ≥40% atau bahagia ≥55%).';
+      if (!hbPenuhT && !isPas && !isTeman && pr < 40 && hub < 55) {
+        return target.nama + ' masih canggung (butuh perasaan ≥40%, bahagia ≥55%, atau Bar HB 100%).';
       }
       target.perasaan = Math.min(100, pr + (isPas ? 15 : 16));
       target.hb = Math.min(100, (target.hb == null ? 30 : target.hb) + 15);
@@ -2582,8 +2586,8 @@
     }
 
     if (aksi === 'foreplay') {
-      if (isPas && pr < 40) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman dulu sampai perasaan minimal 40%!';
-      if (!isPas && pr < 55 && hub < 60) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman atau lebih akrab dulu (perasaan ≥55% atau hubungan ≥60%).';
+      if (!hbPenuhT && isPas && pr < 40) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman dulu sampai perasaan minimal 40%!';
+      if (!hbPenuhT && !isPas && pr < 55 && hub < 60) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman dulu (perasaan ≥55%, hubungan ≥60%, atau Bar HB 100%).';
       target.perasaan = Math.min(100, pr + 22);
       target.hb = Math.min(100, (target.hb == null ? 30 : target.hb) + 28);
       if (isTeman) target.hubungan = Math.min(100, hub + 12);

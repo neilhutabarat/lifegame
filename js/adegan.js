@@ -970,7 +970,8 @@
     if (v === 'ciuman') { gr.addColorStop(0, '#5a1a38'); gr.addColorStop(1, '#a83b62'); }
     else if (v === 'foreplay') { gr.addColorStop(0, '#361024'); gr.addColorStop(1, '#752242'); }
     else if (v === 'hotel') { gr.addColorStop(0, '#2a1240'); gr.addColorStop(1, '#4a1e50'); }
-    else if (v === 'sofa') { gr.addColorStop(0, '#16303a'); gr.addColorStop(1, '#244a50'); }
+    else if (v === 'sofa') { gr.addColorStop(0, '#18363c'); gr.addColorStop(1, '#26545a'); }
+    else if (v === 'tv') { gr.addColorStop(0, '#0f1c2e'); gr.addColorStop(1, '#1d3354'); }
     else if (v === 'mandi') { gr.addColorStop(0, '#6b8fa0'); gr.addColorStop(1, '#a9c4cf'); }
     else if (v === 'pelukan') { gr.addColorStop(0, '#ff9a6a'); gr.addColorStop(1, '#6a3a6e'); }
     else if (v === 'balkon') { gr.addColorStop(0, '#0b1230'); gr.addColorStop(1, '#2a2f5a'); }
@@ -992,12 +993,27 @@
         cx.fillStyle = cg; cx.fillRect(lx - 95, 265, 190, 190);
       });
     }
-    if (v === 'hotel') { cx.fillStyle = '#ff5c8a'; kotakBulat(120, 276, 120, 26, 8, '#ff5c8a'); cx.fillStyle = '#fff'; cx.font = '800 18px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.globalAlpha = 0.75 + Math.sin(t / 260) * 0.25; cx.fillText('HOTEL', 180, 290); cx.globalAlpha = 1; }
-    if (v === 'sofa') { var fl = 0.35 + Math.abs(Math.sin(t / 310)) * 0.25; kotakBulat(120, 268, 120, 34, 8, 'rgba(120,200,255,' + fl.toFixed(2) + ')'); }
+    if (v === 'hotel') {
+      /* tirai hotel & lampu neon hangat */
+      kotak(0, 0, 32, H, 'rgba(90,26,70,.55)'); kotak(W - 32, 0, 32, H, 'rgba(90,26,70,.55)');
+      cx.fillStyle = '#ff5c8a'; kotakBulat(120, 276, 120, 26, 8, '#ff5c8a'); cx.fillStyle = '#fff'; cx.font = '800 18px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.globalAlpha = 0.75 + Math.sin(t / 260) * 0.25; cx.fillText('HOTEL', 180, 290); cx.globalAlpha = 1;
+    }
+    if (v === 'sofa') {
+      /* ruang tamu: bingkai lukisan, tanaman hias & lampu meja */
+      kotak(42, 266, 56, 42, '#4a3525'); kotak(46, 270, 48, 34, '#d9e8e4'); bulat(64, 286, 8, '#e07a5f');
+      kotakBulat(286, 304, 28, 22, 4, '#8d5b3e'); bulat(300, 294, 15, '#3a8c5c'); bulat(292, 284, 11, '#4ca36d');
+    }
+    if (v === 'tv') {
+      /* depan TV: layar TV lebar menyala dengan cahaya layar lembut & rak konsol */
+      var flTv = 0.45 + Math.abs(Math.sin(t / 290)) * 0.35;
+      kotakBulat(94, 262, 172, 82, 8, '#111827');
+      kotak(100, 268, 160, 70, 'rgba(96,175,255,' + flTv.toFixed(2) + ')');
+      kotak(166, 344, 28, 8, '#334155'); kotakBulat(82, 352, 196, 16, 4, '#5c4033');
+    }
     if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
-    /* karakter & selimut: untuk HB di kasur (kamar/hotel/sofa), pria menimpa wanita di dalam selimut dan bergoyang naik turun secara realistis namun tetap tertutup sopan */
-    var isRanjang = v === 'kamar' || v === 'hotel' || v === 'sofa';
+    /* karakter & selimut: tiap lokasi punya properti & suasana berbeda (kasur kamar, kursi sofa ruang tamu, depan TV, hotel, kamar mandi, balkon) */
+    var isRanjang = v === 'kamar' || v === 'hotel' || v === 'sofa' || v === 'tv';
     var g2 = Math.sin(t / 210 + 1.1) * 6;
     var dekatC = Math.abs(Math.sin(t / 460)) * 8;
     var rr = (v === 'pelukan' || v === 'ciuman') ? 30 : 27;
@@ -1007,12 +1023,27 @@
       var ritme = Math.sin(t / 185);
       var naikTurun = ritme * 9.5;
       var pantulKasur = Math.max(0, -ritme) * 2.5;
-      var yRanjang = cy + 62 + pantulKasur;
-      /* sandaran ranjang & bantal */
-      kotakBulat(38, cy - 10, 22, 135, 8, v === 'hotel' ? '#4f224d' : '#5b3b2c');
-      kotakBulat(46, yRanjang + 36, 276, 36, 10, v === 'hotel' ? '#3d1c3d' : '#4a3125');
-      kotakBulat(54, yRanjang + 18, 262, 26, 8, '#f6f2eb');
-      kotakBulat(62, yRanjang - 8 + pantulKasur * 0.5, 58, 26, 11, '#ffffff');
+      var yRanjang = (v === 'tv' ? cy + 88 : cy + 62) + pantulKasur;
+      /* properti alas berbeda sesuai lokasi */
+      if (v === 'sofa') {
+        /* kursi sofa ruang tamu dengan sandaran & lengan sofa */
+        kotakBulat(36, yRanjang - 42, 288, 66, 14, '#325a66');
+        kotakBulat(28, yRanjang - 6, 26, 78, 10, '#274852');
+        kotakBulat(306, yRanjang - 6, 26, 78, 10, '#274852');
+        kotakBulat(54, yRanjang + 18, 252, 46, 10, '#3e6e7c');
+        kotakBulat(62, yRanjang - 8 + pantulKasur * 0.5, 52, 24, 10, '#f2c14e');
+      } else if (v === 'tv') {
+        /* karpet bulu & bantal lantai di depan TV */
+        kotakBulat(26, yRanjang + 22, 308, 46, 16, '#3b2e4a');
+        kotakBulat(54, yRanjang + 14, 252, 26, 10, '#54416b');
+        kotakBulat(62, yRanjang - 6 + pantulKasur * 0.5, 54, 24, 10, '#cbd5e1');
+      } else {
+        /* kasur kamar tidur / hotel */
+        kotakBulat(38, cy - 10, 22, 135, 8, v === 'hotel' ? '#4f224d' : '#5b3b2c');
+        kotakBulat(46, yRanjang + 36, 276, 36, 10, v === 'hotel' ? '#3d1c3d' : '#4a3125');
+        kotakBulat(54, yRanjang + 18, 262, 26, 8, '#f6f2eb');
+        kotakBulat(62, yRanjang - 8 + pantulKasur * 0.5, 58, 26, 11, '#ffffff');
+      }
       /* tentukan posisi cewek (berbaring di bantal) & cowok (di atas menimpa dalam selimut) */
       var cowokDiAtas = gA === 'cowok' ? { tp: tpA, g: 'cowok' } : { tp: tpB, g: 'cowok' };
       var cewekDiBawah = gA === 'cewek' ? { tp: tpA, g: 'cewek' } : { tp: tpB, g: 'cewek' };
@@ -1021,8 +1052,8 @@
       /* kepala & bahu cowok di atas cewek, bergerak naik-turun mengikuti irama */
       gambarKepalaPotret(138 + ritme * 3, yRanjang - 44 + naikTurun, 21, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.42 + ritme * 0.08, merem: false, tanpaLeher: true });
       /* kontur selimut tebal menutupi tubuh keduanya, melengkung realistis dan bergoyang naik-turun */
-      var wrnSel = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : '#b04a68';
-      var wrnSelTua = v === 'hotel' ? '#5c1d46' : v === 'sofa' ? '#1f4f4f' : '#8c3550';
+      var wrnSel = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'tv' ? '#3b4e8c' : '#b04a68';
+      var wrnSelTua = v === 'hotel' ? '#5c1d46' : v === 'sofa' ? '#1f4f4f' : v === 'tv' ? '#29386b' : '#8c3550';
       cx.fillStyle = wrnSel;
       cx.beginPath();
       cx.moveTo(106, yRanjang + 16);

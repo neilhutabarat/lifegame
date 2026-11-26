@@ -329,19 +329,47 @@
     return kabar;
   }
 
-  /* HB dengan teman/pacar/mantan: butuh hubungan di atas 70%, lawan jenis, dan usia >= 18 */
+  /* undang teman/sahabat/pacar/mantan ke rumah:
+     - hubungan < 30% biasanya menolak, KECUALI bar HB teman sudah 100% (tetap mau walau hubungan 0%) */
+  function undangKeRumah(S, id) {
+    var x = cari(S, id); if (!x) return 'Kontak tidak ditemukan.';
+    if (S.diri && S.diri.posisi !== 'kos') return 'Pulang dulu ke rumah/kos sebelum mengundang tamu.';
+    if (S.tamuRumah && S.tamuRumah.id === x.id && S.tamuRumah.hari === S.hari) return x.nama + ' sudah sedang bertamu di rumahmu.';
+    var gPem = (S.profil && S.profil.gender) || 'cowok';
+    var hbPenuh = (x.hb || 0) >= 100 && usiaTeman(S, x) >= 18 && x.gender !== gPem;
+    if (!hbPenuh && (x.hubungan || 0) < 30) {
+      return x.nama + ' menolak undanganmu ("Maaf, kita belum terlalu dekat..."). Butuh hubungan minimal 30% (atau Bar HB 100%).';
+    }
+    S.tamuRumah = {
+      id: x.id, nama: x.nama, gender: x.gender, peran: x.peran,
+      hari: S.hari, sampaiJam: (S.menit % 1440) + 180, tampilan: x.tampilan || null
+    };
+    x.hubungan = Math.min(100, (x.hubungan || 0) + 4);
+    return { ok: true, teks: hbPenuh && (x.hubungan || 0) < 30
+      ? '🔥 Bar HB ' + x.nama + ' sedang 100% — langsung menerima undangan dan datang ke rumahmu!'
+      : '🏠 ' + x.nama + ' datang bertamu ke rumahmu! (Hubungan ' + Math.round(x.hubungan) + '%).' };
+  }
+  function pulangkanTamu(S) {
+    if (!S.tamuRumah) return 'Tidak ada tamu di rumah.';
+    var nm = S.tamuRumah.nama;
+    S.tamuRumah = null;
+    return { ok: true, teks: nm + ' pamit pulang ke rumahnya.' };
+  }
+
+  /* HB dengan teman/pacar/mantan: lawan jenis & usia >= 18; butuh hubungan > 70% KECUALI Bar HB 100% */
   function syaratHb(S, id) {
     var x = cari(S, id); if (!x) return 'Tidak ditemukan.';
     var gPem = (S.profil && S.profil.gender) || 'cowok';
     if (x.gender === gPem) return 'HB hanya bisa dilakukan dengan lawan jenis.';
     if (usiaTeman(S, x) < 18) return x.nama + ' masih di bawah 18 tahun.';
-    if (x.hubungan <= MIN_HB) return 'Hubungan dengan ' + x.nama + ' baru ' + Math.round(x.hubungan) + '%. Butuh di atas ' + MIN_HB + '%.';
+    if ((x.hb || 0) < 100 && x.hubungan <= MIN_HB) return 'Hubungan dengan ' + x.nama + ' baru ' + Math.round(x.hubungan) + '%. Butuh di atas ' + MIN_HB + '% (atau Bar HB 100%).';
     return x;
   }
 
   g.KK_TEMAN = { PERAN: PERAN, HOTEL: HOTEL, MIN_HB: MIN_HB, KARAKTER_BAWAAN: KARAKTER_BAWAAN,
     tambah: tambah, ubahPeran: ubahPeran, ubahNama: ubahNama, ubahTtl: ubahTtl, hapus: hapus, interaksi: interaksi, tambahMantan: tambahMantan,
     isiKarakterBawaan: isiKarakterBawaan, lepasPacarNpc: lepasPacarNpc, validasiPasanganNpc: validasiPasanganNpc, gantiHari: gantiHari,
+    undangKeRumah: undangKeRumah, pulangkanTamu: pulangkanTamu,
     cari: cari, siap: siap, tolakHb: tolakHb, resetTolak: resetTolak, izinKerja: izinKerja, kirimPulang: kirimPulang, konfrontasi: konfrontasi, jalan: jalan, cekPulang: cekPulang,
     sedangKeluar: sedangKeluar, alasanTeks: alasanTeks, syaratHb: syaratHb, hubunganKl: hubunganKl, rp: rp };
 })(window);
