@@ -240,6 +240,26 @@
         : 'Pindah ke kos. Barang besar yang tidak muat dijual murah ke tetangga.' };
   }
 
+  function bayarCicilanKpr(S, idx) {
+    var list = daftarRumah(S), r = list[idx != null ? idx : 0];
+    if (!r || !r.kpr) return 'Rumah ini tidak memiliki cicilan KPR.';
+    var k = r.kpr, nmLok = r.nama + ' (' + (r.lokasiTeks || namaKota(r.kota)) + ')';
+    if (k.tunggakan > 0) {
+      var bT = Math.round(k.tunggakan);
+      if (S.bank.saldo < bT) return 'Saldo rekening tidak cukup untuk bayar tunggakan KPR ' + rp(bT) + '.';
+      S.bank.saldo -= bT; M().catatBank(S, 'Bayar tunggakan KPR ' + nmLok, -bT);
+      k.tunggakan = 0; k.bulanTelat = 0;
+      if (k.sisa <= 0) r.kpr = null;
+      return { ok: true, jml: bT, teks: 'Tunggakan KPR ' + nmLok + ' (' + rp(bT) + ') lunas!' };
+    }
+    if (k.sisa <= 0) { r.kpr = null; return { ok: true, jml: 0, teks: 'KPR rumah sudah lunas.' }; }
+    var bA = k.angsuran;
+    if (S.bank.saldo < bA) return 'Saldo rekening tidak cukup untuk bayar angsuran KPR ' + rp(bA) + '.';
+    S.bank.saldo -= bA; M().catatBank(S, 'Bayar angsuran KPR ' + nmLok, -bA);
+    k.pokok = Math.max(0, k.pokok - (bA - k.pokok * k.bunga / 12)); k.sisa--;
+    if (k.sisa <= 0 && !k.tunggakan) { r.kpr = null; return { ok: true, jml: bA, teks: 'Angsuran terakhir ' + rp(bA) + ' dibayar! KPR ' + nmLok + ' LUNAS!' }; }
+    return { ok: true, jml: bA, teks: 'Angsuran KPR ' + nmLok + ' (' + rp(bA) + ') dibayar. Sisa ' + k.sisa + ' bulan.' };
+  }
   function nilaiRumah(S, rObj) { var r = rObj || S.properti.rumah; return r ? Math.round(r.harga * Math.pow(1.04, (S.hari - r.dibeli) / 365) / 1e6) * 1e6 : 0; }
   function sisaPokok(S, rObj) { var r = rObj || S.properti.rumah; return r && r.kpr ? Math.round(r.kpr.pokok + r.kpr.tunggakan) : 0; }
   function jualRumah(S, idx) {
@@ -307,27 +327,33 @@
         }
       }
       var k = r.kpr;
-      if (k && k.sisa > 0 && tB.d === k.tempo) {
-        if (r.tipe !== 'subsidi' && nBaru >= k.fixSampai && k.bunga !== P.komersial.bungaFloating) {
-          k.bunga = P.komersial.bungaFloating; k.angsuran = Math.round(anuitas(k.pokok, k.bunga, k.sisa) / 100) * 100;
-          kabar.push('Masa bunga tetap KPR ' + nmLok + ' habis. Bunga floating ' + (k.bunga * 100).toFixed(1).replace('.', ',') + '%, angsuran jadi ' + rp(k.angsuran) + '.');
-        }
-        if (S.bank.saldo >= k.angsuran) {
-          S.bank.saldo -= k.angsuran; M().catatBank(S, 'Angsuran KPR ' + nmLok, -k.angsuran, nBaru);
-          k.pokok = Math.max(0, k.pokok - (k.angsuran - k.pokok * k.bunga / 12)); k.sisa--;
-          if (k.bulanTelat && S.bank.saldo >= k.tunggakan) { S.bank.saldo -= k.tunggakan; M().catatBank(S, 'Tunggakan KPR', -k.tunggakan, nBaru); k.tunggakan = 0; k.bulanTelat = 0; }
-          kabar.push('Angsuran KPR ' + nmLok + ' ' + rp(k.angsuran) + ' dipotong. Sisa ' + k.sisa + ' bulan.');
-        } else {
-          k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true;
-          kabar.push('Saldo kurang untuk angsuran KPR ' + nmLok + '. Menunggak ' + k.bulanTelat + ' bulan.');
-          if (k.bulanTelat >= P.sitaSetelahBulan) {
-            if (r.dihuni) pindah(S, 'kos', true);
-            list.splice(i, 1); sinkronRumahUtama(S);
-            kabar.push('Bank menyita ' + nmLok + ' karena menunggak ' + k.bulanTelat + ' bulan.');
-            continue;
+      if (k && (k.sisa > 0 || k.tunggakan > 0)) {
+        if (k.sisa > 0 && tB.d === k.tempo) {
+          if (r.tipe !== 'subsidi' && nBaru >= k.fixSampai && k.bunga !== P.komersial.bungaFloating) {
+            k.bunga = P.komersial.bungaFloating; k.angsuran = Math.round(anuitas(k.pokok, k.bunga, k.sisa) / 100) * 100;
+            kabar.push('Masa bunga tetap KPR ' + nmLok + ' habis. Bunga floating ' + (k.bunga * 100).toFixed(1).replace('.', ',') + '%, angsuran jadi ' + rp(k.angsuran) + '.');
+          }
+          if (S.bank.saldo >= k.angsuran) {
+            S.bank.saldo -= k.angsuran; M().catatBank(S, 'Autodebit KPR ' + nmLok, -k.angsuran, nBaru);
+            k.pokok = Math.max(0, k.pokok - (k.angsuran - k.pokok * k.bunga / 12)); k.sisa--;
+            kabar.push('🏠 Autodebit KPR ' + nmLok + ' ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.');
+          } else {
+            k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true;
+            kabar.push('⚠️ Saldo kurang untuk autodebit KPR ' + nmLok + '. Menunggak ' + k.bulanTelat + ' bulan.');
+            if (k.bulanTelat >= P.sitaSetelahBulan) {
+              if (r.dihuni) pindah(S, 'kos', true);
+              list.splice(i, 1); sinkronRumahUtama(S);
+              kabar.push('Bank menyita ' + nmLok + ' karena menunggak ' + k.bulanTelat + ' bulan.');
+              continue;
+            }
           }
         }
-        if (k.sisa <= 0 && !k.tunggakan) { r.kpr = null; kabar.push('KPR ' + nmLok + ' lunas! Sertifikat rumah diambil di bank.'); }
+        if (k.tunggakan > 0 && S.bank.saldo >= k.tunggakan) {
+          var btKpr = k.tunggakan; S.bank.saldo -= btKpr; M().catatBank(S, 'Autodebit tunggakan KPR ' + nmLok, -btKpr, nBaru);
+          k.tunggakan = 0; k.bulanTelat = 0;
+          kabar.push('🏠 Tunggakan KPR ' + nmLok + ' (' + rp(btKpr) + ') dibayar otomatis.');
+        }
+        if (k.sisa <= 0 && !k.tunggakan) { r.kpr = null; kabar.push('🎉 KPR ' + nmLok + ' lunas! Sertifikat rumah diambil di bank.'); }
       }
     }
     return kabar;
@@ -335,5 +361,5 @@
 
   g.KK_PROPERTI = { siapkan: siapkan, daftarRumah: daftarRumah, daftarKota: daftarKota, namaKota: namaKota, dataKota: dataKota, WILAYAH: WILAYAH, harga: harga, hitung: hitung, syarat: syarat, ajukan: ajukan, pindah: pindah, penghasilan: penghasilan, nilaiRumah: nilaiRumah,
     sisaPokok: sisaPokok, jualRumah: jualRumah, hargaTanah: hargaTanah, beliTanah: beliTanah, nilaiTanah: nilaiTanah, jualTanah: jualTanah, bphtb: bphtb, gantiHari: gantiHari,
-    PERABOT_RUANG: PERABOT_RUANG, hitungTagihanAir: hitungTagihanAir, bayarAir: bayarAir, instalPerabot: instalPerabot, tarifSewa: tarifSewa, sewakanRumah: sewakanRumah, hentiSewaRumah: hentiSewaRumah };
+    PERABOT_RUANG: PERABOT_RUANG, hitungTagihanAir: hitungTagihanAir, bayarAir: bayarAir, bayarCicilanKpr: bayarCicilanKpr, instalPerabot: instalPerabot, tarifSewa: tarifSewa, sewakanRumah: sewakanRumah, hentiSewaRumah: hentiSewaRumah };
 })(window);

@@ -330,7 +330,7 @@
     var adaMenunggu = false;
     Object.keys(S.merchants).forEach(function (id) {
       var m = S.merchants[id], q = qrisData(id);
-      if (m.aktifPada && nBaru === m.aktifPada) kabar.push('QRIS ' + q.nama + ' sudah aktif. Stikernya dipasang di kedai.');
+      if (m.aktifPada && nBaru === m.aktifPada) kabar.push('QRIS ' + q.nama + ' sudah aktif.');
       if (!hariKerja(nBaru)) { if (m.menunggu.length) adaMenunggu = true; return; }
       var cair = 0;
       m.menunggu = m.menunggu.filter(function (x) { if (x.n < nBaru) { cair += x.jml; return false; } return true; });
@@ -390,6 +390,17 @@
         kk.dibayarBulanIni = 0;
         kk.minBayar = kk.tagihan > 0 ? Math.min(kk.tagihan, Math.max(KK.minRp, Math.round(kk.tagihan * KK.minPersen))) : 0;
         if (kk.tagihan > 0) kabar.push('Tagihan kartu kredit ' + b.nama + ' tercetak ' + rp(kk.tagihan) + (bunga ? ' (termasuk bunga 1,75% ' + rp(bunga) + ')' : '') + '. Bayar minimal ' + rp(kk.minBayar) + ' paling lambat tanggal ' + KK.jatuhTempo + '.');
+      }
+      /* Autodebit otomatis tagihan kartu kredit pada tanggal jatuh tempo (tgl 18) agar tidak kena denda */
+      if (tB.d === KK.jatuhTempo && (kk.tagihan + kk.denda) > 0) {
+        var totKk = kk.tagihan + kk.denda;
+        if (S.bank.saldo >= totKk) {
+          var rAutoPenuh = bayarKk(S, 'penuh');
+          if (rAutoPenuh && rAutoPenuh.ok) kabar.push('💳 Autodebit Kartu Kredit ' + b.nama + ' penuh ' + rp(rAutoPenuh.jml) + ' berhasil (bebas bunga & denda).');
+        } else if (kk.dibayarBulanIni < kk.minBayar) {
+          var rAutoMin = bayarKk(S, 'minimal');
+          if (rAutoMin && rAutoMin.ok) kabar.push('💳 Autodebit minimum Kartu Kredit ' + b.nama + ' ' + rp(rAutoMin.jml) + ' berhasil (saldo belum cukup untuk bayar penuh).');
+        }
       }
       if (tB.d === KK.jatuhTempo + 1 && kk.tagihan > 0 && kk.dibayarBulanIni < kk.minBayar) {
         var dnd = Math.min(KK.dendaMaks, Math.max(10000, Math.round(kk.tagihan * KK.dendaPersen)));

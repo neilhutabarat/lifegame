@@ -351,10 +351,10 @@
     if (!tr.peringatan && m.isi < 0.12) { tr.peringatan = true; kabar.push('Bensin tinggal sedikit. Tekan Berhenti untuk isi di SPBU.'); }
     if (m.isi > 0.3) tr.peringatan = false;
     var jamFrac = dMenit / 60, r2 = Math.random();
-    if (v.gigi === 6 && r2 < 0.025 * jamFrac) {
+    if (v.gigi === 5 && v.kmh > 115 && r2 < 0.02 * jamFrac) {
       var denda = bayar(S, 500000, 'Tilang kecepatan'); tambahKejadian(T, 'Kena tilang karena ngebut. Denda ' + rp(denda) + '.', denda, 15, 0.6);
       kabar.push('Kena tilang ngebut, denda ' + rp(denda) + '.');
-    } else if (v.gigi === 6 && r2 < 0.033 * jamFrac) {
+    } else if (v.gigi === 5 && v.kmh > 125 && r2 < 0.028 * jamFrac) {
       var rusak = bayar(S, 2000000, 'Perbaikan senggolan jalan'); tambahKejadian(T, 'Senggolan saat ngebut. Perbaikan ' + rp(rusak) + '.', rusak, 40, 2);
       kabar.push('Mobil menyenggol pembatas saat ngebut. Perbaikan ' + rp(rusak) + '.');
     } else if (r2 < (0.004 * (kdR.risikoBan || 1) + (g.KK_MOBIL.telatServis(S) / 1000) * 0.01) * jamFrac) {
@@ -443,12 +443,11 @@
         if (telat > 1.2) { n -= Math.min(3, (telat - 1.2) * 6); ket = 'minta cepat, merasa kelamaan'; }
         else { bayarKursi = Math.round(bayarKursi * 1.2 / 1000) * 1000; ket = 'minta cepat, puas (+20%)'; }
       } else if (p.tipe === 'santai') {
-        if (pangsa6 > 0) { n -= 2; ket = 'minta santai, takut karena ngebut'; }
-        else if (pangsa5 > 0.4) { n -= pangsa5 * 3; ket = 'minta santai, kurang nyaman dengan lajunya'; }
+        if (pangsa5 > 0.45) { n -= Math.min(2, pangsa5 * 3); ket = 'minta santai, kurang nyaman karena ngebut'; }
         else { ket = 'minta santai, nyaman'; if (n >= 4.5) { var tp = Math.round(bayarKursi * 0.05 / 1000) * 1000; tip += tp; } }
       } else {
         if (telat > 1.8) { n -= 1; ket = 'merasa kelamaan'; }
-        if (pangsa6 > 0.1) n -= 1;
+        if (pangsa5 > 0.6) n -= 0.8;
       }
       n = Math.max(1, Math.min(5, n)); sumNilai += n; total += bayarKursi; rinci.push({ nama: p.nama, tipe: p.tipe, nilai: Math.round(n * 10) / 10, bayar: bayarKursi, ket: ket });
     });

@@ -104,6 +104,25 @@
     else S.motor = null;
     return { ok: true, harga: h };
   }
+  function bayarCicilan(S) {
+    var m = S.motor; if (!m || !m.kredit) return 'Tidak ada cicilan motor.';
+    var k = m.kredit;
+    if (k.tunggakan > 0) {
+      var bT = Math.round(k.tunggakan + (k.denda || 0));
+      if (S.bank.saldo < bT) return 'Saldo rekening tidak cukup untuk bayar tunggakan + denda ' + rp(bT) + '.';
+      S.bank.saldo -= bT; catatBank(S, 'Bayar tunggakan cicilan ' + m.nama, -bT);
+      k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0;
+      if (k.sisa <= 0) m.kredit = null;
+      return { ok: true, jml: bT, teks: 'Tunggakan cicilan motor ' + rp(bT) + ' berhasil dilunasi!' + (!m.kredit ? ' Kredit motor LUNAS!' : '') };
+    }
+    if (k.sisa <= 0) { m.kredit = null; return { ok: true, jml: 0, teks: 'Kredit motor sudah lunas.' }; }
+    var bA = k.angsuran;
+    if (S.bank.saldo < bA) return 'Saldo rekening tidak cukup untuk bayar angsuran ' + rp(bA) + '.';
+    S.bank.saldo -= bA; catatBank(S, 'Bayar angsuran ' + KR.leasing + ' ' + m.nama, -bA);
+    k.sisa--;
+    if (k.sisa <= 0 && !k.tunggakan) { m.kredit = null; return { ok: true, jml: bA, teks: 'Angsuran terakhir ' + rp(bA) + ' dibayar! Kredit motor LUNAS.' }; }
+    return { ok: true, jml: bA, teks: 'Angsuran motor ' + rp(bA) + ' dibayar. Sisa ' + k.sisa + ' bulan.' };
+  }
   function lunasi(S) {
     var m = S.motor; if (!m || !m.kredit) return 'Tidak ada kredit motor.';
     var k = m.kredit, sisa = k.sisa * k.angsuran * 0.9 + k.tunggakan + k.denda; /* pelunasan dipercepat: diskon bunga, perkiraan */
@@ -171,7 +190,7 @@
   }
   function isiBensin(S, jenis, liter) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
-    if (m.bbm === 'listrik') return 'Motor listrik dicas di kedai tiap malam.';
+    if (m.bbm === 'listrik') return 'Motor listrik dicas otomatis tiap malam di tempat tinggal.';
     jenis = RON[jenis] ? jenis : m.bbm;
     var kosong = Math.round((m.tangki - m.isi) * 100) / 100; if (kosong < 0.2) return 'Tangki sudah penuh.';
     liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
@@ -269,7 +288,7 @@
     m.km += km;
     if (Math.random() < peluangMogok(S)) {
       var bengkel = 50000 + Math.floor(Math.random() * 3) * 50000;
-      menit += 60; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; bayarLaci(S, Math.min(bengkel, g.KK_UANG.laci(S)));
+      menit += 60; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; bayarTunaiMotor(S, bengkel);
       kabar.push('Motor mogok di jalan. Ke bengkel ' + rp(bengkel) + ', telat sekitar 1 jam.');
     }
     return { ok: true, menit: menit, kabar: kabar };
@@ -289,15 +308,15 @@
       m.baterai = m.jarakPenuh; S.hariIni.listrikMotor = (S.hariIni.listrikMotor || 0) + biaya;
     }
     var k = m.kredit;
-    if (k && k.sisa > 0) {
-      if (tB.d === k.tempo) {
-        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; catatBank(S, 'Angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('Angsuran motor ' + rp(k.angsuran) + ' dipotong dari rekening. Sisa ' + k.sisa + ' bulan.'); }
-        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('Saldo kurang untuk angsuran motor. Denda harian berjalan dan tercatat di riwayat kredit.'); }
+    if (k && (k.sisa > 0 || k.tunggakan > 0)) {
+      if (k.sisa > 0 && tB.d === k.tempo) {
+        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('🏍️ Autodebit angsuran motor ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
+        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran motor (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
       }
       if (k.tunggakan > 0) {
         k.denda += Math.round(k.tunggakan * KR.dendaHarian);
         var bayar = Math.min(k.tunggakan + k.denda, S.bank.saldo);
-        if (bayar >= k.tunggakan + k.denda) { S.bank.saldo -= bayar; catatBank(S, 'Tunggakan + denda angsuran motor', -bayar, nBaru); kabar.push('Tunggakan motor dan denda ' + rp(bayar) + ' sudah dibayar.'); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; }
+        if (bayar >= k.tunggakan + k.denda) { S.bank.saldo -= bayar; catatBank(S, 'Autodebit tunggakan + denda motor', -bayar, nBaru); kabar.push('🏍️ Tunggakan motor & denda ' + rp(bayar) + ' dibayar otomatis.'); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; }
         else if (k.bulanTelat >= KR.tarikSetelahBulan) {
           kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.');
           if (S.armadaMotor && S.armadaMotor.length) { S.armadaMotor.splice(S.motorAktif || 0, 1); S.motorAktif = 0; sinkronAktif(S); }
@@ -305,7 +324,7 @@
           return kabar;
         }
       }
-      if (k.sisa === 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('Kredit motor lunas. BPKB diambil di ' + KR.leasing + '.'); }
+      if (k.sisa <= 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('🎉 Kredit motor lunas! BPKB diambil di ' + KR.leasing + '.'); }
     }
     if (nBaru === m.pajakTempo - 14) kabar.push('Pajak tahunan ' + m.nama + ' jatuh tempo 2 minggu lagi.');
     if (nBaru > m.pajakTempo && (nBaru - m.pajakTempo) % 30 === 1) { m.dendaPajak = (m.dendaPajak || 0) + Math.round(m.harga * R.pkb * R.dendaPajak); kabar.push('Pajak motor telat, denda bertambah.'); }
@@ -316,5 +335,5 @@
   g.KK_MOTOR = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, hargaBbm: hargaBbm, punya: punya, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit,
     beliBekas: beliBekas, isiBensin: isiBensin, rawat: rawat, beliAks: beliAks, bayarPajak: bayarPajak, tagihanPajak: tagihanPajak,
     muatan: muatan, telatOli: telatOli, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, peluangMogok: peluangMogok, cukup: cukup, jalan: jalan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi,
-    gantiHari: gantiHari, bayarLaci: bayarLaci, RON: RON, nilaiJual: nilaiJual, jual: jual, lunasi: lunasi, catatBank: catatBank };
+    gantiHari: gantiHari, bayarLaci: bayarLaci, RON: RON, nilaiJual: nilaiJual, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi, catatBank: catatBank };
 })(window);

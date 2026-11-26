@@ -147,6 +147,25 @@
     var h = M().nilaiJual(S, m); S.bank.saldo += h; M().catatBank(S, 'Jual ' + m.nama, h); S.mobil = null;
     return { ok: true, harga: h };
   }
+  function bayarCicilan(S) {
+    var m = S.mobil; if (!m || !m.kredit) return 'Tidak ada cicilan mobil.';
+    var k = m.kredit;
+    if (k.tunggakan > 0) {
+      var bT = Math.round(k.tunggakan + (k.denda || 0));
+      if (S.bank.saldo < bT) return 'Saldo rekening tidak cukup untuk bayar tunggakan + denda ' + rp(bT) + '.';
+      S.bank.saldo -= bT; M().catatBank(S, 'Bayar tunggakan cicilan ' + m.nama, -bT);
+      k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0;
+      if (k.sisa <= 0) m.kredit = null;
+      return { ok: true, jml: bT, teks: 'Tunggakan cicilan mobil ' + rp(bT) + ' berhasil dilunasi!' + (!m.kredit ? ' Kredit mobil LUNAS!' : '') };
+    }
+    if (k.sisa <= 0) { m.kredit = null; return { ok: true, jml: 0, teks: 'Kredit mobil sudah lunas.' }; }
+    var bA = k.angsuran;
+    if (S.bank.saldo < bA) return 'Saldo rekening tidak cukup untuk bayar angsuran ' + rp(bA) + '.';
+    S.bank.saldo -= bA; M().catatBank(S, 'Bayar angsuran ' + KR.leasing + ' ' + m.nama, -bA);
+    k.sisa--;
+    if (k.sisa <= 0 && !k.tunggakan) { m.kredit = null; return { ok: true, jml: bA, teks: 'Angsuran terakhir ' + rp(bA) + ' dibayar! Kredit mobil LUNAS, BPKB di tangan.' }; }
+    return { ok: true, jml: bA, teks: 'Angsuran mobil ' + rp(bA) + ' dibayar. Sisa ' + k.sisa + ' bulan.' };
+  }
   function lunasi(S) {
     var m = S.mobil; if (!m || !m.kredit) return 'Tidak ada kredit mobil.';
     var k = m.kredit, sisa = Math.round((k.sisa * k.angsuran * 0.9 + k.tunggakan + k.denda) / 1000) * 1000;
@@ -240,23 +259,23 @@
     }
     if (!m) return kabar;
     var k = m.kredit;
-    if (k && k.sisa > 0) {
-      if (tB.d === k.tempo) {
-        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; M().catatBank(S, 'Angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('Angsuran mobil ' + rp(k.angsuran) + ' dipotong. Sisa ' + k.sisa + ' bulan.'); }
-        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('Saldo kurang untuk angsuran mobil. Denda harian berjalan.'); }
+    if (k && (k.sisa > 0 || k.tunggakan > 0)) {
+      if (k.sisa > 0 && tB.d === k.tempo) {
+        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; M().catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('🚗 Autodebit angsuran mobil ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
+        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran mobil (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
       }
       if (k.tunggakan > 0) {
         k.denda += Math.round(k.tunggakan * KR.dendaHarian);
-        if (S.bank.saldo >= k.tunggakan + k.denda) { var b = k.tunggakan + k.denda; S.bank.saldo -= b; M().catatBank(S, 'Tunggakan + denda angsuran mobil', -b, nBaru); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; kabar.push('Tunggakan mobil dan denda ' + rp(b) + ' sudah dibayar.'); }
+        if (S.bank.saldo >= k.tunggakan + k.denda) { var b = k.tunggakan + k.denda; S.bank.saldo -= b; M().catatBank(S, 'Autodebit tunggakan + denda mobil', -b, nBaru); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; kabar.push('🚗 Tunggakan mobil & denda ' + rp(b) + ' dibayar otomatis.'); }
         else if (k.bulanTelat >= KR.tarikSetelahBulan) { kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.'); S.mobil = null; return kabar; }
       }
-      if (k.sisa === 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('Kredit mobil lunas. BPKB diambil di ' + KR.leasing + '.'); }
+      if (k.sisa <= 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('🎉 Kredit mobil lunas! BPKB diambil di ' + KR.leasing + '.'); }
     }
     if (nBaru === m.pajakTempo - 14) kabar.push('Pajak tahunan ' + m.nama + ' jatuh tempo 2 minggu lagi.');
     if (nBaru > m.pajakTempo && (nBaru - m.pajakTempo) % 30 === 1) { m.dendaPajak = (m.dendaPajak || 0) + Math.round(m.harga * R.pkb * R.dendaPajak); kabar.push('Pajak mobil telat, denda bertambah.'); }
     return kabar;
   }
 
-  g.KK_MOBIL = { siapkan: siapkan, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, lunasi: lunasi,
+  g.KK_MOBIL = { siapkan: siapkan, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
     isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);
