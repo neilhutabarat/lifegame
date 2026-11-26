@@ -1,53 +1,9 @@
-/* adegan.js — adegan kedai di kanvas 2D: langit sesuai jam, ruko, tiang listrik, kontainer, barista, motor lewat.
-   Gambar masih bentuk sederhana; gambar AI menggantikan bagian ini di tahap 9. */
+/* adegan.js — adegan The Driver 100% vektor Kanvas 2D: langit sesuai jam, ruko, pemandangan tema & ikon kota, interior kos/rumah, karakter, motor, dan mobil vektor dengan roda berputar. */
 (function (g) {
   'use strict';
   var cv, cx, W = 360, H = 640, dpr = 1;
   var anim = { rolling: 0, pantulKedai: 0, pantulBarista: 0, kedip: 0, motor: [], tMotor: 0, angkat: 0, teks: [], cup: [] };
   var ruko = [];
-  var bgImgs = {}, charImgs = {}, charFullImgs = {}, kotaImgs = {}, temaImgs = {}, motorImgs = {}, mobilImgs = {};
-  function muatLazily(map, kunci, src) {
-    if (!kunci) return null;
-    if (map[kunci] === 'none') return null;
-    if (map[kunci]) return map[kunci].naturalWidth ? map[kunci] : null;
-    var im = new Image();
-    im.onerror = function () { map[kunci] = 'none'; };
-    im.src = src;
-    map[kunci] = im;
-    return null;
-  }
-  function gambarLatarGulir(im, yBawah, geser) {
-    if (!im || !im.naturalWidth) return false;
-    var dh = Math.max(yBawah, 240), dw = Math.max(W, dh * (im.naturalWidth / im.naturalHeight));
-    var off = ((geser || 0) % dw + dw) % dw;
-    cx.drawImage(im, -off, 0, dw, dh);
-    if (dw - off < W) cx.drawImage(im, dw - off, 0, dw, dh);
-    return true;
-  }
-  function muatBg(kunci, src) {
-    var im = new Image();
-    im.onload = function () { bgImgs[kunci] = im; };
-    im.src = src;
-  }
-  function muatChar(kunci, src) {
-    var im = new Image();
-    im.onload = function () { charImgs[kunci] = im; };
-    im.src = src;
-  }
-  function muatCharFull(kunci, src) {
-    var im = new Image();
-    im.onload = function () { charFullImgs[kunci] = im; };
-    im.src = src;
-  }
-  var DAFTAR_CHAR = ['neil-aura', 'ferry', 'cewek-1', 'cewek-2', 'cewek-3', 'cowok-1', 'cowok-2', 'remaja-cewek', 'remaja-cowok', 'anak-cewek', 'anak-cowok'];
-  DAFTAR_CHAR.forEach(function (k) {
-    muatChar(k, 'img/char-' + k + '.jpg');
-    muatCharFull(k, 'img/char-' + k + '-full.png');
-  });
-  muatBg('kos', 'img/bg-kos.jpg');
-  muatBg('subsidi', 'img/bg-rumah-subsidi.jpg');
-  muatBg('komersial', 'img/bg-rumah-komersial.jpg');
-  muatBg('mewah', 'img/bg-rumah-mewah.jpg');
   function hashNama(teks) {
     var h = 0, s = String(teks || '');
     for (var i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
@@ -55,89 +11,19 @@
   }
   function pilihKunciChar(nama, gender, usia, peran) {
     var nm = String(nama || '').trim().toLowerCase();
-    if (nm === 'neil aura' || nm.indexOf('neil aura') >= 0) return 'neil-aura';
-    if (nm === 'ferry ananda' || nm.indexOf('ferry ananda') >= 0) return 'ferry';
     var cw = gender === 'cowok';
     if ((usia != null && usia < 12) || (peran === 'anak' && (usia == null || usia < 12))) return cw ? 'anak-cowok' : 'anak-cewek';
     if (usia != null && usia < 20) return cw ? 'remaja-cowok' : 'remaja-cewek';
-    var pool = cw ? ['cowok-1', 'cowok-2'] : ['cewek-1', 'cewek-2', 'cewek-3'];
-    return pool[hashNama(nm || (cw ? 'c' : 'p')) % pool.length];
+    return (cw ? 'cowok-' : 'cewek-') + (hashNama(nm || (cw ? 'c' : 'p')) % 6);
   }
-  function imChar(nama, gender, usia, peran) { return charImgs[pilihKunciChar(nama, gender, usia, peran)]; }
-  function imCharFull(nama, gender, usia, peran) { return charFullImgs[pilihKunciChar(nama, gender, usia, peran)]; }
   var genderPemain = 'cewek';
-  function imPemain(s) {
-    if (s && s.namaPemain) return imChar(s.namaPemain, s.gender || genderPemain);
-    return genderPemain === 'cowok' ? charImgs['cowok-1'] : charImgs['cewek-1'];
-  }
-  function imPasangan(s) {
-    var pas = s && s.keluargaRumah ? s.keluargaRumah.filter(function (k) { return k.pasangan; })[0] : null;
-    if (pas) return imChar(pas.nama, pas.gender, pas.usia, pas.peran);
-    return genderPemain === 'cowok' ? charImgs['cewek-1'] : charImgs['cowok-1'];
-  }
-  function gambarPotretAi(im, x, y, r, t, o) {
-    if (!im || !im.naturalWidth) return false;
-    o = o || {};
-    var gerakX = o.diam ? 0 : Math.sin(t / 1350 + x * 0.05) * (o.gerak != null ? o.gerak : 7);
-    var bobY = o.diam ? 0 : Math.abs(Math.sin(t / 340 + x * 0.03)) * -2.6;
-    var rot = o.diam ? 0 : Math.sin(t / 700 + x * 0.04) * 0.045;
-    var napas = o.diam ? 1 : 1 + Math.sin(t / 460 + x * 0.02) * 0.025;
-    var px = x + gerakX, py = y + bobY;
-    cx.save();
-    cx.fillStyle = 'rgba(0,0,0,.28)';
-    cx.beginPath(); cx.ellipse(px, py + r + 4, r * 0.78, 4.5, 0, 0, Math.PI * 2); cx.fill();
-    cx.translate(px, py);
-    cx.rotate(rot);
-    cx.scale(napas, napas);
-    cx.beginPath(); cx.arc(0, 0, r, 0, Math.PI * 2); cx.closePath(); cx.clip();
-    /* potongan wajah: perbesar dan geser ke atas supaya yang terlihat muka, bukan seluruh badan */
-    var s = Math.max((r * 2) / im.naturalWidth, (r * 2) / im.naturalHeight) * (o.zoom || 1.7);
-    var dw = im.naturalWidth * s, dh = im.naturalHeight * s;
-    cx.drawImage(im, -dw / 2, -dh * 0.4, dw, dh);
-    /* efek kedip mata atau rona pipi/ekspresi lembut */
-    if (!o.diam && anim.kedip > 0) {
-      cx.fillStyle = 'rgba(255,220,210,.22)';
-      cx.fillRect(-r, -r * 0.25, r * 2, r * 0.16);
-    }
-    if (o.ekspresi === 'hati' || o.ekspresi === 'senang') {
-      cx.fillStyle = 'rgba(255,105,150,.18)';
-      cx.fillRect(-r, -r, r * 2, r * 2);
-    }
-    cx.restore();
-    cx.save();
-    cx.translate(px, py);
-    cx.strokeStyle = o.bingkai || '#ffffff';
-    cx.lineWidth = o.tebal || 2.6;
-    cx.beginPath(); cx.arc(0, 0, r, 0, Math.PI * 2); cx.stroke();
-    /* gelembung ekspresi bergerak di kanan atas karakter */
-    if (o.ikonEkspresi) {
-      var ey = -r + 2 + Math.sin(t / 320 + x) * 2;
-      bulat(r - 2, ey, 9.5, '#ffffff');
-      cx.strokeStyle = o.bingkai || '#1f8a80'; cx.lineWidth = 1.4;
-      cx.beginPath(); cx.arc(r - 2, ey, 9.5, 0, Math.PI * 2); cx.stroke();
-      cx.font = '11px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(o.ikonEkspresi, r - 2, ey + 0.5);
-    }
-    if (o.label) {
-      cx.font = '800 10px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center';
-      var tw = Math.max(36, cx.measureText(o.label).width + 12);
-      kotakBulat(-tw / 2, r - 6, tw, 15, 7, 'rgba(18,25,29,.84)');
-      cx.fillStyle = '#fff'; cx.fillText(o.label, 0, r + 4.5);
-    }
-    cx.restore();
-    return true;
-  }
-  function gambarBgCover(im, alpha) {
-    if (!im || !im.naturalWidth) return false;
-    var rImg = im.naturalWidth / im.naturalHeight, rCv = W / H;
-    var dw = W, dh = H, dx = 0, dy = 0;
-    if (rImg > rCv) { dh = H; dw = H * rImg; dx = (W - dw) / 2; }
-    else { dw = W; dh = W / rImg; dy = (H - dh) / 2; }
-    if (alpha != null && alpha < 1) cx.globalAlpha = alpha;
-    cx.drawImage(im, dx, dy, dw, dh);
-    cx.globalAlpha = 1;
-    return true;
-  }
+  function gambarPotretAi() { return false; }
+  function gambarBgCover() { return false; }
+  function gambarKarakterPenuh() { return false; }
+  function imChar() { return null; }
+  function imCharFull() { return null; }
+  function imPemain() { return null; }
+  function imPasangan() { return null; }
 
   /* angka acak tetap supaya ruko dan jendela selalu sama */
   function acak(seed) { var x = Math.sin(seed * 999.13) * 43758.5453; return x - Math.floor(x); }
@@ -912,36 +798,6 @@
     cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
     kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
   }
-  function gambarKarakterPenuh(im, x, yKaki, tinggi, t, o) {
-    if (!im || !im.naturalWidth) return false;
-    o = o || {};
-    var gerakX = o.diam ? 0 : Math.sin(t / 1500 + x * 0.05) * (o.gerak != null ? o.gerak : 4);
-    var napas = o.diam ? 1 : 1 + Math.sin(t / 520 + x * 0.02) * 0.015;
-    var dw = tinggi * (im.naturalWidth / im.naturalHeight), dh = tinggi;
-    var px = x + gerakX, py = yKaki;
-    cx.save();
-    cx.fillStyle = 'rgba(0,0,0,.22)';
-    cx.beginPath(); cx.ellipse(px, py + 2, Math.max(14, dw * 0.42), 5, 0, 0, Math.PI * 2); cx.fill();
-    cx.translate(px, py);
-    cx.scale(1, napas);
-    cx.drawImage(im, -dw / 2, -dh, dw, dh);
-    if (o.ikonEkspresi) {
-      var ey = -dh + 10 + Math.sin(t / 320 + x) * 2;
-      bulat(dw * 0.35 + 6, ey, 9.5, '#ffffff');
-      cx.strokeStyle = o.bingkai || '#1f8a80'; cx.lineWidth = 1.4;
-      cx.beginPath(); cx.arc(dw * 0.35 + 6, ey, 9.5, 0, Math.PI * 2); cx.stroke();
-      cx.font = '11px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(o.ikonEkspresi, dw * 0.35 + 6, ey + 0.5);
-    }
-    if (o.label) {
-      cx.font = '800 10px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center';
-      var tw = Math.max(36, cx.measureText(o.label).width + 12);
-      kotakBulat(-tw / 2, 6, tw, 15, 7, 'rgba(18,25,29,.82)');
-      cx.fillStyle = '#fff'; cx.fillText(o.label, 0, 14.5);
-    }
-    cx.restore();
-    return true;
-  }
   function gambarPenghuniRumah(s, t, xKasur, yKasur, yLantai) {
     var kel = s.keluargaRumah || [];
     var pas = kel.filter(function (k) { return k.pasangan; })[0] || null;
@@ -1128,7 +984,7 @@
   /* ---------- rumah sendiri: denah ringkas supaya barang terlihat di atas tombol bawah ---------- */
   function gambarRumah(s, t) {
     var m = s.menit % 1440, gp = gelap(m), b = s.barang || {}, rumah = s.rumah, lantai = Math.max(330, H - 300);
-    var adaBgRumah = gambarBgCover(bgImgs[rumah] || bgImgs.komersial || bgImgs.subsidi, 1.0);
+    var adaBgRumah = false;
     if (!adaBgRumah) {
       kotak(0, 0, W, H, { subsidi: '#dfe6dc', komersial: '#efe6d6', mewah: '#f4efe8' }[rumah]);
       cx.fillStyle = 'rgba(0,0,0,.035)'; for (var x = 0; x < W; x += 30) cx.fillRect(x, 0, 2, lantai);
@@ -1175,7 +1031,7 @@
     if (s.rumah) return gambarRumah(s, t);
     var m = s.menit % 1440, gp = gelap(m), b = s.barang || {}, rumah = s.rumah;
     var lantai = Math.max(330, H - 300);
-    var adaBgKos = gambarBgCover(bgImgs.kos, 1.0);
+    var adaBgKos = false;
     if (!adaBgKos) {
       kotak(0, 0, W, H, rumah ? { subsidi: '#dfe6dc', komersial: '#efe6d6', mewah: '#f4efe8' }[rumah] : '#e9dcc4'); /* dinding */
       cx.fillStyle = 'rgba(0,0,0,.04)'; for (var x = 0; x < W; x += 30) cx.fillRect(x, 0, 2, lantai);
@@ -1231,18 +1087,9 @@
   /* ---------- motor sendiri (bentuk vektor asli per jenis), ngojek, mobil, pindahan ---------- */
   var SPORT = { gsxr150: '#2f6fb0', cbr150: '#d9443a', r15: '#2f6fb0', r15m: '#1f4e8c', mt25: '#3b3f46', cbr250: '#d9443a', cbr250sp: '#c62828', ninja250: '#4fa53a', r25: '#2f6fb0', zx25r: '#4fa53a', zx25rr: '#43a047', zx4rr: '#4fa53a', zx6r: '#4fa53a', zx10r: '#4fa53a', cbr1000: '#d9443a', h2: '#2b2f36', r6: '#2f6fb0', r1m: '#1f3a60', s1000rr: '#1565c0', panigalev4: '#c62828', harleysport: '#26292e', 'cbr250-bekas': '#d9443a' };
   var RETRO = { scoopy: 1, vespa: 1, vespasprint: 1, vespagts: 1, vespa946: 1, fazzio: 1, filano: 1, stylo160: 1 }, MAXI = { nmax: 1, nmaxturbo: 1, pcx160: 1, pcxroadsync: 1, adv160: 1, xmax250: 1, forza250: 1, aeroxalpha: 1, alvacervo: 1 }, AYAGO = { satriafu: 1, mxking: 1 };
-  /* motor menghadap kanan; dasar = permukaan jalan */
+  /* motor menghadap kanan; dasar = permukaan jalan (100% vektor) */
   function gambarMotorKu(x, y, id, o, t) {
     o = o || {};
-    var imM = muatLazily(motorImgs, id, 'img/motor-' + id + '.png');
-    if (imM) {
-      var th = 56, tw = th * (imM.naturalWidth / imM.naturalHeight);
-      cx.save(); cx.translate(x, y); if (o.kiri) cx.scale(-1, 1);
-      cx.fillStyle = 'rgba(0,0,0,.28)'; cx.beginPath(); cx.ellipse(0, 1, Math.max(26, tw * 0.42), 4.5, 0, 0, Math.PI * 2); cx.fill();
-      cx.drawImage(imM, -tw / 2, -th + 2, tw, th);
-      cx.restore();
-      return;
-    }
     var sport = !!SPORT[id], retro = !!RETRO[id], maxi = !!MAXI[id], ayago = !!AYAGO[id];
     var w = SPORT[id] || WARNA_MOTOR[id] || '#d9443a', putar = o.jalan ? t / 60 : 0;
     cx.save(); cx.translate(x, y); if (o.kiri) cx.scale(-1, 1);
@@ -1313,190 +1160,47 @@
     if (sopir && !hp) kotak(x + 8, yb + 8, 12, 4, baju);
     if (hp) { kotak(x + 6, yb + 4, 5, 9, '#222'); kotak(x + 7, yb + 5, 3, 6, '#7fd3e8'); }
   }
-  var WARNA_MOBIL = { granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', calya: '#b8bcc0', agya: '#d9443a', avanza: '#e8e4da', rush: '#2b2f36', veloz: '#8a2a2a', innova: '#c8ccd0', zenix: '#d8d4cc', fortuner: '#2b2f36', camry: '#3a3f46', gr86: '#d9443a', alphard: '#f3f1ea', landcruiser: '#2b2f36' };
-  var FALLBACK_MOBIL = { mpv: 'avanza', suv: 'fortuner', van: 'alphard', hatch: 'brio', sedan: 'civicrs', sport: 'gr86', pikap: 'granmax' };
-  /* koordinat roda terukur dari 9 sprite PNG mobil: [rearX, frontX, wheelY, tireRadiusH] (rasio 0..1 dari lebar & tinggi sprite) */
-  var RODA_MOBIL = {
-    alphard:     [0.205, 0.817, 0.818, 0.160],
-    avanza:      [0.195, 0.824, 0.808, 0.168],
-    brio:        [0.155, 0.802, 0.810, 0.162],
-    civicrs:     [0.200, 0.807, 0.774, 0.194],
-    fortuner:    [0.210, 0.800, 0.804, 0.172],
-    gr86:        [0.195, 0.800, 0.750, 0.210],
-    granmax:     [0.245, 0.871, 0.838, 0.138],
-    innova:      [0.205, 0.805, 0.806, 0.166],
-    landcruiser: [0.229, 0.817, 0.802, 0.172]
+  var WARNA_MOBIL = {
+    granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', traga: '#e8e4da', triton: '#3a4048',
+    calya: '#b8bcc0', sigra: '#c9ced4', ayla: '#e5a93c', agya: '#d9443a', brio: '#f0b92b', airev: '#8ecae6', binguoev: '#d6e5e3', cloudev: '#d8dde2',
+    xenia: '#cfd4d8', avanza: '#e8e4da', ertiga: '#7b8794', terios: '#d9d6cf', rush: '#2b2f36', xl7: '#59636e', veloz: '#8a2a2a', xpander: '#cfd4da', stargazer: '#bfc6cc',
+    raize: '#d9443a', brv: '#d6dade', yariscross: '#1f7a8c', atto3: '#3a7ca5', hiace: '#eef0f2',
+    bydm6: '#4a5568', creta: '#c8cfd6', hrv: '#8d99ae', innova: '#c8ccd0', zenix: '#d8d4cc', jimny: '#a7b97d', hiluxdc: '#2b2f36',
+    fortuner: '#2b2f36', pajerosport: '#2c3138', civicrs: '#c62828', bydseal: '#457b9d', crv: '#3d4550', ioniq5: '#cfd6dc', camry: '#3a3f46', gr86: '#d9443a',
+    staria: '#2e343d', palisade: '#262b33', model3: '#c92a2a', bmw330i: '#1d4e89',
+    alphard: '#f3f1ea', vellfire: '#22262b', lexuslm: '#2d3138', landcruiser: '#2b2f36', porsche911: '#d93829', mercg63: '#1e2227'
   };
-  function gambarRodaPutar(wx, wy, rTire, sudut, gerak) {
-    var rRim = rTire * 0.64;
-    cx.save();
-    cx.translate(wx, wy);
-    /* ban karet gelap (tetap menutup pelek statis pada PNG) */
-    cx.fillStyle = '#171a1f';
-    cx.beginPath(); cx.arc(0, 0, rTire, 0, Math.PI * 2); cx.fill();
-    /* dinding ban & alur putar halus */
-    cx.strokeStyle = '#2d333c';
-    cx.lineWidth = Math.max(1.2, rTire * 0.14);
-    cx.beginPath(); cx.arc(0, 0, rTire * 0.82, 0, Math.PI * 2); cx.stroke();
-    cx.save();
-    cx.rotate(sudut);
-    cx.strokeStyle = 'rgba(130,142,158,.24)';
-    cx.lineWidth = Math.max(0.9, rTire * 0.08);
-    for (var tr = 0; tr < 6; tr++) {
-      var aTr = tr * (Math.PI / 3);
-      cx.beginPath(); cx.arc(0, 0, rTire * 0.84, aTr, aTr + 0.22); cx.stroke();
-    }
-    cx.restore();
-    /* latar cakram rem di balik velg */
-    var gDisc = cx.createRadialGradient(0, 0, rRim * 0.15, 0, 0, rRim);
-    gDisc.addColorStop(0, '#303640');
-    gDisc.addColorStop(0.65, '#464e5a');
-    gDisc.addColorStop(1, '#1a1e24');
-    cx.fillStyle = gDisc;
-    cx.beginPath(); cx.arc(0, 0, rRim, 0, Math.PI * 2); cx.fill();
-    /* kaliper rem statis (tidak ikut berputar, memberi efek realistis!) */
-    cx.fillStyle = '#a8342a';
-    cx.beginPath(); cx.arc(0, 0, rRim * 0.72, -2.55, -1.75); cx.arc(0, 0, rRim * 0.44, -1.75, -2.55, true); cx.closePath(); cx.fill();
-    /* ring bibir velg metalik */
-    cx.strokeStyle = '#c8d1da';
-    cx.lineWidth = Math.max(1.1, rRim * 0.14);
-    cx.beginPath(); cx.arc(0, 0, rRim * 0.94, 0, Math.PI * 2); cx.stroke();
-    /* palang 5-spoke velg alloy yang berputar halus */
-    cx.save();
-    cx.rotate(sudut);
-    for (var s = 0; s < 5; s++) {
-      var ang = s * (Math.PI * 2 / 5);
-      cx.save();
-      cx.rotate(ang);
-      cx.fillStyle = '#dfe6ee';
-      cx.beginPath();
-      cx.moveTo(-rRim * 0.13, -rRim * 0.22);
-      cx.lineTo(rRim * 0.13, -rRim * 0.22);
-      cx.lineTo(rRim * 0.08, -rRim * 0.90);
-      cx.lineTo(-rRim * 0.08, -rRim * 0.90);
-      cx.closePath();
-      cx.fill();
-      cx.fillStyle = 'rgba(95,108,122,.55)';
-      cx.fillRect(0, -rRim * 0.88, rRim * 0.07, rRim * 0.65);
-      cx.restore();
-    }
-    /* efek motion-blur melingkar saat mobil melaju kencang */
-    if (gerak) {
-      cx.strokeStyle = 'rgba(230,238,246,.32)';
-      cx.lineWidth = Math.max(1.2, rRim * 0.18);
-      for (var mb = 0; mb < 3; mb++) {
-        var aM = mb * (Math.PI * 2 / 3);
-        cx.beginPath(); cx.arc(0, 0, rRim * 0.58, aM, aM + 0.75); cx.stroke();
-      }
-    }
-    /* dop tengah velg */
-    cx.fillStyle = '#232830';
-    cx.beginPath(); cx.arc(0, 0, rRim * 0.25, 0, Math.PI * 2); cx.fill();
-    cx.fillStyle = '#cfd7df';
-    cx.beginPath(); cx.arc(0, 0, rRim * 0.11, 0, Math.PI * 2); cx.fill();
-    cx.restore();
-    cx.restore();
-  }
   function gambarMobil(x, y, bentuk, id, kiri, roda, gp) {
-    var spriteKey = id;
-    var imC = muatLazily(mobilImgs, id, 'img/mobil-' + id + '.png');
-    if (!imC) {
-      var fbId = (id === 'zenix') ? 'innova' : (FALLBACK_MOBIL[bentuk] || 'avanza');
-      if (fbId && fbId !== id) {
-        imC = muatLazily(mobilImgs, fbId, 'img/mobil-' + fbId + '.png');
-        if (imC) spriteKey = fbId;
-      }
-    }
-    var malamF = gp != null ? Math.max(0, Math.min(1, gp)) : 0;
-    if (imC) {
-      var th = (bentuk === 'sport' || bentuk === 'sedan') ? 46 : (bentuk === 'hatch') ? 50 : (bentuk === 'van' || bentuk === 'pikap') ? 60 : 56;
-      var tw = th * (imC.naturalWidth / imC.naturalHeight);
-      var rm = RODA_MOBIL[spriteKey] || RODA_MOBIL.avanza;
-      var gerak = !!(roda && Math.abs(roda) > 0.001);
-      var bob = gerak ? Math.sin(roda * 0.7) * 0.85 : 0;
-      var wx1 = -tw / 2 + tw * rm[0];
-      var wx2 = -tw / 2 + tw * rm[1];
-      var wy = -th + 4 + th * rm[2];
-      var rTire = th * rm[3];
-      cx.save(); cx.translate(x, y); if (kiri) cx.scale(-1, 1);
-      /* 1. Bayangan kontak 2 lapis menempel kuat di aspal (tidak ikut memantul naik bersama bodi) */
-      var gSh = cx.createRadialGradient(0, 1, tw * 0.08, 0, 1, tw * 0.52);
-      gSh.addColorStop(0, 'rgba(0,0,0,.48)');
-      gSh.addColorStop(0.68, 'rgba(0,0,0,.24)');
-      gSh.addColorStop(1, 'rgba(0,0,0,0)');
-      cx.fillStyle = gSh;
-      cx.beginPath(); cx.ellipse(0, 1.5, Math.max(46, tw * 0.50), 7.5, 0, 0, Math.PI * 2); cx.fill();
-      /* bayangan tapak ban kiri & kanan menempel ketat ke aspal */
-      cx.fillStyle = 'rgba(0,0,0,.65)';
-      cx.beginPath(); cx.ellipse(wx1, 1.5, rTire * 1.12, 3.0, 0, 0, Math.PI * 2); cx.fill();
-      cx.beginPath(); cx.ellipse(wx2, 1.5, rTire * 1.12, 3.0, 0, 0, Math.PI * 2); cx.fill();
-      /* 2. Bodi mobil dengan suspensi halus terpisah dari permukaan jalan */
-      cx.drawImage(imC, -tw / 2, -th + 4 + bob, tw, th);
-      /* 3. Roda & velg alloy berputar presisi di posisi lubang spakbor (saat jalan maupun parkir) */
-      if (gerak) {
-        gambarRodaPutar(wx1, wy + bob * 0.25, rTire, roda, true);
-        gambarRodaPutar(wx2, wy + bob * 0.25, rTire, roda, true);
-      }
-      /* 4. Integrasi pencahayaan malam: lampu depan LED, lampu rem belakang merah, & bias atmosfer malam */
-      if (malamF > 0.16) {
-        var frontX = tw * 0.45, rearX = -tw * 0.45, lampY = -th * 0.36 + bob;
-        if (gerak) {
-          /* sorot lampu utama ke depan aspal saat mobil melaju */
-          var gHead = cx.createLinearGradient(frontX, lampY, frontX + 68, lampY + 14);
-          gHead.addColorStop(0, 'rgba(255,248,215,' + (malamF * 0.42).toFixed(3) + ')');
-          gHead.addColorStop(1, 'rgba(255,248,215,0)');
-          cx.fillStyle = gHead;
-          cx.beginPath();
-          cx.moveTo(frontX, lampY - 3);
-          cx.lineTo(frontX + 70, lampY - 12);
-          cx.lineTo(frontX + 70, lampY + 22);
-          cx.lineTo(frontX, lampY + 4);
-          cx.closePath();
-          cx.fill();
-          /* titik pijar lampu depan LED */
-          var gHl = cx.createRadialGradient(frontX, lampY, 1, frontX, lampY, 11);
-          gHl.addColorStop(0, 'rgba(255,253,235,' + (malamF * 0.92).toFixed(3) + ')');
-          gHl.addColorStop(1, 'rgba(255,245,195,0)');
-          cx.fillStyle = gHl;
-          cx.beginPath(); cx.arc(frontX, lampY, 11, 0, Math.PI * 2); cx.fill();
-          /* titik pijar lampu belakang LED merah */
-          var gTl = cx.createRadialGradient(rearX, lampY, 1, rearX, lampY, 11);
-          gTl.addColorStop(0, 'rgba(255,48,38,' + (malamF * 0.85).toFixed(3) + ')');
-          gTl.addColorStop(1, 'rgba(255,30,25,0)');
-          cx.fillStyle = gTl;
-          cx.beginPath(); cx.arc(rearX, lampY, 11, 0, Math.PI * 2); cx.fill();
-          /* refleksi merah tipis di aspal belakang */
-          var gTr = cx.createRadialGradient(rearX - 6, 2, 1, rearX - 6, 2, 18);
-          gTr.addColorStop(0, 'rgba(255,40,30,' + (malamF * 0.24).toFixed(3) + ')');
-          gTr.addColorStop(1, 'rgba(255,40,30,0)');
-          cx.fillStyle = gTr;
-          cx.beginPath(); cx.ellipse(rearX - 6, 2, 18, 4.5, 0, 0, Math.PI * 2); cx.fill();
-        }
-      }
-      cx.restore();
-      return;
-    }
-    var w = WARNA_MOBIL[id] || '#e8e4da', pt = roda ? roda / 60 : 0;
+    var w = WARNA_MOBIL[id] || '#e8e4da';
+    var gerak = !!(roda && Math.abs(roda) > 0.001);
+    var pt = gerak ? roda : 0;
+    var lampu = (gp || 0) > 0.2 && gerak;
     cx.save(); cx.translate(x, y); if (kiri) cx.scale(-1, 1);
-    if (id === 'hilux') {
-      /* Hilux Rangga: pikap bermoncong (bonnet) */
+    if (id === 'hilux' || id === 'triton') {
+      /* Pikap bermoncong (bonnet) 100% vektor dengan roda berputar */
       cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(0, 2, 64, 5, 0, 0, Math.PI * 2); cx.fill();
       kotakBulat(-58, -24, 62, 16, 3, w); kotak(-58, -26, 62, 3, '#8d969b');
       kotakBulat(4, -24, 54, 16, 4, w);
       cx.fillStyle = w; cx.beginPath(); cx.moveTo(4, -24); cx.lineTo(8, -44); cx.lineTo(30, -44); cx.lineTo(42, -24); cx.closePath(); cx.fill();
       cx.fillStyle = 'rgba(130,175,205,.88)'; cx.beginPath(); cx.moveTo(10, -25); cx.lineTo(13, -40); cx.lineTo(28, -40); cx.lineTo(37, -25); cx.closePath(); cx.fill();
       kotak(54, -20, 5, 6, '#fff6cc'); kotak(-59, -20, 4, 6, '#e03c31');
-      [-36, 38].forEach(function (rx) { bulat(rx, -7, 11.5, '#181a1d'); bulat(rx, -7, 6, '#b9c2ca'); });
+      [-36, 38].forEach(function (rx) {
+        bulat(rx, -7, 11.5, '#181a1d'); bulat(rx, -7, 6.2, '#b9c2ca');
+        cx.strokeStyle = '#485058'; cx.lineWidth = 1.4; cx.beginPath();
+        for (var s = 0; s < 4; s++) { var a = pt + s * Math.PI / 4; cx.moveTo(rx + Math.cos(a) * 5.6, -7 + Math.sin(a) * 5.6); cx.lineTo(rx - Math.cos(a) * 5.6, -7 - Math.sin(a) * 5.6); }
+        cx.stroke();
+        bulat(rx, -7, 2, '#eef2f5');
+      });
     } else if (bentuk === 'van') {
-      /* Alphard: boxy MPV mewah + aksen krom + grille besar */
-      gambarMobilRealistis('mpv', w, pt, false);
+      /* Alphard / Vellfire / HiAce / Staria: boxy MPV mewah + aksen krom */
+      gambarMobilRealistis('mpv', w, pt, lampu);
       kotak(52, -28, 7, 18, '#c9b37a'); kotak(-56, -15, 112, 2.5, '#c9b37a');
     } else if (bentuk === 'sport') {
-      /* GR 86: sports coupe ceper + spoiler belakang */
-      gambarMobilRealistis('sedan', w, pt, false);
+      /* GR 86 / Porsche 911: sports coupe ceper + spoiler belakang */
+      gambarMobilRealistis('sedan', w, pt, lampu);
       kotak(-56, -32, 12, 3, '#1f2328'); kotak(-52, -29, 3, 5, '#1f2328');
     } else {
-      gambarMobilRealistis(bentuk, w, pt, false);
+      gambarMobilRealistis(bentuk, w, pt, lampu);
     }
     cx.restore();
   }
@@ -1513,13 +1217,8 @@
   function gambarJalanRaya(s, t) {
     var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
     var gp = gelap(m);
-    var imKota = muatLazily(kotaImgs, s.kota, 'img/kota-' + s.kota + '.jpg');
-    var temaK = (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[s.kota] && g.KK_RUTE.kota[s.kota].tema) || 'kota';
-    var imLatarJalan = imKota || muatLazily(temaImgs, temaK, 'img/tema-' + temaK + '.jpg') || muatLazily(temaImgs, 'kotaBesar', 'img/tema-kotaBesar.jpg');
-    if (!gambarLatarGulir(imLatarJalan, dasarRuko + 12, t * 0.06)) {
-      gambarLangit(m, t);
-      cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
-    }
+    gambarLangit(m, t);
+    cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     kotak(0, dasarRuko, W, jalan - dasarRuko, 'rgba(185,178,166,.55)');
     var g2 = (t * 0.25) % 20; for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b');
@@ -1594,10 +1293,8 @@
     else if (id === 'binjai') { for (var b2 = -2; b2 <= 2; b2++) { bulat(x + b2 * 14 * s, d - 12 * s, 7 * s, '#d9302c'); kotak(x + b2 * 14 * s - 1, d - 32 * s, 2, 20 * s, '#6b4a2e'); } gedung(x - 40 * s, d, 30 * s, 50 * s, '#d9cfb8', lampu); gedung(x + 12 * s, d, 34 * s, 40 * s, '#cdbf9e', lampu); }
     else { gedung(x - 45 * s, d, 28 * s, 56 * s, '#cfc7b4', lampu); gedung(x - 12 * s, d, 30 * s, 72 * s, '#b9c3c9', lampu); gedung(x + 22 * s, d, 26 * s, 48 * s, '#d9cfb8', lampu); }
   }
-  /* pemandangan umum per tema, bergeser mengikuti jarak tempuh */
+  /* pemandangan umum per tema (100% vektor), bergeser mengikuti jarak tempuh */
   function latarTema(tema, dasar, geser, gp, m) {
-    var imTema = muatLazily(temaImgs, tema, 'img/tema-' + tema + '.jpg');
-    if (gambarLatarGulir(imTema, dasar + 8, geser * 0.35)) return;
     var lampu = gp > 0.4, off = geser;
     if (tema === 'gunung') { bukitLatar(dasar - 12, 110, '#6d8f8a', off * 0.2, 90, 1); bukitLatar(dasar - 4, 70, '#4f8a55', off * 0.45, 60, 3); for (var r = 0; r < 4; r++) { cx.fillStyle = 'rgba(90,160,80,' + (0.5 - r * 0.08) + ')'; cx.fillRect(0, dasar - 8 - r * 7, W, 3); } }
     else if (tema === 'danau') { bukitLatar(dasar - 18, 90, '#5d7f8a', off * 0.15, 110, 5); cx.fillStyle = 'rgba(90,170,205,.85)'; cx.fillRect(0, dasar - 18, W, 18); bukitLatar(dasar, 36, '#3f7a4a', off * 0.4, 70, 2); }
@@ -1779,50 +1476,18 @@
     var f = cv.width / W;
     cx.setTransform(f, 0, 0, f, 0, -anim.angkat * f);
     var gp = gelap(m);
-    var bgKedai = (s.hujan || gp > 0.35) ? bgImgs.hujan : bgImgs.siang;
-    var adaBgKedai = !s.berhentiSewa && gambarBgCover(bgKedai, 1.0);
-    if (adaBgKedai) {
-      if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.25).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
-      /* saat menggunakan background AI: tampilkan papan nama toko & karakter AI di konter tanpa menempelkan kontainer/tiang/kursi vektor lama */
-      var kX = 148, kY = dasarKedai - 138, kW = 192, kH = 140;
-      var namaTokoAi = (s.namaToko && s.namaToko.trim()) ? s.namaToko.trim() : 'Kopi Kontainer';
-      kotakBulat(kX + 16, kY - 12, kW - 32, 24, 8, 'rgba(26,18,14,.86)');
-      cx.fillStyle = '#ffe3a1'; cx.font = '700 13px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(namaTokoAi.slice(0, 24), kX + kW / 2, kY);
-      if (s.buka && !s.berhentiSewa) {
-        var ekspBarista = s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : (s.pembeli && s.pembeli.length > 0) ? '☕' : '😊';
-        gambarPotretAi(imPemain(), kX + kW / 2, kY + 56, 25, t, { gerak: 8, bingkai: '#1f8a80', ekspresi: 'senang', ikonEkspresi: ekspBarista, label: s.namaPemain || 'Barista' });
-        if ((s.staf || 0) > 0) gambarPotretAi(imPasangan(), kX + kW / 2 - 52, kY + 60, 20, t + 600, { gerak: 5, bingkai: '#f2a516', ikonEkspresi: '✨', label: 'Staf' });
-        if (s.anakBantu && s.anakBantu.length) gambarPotretAi(charImgs.anak, kX + kW / 2 + 52, kY + 62, 19, t + 900, { gerak: 6, bingkai: '#e91e63', ikonEkspresi: '😄', label: 'Bantu' });
-        kotakBarista = { x: kX + kW / 2 - 28, y: kY + 28, w: 56, h: 56 };
-      } else if (s.berhentiSewa && (!s.ojek || s.ojek.status === 'standby')) {
-        gambarPotretAi(imPemain(), 280, dasarKedai - 24, 24, t, { gerak: 6, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: '🛵', label: s.namaPemain || 'Driver' });
-        kotakBarista = null;
-      } else {
-        kotakBarista = null;
+    gambarLangit(m, t);
+    gambarRuko(m, dasarRuko);
+    if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
+    gambarJalan(trotoar, jalan);
+    gambarTiang(dasarKedai, dasarRuko - 270);
+    if (s.berhentiSewa) {
+      /* mode driver: tidak ada kedai, hanya jalan raya vektor dan pemain vektor di tepi jalan */
+      kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
+      if (!s.ojek || s.ojek.status === 'standby') {
+        gambarKarakterRumah(242, dasarKedai + 6, s.gender || 'cewek', t, { skala: 1.25, baju: '#00aa13', label: s.namaPemain || 'Driver' });
       }
-      kotakKedai = { x: kX, y: kY - 12, w: kW, h: kH + 12, bx: kX + 20, by: kY + 28, bw: kW - 40, bh: 54 };
     } else {
-      var imKotaS = muatLazily(kotaImgs, s.kota, 'img/kota-' + s.kota + '.jpg');
-      var temaKs = (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[s.kota] && g.KK_RUTE.kota[s.kota].tema) || 'kota';
-      var imStandby = imKotaS || muatLazily(temaImgs, temaKs, 'img/tema-' + temaKs + '.jpg') || muatLazily(temaImgs, 'kotaBesar', 'img/tema-kotaBesar.jpg');
-      if (!gambarLatarGulir(imStandby, dasarRuko + 12, 0)) {
-        gambarLangit(m, t);
-        gambarRuko(m, dasarRuko);
-      }
-      if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
-      gambarJalan(trotoar, jalan);
-      if (!imStandby) gambarTiang(dasarKedai, dasarRuko - 270);
-      if (s.berhentiSewa) {
-        /* mode driver: tidak ada kedai, hanya jalan raya dan pemain di tepi jalan */
-        kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
-        if (!s.ojek || s.ojek.status === 'standby') {
-          var imStand = imCharFull(s.namaPemain, s.gender);
-          if (!gambarKarakterPenuh(imStand, 242, dasarKedai + 8, 128, t, { gerak: 4, bingkai: '#00aa13', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' })) {
-            gambarPotretAi(imPemain(s), 258, dasarKedai - 30, 24, t, { gerak: 5, zoom: 1.3, bingkai: '#00aa13', ekspresi: 'senang', ikonEkspresi: s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : '🛵', label: s.namaPemain || 'Driver' });
-          }
-        }
-      } else {
       gambarPisang(132, dasarKedai, t);
       kotakKedai = gambarKedai(160, dasarKedai, s, t, m);
       var nyala = s.buka && !s.padam ? Math.max(gp, 0.15) : 0;
@@ -1831,7 +1496,6 @@
       gambarKursi(44, dasarKedai + 4, wk[0]); gambarKursi(88, dasarKedai + 8, wk[1]);
       if ((s.tier || 1) >= 2) { gambarKursi(8, dasarKedai + 10, wk[1]); kotak(20, dasarKedai - 22, 30, 4, s.kayu ? '#b97a46' : '#e8e4da'); }
       kotak(60, dasarKedai - 26, 34, 4, '#e8e4da'); kotak(74, dasarKedai - 22, 4, 24, '#c8c2b4');
-      }
     }
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.32).toFixed(3) + ')'; cx.fillRect(0, trotoar, W, H - trotoar); }
     var daftar = s.pembeli || [];

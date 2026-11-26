@@ -3795,19 +3795,27 @@
     else if (r) toast(r, 2600);
     if (lembar === 'diri') bukaDiri();
   }
-  /* foto wajah bundar: potret AI dipotong ke muka. Pemain mengikuti gender, pasangan sebaliknya */
+  /* avatar wajah bundar 100% vektor SVG dengan variasi warna & gaya berdasarkan nama dan gender */
   function fotoWajah(src, ukuran, bingkai, nama, gender, usia, peran) {
     var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');
-    var pChar = peran || (/anak/.test(src) ? 'anak' : '');
-    var kunci = (ADEGAN && ADEGAN.pilihChar) ? ADEGAN.pilihChar(nama, gChar, usia, pChar) : null;
-    var jenis = gChar === 'cowok' ? 'cowok' : /anak/.test(src) ? 'anak' : 'cewek';
-    var kulit = '#f1c39b', rambut = jenis === 'cowok' ? '#2a1d1a' : jenis === 'anak' ? '#3b2a20' : '#4a2c2a', bg = jenis === 'cowok' ? '#cfe6e3' : '#f6d3dc';
+    var isAnak = peran === 'anak' || /anak/.test(src) || (usia != null && usia < 12);
+    var jenis = isAnak ? 'anak' : (gChar === 'cowok' ? 'cowok' : 'cewek');
+    var h = 0, nm = String(nama || src || '');
+    for (var i = 0; i < nm.length; i++) h = ((h * 31) + nm.charCodeAt(i)) >>> 0;
+    var kulitList = ['#f1c39b', '#e6b289', '#f6cfb0', '#d89d72'];
+    var bajuCwk = ['#1f8a80', '#2f6fb0', '#3b5998', '#4a6b5d', '#5c4d7d'];
+    var bajuCwkP = ['#e91e63', '#c85a72', '#d97742', '#7a5195', '#1f8a80'];
+    var bgCwk = ['#cfe6e3', '#d4e4f4', '#dde8d5', '#e4ddf0'];
+    var bgCwkP = ['#f6d3dc', '#fbe1cc', '#eadcf5', '#d5ece9'];
+    var kulit = kulitList[h % kulitList.length];
+    var rambut = jenis === 'cowok' ? '#241a18' : jenis === 'anak' ? '#3b2a20' : (h % 3 === 0 ? '#2b1d1b' : '#4a2c2a');
+    var baju = jenis === 'cowok' ? bajuCwk[h % bajuCwk.length] : bajuCwkP[h % bajuCwkP.length];
+    var bg = jenis === 'cowok' ? bgCwk[h % bgCwk.length] : bgCwkP[h % bgCwkP.length];
     var hair = jenis === 'cowok' ? '<path d="M14 30c0-12 8-18 18-18s18 6 18 18c-4-6-10-8-18-8s-14 2-18 8z" fill="' + rambut + '"/>'
       : jenis === 'anak' ? '<path d="M13 32c0-13 8-19 19-19s19 6 19 19c-3-7-9-9-19-9s-16 2-19 9z" fill="' + rambut + '"/><circle cx="16" cy="22" r="5" fill="' + rambut + '"/><circle cx="48" cy="22" r="5" fill="' + rambut + '"/>'
       : '<path d="M12 44c-2-20 6-33 20-33s22 13 20 33c-3-5-4-12-4-18-8 0-14-3-16-8-3 6-8 8-16 8 0 6-1 13-4 18z" fill="' + rambut + '"/>';
-    var svg = '<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="' + bg + '"/><path d="M10 64c2-12 10-16 22-16s20 4 22 16z" fill="' + (jenis === 'cowok' ? '#1f8a80' : '#e91e63') + '"/><circle cx="32" cy="32" r="14" fill="' + kulit + '"/>' + hair + '<circle cx="26" cy="33" r="1.8" fill="#2a1d1a"/><circle cx="38" cy="33" r="1.8" fill="#2a1d1a"/><path d="M27 39q5 4 10 0" stroke="#b5524a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
-    var img = kunci ? '<img src="img/char-' + kunci + '.jpg" alt="" onerror="this.style.display=\'none\'">' : '';
-    return '<span class="foto-wajah" style="width:' + ukuran + 'px;height:' + ukuran + 'px;border-color:' + (bingkai || 'rgba(31,138,128,.55)') + '">' + svg + img + '</span>';
+    var svg = '<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="' + bg + '"/><path d="M10 64c2-12 10-16 22-16s20 4 22 16z" fill="' + baju + '"/><circle cx="32" cy="32" r="14" fill="' + kulit + '"/>' + hair + '<circle cx="26" cy="33" r="1.8" fill="#2a1d1a"/><circle cx="38" cy="33" r="1.8" fill="#2a1d1a"/><path d="M27 39q5 4 10 0" stroke="#b5524a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
+    return '<span class="foto-wajah" style="width:' + ukuran + 'px;height:' + ukuran + 'px;border-color:' + (bingkai || 'rgba(31,138,128,.55)') + '">' + svg + '</span>';
   }
   function srcPemain() { return (S && S.profil && S.profil.gender === 'cowok') ? 'char-pemain' : 'char-istri'; }
   function srcPasangan() { return (S && S.profil && S.profil.gender === 'cowok') ? 'char-istri' : 'char-pemain'; }
