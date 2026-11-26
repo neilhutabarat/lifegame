@@ -6,6 +6,7 @@
   var N = g.KK_NYATA, R = g.KK_RUTE;
   var CEPAT_JALAN = 8, CEPAT_TUNGGU = 1; /* waktu berjalan lebih cepat saat menyetir atau menunggu penumpang (setelan) */
   var MULT_MIN = 0.6, MULT_MAKS = 1.6, JEMPUT_MAKS = 3;
+  var KAS_MIN = 50000000; /* batas minimum Kas Travel: auto top-up dari bank jika di bawah Rp50.000.000 */
   var JAM_RAMAI = [0.2, 0.1, 0.1, 0.2, 0.8, 1.4, 1.6, 1.4, 1.1, 1, 1, 1.1, 1.2, 1.2, 1.3, 1.5, 1.7, 1.5, 1.1, 0.8, 0.5, 0.4, 0.3, 0.2];
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
@@ -16,6 +17,10 @@
       hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0, km: 0 } };
     if (!S.travel.total.km) S.travel.total.km = 0;
     if (!S.travel.supir) S.travel.supir = [];
+    if (typeof S.travel.kas !== 'number' || isNaN(S.travel.kas)) S.travel.kas = 0;
+    if (typeof S.travel.kasTarget !== 'number' || S.travel.kasTarget < 1000000) S.travel.kasTarget = KAS_MIN;
+    if (typeof S.travel.autoTopupKas !== 'boolean') S.travel.autoTopupKas = true;
+    if (!Array.isArray(S.travel.kasMutasi)) S.travel.kasMutasi = [];
     S.travel.supir.forEach(function (sp) {
       if (typeof sp.qrisSaldo !== 'number' || isNaN(sp.qrisSaldo)) sp.qrisSaldo = 0;
       if (!Array.isArray(sp.qrisRiwayat)) sp.qrisRiwayat = [];
@@ -26,6 +31,85 @@
     if (!S.travel.aktif || (!S.travel.trip && !R.kota[S.travel.di])) S.travel.di = S.kota;
     sinkronMobilSupir(S);
     return S.travel;
+  }
+  /* ---------- Kas Travel (khusus bensin, perawatan, tol, kapal, gaji supir; auto top-up dari bank jika < 50 juta) ---------- */
+  function catatKas(S, ket, jml, n) {
+    var T = siapkan(S);
+    T.kasMutasi.unshift({ n: n != null ? n : (S.hari || 0), ket: ket, jml: Math.round(jml) });
+    if (T.kasMutasi.length > 50) T.kasMutasi.length = 50;
+  }
+  function pastikanKasTravel(S, butuh, n) {
+    var T = siapkan(S);
+    if (!S.bank || typeof S.bank.saldo !== 'number') return 0;
+    if (T.autoTopupKas === false) return 0;
+    var target = Math.max(T.kasTarget || KAS_MIN, Math.round(butuh || 0));
+    if (T.kas >= target || S.bank.saldo <= 0) return 0;
+    var kurang = Math.min(Math.floor(S.bank.saldo), Math.ceil(target - T.kas));
+    if (kurang <= 0) return 0;
+    S.bank.saldo -= kurang;
+    M().catatBank(S, 'Auto top-up Kas Travel (jaga minimal ' + rp(T.kasTarget || KAS_MIN) + ')', -kurang, n);
+    T.kas += kurang;
+    catatKas(S, 'Auto transfer dari Bank' + (g.KK_UANG ? ' ' + g.KK_UANG.bankIni(S).nama : ''), kurang, n);
+    return kurang;
+  }
+  function danaKas(S) {
+    var T = siapkan(S);
+    var kas = Math.max(0, T.kas || 0);
+    var drBank = (T.autoTopupKas !== false && S.bank) ? Math.max(0, S.bank.saldo || 0) : 0;
+    return kas + drBank;
+  }
+  function bayarKasTravel(S, jml, ket, n, fallbackDompet) {
+    var T = siapkan(S);
+    jml = Math.round(jml); if (jml <= 0) return 0;
+    pastikanKasTravel(S, jml, n);
+    var sisa = jml;
+    var dariKas = Math.min(Math.max(0, T.kas || 0), sisa);
+    if (dariKas > 0) {
+      T.kas -= dariKas;
+      catatKas(S, ket, -dariKas, n);
+      sisa -= dariKas;
+    }
+    if (sisa > 0 && S.bank && S.bank.saldo > 0) {
+      var dariBank = Math.min(Math.max(0, S.bank.saldo), sisa);
+      if (dariBank > 0) { S.bank.saldo -= dariBank; M().catatBank(S, ket, -dariBank, n); sisa -= dariBank; }
+    }
+    if (sisa > 0 && fallbackDompet !== false && S.uang && S.uang.dompet > 0) {
+      var d = Math.min(Math.max(0, S.uang.dompet || 0), sisa);
+      S.uang.dompet -= d; sisa -= d;
+    }
+    /* setelah dipotong, jika saldo Kas Travel turun di bawah Rp50jt, otomatis transfer lagi dari bank */
+    pastikanKasTravel(S, 0, n);
+    return jml - sisa;
+  }
+  function isiKasTravel(S, jml) {
+    var T = siapkan(S);
+    jml = Math.round(+jml || 0);
+    if (jml < 100000) return 'Nominal isi Kas Travel minimal Rp100.000.';
+    if (!S.bank || S.bank.saldo < jml) return 'Saldo rekening bank tidak cukup (' + rp((S.bank && S.bank.saldo) || 0) + ').';
+    S.bank.saldo -= jml;
+    M().catatBank(S, 'Transfer manual ke Kas Travel', -jml);
+    T.kas += jml;
+    catatKas(S, 'Isi manual dari Bank' + (g.KK_UANG ? ' ' + g.KK_UANG.bankIni(S).nama : ''), jml);
+    return { ok: true, jml: jml, teks: 'Berhasil mengisi Kas Travel sebesar ' + rp(jml) + '. Saldo Kas Travel kini ' + rp(T.kas) + '.' };
+  }
+  function tarikKasTravel(S, jml) {
+    var T = siapkan(S);
+    var sld = Math.max(0, Math.round(T.kas || 0));
+    if (sld <= 0) return 'Saldo Kas Travel sedang Rp0.';
+    var ambil = jml === 'semua' ? sld : Math.min(sld, Math.round(+jml || 0));
+    if (ambil <= 0) return 'Nominal tarik tidak valid.';
+    T.kas -= ambil;
+    catatKas(S, 'Tarik ke Rekening Bank', -ambil);
+    S.bank.saldo += ambil;
+    M().catatBank(S, 'Tarik dari Kas Travel', ambil);
+    return { ok: true, jml: ambil, teks: 'Berhasil menarik ' + rp(ambil) + ' dari Kas Travel ke rekening bank.' };
+  }
+  function toggleAutoKasTravel(S) {
+    var T = siapkan(S);
+    T.autoTopupKas = !T.autoTopupKas;
+    var isiAuto = 0;
+    if (T.autoTopupKas) isiAuto = pastikanKasTravel(S, 0);
+    return { ok: true, aktif: T.autoTopupKas, teks: T.autoTopupKas ? ('Auto top-up Kas Travel (< ' + rp(T.kasTarget || KAS_MIN) + ') AKTIF.' + (isiAuto > 0 ? ' Otomatis isi ' + rp(isiAuto) + ' dari bank.' : '')) : 'Auto top-up Kas Travel dimatikan (isi manual dari bank).' };
   }
   function daftarMobilPenumpang(S) {
     var armada = S.armadaMobil || (S.mobil ? [S.mobil] : []);
@@ -224,6 +308,10 @@
   }
   function gantiHari(S, nLama, nBaru) {
     var T = siapkan(S), kabar = [];
+    if (S.mobil || (T.supir && T.supir.length)) {
+      var topupPagi = pastikanKasTravel(S, 0, nBaru);
+      if (topupPagi > 0) kabar.push('💼 Auto top-up Kas Travel ' + rp(topupPagi) + ' dari rekening bank (saldo dijaga minimal ' + rp(T.kasTarget || KAS_MIN) + ').');
+    }
     if (!T.supir || !T.supir.length) return kabar;
     var tB = g.KK_KAL.tgl(nBaru), gantiBulan = tB.d === 1;
     sinkronMobilSupir(S);
@@ -264,18 +352,23 @@
             var kotor = pnp * tf * tripHari;
             var bbmRp = Math.round((j.km / (m.kml || 12)) * M().hargaBbm(S, m.bbm) * tripHari);
             var tolRp = (j.tol || 0) * tripHari;
+            var opsKas = bbmRp + tolRp;
+            if (opsKas > 0) {
+              bayarKasTravel(S, opsKas, 'BBM & Tol Supir ' + sp.nama + ' (' + m.nama + ' · ' + tripHari + '× ' + R.nama(tujuanId) + ')', nBaru, false);
+            }
             var upahJalan = (sp.periode === 'jalan' ? sp.gajiPokok * tripHari : 0) + (sp.uangMakan || 0) + (sp.insentif || 0) * tripHari;
-            var bersih = kotor - bbmRp - tolRp - upahJalan;
+            var setorQris = kotor - upahJalan;
+            var bersih = kotor - opsKas - upahJalan;
             sp.qrisRiwayat = sp.qrisRiwayat || [];
-            if (bersih >= 0) {
-              sp.qrisSaldo = (sp.qrisSaldo || 0) + bersih;
-              sp.qrisRiwayat.unshift({ n: nBaru, ket: tripHari + '× ' + R.nama(tujuanId) + ' (' + pnp + ' pnp · ' + m.nama + ')', jml: bersih });
+            if (setorQris >= 0) {
+              sp.qrisSaldo = (sp.qrisSaldo || 0) + setorQris;
+              sp.qrisRiwayat.unshift({ n: nBaru, ket: tripHari + '× ' + R.nama(tujuanId) + ' (' + pnp + ' pnp · ' + m.nama + ')', jml: setorQris });
             } else {
-              var tutupQris = Math.min(sp.qrisSaldo || 0, -bersih);
+              var tutupQris = Math.min(sp.qrisSaldo || 0, -setorQris);
               sp.qrisSaldo = (sp.qrisSaldo || 0) - tutupQris;
-              var sisaRugi = (-bersih) - tutupQris;
-              if (sisaRugi > 0) { S.bank.saldo -= sisaRugi; M().catatBank(S, 'Defisit operasional Supir ' + sp.nama + ' [' + m.nama + ']', -sisaRugi, nBaru); }
-              sp.qrisRiwayat.unshift({ n: nBaru, ket: 'Defisit ' + tripHari + '× ' + R.nama(tujuanId) + ' (' + m.nama + ')', jml: bersih });
+              var sisaRugi = (-setorQris) - tutupQris;
+              if (sisaRugi > 0) bayarKasTravel(S, sisaRugi, 'Defisit operasional Supir ' + sp.nama + ' [' + m.nama + ']', nBaru, false);
+              sp.qrisRiwayat.unshift({ n: nBaru, ket: 'Defisit ' + tripHari + '× ' + R.nama(tujuanId) + ' (' + m.nama + ')', jml: setorQris });
             }
             if (sp.qrisRiwayat.length > 25) sp.qrisRiwayat.length = 25;
             m.km = (m.km || 0) + Math.round(j.km * tripHari);
@@ -284,36 +377,61 @@
             if (S.hariIni) S.hariIni.travel = (S.hariIni.travel || 0) + Math.max(0, bersih);
             T.total.trip += tripHari; T.total.bersih += bersih; T.total.km += Math.round(j.km * tripHari);
             sp.totalTrip = (sp.totalTrip || 0) + tripHari; sp.totalBersih = (sp.totalBersih || 0) + bersih;
-            kabar.push('🚐 Supir ' + sp.nama + ' (pakai ' + m.nama + ') narik ke ' + R.nama(tujuanId) + ' (' + tripHari + ' trip, ' + pnp + ' pnp): bersih ' + rp(bersih) + ' masuk ke QRIS Karyawan.');
+            kabar.push('🚐 Supir ' + sp.nama + ' (pakai ' + m.nama + ') narik ke ' + R.nama(tujuanId) + ' (' + tripHari + ' trip, ' + pnp + ' pnp): ' + rp(setorQris) + ' masuk QRIS Karyawan · BBM/Tol ' + rp(opsKas) + ' dari Kas Travel.');
           } else {
             kabar.push('Supir ' + sp.nama + ' bolos hari ini karena kurang puas dengan gaji (' + puas + '%).');
           }
         }
-      }
-      /* gaji mingguan */
-      if (sp.periode === 'minggu' && (nBaru - (sp.terakhirGaji || sp.hariMasuk || 0)) >= 7) {
-        sp.terakhirGaji = nBaru;
-        if (S.bank.saldo >= sp.gajiPokok) {
-          S.bank.saldo -= sp.gajiPokok; M().catatBank(S, 'Gaji mingguan supir ' + sp.nama, -sp.gajiPokok, nBaru);
-          kabar.push('Gaji mingguan supir travel ' + sp.nama + ' (' + rp(sp.gajiPokok) + ') dibayar.');
-        } else {
-          kabar.push('⚠️ Saldo kurang untuk gaji mingguan supir ' + sp.nama + ' (' + rp(sp.gajiPokok) + ')!');
+        /* auto-service, ganti ban, & pajak mobil oleh karyawan supir travel (biaya dipotong dari Kas Travel) */
+        var rm = N.rawatMobil;
+        if ((m.km || 0) - (m.kmServis || 0) >= (rm.servisKm || 25000)) {
+          if (danaKas(S) >= rm.servis) {
+            bayarKasTravel(S, rm.servis, 'Auto-servis ' + m.nama + ' (Supir ' + sp.nama + ')', nBaru, false);
+            m.kmServis = m.km;
+            kabar.push('🔧 Supir ' + sp.nama + ' otomatis servis berkala ' + m.nama + ' (' + rp(rm.servis) + ') dari Kas Travel.');
+          }
+        }
+        if ((m.km || 0) - (m.kmBan || 0) >= (rm.banKm || 90000)) {
+          var hBan = (g.KK_MOBIL && g.KK_MOBIL.hargaBan) ? g.KK_MOBIL.hargaBan(m) : 4200000;
+          if (danaKas(S) >= hBan) {
+            bayarKasTravel(S, hBan, 'Auto ganti 4 ban ' + m.nama + ' (Supir ' + sp.nama + ')', nBaru, false);
+            m.kmBan = m.km;
+            kabar.push('🛞 Supir ' + sp.nama + ' otomatis mengganti 4 ban ' + m.nama + ' (' + rp(hBan) + ') dari Kas Travel.');
+          }
+        }
+        if (m.pajakTempo && nBaru >= m.pajakTempo - 7) {
+          var pjkM = Math.round(m.harga * rm.pkb / 1000) * 1000 + rm.swdkllj + (m.dendaPajak || 0);
+          if (danaKas(S) >= pjkM) {
+            bayarKasTravel(S, pjkM, 'Auto pajak tahunan ' + m.nama + ' (Supir ' + sp.nama + ')', nBaru, false);
+            m.pajakTempo += 365; m.dendaPajak = 0;
+            kabar.push('📄 Supir ' + sp.nama + ' otomatis membayar pajak tahunan ' + m.nama + ' (' + rp(pjkM) + ') dari Kas Travel.');
+          }
         }
       }
-      /* gaji bulanan + BPJS supir */
+      /* gaji mingguan dari Kas Travel */
+      if (sp.periode === 'minggu' && (nBaru - (sp.terakhirGaji || sp.hariMasuk || 0)) >= 7) {
+        sp.terakhirGaji = nBaru;
+        if (danaKas(S) >= sp.gajiPokok) {
+          bayarKasTravel(S, sp.gajiPokok, 'Gaji mingguan supir ' + sp.nama, nBaru, false);
+          kabar.push('Gaji mingguan supir travel ' + sp.nama + ' (' + rp(sp.gajiPokok) + ') dibayar dari Kas Travel.');
+        } else {
+          kabar.push('⚠️ Saldo Kas Travel & bank kurang untuk gaji mingguan supir ' + sp.nama + ' (' + rp(sp.gajiPokok) + ')!');
+        }
+      }
+      /* gaji bulanan + BPJS supir dari Kas Travel */
       if (gantiBulan) {
         if (sp.periode === 'bulan' && sp.gajiPokok > 0) {
-          if (S.bank.saldo >= sp.gajiPokok) {
-            S.bank.saldo -= sp.gajiPokok; M().catatBank(S, 'Gaji bulanan supir ' + sp.nama, -sp.gajiPokok, nBaru);
-            kabar.push('Gaji bulanan supir travel ' + sp.nama + ' (' + rp(sp.gajiPokok) + ') dibayar.');
+          if (danaKas(S) >= sp.gajiPokok) {
+            bayarKasTravel(S, sp.gajiPokok, 'Gaji bulanan supir ' + sp.nama, nBaru, false);
+            kabar.push('Gaji bulanan supir travel ' + sp.nama + ' (' + rp(sp.gajiPokok) + ') dibayar dari Kas Travel.');
           } else {
-            kabar.push('⚠️ Saldo kurang untuk gaji bulanan supir ' + sp.nama + ' (' + rp(sp.gajiPokok) + ')!');
+            kabar.push('⚠️ Saldo Kas Travel & bank kurang untuk gaji bulanan supir ' + sp.nama + ' (' + rp(sp.gajiPokok) + ')!');
           }
         }
         if (sp.bpjs) {
           var bjs = 250000;
-          if (S.bank.saldo >= bjs) {
-            S.bank.saldo -= bjs; M().catatBank(S, 'BPJS Supir Travel ' + sp.nama, -bjs, nBaru);
+          if (danaKas(S) >= bjs) {
+            bayarKasTravel(S, bjs, 'BPJS Supir Travel ' + sp.nama, nBaru, false);
           }
         }
       }
@@ -328,38 +446,44 @@
   function gigiObj(n, S) { return R.gigiInfo ? R.gigiInfo(S, 'mobil', Math.max(1, Math.min(5, n))) : R.gigi[Math.max(1, Math.min(5, n)) - 1]; }
   function hujan(S) { return !!(g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)); }
   function malam(S) { var m = S.menit % 1440; return m >= 1320 || m < 300; }
-  function bolehKhusus(S) { return !hujan(S) && !!S.mobil; }
+  function bolehKhusus(S) { return !!S.mobil; }
 
-  /* ---------- uang ---------- */
-  function dana(S) { return Math.max(0, S.bank.saldo) + Math.max(0, S.uang.dompet || 0); }
-  function bayar(S, jml, ket) {
-    jml = Math.round(jml); if (jml <= 0) return 0;
-    var sisa = jml, dariBank = Math.min(Math.max(0, S.bank.saldo), sisa);
-    if (dariBank > 0) { S.bank.saldo -= dariBank; M().catatBank(S, ket, -dariBank); sisa -= dariBank; }
-    var d = Math.min(Math.max(0, S.uang.dompet || 0), sisa); S.uang.dompet -= d; sisa -= d;
-    return jml - sisa;
-  }
+  /* ---------- uang (semua operasional Travel lewat Kas Travel, auto top-up dari bank < 50 juta) ---------- */
+  function dana(S) { return danaKas(S) + Math.max(0, (S.uang && S.uang.dompet) || 0); }
+  function bayar(S, jml, ket) { return bayarKasTravel(S, jml, ket, S.hari, true); }
 
-  /* ---------- perhitungan kecepatan realistis per ruas (dipakai seragam oleh rencana, jalan, estimasi, dan ideal) ---------- */
+  /* ---------- perhitungan kecepatan per ruas (Level 5 membuka kecepatan maksimal penuh mobil di mode Travel!) ---------- */
   function kecepatanRuas(S, r, levelGigi, pakaiVariasi, kenaHujan) {
     var n = Math.max(1, Math.min(5, levelGigi || 3)), ket = '', m = S.mobil;
     var isHujan = kenaHujan != null ? !!kenaHujan : hujan(S);
-    if (isHujan && n > 4) { n = 4; ket = 'Hujan deras: dibatasi level 4.'; }
-    var gi = gigiObj(n, S);
-    var v = pakaiVariasi
-      ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.16 * Math.sin(S.menit / 5))
-      : (gi.lo + gi.hi) / 2;
     var vmax = R.vmaxKendaraan ? R.vmaxKendaraan(S, 'mobil') : (R.vmax[m ? m.bentuk : 'mpv'] || 170);
-    if (v > vmax) v = vmax;
     var kdJ = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 0.76, vMaxJalan: 92, nama: 'Aspal Mulus' };
-    var fK = kdJ.faktorV * (r && r.kondisi === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
-    v *= fK;
-    var batasJalan = (kdJ.vMaxJalan || 92) * (r && r.kondisi === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
-    if (v > batasJalan) v = batasJalan;
-    if (r && (r.kondisi === 'tanah' || r.kondisi === 'rusak' || r.kondisi === 'bergelombang')) {
-      ket = kdJ.nama + (r.kondisi === 'tanah' && isHujan ? ' (becek lumpur!)' : '');
+    var kId = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
+    var v, batasJalan;
+    if (n === 5) {
+      /* Mode Travel Level 5: mobil dapat menggunakan kecepatan maksimal penuh (vmax + bonus upgrade mesin) */
+      var vTop = pakaiVariasi ? vmax * (0.96 + 0.04 * Math.sin(S.menit / 5)) : vmax;
+      var fTop = kId === 'tol' || kId === 'mulus' ? 1 : kId === 'bergelombang' ? 0.76 : kId === 'rusak' ? 0.56 : 0.42;
+      v = vTop * fTop * (isHujan ? (kId === 'tanah' ? 0.75 : 0.88) : 1);
+      batasJalan = Math.round(vmax * fTop);
+      if (isHujan) ket = 'Hujan: kecepatan tinggi ' + Math.round(v) + ' km/j.';
+      else if (kId === 'tol' || kId === 'mulus') ket = 'Top Speed Maksimal (' + Math.round(vmax) + ' km/j)!';
+      else ket = kdJ.nama + ' (maks ' + Math.round(v) + ' km/j)';
+    } else {
+      var gi = gigiObj(n, S);
+      v = pakaiVariasi
+        ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.16 * Math.sin(S.menit / 5))
+        : (gi.lo + gi.hi) / 2;
+      if (v > vmax) v = vmax;
+      var fK = kdJ.faktorV * (kId === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
+      v *= fK;
+      batasJalan = (kdJ.vMaxJalan || 92) * (kId === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
+      if (v > batasJalan) v = batasJalan;
+      if (kId === 'tanah' || kId === 'rusak' || kId === 'bergelombang') {
+        ket = kdJ.nama + (kId === 'tanah' && isHujan ? ' (becek lumpur!)' : '');
+      }
     }
-    return { kmh: Math.max(6, v), gigi: n, ket: ket, batasJalan: batasJalan };
+    return { kmh: Math.max(6, v), gigi: n, ket: ket, batasJalan: batasJalan, vmax: vmax };
   }
 
   /* ---------- rencana perjalanan ---------- */
@@ -518,7 +642,6 @@
   }
   function setGigi(S, n) {
     var T = siapkan(S); n = +n; if (n < 1 || n > 5) return 'Level kecepatan 1–5.';
-    if (hujan(S) && n > 4) return 'Hujan deras: paling cepat level 4.';
     T.gigi = n; return true;
   }
 
@@ -549,15 +672,15 @@
     }
     m.isi = Math.max(0, m.isi - liter / m.tangki); tr.bensinTerpakai = (tr.bensinTerpakai || 0) + liter; m.km += km; tr.kmRuas += km; tr.kmSelesai += km; tr.menitGerak += dMenit; tr.gigiMenit[v.gigi] += dMenit;
     var jamFrac = dMenit / 60, r2 = Math.random();
-    var ngebutBatas = v.gigi === 5 && (v.kmh > 115 || (r.tol <= 0 && v.kmh >= (v.batasJalan || 90) * 0.92));
-    if (ngebutBatas && r2 < 0.02 * jamFrac) {
-      var denda = bayar(S, 500000, 'Tilang kecepatan'); tambahKejadian(T, 'Kena tilang karena ngebut. Denda ' + rp(denda) + '.', denda, 15, 0.6);
+    var ngebutBatas = v.gigi === 5 && v.kmh > 135;
+    if (ngebutBatas && r2 < 0.008 * jamFrac) {
+      var denda = bayar(S, 500000, 'Tilang kecepatan'); tambahKejadian(T, 'Kena tilang karena ngebut. Denda ' + rp(denda) + '.', denda, 15, 0.4);
       kabar.push('Kena tilang ngebut, denda ' + rp(denda) + '.');
-    } else if (ngebutBatas && r2 < 0.028 * jamFrac) {
-      var rusak = bayar(S, 2000000, 'Perbaikan senggolan jalan'); tambahKejadian(T, 'Senggolan saat ngebut. Perbaikan ' + rp(rusak) + '.', rusak, 40, 2);
+    } else if (ngebutBatas && r2 < 0.011 * jamFrac) {
+      var rusak = bayar(S, 2000000, 'Perbaikan senggolan jalan'); tambahKejadian(T, 'Senggolan saat ngebut. Perbaikan ' + rp(rusak) + '.', rusak, 40, 1.5);
       kabar.push('Mobil menyenggol pembatas saat ngebut. Perbaikan ' + rp(rusak) + '.');
-    } else if (r2 < (0.004 * (kdR.risikoBan || 1) + (g.KK_MOBIL.telatServis(S) / 1000) * 0.01) * jamFrac) {
-      var ban = 150000 + Math.floor(Math.random() * 3) * 100000, pb = bayar(S, ban, 'Tambal ban dan bengkel'); tambahKejadian(T, 'Ban bocor, tambal dan bengkel ' + rp(pb) + '.', pb, 45, 0.5);
+    } else if (r2 < (0.002 * (kdR.risikoBan || 1) + (g.KK_MOBIL.telatServis(S) / 2500) * 0.01) * jamFrac) {
+      var ban = 150000 + Math.floor(Math.random() * 3) * 100000, pb = bayar(S, ban, 'Tambal ban dan bengkel'); tambahKejadian(T, 'Ban bocor, tambal dan bengkel ' + rp(pb) + '.', pb, 45, 0.4);
       kabar.push('Ban bocor di jalan. Tambal dan bengkel ' + rp(pb) + ', telat 45 menit.');
     }
     var d = S.diri, w = waktu(S);
@@ -719,7 +842,8 @@
   }
 
   g.KK_TRAVEL = { siapkan: siapkan, kursi: kursi, bisaMulai: bisaMulai, mulai: mulai, selesaiParkir: selesaiParkir, pilihTujuan: pilihTujuan, ubahTarif: ubahTarif, jemput: jemput, berangkat: berangkat,
-    setGigi: setGigi, kecepatan: kecepatan, jalan: jalan, istirahat: istirahat, isiBensin: isiBensin, fase: fase, cepatWaktu: cepatWaktu, estimasi: estimasi, rencana: rencana, laju: laju, bolehKhusus: bolehKhusus,
+    setGigi: setGigi, kecepatan: kecepatan, kecepatanRuas: kecepatanRuas, jalan: jalan, istirahat: istirahat, isiBensin: isiBensin, fase: fase, cepatWaktu: cepatWaktu, estimasi: estimasi, rencana: rencana, laju: laju, bolehKhusus: bolehKhusus,
+    KAS_MIN: KAS_MIN, pastikanKasTravel: pastikanKasTravel, danaKas: danaKas, bayarKasTravel: bayarKasTravel, isiKasTravel: isiKasTravel, tarikKasTravel: tarikKasTravel, toggleAutoKasTravel: toggleAutoKasTravel,
     kepuasanSupir: kepuasanSupir, labelPuasSupir: labelPuasSupir, daftarMobilPenumpang: daftarMobilPenumpang, sinkronMobilSupir: sinkronMobilSupir, mobilUntukSupir: mobilUntukSupir, rekrutSupir: rekrutSupir, aturSupir: aturSupir, pecatSupir: pecatSupir, totalQrisSupir: totalQrisSupir, tarikQrisSupir: tarikQrisSupir, ruteUntukSupir: ruteUntukSupir, gantiHari: gantiHari,
     dana: dana, CEPAT_JALAN: CEPAT_JALAN, MULT_MIN: MULT_MIN, MULT_MAKS: MULT_MAKS, JEMPUT_MAKS: JEMPUT_MAKS };
 })(window);

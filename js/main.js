@@ -150,6 +150,8 @@
       d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Tambahan modal 5 miliar', jml: 5000000000 });
       d.bonusBank5M = true;
     }
+    if (d.tagihanNafkah) d.tagihanNafkah = null;
+    if (d.travel && TRAVEL && TRAVEL.pastikanKasTravel && (d.mobil || (d.travel.supir && d.travel.supir.length))) TRAVEL.pastikanKasTravel(d, 0);
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
@@ -236,10 +238,10 @@
       function selisihTgl(tempo) { var sd = tempo - tglSkrg; if (sd < 0) sd += 30; return sd; }
       function blnTagihH(tempo) { return blnIniH + (tglSkrg > tempo ? 1 : 0); }
       var chipBayar = '';
-      if (S.tagihanNafkah && !S.tagihanNafkah.lunas) {
-        chipBayar += '<span class="chip libur bisa-tap" data-chipapp="keluarga">📢 Nafkah ' + rupiahPendek(S.tagihanNafkah.jumlah) + '</span>';
-      } else if (DIRI.pasanganAktif(S) && ((S.profil && S.profil.gender) === 'cowok') && (S.nafkahTerbayarSampai || 0) < (blnIniH + 1) && DIRI.sisaHariNafkah && DIRI.sisaHariNafkah(S) <= 3) {
-        chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">💝 Nafkah H-' + DIRI.sisaHariNafkah(S) + '</span>';
+      if ((S.bulanTanpaNafkah || 0) > 0 && DIRI.pasanganAktif(S) && ((S.profil && S.profil.gender) === 'cowok')) {
+        chipBayar += '<span class="chip libur bisa-tap" data-chipapp="keluarga">⚠️ Tanpa Nafkah ' + S.bulanTanpaNafkah + '/6 bln</span>';
+      } else if (DIRI.pasanganAktif(S) && ((S.profil && S.profil.gender) === 'cowok') && (S.nafkahTerbayarSampai || 0) < blnIniH && DIRI.sisaHariNafkah && DIRI.sisaHariNafkah(S) <= 5) {
+        chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">💝 Nafkah bln ini</span>';
       }
       (S.armadaMobil || (S.mobil ? [S.mobil] : [])).forEach(function (mb) {
         if (!mb || !mb.kredit) return;
@@ -638,7 +640,7 @@
       badge: function () { return S.diri.kenyang < 25 || S.diri.minum < 25 ? '!' : ''; } },
     { id: 'keluarga', nama: function () { return 'Keluarga'; }, warna: function () { return '#e91e63'; },
       ikon: function () { return svgIkon('<circle cx="9" cy="7" r="3"/><circle cx="16.5" cy="9.5" r="2.3"/><path d="M3.5 19c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><path d="M14 19c0-2.1 1.5-3.8 3.5-3.8S21 16.9 21 19"/>'); },
-      badge: function () { return (S.tagihanNafkah && !S.tagihanNafkah.lunas) ? '!' : ((S.diri.hb || 0) >= 85 && DIRI.pasanganAktif(S) ? 'HB' : (S.keluarga && S.keluarga.length ? String(S.keluarga.length) : '')); } },
+      badge: function () { return (S.bulanTanpaNafkah || 0) > 0 ? '!' : ((S.diri.hb || 0) >= 85 && DIRI.pasanganAktif(S) ? 'HB' : (S.keluarga && S.keluarga.length ? String(S.keluarga.length) : '')); } },
     { id: 'teman', nama: function () { return 'Teman'; }, warna: function () { return '#3f8fd9'; },
       ikon: function () { return svgIkon('<circle cx="8" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M2.5 19c0-3.2 2.4-5.2 5.5-5.2s5.5 2 5.5 5.2M14 14.2c3 0 7 1.4 7 4.8"/>'); },
       badge: function () { return S.popupSelingkuh ? '!' : ''; } },
@@ -660,6 +662,9 @@
     { id: 'travel', nama: function () { return 'Travel'; }, warna: function () { return '#6a4fd8'; },
       ikon: function () { return svgIkon('<path d="M3.5 15l1.6-4.6A2 2 0 0 1 7 9h10a2 2 0 0 1 1.9 1.4L20.5 15v3.5h-17z"/><circle cx="7.5" cy="18.5" r="1.8"/><circle cx="16.5" cy="18.5" r="1.8"/><path d="M5.5 13h13"/>'); },
       badge: function () { return S.travel && S.travel.aktif ? '•' : ''; } },
+    { id: 'kastravel', nama: function () { return 'Kas Travel'; }, warna: function () { return '#1565c0'; },
+      ikon: function () { return svgIkon('<rect x="3" y="6.5" width="18" height="13" rx="2.5"/><path d="M8 6.5V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5M3 11.5h18M12 11.5v3"/>'); },
+      badge: function () { return (S.travel && (S.travel.kas || 0) < (TRAVEL.KAS_MIN || 50000000) && S.travel.autoTopupKas === false) ? '!' : ''; } },
     { id: 'gadget', nama: function () { return 'Gadget & Kuota'; }, warna: function () { return '#1e88e5'; },
       ikon: function () { return svgIkon('<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 5.5h4M12 18.5h.01"/>'); },
       badge: function () { return (S.hp && (S.hp.baterai < 20 || (!DIRI.adaWifi(S) && S.hp.kuota < 1))) ? '!' : ''; } },
@@ -722,6 +727,7 @@
     else if (app.nama === 'properti') html = layarProperti();
     else if (app.nama === 'ojol') html = layarOjol();
     else if (app.nama === 'travel') html = layarTravel();
+    else if (app.nama === 'kastravel') html = layarKasTravel();
     else if (app.nama === 'karyawan') html = layarKaryawan();
     else if (app.nama === 'maps') html = layarMaps();
     else if (app.nama === 'usaha') html = layarUsaha();
@@ -866,8 +872,30 @@
         (riw.length ? '<small style="display:block;margin-top:6px"><b>Riwayat QRIS terakhir:</b></small><ul class="daftar angka" style="margin-top:4px">' + riw.map(function (r) {
           return baris(esc(r.ket) + '<small>' + namaTanggal(r.n) + '</small>', (r.jml < 0 ? '−' : '+') + rupiah(Math.abs(r.jml)), r.jml < 0 ? 'keluar' : 'masuk');
         }).join('') + '</ul>' : '') + '</div></li>';
-    }).join('') + '</ul><p class="catatan">Setiap pendapatan bersih Supir Travel masuk ke QRIS khusus karyawan masing-masing dan tidak langsung disatukan ke rekening bankmu. Tarik kapan saja dari menu ini.</p>';
+    }).join('') + '</ul><div class="chip-baris" style="margin-top:8px"><button type="button" class="chip-tombol" data-app="kastravel">💼 Buka Menu Kas Travel</button></div><p class="catatan">Setiap pendapatan bersih Supir Travel masuk ke QRIS khusus karyawan masing-masing dan tidak langsung disatukan ke rekening bankmu. Biaya bensin, tol, auto-servis, ban, dan gaji supir otomatis dipotong dari Kas Travel.</p>';
     return html;
+  }
+  function layarKasTravel() {
+    var T = TRAVEL.siapkan(S);
+    if (T.autoTopupKas !== false) TRAVEL.pastikanKasTravel(S, 0);
+    var sld = Math.max(0, Math.round(T.kas || 0));
+    var target = T.kasTarget || TRAVEL.KAS_MIN || 50000000;
+    var autoOn = T.autoTopupKas !== false;
+    var mut = (T.kasMutasi || []).slice(0, 35);
+    var bankNm = UANG.bankIni(S).nama;
+    return kepalaApp('Kas Travel', 'Dana operasional bensin, servis & armada') + pesanApp() +
+      '<div class="saldo-besar" style="background:#1565c0"><small>Saldo Kas Travel (Auto Top-Up &lt; ' + rupiah(target) + ': ' + (autoOn ? 'AKTIF ✓' : 'NONAKTIF') + ')</small><b>' + rupiah(sld) + '</b></div>' +
+      '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin:8px 0;background:rgba(21,101,192,.1)">' +
+      '<b>⚙️ Auto-Transfer dari Bank ' + esc(bankNm) + '</b>' +
+      '<small>Semua kebutuhan bensin/SPKLU mobil, tol, kapal, servis berkala, ganti ban, pajak mobil, auto-servis karyawan supir travel, serta gaji & BPJS supir otomatis dipotong dari <b>Kas Travel</b>. Jika saldo turun di bawah <b>' + rupiah(target) + '</b>, sistem otomatis mentransfer kekurangan dari rekening bankmu (' + rupiah(S.bank.saldo) + ').</small>' +
+      '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol' + (autoOn ? ' pilih' : '') + '" data-aksi="toggleAutoKasTravel:1">' + (autoOn ? '✓ Auto Top-Up < Rp50jt Aktif' : 'Aktifkan Auto Top-Up < Rp50jt') + '</button><button type="button" class="chip-tombol" data-app="travel">🚐 Aplikasi Travel</button><button type="button" class="chip-tombol" data-app="qriskaryawan">📲 QRIS Karyawan</button></div></div>' +
+      '<h3 class="subjudul">Isi Manual dari Bank ' + esc(bankNm) + '</h3>' +
+      '<div class="chip-baris">' + tombolUang('isiKasTravel', [10000000, 25000000, 50000000, 100000000]) + '</div>' +
+      '<div class="chip-baris" style="margin-top:6px;align-items:center"><input id="in-kas-isi" class="input-teks" type="number" step="1000000" min="100000" placeholder="Nominal isi manual (Rp)" style="margin:0;flex:1"><button type="button" class="chip-tombol pilih" data-aksi="isiKasTravel:input">Transfer ke Kas</button></div>' +
+      (sld > 0 ? '<h3 class="subjudul">Tarik dari Kas Travel ke Bank ' + esc(bankNm) + '</h3><div class="chip-baris">' + tombolUang('tarikKasTravel', [10000000, 50000000, 'semua']) + '</div>' : '') +
+      '<h3 class="subjudul">Riwayat Mutasi Kas Travel (' + mut.length + ')</h3><ul class="daftar angka">' + (mut.length ? mut.map(function (m) {
+        return baris(esc(m.ket) + '<small>' + namaTanggal(m.n) + '</small>', (m.jml < 0 ? '−' : '+') + rupiah(Math.abs(m.jml)), m.jml < 0 ? 'keluar' : 'masuk');
+      }).join('') : '<li><span>Belum ada mutasi Kas Travel.</span></li>') + '</ul>';
   }
   function layarLaci() {
     return kepalaApp('Dompet', 'Uang tunai pribadi') +
@@ -1756,17 +1784,25 @@
     var ks = S.kesehatan || { kondom: 0, kondomGerigi: 0, kbSampai: -1 }, kbAktif = (ks.kbSampai || -1) >= S.hari;
     var noHp = (S.hp && S.hp.nomor) || '081256000088';
     var html = kepalaApp('Keluarga', kel.length + ' anggota keluarga · Tahun ' + thn) + pesanApp();
-    /* 0. Notice Nafkah Wajib Bulanan (40% penghasilan suami) + Hitung Mundur Waktu */
-    var tgN = S.tagihanNafkah, sisaHariN = DIRI.sisaHariNafkah ? DIRI.sisaHariNafkah(S) : 1;
+    /* 0. Nafkah Bulanan (Nominal Bebas — tidak memberi nafkah 1–6 bulan menurunkan keharmonisan bertahap hingga 0%) */
+    var sisaHariN = DIRI.sisaHariNafkah ? DIRI.sisaHariNafkah(S) : 1;
+    var blnIniKel = KAL.tgl(S.hari).y * 12 + KAL.tgl(S.hari).m;
+    var sudahNafkahBln = (S.nafkahTerbayarSampai || 0) >= blnIniKel;
+    var blnKosongN = S.bulanTanpaNafkah || 0;
     var sumberB = app.sumberBayar || 'suami';
     if (pas) {
       if (prPemain === 'cowok') {
-        var estN = (tgN && !tgN.lunas) ? tgN.jumlah : Math.max(500000, Math.round((S.penghasilanBulanIni || 0) * 0.4 / 1000) * 1000);
-        html += '<div class="kartu-pesanan" style="margin-bottom:10px;padding:12px;border-radius:12px;background:' + (tgN && !tgN.lunas ? 'rgba(217,68,58,.14);border:1px solid rgba(217,68,58,.4)' : 'rgba(31,138,128,.12);border:1px solid rgba(31,138,128,.3)') + '">' +
-          '<b>' + (tgN && !tgN.lunas ? '📢 Notice Tagihan Nafkah Bulanan (Wajib!)' : '💝 Nafkah Bulanan (40% Penghasilan)') + '</b>' +
-          '<small>⏳ <b>Sisa waktu jadwal nafkah berikutnya: ' + sisaHariN + ' hari lagi</b> (setiap tanggal 1).</small>' +
-          '<small>' + (tgN && !tgN.lunas ? ('Tagihan bulan ini (40% penghasilan ' + rupiah(tgN.penghasilan || 0) + ') = <b>' + rupiah(tgN.jumlah) + '</b>. Telat 1 bulan menurunkan keharmonisan 50%!') : ('Estimasi nafkah berikutnya: <b>' + rupiah(estN) + '</b> (40% dari ' + rupiah(S.penghasilanBulanIni || 0) + '). Belanja pokok & kebutuhan dapur diurus otomatis oleh istri dari uang nafkah (makan di rumah gratis).')) + '</small>' +
-          '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-aksi="bayarNafkah:1">Berikan Nafkah ' + rupiah(estN) + '</button></div></div>';
+        html += '<div class="kartu-pesanan" style="margin-bottom:10px;padding:12px;border-radius:12px;background:' + (blnKosongN > 0 ? 'rgba(217,68,58,.14);border:1px solid rgba(217,68,58,.4)' : 'rgba(31,138,128,.12);border:1px solid rgba(31,138,128,.3)') + '">' +
+          '<b>' + (blnKosongN > 0 ? ('⚠️ Tanpa Nafkah ' + blnKosongN + '/6 Bulan!') : sudahNafkahBln ? '💝 Nafkah Bulan Ini Sudah Diberikan ✓' : '💝 Nafkah Bulanan (Nominal Bebas)') + '</b>' +
+          '<small>⏳ Sisa hari di bulan ini: <b>' + sisaHariN + ' hari</b>. Tidak ditentukan dari % penghasilan — cukup beri uang berapa pun nominalnya (min Rp50.000).</small>' +
+          '<small>' + (blnKosongN > 0
+            ? ('<b>Peringatan:</b> Sudah ' + blnKosongN + ' bulan tidak memberi nafkah! Keharmonisan pasangan turun bertahap dari bulan ke-1 hingga <b>0% di bulan ke-6</b>. Beri nafkah sekarang untuk mereset hitungan!')
+            : 'Jika tidak memberi nafkah sama sekali dalam 1–6 bulan, keharmonisan pasangan turun bertahap hingga <b>0%</b> di bulan ke-6. Belanja pokok & dapur diurus otomatis oleh istri (makan di rumah gratis 30 hari).') + '</small>' +
+          '<div class="chip-baris" style="margin-top:6px">' +
+          [100000, 250000, 500000, 1000000, 2000000, 5000000].map(function (nom) {
+            return '<button type="button" class="chip-tombol' + (nom === 500000 ? ' pilih' : '') + '" data-aksi="bayarNafkah:' + nom + '">' + rupiahPendek(nom) + '</button>';
+          }).join('') + '</div>' +
+          '<div class="chip-baris" style="margin-top:6px;align-items:center"><input id="in-nafkah" class="input-teks" type="number" step="50000" min="50000" placeholder="Nominal nafkah bebas (Rp)" style="margin:0;flex:1"><button type="button" class="chip-tombol pilih" data-aksi="bayarNafkah:input">Kirim Nafkah</button></div></div>';
       } else {
         html += '<div class="kartu-pesanan" style="margin-bottom:10px;padding:12px;border-radius:12px;background:rgba(31,138,128,.12)">' +
           '<b>💝 Nafkah Bulanan dari Suami (' + esc(pas.nama) + ')</b>' +
@@ -2502,7 +2538,24 @@
       var rcr = DIRI.ceraiPasangan(S, nilai, 'Keputusan perceraian');
       hasilAksi(rcr && rcr.ok ? true : rcr, rcr && rcr.ok ? rcr.teks : '');
     }
-    else if (nama === 'bayarNafkah') { var rnf = DIRI.bayarNafkah(S); hasilAksi(rnf && rnf.ok ? true : rnf, rnf && rnf.teks); }
+    else if (nama === 'bayarNafkah') {
+      var nomNf = nilai === 'input' ? ($('in-nafkah') ? +$('in-nafkah').value : 0) : +nilai;
+      var rnf = DIRI.bayarNafkah(S, nomNf);
+      hasilAksi(rnf && rnf.ok ? true : rnf, rnf && rnf.teks);
+    }
+    else if (nama === 'isiKasTravel') {
+      var nomKas = nilai === 'input' ? ($('in-kas-isi') ? +$('in-kas-isi').value : 0) : +nilai;
+      var rik = TRAVEL.isiKasTravel(S, nomKas);
+      hasilAksi(rik && rik.ok ? true : rik, rik && rik.teks);
+    }
+    else if (nama === 'tarikKasTravel') {
+      var rtk2 = TRAVEL.tarikKasTravel(S, nilai === 'semua' ? 'semua' : +nilai);
+      hasilAksi(rtk2 && rtk2.ok ? true : rtk2, rtk2 && rtk2.teks);
+    }
+    else if (nama === 'toggleAutoKasTravel') {
+      var rak2 = TRAVEL.toggleAutoKasTravel(S);
+      hasilAksi(rak2 && rak2.ok ? true : rak2, rak2 && rak2.teks);
+    }
     else if (nama === 'pinjamPas') { var ppj = nilai.split('|'), rpj = DIRI.pinjamPasangan(S, ppj[0], +ppj[1]); hasilAksi(rpj && rpj.ok ? true : rpj, rpj && rpj.teks); }
     else if (nama === 'bayarUtangPas') { var rbu = DIRI.bayarUtangPasangan(S); hasilAksi(rbu && rbu.ok ? true : rbu, rbu && rbu.teks); }
     else if (nama === 'mintaBantu') { var rmb = DIRI.mintaBantuanPasangan(S, nilai === 'semua' ? 'semua' : +nilai); hasilAksi(rmb && rmb.ok ? true : rmb, rmb && rmb.teks); }
@@ -3024,6 +3077,7 @@
   var seretGigi = false;
   function labelGigi(jenis, id) {
     var gi = RUTE.gigiInfo(S, jenis === 'mobil' ? 'mobil' : 'motor', id);
+    if (jenis === 'mobil' && gi.id === 5 && S.travel && S.travel.aktif) return 'Level 5 (MAKS) · ' + gi.hi + ' km/j';
     return 'Level ' + gi.nama + ' · ' + gi.lo + '–' + gi.hi + ' km/j';
   }
   function barisGigi(jenis) {
@@ -3197,7 +3251,7 @@
         var x = I[k], ket = (x.biaya ? rupiah(x.biaya) + ' · ' : 'Gratis · ') + (x.menit >= 60 ? (x.menit / 60) + ' jam' : x.menit + ' menit');
         var efek = k === 'makan' ? 'Isi makan dan minum' : k === 'penginapan' ? 'Pulihkan stamina penuh' : k === 'rehat' ? 'Pulihkan stamina' : 'Pulihkan stamina sedikit';
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + ket + '</small><small>' + efek + (T.antri.length && (k === 'penginapan' || k === 'rehat') ? ' · penumpang bisa kesal' : '') + '</small></span><span><button type="button" class="chip-tombol pilih" data-trv="isti:' + k + '">Pilih</button></span></li>';
-      }).join('') + '<li><span><b>' + (evT ? 'Cas SPKLU mobil listrik' : 'Isi bensin ' + (m ? esc(N.bbm.nama[m.bbm] || m.bbm) : '')) + '</b><small>Dibayar dari rekening, 10 menit</small></span><span class="chip-baris"><button type="button" class="chip-tombol" data-trv="bbm:10">10 ' + (evT ? 'kWh' : 'L') + '</button><button type="button" class="chip-tombol pilih" data-trv="bbm:penuh">Penuh</button></span></li></ul>' +
+      }).join('') + '<li><span><b>' + (evT ? 'Cas SPKLU mobil listrik' : 'Isi bensin ' + (m ? esc(N.bbm.nama[m.bbm] || m.bbm) : '')) + '</b><small>Dibayar dari Kas Travel, 10 menit</small></span><span class="chip-baris"><button type="button" class="chip-tombol" data-trv="bbm:10">10 ' + (evT ? 'kWh' : 'L') + '</button><button type="button" class="chip-tombol pilih" data-trv="bbm:penuh">Penuh</button></span></li></ul>' +
       '<div style="margin-top:16px"><button type="button" class="aksi" data-tutup>Lanjut jalan</button></div>');
   }
   function bukaLaporanTravel() {
@@ -3260,7 +3314,8 @@
         '<small>' + (cadanganList.length
           ? 'Mobil utamamu tidak akan dipakai supir! Pilih mobil cadangan (' + cadanganList.map(function (x) { return '#' + (x.idx + 1) + ' ' + esc(x.mobil.nama); }).join(', ') + ') untuk tiap supir di bawah.'
           : 'Kamu baru punya 1 mobil penumpang. Beli mobil kedua di Dealer Mobil agar supir memakai mobil terpisah (saat 1 mobil, supir hanya narik jika mobil sedang tidak kamu pakai).') + '</small>' +
-        '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-app="qriskaryawan">📲 Menu QRIS Karyawan (Saldo: ' + rupiah(totQrisSp) + ')</button></div></div>';
+        '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-app="qriskaryawan">📲 Menu QRIS Karyawan (' + rupiah(totQrisSp) + ')</button><button type="button" class="chip-tombol" data-app="kastravel">💼 Kas Travel (' + rupiah(T.kas || 0) + ')</button></div>' +
+        '<small style="display:block;margin-top:4px">🔧 Supir Travel otomatis merawat mobilnya (servis berkala, ganti ban, pajak tahunan) dan biaya bensin/tol/perawatan dipotong dari <b>Kas Travel</b>.</small></div>';
       if (T.supir && T.supir.length) {
         html += '<h3 class="subjudul">Supir Travel Aktif (' + T.supir.length + '/3)</h3><ul class="daftar pesanan">' + T.supir.map(function (sp) {
           var puas = TRAVEL.kepuasanSupir(S, sp), lblP = TRAVEL.labelPuasSupir(puas);
@@ -3339,7 +3394,9 @@
     }
     var klsTrvTxt = (m && RUTE.pengaliKelasMobil) ? (' · ' + RUTE.labelKelasLayanan(m) + ' (Tarif ×' + RUTE.pengaliKelasMobil(m).toFixed(2).replace('.', ',') + ')') : '';
     html += '<ul class="daftar angka">' + baris('Mobil', m ? esc(m.nama) + ' · ' + TRAVEL.kursi(S) + ' kursi penumpang' + esc(klsTrvTxt) : 'Belum punya mobil') + baris('Nilai dari penumpang', '★ ' + T.rating.toLocaleString('id-ID')) +
+      baris('Saldo Kas Travel', rupiah(T.kas || 0)) +
       baris('Hari ini', T.hariIni.trip + ' trip · ' + rupiah(T.hariIni.bersih)) + baris('Total', T.total.trip + ' trip · ' + Math.round(T.total.km).toLocaleString('id-ID') + ' km · ' + rupiah(T.total.bersih)) + '</ul>' +
+      '<div class="chip-baris" style="margin:6px 0"><button type="button" class="chip-tombol" data-app="kastravel">💼 Kelola Kas Travel</button><button type="button" class="chip-tombol" data-app="qriskaryawan">📲 QRIS Karyawan</button></div>' +
       (T.aktif ? '<p class="catatan">Travel sedang berjalan. Tutup HP untuk melanjutkan.</p>' : e ? '<p class="racik-pesan salah">' + esc(e) + '</p>' :
         '<div style="margin:10px 0"><button type="button" class="aksi" data-aksi="mulaiTravel:1">Mulai travel dari ' + esc(kota) + '</button></div>');
     var daf = Object.keys(RUTE.kota).filter(function (id) { return id !== asal && cocokFilterWil(RUTE.kota[id], flt); }).map(function (id) { var j = RUTE.jalur(asal, id); return j ? { id: id, j: j } : null; }).filter(Boolean);

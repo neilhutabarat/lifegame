@@ -281,7 +281,17 @@
     return { ok: true, jml: sisa };
   }
 
-  /* bensin / cas listrik SPKLU dan servis dibayar dari rekening */
+  /* bensin / cas listrik SPKLU, servis, ban, dan pajak dibayar melalui Kas Travel (auto top-up dari bank < 50 jt) */
+  function danaRawat(S) {
+    if (g.KK_TRAVEL && g.KK_TRAVEL.danaKas) return g.KK_TRAVEL.danaKas(S);
+    return Math.max(0, (S.bank && S.bank.saldo) || 0);
+  }
+  function bayarRawat(S, jml, ket) {
+    if (g.KK_TRAVEL && g.KK_TRAVEL.bayarKasTravel) return g.KK_TRAVEL.bayarKasTravel(S, jml, ket, S.hari, false);
+    var p = Math.min(Math.max(0, S.bank.saldo), jml);
+    if (p > 0) { S.bank.saldo -= p; M().catatBank(S, ket, -p); }
+    return p;
+  }
   function isiBensin(S, jenis, liter) {
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
     var RON = M().RON, listrik = m.bbm === 'listrik';
@@ -292,9 +302,8 @@
     if (kosong < 1) return listrik ? 'Baterai mobil sudah penuh.' : 'Tangki sudah penuh.';
     liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
     var biaya = Math.round(liter * M().hargaBbm(S, jenis) / 100) * 100;
-    if (S.bank.saldo < biaya) return 'Saldo rekening tidak cukup untuk ' + (listrik ? 'cas listrik ' : 'bensin ') + rp(biaya) + '.';
-    S.bank.saldo -= biaya;
-    M().catatBank(S, listrik ? ('Cas SPKLU ' + liter.toLocaleString('id-ID') + ' kWh') : ('Isi ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L'), -biaya);
+    if (danaRawat(S) < biaya) return 'Saldo Kas Travel & rekening tidak cukup untuk ' + (listrik ? 'cas listrik ' : 'bensin ') + rp(biaya) + '.';
+    bayarRawat(S, biaya, (listrik ? ('Cas SPKLU ' + liter.toLocaleString('id-ID') + ' kWh') : ('Isi ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L')) + ' · ' + m.nama);
     m.isi = Math.min(1, m.isi + liter / m.tangki);
     S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
     m.ngelitik = !listrik && jenis !== 'solar' && RON[jenis] < RON[m.bbm];
@@ -302,8 +311,8 @@
   }
   function servis(S) {
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
-    if (S.bank.saldo < R.servis) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= R.servis; M().catatBank(S, 'Servis berkala ' + m.nama, -R.servis); m.kmServis = m.km;
+    if (danaRawat(S) < R.servis) return 'Saldo Kas Travel & rekening tidak cukup.';
+    bayarRawat(S, R.servis, 'Servis berkala ' + m.nama); m.kmServis = m.km;
     S.hariIni.bengkel = (S.hariIni.bengkel || 0) + R.servis; return true;
   }
   function tagihanPajak(S) {
@@ -312,11 +321,11 @@
   }
   function bayarPajak(S) {
     var m = S.mobil, t = tagihanPajak(S); if (!m) return 'Belum punya mobil.'; if (!t) return 'Pajak belum jatuh tempo.';
-    if (S.bank.saldo < t) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= t; M().catatBank(S, 'Pajak tahunan ' + m.nama + ' (PKB + SWDKLLJ)', -t); m.pajakTempo += 365; m.dendaPajak = 0; return true;
+    if (danaRawat(S) < t) return 'Saldo Kas Travel & rekening tidak cukup.';
+    bayarRawat(S, t, 'Pajak tahunan ' + m.nama + ' (PKB + SWDKLLJ)'); m.pajakTempo += 365; m.dendaPajak = 0; return true;
   }
   function telatServis(S) { var m = S.mobil; return m ? Math.max(0, m.km - m.kmServis - R.servisKm) : 0; }
-  function telatBan(S) { var m = S.mobil; return m ? Math.max(0, m.km - (m.kmBan || 0) - (R.banKm || 45000)) : 0; }
+  function telatBan(S) { var m = S.mobil; return m ? Math.max(0, m.km - (m.kmBan || 0) - (R.banKm || 90000)) : 0; }
   function hargaBan(m) {
     if (!m) return 4200000;
     return (R.banHarga && R.banHarga[m.kelas || 'keluarga']) || 4200000;
@@ -324,10 +333,10 @@
   function gantiBan(S) {
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
     var h = hargaBan(m);
-    if (S.bank.saldo < h) return 'Saldo rekening tidak cukup untuk ganti 4 ban (' + rp(h) + ').';
-    S.bank.saldo -= h; M().catatBank(S, 'Ganti 4 ban ' + m.nama, -h);
+    if (danaRawat(S) < h) return 'Saldo Kas Travel & rekening tidak cukup untuk ganti 4 ban (' + rp(h) + ').';
+    bayarRawat(S, h, 'Ganti 4 ban ' + m.nama);
     m.kmBan = m.km; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + h;
-    return { ok: true, biaya: h, teks: '4 ban ' + m.nama + ' diganti baru (' + rp(h) + ').' };
+    return { ok: true, biaya: h, teks: '4 ban ' + m.nama + ' diganti baru (' + rp(h) + ') dari Kas Travel.' };
   }
 
   /* perjalanan */
@@ -355,10 +364,10 @@
     if (!cukup(S, km)) return { ok: false, alasan: m && m.bbm === 'listrik' ? 'Daya baterai mobil listrik tidak cukup. Cas dulu di SPKLU.' : 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
     var menit = Math.round(km / kmhGigi(S, km) * 60) + 5 * (stop || 1), kabar = [];
     m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
-    if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + (telatServis(S) + telatBan(S) * 0.5) / 1000 * 0.01) {
+    if (Math.random() < 0.0008 + (m.ngelitik ? 0.008 : 0) + (telatServis(S) + telatBan(S) * 0.4) / 2500 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;
-      if (S.bank.saldo >= bengkel) { S.bank.saldo -= bengkel; M().catatBank(S, 'Derek dan bengkel ' + m.nama, -bengkel); }
-      S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; kabar.push('Mobil mogok di jalan. Derek dan bengkel ' + rp(bengkel) + ', telat sekitar 1,5 jam.');
+      if (danaRawat(S) >= bengkel) bayarRawat(S, bengkel, 'Derek dan bengkel ' + m.nama);
+      S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; kabar.push('Mobil mogok di jalan. Derek dan bengkel ' + rp(bengkel) + ' (Kas Travel), telat sekitar 1,5 jam.');
     }
     return { ok: true, menit: menit, kabar: kabar };
   }

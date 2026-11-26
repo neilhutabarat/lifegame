@@ -440,8 +440,8 @@
     ],
     /* kredit mobil (perkiraan): bunga flat sekitar 5% setahun + asuransi all risk sekitar 2% setahun */
     kreditMobil: { dp: [0.2, 0.25, 0.3], tenor: [12, 24, 36, 48, 60], bungaFlat: 0.0042, asuransi: 0.0017, dendaHarian: 0.005, tarikSetelahBulan: 3, leasing: 'Leasing mobil' },
-    /* perawatan mobil (perkiraan); SWDKLLJ mobil pribadi Rp143.000 setahun; ban 4 roda ±45.000 km */
-    rawatMobil: { servisKm: 10000, servis: 1200000, banKm: 45000, banHarga: { pikap: 2800000, keluarga: 4200000, mewah: 7800000, sultan: 12500000 }, pkb: 0.015, swdkllj: 143000, dendaPajak: 0.02 },
+    /* perawatan mobil (irit & awet); SWDKLLJ mobil pribadi Rp143.000 setahun; servis tiap 25.000 km, ban 4 roda ±90.000 km */
+    rawatMobil: { servisKm: 25000, servis: 1200000, banKm: 90000, banHarga: { pikap: 2800000, keluarga: 4200000, mewah: 7800000, sultan: 12500000 }, pkb: 0.015, swdkllj: 143000, dendaPajak: 0.02 },
     solar: 6800, /* Biosolar subsidi */
 
     /* ojek online (sisi pengemudi). Potongan aplikasi 8% mulai 1 Juli 2026 (Perpres 27/2026).
@@ -515,8 +515,8 @@
     },
     /* kredit motor (perkiraan): bunga flat sekitar 1,8% sebulan + asuransi 0,2% dari harga sebulan */
     kreditMotor: { dp: [0.1, 0.15, 0.2], tenor: [11, 17, 23, 29, 35], bungaFlat: 0.018, asuransi: 0.002, dendaHarian: 0.005, tarikSetelahBulan: 3, leasing: 'Leasing motor' },
-    /* perawatan (perkiraan); ban sepasang depan-belakang ±18.000 km */
-    rawat: { oliKm: 2000, oli: 50000, servisKm: 4000, servis: 100000, banKm: 18000, banHarga: { harian: 420000, sport: 1400000, moge: 4500000 }, pkb: 0.012, swdkllj: 35000, dendaPajak: 0.02, tarifListrik: 1445 },
+    /* perawatan motor (irit & awet); ganti oli 6.000 km, servis 15.000 km, ban 40.000 km */
+    rawat: { oliKm: 6000, oli: 50000, servisKm: 15000, servis: 100000, banKm: 40000, banHarga: { harian: 420000, sport: 1400000, moge: 4500000 }, pkb: 0.012, swdkllj: 35000, dendaPajak: 0.02, tarifListrik: 1445 },
     aksesoris: [
       { id: 'tas', nama: 'Tas cup berinsulasi', harga: 85000, muat: 12, ket: 'Muat 12 cup, es tahan lebih lama' },
       { id: 'box', nama: 'Box belakang', harga: 275000, muat: 20, ket: 'Muat 20 cup, cup jarang tumpah' },

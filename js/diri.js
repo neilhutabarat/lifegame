@@ -1949,25 +1949,31 @@
         }
       }
     });
-    /* nafkah wajib bulanan setiap awal bulan (40% penghasilan suami) */
+    /* nafkah bulanan (nominal bebas): jika tidak memberi nafkah, keharmonisan turun bertahap 1..6 bulan hingga 0% */
     if (gantiBulan) {
       var blnBaruD = blnNo(nBaru);
+      var blnLaluD = blnNo(nLama);
       var gPemain = (S.profil && S.profil.gender) || 'cewek';
       var pasList = daftarPasangan(S);
       if (pasList.length) {
         if (gPemain === 'cowok') {
-          if (S.tagihanNafkah && !S.tagihanNafkah.lunas) {
-            pasList.forEach(function (ps) { ps.bahagia = Math.max(0, Math.round((ps.bahagia == null ? 80 : ps.bahagia) * 0.5)); });
-            kabar.push('⚠️ Kamu 1 bulan tidak memberi nafkah! Keharmonisan pasangan turun 50%.');
-          }
-          var hasilBln = Math.max(0, Math.round(S.penghasilanBulanIni || 0));
-          var jmlNafkah = Math.max(500000, Math.round(hasilBln * 0.4 / 1000) * 1000);
-          if ((S.nafkahTerbayarSampai || 0) >= blnBaruD) {
-            S.tagihanNafkah = { bulan: t.m, tahun: t.y, penghasilan: hasilBln, jumlah: 0, lunas: true };
-            kabar.push('💝 Nafkah bulan ini sudah kamu bayarkan lebih awal (lunas, tidak ditagih lagi).');
+          S.tagihanNafkah = null;
+          if ((S.nafkahTerbayarSampai || 0) >= blnLaluD) {
+            S.bulanTanpaNafkah = 0;
           } else {
-            S.tagihanNafkah = { bulan: t.m, tahun: t.y, penghasilan: hasilBln, jumlah: jmlNafkah, lunas: false };
-            kabar.push('📢 Notice Nafkah Awal Bulan: 40% dari penghasilan bulan lalu (' + rp(hasilBln) + ') = ' + rp(jmlNafkah) + '. Segera bayar di aplikasi Keluarga agar keharmonisan terjaga!');
+            S.bulanTanpaNafkah = Math.min(6, (S.bulanTanpaNafkah || 0) + 1);
+            var blnKosong = S.bulanTanpaNafkah;
+            if (blnKosong >= 6) {
+              pasList.forEach(function (ps) { ps.bahagia = 0; });
+              kabar.push('⚠️ Sudah 6 bulan berturut-turut tidak memberi nafkah! Keharmonisan pasangan turun ke 0%. Segera beri nafkah di aplikasi Keluarga.');
+            } else {
+              var batasHrm = Math.round(((6 - blnKosong) / 6) * 100);
+              pasList.forEach(function (ps) {
+                var hLama = ps.bahagia == null ? 80 : ps.bahagia;
+                ps.bahagia = Math.max(0, Math.min(batasHrm, Math.round(hLama - 17)));
+              });
+              kabar.push('⚠️ Bulan ke-' + blnKosong + '/6 tanpa nafkah: keharmonisan pasangan menurun! Beri nafkah berapa pun nominalnya di aplikasi Keluarga (di bulan ke-6 keharmonisan menjadi 0%).');
+            }
           }
         } else {
           var nafkahMasuk = Math.round((kota(S).umk || 4000000) * 1.15 * 0.4 / 1000) * 1000;
@@ -2176,30 +2182,34 @@
     }
     return { ok: true, teks: 'Cicilan ' + ch.nama + ' (' + rp(ch.angsuran) + ') dibayar (bulan ini lunas, tidak ditagih lagi). Sisa ' + ch.sisa + ' bln.' };
   }
-  /* ---------- keuangan pasangan, nafkah 40%, pinjam/bantuan beli, aktivitas keluarga, penginapan/hotel ---------- */
-  function bayarNafkah(S) {
-    var pas = pasanganAktif(S); if (!pas) return 'Belum punya pasangan.';
-    var tg = S.tagihanNafkah, adaTagih = !!(tg && !tg.lunas);
-    var jml = adaTagih ? tg.jumlah : Math.max(500000, Math.round((S.penghasilanBulanIni || 0) * 0.4 / 1000) * 1000);
+  /* ---------- keuangan pasangan, nafkah bebas nominal, pinjam/bantuan beli, aktivitas keluarga, penginapan/hotel ---------- */
+  function bayarNafkah(S, nominal) {
+    var pasList = daftarPasangan(S), pas = pasList[0] || pasanganAktif(S);
+    if (!pas) return 'Belum punya pasangan.';
+    var jml = Math.round(+(nominal != null ? nominal : 500000) || 0);
+    if (jml < 50000) return 'Nominal nafkah minimal Rp50.000.';
     if (S.bank.saldo >= jml) {
       S.bank.saldo -= jml;
-      S.bank.mutasi.unshift({ n: S.hari, ket: 'Nafkah bulanan untuk ' + pas.nama, jml: -jml });
+      S.bank.mutasi.unshift({ n: S.hari, ket: 'Nafkah untuk ' + pas.nama, jml: -jml });
     } else if ((S.uang.dompet || 0) >= jml) {
       S.uang.dompet -= jml;
     } else return 'Uang tidak cukup untuk nafkah (' + rp(jml) + ').';
     pas.dompet = (pas.dompet || 0) + Math.round(jml * 0.35);
     pas.tabungan = (pas.tabungan || 0) + (jml - Math.round(jml * 0.35));
-    pas.bahagia = Math.min(100, (pas.bahagia || 80) + 12);
+    var bonusHrm = jml >= 5000000 ? 24 : jml >= 2000000 ? 18 : jml >= 500000 ? 14 : 10;
+    var bonusPrs = jml >= 2000000 ? 8 : 5;
+    (pasList.length ? pasList : [pas]).forEach(function (ps) {
+      ps.bahagia = Math.min(100, (ps.bahagia == null ? 80 : ps.bahagia) + bonusHrm);
+      ps.perasaan = Math.min(100, (ps.perasaan == null ? 75 : ps.perasaan) + bonusPrs);
+    });
     var blnIni = blnNo(S.hari);
-    if (adaTagih) {
-      tg.lunas = true;
-      S.nafkahTerbayarSampai = Math.max(S.nafkahTerbayarSampai || 0, blnIni);
-    } else {
-      S.nafkahTerbayarSampai = Math.max(S.nafkahTerbayarSampai || blnIni, blnIni) + 1;
-    }
+    S.nafkahTerbayarSampai = Math.max(S.nafkahTerbayarSampai || 0, blnIni);
+    S.bulanTanpaNafkah = 0;
+    S.nafkahTerakhirHari = S.hari;
+    S.tagihanNafkah = null;
     /* uang istri dipakai untuk seluruh kebutuhan rumah tangga sebulan */
     S.rumahTangga = { aktifSampai: Math.max((S.rumahTangga && S.rumahTangga.aktifSampai) || S.hari, S.hari) + 30, paket: 'cukup' };
-    return { ok: true, teks: 'Nafkah ' + rp(jml) + ' diberikan ke ' + pas.nama + (adaTagih ? ' (lunas bulan ini).' : ' (dibayar lebih awal untuk bulan depan, tidak ditagih lagi tgl 1).') + ' Kebutuhan rumah tangga 30 hari terjamin!' };
+    return { ok: true, teks: '💝 Nafkah ' + rp(jml) + ' diberikan ke ' + pas.nama + '! Keharmonisan +' + bonusHrm + '% & kebutuhan rumah tangga 30 hari terjamin.' };
   }
   function pinjamPasangan(S, id, jml) {
     var ps = (S.keluarga || []).filter(function (x) { return x.id === id; })[0] || pasanganAktif(S);
