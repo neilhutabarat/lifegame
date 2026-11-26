@@ -1434,10 +1434,20 @@
     });
     /* semua mobil di armada */
     var armadaC = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    var supirAktifMap = {};
+    if (S.travel && S.travel.supir) {
+      S.travel.supir.forEach(function (sp) {
+        if (sp && sp.aktif && sp.mobilIdx != null) supirAktifMap[sp.mobilIdx] = sp.nama;
+      });
+    }
     armadaC.forEach(function (mb, idx) {
       var kunciM = 'mobil:' + idx;
+      if (supirAktifMap[idx] && sw[kunciM]) delete sw[kunciM];
       var tarifM = Math.max(220000, Math.min(2500000, Math.round((mb.harga || mb.hargaBeli || 200000000) * 0.0014 / 10000) * 10000));
-      list.push({ kunci: kunciM, nama: mb.nama + (armadaC.length > 1 ? ' (Mobil #' + (idx + 1) + ')' : ''), kat: 'Rental Mobil', tarif: tarifM, aktif: !!sw[kunciM], ket: idx === (S.mobilAktif || 0) ? 'Mobil utama · lepas kunci harian dalam kota' : 'Mobil cadangan armada · lepas kunci harian' });
+      var ketM = supirAktifMap[idx]
+        ? ('Sedang dipakai Supir Travel ' + supirAktifMap[idx] + ' (tidak bisa disewakan bersamaan)')
+        : (idx === (S.mobilAktif || 0) ? 'Mobil utama · lepas kunci harian dalam kota' : 'Mobil cadangan armada · lepas kunci harian');
+      list.push({ kunci: kunciM, nama: mb.nama + (armadaC.length > 1 ? ' (Mobil #' + (idx + 1) + ')' : ''), kat: 'Rental Mobil', tarif: tarifM, aktif: !!sw[kunciM], terkunciSupir: supirAktifMap[idx] || '', ket: ketM });
     });
     /* tablet & laptop di S.gadget */
     Object.keys(S.gadget || {}).forEach(function (id) {
@@ -1456,6 +1466,11 @@
   }
   function toggleSewaBarang(S, kunci) {
     S.sewaBarang = S.sewaBarang || {};
+    if (!S.sewaBarang[kunci] && String(kunci || '').indexOf('mobil:') === 0 && S.travel && S.travel.supir) {
+      var idxM = +String(kunci).slice(6);
+      var spPakai = S.travel.supir.filter(function (sp) { return sp && sp.aktif && sp.mobilIdx === idxM; })[0];
+      if (spPakai) return 'Mobil ini sedang dipakai Supir Travel ' + spPakai.nama + '. Alihkan mobil supir dulu di aplikasi Travel jika ingin disewakan.';
+    }
     S.sewaBarang[kunci] = !S.sewaBarang[kunci];
     if (!S.sewaBarang[kunci]) delete S.sewaBarang[kunci];
     return true;

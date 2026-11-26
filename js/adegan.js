@@ -1313,7 +1313,7 @@
     if (sopir && !hp) kotak(x + 8, yb + 8, 12, 4, baju);
     if (hp) { kotak(x + 6, yb + 4, 5, 9, '#222'); kotak(x + 7, yb + 5, 3, 6, '#7fd3e8'); }
   }
-  var WARNA_MOBIL = { granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', calya: '#b8bcc0', agya: '#d9443a', avanza: '#e8e4da', rush: '#2b2f36', veloz: '#8a2a2a', zenix: '#d8d4cc', fortuner: '#2b2f36', camry: '#3a3f46', gr86: '#d9443a', alphard: '#f3f1ea', landcruiser: '#2b2f36' };
+  var WARNA_MOBIL = { granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', calya: '#b8bcc0', agya: '#d9443a', avanza: '#e8e4da', rush: '#2b2f36', veloz: '#8a2a2a', innova: '#c8ccd0', zenix: '#d8d4cc', fortuner: '#2b2f36', camry: '#3a3f46', gr86: '#d9443a', alphard: '#f3f1ea', landcruiser: '#2b2f36' };
   function gambarMobil(x, y, bentuk, id, kiri, roda) {
     var imC = muatLazily(mobilImgs, id, 'img/mobil-' + id + '.png');
     if (imC) {

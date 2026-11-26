@@ -267,6 +267,10 @@
           chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">🎁 Cicilan Hadiah H-' + DIRI.sisaHariNafkah(S) + ' · ' + rupiahPendek(totHdh) + '</span>';
         }
       }
+      var totQrisHud = TRAVEL.totalQrisSupir ? TRAVEL.totalQrisSupir(S) : 0;
+      if (totQrisHud > 0) {
+        chipBayar += '<span class="chip event bisa-tap" data-chipapp="qriskaryawan">📲 QRIS Supir ' + rupiahPendek(totQrisHud) + '</span>';
+      }
       var chipDunia = chipBayar + (d.sakit ? '<span class="chip libur bisa-tap" data-chipapp="apotek">Sakit: ' + esc(d.sakit.nama) + ' (Apotek & RS)</span>' : '') +
         (d.hiv ? '<span class="chip libur">HIV+ · ' + ((S.kesehatan && S.kesehatan.arvSampai >= S.hari) ? 'ARV Aktif' : 'Beli ARV di Apotek!') + '</span>' : '') +
         (d.kesehatan != null && d.kesehatan < 60 ? '<span class="chip libur">Kesehatan ' + Math.round(d.kesehatan) + '%</span>' : '') +
@@ -762,7 +766,7 @@
         baris('Denda keterlambatan', '1% tagihan (maks ' + rupiah(K.dendaMaks) + ')') +
         baris('Iuran tahunan', 'Gratis tahun pertama, lalu ' + rupiah(K.iuranTahunan) + '/thn') + '</ul>' +
         '<div style="margin-top:12px"><button type="button" class="aksi" data-aksi="ajukanKk:1">Ajukan kartu kredit</button></div>' +
-        '<p class="catatan">Kartu kredit bisa dipakai belanja di Tokopedia, dealer motor & mobil (tunai maupun DP), dan Toko Game. Tagihan dicetak tiap tanggal 1 dan jatuh tempo tanggal 18.</p>';
+        '<p class="catatan">Kartu kredit bisa dipakai belanja di Tokopedia, dealer motor & mobil (langsung lunas tanpa leasing), dan Toko Game. Limit maksimal Rp1 Miliar. Tagihan dicetak tiap tanggal 1 dan jatuh tempo tanggal 18.</p>';
       return html;
     }
     var sisa = UANG.sisaLimitKk(S), totalTagih = (kk.tagihan || 0) + (kk.denda || 0), terpakai = totalTagih + (kk.pakai || 0);
@@ -784,8 +788,13 @@
         ((kk.pakai || 0) > 0 ? '<button type="button" class="chip-tombol" data-aksi="bayarKk:semua">Lunasi semua ' + rupiah(terpakai) + '</button>' : '') +
         '</div>';
     }
-    if (kk.cicilan) html += '<p class="catatan">Cicilan berjalan: ' + rupiah(kk.cicilan.per) + ' per bulan, sisa ' + kk.cicilan.sisa + ' dari ' + kk.cicilan.n + ' bulan.</p>';
-    else if (kk.tagihan >= 500000 && !kk.denda) html += '<h3 class="subjudul">Cicil tagihan ' + rupiah(kk.tagihan) + '</h3><div class="chip-baris">' + UANG.TENOR_KK.map(function (n) { return '<button type="button" class="chip-tombol" data-aksi="cicilKk:' + n + '">' + n + ' bln · ' + rupiah(UANG.cicilanKk(kk.tagihan, n)) + '</button>'; }).join('') + '</div><p class="catatan">Bunga 1,75% sebulan. Cicilan masuk tagihan tiap bulan.</p>';
+    var dasarCicil = Math.round((kk.tagihan || 0) + (kk.pakai || 0));
+    if (kk.cicilan) {
+      var sisaPokokC = Math.round(kk.cicilan.pokok * kk.cicilan.sisa / kk.cicilan.n);
+      html += '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin-top:8px"><b>Cicilan KK Berjalan</b><small>' + rupiah(kk.cicilan.per) + '/bulan · sisa ' + kk.cicilan.sisa + ' dari ' + kk.cicilan.n + ' bulan (sisa pokok ' + rupiah(sisaPokokC) + ').</small><div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-aksi="lunasCicilKk:1">💳 Lunasi Sisa Cicilan (' + rupiah(sisaPokokC) + ')</button></div></div>';
+    } else if (dasarCicil >= 500000 && !kk.denda) {
+      html += '<h3 class="subjudul">Ubah Pemakaian / Tagihan ' + rupiah(dasarCicil) + ' jadi Cicilan KK</h3><div class="chip-baris">' + UANG.TENOR_KK.map(function (n) { return '<button type="button" class="chip-tombol" data-aksi="cicilKk:' + n + '">' + n + ' bln · ' + rupiah(UANG.cicilanKk(dasarCicil, n)) + '</button>'; }).join('') + '</div><p class="catatan">Bunga 1,75% sebulan (bisa langsung ubah pemakaian berjalan jadi cicilan tanpa menunggu tanggal 1).</p>';
+    }
     html += '<div class="chip-baris" style="margin-top:8px"><button type="button" class="chip-tombol" data-aksi="naikLimitKk:1">Ajukan naik limit</button></div>' +
       '<h3 class="subjudul">Riwayat transaksi kartu kredit</h3><ul class="daftar angka">' +
       (kk.mutasi && kk.mutasi.length ? kk.mutasi.slice(0, 15).map(function (m) {
@@ -1278,11 +1287,16 @@
     var jmlCwk = daftar.filter(function (x) { return x.gender === 'cewek'; }).length;
     var jmlCwk2 = daftar.filter(function (x) { return x.gender === 'cowok'; }).length;
     var jmlPac = daftar.filter(function (x) { return !!x.pacarId; }).length;
+    var cariQ = String(app.tmCari || '').trim().toLowerCase();
     var tampilDaftar = daftar.filter(function (x) {
-      if (flt === 'cewek') return x.gender === 'cewek';
-      if (flt === 'cowok') return x.gender === 'cowok';
-      if (flt === 'pacaran') return !!x.pacarId || x.peran === 'pacar';
-      if (flt === 'jomblo') return !x.pacarId && x.peran !== 'pacar';
+      if (flt === 'cewek' && x.gender !== 'cewek') return false;
+      if (flt === 'cowok' && x.gender !== 'cowok') return false;
+      if (flt === 'pacaran' && !x.pacarId && x.peran !== 'pacar') return false;
+      if (flt === 'jomblo' && (x.pacarId || x.peran === 'pacar')) return false;
+      if (cariQ) {
+        var hay = (x.nama + ' ' + (x.kerja || '') + ' ' + (x.pacarNama || '') + ' ' + String(x.tglLahir || '')).toLowerCase();
+        if (hay.indexOf(cariQ) < 0) return false;
+      }
       return true;
     });
     var html = kepalaApp('Teman', daftar.length + ' kontak (' + jmlCwk + ' cewek · ' + jmlCwk2 + ' cowok)') + pesanApp() +
@@ -1293,6 +1307,7 @@
       '<div class="chip-baris"><button type="button" class="chip-tombol pilih" data-aksi="temanTambah:1">Tambah</button></div>';
     if (!daftar.length) return html + '<p class="catatan">Belum ada teman. Istri atau suami yang diceraikan akan masuk ke sini sebagai mantan.</p>';
     html += '<h3 class="subjudul">Daftar Karakter (' + tampilDaftar.length + ' dari ' + daftar.length + ')</h3>' +
+      '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input id="in-tm-cari" class="input-teks" type="text" maxlength="24" style="margin:0;flex:1" placeholder="Cari nama, kerja, atau tahun lahir..." value="' + esc(app.tmCari || '') + '"><button type="button" class="chip-tombol pilih" data-aksi="tmCari:1">🔍 Cari</button>' + (cariQ ? '<button type="button" class="chip-tombol" data-aksi="tmCari:reset">Reset</button>' : '') + '</div>' +
       chipTab('tmFilter', [['semua', 'Semua (' + daftar.length + ')'], ['cewek', 'Cewek (' + jmlCwk + ')'], ['cowok', 'Cowok (' + jmlCwk2 + ')'], ['pacaran', '💑 Pacaran (' + jmlPac + ')'], ['jomblo', 'Lajang']], flt) +
       '<ul class="daftar pesanan">' + tampilDaftar.map(function (x) {
       var usia = KAL.usia(S.hari, x.tglLahir), lawanJenis = x.gender !== gPem;
@@ -1989,7 +2004,7 @@
     }
     html += '<ul class="daftar belanja">' + daftar.map(function (x) {
       return '<li><span><b>[' + esc(x.kat) + '] ' + esc(x.nama) + '</b><small>' + esc(x.ket) + '</small><small class="harga">Tarif sewa ' + rupiah(x.tarif) + ' / hari</small></span>' +
-        '<span><button type="button" class="chip-tombol' + (x.aktif ? ' pilih' : '') + '" data-aksi="sewaBarang:' + x.kunci + '">' + (x.aktif ? 'Disewakan ✓' : 'Sewakan') + '</button></span></li>';
+        '<span><button type="button" class="chip-tombol' + (x.aktif ? ' pilih' : '') + '"' + (x.terkunciSupir ? ' disabled style="opacity:.5"' : '') + ' data-aksi="sewaBarang:' + x.kunci + '">' + (x.terkunciSupir ? 'Dipakai Supir' : x.aktif ? 'Disewakan ✓' : 'Sewakan') + '</button></span></li>';
     }).join('') + '</ul>' +
       '<p class="catatan">Barang yang disewakan menghasilkan uang sewa harian yang otomatis masuk ke rekening bank setiap pagi dan tercatat di Kabar Pagi serta Closing Harian.</p>';
     return html;
@@ -2273,7 +2288,8 @@
     else if (nama === 'kurTenor') { app.kurTenor = v; app.pesan = ''; }
     else if (nama === 'ajukanKur') hasilAksi(UANG.ajukanKur(S, app.kurPlafon, app.kurTenor), 'Pengajuan KUR dikirim. Hasilnya keluar dalam ' + N.kur.hariProses + ' hari.');
     else if (nama === 'ajukanKk') hasilAksi(UANG.ajukanKk(S), 'Kartu kredit ' + UANG.bankIni(S).nama + ' disetujui dengan limit ' + rupiah(S.kk.limit) + '.');
-    else if (nama === 'cicilKk') { var rck = UANG.cicilKk(S, nilai); hasilAksi(rck && rck.ok ? true : rck, rck && rck.ok ? 'Tagihan dicicil ' + rck.tenor + ' bulan, ' + rupiah(rck.per) + ' per bulan.' : ''); }
+    else if (nama === 'cicilKk') { var rck = UANG.cicilKk(S, nilai); hasilAksi(rck && rck.ok ? true : rck, rck && rck.ok ? 'Pemakaian & tagihan dicicil ' + rck.tenor + ' bulan, ' + rupiah(rck.per) + ' per bulan.' : ''); }
+    else if (nama === 'lunasCicilKk') { var rlck = UANG.lunasiCicilanKk(S); hasilAksi(rlck && rlck.ok ? true : rlck, rlck && rlck.ok ? 'Cicilan kartu kredit dilunasi penuh (' + rupiah(rlck.jml) + '). Limit tersedia kembali!' : ''); }
     else if (nama === 'bayarKk') { var rkk = UANG.bayarKk(S, nilai); hasilAksi(rkk && rkk.ok ? true : rkk, rkk && rkk.ok ? 'Tagihan kartu kredit dibayar ' + rupiah(rkk.jml) + '.' : ''); }
     else if (nama === 'naikLimitKk') { var rnl = UANG.naikLimitKk(S); hasilAksi(rnl === true ? true : rnl, 'Limit kartu kredit naik menjadi ' + rupiah(S.kk.limit) + '.'); }
     else if (nama === 'gadgetTab') { app.gadgetTab = nilai; app.pesan = ''; }
@@ -2386,6 +2402,7 @@
     else if (nama === 'spRute') { var psrt = nilai.split('|'), rsrt = TRAVEL.aturSupir(S, psrt[0], { ruteId: psrt[1] }); hasilAksi(rsrt && rsrt.ok ? true : rsrt, rsrt && rsrt.teks); }
     else if (nama === 'tarikQrisSupir') { var rtq = TRAVEL.tarikQrisSupir(S, nilai); hasilAksi(rtq && rtq.ok ? true : rtq, rtq && rtq.teks); }
     else if (nama === 'tmFilter') { app.tmFilter = nilai; app.pesan = ''; }
+    else if (nama === 'tmCari') { app.tmCari = nilai === 'reset' ? '' : ($('in-tm-cari') ? $('in-tm-cari').value : ''); app.pesan = ''; }
     else if (nama === 'spPeriode') { var psp = nilai.split('|'), rsp2 = TRAVEL.aturSupir(S, psp[0], { periode: psp[1] }); hasilAksi(rsp2 && rsp2.ok ? true : rsp2, rsp2 && rsp2.teks); }
     else if (nama === 'spBpjs') { var spO = (S.travel.supir || []).filter(function (x) { return x.id === nilai; })[0]; var rsb = TRAVEL.aturSupir(S, nilai, { bpjs: !(spO && spO.bpjs) }); hasilAksi(rsb && rsb.ok ? true : rsb, rsb && rsb.teks); }
     else if (nama === 'spAktif') { var spA = (S.travel.supir || []).filter(function (x) { return x.id === nilai; })[0]; var rsa2 = TRAVEL.aturSupir(S, nilai, { aktif: !(spA && spA.aktif) }); hasilAksi(rsa2 && rsa2.ok ? true : rsa2, rsa2 && rsa2.teks); }
@@ -2507,7 +2524,7 @@
       hasilAksi(rbk && rbk.ok ? true : rbk, rbk && rbk.ok ? rbk.teks : '');
     }
     else if (nama === 'hapusKel') { DIRI.hapusKeluarga(S, nilai); hasilAksi(true, 'Karakter dihapus dari daftar keluarga.'); }
-    else if (nama === 'sewaBarang') { DIRI.toggleSewaBarang(S, nilai); hasilAksi(true, S.sewaBarang[nilai] ? 'Barang mulai disewakan! Pendapatan sewa cair tiap pagi.' : 'Penyewaan barang dihentikan.'); }
+    else if (nama === 'sewaBarang') { var rsbw = DIRI.toggleSewaBarang(S, nilai); hasilAksi(rsbw, S.sewaBarang[nilai] ? 'Barang mulai disewakan! Pendapatan sewa cair tiap pagi.' : 'Penyewaan barang dihentikan.'); }
     var gulir = $('lembar-isi').scrollTop; bukaHP(app.nama); $('lembar-isi').scrollTop = (nama === 'beli' || nama === 'tab') ? 0 : gulir;
   }
 

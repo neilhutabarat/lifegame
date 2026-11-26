@@ -242,6 +242,11 @@
         S.travel.di = S.kota; S.travel.tujuan = null; S.travel.antri = [];
         if (S.travel.aktif && S.travel.status === 'tunggu') S.travel.aktif = false;
       }
+      if (S.travel && S.travel.supir && S.travel.supir.length && g.KK_RUTE) {
+        S.travel.supir.forEach(function (sp) {
+          if (sp.ruteId && sp.ruteId !== 'otomatis' && (sp.ruteId === S.kota || !g.KK_RUTE.jalur(S.kota, sp.ruteId))) sp.ruteId = 'otomatis';
+        });
+      }
       sinkronRumahUtama(S);
       var jrkWil = (WILAYAH[r.wilayah] && WILAYAH[r.wilayah].jarakTambah) || 0;
       S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S, r.kota).jarak[r.tipe] + jrkWil };

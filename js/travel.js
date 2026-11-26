@@ -214,8 +214,13 @@
     var T = siapkan(S);
     var sp = T.supir.filter(function (x) { return x.id === id; })[0];
     if (!sp) return 'Supir tidak ditemukan.';
+    var sisaQ = Math.max(0, Math.round(sp.qrisSaldo || 0));
+    if (sisaQ > 0) {
+      S.bank.saldo += sisaQ;
+      M().catatBank(S, 'Sisa QRIS Karyawan · ' + sp.nama, sisaQ);
+    }
     T.supir = T.supir.filter(function (x) { return x.id !== id; });
-    return { ok: true, teks: sp.nama + ' diberhentikan dari tugas Supir Travel.' };
+    return { ok: true, teks: sp.nama + ' diberhentikan dari tugas Supir Travel.' + (sisaQ > 0 ? ' Sisa QRIS ' + rp(sisaQ) + ' otomatis ditarik ke rekening bank.' : '') };
   }
   function gantiHari(S, nLama, nBaru) {
     var T = siapkan(S), kabar = [];
@@ -226,21 +231,30 @@
     for (var i = T.supir.length - 1; i >= 0; i--) {
       var sp = T.supir[i], puas = kepuasanSupir(S, sp);
       if (puas < 30 && Math.random() < 0.25) {
-        kabar.push('⚠️ Supir travel ' + sp.nama + ' mengundurkan diri (resign) karena gaji terlalu kecil (kepuasan ' + puas + '%).');
+        var sisaQResign = Math.max(0, Math.round(sp.qrisSaldo || 0));
+        if (sisaQResign > 0) {
+          S.bank.saldo += sisaQResign;
+          M().catatBank(S, 'Sisa QRIS Karyawan (Resign) · ' + sp.nama, sisaQResign, nBaru);
+        }
+        kabar.push('⚠️ Supir travel ' + sp.nama + ' mengundurkan diri (resign) karena gaji terlalu kecil (kepuasan ' + puas + '%).' + (sisaQResign > 0 ? ' Sisa QRIS ' + rp(sisaQResign) + ' otomatis ditarik ke rekening.' : ''));
         T.supir.splice(i, 1);
         continue;
       }
       var resM = mobilUntukSupir(S, sp);
       var m = resM && (!resM.berbagi || !pemainPakaiMobil) ? resM.mobil : null;
       if (sp.aktif && m) {
-        /* pilih rute otomatis / pilihan supir di pulau yang sama (jarak 40-350 km) */
+        /* pilih rute pilihan supir atau otomatis di pulau yang sama; reset otomatis jika kota pindah pulau & rute lama tak terjangkau */
         var asal = S.kota, tujuanId = sp.ruteId && sp.ruteId !== 'otomatis' && R.kota[sp.ruteId] ? sp.ruteId : null;
-        if (!tujuanId || tujuanId === asal) {
-          var cand = Object.keys(R.kota).filter(function (id) { return id !== asal && R.kota[id].pulau === (R.kota[asal] && R.kota[asal].pulau); });
-          if (!cand.length) cand = Object.keys(R.kota).filter(function (id) { return id !== asal; });
+        if (tujuanId && (tujuanId === asal || !R.jalur(asal, tujuanId))) {
+          sp.ruteId = 'otomatis';
+          tujuanId = null;
+        }
+        if (!tujuanId) {
+          var cand = Object.keys(R.kota).filter(function (id) { return id !== asal && R.kota[id].pulau === (R.kota[asal] && R.kota[asal].pulau) && !!R.jalur(asal, id); });
+          if (!cand.length) cand = Object.keys(R.kota).filter(function (id) { return id !== asal && !!R.jalur(asal, id); });
           tujuanId = cand[Math.floor(Math.random() * cand.length)];
         }
-        var j = R.jalur(asal, tujuanId);
+        var j = tujuanId ? R.jalur(asal, tujuanId) : null;
         if (j) {
           var tripHari = puas >= 75 ? (Math.random() < 0.5 ? 2 : 1) : (puas >= 45 ? 1 : (Math.random() < 0.55 ? 1 : 0));
           if (tripHari > 0) {
@@ -267,6 +281,7 @@
             m.km = (m.km || 0) + Math.round(j.km * tripHari);
             m.totalHasil = (m.totalHasil || 0) + Math.max(0, bersih);
             S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + Math.max(0, bersih);
+            if (S.hariIni) S.hariIni.travel = (S.hariIni.travel || 0) + Math.max(0, bersih);
             T.total.trip += tripHari; T.total.bersih += bersih; T.total.km += Math.round(j.km * tripHari);
             sp.totalTrip = (sp.totalTrip || 0) + tripHari; sp.totalBersih = (sp.totalBersih || 0) + bersih;
             kabar.push('🚐 Supir ' + sp.nama + ' (pakai ' + m.nama + ') narik ke ' + R.nama(tujuanId) + ' (' + tripHari + ' trip, ' + pnp + ' pnp): bersih ' + rp(bersih) + ' masuk ke QRIS Karyawan.');

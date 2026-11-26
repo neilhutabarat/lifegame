@@ -268,7 +268,7 @@
     granmax: 130, carry: 130, hilux: 145, l300: 130,
     calya: 160, sigra: 160, ayla: 155, agya: 160, brio: 165, airev: 100, binguoev: 130,
     xenia: 170, avanza: 170, ertiga: 170, terios: 170, rush: 170, xl7: 170, veloz: 175, xpander: 175, stargazer: 175,
-    bydm6: 180, creta: 180, hrv: 180, zenix: 180, jimny: 145,
+    bydm6: 180, creta: 180, hrv: 180, innova: 175, zenix: 180, jimny: 145,
     fortuner: 185, pajerosport: 190, civicrs: 200, bydseal: 180, crv: 190, ioniq5: 185, camry: 210, gr86: 226,
     alphard: 180, landcruiser: 210
   };
