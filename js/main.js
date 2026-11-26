@@ -2734,7 +2734,17 @@
       return;
     }
     if (nama.indexOf('tidurJalan:') === 0) return tidurJalan(+nama.split(':')[1]);
-    if (nama.indexOf('hiburan:') === 0) { var hk = nama.split(':')[1]; S.hiburan = S.hiburan === hk ? null : hk; simpan(); panelOjek(true); if (S.travel && S.travel.aktif) panelTravel(true); return; }
+    if (nama.indexOf('hiburan:') === 0) {
+      var hk = nama.split(':')[1];
+      if (S.hiburan === hk) { S.hiburan = null; }
+      else {
+        if (S.hp && (S.hp.baterai || 0) <= 1) { toast('Baterai HP habis! Cas dulu.', 2000); return; }
+        if (!DIRI.adaWifi(S) && S.hp && (S.hp.kuota || 0) <= 0.001) { toast('Kuota internet habis! Beli kuota di HP.', 2200); return; }
+        S.hiburan = hk;
+        toast(DIRI.HIBURAN[hk].nama + ' aktif (waktu menunggu dipercepat 8×).', 2000);
+      }
+      simpan(); panelOjek(true); if (S.travel && S.travel.aktif) panelTravel(true); return;
+    }
     if (nama === 'ambil') { var r = OJEK.ambil(S); if (r !== true) toast(r, 2200); else { tawaranUmur = 0; if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {} } }
     else if (nama === 'lewati') { OJEK.lewati(S); tawaranUmur = 0; }
     else if (nama === 'batal') {
@@ -3160,15 +3170,19 @@
     var dMenit = 0, depanLama = main ? JUAL.depan() : null;
     var narik = main && S.ojek.online, trv = !!(main && S.travel && S.travel.aktif), tr = !!(main && (S.transit || S.hbRun));
     if (main && !lembar && !document.hidden && S.kec > 0 && !animasi) {
-      dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && (S.ojek.trip || (S.hiburan && !S.ojek.tawaran)) ? OJEK.CEPAT_TRIP : 1) * (trv ? (S.hiburan && S.travel.status === 'tunggu' && S.travel.tujuan && S.travel.antri.length < TRAVEL.kursi(S) ? OJEK.CEPAT_TRIP : TRAVEL.cepatWaktu(S)) : 1) * (S.transit ? S.transit.mult : S.hbRun ? S.hbRun.mult : 1);
+      var trvTunggu = trv && S.travel.status === 'tunggu' && (!S.travel.tujuan || S.travel.antri.length < TRAVEL.kursi(S));
+      dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && (S.ojek.trip || (S.hiburan && !S.ojek.tawaran)) ? OJEK.CEPAT_TRIP : 1) * (trv ? (S.hiburan && trvTunggu ? OJEK.CEPAT_TRIP : TRAVEL.cepatWaktu(S)) : 1) * (S.transit ? S.transit.mult : S.hbRun ? S.hbRun.mult : 1);
       if (S.transit) dMenit = Math.min(dMenit, S.transit.sisa); else if (S.hbRun) dMenit = Math.min(dMenit, S.hbRun.sisa);
       S.menit += dMenit;
       if (S.fase === 'buka' && !S.tutupSementara) JUAL.langkah(S, dMenit);
       var kabarStok = DUNIA.jalan(S, dMenit, false).concat(TEMAN.jalan(S)); if (S.popupSelingkuh) tampilPopupSelingkuh();
       if (kabarStok.length) { perbaruiHUD(true); perbaruiPesanan(); if (R && !animasi) gambarRacik(); }
       kabarStok = kabarStok.concat(DIRI.jalan(S, dMenit, (S.diri.posisi === 'kedai' || tr) && (S.fase === 'buka' || narik || tr || (trv && (S.travel.status === 'jalan')))));
-      var menunggu = (narik && !S.ojek.trip && !S.ojek.tawaran) || (trv && S.travel.status === 'tunggu');
-      if (S.hiburan) { if (!menunggu) { S.hiburan = null; panelOjek(true); } else { var rh = DIRI.hiburanJalan(S, dMenit); if (rh) { kabarStok.push(rh); panelOjek(true); } } }
+      var menunggu = (narik && !S.ojek.trip && !S.ojek.tawaran) || trvTunggu;
+      if (S.hiburan) {
+        if (!menunggu) { S.hiburan = null; panelOjek(true); if (trv) panelTravel(true); }
+        else { var rh = DIRI.hiburanJalan(S, dMenit); if (rh) { kabarStok.push(rh); panelOjek(true); if (trv) panelTravel(true); } }
+      }
       if (narik) {
         var kabarOjek = OJEK.jalan(S, dMenit);
         if (kabarOjek.length) { kabarStok = kabarStok.concat(kabarOjek); perbaruiHUD(true); simpan(); }
@@ -3286,7 +3300,10 @@
       }
       else pindah('kos', true);
     };
-    $('travel-panel').onclick = function (e) { var b = e.target.closest('[data-trv]'); if (b) { var tv = b.dataset.trv.split(':'); aksiTravel(tv[0], tv.slice(1).join(':')); } };
+    $('travel-panel').onclick = function (e) {
+      var o = e.target.closest('[data-ojek]'); if (o) return aksiOjek(o.dataset.ojek);
+      var b = e.target.closest('[data-trv]'); if (b) { var tv = b.dataset.trv.split(':'); aksiTravel(tv[0], tv.slice(1).join(':')); }
+    };
     function onSliderInput(e) {
       var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = true;
       var jn = s.dataset.gigi === 'trv' ? 'mobil' : (s.dataset.gigi.split(':')[1] === 'mobil' ? 'mobil' : 'motor'), lb = $('gigi-label'); if (lb) lb.textContent = labelGigi(jn, +s.value);
