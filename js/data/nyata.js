@@ -13,7 +13,12 @@
       { id: 'medan', nama: 'Medan', provinsi: 'Sumatera Utara', umk: 4335198, bbm: 'sumatera', kos: 550000, makan: 15000, ppj: 0.03, hargaKopi: 1, zona: 1 },
       { id: 'pekanbaru', nama: 'Pekanbaru', provinsi: 'Riau', umk: 3998179, bbm: 'sumatera' /* perkiraan: Riau tidak ada di daftar sumber */, kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
       { id: 'jambi', nama: 'Kota Jambi', provinsi: 'Jambi', umk: 3868963, bbm: 'sumatera', kos: 650000, makan: 15000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
-      { id: 'jakarta', nama: 'Jakarta', provinsi: 'DKI Jakarta', umk: 5729876, bbm: 'jawa', kos: 910000, makan: 20000, ppj: 0.024, hargaKopi: 1.15, zona: 2 }
+      { id: 'jakarta', nama: 'Jakarta', provinsi: 'DKI Jakarta', umk: 5729876, bbm: 'jawa', kos: 910000, makan: 20000, ppj: 0.024, hargaKopi: 1.15, zona: 2 },
+      { id: 'pontianak', nama: 'Kota Pontianak', provinsi: 'Kalimantan Barat', umk: 3250000, bbm: 'sumatera', kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'palangkaraya', nama: 'Kota Palangka Raya', provinsi: 'Kalimantan Tengah', umk: 3650000, bbm: 'sumatera', kos: 650000, makan: 18000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'banjarmasin', nama: 'Kota Banjarmasin', provinsi: 'Kalimantan Selatan', umk: 3750000, bbm: 'sumatera', kos: 650000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'balikpapan', nama: 'Kota Balikpapan', provinsi: 'Kalimantan Timur', umk: 3980000, bbm: 'sumatera', kos: 800000, makan: 20000, ppj: 0.03, hargaKopi: 1.1, zona: 2 },
+      { id: 'tanjungselor', nama: 'Tanjung Selor (Bulungan)', provinsi: 'Kalimantan Utara', umk: 3680000, bbm: 'sumatera', kos: 700000, makan: 19000, ppj: 0.03, hargaKopi: 1.05, zona: 1 }
     ],
 
     /* penyedia QRIS merchant; aturan transfer ke bank per September 2026 */

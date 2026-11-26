@@ -27,6 +27,7 @@
     if (typeof S.kesehatan.kondomGerigi !== 'number') S.kesehatan.kondomGerigi = 0;
     if (S.kesehatan.kbSampai == null) S.kesehatan.kbSampai = -1;
     if (S.kesehatan.arvSampai == null) S.kesehatan.arvSampai = -1;
+    if (!S.kesehatan.bpjs) S.kesehatan.bpjs = { kelas: 0, aktif: false, tunggakan: 0 };
     S.rumahTangga = S.rumahTangga || { aktifSampai: -1, paket: null };
     if (!S.rumah) S.rumah = { jenis: 'kos', sewa: kota(S).kos, kwh: 10, barang: {}, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false };
     if (typeof S.rumah.kwh !== 'number' || isNaN(S.rumah.kwh)) { S.rumah.kwh = 10; S.rumah.padam = false; }
@@ -1865,7 +1866,31 @@
           }
         });
       }
+      /* iuran bulanan BPJS Kesehatan (Kelas 1/2/3 asli) */
+      var bp = S.kesehatan && S.kesehatan.bpjs;
+      if (bp && bp.kelas > 0 && BPJS_KELAS[bp.kelas]) {
+        var jmlP = 1 + (S.keluarga ? S.keluarga.length : 0);
+        var iuranB = BPJS_KELAS[bp.kelas].iuran * jmlP;
+        if (S.bank.saldo >= iuranB) {
+          S.bank.saldo -= iuranB;
+          S.bank.mutasi.unshift({ n: nBaru, ket: 'Iuran ' + BPJS_KELAS[bp.kelas].nama + ' (' + jmlP + ' org)', jml: -iuranB });
+          bp.aktif = true;
+        } else {
+          bp.aktif = false;
+          bp.tunggakan = (bp.tunggakan || 0) + iuranB;
+          kabar.push('⚠️ Saldo kurang untuk iuran ' + BPJS_KELAS[bp.kelas].nama + ' (' + rp(iuranB) + '). Kartu BPJS nonaktif sementara hingga tunggakan dilunasi.');
+        }
+      }
       S.penghasilanBulanIni = 0;
+    }
+    /* kondisi kritis: otomatis dilarikan ke IGD Rumah Sakit */
+    if ((S.diri.kesehatan != null && S.diri.kesehatan <= 15) || (S.diri.sakit && S.diri.sakit.berat && S.diri.kesehatan <= 30)) {
+      var biayaIgd = hargaRs(S, 'opname');
+      var bpDar = S.kesehatan && S.kesehatan.bpjs;
+      if (S.bank.saldo >= biayaIgd) { S.bank.saldo -= biayaIgd; S.bank.mutasi.unshift({ n: nBaru, ket: 'Darurat Masuk RS' + (bpDar && bpDar.aktif ? ' (BPJS)' : ' (Umum)'), jml: -biayaIgd }); }
+      else S.uang.dompet = Math.max(0, (S.uang.dompet || 0) - biayaIgd);
+      S.diri.sakit = null; S.diri.kesehatan = 75; S.diri.stamina = 70;
+      kabar.unshift('🚑 DARURAT! Kondisimu drop & kamu dilarikan ke Rumah Sakit! Biaya perawatan ' + rp(biayaIgd) + (bpDar && bpDar.aktif ? ' (ditanggung BPJS Kelas ' + bpDar.kelas + ')' : ' (tarif Umum — aktifkan BPJS agar jauh lebih murah!)') + '.');
     }
     return kabar;
   }
@@ -2083,6 +2108,80 @@
     if (x.harga >= 350000) { S.diri.kenyang = Math.min(100, S.diri.kenyang + 35); S.diri.minum = Math.min(100, S.diri.minum + 35); }
     return { ok: true, menit: x.jam * 60, teks: 'Menginap di ' + x.nama + ' (' + rp(x.harga) + ', ' + x.jam + ' jam). Stamina ' + Math.round(S.diri.stamina) + '%, kesehatan ' + Math.round(S.diri.kesehatan) + '%!' };
   }
+  /* ---------- BPJS Kesehatan (Kelas 1, 2, 3 asli) & Masuk Rumah Sakit ---------- */
+  var BPJS_KELAS = {
+    0: { kelas: 0, nama: 'Umum (Tanpa BPJS)', iuran: 0, diskon: 0, ket: 'Bayar 100% tarif rumah sakit umum' },
+    3: { kelas: 3, nama: 'BPJS Kelas 3', iuran: 35000, diskon: 0.88, ket: 'Iuran Rp35.000/org/bln (bersubsidi) · diskon RS 88%' },
+    2: { kelas: 2, nama: 'BPJS Kelas 2', iuran: 100000, diskon: 0.92, ket: 'Iuran Rp100.000/org/bln · kamar Kelas 2, diskon RS 92%' },
+    1: { kelas: 1, nama: 'BPJS Kelas 1', iuran: 150000, diskon: 0.95, ket: 'Iuran Rp150.000/org/bln · kamar Kelas 1 AC, diskon RS 95%' }
+  };
+  var LAYANAN_RS = [
+    { id: 'igd', nama: 'IGD & Rawat Jalan Spesialis', umum: 450000, jam: 2, sehat: 35, stamina: 20, kebal: 1, sembuh: true, ket: 'Penanganan cepat IGD & obat dokter spesialis' },
+    { id: 'opname', nama: 'Rawat Inap / Opname (1 Hari)', umum: 1850000, jam: 12, sehat: 100, stamina: 95, kebal: 3, sembuh: true, ket: 'Rawat inap, infus & pemulihan penuh dari sakit berat' },
+    { id: 'vip', nama: 'Perawatan Intensif / Operasi RS', umum: 6500000, jam: 24, sehat: 100, stamina: 100, kebal: 7, sembuh: true, ket: 'Tindakan medis menyeluruh, pulih 100% & kebal 7 hari' }
+  ];
+  function hargaRs(S, layananId) {
+    var l = LAYANAN_RS.filter(function (x) { return x.id === layananId; })[0];
+    if (!l) return 0;
+    var bp = (S.kesehatan && S.kesehatan.bpjs) || { kelas: 0, aktif: false };
+    var k = bp.aktif && BPJS_KELAS[bp.kelas] ? BPJS_KELAS[bp.kelas] : BPJS_KELAS[0];
+    return Math.round(l.umum * (1 - k.diskon) / 5000) * 5000;
+  }
+  function daftarBpjs(S, kelas) {
+    kelas = +kelas || 0;
+    S.kesehatan = S.kesehatan || { obat: {}, kondom: 0, kbSampai: -1 };
+    S.kesehatan.bpjs = S.kesehatan.bpjs || { kelas: 0, aktif: false, tunggakan: 0 };
+    if (kelas === 0) {
+      S.kesehatan.bpjs = { kelas: 0, aktif: false, tunggakan: 0 };
+      return { ok: true, teks: 'Kepesertaan BPJS Kesehatan dinonaktifkan (kembali ke pasien Umum).' };
+    }
+    var k = BPJS_KELAS[kelas]; if (!k) return 'Kelas BPJS tidak valid.';
+    var jmlOrg = 1 + (S.keluarga ? S.keluarga.length : 0);
+    var totalIuran = k.iuran * jmlOrg;
+    if (S.bank.saldo >= totalIuran) { S.bank.saldo -= totalIuran; S.bank.mutasi.unshift({ n: S.hari, ket: 'Iuran ' + k.nama + ' (' + jmlOrg + ' org)', jml: -totalIuran }); }
+    else if ((S.uang.dompet || 0) >= totalIuran) S.uang.dompet -= totalIuran;
+    else return 'Saldo tidak cukup untuk iuran bulan pertama ' + k.nama + ' (' + rp(totalIuran) + ' untuk ' + jmlOrg + ' org).';
+    S.kesehatan.bpjs = { kelas: kelas, aktif: true, tunggakan: 0 };
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + totalIuran;
+    return { ok: true, teks: '🏥 ' + k.nama + ' aktif untuk ' + jmlOrg + ' orang! Iuran ' + rp(totalIuran) + '/bln. Biaya Rumah Sakit kini jauh lebih murah!' };
+  }
+  function bayarTunggakanBpjs(S) {
+    var bp = S.kesehatan && S.kesehatan.bpjs;
+    if (!bp || !(bp.tunggakan > 0)) return 'Tidak ada tunggakan BPJS Kesehatan.';
+    var tg = bp.tunggakan;
+    if (S.bank.saldo >= tg) { S.bank.saldo -= tg; S.bank.mutasi.unshift({ n: S.hari, ket: 'Lunasi tunggakan BPJS Kesehatan', jml: -tg }); }
+    else if ((S.uang.dompet || 0) >= tg) S.uang.dompet -= tg;
+    else return 'Saldo tidak cukup untuk melunasi tunggakan BPJS (' + rp(tg) + ').';
+    bp.tunggakan = 0; bp.aktif = true;
+    return { ok: true, teks: 'Tunggakan BPJS Kesehatan ' + rp(tg) + ' lunas! Kartu BPJS Kelas ' + bp.kelas + ' kembali AKTIF.' };
+  }
+  function masukRumahSakit(S, layananId, targetId) {
+    var l = LAYANAN_RS.filter(function (x) { return x.id === layananId; })[0];
+    if (!l) return 'Layanan rumah sakit tidak ditemukan.';
+    var bp = (S.kesehatan && S.kesehatan.bpjs) || { kelas: 0, aktif: false };
+    var biaya = hargaRs(S, layananId);
+    if (biaya > 0) {
+      if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; S.bank.mutasi.unshift({ n: S.hari, ket: 'RS: ' + l.nama + (bp.aktif ? ' (BPJS Kls ' + bp.kelas + ')' : ' (Umum)'), jml: -biaya }); }
+      else if ((S.uang.dompet || 0) >= biaya) S.uang.dompet -= biaya;
+      else return 'Uang tidak cukup untuk ' + l.nama + ' (' + rp(biaya) + ').' + (!bp.aktif ? ' Aktifkan BPJS Kesehatan agar jauh lebih murah!' : '');
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
+    }
+    var namaP = S.namaPemain || 'Kamu';
+    if (!targetId || targetId === 'pemain') {
+      S.diri.sakit = null;
+      S.diri.kesehatan = l.sehat >= 100 ? 100 : Math.min(100, (S.diri.kesehatan || 60) + l.sehat);
+      S.diri.stamina = Math.min(100, Math.max(S.diri.stamina, l.stamina));
+      S.diri.kebalSampai = Math.max(S.diri.kebalSampai || -1, S.hari + l.kebal);
+    } else {
+      var kl = (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
+      if (!kl) return 'Pasien tidak ditemukan.';
+      namaP = kl.nama;
+      kl.sakit = null;
+      kl.bahagia = Math.min(100, (kl.bahagia || 80) + 18);
+    }
+    var hemat = l.umum - biaya;
+    return { ok: true, menit: l.jam * 60, teks: '🏥 ' + namaP + ' selesai menjalani ' + l.nama + ' (' + rp(biaya) + (hemat > 0 ? ', hemat ' + rp(hemat) + ' pakai BPJS Kls ' + bp.kelas : ' · Tarif Umum') + '). Sehat & bugar kembali!' };
+  }
   /* bar perasaan, ciuman, dan foreplay untuk pasangan, keluarga dewasa (ipar), dan teman */
   function labelPerasaan(v) {
     var n = Math.round(v == null ? 50 : v);
@@ -2157,6 +2256,7 @@
     hargaRumahTangga: hargaRumahTangga, beriRumahTangga: beriRumahTangga, makanDiRumah: makanDiRumah,
     daftarKuliahPasangan: daftarKuliahPasangan, aturKerjaPasangan: aturKerjaPasangan, daftarSekolahAnak: daftarSekolahAnak,
     itemApotek: itemApotek, beliApotek: beliApotek, pakaiObat: pakaiObat, lakukanHb: lakukanHb, momenMesra: momenMesra, labelPerasaan: labelPerasaan,
+    BPJS_KELAS: BPJS_KELAS, LAYANAN_RS: LAYANAN_RS, hargaRs: hargaRs, daftarBpjs: daftarBpjs, bayarTunggakanBpjs: bayarTunggakanBpjs, masukRumahSakit: masukRumahSakit,
     daftarBisaDisewa: daftarBisaDisewa, toggleSewaBarang: toggleSewaBarang,
     infoLokasiRental: infoLokasiRental, bukaRentalPs: bukaRentalPs, beliTvRentalPs: beliTvRentalPs, tambahUnitRentalPs: tambahUnitRentalPs,
     aturTarifRentalPs: aturTarifRentalPs, beliKasetRentalPs: beliKasetRentalPs, aturPenjagaRentalPs: aturPenjagaRentalPs,

@@ -19,6 +19,8 @@
     if (typeof S.ojek.mult !== 'number' || isNaN(S.ojek.mult)) S.ojek.mult = 1;
     if (S.ojek.jauhHariIni == null) S.ojek.jauhHariIni = 0;
     if (S.ojek.jatahJauh == null) S.ojek.jatahJauh = 1 + Math.floor(Math.random() * 4);
+    if (S.ojek.jauhCarHariIni == null) S.ojek.jauhCarHariIni = 0;
+    if (S.ojek.jatahJauhCar == null) S.ojek.jatahJauhCar = 1 + Math.floor(Math.random() * 5);
     if (!S.ojek.pos) S.ojek.pos = { x: 0, y: 0 };
     return S;
   }
@@ -119,14 +121,24 @@
     var jam = Math.floor(S.menit / 60) % 24, makan = (jam >= 11 && jam < 14) || (jam >= 18 && jam < 21);
     var isCar = S.ojek && S.ojek.mode === 'mobil';
     var r = Math.random(), jenis = isCar ? 'penumpang' : (r < (makan ? 0.45 : 0.15) ? 'makanan' : r < (makan ? 0.6 : 0.35) ? 'barang' : 'penumpang');
-    /* sehari-hari 1-10 km, dan 1-4 kali sehari muncul order jarak jauh hingga 30 km */
-    var bisaJauh = (S.ojek.jauhHariIni || 0) < (S.ojek.jatahJauh || 2) && Math.random() < 0.28;
-    var km;
-    if (bisaJauh) {
-      S.ojek.jauhHariIni = (S.ojek.jauhHariIni || 0) + 1;
-      km = Math.round((11 + Math.random() * 19) * 10) / 10; /* 11 s/d 30 km */
+    /* GoCar: dalam kota 2-25 km, dan 1-5 kali sehari muncul order jarak jauh hingga 300 km; Ojol motor: 1-10 km + 1-4x 11-30 km */
+    var bisaJauh = false, km;
+    if (isCar) {
+      bisaJauh = (S.ojek.jauhCarHariIni || 0) < (S.ojek.jatahJauhCar || 3) && Math.random() < 0.36;
+      if (bisaJauh) {
+        S.ojek.jauhCarHariIni = (S.ojek.jauhCarHariIni || 0) + 1;
+        km = Math.round((35 + Math.random() * 265) * 10) / 10; /* 35 s/d 300 km */
+      } else {
+        km = Math.round((2 + Math.pow(Math.random(), 1.25) * 23) * 10) / 10; /* 2 s/d 25 km */
+      }
     } else {
-      km = Math.round((1 + Math.pow(Math.random(), 1.35) * 9) * 10) / 10; /* 1 s/d 10 km */
+      bisaJauh = (S.ojek.jauhHariIni || 0) < (S.ojek.jatahJauh || 2) && Math.random() < 0.28;
+      if (bisaJauh) {
+        S.ojek.jauhHariIni = (S.ojek.jauhHariIni || 0) + 1;
+        km = Math.round((11 + Math.random() * 19) * 10) / 10; /* 11 s/d 30 km */
+      } else {
+        km = Math.round((1 + Math.pow(Math.random(), 1.35) * 9) * 10) / 10; /* 1 s/d 10 km */
+      }
     }
     var jemput = Math.round((0.3 + Math.random() * 1.8) * 10) / 10;
     var arah = Math.random() * Math.PI * 2;
@@ -137,9 +149,11 @@
     var pot = isCar ? ((N.bisnisMobil && N.bisnisMobil.potonganCar) || 0.1) : O.potongan;
     var t = Math.round(tarif(S, km) * kaliCar / 500) * 500;
     var lay = isCar ? (p.id === 'grab' ? 'GrabCar' : 'GoCar') : p.layanan[jenis];
+    var tipJauh = isCar && bisaJauh ? (Math.random() < 0.45 ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
+      : (Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0);
     return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
-      tip: Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0 };
+      tip: tipJauh };
   }
   function ambil(S) {
     var o = S.ojek, x = o.tawaran; if (!x) return 'Order sudah tidak ada.';
@@ -215,7 +229,7 @@
     var o = S.ojek, kabar = [], on = o.online, tw = o.tawaran, tr = o.trip, ps = o.pos;
     O.platform.forEach(function (p) { var d = o.daftar[p.id]; if (d && d.status === 'proses' && nBaru >= d.aktifPada) { d.status = 'aktif'; kabar.push('Akun ' + p.app + ' sudah aktif. Bisa mulai narik.'); } });
     if (o.hariIni.trip) kabar.push('Kemarin narik ' + o.hariIni.trip + ' order, pendapatan bersih ' + rp(o.hariIni.bersih) + '.');
-    o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.jauhHariIni = 0; o.jatahJauh = 1 + Math.floor(Math.random() * 4); o.online = false; o.tawaran = null; o.trip = null; o.pos = { x: 0, y: 0 };
+    o.hariIni = { trip: 0, bersih: 0 }; o.tolak = 0; o.jauhHariIni = 0; o.jatahJauh = 1 + Math.floor(Math.random() * 4); o.jauhCarHariIni = 0; o.jatahJauhCar = 1 + Math.floor(Math.random() * 5); o.online = false; o.tawaran = null; o.trip = null; o.pos = { x: 0, y: 0 };
     if (lanjut) { o.online = on; o.tawaran = tw; o.trip = tr; o.pos = ps; }
     return kabar;
   }

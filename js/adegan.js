@@ -803,7 +803,7 @@
     cx.strokeStyle = '#b5524a'; cx.beginPath(); cx.arc(0, r * 0.38, r * 0.2, 0.2 * Math.PI, 0.8 * Math.PI); cx.stroke();
     cx.restore();
   }
-  var HB_JUDUL = { metime: 'Me time',  kamar: 'Malam hangat berdua', sofa: 'Berdua di depan TV', hotel: 'Kamar hotel', mandi: 'Berdua di balik uap', pelukan: 'Pelukan hangat', balkon: 'Angin malam di balkon' };
+  var HB_JUDUL = { metime: 'Me time', ciuman: 'Ciuman hangat', foreplay: 'Foreplay romantis', kamar: 'Malam hangat berdua', sofa: 'Berdua di depan TV', hotel: 'Kamar hotel', mandi: 'Berdua di balik uap', pelukan: 'Pelukan hangat', balkon: 'Angin malam di balkon' };
   /* adegan HB sinematik: latar berbeda tiap varian, kedua karakter hanya terlihat dari bahu ke atas, bagian bawah tertutup selimut atau kaca buram */
   /* me time: kamar redup, satu siluet disorot lampu, tanpa detail (sengaja tidak eksplisit) */
   function gambarMeTime(s, t, u, g) {
@@ -832,21 +832,44 @@
     if (v === 'metime') { gambarMeTime(s, t, u, gA); return; }
     /* latar */
     var gr = cx.createLinearGradient(0, 0, 0, H);
-    if (v === 'hotel') { gr.addColorStop(0, '#2a1240'); gr.addColorStop(1, '#4a1e50'); }
+    if (v === 'ciuman') { gr.addColorStop(0, '#5a1a38'); gr.addColorStop(1, '#a83b62'); }
+    else if (v === 'foreplay') { gr.addColorStop(0, '#361024'); gr.addColorStop(1, '#752242'); }
+    else if (v === 'hotel') { gr.addColorStop(0, '#2a1240'); gr.addColorStop(1, '#4a1e50'); }
     else if (v === 'sofa') { gr.addColorStop(0, '#16303a'); gr.addColorStop(1, '#244a50'); }
     else if (v === 'mandi') { gr.addColorStop(0, '#6b8fa0'); gr.addColorStop(1, '#a9c4cf'); }
     else if (v === 'pelukan') { gr.addColorStop(0, '#ff9a6a'); gr.addColorStop(1, '#6a3a6e'); }
     else if (v === 'balkon') { gr.addColorStop(0, '#0b1230'); gr.addColorStop(1, '#2a2f5a'); }
     else { gr.addColorStop(0, '#2b1a2a'); gr.addColorStop(1, '#4a2a38'); }
     cx.fillStyle = gr; cx.fillRect(0, 0, W, H);
+    if (v === 'ciuman') {
+      for (var bk = 0; bk < 12; bk++) {
+        cx.globalAlpha = 0.14 + 0.14 * Math.abs(Math.sin(t / 700 + bk));
+        bulat(30 + (bk * 67) % (W - 60), 70 + (bk * 53) % 240, 10 + (bk % 3) * 8, '#ffd1e3');
+      }
+      cx.globalAlpha = 1;
+    }
+    if (v === 'foreplay') {
+      var lln = 0.24 + Math.sin(t / 180) * 0.05;
+      [55, W - 55].forEach(function (lx) {
+        var cg = cx.createRadialGradient(lx, 360, 4, lx, 360, 95);
+        cg.addColorStop(0, 'rgba(255,195,120,' + lln.toFixed(2) + ')');
+        cg.addColorStop(1, 'rgba(255,120,80,0)');
+        cx.fillStyle = cg; cx.fillRect(lx - 95, 265, 190, 190);
+      });
+    }
     if (v === 'hotel') { cx.fillStyle = '#ff5c8a'; kotakBulat(120, 276, 120, 26, 8, '#ff5c8a'); cx.fillStyle = '#fff'; cx.font = '800 18px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.globalAlpha = 0.75 + Math.sin(t / 260) * 0.25; cx.fillText('HOTEL', 180, 290); cx.globalAlpha = 1; }
     if (v === 'sofa') { var fl = 0.35 + Math.abs(Math.sin(t / 310)) * 0.25; kotakBulat(120, 268, 120, 34, 8, 'rgba(120,200,255,' + fl.toFixed(2) + ')'); }
     if (v === 'balkon') { for (var st = 0; st < 26; st++) { cx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t / 700 + st)); bulat((st * 53) % W, 40 + (st * 29) % 200, 1.4, '#fff'); } cx.globalAlpha = 1; bulat(290, 90, 22, '#fff3c4'); }
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
     /* karakter: tampilkan badan penuh dari bahu ke atas di balik selimut/kaca buram, tanpa gelembung bulat */
     var g2 = Math.sin(t / 210 + 1.1) * 6;
-    var sepasang = (v === 'pelukan') ? [[152, cy - 10 - Math.abs(goyang), -0.1 + irama * 0.05], [208, cy - Math.abs(g2), 0.1 - irama * 0.05]] : (v === 'sofa' || v === 'balkon') ? [[146 + irama * 3, cy - Math.abs(goyang), -0.08 + irama * 0.04], [214 + irama * 3, cy + 4 - Math.abs(g2), 0.1 - irama * 0.04]] : [[138, cy + 6 - Math.abs(goyang), -0.15 + irama * 0.06], [220, cy + 6 - Math.abs(g2) * 0.6, 0.15 - irama * 0.06]];
-    var rr = v === 'pelukan' ? 30 : 27;
+    var dekatC = Math.abs(Math.sin(t / 460)) * 8;
+    var sepasang = (v === 'ciuman') ? [[150 + dekatC, cy - 6, 0.14 + Math.sin(t / 460) * 0.04], [210 - dekatC, cy - 4, -0.14 - Math.sin(t / 460) * 0.04]]
+      : (v === 'foreplay') ? [[146 + irama * 3, cy - Math.abs(goyang) * 0.55, 0.12 + irama * 0.05], [214 - irama * 3, cy + 2 - Math.abs(g2) * 0.55, -0.12 - irama * 0.05]]
+      : (v === 'pelukan') ? [[152, cy - 10 - Math.abs(goyang), -0.1 + irama * 0.05], [208, cy - Math.abs(g2), 0.1 - irama * 0.05]]
+      : (v === 'sofa' || v === 'balkon') ? [[146 + irama * 3, cy - Math.abs(goyang), -0.08 + irama * 0.04], [214 + irama * 3, cy + 4 - Math.abs(g2), 0.1 - irama * 0.04]]
+      : [[138, cy + 6 - Math.abs(goyang), -0.15 + irama * 0.06], [220, cy + 6 - Math.abs(g2) * 0.6, 0.15 - irama * 0.06]];
+    var rr = (v === 'pelukan' || v === 'ciuman') ? 30 : 27;
     var imFullA = imCharFull(s.namaPemain, gA), imFullB = imCharFull(A.nama, gB);
     function gambarTubuhHb(imF, px, py, rot, gDef) {
       if (imF && imF.naturalWidth) {
@@ -862,11 +885,22 @@
     gambarTubuhHb(imFullB, sepasang[1][0], sepasang[1][1], sepasang[1][2], gB);
     /* penutup: selimut atau kaca buram */
     if (v === 'mandi') { cx.fillStyle = 'rgba(235,245,250,.78)'; cx.fillRect(60, cy + 34, 240, 260); for (var dr = 0; dr < 14; dr++) { cx.fillStyle = 'rgba(255,255,255,.55)'; cx.fillRect(70 + dr * 17, (t / 8 + dr * 53) % 300 + 80, 2, 12); } }
-    else if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.9)'; kotakBulat(100, cy + 44, 160, 200, 40, 'rgba(40,20,50,.9)'); }
-    else { cx.fillStyle = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'balkon' ? '#3a3f78' : '#b04a68'; kotakBulat(70, cy + 34 - Math.abs(goyang) * 0.6, 220, 230 + Math.abs(goyang) * 0.6, 30, cx.fillStyle); cx.fillStyle = 'rgba(255,255,255,.12)'; kotakBulat(80, cy + 42, 200, 14, 7, 'rgba(255,255,255,.12)'); }
-    /* uap / hati */
+    else if (v === 'pelukan' || v === 'ciuman') {
+      var fgG = cx.createLinearGradient(0, cy + 36, 0, H);
+      fgG.addColorStop(0, v === 'ciuman' ? 'rgba(90,26,56,0)' : 'rgba(40,20,50,.9)');
+      fgG.addColorStop(0.35, v === 'ciuman' ? 'rgba(90,26,56,.88)' : 'rgba(40,20,50,.95)');
+      fgG.addColorStop(1, v === 'ciuman' ? 'rgba(65,16,40,.98)' : 'rgba(40,20,50,.98)');
+      cx.fillStyle = fgG; cx.fillRect(0, cy + 36, W, H - cy);
+    } else { cx.fillStyle = v === 'foreplay' ? '#8c2348' : v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'balkon' ? '#3a3f78' : '#b04a68'; kotakBulat(70, cy + 34 - Math.abs(goyang) * 0.6, 220, 230 + Math.abs(goyang) * 0.6, 30, cx.fillStyle); cx.fillStyle = 'rgba(255,255,255,.12)'; kotakBulat(80, cy + 42, 200, 14, 7, 'rgba(255,255,255,.12)'); }
+    /* uap / hati / ciuman / api hangat */
     cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
-    for (var hg = 0; hg < 8; hg++) { var fg = (t / 24 + hg * 22) % 100; cx.globalAlpha = Math.max(0, 1 - fg / 100) * 0.9; cx.fillStyle = v === 'mandi' ? '#ffffff' : '#ff5c8a'; cx.font = '800 ' + (v === 'mandi' ? 22 : 26) + 'px system-ui, sans-serif'; cx.fillText(v === 'mandi' ? '○' : '♥', 70 + hg * 31 + Math.sin(t / 500 + hg) * 12, cy - 40 - fg * 1.5); }
+    for (var hg = 0; hg < 8; hg++) {
+      var fg = (t / 24 + hg * 22) % 100; cx.globalAlpha = Math.max(0, 1 - fg / 100) * 0.9;
+      cx.fillStyle = v === 'mandi' ? '#ffffff' : v === 'foreplay' ? (hg % 2 ? '#ff8a5c' : '#ff5c8a') : '#ff5c8a';
+      cx.font = '800 ' + (v === 'mandi' ? 22 : 24) + 'px system-ui, sans-serif';
+      var sym = v === 'mandi' ? '○' : v === 'ciuman' ? (hg % 2 ? '💋' : '♥') : v === 'foreplay' ? (hg % 2 ? '🔥' : '♥') : '♥';
+      cx.fillText(sym, 70 + hg * 31 + Math.sin(t / 500 + hg) * 12, cy - 40 - fg * 1.5);
+    }
     cx.globalAlpha = 1;
     var dim = Math.min(0.45, u * 0.7); cx.fillStyle = 'rgba(20,6,20,' + dim.toFixed(2) + ')'; cx.fillRect(0, 0, W, H);
     /* judul, jam, progres */
@@ -1464,16 +1498,29 @@
     var tema = u < 0.5 ? f.temaA : f.temaB; latarTema(tema, hor, geser, gp, m);
     if (u < 0.3) ikonKota(f.dari, 200 - u / 0.3 * 340, hor + 2, G.sk, gp);
     if (u > 0.7) ikonKota(f.ke, 160 + (1 - u) / 0.3 * 340, hor + 2, G.sk, gp);
-    kotak(0, hor, W, jt - hor + 6, f.tol ? '#9aa3a6' : '#7d8a6a');
-    kotak(0, jt + 6, W, H - jt, s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)');
-    var g3 = (geser * 3) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jt + 36, 34, 3);
+    var knd = f.kondisi || (f.tol ? 'tol' : 'mulus');
+    kotak(0, hor, W, jt - hor + 6, f.tol ? '#9aa3a6' : knd === 'tanah' ? '#8c6b43' : '#7d8a6a');
+    var wrnJalan = knd === 'tanah' ? (s.hujan ? '#5a3f24' : '#8a653c') : knd === 'rusak' ? (s.hujan ? '#3c3a38' : '#5e5a54') : (s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)');
+    kotak(0, jt + 6, W, H - jt, wrnJalan);
+    if (knd !== 'tanah') {
+      var g3 = (geser * 3) % 70; cx.fillStyle = knd === 'rusak' ? 'rgba(233,228,212,.45)' : '#e9e4d4';
+      for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jt + 36, 34, 3);
+    }
+    if (knd === 'bergelombang' || knd === 'rusak' || knd === 'tanah') {
+      var gLub = (geser * 3) % 90;
+      cx.fillStyle = knd === 'tanah' ? 'rgba(55,36,18,.55)' : 'rgba(28,28,30,.55)';
+      for (var lb = -90; lb < W + 90; lb += 90) {
+        cx.beginPath(); cx.ellipse(lb - gLub + 30, jt + 24 + (Math.abs(lb) % 3) * 14, knd === 'rusak' || knd === 'tanah' ? 14 : 9, 4, 0, 0, Math.PI * 2); cx.fill();
+      }
+    }
     if (f.tol) { kotak(0, jt + 6, W, 3, '#d9d4c8'); var g4 = (geser * 2) % 120; for (var x2 = -120; x2 < W + 120; x2 += 120) { kotak(x2 - g4, jt - 26, 3, 34, '#59656d'); kotak(x2 - g4, jt - 26, 14, 3, '#59656d'); } }
     else { var g5 = (geser * 2.4) % 100; for (var x3 = -100; x3 < W + 100; x3 += 100) pohonBulat(x3 - g5, jt + 4, 0.9, '#3f8a46'); }
     var tx = null, tek = '';
     if (u < 0.2) { tx = 230 - u / 0.2 * 300; tek = 'Meninggalkan ' + RUTE_NAMA(f.dari).slice(0, 14); } else if (u > 0.82) { tx = 240 - (u - 0.82) / 0.18 * 280; tek = 'Menuju ' + RUTE_NAMA(f.ke).slice(0, 15); }
     if (tx !== null) { kotak(tx + 54, jt - 14, 4, 22, '#59656d'); kotakBulat(tx, jt - 36, 112, 22, 5, '#1f8a80'); cx.font = '800 11px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText(tek, tx + 56, jt - 25); }
     selimutMalam(gp, 0.36);
-    var goyang = Math.sin(t / 85) * Math.min(1.4, f.kmh / 60), mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
+    var goyF = knd === 'tanah' ? 3.2 : knd === 'rusak' ? 2.4 : knd === 'bergelombang' ? 1.6 : 1.0;
+    var goyang = Math.sin(t / (knd === 'tanah' || knd === 'rusak' ? 55 : 85)) * Math.min(3.5, (f.kmh / 55) * goyF), mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
     var sx = -90 + ((t * (0.02 + f.kmh * 0.0004)) % (W + 300)); gambarMobil(sx, jt + 26, ['mpv', 'hatch', 'suv'][Math.floor(t / 11000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 11000) % 3], false, t);
     gambarMobil(W * 0.46, G.carY + goyang, mob.bentuk, mob.id, false, t * (0.3 + f.kmh / 80));
     pencahayaanLuar(m, t, jt, W * 0.46 + 46, G.carY - 22 + goyang);

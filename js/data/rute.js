@@ -36,11 +36,72 @@
     denpasar: { nama: 'Denpasar (Bali)', pulau: 'Bali', tema: 'pantai', ramai: 1.55, ket: 'Pulau Dewata, Kuta dan Sanur' },
     mataram: { nama: 'Mataram (Lombok)', pulau: 'NTB', tema: 'pantai', ramai: 1.05, ket: 'Pulau Lombok, Mandalika' },
     kupang: { nama: 'Kupang (NTT)', pulau: 'NTT', tema: 'pantai', ramai: 0.85, ket: 'Gerbang Nusa Tenggara Timur' },
-    pontianak: { nama: 'Pontianak', pulau: 'Kalimantan', tema: 'sungai', ramai: 1.0, ket: 'Kota Khatulistiwa, Sungai Kapuas' },
-    banjarmasin: { nama: 'Banjarmasin', pulau: 'Kalimantan', tema: 'sungai', ramai: 1.05, ket: 'Kota Seribu Sungai' },
-    balikpapan: { nama: 'Balikpapan', pulau: 'Kalimantan', tema: 'kotaBesar', ramai: 1.25, ket: 'Kota Minyak, Gerbang IKN' },
-    samarinda: { nama: 'Samarinda', pulau: 'Kalimantan', tema: 'sungai', ramai: 1.1, ket: 'Sungai Mahakam' },
-    ikn: { nama: 'Nusantara (IKN)', pulau: 'Kalimantan', tema: 'kotaBesar', ramai: 1.2, ket: 'Ibu Kota Nusantara' },
+    /* === KALIMANTAN BARAT (14 Kota & Kabupaten: 2 Kota, 12 Kabupaten) === */
+    pontianak: { nama: 'Kota Pontianak', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 118, tema: 'sungai', ramai: 1.35, ket: 'Ibu kota Kalbar, Tugu Khatulistiwa, Sungai Kapuas' },
+    singkawang: { nama: 'Kota Singkawang', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 550, tema: 'pantai', ramai: 1.1, ket: 'Kota Seribu Kelenteng & wisata pantai Pasir Panjang' },
+    kuburaya: { nama: 'Kab. Kubu Raya (Sungai Raya)', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 8549, tema: 'sungai', ramai: 1.05, ket: 'Bandara Supadio, penyangga Pontianak' },
+    mempawah: { nama: 'Kab. Mempawah', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 1935, tema: 'pantai', ramai: 0.9, ket: 'Pelabuhan Kijing, jalur pesisir Pontianak–Singkawang' },
+    sambas: { nama: 'Kab. Sambas', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 5938, tema: 'pantai', ramai: 0.85, ket: 'PLBN Aruk perbatasan Sarawak & Keraton Alwatzikhoebillah' },
+    bengkayang: { nama: 'Kab. Bengkayang', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 5489, tema: 'gunung', ramai: 0.75, ket: 'PLBN Jagoi Babang & perbukitan hijau perbatasan' },
+    landak: { nama: 'Kab. Landak (Ngabang)', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 8431, tema: 'sawit', ramai: 0.85, ket: 'Kota Ngabang, jalur utama Trans-Kalimantan Kalbar' },
+    sanggau: { nama: 'Kab. Sanggau', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 12452, tema: 'sungai', ramai: 0.95, ket: 'Jembatan Tayan, PLBN Entikong, tepi Sungai Kapuas' },
+    sekadau: { nama: 'Kab. Sekadau', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 5979, tema: 'sawit', ramai: 0.78, ket: 'Lintas tengah Kalbar, perkebunan karet & sawit' },
+    sintang: { nama: 'Kab. Sintang', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 22026, tema: 'gunung', ramai: 0.95, ket: 'Bukit Kelam, pertemuan Sungai Kapuas & Melawi' },
+    melawi: { nama: 'Kab. Melawi (Nanga Pinoh)', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 10122, tema: 'sungai', ramai: 0.75, ket: 'Kota Nanga Pinoh, gerbang pedalaman perbukitan Schwaner' },
+    kapuashulu: { nama: 'Kab. Kapuas Hulu (Putussibau)', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 31318, tema: 'danau', ramai: 0.7, ket: 'Danau Sentarum, Taman Nasional Betung Kerihun & PLBN Badau' },
+    ketapang: { nama: 'Kab. Ketapang', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 30019, tema: 'pantai', ramai: 0.95, ket: 'Kabupaten terluas di pesisir selatan Kalbar, jalur ke Kalteng' },
+    kayongutara: { nama: 'Kab. Kayong Utara (Sukadana)', pulau: 'Kalimantan', prov: 'Kalimantan Barat', luas: 4110, tema: 'pantai', ramai: 0.65, ket: 'Pantai Pulau Datok & Taman Nasional Gunung Palung' },
+
+    /* === KALIMANTAN TENGAH (14 Kota & Kabupaten: 1 Kota, 13 Kabupaten) === */
+    palangkaraya: { nama: 'Kota Palangka Raya', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 2853, tema: 'sungai', ramai: 1.25, ket: 'Ibu kota Kalteng, Jembatan Kahayan & taman gambut' },
+    kotawaringinbarat: { nama: 'Kab. Kotawaringin Barat (Pangkalan Bun)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 9480, tema: 'pantai', ramai: 1.05, ket: 'Pangkalan Bun, Pelabuhan Kumai & TN Tanjung Puting' },
+    sukamara: { nama: 'Kab. Sukamara', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 3311, tema: 'pantai', ramai: 0.65, ket: 'Ujung barat daya Kalteng berbatasan dengan Ketapang' },
+    lamandau: { nama: 'Kab. Lamandau (Nanga Bulik)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 7632, tema: 'sawit', ramai: 0.75, ket: 'Nanga Bulik, gerbang lintas Trans-Kalimantan Kalbar–Kalteng' },
+    seruyan: { nama: 'Kab. Seruyan (Kuala Pembuang)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 15215, tema: 'pantai', ramai: 0.72, ket: 'Kuala Pembuang, pesisir Laut Jawa & perkebunan sawit' },
+    kotawaringintimur: { nama: 'Kab. Kotawaringin Timur (Sampit)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 15544, tema: 'sungai', ramai: 1.15, ket: 'Kota Sampit, Sungai Mentaya & pusat perdagangan Kalteng' },
+    katingan: { nama: 'Kab. Katingan (Kasongan)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 20382, tema: 'sungai', ramai: 0.82, ket: 'Kasongan & Taman Nasional Sebangau' },
+    pulangpisau: { nama: 'Kab. Pulang Pisau', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 9651, tema: 'sungai', ramai: 0.85, ket: 'Jembatan Tumbang Nusa, jalur utama Palangka Raya–Banjarmasin' },
+    kapuas: { nama: 'Kab. Kapuas (Kuala Kapuas)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 17070, tema: 'sungai', ramai: 0.95, ket: 'Kota Air Kuala Kapuas, perbatasan Kalteng–Kalsel' },
+    gunungmas: { nama: 'Kab. Gunung Mas (Kuala Kurun)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 9306, tema: 'gunung', ramai: 0.72, ket: 'Kuala Kurun, perbukitan hulu Sungai Kahayan' },
+    baritoselatan: { nama: 'Kab. Barito Selatan (Buntok)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 6267, tema: 'sungai', ramai: 0.85, ket: 'Kota Buntok di tepi Sungai Barito' },
+    baritotimur: { nama: 'Kab. Barito Timur (Tamiang Layang)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 3213, tema: 'sawit', ramai: 0.8, ket: 'Tamiang Layang, penghubung langsung ke Tabalong Kalsel' },
+    baritoutara: { nama: 'Kab. Barito Utara (Muara Teweh)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 9985, tema: 'sungai', ramai: 0.88, ket: 'Muara Teweh, pusat perdagangan & tambang hulu Barito' },
+    murungraya: { nama: 'Kab. Murung Raya (Puruk Cahu)', pulau: 'Kalimantan', prov: 'Kalimantan Tengah', luas: 23575, tema: 'gunung', ramai: 0.68, ket: 'Puruk Cahu, jantung perbukitan utara Kalteng' },
+
+    /* === KALIMANTAN SELATAN (13 Kota & Kabupaten: 2 Kota, 11 Kabupaten) === */
+    banjarmasin: { nama: 'Kota Banjarmasin', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 98, tema: 'sungai', ramai: 1.35, ket: 'Kota Seribu Sungai, Pasar Terapung & Pelabuhan Trisakti' },
+    banjarbaru: { nama: 'Kota Banjarbaru', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 305, tema: 'kotaBesar', ramai: 1.25, ket: 'Ibu kota Provinsi Kalsel & Bandara Syamsudin Noor' },
+    banjar: { nama: 'Kab. Banjar (Martapura)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 4588, tema: 'budaya', ramai: 1.15, ket: 'Kota Intan Martapura & wisata religi Sekumpul' },
+    baritokuala: { nama: 'Kab. Barito Kuala (Marabahan)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 2426, tema: 'sungai', ramai: 0.85, ket: 'Jembatan Barito & Jembatan Sei Alalak, lumbung padi Kalsel' },
+    tanahlaut: { nama: 'Kab. Tanah Laut (Pelaihari)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 3841, tema: 'pantai', ramai: 0.95, ket: 'Pelaihari, Pantai Takisung & jalur selatan ke Batulicin' },
+    tapin: { nama: 'Kab. Tapin (Rantau)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 2156, tema: 'sawit', ramai: 0.88, ket: 'Kota Rantau di Jalan Nasional Ahmad Yani lintas Banua Anam' },
+    hss: { nama: 'Kab. Hulu Sungai Selatan (Kandangan)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 1697, tema: 'gunung', ramai: 0.92, ket: 'Kandangan, kuliner Ketupat Kandangan & Loksado Pegunungan Meratus' },
+    hst: { nama: 'Kab. Hulu Sungai Tengah (Barabai)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 1573, tema: 'gunung', ramai: 0.9, ket: 'Kota Barabai, kaki Pegunungan Meratus' },
+    hsu: { nama: 'Kab. Hulu Sungai Utara (Amuntai)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 907, tema: 'sungai', ramai: 0.88, ket: 'Kota Amuntai, rawa lebak & sentra kerajinan purun' },
+    balangan: { nama: 'Kab. Balangan (Paringin)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 1829, tema: 'sawit', ramai: 0.82, ket: 'Kota Paringin, jalur strategis menuju Tabalong & Kaltim' },
+    tabalong: { nama: 'Kab. Tabalong (Tanjung)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 3473, tema: 'sawit', ramai: 1.0, ket: 'Kota Tanjung, gerbang perbatasan Kalsel–Kaltim & Kalsel–Kalteng' },
+    tanahbumbu: { nama: 'Kab. Tanah Bumbu (Batulicin)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 4885, tema: 'pelabuhan', ramai: 1.08, ket: 'Batulicin, pelabuhan feri ke Kotabaru & jalur pesisir ke Paser' },
+    kotabaru: { nama: 'Kab. Kotabaru (Pulau Laut)', pulau: 'Kalimantan', prov: 'Kalimantan Selatan', luas: 9423, tema: 'pantai', ramai: 0.92, ket: 'Pulau Laut Kotabaru, diseberangi via Feri Batulicin–Tanjung Serdang' },
+
+    /* === KALIMANTAN TIMUR (10 Kota/Kabupaten + IKN: 3 Kota, 7 Kabupaten + IKN) === */
+    balikpapan: { nama: 'Kota Balikpapan', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 511, tema: 'metropolis', ramai: 1.45, ket: 'Kota Minyak, Bandara SAMS Sepinggan & gerbang utama IKN' },
+    samarinda: { nama: 'Kota Samarinda', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 717, tema: 'sungai', ramai: 1.35, ket: 'Ibu kota Kaltim, Sungai Mahakam & Tol Balsam' },
+    bontang: { nama: 'Kota Bontang', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 161, tema: 'pantai', ramai: 1.05, ket: 'Kota Industri LNG & Pupuk di pesisir timur Kaltim' },
+    ikn: { nama: 'Nusantara (IKN · Sepaku)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 2561, tema: 'kotaBesar', ramai: 1.35, ket: 'Ibu Kota Nusantara, Kawasan Inti Pusat Pemerintahan (KIPP)' },
+    ppu: { nama: 'Kab. Penajam Paser Utara', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 3212, tema: 'pelabuhan', ramai: 1.05, ket: 'Penajam, Jembatan Pulau Balang & Feri Kariangau–Penajam' },
+    paser: { nama: 'Kab. Paser (Tanah Grogot)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 10708, tema: 'sawit', ramai: 0.92, ket: 'Tanah Grogot, jalur Gunung Rambutan lintas Kaltim–Kalsel' },
+    kukar: { nama: 'Kab. Kutai Kartanegara (Tenggarong)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 26926, tema: 'sungai', ramai: 1.15, ket: 'Tenggarong, Jembatan Kutai Kartanegara & eks Kesultanan Kutai' },
+    kubar: { nama: 'Kab. Kutai Barat (Sendawar)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 13611, tema: 'sungai', ramai: 0.85, ket: 'Sendawar / Barong Tongkok, jalur Trans-Kalimantan pedalaman' },
+    mahakamulu: { nama: 'Kab. Mahakam Ulu (Ujoh Bilang)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 18428, tema: 'gunung', ramai: 0.58, ket: 'Ujoh Bilang, kabupaten termuda di hulu Sungai Mahakam (jalur pedalaman tanah)' },
+    kutim: { nama: 'Kab. Kutai Timur (Sangatta)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 31588, tema: 'sawit', ramai: 1.05, ket: 'Sangatta, Taman Nasional Kutai & pusat pertambangan' },
+    berau: { nama: 'Kab. Berau (Tanjung Redeb)', pulau: 'Kalimantan', prov: 'Kalimantan Timur', luas: 21951, tema: 'pantai', ramai: 1.0, ket: 'Tanjung Redeb, gerbang wisata Kepulauan Derawan & Maratua' },
+
+    /* === KALIMANTAN UTARA (5 Kota & Kabupaten: 1 Kota, 4 Kabupaten) === */
+    tanjungselor: { nama: 'Kab. Bulungan (Tanjung Selor)', pulau: 'Kalimantan', prov: 'Kalimantan Utara', luas: 13882, tema: 'sungai', ramai: 1.0, ket: 'Ibu kota Provinsi Kaltara di tepi Sungai Kayan' },
+    tarakan: { nama: 'Kota Tarakan', pulau: 'Kalimantan', prov: 'Kalimantan Utara', luas: 251, tema: 'pelabuhan', ramai: 1.18, ket: 'Pulau Tarakan, pusat ekonomi & bandara internasional Kaltara' },
+    tanatidung: { nama: 'Kab. Tana Tidung (Tideng Pale)', pulau: 'Kalimantan', prov: 'Kalimantan Utara', luas: 3507, tema: 'sungai', ramai: 0.72, ket: 'Tideng Pale, poros Trans-Kalimantan Utara menuju Malinau' },
+    malinau: { nama: 'Kab. Malinau', pulau: 'Kalimantan', prov: 'Kalimantan Utara', luas: 38915, tema: 'gunung', ramai: 0.82, ket: 'Kabupaten terluas di Kaltara & Taman Nasional Kayan Mentarang' },
+    nunukan: { nama: 'Kab. Nunukan', pulau: 'Kalimantan', prov: 'Kalimantan Utara', luas: 13556, tema: 'pelabuhan', ramai: 0.85, ket: 'Pulau Nunukan & Sebatik, gerbang perbatasan Sabah Malaysia' },
     makassar: { nama: 'Makassar', pulau: 'Sulawesi', tema: 'metropolis', ramai: 1.35, ket: 'Pantai Losari, Kota Daeng' },
     parepare: { nama: 'Parepare', pulau: 'Sulawesi', tema: 'pelabuhan', ramai: 0.8, ket: 'Pelabuhan lintas Sulawesi–Kalimantan' },
     palu: { nama: 'Palu', pulau: 'Sulawesi', tema: 'pantai', ramai: 0.85, ket: 'Teluk Palu' },
@@ -85,12 +146,98 @@
     { a: 'banyuwangi', b: 'denpasar', km: 140, tol: 0, laut: true, jam: 2.5, kapalMobil: 215000, kapalOrang: 12000 },
     { a: 'denpasar', b: 'mataram', km: 110, tol: 0, laut: true, jam: 4.5, kapalMobil: 450000, kapalOrang: 65000 },
     { a: 'mataram', b: 'kupang', km: 720, tol: 0, laut: true, jam: 14, kapalMobil: 950000, kapalOrang: 180000 },
-    { a: 'surabaya', b: 'banjarmasin', km: 480, tol: 0, laut: true, jam: 15, kapalMobil: 1200000, kapalOrang: 250000 },
-    { a: 'banjarmasin', b: 'balikpapan', km: 470, tol: 0 },
-    { a: 'banjarmasin', b: 'pontianak', km: 890, tol: 0 },
-    { a: 'balikpapan', b: 'ikn', km: 85, tol: 35000 },
-    { a: 'balikpapan', b: 'samarinda', km: 115, tol: 125000 },
-    { a: 'balikpapan', b: 'parepare', km: 350, tol: 0, laut: true, jam: 12, kapalMobil: 1100000, kapalOrang: 220000 },
+    { a: 'surabaya', b: 'banjarmasin', km: 480, tol: 0, laut: true, jam: 15, kapalMobil: 1200000, kapalOrang: 250000, jalan: 'Feri Laut Jawa (Tanjung Perak–Trisakti)', kondisi: 'mulus' },
+    { a: 'surabaya', b: 'pontianak', km: 790, tol: 0, laut: true, jam: 28, kapalMobil: 1650000, kapalOrang: 340000, jalan: 'Kapal Ro-Ro Surabaya–Dwikora Pontianak', kondisi: 'mulus' },
+    { a: 'surabaya', b: 'kotawaringinbarat', km: 440, tol: 0, laut: true, jam: 16, kapalMobil: 1150000, kapalOrang: 240000, jalan: 'Kapal Ro-Ro Surabaya–Kumai', kondisi: 'mulus' },
+    { a: 'surabaya', b: 'kotawaringintimur', km: 470, tol: 0, laut: true, jam: 17, kapalMobil: 1200000, kapalOrang: 250000, jalan: 'Kapal Ro-Ro Surabaya–Sampit', kondisi: 'mulus' },
+    { a: 'balikpapan', b: 'parepare', km: 350, tol: 0, laut: true, jam: 12, kapalMobil: 1100000, kapalOrang: 220000, jalan: 'Feri Selat Makassar (Balikpapan–Parepare)', kondisi: 'mulus' },
+
+    /* === JARINGAN JALAN ASLI KALIMANTAN BARAT (Trans-Kalimantan & Pesisir) === */
+    { a: 'pontianak', b: 'kuburaya', km: 14, tol: 0, jalan: 'Jl. Ahmad Yani II (Pontianak–Sungai Raya)', kondisi: 'mulus' },
+    { a: 'pontianak', b: 'mempawah', km: 68, tol: 0, jalan: 'Jl. Raya Pontianak–Mempawah (Pesisir)', kondisi: 'mulus' },
+    { a: 'mempawah', b: 'singkawang', km: 77, tol: 0, jalan: 'Jl. Raya Mempawah–Singkawang', kondisi: 'mulus' },
+    { a: 'singkawang', b: 'sambas', km: 76, tol: 0, jalan: 'Jl. Nasional Singkawang–Pemangkat–Sambas', kondisi: 'mulus' },
+    { a: 'singkawang', b: 'bengkayang', km: 68, tol: 0, jalan: 'Jl. Raya Singkawang–Bengkayang (Perbukitan)', kondisi: 'bergelombang' },
+    { a: 'mempawah', b: 'bengkayang', km: 112, tol: 0, jalan: 'Jl. Karangan–Bengkayang', kondisi: 'bergelombang' },
+    { a: 'kuburaya', b: 'landak', km: 155, tol: 0, jalan: 'Trans-Kalimantan Poros Utara (Ambawang–Ngabang)', kondisi: 'mulus' },
+    { a: 'bengkayang', b: 'landak', km: 88, tol: 0, jalan: 'Jl. Sanggau Ledo–Ngabang', kondisi: 'bergelombang' },
+    { a: 'landak', b: 'sanggau', km: 95, tol: 0, jalan: 'Trans-Kalimantan (Ngabang–Sosok–Sanggau)', kondisi: 'mulus' },
+    { a: 'kuburaya', b: 'sanggau', km: 185, tol: 0, jalan: 'Trans-Kalimantan via Tayan Hilir', kondisi: 'mulus' },
+    { a: 'sanggau', b: 'sekadau', km: 48, tol: 0, jalan: 'Trans-Kalimantan (Sanggau–Sekadau)', kondisi: 'mulus' },
+    { a: 'sekadau', b: 'sintang', km: 82, tol: 0, jalan: 'Trans-Kalimantan (Sekadau–Sintang)', kondisi: 'bergelombang' },
+    { a: 'sintang', b: 'melawi', km: 46, tol: 0, jalan: 'Jl. Nasional Sintang–Nanga Pinoh', kondisi: 'mulus' },
+    { a: 'sintang', b: 'kapuashulu', km: 282, tol: 0, jalan: 'Jl. Lintas Selatan Kalbar (Sintang–Putussibau)', kondisi: 'bergelombang' },
+    { a: 'sanggau', b: 'ketapang', km: 295, tol: 0, jalan: 'Trans-Kalimantan via Jembatan Tayan–Sandai–Ketapang', kondisi: 'bergelombang' },
+    { a: 'ketapang', b: 'kayongutara', km: 82, tol: 0, jalan: 'Jl. Provinsi Ketapang–Sukadana (Siduk)', kondisi: 'bergelombang' },
+    { a: 'ketapang', b: 'melawi', km: 235, tol: 0, jalan: 'Jalur Pedalaman Sandai–Nanga Tayap–Nanga Pinoh', kondisi: 'rusak' },
+
+    /* === PENGHUBUNG KALBAR ↔ KALTENG === */
+    { a: 'ketapang', b: 'sukamara', km: 145, tol: 0, jalan: 'Jalur Pesisir Selatan (Kendawangan–Jelai–Sukamara)', kondisi: 'rusak' },
+    { a: 'ketapang', b: 'lamandau', km: 245, tol: 0, jalan: 'Trans-Kalimantan Poros Selatan (Tumbang Titi–Kudangan–Nanga Bulik)', kondisi: 'bergelombang' },
+
+    /* === JARINGAN JALAN ASLI KALIMANTAN TENGAH === */
+    { a: 'sukamara', b: 'kotawaringinbarat', km: 92, tol: 0, jalan: 'Jl. Nasional Sukamara–Pangkalan Bun', kondisi: 'mulus' },
+    { a: 'lamandau', b: 'kotawaringinbarat', km: 98, tol: 0, jalan: 'Trans-Kalimantan (Nanga Bulik–Pangkalan Bun)', kondisi: 'mulus' },
+    { a: 'kotawaringinbarat', b: 'seruyan', km: 168, tol: 0, jalan: 'Jl. Lintas Pangkalan Bun–Kuala Pembuang', kondisi: 'bergelombang' },
+    { a: 'kotawaringinbarat', b: 'kotawaringintimur', km: 225, tol: 0, jalan: 'Trans-Kalimantan Poros Selatan (Pangkalan Bun–Sampit)', kondisi: 'mulus' },
+    { a: 'seruyan', b: 'kotawaringintimur', km: 118, tol: 0, jalan: 'Jl. Provinsi Kuala Pembuang–Sampit', kondisi: 'bergelombang' },
+    { a: 'kotawaringintimur', b: 'katingan', km: 142, tol: 0, jalan: 'Trans-Kalimantan (Sampit–Kasongan)', kondisi: 'mulus' },
+    { a: 'katingan', b: 'palangkaraya', km: 84, tol: 0, jalan: 'Jl. Tjilik Riwut (Kasongan–Palangka Raya)', kondisi: 'mulus' },
+    { a: 'palangkaraya', b: 'gunungmas', km: 175, tol: 0, jalan: 'Jl. Provinsi Palangka Raya–Tangkiling–Kuala Kurun', kondisi: 'rusak' },
+    { a: 'palangkaraya', b: 'pulangpisau', km: 95, tol: 0, jalan: 'Trans-Kalimantan (Jembatan Tumbang Nusa–Pulang Pisau)', kondisi: 'mulus' },
+    { a: 'pulangpisau', b: 'kapuas', km: 45, tol: 0, jalan: 'Trans-Kalimantan (Pulang Pisau–Kuala Kapuas)', kondisi: 'mulus' },
+    { a: 'palangkaraya', b: 'baritoselatan', km: 198, tol: 0, jalan: 'Trans-Kalimantan Poros Tengah (Palangka Raya–Timpeh–Buntok)', kondisi: 'bergelombang' },
+    { a: 'baritoselatan', b: 'baritotimur', km: 72, tol: 0, jalan: 'Jl. Nasional Buntok–Ampah–Tamiang Layang', kondisi: 'mulus' },
+    { a: 'baritoselatan', b: 'baritoutara', km: 118, tol: 0, jalan: 'Jl. Nasional Buntok–Pendang–Muara Teweh', kondisi: 'bergelombang' },
+    { a: 'baritoutara', b: 'murungraya', km: 96, tol: 0, jalan: 'Jl. Negara Muara Teweh–Puruk Cahu', kondisi: 'bergelombang' },
+    { a: 'gunungmas', b: 'baritoutara', km: 165, tol: 0, jalan: 'Jalur Pedalaman Kuala Kurun–Muara Teweh', kondisi: 'tanah' },
+
+    /* === PENGHUBUNG KALTENG ↔ KALSEL === */
+    { a: 'kapuas', b: 'baritokuala', km: 32, tol: 0, jalan: 'Trans-Kalimantan (Anjir Pasar–Jembatan Barito)', kondisi: 'mulus' },
+    { a: 'baritotimur', b: 'tabalong', km: 54, tol: 0, jalan: 'Jl. Lintas Pasar Panas–Kelua–Tanjung', kondisi: 'mulus' },
+
+    /* === JARINGAN JALAN ASLI KALIMANTAN SELATAN === */
+    { a: 'baritokuala', b: 'banjarmasin', km: 28, tol: 0, jalan: 'Jl. Brigjen Hasan Basri (Marabahan–Jembatan Alalak–Banjarmasin)', kondisi: 'mulus' },
+    { a: 'banjarmasin', b: 'banjarbaru', km: 34, tol: 0, jalan: 'Jl. Ahmad Yani / Jl. Gubernur Syarkawi', kondisi: 'mulus' },
+    { a: 'banjarbaru', b: 'banjar', km: 10, tol: 0, jalan: 'Jl. Ahmad Yani (Banjarbaru–Martapura)', kondisi: 'mulus' },
+    { a: 'banjarbaru', b: 'tanahlaut', km: 48, tol: 0, jalan: 'Jl. Nasional Banjarbaru–Bati-Bati–Pelaihari', kondisi: 'mulus' },
+    { a: 'banjar', b: 'tapin', km: 76, tol: 0, jalan: 'Jl. Nasional Ahmad Yani (Martapura–Rantau)', kondisi: 'mulus' },
+    { a: 'tapin', b: 'hss', km: 25, tol: 0, jalan: 'Jl. Nasional Rantau–Kandangan', kondisi: 'mulus' },
+    { a: 'hss', b: 'hst', km: 30, tol: 0, jalan: 'Jl. Nasional Kandangan–Barabai', kondisi: 'mulus' },
+    { a: 'hst', b: 'hsu', km: 32, tol: 0, jalan: 'Jl. Nasional Barabai–Amuntai', kondisi: 'mulus' },
+    { a: 'hst', b: 'balangan', km: 38, tol: 0, jalan: 'Jl. Nasional Barabai–Paringin', kondisi: 'mulus' },
+    { a: 'hsu', b: 'tabalong', km: 44, tol: 0, jalan: 'Jl. Nasional Amuntai–Kelua–Tanjung', kondisi: 'mulus' },
+    { a: 'balangan', b: 'tabalong', km: 34, tol: 0, jalan: 'Jl. Nasional Paringin–Tanjung', kondisi: 'mulus' },
+    { a: 'tanahlaut', b: 'tanahbumbu', km: 192, tol: 0, jalan: 'Jl. Lintas Selatan Kalsel (Pelaihari–Satui–Batulicin)', kondisi: 'bergelombang' },
+    { a: 'banjarbaru', b: 'tanahbumbu', km: 174, tol: 0, jalan: 'Jalan Lintas Baru Banjarbaru–Batulicin (Tembus Meratus)', kondisi: 'mulus' },
+    { a: 'tanahbumbu', b: 'kotabaru', km: 22, tol: 0, laut: true, jam: 1.0, kapalMobil: 185000, kapalOrang: 15000, jalan: 'Feri ASDP Batulicin–Tanjung Serdang (Pulau Laut)', kondisi: 'mulus' },
+
+    /* === PENGHUBUNG KALSEL ↔ KALTIM & KALTENG ↔ KALTIM === */
+    { a: 'tabalong', b: 'paser', km: 138, tol: 0, jalan: 'Trans-Kalimantan Poros Selatan (Tanjung–Gunung Rambutan–Tanah Grogot)', kondisi: 'bergelombang' },
+    { a: 'tanahbumbu', b: 'paser', km: 215, tol: 0, jalan: 'Jalur Pesisir Timur (Batulicin–Cantung–Kuaro–Tanah Grogot)', kondisi: 'bergelombang' },
+    { a: 'baritoutara', b: 'kubar', km: 195, tol: 0, jalan: 'Jalur Lintas Benangin–Sendawar (Kalteng–Kaltim)', kondisi: 'rusak' },
+
+    /* === JARINGAN JALAN ASLI KALIMANTAN TIMUR & IKN === */
+    { a: 'paser', b: 'ppu', km: 122, tol: 0, jalan: 'Trans-Kalimantan (Tanah Grogot–Kuaro–Penajam)', kondisi: 'bergelombang' },
+    { a: 'ppu', b: 'ikn', km: 56, tol: 0, jalan: 'Jl. Negara Penajam–Petung–Sepaku (IKN)', kondisi: 'mulus' },
+    { a: 'ppu', b: 'balikpapan', km: 24, tol: 0, laut: true, jam: 1.2, kapalMobil: 195000, kapalOrang: 18000, jalan: 'Feri Kariangau–Penajam (Teluk Balikpapan)', kondisi: 'mulus' },
+    { a: 'balikpapan', b: 'ikn', km: 72, tol: 35000, jalan: 'Tol IKN & Jembatan Pulau Balang (Balikpapan–Sepaku)', kondisi: 'tol' },
+    { a: 'balikpapan', b: 'samarinda', km: 99, tol: 125000, jalan: 'Tol Balikpapan–Samarinda (Balsam)', kondisi: 'tol' },
+    { a: 'ikn', b: 'kukar', km: 98, tol: 0, jalan: 'Jl. Sepaku–Loa Janan–Tenggarong', kondisi: 'mulus' },
+    { a: 'samarinda', b: 'kukar', km: 34, tol: 0, jalan: 'Jl. Nasional Samarinda–Tenggarong Seberang', kondisi: 'mulus' },
+    { a: 'kukar', b: 'kubar', km: 285, tol: 0, jalan: 'Trans-Kalimantan (Tenggarong–Kota Bangun–Sendawar)', kondisi: 'rusak' },
+    { a: 'kubar', b: 'mahakamulu', km: 145, tol: 0, jalan: 'Jalur Pedalaman Tering–Long Bagun–Ujoh Bilang', kondisi: 'tanah' },
+    { a: 'samarinda', b: 'bontang', km: 118, tol: 0, jalan: 'Jl. Poros Samarinda–Bontang', kondisi: 'mulus' },
+    { a: 'bontang', b: 'kutim', km: 62, tol: 0, jalan: 'Jl. Poros Bontang–Sangatta', kondisi: 'mulus' },
+    { a: 'kutim', b: 'berau', km: 358, tol: 0, jalan: 'Trans-Kalimantan Poros Timur (Sangatta–Muara Wahau–Tanjung Redeb)', kondisi: 'bergelombang' },
+
+    /* === PENGHUBUNG KALTIM ↔ KALTARA & JARINGAN JALAN KALIMANTAN UTARA === */
+    { a: 'berau', b: 'tanjungselor', km: 132, tol: 0, jalan: 'Trans-Kalimantan Poros Utara (Tanjung Redeb–Tanjung Selor)', kondisi: 'mulus' },
+    { a: 'tanjungselor', b: 'tarakan', km: 48, tol: 0, laut: true, jam: 1.5, kapalMobil: 260000, kapalOrang: 95000, jalan: 'Feri / Speedboat Kayan (Tanjung Selor–Tarakan)', kondisi: 'mulus' },
+    { a: 'tanjungselor', b: 'tanatidung', km: 124, tol: 0, jalan: 'Trans-Kalimantan Utara (Tanjung Selor–Sekatak–Tideng Pale)', kondisi: 'bergelombang' },
+    { a: 'tanatidung', b: 'malinau', km: 112, tol: 0, jalan: 'Jl. Nasional Tideng Pale–Malinau', kondisi: 'bergelombang' },
+    { a: 'tanatidung', b: 'nunukan', km: 148, tol: 0, laut: true, jam: 2.0, kapalMobil: 290000, kapalOrang: 85000, jalan: 'Jl. Sei Ular–Feri Penyeberangan ke Pulau Nunukan', kondisi: 'bergelombang' },
+    { a: 'tarakan', b: 'nunukan', km: 125, tol: 0, laut: true, jam: 3.5, kapalMobil: 390000, kapalOrang: 150000, jalan: 'Feri Penyeberangan Tarakan–Tunon Taka Nunukan', kondisi: 'mulus' },
     { a: 'surabaya', b: 'makassar', km: 780, tol: 0, laut: true, jam: 20, kapalMobil: 1650000, kapalOrang: 320000 },
     { a: 'makassar', b: 'parepare', km: 155, tol: 0 },
     { a: 'makassar', b: 'kendari', km: 620, tol: 0 },
@@ -211,5 +358,17 @@
     var t = Math.max(DASAR.minimal, j.km * DASAR.perKm + DASAR.tetap) + (j.laut ? DASAR.tambahLaut : 0);
     return bulat5k(t);
   }
-  g.KK_RUTE = { kota: KOTA, ruas: RUAS, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
+  /* kondisi jalan asli: memengaruhi kecepatan efektif, konsumsi BBM, goyangan, dan risiko ban bocor */
+  var KONDISI_JALAN = {
+    tol: { nama: 'Jalan Tol Mulus', faktorV: 1.08, boros: 0.96, risikoBan: 0.6 },
+    mulus: { nama: 'Aspal Mulus', faktorV: 1.0, boros: 1.0, risikoBan: 1.0 },
+    bergelombang: { nama: 'Aspal Bergelombang / Tambalan', faktorV: 0.80, boros: 1.08, risikoBan: 1.65 },
+    rusak: { nama: 'Jalan Rusak / Berlubang Berat', faktorV: 0.58, boros: 1.18, risikoBan: 2.8 },
+    tanah: { nama: 'Jalan Tanah / Berlumpur Pedalaman', faktorV: 0.42, boros: 1.28, risikoBan: 3.6 }
+  };
+  function infoKondisi(r) {
+    var k = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
+    return KONDISI_JALAN[k] || KONDISI_JALAN.mulus;
+  }
+  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
 })(window);
