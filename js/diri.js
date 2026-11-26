@@ -79,6 +79,7 @@
     S.keluarga = S.keluarga || [];
     if (typeof S.penghasilanBulanIni !== 'number') S.penghasilanBulanIni = 0;
     if (typeof S.utangPasangan !== 'number') S.utangPasangan = 0;
+    if (!S.cicilanHadiah) S.cicilanHadiah = [];
     S.keluarga.forEach(function (kl) {
       if (adalahPasangan(kl)) {
         if (typeof kl.hb !== 'number') kl.hb = 30;
@@ -87,6 +88,7 @@
       } else {
         if (!kl.aktivitas) kl.aktivitas = 'rumah';
       }
+      if (!kl.hadiah) kl.hadiah = [];
     });
     S.sewaBarang = S.sewaBarang || {};
     Object.keys(S.rumah.barang).forEach(function (id) {
@@ -177,7 +179,7 @@
         S.pesanPasanganHari = S.hari;
         var butuhDapur = !S.rumahTangga || (S.rumahTangga.aktifSampai || -1) <= S.hari;
         var teksPesan = butuhDapur
-          ? 'Sayang, stok beras & bahan dapur di rumah udah mau habis nih. Nanti belanja di Pasar Pokok HP atau suruh aku belanja ke pasar ya!'
+          ? 'Sayang, uang belanja dapur bulan ini udah menipis nih. Jangan lupa berikan nafkah bulanan di menu Keluarga ya biar aku bisa belanja keperluan rumah tangga!'
           : ['Sayang, lagi sibuk narik ya? Jangan lupa makan & jaga kesehatan ya!', 'Sayang, semangat kerjanya hari ini! Nanti malam pulang ke rumah ya, aku kangen.', 'Halo sayang, gimana narik hari ini? Lancar kan?'][S.hari % 3];
         var viaTelp = Math.random() < 0.35;
         S.pesanKeluarga = S.pesanKeluarga || [];
@@ -966,28 +968,51 @@
   }
   function makanDiRumah(S) {
     if (S.diri.posisi !== 'kos') return 'Pulang ke rumah/kos dulu untuk makan masakan rumah.';
-    if (!S.rumahTangga || (S.rumahTangga.aktifSampai || -1) < S.hari) return 'Belum memberi uang biaya rumah tangga. Beri di aplikasi Keluarga dulu, atau masak/beli makan.';
+    if (!S.rumahTangga || (S.rumahTangga.aktifSampai || -1) < S.hari) return 'Stok dapur kosong. Berikan nafkah bulanan di aplikasi Keluarga agar pasangan bisa belanja kebutuhan rumah tangga.';
     S.diri.kenyang = batas(S.diri.kenyang + 80);
     S.diri.minum = batas(S.diri.minum + 35);
     S.diri.stamina = batas(S.diri.stamina + 8);
-    return { ok: true, menit: 20, teks: 'Makan masakan rumah bersama keluarga (Gratis dari biaya rumah tangga). Kenyang & segar!' };
+    return { ok: true, menit: 20, teks: 'Makan masakan rumah bersama keluarga (Gratis dari nafkah dapur). Kenyang & segar!' };
   }
-  /* pendidikan kuliah & pekerjaan luar rumah untuk pasangan (istri/suami atas kehendak karakter utama) */
-  function daftarKuliahPasangan(S, id, jurusanId) {
+  /* pendidikan kuliah & pekerjaan luar rumah (pasangan atau anggota keluarga usia >= 18; bisa dibayar suami, istri, atau patungan 50/50) */
+  function bayarPendidikan(S, biaya, ket, sumber) {
+    var ps = pasanganAktif(S), danaPs = ps ? ((ps.dompet || 0) + (ps.tabungan || 0)) : 0;
+    if (sumber === 'istri') {
+      if (!ps) return 'Belum punya pasangan.';
+      if (danaPs < biaya) return 'Uang ' + ps.nama + ' (' + rp(danaPs) + ') tidak cukup untuk ' + ket + ' (' + rp(biaya) + ').';
+      potongDanaPasangan(ps, biaya);
+      return { ok: true, ketSumber: 'uang ' + ps.nama };
+    }
+    if (sumber === 'patungan') {
+      if (!ps) return 'Belum punya pasangan untuk patungan.';
+      var sep = Math.round(biaya / 2), sisaS = biaya - sep;
+      if (danaPs < sep) return 'Uang ' + ps.nama + ' (' + rp(danaPs) + ') kurang untuk patungan (' + rp(sep) + ').';
+      if (S.bank.saldo < sisaS && (S.uang.dompet || 0) < sisaS) return 'Uangmu tidak cukup untuk patungan (' + rp(sisaS) + ').';
+      potongDanaPasangan(ps, sep);
+      if (S.bank.saldo >= sisaS) { S.bank.saldo -= sisaS; S.bank.mutasi.unshift({ n: S.hari, ket: 'Patungan ' + ket, jml: -sisaS }); }
+      else S.uang.dompet -= sisaS;
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + sisaS;
+      return { ok: true, ketSumber: 'patungan 50/50' };
+    }
+    if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; S.bank.mutasi.unshift({ n: S.hari, ket: ket, jml: -biaya }); S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya; return { ok: true, ketSumber: 'rekeningmu' }; }
+    if ((S.uang.dompet || 0) >= biaya) { S.uang.dompet -= biaya; S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya; return { ok: true, ketSumber: 'dompetmu' }; }
+    return 'Saldo tidak cukup untuk ' + ket + ' (' + rp(biaya) + ').';
+  }
+  function daftarKuliahPasangan(S, id, jurusanId, sumber) {
     var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
-    if (!kl || !adalahPasangan(kl)) return 'Hanya pasangan (istri/suami) yang bisa kuliah dari menu ini.';
+    if (!kl) return 'Anggota keluarga tidak ditemukan.';
+    var usia = KAL.usia(S.hari, kl.tglLahir);
+    if (!adalahPasangan(kl) && usia < 17) return kl.nama + ' masih ' + usia + ' tahun (minimal 17 tahun untuk kuliah).';
     var jr = (N.pendidikanPasangan || []).filter(function (x) { return x.id === jurusanId; })[0];
     if (!jr) return 'Jurusan kuliah tidak ditemukan.';
     kl.lulus = kl.lulus || [];
     if (kl.lulus.indexOf(jr.id) >= 0) return kl.nama + ' sudah lulus ' + jr.nama + '.';
     if (kl.kuliah) return kl.nama + ' sedang berkuliah di ' + kl.kuliah.nama + '.';
-    if (S.bank.saldo < jr.ukt) return 'Saldo rekening tidak cukup untuk UKT semester 1 (' + rp(jr.ukt) + ').';
-    S.bank.saldo -= jr.ukt;
-    S.bank.mutasi.unshift({ n: S.hari, ket: 'UKT Kuliah ' + kl.nama + ' (' + jr.nama + ')', jml: -jr.ukt });
-    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + jr.ukt;
+    var by = bayarPendidikan(S, jr.ukt, 'UKT Kuliah ' + kl.nama + ' (' + jr.nama + ')', sumber || 'suami');
+    if (!by || !by.ok) return by;
     kl.kuliah = { id: jr.id, nama: jr.nama, gelar: jr.gelar, semester: 1, totalSemester: jr.semester, ukt: jr.ukt, tagihBerikut: S.hari + 180 };
     kl.bahagia = Math.min(100, (kl.bahagia || 80) + 15);
-    return { ok: true, teks: kl.nama + ' resmi kuliah ' + jr.nama + '! UKT semester 1 ' + rp(jr.ukt) + ' lunas.' };
+    return { ok: true, teks: kl.nama + ' resmi kuliah ' + jr.nama + '! UKT semester 1 ' + rp(jr.ukt) + ' lunas via ' + by.ketSumber + '.' };
   }
   function aturKerjaPasangan(S, id, kerjaId) {
     var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
@@ -1008,23 +1033,23 @@
     return { ok: true, teks: kl.nama + ' mulai bekerja sebagai ' + kj.nama + ' (gaji ' + rp(kj.gaji) + '/bulan, masuk rekening tiap ganti bulan).' };
   }
   /* pendidikan anak sesuai usia nyata: usia 4 PAUD/TK, usia 6 SD, usia 12 SMP, usia 15 SMA */
-  function daftarSekolahAnak(S, id, sekolahId) {
+  function daftarSekolahAnak(S, id, sekolahId, sumber) {
     var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0];
-    if (!kl || adalahPasangan(kl)) return 'Pilih karakter anak untuk didaftarkan sekolah.';
+    if (!kl || adalahPasangan(kl)) return 'Pilih karakter anak/adik untuk didaftarkan sekolah.';
     var sk = (N.sekolahAnak || []).filter(function (x) { return x.id === sekolahId; })[0];
     if (!sk) return 'Jenjang sekolah tidak ditemukan.';
     var usia = KAL.usia(S.hari, kl.tglLahir);
     if (usia < sk.minUsia) return kl.nama + ' masih berusia ' + usia + ' tahun. Syarat minimal masuk ' + sk.nama + ' adalah ' + sk.minUsia + ' tahun.';
     if (kl.sekolah && kl.sekolah.id === sk.id) return kl.nama + ' sudah bersekolah di ' + sk.nama + '.';
+    var ketS = 'rekeningmu';
     if (sk.pangkal > 0) {
-      if (S.bank.saldo < sk.pangkal) return 'Saldo rekening tidak cukup untuk uang pangkal / seragam ' + sk.nama + ' (' + rp(sk.pangkal) + ').';
-      S.bank.saldo -= sk.pangkal;
-      S.bank.mutasi.unshift({ n: S.hari, ket: 'Daftar sekolah ' + kl.nama + ' (' + sk.nama + ')', jml: -sk.pangkal });
-      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + sk.pangkal;
+      var by = bayarPendidikan(S, sk.pangkal, 'Daftar sekolah ' + kl.nama + ' (' + sk.nama + ')', sumber || 'suami');
+      if (!by || !by.ok) return by;
+      ketS = by.ketSumber;
     }
     kl.sekolah = { id: sk.id, nama: sk.nama, spp: sk.spp, sejak: S.hari };
     kl.bahagia = Math.min(100, (kl.bahagia || 80) + 12);
-    return { ok: true, teks: kl.nama + ' resmi masuk ' + sk.nama + '!' + (sk.spp ? ' SPP bulanan ' + rp(sk.spp) + '.' : ' SPP gratis pemerintah.') };
+    return { ok: true, teks: kl.nama + ' resmi masuk ' + sk.nama + (sk.pangkal > 0 ? ' (via ' + ketS + ')' : '') + '!' + (sk.spp ? ' SPP bulanan ' + rp(sk.spp) + '.' : ' SPP gratis pemerintah.') };
   }
   /* apotek: beli obat, vitamin, kondom, pil KB, suntik KB, testpack, dokter */
   function itemApotek(id) { return (N.apotek || []).filter(function (x) { return x.id === id; })[0]; }
@@ -1700,7 +1725,7 @@
         kabar.push(kl.nama + ' sedang kurang sehat (' + pkK.nama + '). Belikan obat di Apotek K-24!');
       }
       cekKehamilan(kl, kl.nama);
-      /* kuliah pasangan tiap semester (180 hari) */
+      /* kuliah pasangan / adik ipar / anak tiap semester (180 hari) */
       if (kl.kuliah && nBaru >= kl.kuliah.tagihBerikut) {
         if (kl.kuliah.semester >= kl.kuliah.totalSemester) {
           kl.lulus = kl.lulus || [];
@@ -1708,15 +1733,30 @@
           kl.gelar = kl.kuliah.gelar;
           kabar.push('WISUDA! ' + kl.nama + ' resmi lulus ' + kl.kuliah.nama + ' (' + kl.gelar + ')! Kini bisa bekerja di profesi barunya.');
           kl.kuliah = null;
-        } else if (S.bank.saldo >= kl.kuliah.ukt) {
-          S.bank.saldo -= kl.kuliah.ukt;
-          S.bank.mutasi.unshift({ n: nBaru, ket: 'UKT Smt ' + (kl.kuliah.semester + 1) + ' ' + kl.nama, jml: -kl.kuliah.ukt });
-          kl.kuliah.semester++;
-          kl.kuliah.tagihBerikut = nBaru + 180;
-          kabar.push(kl.nama + ' naik ke semester ' + kl.kuliah.semester + '/' + kl.kuliah.totalSemester + ' (' + kl.kuliah.nama + '), UKT ' + rp(kl.kuliah.ukt) + ' lunas.');
         } else {
-          kl.kuliah.tagihBerikut = nBaru + 7;
-          kabar.push('Saldo kurang untuk UKT kuliah ' + kl.nama + ' (' + rp(kl.kuliah.ukt) + '). Ditagih lagi minggu depan.');
+          var psBayar = pasanganAktif(S);
+          var danaIstri = psBayar ? ((psBayar.tabungan || 0) + (psBayar.dompet || 0)) : 0;
+          var istriDuluan = adalahIpar(kl) && psBayar && danaIstri >= kl.kuliah.ukt;
+          if (istriDuluan) {
+            potongDanaPasangan(psBayar, kl.kuliah.ukt);
+            kl.kuliah.semester++;
+            kl.kuliah.tagihBerikut = nBaru + 180;
+            kabar.push(psBayar.nama + ' memakai uangnya sendiri untuk membayar UKT kuliah adiknya (' + kl.nama + ', ' + rp(kl.kuliah.ukt) + ').');
+          } else if (S.bank.saldo >= kl.kuliah.ukt) {
+            S.bank.saldo -= kl.kuliah.ukt;
+            S.bank.mutasi.unshift({ n: nBaru, ket: 'UKT Smt ' + (kl.kuliah.semester + 1) + ' ' + kl.nama, jml: -kl.kuliah.ukt });
+            kl.kuliah.semester++;
+            kl.kuliah.tagihBerikut = nBaru + 180;
+            kabar.push(kl.nama + ' naik ke semester ' + kl.kuliah.semester + '/' + kl.kuliah.totalSemester + ' (' + kl.kuliah.nama + '), UKT ' + rp(kl.kuliah.ukt) + ' lunas.');
+          } else if (psBayar && danaIstri >= kl.kuliah.ukt) {
+            potongDanaPasangan(psBayar, kl.kuliah.ukt);
+            kl.kuliah.semester++;
+            kl.kuliah.tagihBerikut = nBaru + 180;
+            kabar.push(psBayar.nama + ' memakai uangnya sendiri untuk membayar UKT ' + kl.nama + ' (' + rp(kl.kuliah.ukt) + ').');
+          } else {
+            kl.kuliah.tagihBerikut = nBaru + 7;
+            kabar.push('Saldo kurang untuk UKT kuliah ' + kl.nama + ' (' + rp(kl.kuliah.ukt) + '). Ditagih lagi minggu depan.');
+          }
         }
       }
       /* gaji bulanan pasangan yang bekerja: masuk dompet & tabungan pasangan sendiri */
@@ -1744,10 +1784,14 @@
           kabar.push('Selamat ulang tahun ke-' + usB + ' untuk ' + kl.nama + '!' + catatanUsia);
         }
         if (gantiBulan && kl.sekolah && kl.sekolah.spp > 0) {
+          var psSpp = pasanganAktif(S), danaPsSpp = psSpp ? ((psSpp.tabungan || 0) + (psSpp.dompet || 0)) : 0;
           if (S.bank.saldo >= kl.sekolah.spp) {
             S.bank.saldo -= kl.sekolah.spp;
             S.bank.mutasi.unshift({ n: nBaru, ket: 'SPP ' + kl.sekolah.nama + ' ' + kl.nama, jml: -kl.sekolah.spp });
             kabar.push('SPP bulanan ' + kl.nama + ' (' + kl.sekolah.nama + ') ' + rp(kl.sekolah.spp) + ' dibayar.');
+          } else if (psSpp && danaPsSpp >= kl.sekolah.spp) {
+            potongDanaPasangan(psSpp, kl.sekolah.spp);
+            kabar.push(psSpp.nama + ' membayarkan SPP bulanan ' + kl.nama + ' (' + rp(kl.sekolah.spp) + ') dari uangnya sendiri.');
           } else {
             kabar.push('Saldo rekening kurang untuk SPP bulanan ' + kl.nama + ' (' + rp(kl.sekolah.spp) + ').');
           }
@@ -1772,12 +1816,166 @@
           var nafkahMasuk = Math.round((kota(S).umk || 4000000) * 1.15 * 0.4 / 1000) * 1000;
           S.bank.saldo += nafkahMasuk;
           S.bank.mutasi.unshift({ n: nBaru, ket: 'Nafkah bulanan dari ' + pasList[0].nama, jml: nafkahMasuk });
+          S.rumahTangga = { aktifSampai: Math.max((S.rumahTangga && S.rumahTangga.aktifSampai) || nBaru, nBaru) + 30, paket: 'cukup' };
           kabar.push('💝 ' + pasList[0].nama + ' mengirimkan nafkah bulanan ' + rp(nafkahMasuk) + ' ke rekeningmu.');
         }
+      }
+      /* cicilan hadiah (HP/Motor/Rumah untuk keluarga/teman) bulanan */
+      if (S.cicilanHadiah && S.cicilanHadiah.length) {
+        for (var ci = S.cicilanHadiah.length - 1; ci >= 0; ci--) {
+          var ch = S.cicilanHadiah[ci];
+          if (S.bank.saldo >= ch.angsuran) {
+            S.bank.saldo -= ch.angsuran;
+            S.bank.mutasi.unshift({ n: nBaru, ket: 'Cicilan ' + ch.nama + ' (' + ch.untuk + ')', jml: -ch.angsuran });
+            ch.sisa--;
+            if (ch.sisa <= 0) { kabar.push('Cicilan ' + ch.nama + ' untuk ' + ch.untuk + ' sudah LUNAS!'); S.cicilanHadiah.splice(ci, 1); }
+          } else {
+            S.kreditBuruk = true;
+            kabar.push('Saldo kurang untuk cicilan ' + ch.nama + ' (' + rp(ch.angsuran) + ').');
+          }
+        }
+      }
+      /* istri otomatis pakai uangnya untuk belanja pokok rumah tangga & kebutuhan adik ipar yang belum bekerja/menikah */
+      if (pasList.length) {
+        var psU = pasList[0], danaU = (psU.tabungan || 0) + (psU.dompet || 0);
+        if ((!S.rumahTangga || (S.rumahTangga.aktifSampai || -1) < nBaru) && danaU >= 450000) {
+          potongDanaPasangan(psU, 450000);
+          S.rumahTangga = { aktifSampai: nBaru + 30, paket: 'cukup' };
+          kabar.push(psU.nama + ' membelanjakan kebutuhan pokok rumah tangga bulan ini dari uangnya sendiri (Rp450.000).');
+        }
+        (S.keluarga || []).forEach(function (ip) {
+          if (adalahIpar(ip) && ip.aktivitas !== 'kerja') {
+            var kbt = 350000;
+            if (((psU.tabungan || 0) + (psU.dompet || 0)) >= kbt) {
+              potongDanaPasangan(psU, kbt);
+              ip.bahagia = Math.min(100, (ip.bahagia || 80) + 6);
+              kabar.push(psU.nama + ' menggunakan uangnya untuk kebutuhan bulanan adiknya (' + ip.nama + ', ' + rp(kbt) + ').');
+            }
+          }
+        });
       }
       S.penghasilanBulanIni = 0;
     }
     return kabar;
+  }
+  function potongDanaPasangan(ps, jml) {
+    if (!ps || jml <= 0) return;
+    var drDom = Math.min(ps.dompet || 0, jml);
+    ps.dompet = (ps.dompet || 0) - drDom;
+    ps.tabungan = Math.max(0, (ps.tabungan || 0) - (jml - drDom));
+  }
+  function sisaHariNafkah(S) {
+    var t = KAL.tgl(S.hari), b = t.m, y = t.y;
+    var h = S.hari + 1;
+    while (h < S.hari + 35 && KAL.tgl(h).d !== 1) h++;
+    return Math.max(1, h - S.hari);
+  }
+  /* bayar kebutuhan / sekolah / kuliah anggota keluarga: sumber = 'suami' | 'istri' | 'patungan' */
+  function bayarKebutuhanKeluarga(S, targetId, biaya, ket, sumber) {
+    var kl = (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
+    if (!kl) return 'Anggota keluarga tidak ditemukan.';
+    biaya = Math.round(+biaya || 0);
+    if (biaya <= 0) return 'Nominal tidak valid.';
+    var ps = pasanganAktif(S), danaPs = ps ? ((ps.tabungan || 0) + (ps.dompet || 0)) : 0;
+    if (sumber === 'istri') {
+      if (!ps) return 'Belum punya pasangan.';
+      if (danaPs < biaya) return 'Uang ' + ps.nama + ' tidak cukup (' + rp(danaPs) + ').';
+      potongDanaPasangan(ps, biaya);
+      kl.bahagia = Math.min(100, (kl.bahagia || 80) + 12);
+      return { ok: true, teks: ps.nama + ' membayarkan ' + ket + ' untuk ' + kl.nama + ' (' + rp(biaya) + ') dari uangnya sendiri.' };
+    }
+    if (sumber === 'patungan') {
+      if (!ps) return 'Belum punya pasangan untuk patungan.';
+      var separuh = Math.round(biaya / 2), sisaS = biaya - separuh;
+      if (danaPs < separuh) return 'Uang ' + ps.nama + ' tidak cukup untuk patungan (' + rp(separuh) + ').';
+      if (S.bank.saldo < sisaS && (S.uang.dompet || 0) < sisaS) return 'Uangmu tidak cukup untuk patungan (' + rp(sisaS) + ').';
+      potongDanaPasangan(ps, separuh);
+      if (S.bank.saldo >= sisaS) { S.bank.saldo -= sisaS; S.bank.mutasi.unshift({ n: S.hari, ket: 'Patungan ' + ket + ' ' + kl.nama, jml: -sisaS }); }
+      else S.uang.dompet -= sisaS;
+      kl.bahagia = Math.min(100, (kl.bahagia || 80) + 15);
+      ps.bahagia = Math.min(100, (ps.bahagia || 80) + 6);
+      return { ok: true, teks: 'Patungan 50/50 dengan ' + ps.nama + ' untuk ' + ket + ' ' + kl.nama + ' (' + rp(sisaS) + ' + ' + rp(separuh) + ') berhasil!' };
+    }
+    /* default: dibayar suami/pemain */
+    if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; S.bank.mutasi.unshift({ n: S.hari, ket: ket + ' ' + kl.nama, jml: -biaya }); }
+    else if ((S.uang.dompet || 0) >= biaya) { S.uang.dompet -= biaya; }
+    else return 'Saldo tidak cukup untuk ' + ket + ' (' + rp(biaya) + ').';
+    kl.bahagia = Math.min(100, (kl.bahagia || 80) + 15);
+    return { ok: true, teks: 'Kamu membayarkan ' + ket + ' untuk ' + kl.nama + ' (' + rp(biaya) + ').' };
+  }
+  /* jalan-jalan bersama keluarga dengan mobil sendiri */
+  var JALAN_KELUARGA = [
+    { id: 'keliling', nama: 'Keliling Kota & Streetfood', biaya: 150000, km: 15, jam: 2, bahagia: 12, sehat: 2, bersalah: 0, hb: 5, ket: 'Santai keliling kota sambil jajan kuliner' },
+    { id: 'mall', nama: 'Jalan-jalan ke Mall & Makan', biaya: 500000, km: 20, jam: 3, bahagia: 22, sehat: 5, bersalah: 8, hb: 12, ket: 'Belanja & makan enak bareng keluarga di mall' },
+    { id: 'wisata', nama: 'Wisata Pantai / Taman Bermain', biaya: 1500000, km: 40, jam: 5, bahagia: 35, sehat: 12, bersalah: 15, hb: 18, ket: 'Liburan seru seharian, semua makin harmonis' },
+    { id: 'resort', nama: 'Staycation Resort & Shopping Mewah', biaya: 4500000, km: 50, jam: 6, bahagia: 50, sehat: 20, bersalah: 30, hb: 28, ket: 'Liburan mewah, kebahagiaan keluarga maksimal!' }
+  ];
+  function jalanKeluarga(S, id) {
+    if (!S.mobil) return 'Butuh mobil sendiri untuk jalan-jalan bersama keluarga.';
+    if (g.KK_MOBIL && g.KK_MOBIL.pikap(S)) return 'Mobil pikap kurang nyaman untuk jalan-jalan keluarga. Pakai MPV/SUV/Hatchback/Sedan.';
+    if (!S.keluarga || !S.keluarga.length) return 'Belum ada anggota keluarga untuk diajak jalan-jalan.';
+    var x = JALAN_KELUARGA.filter(function (j) { return j.id === id; })[0];
+    if (!x) return 'Tujuan tidak ditemukan.';
+    if (!g.KK_MOBIL.cukup(S, x.km)) return S.mobil.bbm === 'listrik' ? 'Baterai mobil listrik tidak cukup untuk jalan-jalan ' + x.km + ' km.' : 'Bensin mobil tidak cukup untuk jalan-jalan ' + x.km + ' km.';
+    if ((S.uang.dompet || 0) >= x.biaya) S.uang.dompet -= x.biaya;
+    else if (S.bank.saldo >= x.biaya) { S.bank.saldo -= x.biaya; S.bank.mutasi.unshift({ n: S.hari, ket: 'Jalan-jalan keluarga: ' + x.nama, jml: -x.biaya }); }
+    else return 'Uang tidak cukup untuk ' + x.nama + ' (' + rp(x.biaya) + ').';
+    g.KK_MOBIL.jalan(S, x.km, 1);
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.biaya;
+    S.diri.kenyang = Math.min(100, S.diri.kenyang + 45);
+    S.diri.minum = Math.min(100, S.diri.minum + 45);
+    S.diri.stamina = Math.min(100, S.diri.stamina + 15);
+    S.diri.kesehatan = Math.min(100, (S.diri.kesehatan == null ? 100 : S.diri.kesehatan) + x.sehat);
+    if (x.bersalah) S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - x.bersalah);
+    S.keluarga.forEach(function (kl) {
+      kl.bahagia = Math.min(100, (kl.bahagia || 80) + x.bahagia);
+      if (adalahPasangan(kl)) kl.hb = Math.min(100, (kl.hb || 30) + x.hb);
+    });
+    return { ok: true, menit: x.jam * 60, teks: '🚗 Jalan-jalan ke ' + x.nama + ' (' + rp(x.biaya) + ', ' + x.km + ' km) selesai! Kebahagiaan keluarga +' + x.bahagia + '%!' };
+  }
+  /* belikan / kredit hadiah (HP, Motor, Rumah) untuk keluarga atau teman */
+  var KATALOG_HADIAH = [
+    { id: 'hp_redmi', kat: 'HP', nama: 'Xiaomi Redmi 14C', harga: 1800000, dp: 0.1, tenor: 12, naik: 16 },
+    { id: 'hp_samsung', kat: 'HP', nama: 'Samsung Galaxy A55 5G', harga: 6000000, dp: 0.1, tenor: 12, naik: 24 },
+    { id: 'hp_iphone', kat: 'HP', nama: 'iPhone 16 Pro Max', harga: 21000000, dp: 0.1, tenor: 12, naik: 36 },
+    { id: 'mtr_beat', kat: 'Motor', nama: 'Honda BeAT CBS', harga: 19400000, dp: 0.1, tenor: 24, naik: 32 },
+    { id: 'mtr_nmax', kat: 'Motor', nama: 'Yamaha NMAX 155', harga: 32200000, dp: 0.1, tenor: 24, naik: 40 },
+    { id: 'mtr_vespa', kat: 'Motor', nama: 'Vespa Primavera 150', harga: 54100000, dp: 0.1, tenor: 24, naik: 48 },
+    { id: 'rmh_subsidi', kat: 'Rumah', nama: 'Rumah Subsidi Tipe 36', harga: 166000000, dp: 0.05, tenor: 180, naik: 50 },
+    { id: 'rmh_45', kat: 'Rumah', nama: 'Rumah Tipe 45', harga: 450000000, dp: 0.1, tenor: 180, naik: 60 },
+    { id: 'rmh_mewah', kat: 'Rumah', nama: 'Rumah Mewah Tipe 200', harga: 2500000000, dp: 0.1, tenor: 180, naik: 80 }
+  ];
+  function belikanHadiah(S, targetJenis, targetId, itemId, kredit) {
+    var it = KATALOG_HADIAH.filter(function (x) { return x.id === itemId; })[0];
+    if (!it) return 'Barang tidak ditemukan.';
+    var target = targetJenis === 'teman'
+      ? (S.teman || []).filter(function (x) { return x.id === targetId; })[0]
+      : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
+    if (!target) return 'Penerima tidak ditemukan.';
+    if (kredit) {
+      if (S.kreditBuruk) return 'Pengajuan kredit ditolak: ada riwayat telat bayar cicilan.';
+      var dpRp = Math.round(it.harga * it.dp / 10000) * 10000;
+      var pokok = it.harga - dpRp;
+      var angs = Math.round((pokok * (1 + 0.008 * it.tenor) / it.tenor) / 1000) * 1000;
+      if (S.bank.saldo < dpRp) return 'Saldo rekening tidak cukup untuk DP ' + rp(dpRp) + '.';
+      S.bank.saldo -= dpRp;
+      S.bank.mutasi.unshift({ n: S.hari, ket: 'DP Kredit ' + it.nama + ' untuk ' + target.nama, jml: -dpRp });
+      S.cicilanHadiah = S.cicilanHadiah || [];
+      S.cicilanHadiah.push({ nama: it.nama, untuk: target.nama, angsuran: angs, sisa: it.tenor });
+      target.hadiah = target.hadiah || [];
+      target.hadiah.push(it.nama + ' (Kredit)');
+      if (targetJenis === 'teman') target.hubungan = Math.min(100, (target.hubungan || 50) + it.naik);
+      else target.bahagia = Math.min(100, (target.bahagia || 80) + it.naik);
+      return { ok: true, teks: '🎁 Kredit ' + it.nama + ' untuk ' + target.nama + ' disetujui! DP ' + rp(dpRp) + ', angsuran ' + rp(angs) + '/bln (' + it.tenor + ' bln).' };
+    }
+    if (S.bank.saldo >= it.harga) { S.bank.saldo -= it.harga; S.bank.mutasi.unshift({ n: S.hari, ket: 'Belikan ' + it.nama + ' untuk ' + target.nama, jml: -it.harga }); }
+    else if ((S.uang.dompet || 0) >= it.harga) S.uang.dompet -= it.harga;
+    else return 'Saldo tidak cukup untuk membelikan ' + it.nama + ' (' + rp(it.harga) + ').';
+    target.hadiah = target.hadiah || [];
+    target.hadiah.push(it.nama);
+    if (targetJenis === 'teman') target.hubungan = Math.min(100, (target.hubungan || 50) + it.naik);
+    else target.bahagia = Math.min(100, (target.bahagia || 80) + it.naik);
+    return { ok: true, teks: '🎁 Kamu membelikan ' + it.nama + ' (' + rp(it.harga) + ') untuk ' + target.nama + '! Dia sangat senang!' };
   }
   /* ---------- keuangan pasangan, nafkah 40%, pinjam/bantuan beli, aktivitas keluarga, penginapan/hotel ---------- */
   function bayarNafkah(S) {
@@ -1886,7 +2084,7 @@
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
-    bayarNafkah: bayarNafkah, pinjamPasangan: pinjamPasangan, bayarUtangPasangan: bayarUtangPasangan, mintaBantuanPasangan: mintaBantuanPasangan, aturAktivitasKeluarga: aturAktivitasKeluarga, PENGINAPAN_LUAR: PENGINAPAN_LUAR, menginapLuar: menginapLuar,
+    bayarNafkah: bayarNafkah, sisaHariNafkah: sisaHariNafkah, bayarKebutuhanKeluarga: bayarKebutuhanKeluarga, JALAN_KELUARGA: JALAN_KELUARGA, jalanKeluarga: jalanKeluarga, KATALOG_HADIAH: KATALOG_HADIAH, belikanHadiah: belikanHadiah, pinjamPasangan: pinjamPasangan, bayarUtangPasangan: bayarUtangPasangan, mintaBantuanPasangan: mintaBantuanPasangan, aturAktivitasKeluarga: aturAktivitasKeluarga, PENGINAPAN_LUAR: PENGINAPAN_LUAR, menginapLuar: menginapLuar,
     tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, aturJajan: aturJajan, ENERGI: ENERGI, minumEnergi: minumEnergi, meTime: meTime, HIBURAN: HIBURAN, hiburanJalan: hiburanJalan, PAKET_NIKAH: PAKET_NIKAH, nikahiTeman: nikahiTeman, faktorPromo: faktorPromo, ubahNamaKeluarga: ubahNamaKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
     kirimPesanKeluarga: kirimPesanKeluarga, belanjaPasarPokok: belanjaPasarPokok,
     aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,

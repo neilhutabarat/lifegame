@@ -72,14 +72,25 @@
     { id: 'kompor_set', nama: 'Kompor Tanam + Kitchen Set', harga: 4800000, kat: 'Dapur', sync: 'kompor' },
     { id: 'mesincuci_fl', nama: 'Mesin Cuci Front Loading', harga: 3800000, kat: 'Elektronik', sync: 'mesincuci' }
   ];
+  function sinkronRumahUtama(S) {
+    var list = (S.properti && S.properti.daftarRumah) || [];
+    var huni = list.filter(function (x) { return x.dihuni; })[0];
+    S.properti.rumah = huni || list[0] || null;
+  }
+  function daftarRumah(S) {
+    siapkan(S);
+    return S.properti.daftarRumah;
+  }
   function siapkan(S) {
-    if (!S.properti) S.properti = { rumah: null, tanah: [], pernahRumah: false, mulai: S.hari };
-    var r = S.properti.rumah;
-    if (r) {
+    if (!S.properti) S.properti = { rumah: null, daftarRumah: [], tanah: [], pernahRumah: false, mulai: S.hari };
+    if (!S.properti.daftarRumah) S.properti.daftarRumah = S.properti.rumah ? [S.properti.rumah] : [];
+    S.properti.daftarRumah.forEach(function (r, idx) {
+      if (!r.id) r.id = 'rmh-' + (r.dibeli || 0) + '-' + idx;
       if (!r.kota) r.kota = S.kota;
       if (!r.ruangan || !r.ruangan.length) r.ruangan = buatRuangan(r.tipe || 'subsidi');
       if (typeof r.tagihanAir !== 'number') r.tagihanAir = 0;
-    }
+    });
+    sinkronRumahUtama(S);
     return S;
   }
   var WILAYAH = {
@@ -101,30 +112,58 @@
     var jmlOrang = 1 + (S.keluarga ? S.keluarga.length : 0);
     return dasar + jmlOrang * 20000;
   }
-  function bayarAir(S) {
-    var r = S.properti && S.properti.rumah;
+  function bayarAir(S, idx) {
+    var list = daftarRumah(S);
+    var r = idx != null ? list[idx] : S.properti.rumah;
     if (!r) return 'Belum punya rumah.';
     var tg = r.tagihanAir || 0;
     if (tg <= 0) return 'Tagihan air ledeng (PDAM) bulan ini sudah lunas.';
-    if (S.bank.saldo >= tg) { S.bank.saldo -= tg; M().catatBank(S, 'Tagihan air ledeng PDAM', -tg); }
+    if (S.bank.saldo >= tg) { S.bank.saldo -= tg; M().catatBank(S, 'Tagihan air ledeng PDAM (' + (r.lokasiTeks || namaKota(r.kota)) + ')', -tg); }
     else if ((S.uang.dompet || 0) >= tg) { S.uang.dompet -= tg; }
     else return 'Saldo tidak cukup untuk bayar PDAM (' + rp(tg) + ').';
     r.tagihanAir = 0; S.hariIni.pribadi = (S.hariIni.pribadi || 0) + tg;
     return { ok: true, teks: 'Tagihan air ledeng (PDAM) ' + rp(tg) + ' lunas.' };
   }
-  function instalPerabot(S, ruangIdx, itemId) {
-    var r = S.properti && S.properti.rumah;
+  function instalPerabot(S, ruangIdx, itemId, rumahIdx) {
+    var list = daftarRumah(S);
+    var r = rumahIdx != null ? list[rumahIdx] : S.properti.rumah;
     if (!r) return 'Beli rumah dulu untuk instalasi perabot ruangan.';
-    siapkan(S);
     var rg = r.ruangan[ruangIdx]; if (!rg) return 'Ruangan tidak ditemukan.';
     var it = PERABOT_RUANG.filter(function (x) { return x.id === itemId; })[0]; if (!it) return 'Perabot tidak ditemukan.';
     if (S.bank.saldo >= it.harga) { S.bank.saldo -= it.harga; M().catatBank(S, 'Instal ' + it.nama + ' di ' + rg.nama, -it.harga); }
     else if ((S.uang.dompet || 0) >= it.harga) { S.uang.dompet -= it.harga; }
     else return 'Saldo tidak cukup untuk beli & instal ' + it.nama + ' (' + rp(it.harga) + ').';
     rg.isi.push({ id: it.id, nama: it.nama, hari: S.hari });
-    if (it.sync && S.rumah && S.rumah.barang) S.rumah.barang[it.sync] = true;
+    if (it.sync && r.dihuni && S.rumah && S.rumah.barang) S.rumah.barang[it.sync] = true;
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + it.harga;
     return { ok: true, teks: it.nama + ' berhasil dibeli dan diinstal di ' + rg.nama + '!' };
+  }
+  function tarifSewa(r, mode) {
+    var h = (r && r.harga) || 166e6;
+    if (mode === 'tahun') return Math.round(h * 0.06 / 100000) * 100000;
+    return Math.round(h * 0.0055 / 50000) * 50000;
+  }
+  function sewakanRumah(S, idx, mode) {
+    var list = daftarRumah(S), r = list[idx];
+    if (!r) return 'Rumah tidak ditemukan.';
+    if (r.status !== 'siap') return 'Kunci rumah belum diterima.';
+    if (r.dihuni) return 'Rumah ini sedang kamu tempati. Pindah ke rumah lain atau kos dulu kalau mau disewakan.';
+    var md = mode === 'tahun' ? 'tahun' : 'bulan', tf = tarifSewa(r, md);
+    if (md === 'tahun') {
+      r.sewa = { mode: 'tahun', tarif: tf, jatuhTempo: S.hari + 365 };
+      S.bank.saldo += tf; M().catatBank(S, 'Kontrak tahunan ' + r.nama + ' (' + (r.lokasiTeks || namaKota(r.kota)) + ')', tf);
+      S.hariIni.rental = (S.hariIni.rental || 0) + tf;
+      S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + tf;
+      return { ok: true, teks: r.nama + ' dikontrakkan 1 tahun! Uang sewa ' + rp(tf) + ' langsung masuk rekening.' };
+    }
+    r.sewa = { mode: 'bulan', tarif: tf, jatuhTempo: S.hari + 30 };
+    return { ok: true, teks: r.nama + ' mulai disewakan per bulan (' + rp(tf) + '/bulan, masuk rekening tiap tanggal 1).' };
+  }
+  function hentiSewaRumah(S, idx) {
+    var list = daftarRumah(S), r = list[idx];
+    if (!r || !r.sewa) return 'Rumah tidak sedang disewakan.';
+    r.sewa = null;
+    return { ok: true, teks: 'Kontrak sewa ' + r.nama + ' dihentikan.' };
   }
 
   /* penghasilan sebulan: rata-rata laba kedai + ngojek 30 hari terakhir */
@@ -146,21 +185,14 @@
     return { harga: h, dp: uangMuka, pokok: pokok, bunga: K.bungaFix, biaya: biaya, bphtb: bb, bayarAwal: uangMuka + biaya + bb, angsuran: ang, angsuranFloating: angFloat, tenor: tenorTahun * 12 };
   }
   function syarat(S, tipe, x) {
-    var gaji = penghasilan(S), daftar = [];
+    var daftar = [];
     if (x.tunai) { daftar.push({ teks: 'Saldo rekening ' + rp(x.bayarAwal), ok: S.bank.saldo >= x.bayarAwal }); return daftar; }
-    daftar.push({ teks: 'Punya NIB (bukti usaha)', ok: !!S.nib });
-    daftar.push({ teks: 'Usaha berjalan minimal 1 tahun (sekarang ' + (S.hariKe || 0) + ' hari)', ok: (S.hariKe || 0) >= P.syaratHari });
     daftar.push({ teks: 'Tidak ada riwayat telat bayar cicilan (SLIK OJK)', ok: !S.kreditBuruk });
-    daftar.push({ teks: 'Angsuran paling besar ' + Math.round(P.dbr * 100) + '% penghasilan (' + rp(gaji) + ' sebulan)', ok: gaji > 0 && x.angsuran <= gaji * P.dbr });
-    if (tipe === 'subsidi') {
-      daftar.push({ teks: 'Penghasilan paling besar ' + rp(P.subsidi.batasGaji) + ' sebulan', ok: gaji <= P.subsidi.batasGaji });
-      daftar.push({ teks: 'Belum pernah punya rumah', ok: !S.properti.pernahRumah });
-    }
     daftar.push({ teks: 'Saldo rekening untuk uang muka dan biaya ' + rp(x.bayarAwal), ok: S.bank.saldo >= x.bayarAwal });
     return daftar;
   }
   function ajukan(S, tipe, dp, tenorTahun, tunai, kotaId, wil, namaWil) {
-    if (S.properti.rumah) return 'Sudah punya rumah. Jual dulu kalau mau ganti.';
+    siapkan(S);
     if (tipe === 'subsidi' && tunai) return 'Rumah subsidi hanya lewat KPR FLPP.';
     var kId = kotaId || S.kota, wId = WILAYAH[wil] ? wil : 'kota';
     var nmW = String(namaWil || '').trim().slice(0, 32);
@@ -170,48 +202,56 @@
     var T = P.tipe[tipe];
     S.bank.saldo -= x.bayarAwal;
     M().catatBank(S, (tunai ? 'Beli tunai ' : 'Uang muka + biaya KPR ') + T.nama + ' (' + lblLok + ')', -x.bayarAwal);
-    S.properti.rumah = { tipe: tipe, kota: kId, wilayah: wId, alamatWilayah: nmW, lokasiTeks: lblLok, nama: T.nama, harga: x.harga, status: 'akad', kunciPada: S.hari + P.akadHari, dihuni: false, dibeli: S.hari,
-      ruangan: buatRuangan(tipe), tagihanAir: 0,
+    var baru = { id: 'rmh-' + S.hari + '-' + Math.floor(Math.random() * 999), tipe: tipe, kota: kId, wilayah: wId, alamatWilayah: nmW, lokasiTeks: lblLok, nama: T.nama, harga: x.harga, status: 'akad', kunciPada: S.hari + P.akadHari, dihuni: false, dibeli: S.hari,
+      ruangan: buatRuangan(tipe), tagihanAir: 0, sewa: null,
       kpr: tunai ? null : { angsuran: x.angsuran, pokok: x.pokok, bunga: x.bunga, fixSampai: tipe === 'subsidi' ? Infinity : S.hari + P.komersial.tahunFix * 365, sisa: x.tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0 } };
+    S.properti.daftarRumah.push(baru);
+    sinkronRumahUtama(S);
     S.properti.pernahRumah = true;
-    return { ok: true, kunci: S.properti.rumah.kunciPada };
+    return { ok: true, kunci: baru.kunciPada };
   }
 
-  /* pindah: ke rumah sendiri atau balik ke kos. Hasil { ok, menit, biaya, teks } */
-  function pindah(S, ke, paksa) {
-    var r = S.properti.rumah, kos = g.KK_DIRI.kota(S);
+  /* pindah: ke rumah pilihan atau balik ke kos. Hasil { ok, menit, biaya, teks } */
+  function pindah(S, ke, paksa, rumahIdx) {
+    var list = daftarRumah(S), r = rumahIdx != null ? list[rumahIdx] : S.properti.rumah, kos = g.KK_DIRI.kota(S);
     if (ke === 'rumah') {
       if (!r || r.status !== 'siap') return 'Kunci rumah belum diterima.';
-      if (r.dihuni) return 'Sudah tinggal di rumah.';
+      if (r.dihuni) return 'Sudah tinggal di rumah ini.';
+      if (r.sewa) return 'Rumah ini sedang disewakan. Hentikan sewa dulu sebelum ditempati.';
     } else if (S.rumah.jenis === 'kos') return 'Sudah tinggal di kos.';
     var pikap = g.KK_MOBIL && g.KK_MOBIL.pikap(S), biaya = pikap || paksa ? 0 : P.jasaPindahan;
     if (biaya && S.bank.saldo < biaya) return 'Saldo rekening tidak cukup untuk jasa pindahan ' + rp(biaya) + '.';
     if (biaya) { S.bank.saldo -= biaya; M().catatBank(S, 'Jasa pindahan (pikap + 2 orang)', -biaya); S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya; }
     var barang = S.rumah.barang, infoBarang = S.rumah.infoBarang || {};
+    list.forEach(function (x) { x.dihuni = false; });
     if (ke === 'rumah') {
       r.dihuni = true;
-      S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S, r.kota).jarak[r.tipe] };
+      sinkronRumahUtama(S);
+      var jrkWil = (WILAYAH[r.wilayah] && WILAYAH[r.wilayah].jarakTambah) || 0;
+      S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S, r.kota).jarak[r.tipe] + jrkWil };
     } else {
-      if (r) r.dihuni = false;
+      sinkronRumahUtama(S);
       S.rumah = { jenis: 'kos', sewa: kos.kos, kwh: 10, barang: barang, infoBarang: infoBarang, wifi: false, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false, jarak: N.jarakKos };
       Object.keys(barang).forEach(function (id) { var b = g.KK_DIRI.barang(id); if (b && b.rumah) { delete barang[id]; delete infoBarang[id]; } });
       if (S.bank.saldo >= kos.kos) { S.bank.saldo -= kos.kos; M().catatBank(S, 'Sewa kos bulan pertama', -kos.kos); }
     }
     return { ok: true, menit: 180, biaya: biaya, pikap: pikap,
-      teks: ke === 'rumah' ? 'Pindah ke ' + r.nama + (pikap ? ' pakai pikap sendiri.' : ', jasa pindahan ' + rp(biaya) + '.') + ' Meteran listrik rumah masih kosong: beli token di PLN Mobile.'
+      teks: ke === 'rumah' ? 'Pindah ke ' + r.nama + ' (' + (r.lokasiTeks || namaKota(r.kota)) + ')' + (pikap ? ' pakai pikap sendiri.' : ', jasa pindahan ' + rp(biaya) + '.') + ' Meteran listrik rumah masih kosong: beli token di PLN Mobile.'
         : 'Pindah ke kos. Barang besar yang tidak muat dijual murah ke tetangga.' };
   }
 
-  function nilaiRumah(S) { var r = S.properti.rumah; return r ? Math.round(r.harga * Math.pow(1.04, (S.hari - r.dibeli) / 365) / 1e6) * 1e6 : 0; }
-  function sisaPokok(S) { var r = S.properti.rumah; return r && r.kpr ? Math.round(r.kpr.pokok + r.kpr.tunggakan) : 0; }
-  function jualRumah(S) {
-    var r = S.properti.rumah; if (!r) return 'Belum punya rumah.';
+  function nilaiRumah(S, rObj) { var r = rObj || S.properti.rumah; return r ? Math.round(r.harga * Math.pow(1.04, (S.hari - r.dibeli) / 365) / 1e6) * 1e6 : 0; }
+  function sisaPokok(S, rObj) { var r = rObj || S.properti.rumah; return r && r.kpr ? Math.round(r.kpr.pokok + r.kpr.tunggakan) : 0; }
+  function jualRumah(S, idx) {
+    var list = daftarRumah(S), i = idx != null ? idx : 0, r = list[i];
+    if (!r) return 'Belum punya rumah.';
     if (r.status !== 'siap') return 'Rumah belum serah terima.';
-    var nilai = nilaiRumah(S), pph = Math.round(nilai * P.pphJual), utang = sisaPokok(S), bersih = nilai - pph - utang;
+    var nilai = nilaiRumah(S, r), pph = Math.round(nilai * P.pphJual), utang = sisaPokok(S, r), bersih = nilai - pph - utang;
     var pindahan = null;
-    if (r.dihuni) { pindahan = pindah(S, 'kos'); if (!pindahan.ok) return pindahan; }
-    S.bank.saldo += bersih; M().catatBank(S, 'Jual ' + r.nama + ' (setelah PPh ' + (P.pphJual * 100).toString().replace('.', ',') + '%' + (utang ? ' dan pelunasan KPR' : '') + ')', bersih);
-    S.properti.rumah = null;
+    if (r.dihuni) { pindahan = pindah(S, 'kos', true); if (!pindahan.ok) return pindahan; }
+    S.bank.saldo += bersih; M().catatBank(S, 'Jual ' + r.nama + ' (' + (r.lokasiTeks || namaKota(r.kota)) + ')', bersih);
+    list.splice(i, 1);
+    sinkronRumahUtama(S);
     return { ok: true, bersih: bersih, pindah: pindahan };
   }
 
@@ -235,46 +275,65 @@
   }
 
   function gantiHari(S, nLama, nBaru) {
-    var kabar = [], r = S.properti.rumah, tB = KAL.tgl(nBaru);
-    if (!r) return kabar;
-    if (r.status === 'akad' && nBaru >= r.kunciPada) { r.status = 'siap'; kabar.push('Kunci ' + r.nama + ' sudah diterima. Pindah lewat aplikasi Properti.'); }
-    /* tagihan air ledeng (PDAM) bulanan setiap tanggal 1 */
-    if (tB.d === 1 && r.status === 'siap') {
-      var air = hitungTagihanAir(S, r.tipe);
-      if (S.bank.saldo >= air && !(r.tagihanAir > 0)) {
-        S.bank.saldo -= air; M().catatBank(S, 'Tagihan air ledeng PDAM', -air, nBaru);
-        kabar.push('Tagihan air ledeng (PDAM) bulanan ' + rp(air) + ' dibayar otomatis.');
-      } else {
-        r.tagihanAir = (r.tagihanAir || 0) + air;
-        kabar.push('💧 Tagihan air ledeng (PDAM) ' + rp(r.tagihanAir) + ' belum dibayar! Bayar di aplikasi Properti.');
-      }
-    }
-    var k = r.kpr;
-    if (k && k.sisa > 0 && tB.d === k.tempo) {
-      if (r.tipe !== 'subsidi' && nBaru >= k.fixSampai && k.bunga !== P.komersial.bungaFloating) {
-        k.bunga = P.komersial.bungaFloating; k.angsuran = Math.round(anuitas(k.pokok, k.bunga, k.sisa) / 100) * 100;
-        kabar.push('Masa bunga tetap KPR habis. Bunga floating ' + (k.bunga * 100).toFixed(1).replace('.', ',') + '%, angsuran jadi ' + rp(k.angsuran) + '.');
-      }
-      if (S.bank.saldo >= k.angsuran) {
-        S.bank.saldo -= k.angsuran; M().catatBank(S, 'Angsuran KPR ' + r.nama, -k.angsuran, nBaru);
-        k.pokok = Math.max(0, k.pokok - (k.angsuran - k.pokok * k.bunga / 12)); k.sisa--;
-        if (k.bulanTelat && S.bank.saldo >= k.tunggakan) { S.bank.saldo -= k.tunggakan; M().catatBank(S, 'Tunggakan KPR', -k.tunggakan, nBaru); k.tunggakan = 0; k.bulanTelat = 0; }
-        kabar.push('Angsuran KPR ' + rp(k.angsuran) + ' dipotong. Sisa ' + k.sisa + ' bulan.');
-      } else {
-        k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true;
-        kabar.push('Saldo kurang untuk angsuran KPR. Menunggak ' + k.bulanTelat + ' bulan.');
-        if (k.bulanTelat >= P.sitaSetelahBulan) {
-          if (r.dihuni) pindah(S, 'kos', true);
-          S.properti.rumah = null; kabar.push('Bank menyita ' + r.nama + ' karena menunggak ' + k.bulanTelat + ' bulan. Kamu kembali tinggal di kos.');
-          return kabar;
+    var kabar = [], list = daftarRumah(S), tB = KAL.tgl(nBaru);
+    if (!list.length) return kabar;
+    for (var i = list.length - 1; i >= 0; i--) {
+      var r = list[i], nmLok = r.nama + ' (' + (r.lokasiTeks || namaKota(r.kota)) + ')';
+      if (r.status === 'akad' && nBaru >= r.kunciPada) { r.status = 'siap'; kabar.push('Kunci ' + nmLok + ' sudah diterima. Bisa ditempati atau disewakan di Properti.'); }
+      /* pendapatan sewa rumah bulanan / perpanjangan tahunan */
+      if (r.sewa && r.status === 'siap') {
+        if (r.sewa.mode === 'bulan' && tB.d === 1) {
+          S.bank.saldo += r.sewa.tarif; M().catatBank(S, 'Sewa bulanan ' + nmLok, r.sewa.tarif, nBaru);
+          S.hariIni.rental = (S.hariIni.rental || 0) + r.sewa.tarif;
+          S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + r.sewa.tarif;
+          kabar.push('Uang sewa bulanan ' + nmLok + ' sebesar ' + rp(r.sewa.tarif) + ' masuk rekening.');
+        } else if (r.sewa.mode === 'tahun' && nBaru >= (r.sewa.jatuhTempo || 0)) {
+          r.sewa.jatuhTempo = nBaru + 365;
+          S.bank.saldo += r.sewa.tarif; M().catatBank(S, 'Perpanjangan kontrak tahunan ' + nmLok, r.sewa.tarif, nBaru);
+          S.hariIni.rental = (S.hariIni.rental || 0) + r.sewa.tarif;
+          S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + r.sewa.tarif;
+          kabar.push('Kontrak tahunan ' + nmLok + ' diperpanjang! ' + rp(r.sewa.tarif) + ' masuk rekening.');
         }
       }
-      if (k.sisa <= 0 && !k.tunggakan) { r.kpr = null; kabar.push('KPR lunas! Sertifikat rumah diambil di bank.'); }
+      /* tagihan air ledeng (PDAM) bulanan untuk rumah yang dihuni (tidak disewakan) */
+      if (tB.d === 1 && r.status === 'siap' && !r.sewa) {
+        var air = hitungTagihanAir(S, r.tipe);
+        if (S.bank.saldo >= air && !(r.tagihanAir > 0)) {
+          S.bank.saldo -= air; M().catatBank(S, 'Tagihan air ledeng PDAM (' + (r.lokasiTeks || namaKota(r.kota)) + ')', -air, nBaru);
+          kabar.push('Tagihan air ledeng (PDAM) ' + nmLok + ' ' + rp(air) + ' dibayar otomatis.');
+        } else {
+          r.tagihanAir = (r.tagihanAir || 0) + air;
+          kabar.push('💧 Tagihan air ledeng (PDAM) ' + nmLok + ' ' + rp(r.tagihanAir) + ' belum dibayar!');
+        }
+      }
+      var k = r.kpr;
+      if (k && k.sisa > 0 && tB.d === k.tempo) {
+        if (r.tipe !== 'subsidi' && nBaru >= k.fixSampai && k.bunga !== P.komersial.bungaFloating) {
+          k.bunga = P.komersial.bungaFloating; k.angsuran = Math.round(anuitas(k.pokok, k.bunga, k.sisa) / 100) * 100;
+          kabar.push('Masa bunga tetap KPR ' + nmLok + ' habis. Bunga floating ' + (k.bunga * 100).toFixed(1).replace('.', ',') + '%, angsuran jadi ' + rp(k.angsuran) + '.');
+        }
+        if (S.bank.saldo >= k.angsuran) {
+          S.bank.saldo -= k.angsuran; M().catatBank(S, 'Angsuran KPR ' + nmLok, -k.angsuran, nBaru);
+          k.pokok = Math.max(0, k.pokok - (k.angsuran - k.pokok * k.bunga / 12)); k.sisa--;
+          if (k.bulanTelat && S.bank.saldo >= k.tunggakan) { S.bank.saldo -= k.tunggakan; M().catatBank(S, 'Tunggakan KPR', -k.tunggakan, nBaru); k.tunggakan = 0; k.bulanTelat = 0; }
+          kabar.push('Angsuran KPR ' + nmLok + ' ' + rp(k.angsuran) + ' dipotong. Sisa ' + k.sisa + ' bulan.');
+        } else {
+          k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true;
+          kabar.push('Saldo kurang untuk angsuran KPR ' + nmLok + '. Menunggak ' + k.bulanTelat + ' bulan.');
+          if (k.bulanTelat >= P.sitaSetelahBulan) {
+            if (r.dihuni) pindah(S, 'kos', true);
+            list.splice(i, 1); sinkronRumahUtama(S);
+            kabar.push('Bank menyita ' + nmLok + ' karena menunggak ' + k.bulanTelat + ' bulan.');
+            continue;
+          }
+        }
+        if (k.sisa <= 0 && !k.tunggakan) { r.kpr = null; kabar.push('KPR ' + nmLok + ' lunas! Sertifikat rumah diambil di bank.'); }
+      }
     }
     return kabar;
   }
 
-  g.KK_PROPERTI = { siapkan: siapkan, daftarKota: daftarKota, namaKota: namaKota, dataKota: dataKota, WILAYAH: WILAYAH, harga: harga, hitung: hitung, syarat: syarat, ajukan: ajukan, pindah: pindah, penghasilan: penghasilan, nilaiRumah: nilaiRumah,
+  g.KK_PROPERTI = { siapkan: siapkan, daftarRumah: daftarRumah, daftarKota: daftarKota, namaKota: namaKota, dataKota: dataKota, WILAYAH: WILAYAH, harga: harga, hitung: hitung, syarat: syarat, ajukan: ajukan, pindah: pindah, penghasilan: penghasilan, nilaiRumah: nilaiRumah,
     sisaPokok: sisaPokok, jualRumah: jualRumah, hargaTanah: hargaTanah, beliTanah: beliTanah, nilaiTanah: nilaiTanah, jualTanah: jualTanah, bphtb: bphtb, gantiHari: gantiHari,
-    PERABOT_RUANG: PERABOT_RUANG, hitungTagihanAir: hitungTagihanAir, bayarAir: bayarAir, instalPerabot: instalPerabot };
+    PERABOT_RUANG: PERABOT_RUANG, hitungTagihanAir: hitungTagihanAir, bayarAir: bayarAir, instalPerabot: instalPerabot, tarifSewa: tarifSewa, sewakanRumah: sewakanRumah, hentiSewaRumah: hentiSewaRumah };
 })(window);

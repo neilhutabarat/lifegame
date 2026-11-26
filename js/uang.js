@@ -22,8 +22,8 @@
     if (!S.kk) S.kk = { status: 'tidak', limit: 0, pakai: 0, tagihan: 0, minBayar: 0, dibayarBulanIni: 0, denda: 0, sejak: 0, iuranTempo: 0, mutasi: [] };
     S.kk.mutasi = S.kk.mutasi || [];
   }
-  function qrisAktif(S) { return Object.keys(S.merchants).filter(function (id) { var m = S.merchants[id]; return !m.aktifPada || S.hari >= m.aktifPada; }); }
-  function tersedia(S) { var t = 0; for (var id in S.merchants) t += S.merchants[id].tersedia; return t; }
+  function qrisAktif(S) { if (!S.merchants) return []; return Object.keys(S.merchants).filter(function (id) { var m = S.merchants[id]; return !m.aktifPada || S.hari >= m.aktifPada; }); }
+  function tersedia(S) { if (!S.merchants) return 0; var t = 0; for (var id in S.merchants) t += (S.merchants[id].tersedia || 0); return t; }
   /* bayar dari salah satu saldo QRIS yang cukup (satu pembayaran tidak bisa digabung dari dua aplikasi) */
   function bayarQris(S, jml) {
     var ids = Object.keys(S.merchants).sort(function (a, b) { return S.merchants[b].tersedia - S.merchants[a].tersedia; });
@@ -78,9 +78,11 @@
     if (uang >= 50000) u.besar += uang; else u.kecil += uang;
     return { ok: true, uang: uang, kembalian: kembali };
   }
-  /* pembeli memindai salah satu stiker QRIS yang terpasang */
+  /* penumpang / pembeli memindai salah satu stiker QRIS yang terpasang */
   function terimaQris(S, bersih) {
-    var a = qrisAktif(S), id = a[Math.floor(Math.random() * a.length)] || Object.keys(S.merchants)[0];
+    if (!S.merchants || !Object.keys(S.merchants).length) migrasi(S);
+    var a = qrisAktif(S), id = a[Math.floor(Math.random() * a.length)] || Object.keys(S.merchants)[0] || S.qris || 'gopay';
+    if (!S.merchants[id]) S.merchants[id] = { tersedia: 0, menunggu: [], tarikBulanIni: 0 };
     S.merchants[id].menunggu.push({ n: S.hari, jml: bersih });
   }
   function laci(S) { return S.uang.kecil + S.uang.besar; }
