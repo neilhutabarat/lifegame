@@ -217,6 +217,16 @@
       { id: 'rogzephyrus', jenis: 'laptop', tahun: 2024, merek: 'ASUS ROG', nama: 'ROG Zephyrus G14 OLED RTX 4060', ram: 16, storage: 1024, mah: 19000, watt: 180, kamera: 1.2, harga: 28999000, sewaHarian: 240000, ket: 'Ryzen 9 8945HS · GeForce RTX 4060 · ROG Nebula OLED 120Hz · 1 TB SSD' }
     ],
 
+    /* katalog power bank HP (5.000 mAh – 100.000 mAh, kapasitas & efisiensi konversi 80% sesuai dunia nyata) */
+    daftarPowerBank: [
+      { id: 'pb5k', merek: 'Xiaomi', nama: 'Xiaomi Pocket Power Bank 5.000 mAh', mah: 5000, wattOut: 18, wattIn: 18, harga: 149000, ket: 'Tipis masuk saku · Efektif ±4.000 mAh (~1 hari narik ojol)' },
+      { id: 'pb10k', merek: 'Anker', nama: 'Anker PowerCore 10.000 mAh PD', mah: 10000, wattOut: 22.5, wattIn: 20, harga: 299000, ket: 'Fast Charge 22,5W · Efektif ±8.000 mAh (~2 hari narik)' },
+      { id: 'pb20k', merek: 'Baseus', nama: 'Baseus Bipow Pro 20.000 mAh', mah: 20000, wattOut: 30, wattIn: 30, harga: 459000, ket: 'Layar LED persentase · Efektif ±16.000 mAh (~4 hari narik)' },
+      { id: 'pb30k', merek: 'Romoss', nama: 'Romoss Sense 8P+ 30.000 mAh', mah: 30000, wattOut: 30, wattIn: 30, harga: 599000, ket: 'Favorit driver ojol & travel · Efektif ±24.000 mAh (~6 hari narik)' },
+      { id: 'pb50k', merek: 'Baseus', nama: 'Baseus Amblight 50.000 mAh PD 65W', mah: 50000, wattOut: 65, wattIn: 60, harga: 1199000, ket: 'Super kapasitas 50.000 mAh · Efektif ±40.000 mAh (~10 hari narik)' },
+      { id: 'pb100k', merek: 'EcoPower', nama: 'Monster Power Bank 100.000 mAh PD 100W', mah: 100000, wattOut: 100, wattIn: 100, harga: 2499000, ket: 'Kapasitas raksasa 100.000 mAh (efektif ±80.000 mAh) · Tahan ~20–25 hari narik / 40+ hari harian!' }
+    ],
+
     /* aplikasi & game HP yang bisa diinstal (memakai RAM & Storage internal HP) */
     apkHp: [
       { id: 'kasirpro', jenis: 'bisnis', nama: 'BukuWarung & Kasir Pintar Pro', rom: 2, ram: 3, kuotaGb: 0.2, ket: 'Catat arus kas otomatis & mengurangi risiko selisih kas laci' },

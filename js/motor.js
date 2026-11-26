@@ -93,7 +93,8 @@
   function nilaiJual(S, k) {
     var J = N.jualKendaraan, tahun = (S.hari - (k.dibeli == null ? S.hari : k.dibeli)) / 365;
     var f = k.bekas ? 0.85 : J.awal; f -= J.perTahun * tahun + J.perKm * k.km;
-    return Math.round(k.harga * Math.max(J.min, Math.min(k.bekas ? 0.9 : J.awal, f)) / 100000) * 100000;
+    var bonusUpg = Math.round((k.totalUpgrade || 0) * 0.4);
+    return Math.round((k.harga * Math.max(J.min, Math.min(k.bekas ? 0.9 : J.awal, f)) + bonusUpg) / 100000) * 100000;
   }
   function jual(S, idx) {
     var i = idx != null ? +idx : (S.motorAktif || 0);

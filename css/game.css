@@ -257,9 +257,10 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .gelas-isi i { height: 0; animation: isiGelas .75s ease-out forwards; }
 @keyframes isiGelas { from { height: 0; } to { height: 64px; } }
 
-/* ---------- kebutuhan pemain dan kos ---------- */
-.diri { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding: 5px 8px 6px; text-align: left; }
-.diri > span { font-size: 10px; font-weight: 800; color: var(--tinta-pudar); display: grid; gap: 3px; }
+/* ---------- kebutuhan pemain dan kos (kini di dock bawah) ---------- */
+.diri { width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding: 6px 8px 7px; text-align: left; }
+.dok-diri { background: rgba(251, 250, 246, .94); box-shadow: 0 4px 16px -6px rgba(0, 0, 0, .48); }
+.diri > span { font-size: 10px; font-weight: 800; color: var(--tinta-pudar); display: grid; gap: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .diri .meteran { display: block; height: 6px; margin: 0; }
 .diri .meteran i { background: var(--kontainer); }
 .diri .meteran.kritis i { background: var(--merah-libur); }

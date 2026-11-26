@@ -16,21 +16,57 @@
     if (S.mobilAktif == null || S.mobilAktif < 0 || S.mobilAktif >= S.armadaMobil.length) S.mobilAktif = 0;
     S.mobil = S.armadaMobil[S.mobilAktif];
   }
+  var UPGRADE_MAKS = 5;
+  var UPGRADE_INFO = {
+    mesin: { nama: 'Mesin & Performa', ket: '+12 km/j top speed & tarikan lebih halus tiap level', persenHarga: 0.025, naikHarga: 0.018, minHarga: 3500000 },
+    tangki: { nama: 'Tangki BBM / Baterai EV', ket: '+15% kapasitas tangki/baterai tiap level', persenHarga: 0.018, naikHarga: 0.013, minHarga: 2500000 },
+    efisiensi: { nama: 'Efisiensi / Tune-Up Eco', ket: '+12% lebih irit km/liter (atau km/kWh) tiap level', persenHarga: 0.020, naikHarga: 0.015, minHarga: 2800000 }
+  };
   function normMobil(c) {
     if (!c || !c.id) return;
     var ref = model(c.id);
+    if (!c.upg) c.upg = { mesin: 0, tangki: 0, efisiensi: 0 };
     if (ref && ref.bbm === 'listrik' && c.bbm !== 'listrik') {
-      c.bbm = 'listrik'; c.kml = ref.kml; c.tangki = ref.tangki; c.ngelitik = false;
+      c.bbm = 'listrik'; c.ngelitik = false;
     }
-    if (ref) {
-      if (!(c.kml > 0)) c.kml = ref.kml || 12;
-      if (!(c.tangki > 0)) c.tangki = ref.tangki || 45;
-      if (ref.kursi) c.kursi = ref.kursi;
-    }
+    var baseKml = (ref && ref.kml) || c.baseKml || c.kml || 12;
+    var baseTangki = (ref && ref.tangki) || c.baseTangki || c.tangki || 45;
+    c.baseKml = baseKml;
+    c.baseTangki = baseTangki;
+    c.kml = Math.round(baseKml * (1 + (c.upg.efisiensi || 0) * 0.12) * 10) / 10;
+    c.tangki = Math.round(baseTangki * (1 + (c.upg.tangki || 0) * 0.15) * 10) / 10;
+    if (ref && ref.kursi) c.kursi = ref.kursi;
     if (typeof c.isi !== 'number' || isNaN(c.isi)) c.isi = 0.5;
     if (c.isi > 1) c.isi = Math.min(1, c.isi / (c.tangki || 45));
     if (c.kmBan == null) c.kmBan = c.km || 0;
     if (c.totalHasil == null) c.totalHasil = 0;
+    if (c.totalUpgrade == null) c.totalUpgrade = 0;
+  }
+  function biayaUpgrade(c, jenis) {
+    var info = UPGRADE_INFO[jenis];
+    if (!c || !info) return 0;
+    var lvl = (c.upg && c.upg[jenis]) || 0;
+    var hDasar = c.harga || (model(c.id) && model(c.id).harga) || 200000000;
+    return Math.max(info.minHarga, Math.round(hDasar * (info.persenHarga + lvl * info.naikHarga) / 100000) * 100000);
+  }
+  function upgrade(S, jenis) {
+    var c = S.mobil;
+    if (!c) return 'Belum punya mobil.';
+    var info = UPGRADE_INFO[jenis];
+    if (!info) return 'Jenis upgrade tidak dikenal.';
+    normMobil(c);
+    var lvl = c.upg[jenis] || 0;
+    if (lvl >= UPGRADE_MAKS) return info.nama + ' sudah level maksimal (Lv ' + UPGRADE_MAKS + ').';
+    var biaya = biayaUpgrade(c, jenis);
+    if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; M().catatBank(S, 'Upgrade ' + info.nama + ' ' + c.nama + ' (Lv ' + (lvl + 1) + ')', -biaya); }
+    else if ((S.uang && S.uang.dompet || 0) >= biaya) { S.uang.dompet -= biaya; }
+    else return 'Dana tidak cukup untuk upgrade ' + info.nama + ' (' + rp(biaya) + ').';
+    var literSebelum = c.isi * c.tangki;
+    c.upg[jenis] = lvl + 1;
+    c.totalUpgrade = (c.totalUpgrade || 0) + biaya;
+    normMobil(c);
+    if (jenis === 'tangki' && c.tangki > 0) c.isi = Math.max(0, Math.min(1, literSebelum / c.tangki));
+    return { ok: true, biaya: biaya, level: c.upg[jenis], teks: 'Upgrade ' + info.nama + ' ' + c.nama + ' naik ke Lv ' + c.upg[jenis] + '/' + UPGRADE_MAKS + ' (' + rp(biaya) + ')!' };
   }
   function siapkan(S) {
     if (S.mobil === undefined) S.mobil = null;
@@ -138,7 +174,8 @@
   }
 
   function mobilBaru(m, S) {
-    return { id: m.id, nama: m.nama, harga: m.harga, kml: m.kml, bbm: m.bbm, tangki: m.tangki, kursi: m.kursi || 0, isi: 0.25, muat: m.muat, bentuk: m.bentuk, kelas: m.kelas,
+    return { id: m.id, nama: m.nama, harga: m.harga, kml: m.kml, baseKml: m.kml, bbm: m.bbm, tangki: m.tangki, baseTangki: m.tangki, kursi: m.kursi || 0, isi: 0.25, muat: m.muat, bentuk: m.bentuk, kelas: m.kelas,
+      upg: { mesin: 0, tangki: 0, efisiensi: 0 }, totalUpgrade: 0,
       km: 0, kmServis: 0, kmBan: 0, totalHasil: 0, kredit: null, pajakTempo: S.hari + 365, dibeli: S.hari };
   }
   function cekGarasi(S) {
@@ -362,5 +399,6 @@
   }
 
   g.KK_MOBIL = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
+    UPGRADE_MAKS: UPGRADE_MAKS, UPGRADE_INFO: UPGRADE_INFO, biayaUpgrade: biayaUpgrade, upgrade: upgrade,
     isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);

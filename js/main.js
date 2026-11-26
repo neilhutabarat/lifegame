@@ -204,7 +204,9 @@
     }
     if (S.travel && S.travel.aktif) { st.className = ''; st.textContent = S.travel.status === 'jalan' ? 'Di jalan' : S.travel.status === 'kapal' ? 'Di kapal' : 'Pool travel · ' + RUTE.nama(S.travel.di); }
     var d = S.diri, batHp = Math.round((S.hp && S.hp.baterai != null) ? S.hp.baterai : 95);
-    $('h-diri').innerHTML = bar('Makan', d.kenyang) + bar('Minum', d.minum) + bar('Stamina', d.stamina, false, 'stamina') + bar('HB', d.hb || 0, true, 'hb') + bar((S.hp && S.hp.cas ? '⚡HP' : '🔋HP'), batHp, false, 'hp') + barBensin();
+    var pbOn = !!(S.hp && S.hp.pbPasang && DIRI.pbAktifInfo && DIRI.pbAktifInfo(S) && DIRI.pbAktifInfo(S).state.sisaMah > 0);
+    var lblHp = (S.hp && S.hp.cas) ? '⚡HP' : pbOn ? '🔋PB' : '🔋HP';
+    $('h-diri').innerHTML = bar('Makan', d.kenyang) + bar('Minum', d.minum) + bar('Stamina', d.stamina, false, 'stamina') + bar('HB', d.hb || 0, true, 'hb') + bar(lblHp, batHp, false, 'hp') + barBensin();
     if ($('b-home')) $('b-home').classList.toggle('aktif-home', d.posisi === 'kos');
     var tanpaToko = !!(S.usaha && S.usaha.berhentiSewa);
     if ($('h-laci')) {
@@ -965,6 +967,17 @@
           (pj ? '<button type="button" class="chip-tombol" data-aksi="pajakMobil:1">Bayar pajak ' + rupiah(pj) + '</button>' : '') +
           (c.kredit ? '<button type="button" class="chip-tombol pilih" data-aksi="bayarCicilanMobil:1">💳 ' + (c.kredit.tunggakan ? 'Bayar Tunggakan ' + rupiah(c.kredit.tunggakan + (c.kredit.denda || 0)) : 'Bayar Cicilan ' + rupiah(c.kredit.angsuran)) + '</button><button type="button" class="chip-tombol" data-aksi="lunasMobil:1">Lunasi semua</button>' : '<button type="button" class="chip-tombol" data-aksi="jualMobil:1">Jual mobil</button>') + '</div>' +
           (c.kredit ? '<p class="catatan" style="margin-top:4px">Cicilan mobil otomatis autodebit dari rekening tiap tanggal ' + c.kredit.tempo + '. Kamu juga bisa bayar manual lebih awal lewat tombol di atas.</p>' : '') +
+          '<h3 class="subjudul">🔧 Upgrade & Modifikasi Mobil (' + esc(c.nama) + ')</h3><ul class="daftar belanja">' +
+          ['mesin', 'tangki', 'efisiensi'].map(function (uj) {
+            var uInfo = MOBIL.UPGRADE_INFO[uj], uLvl = (c.upg && c.upg[uj]) || 0, maksU = MOBIL.UPGRADE_MAKS || 5;
+            var biayaU = MOBIL.biayaUpgrade(c, uj);
+            var statSkrg = uj === 'mesin' ? ((RUTE.vmaxKendaraan ? RUTE.vmaxKendaraan(S, 'mobil') : 170) + ' km/j')
+              : uj === 'tangki' ? (c.tangki + (cEv ? ' kWh' : ' L'))
+              : (c.kml + (cEv ? ' km/kWh' : ' km/L'));
+            return '<li><span><b>' + esc(uInfo.nama) + ' (Lv ' + uLvl + '/' + maksU + ')</b><small>Saat ini: <b>' + statSkrg + '</b> · ' + esc(uInfo.ket) + '</small>' +
+              (uLvl < maksU ? '<small class="harga">' + rupiah(biayaU) + '</small>' : '<small class="harga">MAKSIMAL ✓</small>') + '</span>' +
+              '<span>' + (uLvl < maksU ? '<button type="button" class="chip-tombol pilih" data-aksi="upgradeMobil:' + uj + '">Upgrade Lv ' + (uLvl + 1) + '</button>' : '<small><b>MAX</b></small>') + '</span></li>';
+          }).join('') + '</ul>' +
           (MOBIL.pikap(S) ?
             '<h3 class="subjudul">Jasa Angkutan Pikap (' + esc(c.nama) + ')</h3><ul class="daftar belanja">' + (N.bisnisMobil.angkutan || []).map(function (ag) {
               return '<li><span><b>' + esc(ag.nama) + '</b><small>' + ag.km + ' km · sekitar ' + ag.jam + ' jam</small><small class="harga">Bayaran ' + rupiah(ag.bayar) + '</small></span><span><button type="button" class="chip-tombol pilih" data-aksi="angkutan:' + ag.id + '">Ambil</button></span></li>';
@@ -1544,10 +1557,12 @@
   function layarGadget() {
     var tab = app.gadgetTab || 'data', hm = DIRI.hpAktif(S), st = DIRI.infoStorageHp(S), wifi = DIRI.adaWifi(S);
     var bat = Math.round((S.hp && S.hp.baterai) || 95), wfInfo = N.paketData.wifiRumah;
-    var html = kepalaApp('Gadget & Kuota', hm.nama + ' · Baterai ' + bat + '% · ' + (wifi ? 'WiFi Aktif' : 'Kuota ' + (S.hp ? S.hp.kuota : 0) + ' GB')) +
-      chipTab('gadgetTab', [['data', 'Pulsa, Kuota & WiFi'], ['hp', 'HP Asli'], ['tablap', 'Tablet & Laptop'], ['apk', 'APK & Game HP']], tab) + pesanApp();
-    html += '<div class="saldo-besar" style="background:#1e88e5"><small>' + esc(hm.merek + ' ' + hm.nama) + ' (' + hm.tahun + ')</small><b>' + (S.hp.cas ? '⚡ Mengisi ' : '🔋 ') + bat + '% · RAM ' + hm.ram + ' GB · ROM ' + st.terpakaiRom + '/' + st.totalRom + ' GB</b>' + persenBar(bat) + '</div>' +
-      '<div class="chip-baris" style="margin-bottom:10px"><button type="button" class="chip-tombol' + (S.hp.cas ? ' pilih' : '') + '" data-aksi="casHp:1">' + (S.hp.cas ? '⚡ Cabut Charger (' + hm.watt + 'W)' : '🔌 Cas HP (' + hm.mah + ' mAh · Fast Charge ' + hm.watt + 'W)') + '</button></div>';
+    var html = kepalaApp('Gadget & Kuota', hm.nama + ' · Baterai ' + bat + '% · ' + (wifi ? 'WiFi Aktif' : 'Kuota ' + (S.hp ? S.hp.kuota.toFixed(2).replace('.', ',') : 0) + ' GB')) +
+      chipTab('gadgetTab', [['data', 'Pulsa, Kuota & WiFi'], ['hp', 'HP Asli'], ['pb', '🔋 Power Bank'], ['tablap', 'Tablet & Laptop'], ['apk', 'APK & Game HP']], tab) + pesanApp();
+    var pbInfoG = DIRI.pbAktifInfo ? DIRI.pbAktifInfo(S) : null;
+    html += '<div class="saldo-besar" style="background:#1e88e5"><small>' + esc(hm.merek + ' ' + hm.nama) + ' (' + hm.tahun + ')' + (S.hp.pbPasang && pbInfoG ? ' · 🔋 PB ' + pbInfoG.persen + '% Tersambung' : '') + '</small><b>' + (S.hp.cas ? '⚡ Mengisi ' : '🔋 ') + bat + '% · RAM ' + hm.ram + ' GB · ROM ' + st.terpakaiRom + '/' + st.totalRom + ' GB</b>' + persenBar(bat) + '</div>' +
+      '<div class="chip-baris" style="margin-bottom:10px"><button type="button" class="chip-tombol' + (S.hp.cas ? ' pilih' : '') + '" data-aksi="casHp:1">' + (S.hp.cas ? '⚡ Cabut Charger (' + hm.watt + 'W)' : '🔌 Cas HP (' + hm.mah + ' mAh · Fast Charge ' + hm.watt + 'W)') + '</button>' +
+      (pbInfoG ? '<button type="button" class="chip-tombol' + (S.hp.pbPasang ? ' pilih' : '') + '" data-aksi="togglePb:1">' + (S.hp.pbPasang ? '🔋 Cabut PB (' + pbInfoG.persen + '%)' : '🔋 Sambungkan PB (' + pbInfoG.persen + '%)') + '</button>' : '') + '</div>';
     if (tab === 'data') {
       var noHp = (S.hp && S.hp.nomor) || '081256000088';
       var masaAktif = (S.hp && S.hp.masaAktif != null) ? S.hp.masaAktif : (S.hari + 30);
@@ -1575,6 +1590,32 @@
         '<h3 class="subjudul">WiFi Fiber di ' + DIRI.tempat(S) + '</h3>' +
         '<div class="kartu-pesanan" style="padding:12px;border-radius:12px"><b>' + esc(wfInfo.nama) + '</b><small>Biaya pasang ' + rupiah(wfInfo.pasang) + ' · langganan ' + rupiah(wfInfo.hargaBulan) + '/bulan. Selama di ' + DIRI.tempat(S) + ', instal game/APK, main game, dan sosmed tidak memotong kuota!</small>' +
         '<div class="chip-baris" style="margin-top:8px"><button type="button" class="chip-tombol' + (S.rumah.wifi ? '' : ' pilih') + '" data-aksi="wifiRumah:1">' + (S.rumah.wifi ? 'Berhenti langganan WiFi' : 'Pasang WiFi (' + rupiah(wfInfo.pasang + wfInfo.hargaBulan) + ')') + '</button></div></div>';
+      return html;
+    }
+    if (tab === 'pb') {
+      if (pbInfoG) {
+        var sisaM = Math.round(pbInfoG.state.sisaMah).toLocaleString('id-ID'), totM = pbInfoG.model.mah.toLocaleString('id-ID');
+        html += '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin-bottom:10px;background:rgba(0,137,123,.12)">' +
+          '<b>🔋 Power Bank Aktif: ' + esc(pbInfoG.model.nama) + '</b>' +
+          '<small>Sisa daya: <b>' + sisaM + ' / ' + totM + ' mAh (' + pbInfoG.persen + '%)</b> · Output ' + pbInfoG.model.wattOut + 'W · Input ' + pbInfoG.model.wattIn + 'W' + (S.hp.pbCas ? ' · ⚡ Sedang dicas di rumah' : S.hp.pbPasang ? ' · 🔌 Tersambung ke HP' : '') + '</small>' +
+          '<div class="meteran" style="margin:6px 0"><i style="width:' + pbInfoG.persen + '%;background:#00897b"></i></div>' +
+          '<div class="chip-baris"><button type="button" class="chip-tombol' + (S.hp.pbPasang ? ' pilih' : '') + '" data-aksi="togglePb:1">' + (S.hp.pbPasang ? '🔌 Cabut dari HP' : '🔌 Sambungkan ke HP') + '</button>' +
+          '<button type="button" class="chip-tombol' + (S.hp.pbCas ? ' pilih' : '') + '" data-aksi="casPb:1">' + (S.hp.pbCas ? '⚡ Stop Cas PB' : '⚡ Cas Power Bank di Rumah') + '</button></div></div>';
+      }
+      html += '<h3 class="subjudul">Katalog Power Bank (5.000 mAh – 100.000 mAh)</h3><ul class="daftar belanja">' +
+        (N.daftarPowerBank || []).map(function (pb) {
+          var milikPb = S.hp && S.hp.pbMilik && S.hp.pbMilik[pb.id];
+          var aktPb = S.hp && S.hp.pbAktif === pb.id;
+          var pctPb = milikPb ? Math.round((milikPb.sisaMah / pb.mah) * 100) : 100;
+          return '<li><span><b>[' + esc(pb.merek) + '] ' + esc(pb.nama) + '</b>' +
+            '<small>Kapasitas <b>' + pb.mah.toLocaleString('id-ID') + ' mAh</b> · Output <b>' + pb.wattOut + 'W</b> · Input ' + pb.wattIn + 'W</small>' +
+            '<small>' + esc(pb.ket) + (milikPb ? ' · Sisa <b>' + Math.round(milikPb.sisaMah).toLocaleString('id-ID') + ' mAh (' + pctPb + '%)</b>' : '') + '</small>' +
+            '<small class="harga">' + rupiah(pb.harga) + '</small></span>' +
+            '<span class="tombol-tegak">' + (milikPb
+              ? (aktPb ? '<small><b>Dipakai ✓</b></small>' : '<button type="button" class="chip-tombol pilih" data-aksi="pakaiPb:' + pb.id + '">Pakai PB ini</button>')
+              : '<button type="button" class="chip-tombol pilih" data-aksi="beliPb:' + pb.id + '-bank">Rekening</button><button type="button" class="chip-tombol" data-aksi="beliPb:' + pb.id + '-dompet">Dompet</button><button type="button" class="chip-tombol" data-aksi="beliPb:' + pb.id + '-kk">Kartu kredit</button>') +
+            '</span></li>';
+        }).join('') + '</ul><p class="catatan">Kapasitas Power Bank dihitung realistis (efisiensi konversi 80%): 5.000 mAh tahan ~1 hari narik ojol, 20.000 mAh ~4 hari, dan 100.000 mAh tahan ~20–25 hari narik rutin (atau 40+ hari pemakaian harian). Saat tersambung, daya HP langsung disuplai dari Power Bank!</p>';
       return html;
     }
     if (tab === 'hp' || tab === 'tablap') {
@@ -2192,6 +2233,11 @@
     else if (nama === 'kreditMobil') { var rkm = MOBIL.beliKredit(S, app.kreditMobil, app.kreditMobilDp || 0.2, app.kreditMobilTenor || 60, nilai === 'kk' ? 'kk' : 'bank'); hasilAksi(rkm, 'Kredit disetujui. Mobil baru masuk garasi & jadi mobil utama.'); if (rkm === true) { app.nama = 'motor'; app.motorTab = 'garasi'; } }
     else if (nama === 'bensinMobil') { var pm2 = nilai.split('-'), bm = MOBIL.isiBensin(S, pm2[0], pm2[1]); hasilAksi(bm && bm.ok ? true : bm, bm && bm.ok ? 'Isi ' + bm.liter.toLocaleString('id-ID') + ' liter, ' + rupiah(bm.biaya) + '.' : ''); }
     else if (nama === 'servisMobil') hasilAksi(MOBIL.servis(S), 'Mobil sudah diservis.');
+    else if (nama === 'upgradeMobil') { var rum = MOBIL.upgrade(S, nilai); hasilAksi(rum && rum.ok ? true : rum, rum && rum.ok ? rum.teks : ''); }
+    else if (nama === 'beliPb') { var ppb = nilai.split('-'), rpb = DIRI.beliPowerBank(S, ppb[0], ppb[1] || 'bank'); hasilAksi(rpb && rpb.ok ? true : rpb, rpb && rpb.ok ? rpb.teks : ''); }
+    else if (nama === 'pakaiPb') { var rpkp = DIRI.pakaiPowerBank(S, nilai); hasilAksi(rpkp && rpkp.ok ? true : rpkp, rpkp && rpkp.ok ? rpkp.teks : ''); }
+    else if (nama === 'togglePb') { var rtpb = DIRI.togglePowerBank(S); hasilAksi(rtpb && rtpb.ok ? true : rtpb, rtpb && rtpb.ok ? rtpb.teks : ''); }
+    else if (nama === 'casPb') { var rcpb = DIRI.toggleCasPowerBank(S); hasilAksi(rcpb && rcpb.ok ? true : rcpb, rcpb && rcpb.ok ? rcpb.teks : ''); }
     else if (nama === 'pajakMobil') hasilAksi(MOBIL.bayarPajak(S), 'Pajak mobil lunas setahun.');
     else if (nama === 'jualMotor') { var jm = MOTOR.jual(S); hasilAksi(jm && jm.ok ? true : jm, jm && jm.ok ? 'Motor terjual ' + rupiah(jm.harga) + ', masuk rekening.' : ''); }
     else if (nama === 'pilihMotor') { hasilAksi(MOTOR.pilihAktif(S, +nilai), 'Motor utama diganti ke ' + (S.motor ? S.motor.nama : '') + '.'); }
@@ -3022,14 +3068,20 @@
     if (nama.indexOf('tidurJalan:') === 0) return tidurJalan(+nama.split(':')[1]);
     if (nama.indexOf('hiburan:') === 0) {
       var hk = nama.split(':')[1];
-      if (S.hiburan === hk) { S.hiburan = null; }
+      if (S.hiburan === hk) { S.hiburan = null; toast(DIRI.HIBURAN[hk].nama + ' dihentikan.', 1600); }
       else {
-        if (S.hp && (S.hp.baterai || 0) <= 1) { toast('Baterai HP habis! Cas dulu.', 2000); return; }
-        if (!DIRI.adaWifi(S) && S.hp && (S.hp.kuota || 0) <= 0.001) { toast('Kuota internet habis! Beli kuota di HP.', 2200); return; }
+        var pbOkH = !!(S.hp && S.hp.pbPasang && DIRI.pbAktifInfo && DIRI.pbAktifInfo(S) && DIRI.pbAktifInfo(S).state.sisaMah > 0);
+        if (S.hp && (S.hp.baterai || 0) <= 0.5 && !pbOkH) { toast('Baterai HP habis! Cas HP atau sambungkan Power Bank dulu.', 2200); return; }
+        if (!DIRI.adaWifi(S) && S.hp) {
+          if (S.hp.masaAktif != null && S.hari > S.hp.masaAktif) { toast('Masa aktif kartu HP sudah habis! Isi pulsa dulu di Gadget & Kuota.', 2400); return; }
+          if ((S.hp.kuota || 0) <= 0.0001 && (S.hp.pulsa || 0) < 500) { toast('Kuota internet & pulsa habis! Beli kuota/pulsa di Gadget & Kuota.', 2200); return; }
+        }
         S.hiburan = hk;
+        if (!S.kec || S.kec <= 0) S.kec = 1;
         toast(DIRI.HIBURAN[hk].nama + ' aktif (waktu menunggu dipercepat 8×).', 2000);
       }
-      simpan(); panelOjek(true); if (S.travel && S.travel.aktif) panelTravel(true); return;
+      travelKunci = '';
+      simpan(); panelOjek(true); if (S.travel && S.travel.aktif) panelTravel(true); perbaruiHUD(true); return;
     }
     if (nama === 'ambil') { var r = OJEK.ambil(S); if (r !== true) toast(r, 2200); else { tawaranUmur = 0; if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {} } }
     else if (nama === 'lewati') { OJEK.lewati(S); tawaranUmur = 0; }
@@ -3072,11 +3124,11 @@
     if (f.mode === 'kota') {
       var rc = T.tujuan ? TRAVEL.rencana(S, T.tujuan) : null, chips = '';
       if (travelMini) {
-        html = '<div class="ojek-kartu travel mini"><b>Pool ' + esc(RUTE.nama(T.di)) + ' · ' + T.antri.length + '/' + f.kursi + ' penumpang' + (rc ? ' → ' + esc(rc.nama) : '') + '</b><div class="ojek-tombol"><button type="button" class="aksi" data-trv="berangkat"' + (rc ? '' : ' disabled') + '>Berangkat</button>' + tMini + '</div></div>';
+        html = '<div class="ojek-kartu travel mini"><b>Pool ' + esc(RUTE.nama(T.di)) + ' · ' + T.antri.length + '/' + f.kursi + ' penumpang' + (rc ? ' → ' + esc(rc.nama) : '') + (S.hiburan && DIRI.HIBURAN[S.hiburan] ? ' · 📺 ' + DIRI.HIBURAN[S.hiburan].nama + ' (8×)' : '') + '</b>' + chipHiburan() + '<div class="ojek-tombol"><button type="button" class="aksi" data-trv="berangkat"' + (rc ? '' : ' disabled') + '>Berangkat</button>' + tMini + '</div></div>';
       } else {
         T.antri.forEach(function (p) { chips += '<span class="chip-pnp ' + p.tipe + '">' + ikonTipe(p.tipe) + ' ' + esc(p.nama.split(' ')[0]) + '</span>'; });
         for (var i = T.antri.length; i < f.kursi; i++) chips += '<span class="chip-pnp kosong">○</span>';
-        html = '<div class="ojek-kartu travel"><b>Pool travel · ' + esc(RUTE.nama(T.di)) + '</b><small>' +
+        html = '<div class="ojek-kartu travel"><b>Pool travel · ' + esc(RUTE.nama(T.di)) + (S.hiburan && DIRI.HIBURAN[S.hiburan] ? ' · 📺 ' + DIRI.HIBURAN[S.hiburan].nama + ' (8×)' : '') + '</b><small>' +
           (rc ? esc(rc.nama) + ' · ' + rc.km.toLocaleString('id-ID') + ' km · ±' + jamTeks(rc.jam) + (rc.tol ? ' · tol ' + rupiah(rc.tol) : '') + (rc.laut ? ' · kapal ' + rupiah(rc.laut) : '') + ' · ' + rupiah(rc.tarif) + '/kursi (×' + T.mult.toLocaleString('id-ID') + ')' : 'Belum ada tujuan. Pilih kota tujuan dulu.') + '</small>' +
           '<div class="pnp-baris">' + chips + '</div>' + chipHiburan() +
           '<div class="ojek-tombol"><button type="button" class="chip-tombol pilih" data-trv="pilih">Tujuan</button>' +
@@ -3372,9 +3424,18 @@
   /* popup dari HUD: charge HP dan isi bensin */
   function popupHp(pesan, salah) {
     var hm = DIRI.hpAktif(S), bat = Math.round((S.hp && S.hp.baterai) || 95), cas = !!(S.hp && S.hp.cas);
-    bukaLembar('hudHp', kepala('Baterai HP', hm.nama) + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
-      '<div class="saldo-besar" style="background:#1e88e5"><small>' + (cas ? '⚡ Sedang mengisi' : '🔋 Baterai') + ' · charger ' + hm.watt + 'W · ' + hm.mah + ' mAh</small><b>' + bat + '%</b>' + persenBar(bat) + '</div>' +
-      '<div class="chip-baris" style="margin-top:10px"><button type="button" class="aksi" data-hud="casHp">' + (cas ? 'Cabut charger' : 'Colok charger ' + hm.watt + 'W') + '</button></div>');
+    var pbInfo = DIRI.pbAktifInfo ? DIRI.pbAktifInfo(S) : null;
+    var pbHtml = pbInfo
+      ? '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin-top:10px;background:rgba(0,137,123,.12)">' +
+        '<b>🔋 ' + esc(pbInfo.model.nama) + '</b>' +
+        '<small>Sisa ' + Math.round(pbInfo.state.sisaMah).toLocaleString('id-ID') + ' / ' + pbInfo.model.mah.toLocaleString('id-ID') + ' mAh (' + pbInfo.persen + '%) · ' + (S.hp.pbPasang ? '🔌 Tersambung ke HP' : S.hp.pbCas ? '⚡ Sedang dicas di rumah' : 'Tidak tersambung') + '</small>' +
+        '<div class="meteran" style="margin:5px 0"><i style="width:' + pbInfo.persen + '%;background:#00897b"></i></div>' +
+        '<div class="chip-baris"><button type="button" class="chip-tombol' + (S.hp.pbPasang ? ' pilih' : '') + '" data-hud="togglePb">' + (S.hp.pbPasang ? 'Cabut Power Bank' : 'Sambungkan ke HP') + '</button>' +
+        '<button type="button" class="chip-tombol' + (S.hp.pbCas ? ' pilih' : '') + '" data-hud="casPb">' + (S.hp.pbCas ? 'Stop Cas PB' : 'Cas PB di Rumah') + '</button></div></div>'
+      : '<div class="chip-baris" style="margin-top:8px"><button type="button" class="chip-tombol" data-hud="bukaPb">🔋 Beli Power Bank (5.000–100.000 mAh)</button></div>';
+    bukaLembar('hudHp', kepala('Baterai HP & Power Bank', hm.nama) + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
+      '<div class="saldo-besar" style="background:#1e88e5"><small>' + (cas ? '⚡ Sedang mengisi' : S.hp.pbPasang && pbInfo ? '🔋 Disuplai Power Bank' : '🔋 Baterai') + ' · charger ' + hm.watt + 'W · ' + hm.mah + ' mAh</small><b>' + bat + '%</b>' + persenBar(bat) + '</div>' +
+      '<div class="chip-baris" style="margin-top:10px"><button type="button" class="aksi" data-hud="casHp">' + (cas ? 'Cabut charger' : 'Colok charger ' + hm.watt + 'W') + '</button></div>' + pbHtml);
   }
   function chipHiburan() {
     return '<div class="chip-baris" style="margin:6px 0 0">' + Object.keys(DIRI.HIBURAN).map(function (k) {
@@ -3440,6 +3501,9 @@
     if (nama === 'pilihKend') { app.bensinTarget = nilai; app.bbmPilih = null; return popupBensin(); }
     var mobil = app.bensinTarget ? (app.bensinTarget === 'mobil' && !!S.mobil) : (jenisKendaraanJalan() === 'mobil');
     if (nama === 'casHp') { var rc = DIRI.toggleCasHp(S); if (rc === true || rc == null) { simpan(); perbaruiHUD(true); } return popupHp(rc === true || rc == null ? (S.hp && S.hp.cas ? 'Charger dicolokkan. Baterai sedang diisi.' : 'Charger dicabut.') : rc, !(rc === true || rc == null)); }
+    if (nama === 'togglePb') { var rtp = DIRI.togglePowerBank(S); simpan(); perbaruiHUD(true); return popupHp(rtp && rtp.ok ? rtp.teks : rtp, !(rtp && rtp.ok)); }
+    if (nama === 'casPb') { var rcp = DIRI.toggleCasPowerBank(S); simpan(); perbaruiHUD(true); return popupHp(rcp && rcp.ok ? rcp.teks : rcp, !(rcp && rcp.ok)); }
+    if (nama === 'bukaPb') { app.gadgetTab = 'pb'; app.pesan = ''; return bukaHP('gadget'); }
     if (nama === 'bbm') { app.bbmPilih = nilai; return popupBensin(); }
     if (nama === 'energi') { var re = DIRI.minumEnergi(S, nilai); if (re && re.ok) { simpan(); perbaruiHUD(true); return popupStamina(re.teks, false); } return popupStamina(re, true); }
     if (nama === 'meTime') { var rm = mulaiMeTime(); if (rm === true) { tutupLembar(); return; } return popupHb(rm, true); }
@@ -3577,7 +3641,7 @@
     var dMenit = 0, depanLama = main ? JUAL.depan() : null;
     var narik = main && S.ojek.online, trv = !!(main && S.travel && S.travel.aktif), tr = !!(main && (S.transit || S.hbRun));
     if (main && !lembar && !document.hidden && S.kec > 0 && !animasi) {
-      var trvTunggu = trv && S.travel.status === 'tunggu' && (!S.travel.tujuan || S.travel.antri.length < TRAVEL.kursi(S));
+      var trvTunggu = trv && S.travel.status === 'tunggu';
       dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && (S.ojek.trip || (S.hiburan && !S.ojek.tawaran)) ? OJEK.CEPAT_TRIP : 1) * (trv ? (S.hiburan && trvTunggu ? OJEK.CEPAT_TRIP : TRAVEL.cepatWaktu(S)) : 1) * (S.transit ? S.transit.mult : S.hbRun ? S.hbRun.mult : 1);
       if (S.transit) dMenit = Math.min(dMenit, S.transit.sisa); else if (S.hbRun) dMenit = Math.min(dMenit, S.hbRun.sisa);
       S.menit += dMenit;
@@ -3796,6 +3860,7 @@
       if (kartu && kartu.dataset.app !== dragHp.id) kartu.classList.add('target-seret');
     });
     window.addEventListener('pointerup', function (e) {
+      seretGigi = false;
       clearTimeout(tahanTimer);
       if (!dragHp) return;
       if (baruSeret) {

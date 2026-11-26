@@ -430,15 +430,36 @@
   function ubahTarif(S, delta) {
     var T = siapkan(S); T.mult = Math.round(Math.max(MULT_MIN, Math.min(MULT_MAKS, T.mult + delta)) * 100) / 100; return true;
   }
+  function autoIsiBbmTravel(S, m) {
+    if (!m) return null;
+    var evM = m.bbm === 'listrik', jenis = m.bbm || 'pertalite', h = M().hargaBbm(S, jenis);
+    var kosong = Math.max(0, Math.round((m.tangki - m.isi * m.tangki) * 10) / 10);
+    if (kosong < 0.5) return null;
+    var uangAda = dana(S);
+    var literBisa = Math.min(kosong, Math.floor((uangAda / Math.max(1, h)) * 10) / 10);
+    if (literBisa < 0.5) return null;
+    var biaya = Math.round(literBisa * h / 100) * 100;
+    if (biaya > uangAda) biaya = uangAda;
+    var dibayar = bayar(S, biaya, (evM ? 'Auto cas SPKLU Travel ' : 'Auto isi ' + (N.bbm.nama[jenis] || jenis) + ' Travel ') + m.nama);
+    m.isi = Math.min(1, m.isi + literBisa / m.tangki);
+    m.ngelitik = false;
+    S.hariIni.bensin = (S.hariIni.bensin || 0) + dibayar;
+    return { liter: literBisa, biaya: dibayar, ev: evM, namaBbm: N.bbm.nama[jenis] || jenis };
+  }
   function jemput(S) {
     var T = siapkan(S);
     if (T.status !== 'tunggu' || !T.tujuan) return 'Pilih tujuan dulu.';
     if (T.antri.length >= kursi(S)) return 'Kursi sudah penuh.';
     if (T.jemput >= JEMPUT_MAKS) return 'Sudah menjemput ' + JEMPUT_MAKS + ' penumpang. Setelah itu langsung berangkat.';
-    if (!g.KK_MOBIL.cukup(S, 4)) return 'Bensin tidak cukup untuk menjemput. Isi dulu.';
-    var m = S.mobil; m.isi = Math.max(0, m.isi - 4 / m.kml / m.tangki); m.km += 4; T.jemput++;
+    var m = S.mobil, autoKet = '';
+    if (!g.KK_MOBIL.cukup(S, 4)) {
+      var aiJ = autoIsiBbmTravel(S, m);
+      if (!aiJ) return 'Dana & BBM tidak cukup untuk menjemput.';
+      autoKet = ' (⛽ Auto isi ' + aiJ.namaBbm + ' ' + aiJ.liter + (aiJ.ev ? ' kWh' : ' L') + ' · ' + rp(aiJ.biaya) + ')';
+    }
+    m.isi = Math.max(0, m.isi - 4 / m.kml / m.tangki); m.km += 4; T.jemput++;
     T.antri.push(penumpangBaru(S));
-    return { ok: true, menit: 25, teks: 'Menjemput ' + T.antri[T.antri.length - 1].nama + ' di rumahnya. Kursi terisi ' + T.antri.length + '/' + kursi(S) + '.' };
+    return { ok: true, menit: 25, teks: 'Menjemput ' + T.antri[T.antri.length - 1].nama + ' di rumahnya. Kursi terisi ' + T.antri.length + '/' + kursi(S) + '.' + autoKet };
   }
 
   /* ---------- berangkat ---------- */
@@ -450,13 +471,18 @@
     var wajib = rc.tol + rc.laut;
     if (dana(S) < wajib) return 'Uang untuk tol dan kapal kurang. Butuh sekitar ' + rp(wajib) + '.';
     if (S.diri.stamina < 12) return 'Kamu terlalu capek dan ngantuk untuk menyetir jauh. Istirahat dulu.';
-    var m = S.mobil;
-    if (m.isi * m.tangki < 3) return m.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis. Cas dulu di aplikasi Kendaraan.' : 'Bensin hampir habis. Isi dulu di aplikasi Kendaraan.';
+    var m = S.mobil, kabarAuto = [];
+    if (m.isi < 0.25 || m.isi * m.tangki < 5) {
+      var aiB = autoIsiBbmTravel(S, m);
+      if (aiB) kabarAuto.push((aiB.ev ? '⚡ Auto cas SPKLU ' : '⛽ Auto isi ' + aiB.namaBbm + ' ') + aiB.liter + (aiB.ev ? ' kWh' : ' L') + ' (' + rp(aiB.biaya) + ') sebelum berangkat.');
+    }
+    if (m.isi * m.tangki < 2) return m.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis & saldo kurang untuk auto cas.' : 'Bensin hampir habis & saldo kurang untuk auto isi BBM.';
     var pnp = T.antri.length;
+    S.hiburan = null;
     T.trip = { dari: T.di, ke: T.tujuan, simpul: rc.jalur.simpul, ruas: rc.jalur.ruas, km: rc.km, idx: 0, kmRuas: 0, kmSelesai: 0, mulai: waktu(S), menitGerak: 0, menitHenti: 0, sisaKapal: 0,
       gigiMenit: [0, 0, 0, 0, 0, 0, 0], tarifKursi: rc.tarif, tol: 0, kapal: 0, penalti: 0, penaltiTipe: { cepat: 0, santai: 0, biasa: 0 }, kejadian: [], bensin0: m.isi * m.tangki, bensinTerpakai: 0, peringatan: false, tolAsal: rc.tol };
     T.status = 'jalan';
-    var kabar = masukRuas(S);
+    var kabar = kabarAuto.concat(masukRuas(S));
     return { ok: true, kabar: kabar, teks: pnp ? 'Berangkat ke ' + rc.nama + ' bersama ' + pnp + ' penumpang.' : 'Berangkat ke ' + rc.nama + ' tanpa penumpang.' };
   }
   function masukRuas(S) {
@@ -506,14 +532,22 @@
     var r = tr.ruas[tr.idx], kdR = R.infoKondisi ? R.infoKondisi(r) : { boros: 1, risikoBan: 1 }, v = kecepatan(S), gi = gigiObj(v.gigi, S), km = Math.min(v.kmh * dMenit / 60, r.km - tr.kmRuas);
     var liter = km / m.kml * gi.boros * (kdR.boros || 1) * (m.ngelitik ? 1.08 : 1);
     var evM = m.bbm === 'listrik';
+    /* mode Travel: otomatis isi BBM di SPBU / cas di SPKLU saat tangki < 18% (GoCar/Ojol tetap manual) */
+    if (m.isi < 0.18 || m.isi * m.tangki < liter + 0.8) {
+      var aiJln = autoIsiBbmTravel(S, m);
+      if (aiJln) {
+        tr.menitHenti += 8; T.lompat += 8;
+        var msgAi = (aiJln.ev ? '⚡ Auto cas SPKLU ' : '⛽ Auto isi ' + aiJln.namaBbm + ' ') + aiJln.liter + (aiJln.ev ? ' kWh' : ' L') + ' (' + rp(aiJln.biaya) + ') di jalur travel.';
+        tr.kejadian.push(msgAi);
+        kabar.push(msgAi);
+      }
+    }
     if (m.isi * m.tangki < liter + 0.2) {
       var derek = Math.min(750000, dana(S)); var bayarDerek = bayar(S, derek, evM ? 'Derek dan cas darurat' : 'Derek dan bensin darurat');
-      m.isi = Math.min(1, m.isi + 8 / m.tangki); tambahKejadian(T, (evM ? 'Baterai habis di jalan. Derek dan cas darurat ' : 'Bensin habis di jalan. Derek dan bensin darurat ') + rp(bayarDerek) + '.', bayarDerek, 90, 0.7);
+      m.isi = Math.min(1, m.isi + 8 / m.tangki); tambahKejadian(T, (evM ? 'Baterai habis di jalan (saldo kurang untuk auto cas). Derek ' : 'Bensin habis di jalan (saldo kurang untuk auto isi BBM). Derek ') + rp(bayarDerek) + '.', bayarDerek, 90, 0.7);
       kabar.push((evM ? 'Baterai mobil listrik habis di jalan. Derek dan cas darurat ' : 'Bensin habis di jalan. Derek dan beli bensin darurat ') + rp(bayarDerek) + ', telat sekitar 1,5 jam.'); return kabar;
     }
     m.isi = Math.max(0, m.isi - liter / m.tangki); tr.bensinTerpakai = (tr.bensinTerpakai || 0) + liter; m.km += km; tr.kmRuas += km; tr.kmSelesai += km; tr.menitGerak += dMenit; tr.gigiMenit[v.gigi] += dMenit;
-    if (!tr.peringatan && m.isi < 0.12) { tr.peringatan = true; kabar.push(evM ? 'Daya baterai tinggal sedikit. Tekan Berhenti untuk cas di SPKLU.' : 'Bensin tinggal sedikit. Tekan Berhenti untuk isi di SPBU.'); }
-    if (m.isi > 0.3) tr.peringatan = false;
     var jamFrac = dMenit / 60, r2 = Math.random();
     var ngebutBatas = v.gigi === 5 && (v.kmh > 115 || (r.tol <= 0 && v.kmh >= (v.batasJalan || 90) * 0.92));
     if (ngebutBatas && r2 < 0.02 * jamFrac) {
@@ -559,7 +593,11 @@
   function jalan(S, dMenit) {
     var T = S.travel; if (!T || !T.aktif) return [];
     if (T.status === 'tunggu') {
-      if (T.tujuan && T.antri.length < kursi(S) && waktu(S) >= T.berikut) { T.antri.push(penumpangBaru(S)); T.berikut = waktu(S) + jeda(S, T.tujuan); }
+      if (T.tujuan && T.antri.length < kursi(S) && waktu(S) >= T.berikut) {
+        var pb = penumpangBaru(S);
+        T.antri.push(pb); T.berikut = waktu(S) + jeda(S, T.tujuan);
+        return ['🧳 ' + pb.nama + ' naik ke mobil (' + T.antri.length + '/' + kursi(S) + ' kursi).'];
+      }
       return [];
     }
     if (!T.trip) { T.status = 'tunggu'; return []; }

@@ -284,7 +284,9 @@
   function vmaxKendaraan(S, jenis) {
     if (jenis === 'mobil') {
       var c = S && S.mobil;
-      return (c && VMAX_MOBIL[c.id]) || VMAX[(c && c.bentuk) || 'mpv'] || 170;
+      var dasar = (c && VMAX_MOBIL[c.id]) || VMAX[(c && c.bentuk) || 'mpv'] || 170;
+      var bonusMesin = (c && c.upg && c.upg.mesin) ? c.upg.mesin * 12 : 0;
+      return dasar + bonusMesin;
     }
     var m = S && S.motor;
     return (m && VMAX_MOTOR[m.id]) || 100;
@@ -293,12 +295,13 @@
   function nyaman(k, jenis) {
     if (!k) return 1;
     if (jenis === 'mobil') {
-      if (k.bentuk === 'pikap') return 0.7;
-      if (k.kelas === 'sultan') return 1.7;
-      if (k.kelas === 'mewah') return 1.45;
-      if (k.harga >= 300e6) return 1.3;
-      if (k.harga >= 220e6) return 1.18;
-      return 1.02;
+      var bUpg = (k.upg && k.upg.mesin) ? k.upg.mesin * 0.05 : 0;
+      if (k.bentuk === 'pikap') return 0.7 + bUpg;
+      if (k.kelas === 'sultan') return 1.7 + bUpg;
+      if (k.kelas === 'mewah') return 1.45 + bUpg;
+      if (k.harga >= 300e6) return 1.3 + bUpg;
+      if (k.harga >= 220e6) return 1.18 + bUpg;
+      return 1.02 + bUpg;
     }
     if (k.id === 'forza250' || k.id === 'xmax250') return 1.45;
     if (k.id === 'nmax' || k.id === 'pcx160' || k.id === 'adv160' || k.id === 'vespa' || k.id === 'vespasprint') return 1.32;

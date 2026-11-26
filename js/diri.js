@@ -118,6 +118,15 @@
     return S;
   }
   function gadgetModel(id) { return (N.daftarGadget || []).filter(function (x) { return x.id === id; })[0]; }
+  function pbModel(id) { return (N.daftarPowerBank || []).filter(function (x) { return x.id === id; })[0]; }
+  function pbAktifInfo(S) {
+    if (!S || !S.hp || !S.hp.pbAktif) return null;
+    var m = pbModel(S.hp.pbAktif), st = S.hp.pbMilik && S.hp.pbMilik[S.hp.pbAktif];
+    if (!m || !st) return null;
+    if (typeof st.sisaMah !== 'number' || isNaN(st.sisaMah)) st.sisaMah = m.mah;
+    st.sisaMah = Math.max(0, Math.min(m.mah, st.sisaMah));
+    return { model: m, state: st, persen: Math.round((st.sisaMah / m.mah) * 100) };
+  }
   function apkModel(id) { return (N.apkHp || []).filter(function (x) { return x.id === id; })[0]; }
   function hpAktif(S) { return gadgetModel(S.hp && S.hp.id) || gadgetModel('redmi12c'); }
   function adaWifi(S) {
@@ -133,7 +142,7 @@
       return 'Masa aktif kartu ' + (S.hp.nomor || '081256000088') + ' sudah habis (masa tenggang)! Isi pulsa dulu untuk memperpanjang masa aktif kartu.';
     }
     if ((S.hp.kuota || 0) >= gb) {
-      S.hp.kuota = Math.max(0, Math.round((S.hp.kuota - gb) * 1000) / 1000);
+      S.hp.kuota = Math.max(0, S.hp.kuota - gb);
       return true;
     }
     /* fallback potong pulsa Rp2.000 per 0.1 GB jika kuota habis */
@@ -221,13 +230,29 @@
       }
     }
     listrikKos(S, dMenit, false);
-    /* baterai HP & charger sesuai mAh dan Watt asli */
+    /* baterai HP, Power Bank (efisiensi konversi nyata 80%), & charger sesuai mAh dan Watt asli */
     if (S.hp) {
       var hm = hpAktif(S), mah = (hm && hm.mah) || 5000, watt = (hm && hm.watt) || 10;
-      var bisaCas = S.hp.cas && ((d.posisi === 'kos' && !S.rumah.padam) || (d.posisi === 'kedai' && (!g.KK_USAHA || g.KK_USAHA.listrikNyala(S))));
+      var listrikTersedia = (d.posisi === 'kos' && !S.rumah.padam) || (d.posisi === 'kedai' && !(S.usaha && S.usaha.berhentiSewa) && (!g.KK_USAHA || g.KK_USAHA.listrikNyala(S)));
+      var bisaCas = S.hp.cas && listrikTersedia;
+      var pbInfo = pbAktifInfo(S);
+      /* cas Power Bank di stopkontak rumah/kos (wattIn × 200 mAh/jam) */
+      if (S.hp.pbCas) {
+        if (!listrikTersedia || !pbInfo) {
+          S.hp.pbCas = false;
+        } else {
+          var tambahPb = (pbInfo.model.wattIn || 18) * 200 * j;
+          var sblmPb = pbInfo.state.sisaMah;
+          pbInfo.state.sisaMah = Math.min(pbInfo.model.mah, pbInfo.state.sisaMah + tambahPb);
+          if (sblmPb < pbInfo.model.mah && pbInfo.state.sisaMah >= pbInfo.model.mah) {
+            S.hp.pbCas = false;
+            kabar.push('🔋 Power Bank ' + pbInfo.model.nama + ' penuh 100% (' + pbInfo.model.mah.toLocaleString('id-ID') + ' mAh)!');
+          }
+        }
+      }
       if (bisaCas) {
         /* kecepatan cas proporsional dengan Watt charger terhadap kapasitas baterai mAh */
-        var naikBat = (watt / (mah / 1000)) * (dMenit / 60) * 18;
+        var naikBat = (watt / (mah / 1000)) * j * 18;
         var batLama = S.hp.baterai;
         S.hp.baterai = Math.min(100, S.hp.baterai + naikBat);
         if (batLama < 100 && S.hp.baterai >= 100) { S.hp.cas = false; kabar.push('Baterai ' + hm.nama + ' penuh 100% (charger ' + watt + 'W).'); }
@@ -235,15 +260,37 @@
         if (S.hp.cas && !bisaCas) S.hp.cas = false;
         var pakaiOjek = S.ojek && S.ojek.online;
         var sedangTrip = pakaiOjek && S.ojek.trip;
-        /* saat narik ojek membuka Google Maps / Apple Maps GPS + layar terang -> baterai jauh lebih boros sesuai kapasitas mAh HP */
-        var lajuKuras = sedangTrip ? 8 : pakaiOjek ? 4.5 : 1.2; /* %/jam HP 5000 mAh: Maps+layar ±8, ojol standby ±4,5, HP diam ±1,2 */
-        var turunBat = (5000 / mah) * lajuKuras * j;
-        var sblm = S.hp.baterai;
-        S.hp.baterai = Math.max(0, S.hp.baterai - turunBat);
-        if (sblm > 15 && S.hp.baterai <= 15) kabar.push('Baterai ' + hm.nama + ' tinggal ' + Math.round(S.hp.baterai) + '%! Segera colok charger ' + watt + 'W.');
-        if (sblm > 0 && S.hp.baterai <= 0) {
-          if (pakaiOjek && g.KK_OJEK) { g.KK_OJEK.offline(S, true); kabar.push('HP mati kehabisan baterai karena GPS Maps ojol! Akun driver otomatis offline.'); }
-          else kabar.push('Baterai HP habis (0%). Colok charger di menu HP.');
+        var pakaiTravel = S.travel && S.travel.aktif;
+        /* konsumsi nyata HP dalam mAh/jam: Maps+GPS+layar 400 mAh/j, ojol/travel standby 225 mAh/j, harian 60 mAh/j */
+        var lajuKuras = sedangTrip ? 8 : (pakaiOjek || pakaiTravel) ? 4.5 : 1.2;
+        var butuhMah = lajuKuras * 50 * j; /* 1% HP 5000 mAh = 50 mAh */
+        if (S.hp.pbPasang && pbInfo && pbInfo.state.sisaMah > 0) {
+          /* Power Bank tersambung: suplai daya langsung ke HP + isi baterai HP menuju 100% (efisiensi konversi nyata 80%) */
+          var wattEf = Math.min(pbInfo.model.wattOut || 18, Math.max(15, watt));
+          var maksKirim = wattEf * 180 * j;
+          var kurangHpMah = Math.max(0, (100 - S.hp.baterai) / 100 * mah);
+          var kirimTotal = Math.min(maksKirim, butuhMah + kurangHpMah);
+          var sedotPb = kirimTotal / 0.8; /* efisiensi konversi DC-DC 3.7V->5V ~80% */
+          if (sedotPb > pbInfo.state.sisaMah) {
+            kirimTotal = pbInfo.state.sisaMah * 0.8;
+            pbInfo.state.sisaMah = 0;
+            S.hp.pbPasang = false;
+            kabar.push('🔋 Daya Power Bank ' + pbInfo.model.nama + ' habis (0 mAh)! Cas lagi di rumah/kos.');
+          } else {
+            pbInfo.state.sisaMah -= sedotPb;
+          }
+          var deltaMah = kirimTotal - butuhMah;
+          S.hp.baterai = Math.max(0, Math.min(100, S.hp.baterai + (deltaMah / mah) * 100));
+        } else {
+          if (S.hp.pbPasang && (!pbInfo || pbInfo.state.sisaMah <= 0)) S.hp.pbPasang = false;
+          var turunBat = (butuhMah / mah) * 100;
+          var sblm = S.hp.baterai;
+          S.hp.baterai = Math.max(0, S.hp.baterai - turunBat);
+          if (sblm > 15 && S.hp.baterai <= 15) kabar.push('Baterai ' + hm.nama + ' tinggal ' + Math.round(S.hp.baterai) + '%! Segera colok charger atau sambungkan Power Bank.');
+          if (sblm > 0 && S.hp.baterai <= 0) {
+            if (pakaiOjek && g.KK_OJEK) { g.KK_OJEK.offline(S, true); kabar.push('HP mati kehabisan baterai karena GPS Maps ojol! Akun driver otomatis offline.'); }
+            else kabar.push('Baterai HP habis (0%). Colok charger atau sambungkan Power Bank di menu HP.');
+          }
         }
       }
       /* kuota terpakai sangat presisi saat online narik ojol (Google Maps / Apple Maps & order) tanpa WiFi */
@@ -629,8 +676,10 @@
     if (!S.hp) return 'HP belum siap.';
     if (!S.hp.cas) {
       if (S.diri.posisi === 'kos' && S.rumah.padam) return 'Listrik ' + tempat(S) + ' sedang padam. Isi token PLN dulu.';
+      if (S.diri.posisi !== 'kos' && (S.usaha && S.usaha.berhentiSewa)) return 'Kamu sedang di jalan! Pulang ke rumah/kos untuk colok charger listrik, atau sambungkan Power Bank.';
       if (S.diri.posisi === 'kedai' && g.KK_USAHA && !g.KK_USAHA.listrikNyala(S)) return 'Listrik sedang padam.';
       if (S.hp.baterai >= 100) return 'Baterai HP sudah penuh 100%.';
+      S.hp.pbPasang = false;
     }
     S.hp.cas = !S.hp.cas;
     return true;
@@ -706,6 +755,52 @@
     if (!gm || gm.jenis !== 'hp' || !S.gadget || !S.gadget[id]) return 'Belum punya HP ini.';
     S.hp.id = id;
     return true;
+  }
+  function beliPowerBank(S, id, caraBayar) {
+    var pb = pbModel(id); if (!pb) return 'Power Bank tidak dikenal.';
+    S.hp = S.hp || {}; S.hp.pbMilik = S.hp.pbMilik || {};
+    if (S.hp.pbMilik[id]) return 'Sudah punya ' + pb.nama + '.';
+    var d = diskonToko(S, 'tokopedia');
+    var h = d ? Math.round(pb.harga * (1 - d) / 5000) * 5000 : pb.harga;
+    var by = bayarBelanja(S, h, 'Beli Power Bank: ' + pb.nama, caraBayar || 'bank');
+    if (by !== true) return by;
+    S.hp.pbMilik[id] = { sisaMah: pb.mah, dibeli: S.hari };
+    S.hp.pbAktif = id;
+    S.hp.pbPasang = true;
+    S.hp.pbCas = false;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
+    return { ok: true, teks: pb.nama + ' dibeli (' + rp(h) + ') dan langsung disambungkan ke HP!' };
+  }
+  function pakaiPowerBank(S, id) {
+    if (!S.hp || !S.hp.pbMilik || !S.hp.pbMilik[id]) return 'Belum punya Power Bank ini.';
+    S.hp.pbAktif = id;
+    S.hp.pbCas = false;
+    var pb = pbModel(id);
+    return { ok: true, teks: 'Power Bank aktif diganti ke ' + (pb ? pb.nama : id) + '.' };
+  }
+  function togglePowerBank(S) {
+    var info = pbAktifInfo(S);
+    if (!info) return 'Belum punya Power Bank. Beli dulu di Gadget & Kuota → Power Bank.';
+    if (S.hp.pbPasang) {
+      S.hp.pbPasang = false;
+      return { ok: true, teks: 'Kabel Power Bank ' + info.model.nama + ' dicabut dari HP.' };
+    }
+    if (info.state.sisaMah <= 0) return 'Daya Power Bank ' + info.model.nama + ' habis (0 mAh). Cas dulu di rumah/kos.';
+    S.hp.pbCas = false;
+    S.hp.pbPasang = true;
+    return { ok: true, teks: '🔋 Power Bank ' + info.model.nama + ' (' + Math.round(info.state.sisaMah).toLocaleString('id-ID') + ' mAh) tersambung ke HP!' };
+  }
+  function toggleCasPowerBank(S) {
+    var info = pbAktifInfo(S);
+    if (!info) return 'Belum punya Power Bank.';
+    if (S.hp.pbCas) { S.hp.pbCas = false; return { ok: true, teks: 'Cas Power Bank dicabut.' }; }
+    var d = S.diri;
+    if (d.posisi === 'kos' && S.rumah.padam) return 'Token listrik rumah/kos habis! Beli token di PLN Mobile dulu.';
+    if (d.posisi !== 'kos' && ((S.usaha && S.usaha.berhentiSewa) || !g.KK_USAHA || !g.KK_USAHA.listrikNyala(S))) return 'Pulang ke rumah/kos dulu untuk mengecas Power Bank di stopkontak.';
+    if (info.state.sisaMah >= info.model.mah) return 'Daya Power Bank sudah penuh 100%.';
+    S.hp.pbPasang = false;
+    S.hp.pbCas = true;
+    return { ok: true, teks: '⚡ Power Bank ' + info.model.nama + ' mulai dicas (' + info.model.wattIn + 'W).' };
   }
   function nilaiJualGadget(S, id) {
     var gm = gadgetModel(id), info = S.gadget && S.gadget[id];
@@ -1377,7 +1472,16 @@
     var h = S.hiburan && HIBURAN[S.hiburan]; if (!h || !S.hp) return null;
     var r = pakaiKuota(S, h.gbMenit * dMenit);
     if (r !== true) { S.hiburan = null; return r; }
-    S.hp.baterai = Math.max(0, S.hp.baterai - h.bat * dMenit * (5000 / ((hpAktif(S) && hpAktif(S).mah) || 5000)));
+    var mahHp = (hpAktif(S) && hpAktif(S).mah) || 5000;
+    var butuhMah = h.bat * 50 * dMenit;
+    var pbInfo = pbAktifInfo(S);
+    if (S.hp.pbPasang && pbInfo && pbInfo.state.sisaMah > 0) {
+      var sedot = butuhMah / 0.8;
+      if (sedot <= pbInfo.state.sisaMah) { pbInfo.state.sisaMah -= sedot; return null; }
+      butuhMah -= pbInfo.state.sisaMah * 0.8;
+      pbInfo.state.sisaMah = 0; S.hp.pbPasang = false;
+    }
+    S.hp.baterai = Math.max(0, S.hp.baterai - (butuhMah / mahHp) * 100);
     return null;
   }
   /* menikahi teman: pindah ke daftar keluarga */
@@ -2317,7 +2421,7 @@
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,
-    gadgetModel: gadgetModel, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
+    gadgetModel: gadgetModel, pbModel: pbModel, pbAktifInfo: pbAktifInfo, beliPowerBank: beliPowerBank, pakaiPowerBank: pakaiPowerBank, togglePowerBank: togglePowerBank, toggleCasPowerBank: toggleCasPowerBank, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
