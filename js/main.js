@@ -1,7 +1,7 @@
 /* main.js — alur game: pilih kota dan QRIS, jam berjalan, buka-tutup kedai, racik dan jualan, laporan malam, kalender, simpan otomatis. */
 (function () {
   'use strict';
-  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG, DIRI = window.KK_DIRI, STOK = window.KK_STOK, MOTOR = window.KK_MOTOR, ANTAR = window.KK_ANTAR, STAF = window.KK_STAF, DUNIA = window.KK_DUNIA, USAHA = window.KK_USAHA, MOBIL = window.KK_MOBIL, OJEK = window.KK_OJEK, TRAVEL = window.KK_TRAVEL, RUTE = window.KK_RUTE, PROPERTI = window.KK_PROPERTI, SUARA = window.KK_SUARA, TEMAN = window.KK_TEMAN;
+  var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG, DIRI = window.KK_DIRI, STOK = window.KK_STOK, MOTOR = window.KK_MOTOR, ANTAR = window.KK_ANTAR, STAF = window.KK_STAF, DUNIA = window.KK_DUNIA, USAHA = window.KK_USAHA, MOBIL = window.KK_MOBIL, OJEK = window.KK_OJEK, TRAVEL = window.KK_TRAVEL, RUTE = window.KK_RUTE, PROPERTI = window.KK_PROPERTI, SUARA = window.KK_SUARA, TEMAN = window.KK_TEMAN, TOWER = window.KK_TOWER;
   var MENIT_PER_DETIK = 2;               /* 1 jam game = 30 detik nyata pada kecepatan 1x */
   var TAHUN_DASAR = 2022;               /* tahun Masehi 2023 = tahun ke-1 */
   var HARI_PERTAMA = KAL.dn(2023, 1, 2); /* Senin pertama */
@@ -152,6 +152,8 @@
     }
     if (d.tagihanNafkah) d.tagihanNafkah = null;
     d.vvip = d.vvip || { aktif: false };
+    d.sandbox = d.sandbox || { aktif: false, kebal: false, bukaTahun: false };
+    if (TOWER && TOWER.sinkron) TOWER.sinkron(d);
     if (!d.vvip.aktif) {
       if (d.gigiJalan > 4) d.gigiJalan = 4;
       if (d.travel && d.travel.gigi > 4) d.travel.gigi = 4;
@@ -163,13 +165,21 @@
     return d;
   }
   function mulaiBaru(kota, qris, bank) {
-    S = lengkapi({ v: 3, kota: kota, qris: qris, hari: HARI_PERTAMA, menit: 360, fase: 'pagi', jamBuka: 7, jamTutup: 22, kec: 1, hariKe: 1, dibuat: Date.now() });
+    /* game baru: modal awal bersih tepat Rp5.000.000 (Rp4.850.000 bank + Rp150.000 dompet tunai), tanpa suntikan bonus migrasi lama */
+    S = lengkapi({
+      v: 3, kota: kota, qris: qris, hari: HARI_PERTAMA, menit: 360, fase: 'pagi', jamBuka: 7, jamTutup: 22, kec: 1, hariKe: 1, dibuat: Date.now(),
+      bonusBank50jt: true, bonusBank200jt: true, bonusBank500jt: true, gantiRugiKk500jt: true, bonusBank5M: true, pemutihanKredit1: true, pemutihanKredit2: true,
+      tutorialSelesai: false
+    });
+    S.bank = null; S.uang = null;
     UANG.siapkan(S, bank);
+    if (TOWER && TOWER.sinkron) TOWER.sinkron(S);
     S.usaha.lokasi = lokasiDipilih || 'jalan';
     if (modeDriver) S.usaha.berhentiSewa = true; /* mulai sebagai driver: kedai belum disewa, bisa dibuka belakangan di aplikasi Usaha */
     if (S.usaha.lokasi === 'spbu') S.dunia.pesaing.push({ nama: 'Point Coffee', jenis: 'waralaba', rating: 4.5, harga: 18000, jarak: 0.1, promoSampai: -1 });
     JUAL.kosongkan(); S.diri.posisi = 'kos'; simpan(); tampil('main');
-    toast('Hari pertama di ' + kotaIni().nama + '. Kamu bangun di kos.' + (modeDriver ? ' Cari penumpang lewat aplikasi Driver atau Travel di HP.' : ' Berangkat ke kedai sebelum pukul ' + jam(S.jamBuka * 60) + '.'), 3600);
+    if (!S.tutorialSelesai) bukaTutorial(0);
+    else toast('Hari pertama di ' + kotaIni().nama + '. Modal awal Rp5.000.000 siap dipakai!', 3200);
   }
   function lanjut(data) {
     S = lengkapi(data); JUAL.kosongkan();
@@ -293,6 +303,7 @@
         (S.rentalPs && S.rentalPs.aktif ? '<span class="chip event">Rental PS: ' + S.rentalPs.unit.length + ' bilik · ' + rupiah((S.rentalPs.hariIni.omzetSewa || 0) + (S.rentalPs.hariIni.omzetMinum || 0)) + '</span>' : '') +
         (kelSakit.length ? '<span class="chip libur">' + esc(kelSakit[0].nama) + ' sakit (' + esc(kelSakit[0].sakit.nama) + ')</span>' : '') +
         ((d.hb || 0) >= 85 && DIRI.pasanganAktif(S) ? '<span class="chip event">HB memuncak · Pulang bersama ' + esc(DIRI.pasanganAktif(S).nama) + '</span>' : '') +
+        (TOWER && TOWER.sandboxAktif(S) ? '<span class="chip event">🧪 SANDBOX</span>' : '') +
         (S.promoAktif ? '<span class="chip event">PROMO AKTIF</span>' : '') +
         (KAL.apakahRamadan(S.hari) ? '<span class="chip event">Promo Ramadan +100%</span>' : '') +
         (KAL.tanggalKembar(S.hari) ? '<span class="chip event">Diskon ' + KAL.tanggalKembar(S.hari) + ' Shopee/Tokopedia</span>' : '') +
@@ -595,7 +606,7 @@
     bukaLembar('atur',
       kepala('Pengaturan', k.nama + ' (' + thn + ')') +
       '<h3 class="subjudul">Identitas pemain</h3>' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' + fotoWajah(srcPemain(), 60, null, S.namaPemain, pr.gender, usia) + '<div><b>' + esc(S.namaPemain || 'Driver') + '</b></div></div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' + fotoWajah(srcPemain(), 60, null, S.namaPemain, pr.gender, usia) + '<div><b>' + esc(S.namaPemain || 'Driver') + '</b><small style="display:block;color:var(--tinta2)">ID Akun: <b>' + esc(S.akunId || '-') + '</b>' + (TOWER && TOWER.sandboxAktif(S) ? ' · 🧪 Sandbox' : '') + '</small></div></div>' +
         '<div class="atur-baris" style="display:block"><div><b>Nama pemain</b><span>Nama pemilik rekening</span></div><input id="in-pemain" class="input-teks" type="text" maxlength="24" value="' + esc(S.namaPemain || 'Pemilik') + '"></div>' +
       '<div class="atur-baris"><div><b>Gender karakter</b><span>Memengaruhi tampilan karakter</span></div><div class="chip-baris" style="margin:0"><button type="button" class="chip-tombol' + (pr.gender === 'cewek' ? ' pilih' : '') + '" data-gender="cewek">Cewek</button><button type="button" class="chip-tombol' + (pr.gender === 'cowok' ? ' pilih' : '') + '" data-gender="cowok">Cowok</button></div></div>' +
       '<div class="atur-baris" style="display:block"><div><b>Tanggal lahir (TTL)</b><span>Tahun game ' + thn + ' · Usia saat ini: <b>' + usia + ' tahun</b></span></div><input id="in-ttl" class="input-teks" type="date" value="' + esc(pr.tglLahir || '1999-05-15') + '"><div style="margin-top:8px"><button type="button" class="chip-tombol pilih" data-simpan-nama>Simpan profil & nama</button></div></div>' +
@@ -605,6 +616,8 @@
         ? '<button type="button" class="chip-tombol" data-vvip="kunci">🔒 Kunci lagi</button>'
         : '<button type="button" class="chip-tombol pilih" data-vvip="popup">🔓 Buka Gembok</button>') +
       '</div></div>' +
+      '<div class="atur-baris" style="display:block"><div><b>🎟️ Tukar Kode Aktivasi / Voucher</b><span>Masukkan kode VVIP, Mode Sandbox, atau Paket Dana dari Control Tower</span></div><div style="display:flex;gap:6px;margin-top:6px"><input id="in-voucher" class="input-teks" style="margin:0;flex:1" type="text" maxlength="28" placeholder="Contoh: TD-VVIP-XXXX-XXXX"><button type="button" class="chip-tombol pilih" data-voucher="redeem">Tukar</button></div></div>' +
+      '<div class="atur-baris"><div><b>📖 Panduan Permainan</b><span>Lihat kembali tutorial dasar cara bermain</span></div><div><button type="button" class="chip-tombol" data-tut="0">Buka Tutorial</button></div></div>' +
       '<h3 class="subjudul">Suara & lagu tema</h3>' +
       '<div class="atur-baris"><div><b>Lagu tema orisinal</b><span>Pagi, siang, dan malam beda suasana</span></div><div><button type="button" class="chip-tombol' + (mOn ? ' pilih' : '') + '" data-suara="musik">' + (mOn ? 'Nyala' : 'Mati') + '</button></div></div>' +
       '<div class="atur-baris"><div><b>Efek suara</b><span>Mesin motor, notifikasi, dan tombol</span></div><div><button type="button" class="chip-tombol' + (eOn ? ' pilih' : '') + '" data-suara="efek">' + (eOn ? 'Nyala' : 'Mati') + '</button></div></div>' +
@@ -1070,16 +1083,16 @@
       return html;
     }
     if (tab === 'dealer') {
-      var kls = app.kelasMotor || 'harian', thnM = KAL.tgl(S.hari).y;
-      var listMotor = N.motor.filter(function (x) { return (x.kelas || 'harian') === kls && (x.tahun || 2023) <= thnM; });
+      var kls = app.kelasMotor || 'harian', thnM = KAL.tgl(S.hari).y, bebasThnM = !!(TOWER && TOWER.bukaSemuaTahun(S));
+      var listMotor = N.motor.filter(function (x) { return (x.kelas || 'harian') === kls && (bebasThnM || (x.tahun || 2023) <= thnM); });
       return html + chipTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + '<ul class="daftar belanja">' + listMotor.map(function (x) {
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? 'Listrik, sekitar ' + x.jarakPenuh + ' km sekali cas' : '±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm]) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></span></li>';
-      }).join('') + '</ul><p class="catatan">Harga OTR tahun ' + thnM + ' varian termurah. Model rilisan tahun berikutnya otomatis muncul saat tahun berganti. Bisa punya lebih dari 1 motor tanpa batas (pilih motor utama di Garasi).</p>';
+      }).join('') + '</ul><p class="catatan">Harga OTR tahun ' + thnM + (bebasThnM ? ' (Sandbox: semua tahun terbuka)' : '') + ' varian termurah. Model rilisan tahun berikutnya otomatis muncul saat tahun berganti. Bisa punya lebih dari 1 motor tanpa batas (pilih motor utama di Garasi).</p>';
     }
     if (tab === 'mobil') {
-      var km2 = app.kelasMobil || 'pikap', thnC = KAL.tgl(S.hari).y;
-      var listMobil = N.mobil.filter(function (x) { return x.kelas === km2 && (x.tahun || 2023) <= thnC; });
+      var km2 = app.kelasMobil || 'pikap', thnC = KAL.tgl(S.hari).y, bebasThnC = !!(TOWER && TOWER.bukaSemuaTahun(S));
+      var listMobil = N.mobil.filter(function (x) { return x.kelas === km2 && (bebasThnC || (x.tahun || 2023) <= thnC); });
       return html + chipTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + '<ul class="daftar belanja">' + listMobil.map(function (x) {
         var pnpM = x.bentuk === 'pikap' ? 0 : Math.max(0, (x.kursi || (N.bisnisMobil && N.bisnisMobil.kapasitas[x.bentuk]) || 5) - 1);
         var infoTangki = x.bbm === 'listrik'
@@ -1484,12 +1497,12 @@
       return html;
     }
     if (tab === 'kaset') {
-      var thnGm = KAL.tgl(S.hari).y;
+      var thnGm = KAL.tgl(S.hari).y, bebasThnG = !!(TOWER && TOWER.bukaSemuaTahun(S));
       html += chipTab('gameKonsolFilter', [['semua', 'Semua'], ['ps1', 'PS1'], ['ps2', 'PS2'], ['ps3', 'PS3'], ['ps4', 'PS4'], ['ps5', 'PS5']], filterK);
       var daftarG = (N.gameKonsol || []).filter(function (g) {
         if (filterK !== 'semua' && g.konsol !== filterK) return false;
         var milikG = !!(S.game && S.game.kaset && S.game.kaset[g.id]);
-        return milikG || (g.tahun || 2023) <= thnGm;
+        return milikG || bebasThnG || (g.tahun || 2023) <= thnGm;
       });
       html += '<ul class="daftar belanja">' + daftarG.map(function (g) {
         var milik = S.game && S.game.kaset && S.game.kaset[g.id];
@@ -1708,13 +1721,13 @@
       if (tab === 'hp') {
         html += chipTab('merekGadget', [['semua', 'Semua'], ['jumbo', '🔋 Jumbo ≥6000mAh'], ['Unihertz', 'Unihertz'], ['Doogee', 'Doogee'], ['Oukitel', 'Oukitel'], ['ASUS', 'ASUS'], ['TECNO', 'TECNO'], ['Apple', 'Apple'], ['Samsung', 'Samsung'], ['Xiaomi', 'Xiaomi'], ['OPPO', 'OPPO'], ['Realme', 'Realme'], ['Infinix', 'Infinix'], ['Vivo', 'Vivo']], merekFilter);
       }
-      var thnKini = KAL.tgl(S.hari).y;
+      var thnKini = KAL.tgl(S.hari).y, bebasThnHp = !!(TOWER && TOWER.bukaSemuaTahun(S));
       var listG = N.daftarGadget.filter(function (g) {
         if (tab === 'hp' && g.jenis !== 'hp') return false;
         if (tab === 'tablap' && g.jenis === 'hp') return false;
         var rilisG = +(g.tahunRilis || g.tahun || 2023);
         var sudahPunya = !!(S.gadget && S.gadget[g.id]);
-        if (!sudahPunya && rilisG > thnKini) return false;
+        if (!sudahPunya && !bebasThnHp && rilisG > thnKini) return false;
         if (tab === 'hp' && merekFilter === 'jumbo') return (g.mah || 0) >= 6000;
         if (tab === 'hp' && merekFilter !== 'semua' && g.merek !== merekFilter) return false;
         return true;
@@ -3047,8 +3060,8 @@
       ? (S.teman || []).filter(function (x) { return x.id === targetId; })[0]
       : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
     if (!target) return toast('Penerima tidak ditemukan.', 2000);
-    var balikApp = targetJenis === 'teman' ? 'teman' : 'keluarga', thnHad = KAL.tgl(S.hari).y;
-    var listHad = (DIRI.KATALOG_HADIAH || []).filter(function (it) { return (it.tahun || 2023) <= thnHad; });
+    var balikApp = targetJenis === 'teman' ? 'teman' : 'keluarga', thnHad = KAL.tgl(S.hari).y, bebasThnH = !!(TOWER && TOWER.bukaSemuaTahun(S));
+    var listHad = (DIRI.KATALOG_HADIAH || []).filter(function (it) { return bebasThnH || (it.tahun || 2023) <= thnHad; });
     bukaLembar('hadiah', kepala('🎁 Belikan / Kredit untuk ' + target.nama, 'Pilih HP, Motor, atau Rumah (Katalog ' + thnHad + ')', '<button type="button" class="panah" data-app="' + balikApp + '" aria-label="Kembali">‹</button>') +
       '<ul class="daftar belanja">' + listHad.map(function (it) {
         var dpRp = Math.round(it.harga * it.dp / 10000) * 10000;
@@ -3111,6 +3124,252 @@
     toast('Offline dari ' + nmOff + '. Hari ini ' + S.ojek.hariIni.trip + ' order, ' + rupiah(S.ojek.hariIni.bersih) + '.', 2600);
   }
   var NAMA_JENIS = { penumpang: 'penumpang', barang: 'paket', makanan: 'makanan' };
+  /* ---------- Tutorial Awal Game (Bisa Skip) & Control Tower (30x Tap) ---------- */
+  var TUTORIAL_LANGKAH = [
+    {
+      ikon: '🚐',
+      judul: 'Selamat Datang di The Driver!',
+      isi: 'Kamu memulai perjalanan hidup di tahun 2023 dengan modal awal <b>Rp5.000.000</b> (Rp4.850.000 di rekening bank + Rp150.000 tunai di dompet). Mulai dari narik ojek online, naik kelas ke GoCar/GrabCar, lalu bangun armada Travel antarkota se-Indonesia!'
+    },
+    {
+      ikon: '📊',
+      judul: 'Pantau 6 Status di Dock Bawah',
+      isi: 'Di bagian paling bawah layar ada 6 bar: <b>Makan, Minum, Stamina, HB, Baterai HP, dan BBM</b>. Ketuk langsung bar mana saja untuk aksi cepat — makan/minum, isi bensin, tidur, atau sambungkan Power Bank saat narik.'
+    },
+    {
+      ikon: '📱',
+      judul: 'HP = Pusat Semua Aktivitas',
+      isi: 'Tekan ikon <b>HP</b> di dock bawah untuk membuka aplikasi penting: <b>Kendaraan</b> (beli motor bekas/kredit & mobil + upgrade), <b>Driver</b> (daftar Gojek/Grab), <b>Travel & Kas Travel</b> (rekrut hingga 10 supir), <b>Bank & QRIS</b>, <b>Keluarga</b>, dan <b>Properti</b>.'
+    },
+    {
+      ikon: '🚦',
+      judul: 'Kecepatan & Kondisi Jalan Realistis',
+      isi: 'Mode normal menyediakan kecepatan <b>Level 1–4</b> yang memperhitungkan kondisi jalan asli (tol, aspal mulus, bergelombang, rusak, tanah) dan cuaca hujan. <b>Level 5 (Top Speed)</b> tergembok 🔒 khusus <b>Mode VVIP</b>.'
+    },
+    {
+      ikon: '📅',
+      judul: 'Hidup Sehat & Tahun Terus Berjalan',
+      isi: 'Jaga kesehatan & BPJS, beri nafkah pasangan, dan bayar cicilan tepat waktu agar SLIK kredit tetap bersih. Katalog <b>HP, motor, mobil, & game</b> mengikuti tahun rilis asli — seri 2024–2026 akan muncul otomatis saat tahun berganti!'
+    }
+  ];
+  function bukaTutorial(step) {
+    var i = Math.max(0, Math.min(TUTORIAL_LANGKAH.length - 1, +step || 0));
+    var t = TUTORIAL_LANGKAH[i], akhir = i >= TUTORIAL_LANGKAH.length - 1;
+    var dots = TUTORIAL_LANGKAH.map(function (_, idx) { return '<i' + (idx === i ? ' class="on"' : '') + '></i>'; }).join('');
+    bukaLembar('tutorial',
+      kepala('📖 Panduan Bermain', 'Langkah ' + (i + 1) + ' dari ' + TUTORIAL_LANGKAH.length, '', '<button type="button" class="chip-tombol" data-tut="skip">Lewati</button>') +
+      '<div class="tut-kartu"><div class="tut-ikon">' + t.ikon + '</div><h4>' + esc(t.judul) + '</h4><p>' + t.isi + '</p></div>' +
+      '<div class="tut-dots">' + dots + '</div>' +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      (i > 0 ? '<button type="button" class="chip-tombol" style="flex:1;padding:11px" data-tut="' + (i - 1) + '">‹ Sebelumnya</button>' : '<button type="button" class="chip-tombol" style="flex:1;padding:11px" data-tut="skip">Skip Tutorial</button>') +
+      (akhir
+        ? '<button type="button" class="aksi" style="flex:1.4" data-tut="skip">Mulai Bermain!</button>'
+        : '<button type="button" class="aksi" style="flex:1.4" data-tut="' + (i + 1) + '">Lanjut ›</button>') +
+      '</div>');
+  }
+
+  var towerUI = { tab: 'akun', pilihId: null, targetDana: 'bank', kodeTerakhir: '', pesan: '', salah: false };
+  function stateTower() {
+    if (S) return S;
+    var lama = SIMPAN.baca();
+    return (lama && lama.v >= 1) ? lama : null;
+  }
+  function simpanStateTower(st) {
+    if (!st) return;
+    if (S && st === S) { simpan(); perbaruiHUD(true); perbaruiAksi(); travelKunci = ''; panelTravel(true); panelOjek(true); }
+    else { SIMPAN.tulis(st); isiLayarAwal(); }
+  }
+  function bukaControlTower() {
+    if (!TOWER) return;
+    var st = stateTower();
+    var daftar = TOWER.daftarAkun(st);
+    if (!towerUI.pilihId || !daftar.some(function (a) { return a.id === towerUI.pilihId; })) {
+      towerUI.pilihId = (st && st.akunId) || (daftar[0] && daftar[0].id) || null;
+    }
+    var ak = daftar.filter(function (a) { return a.id === towerUI.pilihId; })[0] || null;
+    var tab = towerUI.tab || 'akun';
+    var tabsHtml = '<div class="chip-baris" style="margin-bottom:8px">' +
+      [['akun', '👤 Akun & Fitur'], ['uang', '💰 Suntik Dana'], ['voucher', '🎟️ Voucher'], ['dunia', '🌍 Dunia & Log']].map(function (tb) {
+        return '<button type="button" class="chip-tombol' + (tab === tb[0] ? ' pilih' : '') + '" data-ct="tab:' + tb[0] + '">' + tb[1] + '</button>';
+      }).join('') + '</div>';
+    var pesanHtml = towerUI.pesan ? '<p class="racik-pesan ' + (towerUI.salah ? 'salah' : 'siap') + '">' + esc(towerUI.pesan) + '</p>' : '';
+    var isi = '';
+    if (tab === 'akun') {
+      isi += '<h3 class="subjudul">Pilih Akun Target (' + daftar.length + ' terdaftar)</h3>' +
+        '<div class="chip-baris">' + (daftar.length ? daftar.map(function (a) {
+          var isAktif = !!(st && st.akunId === a.id);
+          return '<button type="button" class="chip-tombol' + (ak && ak.id === a.id ? ' pilih' : '') + '" data-ct="pilih:' + esc(a.id) + '">' + esc(a.nama) + (isAktif ? ' ★' : '') + ' (' + esc(a.id) + ')</button>';
+        }).join('') : '<small>Belum ada akun. Tambah akun baru di bawah atau mulai game dulu.</small>') + '</div>';
+      if (ak) {
+        var live = !!(st && st.akunId === ak.id);
+        isi += '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin-top:8px">' +
+          '<b>' + esc(ak.nama) + ' · ' + esc(ak.id) + (live ? ' (Akun Aktif ★)' : ' (Akun Terdaftar)') + '</b>' +
+          '<small>' + (live ? ('Bank: ' + rupiah((st.bank && st.bank.saldo) || 0) + ' · Dompet: ' + rupiah((st.uang && st.uang.dompet) || 0) + ' · Tahun ' + KAL.tgl(st.hari).y) : ('Dana antre: ' + rupiah(ak.pendingUang || 0))) + '</small>' +
+          '<div class="chip-baris" style="margin-top:8px">' +
+          '<button type="button" class="chip-tombol' + (ak.vvip ? ' pilih' : '') + '" data-ct="fitur:vvip|' + (ak.vvip ? '0' : '1') + '">' + (ak.vvip ? '🔓 VVIP Lv 5: AKTIF' : '🔒 VVIP Lv 5: MATI') + '</button>' +
+          '<button type="button" class="chip-tombol' + (ak.sandbox ? ' pilih' : '') + '" data-ct="fitur:sandbox|' + (ak.sandbox ? '0' : '1') + '">' + (ak.sandbox ? '🧪 Sandbox: AKTIF' : '🧪 Sandbox: MATI') + '</button>' +
+          '<button type="button" class="chip-tombol' + (ak.kebal ? ' pilih' : '') + '" data-ct="fitur:kebal|' + (ak.kebal ? '0' : '1') + '">' + (ak.kebal ? '🛡️ Kebal: ON' : '🛡️ Kebal: OFF') + '</button>' +
+          '<button type="button" class="chip-tombol' + (ak.bukaTahun ? ' pilih' : '') + '" data-ct="fitur:bukaTahun|' + (ak.bukaTahun ? '0' : '1') + '">' + (ak.bukaTahun ? '📅 Katalog 2023–2026: ON' : '📅 Katalog 2023–2026: OFF') + '</button>' +
+          (live ? '<button type="button" class="chip-tombol" data-ct="slik:1">✅ Pemutihan SLIK</button>' : '<button type="button" class="chip-tombol" data-ct="hapus:' + esc(ak.id) + '">Hapus Akun</button>') +
+          '</div></div>';
+      }
+      isi += '<h3 class="subjudul">Daftarkan Akun Pengguna Baru (mis. Akun Si A)</h3>' +
+        '<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:6px">' +
+        '<input id="ct-nama" class="input-teks" style="margin:0" type="text" maxlength="24" placeholder="Nama (mis. Si A)">' +
+        '<input id="ct-id" class="input-teks" style="margin:0" type="text" maxlength="14" placeholder="ID opsional (DRV-...)"></div>' +
+        '<div style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-ct="tambahAkun:1">+ Tambah Akun</button></div>';
+    } else if (tab === 'uang') {
+      var tgt = towerUI.targetDana || 'bank';
+      isi += '<p class="catatan" style="margin-top:0">Target akun: <b>' + esc(ak ? (ak.nama + ' (' + ak.id + ')') : 'Belum ada akun') + '</b></p>' +
+        '<div class="chip-baris">' +
+        [['bank', '🏦 Rekening Bank'], ['dompet', '👛 Dompet Tunai'], ['kastravel', '💼 Kas Travel']].map(function (t) {
+          return '<button type="button" class="chip-tombol' + (tgt === t[0] ? ' pilih' : '') + '" data-ct="targetDana:' + t[0] + '">' + t[1] + '</button>';
+        }).join('') + '</div>' +
+        '<h3 class="subjudul">Top-Up / Beli Uang Cepat</h3>' +
+        '<div class="grid-nominal">' +
+        [[1e6, '+1jt'], [5e6, '+5jt'], [10e6, '+10jt'], [50e6, '+50jt'], [100e6, '+100jt'], [500e6, '+500jt'], [1e9, '+1M'], [5e9, '+5M']].map(function (x) {
+          return '<button type="button" class="chip-tombol" data-ct="dana:' + x[0] + '">' + x[1] + '</button>';
+        }).join('') + '</div>' +
+        '<h3 class="subjudul">Nominal Bebas / Set Saldo Persis</h3>' +
+        '<input id="ct-nominal" class="input-teks" type="number" min="0" step="100000" placeholder="Masukkan nominal Rp (mis. 25000000)">' +
+        '<div class="chip-baris"><button type="button" class="chip-tombol pilih" data-ct="danaInput:add">+ Tambah Dana</button>' +
+        '<button type="button" class="chip-tombol" data-ct="danaInput:set">= Set Saldo Persis</button>' +
+        '<button type="button" class="chip-tombol" data-ct="setModal5jt:1">Reset Modal 5 Juta</button></div>';
+    } else if (tab === 'voucher') {
+      isi += '<p class="catatan" style="margin-top:0">Buat <b>Kode Aktivasi / Voucher</b> resmi untuk pengguna lain (mis. pengguna Si A yang membeli VVIP Lv 5, Mode Sandbox, atau Paket Uang). Pengguna cukup memasukkan kode ini di menu <b>Pengaturan</b> atau <b>Popup VVIP</b>.</p>' +
+        '<h3 class="subjudul">Generate Kode Produk</h3>' +
+        '<div class="chip-baris">' +
+        '<button type="button" class="chip-tombol pilih" data-ct="genKode:vvip">🔓 Kode VVIP Lv 5</button>' +
+        '<button type="button" class="chip-tombol pilih" data-ct="genKode:sandbox">🧪 Kode Mode Sandbox</button>' +
+        '</div><div class="grid-nominal" style="margin-top:6px">' +
+        ['5JT', '10JT', '50JT', '100JT', '500JT', '1M', '5M'].map(function (nk) {
+          return '<button type="button" class="chip-tombol" data-ct="genKode:uang|' + nk + '">💰 ' + nk + '</button>';
+        }).join('') + '</div>' +
+        (towerUI.kodeTerakhir ? '<div class="kode-box">' + esc(towerUI.kodeTerakhir) + '</div><div class="chip-baris"><button type="button" class="chip-tombol" data-ct="salinKode:1">📋 Salin Kode</button>' + (st ? '<button type="button" class="chip-tombol pilih" data-ct="pakaiKodeLangsung:1">⚡ Pakai ke Akun Ini</button>' : '') + '</div>' : '');
+    } else {
+      isi += (st ? (
+        '<h3 class="subjudul">Kontrol Waktu & Kondisi (Akun Aktif)</h3>' +
+        '<div class="chip-baris">' +
+        '<button type="button" class="chip-tombol pilih" data-ct="pulih:1">✨ Pulihkan 100% Semua Bar & BBM</button>' +
+        '<button type="button" class="chip-tombol" data-ct="lompatHari:1">+1 Hari</button>' +
+        '<button type="button" class="chip-tombol" data-ct="lompatHari:30">+30 Hari</button>' +
+        '<button type="button" class="chip-tombol" data-ct="lompatHari:365">+1 Tahun</button>' +
+        '</div><div class="chip-baris" style="margin-top:6px">' +
+        '<button type="button" class="chip-tombol" data-ct="jam:420">🌅 07.00</button>' +
+        '<button type="button" class="chip-tombol" data-ct="jam:720">☀️ 12.00</button>' +
+        '<button type="button" class="chip-tombol" data-ct="jam:1020">🌇 17.00</button>' +
+        '<button type="button" class="chip-tombol" data-ct="jam:1260">🌙 21.00</button>' +
+        '<button type="button" class="chip-tombol" data-ct="cuaca:cerah">☀️ Cerah</button>' +
+        '<button type="button" class="chip-tombol" data-ct="cuaca:hujan">🌧️ Hujan</button>' +
+        '</div>'
+      ) : '<p class="catatan">Masuk ke dalam game terlebih dahulu untuk memakai kontrol waktu/cuaca langsung.</p>') +
+      '<h3 class="subjudul">Log Aktivitas Control Tower</h3>' +
+      '<ul class="daftar">' + (TOWER.logTerbaru().length ? TOWER.logTerbaru().map(function (lg) {
+        return '<li><span><small>' + esc(lg.t) + ' · ' + esc(lg.teks) + '</small></span></li>';
+      }).join('') : '<li><span><small>Belum ada aktivitas tercatat.</small></span></li>') + '</ul>';
+    }
+    bukaLembar('tower',
+      kepala('🗼 Control Tower', st ? ('Akun aktif: ' + (st.namaPemain || 'Driver') + ' (' + (st.akunId || '-') + ')') : 'Mode Layar Luar (Admin Console)') +
+      '<div class="tower-banner"><small>OWNER ADMIN CONSOLE · THE DRIVER</small><b>Kontrol Akun, Mode VVIP Lv 5, Sandbox, Dana & Voucher</b></div>' +
+      tabsHtml + pesanHtml + isi);
+  }
+  function aksiTower(cmd, val) {
+    if (!TOWER) return;
+    var st = stateTower();
+    towerUI.pesan = ''; towerUI.salah = false;
+    var sc = $('lembar-isi') ? $('lembar-isi').scrollTop : 0;
+    if (cmd === 'tab') { towerUI.tab = val; return bukaControlTower(); }
+    if (cmd === 'pilih') { towerUI.pilihId = val; return bukaControlTower(); }
+    if (cmd === 'targetDana') { towerUI.targetDana = val; return bukaControlTower(); }
+    if (cmd === 'tambahAkun') {
+      var nm = $('ct-nama') ? $('ct-nama').value : '', cid = $('ct-id') ? $('ct-id').value : '';
+      var rT = TOWER.tambahAkun(nm, cid);
+      if (rT && rT.ok) { towerUI.pilihId = rT.akun.id; towerUI.pesan = rT.teks; } else { towerUI.pesan = rT; towerUI.salah = true; }
+      return bukaControlTower();
+    }
+    if (cmd === 'hapus') {
+      var rH = TOWER.hapusAkun(val, st);
+      if (rH && rH.ok) { towerUI.pilihId = null; towerUI.pesan = rH.teks; } else { towerUI.pesan = rH; towerUI.salah = true; }
+      return bukaControlTower();
+    }
+    if (cmd === 'fitur') {
+      var p = val.split('|');
+      var rF = TOWER.setFiturAkun(towerUI.pilihId, p[0], p[1] === '1', st);
+      if (rF && rF.ok) { towerUI.pesan = rF.teks; simpanStateTower(st); } else { towerUI.pesan = rF; towerUI.salah = true; }
+      bukaControlTower(); if ($('lembar-isi')) $('lembar-isi').scrollTop = sc; return;
+    }
+    if (cmd === 'slik') {
+      var rS = TOWER.putihkanSlik(st);
+      if (rS && rS.ok) { towerUI.pesan = rS.teks; simpanStateTower(st); } else { towerUI.pesan = rS; towerUI.salah = true; }
+      return bukaControlTower();
+    }
+    if (cmd === 'dana') {
+      var rD = TOWER.suntikDanaAkun(towerUI.pilihId, +val, towerUI.targetDana, st, false);
+      if (rD && rD.ok) { towerUI.pesan = rD.teks; simpanStateTower(st); } else { towerUI.pesan = rD; towerUI.salah = true; }
+      bukaControlTower(); if ($('lembar-isi')) $('lembar-isi').scrollTop = sc; return;
+    }
+    if (cmd === 'danaInput') {
+      var nom = $('ct-nominal') ? +$('ct-nominal').value : 0;
+      var rI = TOWER.suntikDanaAkun(towerUI.pilihId, nom, towerUI.targetDana, st, val === 'set');
+      if (rI && rI.ok) { towerUI.pesan = rI.teks; simpanStateTower(st); } else { towerUI.pesan = rI; towerUI.salah = true; }
+      bukaControlTower(); if ($('lembar-isi')) $('lembar-isi').scrollTop = sc; return;
+    }
+    if (cmd === 'setModal5jt') {
+      if (st && st.akunId === towerUI.pilihId) {
+        TOWER.suntikDanaAkun(towerUI.pilihId, 4850000, 'bank', st, true);
+        TOWER.suntikDanaAkun(towerUI.pilihId, 150000, 'dompet', st, true);
+        simpanStateTower(st);
+        towerUI.pesan = 'Saldo akun aktif di-reset tepat ke modal awal Rp5.000.000 (Rp4.850.000 bank + Rp150.000 dompet).';
+      } else {
+        towerUI.pesan = 'Pilih akun aktif dulu untuk reset modal 5 juta.'; towerUI.salah = true;
+      }
+      return bukaControlTower();
+    }
+    if (cmd === 'genKode') {
+      var gp = val.split('|'), akObj = TOWER.daftarAkun(st).filter(function (a) { return a.id === towerUI.pilihId; })[0];
+      var kd = TOWER.buatKode(gp[0], gp[1], akObj ? akObj.nama : '');
+      if (kd) { towerUI.kodeTerakhir = kd; towerUI.pesan = 'Kode aktivasi berhasil dibuat! Kirim ke pengguna target.'; }
+      return bukaControlTower();
+    }
+    if (cmd === 'salinKode') {
+      if (towerUI.kodeTerakhir && navigator.clipboard && navigator.clipboard.writeText) {
+        try { navigator.clipboard.writeText(towerUI.kodeTerakhir); } catch (e) {}
+      }
+      towerUI.pesan = 'Kode ' + towerUI.kodeTerakhir + ' siap ditempel.';
+      return bukaControlTower();
+    }
+    if (cmd === 'pakaiKodeLangsung') {
+      var rP = TOWER.redeemKode(st, towerUI.kodeTerakhir);
+      if (rP && rP.ok) { towerUI.pesan = rP.teks; simpanStateTower(st); } else { towerUI.pesan = rP; towerUI.salah = true; }
+      return bukaControlTower();
+    }
+    if (cmd === 'pulih') {
+      var rPu = TOWER.pulihkanSemua(st);
+      if (rPu && rPu.ok) { towerUI.pesan = rPu.teks; simpanStateTower(st); } else { towerUI.pesan = rPu; towerUI.salah = true; }
+      return bukaControlTower();
+    }
+    if (cmd === 'lompatHari' && st) {
+      var jh = Math.max(1, +val || 1);
+      st.hari += jh; st.hariKe = (st.hariKe || 1) + jh;
+      simpanStateTower(st);
+      towerUI.pesan = 'Waktu maju +' + jh + ' hari (sekarang ' + namaTanggal(st.hari, true) + ' ' + KAL.tgl(st.hari).y + ').';
+      return bukaControlTower();
+    }
+    if (cmd === 'jam' && st) {
+      st.menit = +val || 420;
+      simpanStateTower(st);
+      towerUI.pesan = 'Jam diatur ke ' + jam(st.menit) + '.';
+      return bukaControlTower();
+    }
+    if (cmd === 'cuaca' && st) {
+      st.dunia = st.dunia || { cuaca: {} };
+      st.dunia.cuaca = val === 'hujan' ? { hujan: true, mulai: 0, sampai: 1440, banjir: false } : { hujan: false, mulai: 0, sampai: 0, banjir: false };
+      simpanStateTower(st);
+      towerUI.pesan = 'Cuaca diubah ke ' + (val === 'hujan' ? 'Hujan 🌧️' : 'Cerah ☀️') + '.';
+      return bukaControlTower();
+    }
+  }
+
   /* baris percepatan (gigi) untuk kendaraan sehari-hari: normal 1–4 realistis, Level 5 terkunci 🔒 khusus Mode VVIP */
   var seretGigi = false;
   function bukaPopupVvip() {
@@ -3127,7 +3386,9 @@
       (aktif
         ? '<button type="button" class="chip-tombol" data-vvip="kunci">🔒 Kunci Kembali ke Normal (Lv 1–4)</button>'
         : '<button type="button" class="aksi" data-vvip="buka">' + (pernah ? '🔓 Buka Kembali Mode VVIP' : '🔓 Buka Gembok VVIP (' + rupiah(biaya) + ')') + '</button>') +
-      '</div><p class="catatan">Tanpa Mode VVIP, batas kecepatan maksimal adalah Level 4 dengan perhitungan kecepatan asli sesuai kondisi jalan & cuaca. Mode VVIP bisa dikunci atau dibuka kembali kapan saja di Pengaturan.</p>');
+      '</div>' +
+      (!aktif ? '<div class="atur-baris" style="display:block;margin-top:10px"><div><b>🎟️ Punya Kode Aktivasi VVIP?</b><span>Masukkan kode dari Admin / Control Tower</span></div><div style="display:flex;gap:6px;margin-top:6px"><input id="in-voucher" class="input-teks" style="margin:0;flex:1" type="text" maxlength="28" placeholder="TD-VVIP-XXXX-XXXX"><button type="button" class="chip-tombol pilih" data-voucher="redeem">Tukar</button></div></div>' : '') +
+      '<p class="catatan">Tanpa Mode VVIP, batas kecepatan maksimal adalah Level 4 dengan perhitungan kecepatan asli sesuai kondisi jalan & cuaca. Mode VVIP bisa dikunci atau dibuka kembali kapan saja di Pengaturan.</p>');
   }
   function labelGigi(jenis, id) {
     var vvip = TRAVEL.vvipAktif(S);
@@ -4050,6 +4311,21 @@
     $('lembar').onclick = function (e) {
       if (e.target === $('lembar') || e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
+      if ((b = e.target.closest('[data-ct]'))) { var cp = b.dataset.ct.split(':'); return aksiTower(cp[0], cp.slice(1).join(':')); }
+      if ((b = e.target.closest('[data-tut]'))) {
+        if (b.dataset.tut === 'skip') { if (S) { S.tutorialSelesai = true; simpan(); } tutupLembar(); toast('Selamat bermain! Modal awal Rp5.000.000 siap digunakan.', 2400); return; }
+        return bukaTutorial(+b.dataset.tut);
+      }
+      if ((b = e.target.closest('[data-voucher]'))) {
+        var vk = $('in-voucher') ? $('in-voucher').value : '';
+        var rv = TOWER ? TOWER.redeemKode(S, vk) : 'Sistem voucher belum siap.';
+        if (rv && rv.ok) {
+          simpan(); perbaruiHUD(true); perbaruiAksi(); travelKunci = ''; panelTravel(true); panelOjek(true);
+          toast(rv.teks, 3200);
+          if (lembar === 'vvip') bukaPopupVvip(); else bukaAtur();
+        } else toast(rv || 'Kode tidak valid.', 2600);
+        return;
+      }
       if ((b = e.target.closest('[data-vvip]'))) return aksiVvip(b.dataset.vvip);
       if ((b = e.target.closest('[data-trv]'))) { var tv = b.dataset.trv.split(':'); return aksiTravel(tv[0], tv.slice(1).join(':')); }
       if ((b = e.target.closest('[data-hud]'))) { var hu = b.dataset.hud.split(':'); return aksiHud(hu[0], hu.slice(1).join(':')); }
@@ -4116,6 +4392,22 @@
       }
     };
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lembar) tutupLembar(); });
+    /* Trigger rahasia Control Tower: tap layar luar (awal/setup) atau dalam game sebanyak 30x berturut-turut */
+    var ctTap = 0, ctWaktu = 0;
+    document.addEventListener('pointerdown', function (e) {
+      if (lembar === 'tower') return;
+      if (e.target && e.target.closest && e.target.closest('input, select, textarea')) return;
+      var skr = Date.now();
+      if (skr - ctWaktu > 2500) ctTap = 0;
+      ctWaktu = skr;
+      ctTap++;
+      if (ctTap >= 25 && ctTap < 30) toast('🗼 Control Tower: ' + (30 - ctTap) + ' tap lagi…', 1100);
+      if (ctTap >= 30) {
+        ctTap = 0;
+        towerUI.pesan = ''; towerUI.salah = false;
+        bukaControlTower();
+      }
+    }, true);
     $('adegan').addEventListener('pointerdown', function (e) {
       if (layar !== 'main') return;
       var r = $('adegan').getBoundingClientRect(), kena = ADEGAN.ketuk(e.clientX - r.left, e.clientY - r.top);

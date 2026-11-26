@@ -83,8 +83,8 @@
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = N.motor.filter(function (x) { return x.id === id; })[0]; if (!m) return 'Motor tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var thn = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
+    if (!bebasThn && (m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
     var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
@@ -158,10 +158,10 @@
   }
   function beliKredit(S, id, dp, tenor, cara) {
     var e = cekGarasi(S); if (e) return e;
-    if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
+    if (S.kreditBuruk && !(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S))) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = N.motor.filter(function (x) { return x.id === id; })[0]; if (!m) return 'Motor tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var thn = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
+    if (!bebasThn && (m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;
@@ -302,9 +302,13 @@
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'motor') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
   function borosGigi(S) { return gigi(S).boros; }
   function kmhGigi(S, km) {
-    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
-    /* batas realistis kecepatan rata-rata motor di jalan kota (<15 km: maks 55 km/j) & jarak jauh (>=15 km: maks 72 km/j) */
-    var batas = (km || 0) >= 15 ? 72 : 55;
+    var gi = gigi(S);
+    var v = gi.mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
+    var vmax = (g.KK_RUTE && g.KK_RUTE.vmaxKendaraan) ? g.KK_RUTE.vmaxKendaraan(S, 'motor') : 100;
+    var vvip5 = gi.id === 5 && S && S.vvip && S.vvip.aktif;
+    /* mode normal (Lv 1–4): batas realistis kota (<15 km: 55 km/j, >=15 km: 72 km/j); mode VVIP Lv 5: hingga top speed motor */
+    var batas = vvip5 ? ((km || 0) >= 15 ? vmax : Math.min(vmax, 95)) : ((km || 0) >= 15 ? 72 : 55);
+    if (vvip5) v = Math.max(v, batas * 0.9);
     return Math.max(8, Math.min(batas, v));
   }
   /* jalan: kurangi bensin, tambah km, hitung waktu dan kejadian */
@@ -313,7 +317,10 @@
     if (!cukup(S, km)) return { ok: false, alasan: m.bbm === 'listrik' ? 'Baterai motor tidak cukup.' : 'Bensin tidak cukup. Isi bensin dulu di aplikasi Motor.' };
     var menit = Math.round(km / kmhGigi(S, km) * 60) + 3 * (stop || 1), kabar = [];
     if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml * borosGigi(S));
-    if (m.olisamping) S.hariIni.bensin = (S.hariIni.bensin || 0) + Math.round(km / m.kml * 3000); /* oli samping 2-tak, perkiraan */
+    if (m.olisamping) {
+      var biayaOli2t = Math.round(km / m.kml * 3000 / 100) * 100;
+      if (biayaOli2t > 0 && bayarTunaiMotor(S, biayaOli2t, 'Oli samping 2-tak ' + m.nama)) S.hariIni.bensin = (S.hariIni.bensin || 0) + biayaOli2t;
+    }
     m.km += km;
     if (Math.random() < peluangMogok(S)) {
       var bengkel = 50000 + Math.floor(Math.random() * 3) * 50000;
@@ -338,8 +345,16 @@
     for (var mi = armadaM.length - 1; mi >= 0; mi--) {
       var mt = armadaM[mi];
       if (mt.bbm === 'listrik' && mt.baterai < mt.jarakPenuh) {
-        var kwh = (mt.jarakPenuh - mt.baterai) / mt.jarakPenuh * mt.kwh, biaya = Math.round(kwh * R.tarifListrik);
-        mt.baterai = mt.jarakPenuh; S.hariIni.listrikMotor = (S.hariIni.listrikMotor || 0) + biaya;
+        if (S.rumah && S.rumah.padam) {
+          kabar.push('⚡ Listrik tempat tinggal padam — motor listrik ' + mt.nama + ' tidak bisa dicas semalam.');
+        } else {
+          var kwh = (mt.jarakPenuh - mt.baterai) / mt.jarakPenuh * mt.kwh, biaya = Math.round(kwh * R.tarifListrik);
+          if (S.rumah && typeof S.rumah.kwh === 'number') {
+            S.rumah.kwh = Math.max(0, S.rumah.kwh - kwh);
+            if (S.rumah.kwh <= 0) S.rumah.padam = true;
+          }
+          mt.baterai = mt.jarakPenuh; S.hariIni.listrikMotor = (S.hariIni.listrikMotor || 0) + biaya;
+        }
       }
       var k = mt.kredit;
       if (k && (k.sisa > 0 || k.tunggakan > 0)) {

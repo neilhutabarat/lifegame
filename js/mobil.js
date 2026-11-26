@@ -201,8 +201,8 @@
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = model(id); if (!m) return 'Mobil tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var thn = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
+    if (!bebasThn && (m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
     tambahArmada(S, mobilBaru(m, S)); return true;
@@ -214,10 +214,10 @@
   }
   function beliKredit(S, id, dp, tenor, cara) {
     var e = cekGarasi(S); if (e) return e;
-    if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
+    if (S.kreditBuruk && !(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S))) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = model(id); if (!m) return 'Mobil tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var thn = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
+    if (!bebasThn && (m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;
@@ -353,10 +353,15 @@
   }
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
   function kmhGigi(S, km) {
-    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
+    var gi = gigi(S);
+    var v = gi.mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
     var vmax = (g.KK_RUTE && g.KK_RUTE.vmaxKendaraan) ? g.KK_RUTE.vmaxKendaraan(S, 'mobil') : 170;
-    /* batas realistis kecepatan rata-rata: dalam kota (<35 km: maks 58), luar kota (35–50 km: maks 90), antarkota (>=50 km: hingga 130 km/j) */
-    var batas = (km || 0) >= 50 ? Math.min(vmax, 130) : (km || 0) >= 35 ? 90 : 58;
+    var vvip5 = gi.id === 5 && S && S.vvip && S.vvip.aktif;
+    /* mode normal (Lv 1–4): batas realistis (<35 km: maks 58, 35–50 km: maks 90, >=50 km: maks 130); mode VVIP Lv 5: melaju hingga top speed */
+    var batas = vvip5
+      ? ((km || 0) >= 50 ? vmax : (km || 0) >= 20 ? Math.min(vmax, 145) : Math.min(vmax, 95))
+      : ((km || 0) >= 50 ? Math.min(vmax, 130) : (km || 0) >= 35 ? 90 : 58);
+    if (vvip5) v = Math.max(v, batas * 0.92);
     return Math.max(8, Math.min(batas, v));
   }
   function cukup(S, km) {
@@ -372,8 +377,8 @@
     m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
     if (Math.random() < 0.0008 + (m.ngelitik ? 0.008 : 0) + (telatServis(S) + telatBan(S) * 0.4) / 2500 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;
-      if (danaRawat(S) >= bengkel) bayarRawat(S, bengkel, 'Derek dan bengkel ' + m.nama);
-      S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; kabar.push('Mobil mogok di jalan. Derek dan bengkel ' + rp(bengkel) + ' (Kas Travel), telat sekitar 1,5 jam.');
+      var dibayarB = (g.KK_TRAVEL && g.KK_TRAVEL.bayarKasTravel) ? g.KK_TRAVEL.bayarKasTravel(S, bengkel, 'Derek dan bengkel ' + m.nama, S.hari, true) : bayarRawat(S, bengkel, 'Derek dan bengkel ' + m.nama);
+      S.hariIni.bengkel = (S.hariIni.bengkel || 0) + dibayarB; kabar.push('Mobil mogok di jalan. Derek dan bengkel ' + rp(dibayarB) + ', telat sekitar 1,5 jam.');
     }
     return { ok: true, menit: menit, kabar: kabar };
   }

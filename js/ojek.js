@@ -162,6 +162,7 @@
   }
   function ambil(S) {
     var o = S.ojek, x = o.tawaran; if (!x) return 'Order sudah tidak ada.';
+    if (S.diri && S.diri.stamina < 10) return 'Kamu terlalu capek untuk menerima order. Istirahat sebentar dulu.';
     var km = x.jemput + x.km, isCar = o.mode === 'mobil';
     var kend = isCar ? g.KK_MOBIL : g.KK_MOTOR;
     if (!kend.cukup(S, km)) return isCar ? 'Bensin / baterai mobil tidak cukup untuk order ini.' : 'Bensin tidak cukup untuk order ini.';
@@ -177,9 +178,24 @@
   function kedaluwarsa(S) { var o = S.ojek; o.tawaran = null; o.berikut = waktu(S) + jeda(S); }
 
   function selesai(S) {
-    var o = S.ojek, tr = o.trip, x = tr.x, kabar = tr.kabar.slice(), dapat = x.bersih;
-    o.dompet += x.bersih;
-    if (x.tip) { o.dompet += x.tip; dapat += x.tip; kabar.push(x.nama + ' memberi tip ' + rp(x.tip) + '.'); }
+    var o = S.ojek, tr = o.trip, x = tr.x, kabar = tr.kabar.slice(), dapat = x.bersih + (x.tip || 0);
+    var caraTeks = '';
+    if (x.tunai) {
+      /* order bayar tunai: uang penumpang masuk langsung ke Dompet Pribadi, potongan aplikasi ditarik dari saldo dompet aplikasi (atau diselisihkan jika belum cukup) */
+      var komisi = Math.max(0, (x.tarif || x.bersih) - x.bersih);
+      S.uang = S.uang || { kecil: 0, besar: 0, dompet: 0 };
+      if (o.dompet >= komisi) {
+        o.dompet -= komisi;
+        S.uang.dompet = (S.uang.dompet || 0) + (x.tarif || x.bersih) + (x.tip || 0);
+      } else {
+        S.uang.dompet = (S.uang.dompet || 0) + dapat;
+      }
+      caraTeks = ' (Tunai → Dompet)';
+    } else {
+      o.dompet += dapat;
+      caraTeks = ' (Non-tunai → Saldo Driver)';
+    }
+    if (x.tip) kabar.push(x.nama + ' memberi tip ' + rp(x.tip) + '.');
     o.pos = o.pos || { x: 0, y: 0 };
     o.pos.x += (x.dx != null ? x.dx : x.km);
     o.pos.y += (x.dy != null ? x.dy : 0);
@@ -192,7 +208,7 @@
       S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
     }
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + dapat;
-    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + '.');
+    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + caraTeks + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
   }
