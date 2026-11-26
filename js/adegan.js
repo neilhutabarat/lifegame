@@ -1014,67 +1014,100 @@
     if (v === 'pelukan') { cx.fillStyle = 'rgba(40,20,50,.85)'; for (var gd = 0; gd < 9; gd++) cx.fillRect(gd * 42 - 10, 300 - ((gd * 37) % 90), 30, 200); }
     /* karakter & selimut: tiap lokasi punya properti & suasana berbeda (kasur kamar, kursi sofa ruang tamu, depan TV, hotel, kamar mandi, balkon) */
     var isRanjang = v === 'kamar' || v === 'hotel' || v === 'sofa' || v === 'tv';
+    var isForeplayIntro = !!(A.isLong && u < 0.30);
     var g2 = Math.sin(t / 210 + 1.1) * 6;
     var dekatC = Math.abs(Math.sin(t / 460)) * 8;
     var rr = (v === 'pelukan' || v === 'ciuman') ? 30 : 27;
     var tpA = s.tampilan || tampilanDariNama(s.namaPemain || '', gA, false);
     var tpB = A.tpB || tampilanDariNama(A.nama || '', gB, false);
     if (isRanjang) {
-      var ritme = Math.sin(t / 185);
-      var naikTurun = ritme * 9.5;
-      var pantulKasur = Math.max(0, -ritme) * 2.5;
+      var ritme = Math.sin(t / 195);
+      var naikTurun = ritme * 7.5;
+      var pantulKasur = Math.max(0, -ritme) * 2.0;
       var yRanjang = (v === 'tv' ? cy + 88 : cy + 62) + pantulKasur;
       /* properti alas berbeda sesuai lokasi */
       if (v === 'sofa') {
-        /* kursi sofa ruang tamu dengan sandaran & lengan sofa */
         kotakBulat(36, yRanjang - 42, 288, 66, 14, '#325a66');
         kotakBulat(28, yRanjang - 6, 26, 78, 10, '#274852');
         kotakBulat(306, yRanjang - 6, 26, 78, 10, '#274852');
         kotakBulat(54, yRanjang + 18, 252, 46, 10, '#3e6e7c');
-        kotakBulat(62, yRanjang - 8 + pantulKasur * 0.5, 52, 24, 10, '#f2c14e');
+        kotakBulat(58, yRanjang - 8 + pantulKasur * 0.4, 54, 24, 10, '#f2c14e');
       } else if (v === 'tv') {
-        /* karpet bulu & bantal lantai di depan TV */
         kotakBulat(26, yRanjang + 22, 308, 46, 16, '#3b2e4a');
         kotakBulat(54, yRanjang + 14, 252, 26, 10, '#54416b');
-        kotakBulat(62, yRanjang - 6 + pantulKasur * 0.5, 54, 24, 10, '#cbd5e1');
+        kotakBulat(58, yRanjang - 6 + pantulKasur * 0.4, 56, 24, 10, '#cbd5e1');
       } else {
-        /* kasur kamar tidur / hotel */
         kotakBulat(38, cy - 10, 22, 135, 8, v === 'hotel' ? '#4f224d' : '#5b3b2c');
         kotakBulat(46, yRanjang + 36, 276, 36, 10, v === 'hotel' ? '#3d1c3d' : '#4a3125');
         kotakBulat(54, yRanjang + 18, 262, 26, 8, '#f6f2eb');
-        kotakBulat(62, yRanjang - 8 + pantulKasur * 0.5, 58, 26, 11, '#ffffff');
+        kotakBulat(56, yRanjang - 10 + pantulKasur * 0.4, 62, 26, 11, '#ffffff');
       }
-      /* tentukan posisi cewek (berbaring di bantal) & cowok (di atas menimpa dalam selimut) */
       var cowokDiAtas = gA === 'cowok' ? { tp: tpA, g: 'cowok' } : { tp: tpB, g: 'cowok' };
       var cewekDiBawah = gA === 'cewek' ? { tp: tpA, g: 'cewek' } : { tp: tpB, g: 'cewek' };
-      /* kepala cewek bersandar di bantal, ikut sedikit bergoyang */
-      gambarKepalaPotret(94, yRanjang - 10 + pantulKasur * 0.8, 21, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.35 + ritme * 0.06, merem: true, tanpaLeher: true });
-      /* kepala & bahu cowok di atas cewek, bergerak naik-turun mengikuti irama */
-      gambarKepalaPotret(138 + ritme * 3, yRanjang - 44 + naikTurun, 21, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.42 + ritme * 0.08, merem: false, tanpaLeher: true });
-      /* kontur selimut tebal menutupi tubuh keduanya, melengkung realistis dan bergoyang naik-turun */
       var wrnSel = v === 'hotel' ? '#7a2a5e' : v === 'sofa' ? '#2c6a6a' : v === 'tv' ? '#3b4e8c' : '#b04a68';
       var wrnSelTua = v === 'hotel' ? '#5c1d46' : v === 'sofa' ? '#1f4f4f' : v === 'tv' ? '#29386b' : '#8c3550';
-      cx.fillStyle = wrnSel;
-      cx.beginPath();
-      cx.moveTo(106, yRanjang + 16);
-      cx.bezierCurveTo(132, yRanjang - 44 + naikTurun * 1.15, 198, yRanjang - 46 + naikTurun * 1.25, 242, yRanjang - 10 + naikTurun * 0.55);
-      cx.quadraticCurveTo(286, yRanjang + 2, 314, yRanjang + 16);
-      cx.lineTo(314, yRanjang + 68);
-      cx.lineTo(66, yRanjang + 68);
-      cx.lineTo(66, yRanjang + 22);
-      cx.closePath();
-      cx.fill();
-      /* lipatan & bayangan lembut di permukaan selimut agar efek 3D naik-turun terasa nyata */
-      cx.strokeStyle = 'rgba(255,255,255,.18)'; cx.lineWidth = 3;
-      cx.beginPath();
-      cx.moveTo(122, yRanjang + 4 + naikTurun * 0.6);
-      cx.quadraticCurveTo(180, yRanjang - 24 + naikTurun * 1.05, 252, yRanjang + 4 + naikTurun * 0.4);
-      cx.stroke();
-      cx.strokeStyle = wrnSelTua; cx.lineWidth = 2.5;
-      cx.beginPath();
-      cx.moveTo(116, yRanjang + 24 + naikTurun * 0.3);
-      cx.quadraticCurveTo(192, yRanjang + 4 + naikTurun * 0.6, 286, yRanjang + 26);
-      cx.stroke();
+      if (isForeplayIntro) {
+        /* Fase Foreplay Long Time: duduk berpelukan hangat & saling bersandar di atas ranjang/sofa sebelum masuk selimut */
+        var peluk = Math.sin(t / 420) * 3.5;
+        var yDuduk = yRanjang + 14;
+        /* tubuh cowok (kiri) & cewek (kanan) duduk berhadapan saling memeluk */
+        kotakBulat(112 + peluk, yDuduk - 50, 44, 56, 16, '#1f7a72');
+        kotakBulat(198 - peluk, yDuduk - 46, 42, 52, 16, '#c85a7c');
+        /* lengan saling merangkul bahu & punggung */
+        cx.strokeStyle = '#1f7a72'; cx.lineWidth = 10; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(148 + peluk, yDuduk - 34); cx.quadraticCurveTo(176, yDuduk - 22, 208 - peluk, yDuduk - 26); cx.stroke();
+        cx.strokeStyle = '#c85a7c'; cx.lineWidth = 9;
+        cx.beginPath(); cx.moveTo(204 - peluk, yDuduk - 34); cx.quadraticCurveTo(174, yDuduk - 40, 144 + peluk, yDuduk - 38); cx.stroke();
+        /* selimut masih terlipat rapi di ujung bawah kasur */
+        kotakBulat(88, yDuduk - 2, 224, 42, 12, wrnSel);
+        kotakBulat(88, yDuduk - 4, 224, 10, 5, 'rgba(255,255,255,.22)');
+        /* kepala saling mendekat & mata terpejam hangat */
+        gambarKepalaPotret(152 + peluk, yDuduk - 66, 22, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.16, merem: true, baju: '#1f7a72' });
+        gambarKepalaPotret(198 - peluk, yDuduk - 62, 21, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.18, merem: true, baju: '#c85a7c' });
+      } else {
+        /* Posisi tubuh proporsional: bahu & leher tersambung jelas ke kepala, seluruh tubuh tertutup selimut tebal */
+        var klCwk = cewekDiBawah.tp.kulitHex || '#f5cb9f';
+        var klCwo = cowokDiAtas.tp.kulitHex || '#f5cb9f';
+        /* 1. Bahu & tubuh bagian atas cewek berbaring di bantal */
+        cx.fillStyle = klCwk;
+        cx.beginPath(); cx.ellipse(112, yRanjang + 8 + pantulKasur * 0.4, 24, 13, -0.1, 0, Math.PI * 2); cx.fill();
+        /* 2. Kepala cewek bersandar natural di atas bantal */
+        gambarKepalaPotret(86, yRanjang - 8 + pantulKasur * 0.5, 20, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.28 + ritme * 0.05, merem: true, tanpaLeher: false });
+        /* 3. Bahu, punggung atas & lengan cowok di atas, tersambung mulus ke kepala & masuk ke dalam selimut */
+        cx.fillStyle = klCwo;
+        cx.beginPath(); cx.ellipse(158, yRanjang - 14 + naikTurun * 0.85, 28, 16, 0.28, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = klCwo; cx.lineWidth = 9; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(148, yRanjang - 18 + naikTurun * 0.8); cx.quadraticCurveTo(124, yRanjang - 6 + naikTurun * 0.4, 118, yRanjang + 10); cx.stroke();
+        /* 4. Kepala cowok proporsional di atas bahunya, menunduk lembut mengikuti irama */
+        gambarKepalaPotret(136 + ritme * 2.5, yRanjang - 36 + naikTurun * 0.75, 20.5, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.34 + ritme * 0.06, merem: true, tanpaLeher: false });
+        /* 5. Selimut tebal menutupi penuh kedua tubuh dari dada/punggung hingga kaki dengan siluet tubuh jelas & lipatan 3D */
+        cx.fillStyle = wrnSel;
+        cx.beginPath();
+        cx.moveTo(106, yRanjang + 16);
+        cx.bezierCurveTo(126, yRanjang - 28 + naikTurun * 0.95, 194, yRanjang - 34 + naikTurun * 1.05, 244, yRanjang - 6 + naikTurun * 0.45);
+        cx.quadraticCurveTo(286, yRanjang + 6, 314, yRanjang + 18);
+        cx.lineTo(314, yRanjang + 68);
+        cx.lineTo(66, yRanjang + 68);
+        cx.lineTo(66, yRanjang + 22);
+        cx.closePath();
+        cx.fill();
+        /* lipatan kerah atas selimut (cuff putih lembut) agar batas tubuh & selimut terlihat nyata */
+        cx.strokeStyle = 'rgba(255,255,255,.32)'; cx.lineWidth = 5; cx.lineCap = 'round';
+        cx.beginPath();
+        cx.moveTo(108, yRanjang + 14);
+        cx.quadraticCurveTo(144, yRanjang - 18 + naikTurun * 0.85, 188, yRanjang - 16 + naikTurun * 0.9);
+        cx.stroke();
+        /* lipatan bayangan tubuh di bawah selimut */
+        cx.strokeStyle = wrnSelTua; cx.lineWidth = 2.6;
+        cx.beginPath();
+        cx.moveTo(116, yRanjang + 24 + naikTurun * 0.3);
+        cx.quadraticCurveTo(192, yRanjang + 4 + naikTurun * 0.55, 286, yRanjang + 28);
+        cx.stroke();
+        cx.beginPath();
+        cx.moveTo(140, yRanjang + 40 + naikTurun * 0.2);
+        cx.quadraticCurveTo(212, yRanjang + 22 + naikTurun * 0.35, 302, yRanjang + 44);
+        cx.stroke();
+      }
     } else {
       var sepasang = (v === 'ciuman') ? [[150 + dekatC, cy - 6, 0.14 + Math.sin(t / 460) * 0.04], [210 - dekatC, cy - 4, -0.14 - Math.sin(t / 460) * 0.04]]
         : (v === 'foreplay') ? [[146 + irama * 3, cy - Math.abs(goyang) * 0.55, 0.12 + irama * 0.05], [214 - irama * 3, cy + 2 - Math.abs(g2) * 0.55, -0.12 - irama * 0.05]]
@@ -1106,7 +1139,7 @@
     var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
     cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,12,28,.75)'; cx.fillStyle = '#fff';
     cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif';
-    var jd = (HB_JUDUL[v] || 'Waktu berdua') + (A.nama ? ' · ' + A.nama : '');
+    var jd = (isForeplayIntro ? 'Foreplay · Pelukan hangat' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama : '');
     cx.strokeText(jd, W / 2, 212); cx.fillText(jd, W / 2, 212);
     cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
     kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#ff5c8a');
@@ -1545,20 +1578,50 @@
   function gambarMotorKu(x, y, id, o, t) {
     o = o || {};
     var bid = String(id || 'beat').replace(/-bekas$/, '');
-    var sport = !!SPORT[bid], retro = !!RETRO[bid], maxi = !!MAXI[bid], ayago = !!AYAGO[bid], trail = !!TRAIL[bid], klasik = bid === 'rxking' || bid === 'w175', cruiser = bid === 'harleysport';
+    var sport = !!SPORT[bid], retro = !!RETRO[bid], maxi = !!MAXI[bid], ayago = !!AYAGO[bid], trail = !!TRAIL[bid], klasik = bid === 'rxking' || bid === 'w175', cruiser = bid === 'harleysport', vario = bid === 'vario160' || bid === 'vario';
     var w = SPORT[bid] || WARNA_MOTOR[bid] || '#d9443a', putar = o.jalan ? t / 60 : 0;
     cx.save(); cx.translate(x, y); if (o.kiri) cx.scale(-1, 1);
     cx.fillStyle = 'rgba(0,0,0,.26)'; cx.beginPath(); cx.ellipse(0, 1, 31, 4.2, 0, 0, Math.PI * 2); cx.fill();
-    var rBan = trail ? 10 : 9;
+    var rBan = trail ? 10 : vario ? 9.6 : 9;
     [-20, 20].forEach(function (rx) {
-      bulat(rx, -rBan, rBan, '#191b1e'); bulat(rx, -rBan, rBan - 4, cruiser ? '#d4a843' : '#9aa3a6');
-      cx.strokeStyle = '#485058'; cx.lineWidth = 1.2; cx.beginPath();
-      for (var j = 0; j < 3; j++) { var a = putar + j * Math.PI / 3; cx.moveTo(rx + Math.cos(a) * (rBan - 4), -rBan + Math.sin(a) * (rBan - 4)); cx.lineTo(rx - Math.cos(a) * (rBan - 4), -rBan - Math.sin(a) * (rBan - 4)); }
+      bulat(rx, -rBan, rBan, '#191b1e');
+      bulat(rx, -rBan, rBan - 3.8, (cruiser || bid === 'vario160') ? '#c9a654' : '#9aa3a6');
+      cx.strokeStyle = '#3d434a'; cx.lineWidth = 1.25; cx.beginPath();
+      for (var j = 0; j < 5; j++) { var a = putar + j * Math.PI * 2 / 5; cx.moveTo(rx, -rBan); cx.lineTo(rx + Math.cos(a) * (rBan - 4), -rBan + Math.sin(a) * (rBan - 4)); }
       cx.stroke();
-      bulat(rx, -rBan, 1.8, '#e8ecef');
+      bulat(rx, -rBan, 2.2, '#cfd6dc');
     });
-    cx.strokeStyle = '#5a626a'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(-25, -9); cx.lineTo(-8, -7); cx.stroke();
-    if (trail) {
+    cx.strokeStyle = '#4a525a'; cx.lineWidth = 3.2; cx.beginPath(); cx.moveTo(-25, -9); cx.lineTo(-8, -7); cx.stroke();
+    if (vario) {
+      /* Honda Vario 160 / 125: desain tajam sporty-agresif, tameng V-shape + DRL LED ganda, dek rata, buntut runcing & knalpot sporty */
+      /* knalpot sporty + pelindung perak */
+      cx.strokeStyle = '#22262b'; cx.lineWidth = 4.2; cx.beginPath(); cx.moveTo(-24, -12); cx.lineTo(-9, -7); cx.stroke();
+      cx.strokeStyle = '#cbd5e1'; cx.lineWidth = 1.6; cx.beginPath(); cx.moveTo(-22, -11.5); cx.lineTo(-12, -8.5); cx.stroke();
+      /* rangka bawah & dek rata hitam doff */
+      kotakBulat(-16, -13, 30, 5, 2, '#1c2026');
+      /* bodi samping belakang meruncing agresif khas Vario 160 */
+      cx.fillStyle = w;
+      cx.beginPath();
+      cx.moveTo(-27, -23); cx.lineTo(-4, -21); cx.lineTo(2, -12); cx.lineTo(12, -12);
+      cx.lineTo(15, -28); cx.lineTo(25, -26); cx.lineTo(23, -15); cx.lineTo(17, -10);
+      cx.lineTo(-18, -11); cx.closePath(); cx.fill();
+      /* aksen sayap / garis bodi sporty */
+      cx.strokeStyle = bid === 'vario160' ? '#d4a843' : '#f8fafc'; cx.lineWidth = 1.4;
+      cx.beginPath(); cx.moveTo(-22, -19); cx.lineTo(-5, -18); cx.moveTo(14, -23); cx.lineTo(23, -21); cx.stroke();
+      /* jok 2-tingkat ergonomis Vario 160 */
+      cx.fillStyle = '#181a1e';
+      cx.beginPath(); cx.moveTo(-23, -23); cx.lineTo(-10, -25.5); cx.lineTo(0, -24.5); cx.lineTo(-1, -20.5); cx.lineTo(-22, -21); cx.closePath(); cx.fill();
+      /* batok setang & visor sporty */
+      kotakBulat(11, -34, 8, 6.5, 2.5, w);
+      cx.fillStyle = '#111827'; cx.beginPath(); cx.moveTo(15, -34); cx.lineTo(20, -32); cx.lineTo(18, -37.5); cx.lineTo(13, -36); cx.closePath(); cx.fill();
+      /* fork teleskopik depan + spakbor runcing */
+      cx.strokeStyle = '#2d333b'; cx.lineWidth = 2.4; cx.beginPath(); cx.moveTo(20, -10); cx.lineTo(15, -27); cx.stroke();
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(15, -17); cx.lineTo(27, -15); cx.lineTo(23, -13); cx.lineTo(16, -14); cx.closePath(); cx.fill();
+      /* lampu depan DRL LED putih tajam + lampu utama LED bawah & lampu rem merah tajam */
+      cx.strokeStyle = '#e0f4ff'; cx.lineWidth = 1.8; cx.beginPath(); cx.moveTo(21, -26); cx.lineTo(25.5, -24); cx.stroke();
+      kotakBulat(22, -23, 3.8, 4.5, 1.2, '#fff6c4');
+      kotak(-28, -22, 3, 4.5, '#ef4444');
+    } else if (trail) {
       /* Trail (KLX 150 / CRF150L / WR 155 R): spakbor depan tinggi, suspensi panjang, jok lurus tinggi */
       cx.fillStyle = w; cx.beginPath(); cx.moveTo(-26, -28); cx.lineTo(-6, -26); cx.lineTo(8, -32); cx.lineTo(24, -27); cx.lineTo(14, -18); cx.lineTo(-10, -18); cx.closePath(); cx.fill();
       kotakBulat(-22, -30, 22, 4.5, 2, '#1f2226');
@@ -1620,13 +1683,30 @@
     }
     if (o.muatan === 'paket') { kotak(-30, -44, 20, 16, '#c8a06a'); kotak(-30, -38, 20, 2, '#a5844f'); }
     if (o.muatan === 'makanan') { kotakBulat(-34, -50, 24, 24, 3, '#1f9a3f'); kotak(-32, -42, 20, 3, '#f3f1ea'); }
-    if (o.bonceng) orangMotor(-14, '#5f7f9a', '#f6f6f2', false);
-    if (o.naik) orangMotor(sport ? 2 : 0, '#1f9a3f', '#1f9a3f', true, o.hp, sport && !o.hp, o.tampilan, o.gender);
+    if (o.bonceng) orangMotor(-15, '#5f7f9a', '#f6f6f2', false, false, false, null, null, 'bonceng');
+    var gayaNaik = sport ? 'sport' : maxi ? 'maxi' : trail ? 'trail' : (klasik || cruiser || ayago) ? 'klasik' : 'skutik';
+    if (o.naik) orangMotor(sport ? 0 : -4, '#1f9a3f', '#1f9a3f', true, o.hp, sport && !o.hp, o.tampilan, o.gender, gayaNaik);
     cx.restore();
   }
-  function orangMotor(x, baju, helm, sopir, hp, nunduk, tp, gender) {
-    var yb = nunduk ? -50 : -54;
-    kotak(x - 4, -24, 6, 14, '#33414d');
+  function orangMotor(x, baju, helm, sopir, hp, nunduk, tp, gender, gaya) {
+    var yb = nunduk ? -48 : (gaya === 'trail' ? -56 : -52);
+    /* posisi kaki realistis menyesuaikan tipe motor: dek rata skutik/Vario 160, selonjor maxi, jepit tangki sport */
+    cx.strokeStyle = '#2d3a46'; cx.lineWidth = 5.5; cx.lineCap = 'round'; cx.lineJoin = 'round';
+    cx.beginPath();
+    if (gaya === 'sport') {
+      cx.moveTo(x - 2, -25); cx.lineTo(x + 7, -21); cx.lineTo(x - 1, -12);
+    } else if (gaya === 'maxi') {
+      cx.moveTo(x - 2, -25); cx.lineTo(x + 10, -21); cx.lineTo(x + 15, -13);
+    } else if (gaya === 'bonceng') {
+      cx.moveTo(x, -26); cx.lineTo(x + 6, -19); cx.lineTo(x + 4, -11);
+    } else {
+      /* skutik dek rata (Vario 160, BeAT, Scoopy, Vespa): paha maju, lutut menekuk rapi, kaki menapak di dek rata */
+      cx.moveTo(x - 2, -25); cx.lineTo(x + 9, -23); cx.lineTo(x + 10, -13);
+    }
+    cx.stroke();
+    /* sepatu menapak di pijakan / dek */
+    var xSep = gaya === 'sport' ? x - 2 : gaya === 'maxi' ? x + 14 : gaya === 'bonceng' ? x + 3 : x + 9;
+    kotakBulat(xSep, -14, 7, 3.8, 1.8, '#191b1e');
     cx.save(); cx.translate(x, yb); if (nunduk) cx.rotate(0.35);
     kotakBulat(-8, 0, 16, 26, 6, baju);
     if (sopir) kotak(-8, 10, 16, 3, '#f3f1ea');
@@ -1639,7 +1719,11 @@
       bulat(2, -8, 10, helm); kotak(4, -10, 9, 5, 'rgba(30,40,50,.75)');
     }
     cx.restore();
-    if (sopir && !hp) kotak(x + 8, yb + 8, 12, 4, baju);
+    /* lengan memegang setang / pegang HP saat standby */
+    if (sopir && !hp) {
+      cx.strokeStyle = baju; cx.lineWidth = 4.2; cx.lineCap = 'round';
+      cx.beginPath(); cx.moveTo(x + 4, yb + 9); cx.lineTo(x + 17, nunduk ? -30 : -32); cx.stroke();
+    }
     if (hp) { kotak(x + 7, yb + 5, 5, 9, '#222'); kotak(x + 8, yb + 6, 3, 6, '#7fd3e8'); }
   }
   var WARNA_MOBIL = {

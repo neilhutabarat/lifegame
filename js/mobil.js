@@ -229,13 +229,7 @@
     sinkronAktif(S);
   }
   function bayarDealer(S, jml, ket, cara) {
-    if (cara === 'kk') {
-      var err = g.KK_UANG.pakaiKk(S, jml, 'Dealer Mobil: ' + ket);
-      return err === true ? true : err;
-    }
-    if (S.bank.saldo < jml) return 'Saldo rekening tidak cukup untuk ' + ket + ' ' + rp(jml) + '.';
-    S.bank.saldo -= jml; M().catatBank(S, ket, -jml);
-    return true;
+    return g.KK_UANG.bayarPilihan(S, jml, 'Dealer Mobil: ' + ket, S._metodeBayar || cara || 'bank');
   }
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
@@ -327,10 +321,15 @@
 
   /* bensin / cas listrik SPKLU, servis, ban, dan pajak dibayar melalui Kas Travel (auto top-up dari bank < 50 jt) */
   function danaRawat(S) {
+    if (S._metodeBayar === 'dompet') return (S.uang && S.uang.dompet) || 0;
+    if (S._metodeBayar === 'bank') return Math.max(0, (S.bank && S.bank.saldo) || 0);
     if (g.KK_TRAVEL && g.KK_TRAVEL.danaKas) return g.KK_TRAVEL.danaKas(S);
     return Math.max(0, (S.bank && S.bank.saldo) || 0);
   }
   function bayarRawat(S, jml, ket) {
+    if (S._metodeBayar) {
+      return g.KK_UANG.bayarPilihan(S, jml, ket, S._metodeBayar) === true ? jml : 0;
+    }
     if (g.KK_TRAVEL && g.KK_TRAVEL.bayarKasTravel) return g.KK_TRAVEL.bayarKasTravel(S, jml, ket, S.hari, false);
     var p = Math.min(Math.max(0, S.bank.saldo), jml);
     if (p > 0) { S.bank.saldo -= p; M().catatBank(S, ket, -p); }

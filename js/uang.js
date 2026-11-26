@@ -117,6 +117,21 @@
     S.uang.dompet -= jml;
     return true;
   }
+  /* Pembayaran sesuai pilihan konfirmasi pemain: 'dompet' (Cash) | 'bank' (Transfer Bank) | 'kk' (Kartu Kredit). Tidak pernah memotong bank diam-diam jika Cash dipilih. */
+  function bayarPilihan(S, jml, ket, metode) {
+    var m = metode || (S && S._metodeBayar) || 'bank';
+    jml = Math.max(0, Math.round(+jml || 0));
+    if (jml <= 0) return true;
+    if (m === 'kk') return pakaiKk(S, jml, ket || 'Transaksi');
+    if (m === 'dompet' || m === 'cash') {
+      if (!bayarDompet(S, jml)) return 'Uang tunai (Cash) di dompet tidak cukup (' + rp(dompet(S)) + ', butuh ' + rp(jml) + '). Tarik tunai dulu atau pilih bayar lewat Bank.';
+      return true;
+    }
+    if (!S.bank || S.bank.saldo < jml) return 'Saldo rekening ' + bankIni(S).nama + ' tidak cukup (' + rp((S.bank && S.bank.saldo) || 0) + ', butuh ' + rp(jml) + ').';
+    S.bank.saldo -= jml;
+    catat(S, ket || 'Pembayaran', -jml);
+    return true;
+  }
   function pindahKeDompet(S, jml) {
     jml = Math.min(jml, laci(S));
     if (jml <= 0) return 'Laci kas kosong.';
@@ -469,7 +484,7 @@
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
 
   g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris, tutupQris: tutupQris,
-    biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, isiTabunganGaji: isiTabunganGaji, tarikTabunganGaji: tarikTabunganGaji, merchantTotal: merchantTotal,
+    biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, bayarPilihan: bayarPilihan, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, isiTabunganGaji: isiTabunganGaji, tarikTabunganGaji: tarikTabunganGaji, merchantTotal: merchantTotal,
     bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
     penghasilanKk: penghasilanKk, cicilKk: cicilKk, lunasiCicilanKk: lunasiCicilanKk, cicilanKk: cicilanKk, TENOR_KK: TENOR_KK, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,

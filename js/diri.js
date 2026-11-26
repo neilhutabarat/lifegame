@@ -445,8 +445,8 @@
   }
   function beliTokenKos(S, nominal) {
     var t = g.KK_USAHA.token(S, nominal);
-    if (S.bank.saldo < t.bayar) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= t.bayar; S.bank.mutasi.unshift({ n: S.hari, ket: 'Token listrik PLN ' + tempat(S) + ' ' + nominal.toLocaleString('id-ID'), jml: -t.bayar });
+    var by = g.KK_UANG.bayarPilihan(S, t.bayar, 'Token listrik PLN ' + tempat(S) + ' ' + nominal.toLocaleString('id-ID'), S._metodeBayar || 'bank');
+    if (by !== true) return by;
     S.rumah.kwh += t.kwh; S.rumah.padam = false;
     return { ok: true, kwh: t.kwh, bayar: t.bayar };
   }
@@ -496,13 +496,16 @@
     var d = S.diri, x = itemMakan(id); if (!x) return 'Tidak dikenal.';
     if (cara === 'gofood') {
       var biaya = hargaGofood(S, x);
-      if (!g.KK_UANG.bayarQris(S, biaya)) { if (S.bank.saldo < biaya) return 'Saldo tidak cukup untuk pesan ' + rp(biaya) + '.'; S.bank.saldo -= biaya; S.bank.mutasi.unshift({ n: S.hari, ket: 'GoFood ' + x.nama, jml: -biaya }); }
+      var byGf = g.KK_UANG.bayarPilihan(S, biaya, 'GoFood ' + x.nama, S._metodeBayar || 'bank');
+      if (byGf !== true) return byGf;
       S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
       d.kiriman = d.kiriman || []; d.kiriman.push({ tiba: S.hari * 1440 + S.menit + N.makanOjol.tunggu, kenyang: x.kenyang, minum: x.minum, nama: x.nama });
       return { ok: true, menit: 0, teks: 'Pesan ' + x.nama + ' lewat GoFood ' + rp(biaya) + ' termasuk ongkir. Sampai sekitar ' + N.makanOjol.tunggu + ' menit lagi.' };
     }
     var h = hargaItem(S, x);
-    if (!bayarTunai(S, h)) return 'Uang tunai di dompet pribadi tidak cukup (' + rp(h) + '). Tarik tunai ke dompet dulu atau pesan lewat GoFood.';
+    var byW = g.KK_UANG.bayarPilihan(S, h, 'Warung: ' + x.nama, S._metodeBayar || 'dompet');
+    if (byW !== true) return byW;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
     d.kenyang = batas(d.kenyang + x.kenyang); d.minum = batas(d.minum + x.minum);
     if (x.melek) d.stamina = batas(d.stamina + x.melek);
     var diKedai = d.posisi === 'kedai', menit = diKedai ? 10 : 15;
@@ -589,7 +592,36 @@
     var ac = !S.rumah.padam && adaAc(S);
     listrikKos(S, lama, true);
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
-    if (S.hp && !S.rumah.padam) { S.hp.baterai = 100; S.hp.cas = false; }
+    if (S.hp && !S.rumah.padam) {
+      if (S.hp.cas || !S.hp.pbPasang) { S.hp.baterai = 100; S.hp.cas = false; }
+      if (S.hp.pbCas) {
+        var pbInfoT = pbAktifInfo(S);
+        if (pbInfoT) {
+          var tambahPbT = (pbInfoT.model.wattIn || 18) * 200 * jam;
+          pbInfoT.state.sisaMah = Math.min(pbInfoT.model.mah, pbInfoT.state.sisaMah + tambahPbT);
+          if (pbInfoT.state.sisaMah >= pbInfoT.model.mah) S.hp.pbCas = false;
+        }
+      }
+    }
+    if (S.hp && S.hp.pbPasang) {
+      var pbInfoP = pbAktifInfo(S);
+      if (pbInfoP && pbInfoP.state.sisaMah > 0) {
+        var hmT = hpAktif(S), mahT = (hmT && hmT.mah) || 5000, wattT = (hmT && hmT.watt) || 18;
+        var wattEfT = Math.min(pbInfoP.model.wattOut || 18, Math.max(15, wattT));
+        var maksKirimT = wattEfT * 180 * jam;
+        var kurangHpT = Math.max(0, (100 - (S.hp.baterai || 0)) / 100 * mahT);
+        var kirimT = Math.min(maksKirimT, kurangHpT);
+        var sedotT = kirimT / 0.8;
+        if (sedotT > pbInfoP.state.sisaMah) {
+          kirimT = pbInfoP.state.sisaMah * 0.8;
+          pbInfoP.state.sisaMah = 0;
+          S.hp.pbPasang = false;
+        } else {
+          pbInfoP.state.sisaMah -= sedotT;
+        }
+        S.hp.baterai = Math.min(100, (S.hp.baterai || 0) + (kirimT / mahT) * 100);
+      }
+    }
     var spb = adaSpringbed(S), bnsH = (S.rumah && S.rumah.jenis !== 'rumah') ? (hunianInfo(S.rumah && S.rumah.hunianId).bonusTidur || 1) : 0.92;
     var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * (punya(S, 'airpurifier') ? 1.05 : 1) * (gelisah ? 0.8 : 1);
     d.stamina = batas(d.stamina + jam * 14 * mutu);
@@ -612,17 +644,8 @@
     return Math.round(b.harga * (1 - d) / 5000) * 5000;
   }
   function bayarBelanja(S, harga, ket, caraBayar) {
-    if (caraBayar === 'kk') {
-      var err = g.KK_UANG.pakaiKk(S, harga, ket);
-      return err === true ? true : err;
-    }
-    if (caraBayar === 'dompet') {
-      if (!g.KK_UANG.bayarDompet || !g.KK_UANG.bayarDompet(S, harga)) return 'Uang di dompet pribadi tidak cukup.';
-      return true;
-    }
-    if (S.bank.saldo < harga) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= harga; S.bank.mutasi.unshift({ n: S.hari, ket: ket, jml: -harga });
-    return true;
+    var m = S._metodeBayar || caraBayar || 'bank';
+    return g.KK_UANG.bayarPilihan(S, harga, ket, m);
   }
   function beliBarang(S, id, caraBayar, toko) {
     var b = barang(id); if (!b) return 'Barang tidak dikenal.';

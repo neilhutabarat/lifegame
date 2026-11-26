@@ -277,6 +277,66 @@
     } else if (jenis === 'salah') {
       mainNada(52, 0.12, 'sawtooth', 0.14, 0, masterEfek);
       mainNada(48, 0.18, 'sawtooth', 0.14, 0.09, masterEfek);
+    } else if (jenis === 'motor' || jenis === 'gas') {
+      /* Suara tarikan gas mesin motor/skutik realistis (sawtooth + lowpass filter) */
+      var tM = ctx.currentTime;
+      var oscM = ctx.createOscillator(), flt = ctx.createBiquadFilter(), gM = ctx.createGain();
+      oscM.type = 'sawtooth';
+      oscM.frequency.setValueAtTime(68, tM);
+      oscM.frequency.exponentialRampToValueAtTime(148, tM + 0.22);
+      oscM.frequency.exponentialRampToValueAtTime(102, tM + 0.48);
+      flt.type = 'lowpass'; flt.frequency.setValueAtTime(340, tM);
+      gM.gain.setValueAtTime(0.001, tM);
+      gM.gain.linearRampToValueAtTime(0.24, tM + 0.06);
+      gM.gain.exponentialRampToValueAtTime(0.001, tM + 0.52);
+      oscM.connect(flt); flt.connect(gM); gM.connect(masterEfek);
+      oscM.start(tM); oscM.stop(tM + 0.55);
+    } else if (jenis === 'klakson') {
+      /* Klakson motor Indonesia "tin-tin!" */
+      [0, 0.14].forEach(function (dl) {
+        mainNada(69, 0.09, 'square', 0.11, dl, masterEfek);
+        mainNada(73, 0.09, 'triangle', 0.12, dl, masterEfek);
+      });
+    } else if (jenis === 'order') {
+      /* Notifikasi order ojol masuk */
+      mainNada(79, 0.1, 'triangle', 0.28, 0, masterEfek);
+      mainNada(84, 0.1, 'triangle', 0.28, 0.09, masterEfek);
+      mainNada(88, 0.22, 'sine', 0.30, 0.18, masterEfek);
+    } else if (jenis === 'makan') {
+      /* Suara makan & minum segar */
+      mainNada(64, 0.06, 'triangle', 0.16, 0, masterEfek);
+      mainNada(71, 0.07, 'sine', 0.18, 0.09, masterEfek);
+      mainNada(76, 0.11, 'sine', 0.16, 0.18, masterEfek);
+    } else if (jenis === 'tidur') {
+      /* Lonceng pengantar tidur lembut */
+      mainNada(76, 0.28, 'sine', 0.18, 0, masterEfek);
+      mainNada(72, 0.32, 'sine', 0.16, 0.2, masterEfek);
+      mainNada(67, 0.45, 'sine', 0.15, 0.42, masterEfek);
+    } else if (jenis === 'cas') {
+      /* Suara colok charger / power bank */
+      mainNada(72, 0.08, 'sine', 0.2, 0, masterEfek);
+      mainNada(79, 0.18, 'sine', 0.24, 0.08, masterEfek);
+    } else if (jenis === 'hb' || jenis === 'foreplay' || jenis === 'ciuman') {
+      /* Suasana romantis lembut: detak jantung halus + petikan akor hangat */
+      var tH = ctx.currentTime;
+      [0, 0.26].forEach(function (dl, idx) {
+        var oH = ctx.createOscillator(), gH = ctx.createGain();
+        oH.type = 'sine';
+        oH.frequency.setValueAtTime(idx ? 58 : 70, tH + dl);
+        oH.frequency.exponentialRampToValueAtTime(36, tH + dl + 0.12);
+        gH.gain.setValueAtTime(0.001, tH + dl);
+        gH.gain.linearRampToValueAtTime(0.26, tH + dl + 0.02);
+        gH.gain.exponentialRampToValueAtTime(0.001, tH + dl + 0.15);
+        oH.connect(gH); gH.connect(masterEfek);
+        oH.start(tH + dl); oH.stop(tH + dl + 0.17);
+      });
+      var akorR = jenis === 'ciuman' ? [69, 73, 76] : [65, 69, 72, 76];
+      akorR.forEach(function (nd, idx) { mainNada(nd, 0.48, 'sine', 0.13, 0.05 + idx * 0.08, masterEfek); });
+    } else if (jenis === 'olahraga') {
+      /* Semangat olahraga / jogging */
+      mainNada(74, 0.08, 'triangle', 0.2, 0, masterEfek);
+      mainNada(79, 0.09, 'triangle', 0.22, 0.08, masterEfek);
+      mainNada(83, 0.16, 'sine', 0.22, 0.16, masterEfek);
     }
   }
 

@@ -67,13 +67,7 @@
     return null; /* bisa punya lebih dari 1 motor tanpa batas */
   }
   function bayarDealer(S, jml, ket, cara) {
-    if (cara === 'kk') {
-      var err = g.KK_UANG.pakaiKk(S, jml, 'Dealer Motor: ' + ket);
-      return err === true ? true : err;
-    }
-    if (S.bank.saldo < jml) return 'Saldo rekening tidak cukup untuk ' + ket + ' ' + rp(jml) + '.';
-    S.bank.saldo -= jml; catatBank(S, ket, -jml);
-    return true;
+    return g.KK_UANG.bayarPilihan(S, jml, 'Dealer Motor: ' + ket, S._metodeBayar || cara || 'bank');
   }
   function tambahArmada(S, m) {
     S.armadaMotor = S.armadaMotor || [];
@@ -213,9 +207,11 @@
      yang dianjurkan Pertamax) membuat mesin ngelitik: sedikit lebih sering mogok sampai diisi bensin yang sesuai */
   var RON = { pertalite: 90, pertamax: 92, turbo: 98 };
   function bayarTunaiMotor(S, biaya, ket) {
+    if (S._metodeBayar) {
+      return g.KK_UANG.bayarPilihan(S, biaya, ket || 'Biaya kendaraan motor', S._metodeBayar) === true;
+    }
     if (S.usaha && S.usaha.berhentiSewa) {
       if (g.KK_UANG.bayarDompet && g.KK_UANG.bayarDompet(S, biaya)) return true;
-      if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; catatBank(S, ket || 'Biaya kendaraan motor', -biaya); return true; }
       return false;
     }
     if (g.KK_UANG.laci(S) >= biaya) { bayarLaci(S, biaya); return true; }
@@ -258,8 +254,8 @@
   function bayarPajak(S) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
     var t = tagihanPajak(S); if (!t) return 'Pajak belum jatuh tempo.';
-    if (S.bank.saldo < t) return 'Saldo rekening tidak cukup.';
-    S.bank.saldo -= t; catatBank(S, 'Pajak tahunan ' + m.nama + ' (PKB + SWDKLLJ)', -t);
+    var by = g.KK_UANG.bayarPilihan(S, t, 'Pajak tahunan ' + m.nama + ' (PKB + SWDKLLJ)', S._metodeBayar || 'bank');
+    if (by !== true) return by;
     m.pajakTempo += 365; m.dendaPajak = 0; return true;
   }
   function tagihanPajak(S) {
@@ -290,9 +286,8 @@
   function gantiBan(S) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
     var h = hargaBan(m);
-    if ((S.uang.dompet || 0) >= h) { S.uang.dompet -= h; }
-    else if (S.bank.saldo >= h) { S.bank.saldo -= h; catatBank(S, 'Ganti ban ' + m.nama, -h); }
-    else return 'Uang tidak cukup untuk ganti ban (' + rp(h) + ').';
+    var by = g.KK_UANG.bayarPilihan(S, h, 'Ganti ban ' + m.nama, S._metodeBayar || 'dompet');
+    if (by !== true) return by;
     m.kmBan = m.km; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + h;
     return { ok: true, biaya: h, teks: 'Ban ' + m.nama + ' diganti baru (' + rp(h) + ').' };
   }

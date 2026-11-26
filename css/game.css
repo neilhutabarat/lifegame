@@ -301,13 +301,14 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .gelas-isi i { height: 0; animation: isiGelas .75s ease-out forwards; }
 @keyframes isiGelas { from { height: 0; } to { height: 64px; } }
 
-/* ---------- kebutuhan pemain di dock bawah (5 bar presisi: Makan/Minum digabung) ---------- */
-.diri { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; padding: 8px 10px 9px; text-align: left; align-items: center; }
+/* ---------- kebutuhan pemain di dock bawah (5 bar presisi: Makan/Minum digabung, anti-luber) ---------- */
+.diri { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; padding: 8px 8px 9px; text-align: left; align-items: center; }
 .dok-diri { background: rgba(251, 250, 246, .95); border: 1px solid rgba(255, 255, 255, .82); border-radius: 15px; box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .5); }
-.diri > span { font-size: 10px; font-weight: 800; color: var(--tinta); display: grid; gap: 4px; white-space: nowrap; min-width: 0; }
-.diri > span .bar-lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 2px; line-height: 1; }
-.diri > span .bar-lbl em { font-style: normal; font-size: 9.5px; font-weight: 800; color: var(--tinta-pudar); font-variant-numeric: tabular-nums; }
-.diri .meteran { display: block; height: 6.5px; border-radius: 99px; background: rgba(29, 43, 51, .12); margin: 0; }
+.diri > span { font-size: 9.5px; font-weight: 800; color: var(--tinta); display: grid; gap: 4px; white-space: nowrap; min-width: 0; overflow: hidden; }
+.diri > span .bar-lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 2px; line-height: 1; min-width: 0; overflow: hidden; }
+.diri > span .bar-lbl > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.2px; }
+.diri > span .bar-lbl em { flex-shrink: 0; font-style: normal; font-size: 9px; font-weight: 800; color: var(--tinta-pudar); font-variant-numeric: tabular-nums; }
+.diri .meteran { display: block; height: 6.5px; border-radius: 99px; background: rgba(29, 43, 51, .12); margin: 0; overflow: hidden; }
 .diri .meteran i { background: var(--kontainer); border-radius: 99px; }
 .diri .meteran.kritis i { background: var(--merah-libur); }
 .diri .meteran.hb i { background: #e91e63; }
