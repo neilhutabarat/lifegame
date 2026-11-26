@@ -19,7 +19,11 @@
   function rupiah(n) { n = Math.round(n); return (n < 0 ? '−Rp' : 'Rp') + Math.abs(n).toLocaleString('id-ID'); }
   function rupiahPendek(n) {
     var a = Math.abs(Math.round(n)), sg = n < 0 ? '−' : '';
-    function fmt(v, d) { return v.toFixed(d).replace(/\.?0+$/, '').replace('.', ','); }
+    function fmt(v, d) {
+      var s = v.toFixed(d);
+      if (d > 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+      return s.replace('.', ',');
+    }
     if (a >= 1e12) return sg + 'Rp' + fmt(a / 1e12, a >= 1e13 ? 1 : 2) + 'T';
     if (a >= 1e9) return sg + 'Rp' + fmt(a / 1e9, a >= 1e10 ? 1 : 2) + 'M';
     if (a >= 1e6) return sg + 'Rp' + fmt(a / 1e6, a >= 1e8 ? 0 : a >= 1e7 ? 1 : 2) + 'jt';
