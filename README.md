@@ -65,3 +65,4 @@ P16. Paket 2 Keluarga & Hotel: dompet/tabungan pasangan, nafkah wajib 40% + noti
 P17. Paket 3 Properti & Peta Indonesia: beli rumah di 31 kota/daerah seluruh Indonesia, tagihan air ledeng (PDAM) bulanan, daftar ruangan rumah kosongan, serta katalog & instalasi kasur/AC/TV/perabot per ruangan ✔
 P18. Pilihan lokasi HB (rumah/sofa/kamar mandi/balkon/penginapan/hotel) untuk pasangan/ipar/teman/siapa pun, tampilan & sistem GoCar/GrabCar disamakan dengan Ngojek, dan HUD menampilkan pekerjaan utama (GoCar/Travel) saat tidak ngojek ✔
 P19. Rute Travel diperluas jadi 45 kota seluruh Indonesia (Aceh s/d Jayapura beserta kapal laut) & beli/KPR rumah di kota, kecamatan, atau desa manapun dengan penyesuaian harga wilayah ✔
+P20. Perbaikan menyeluruh bug GoCar bensin/baterai (tab pilih Motor/Mobil di popup isi bensin, tombol isi/cas di garasi, bar ⚡Mobil EV, guard isi/kml/tangki), tombol GoCar & Travel dari rumah, jarak properti 45 kota, dan label kWh travel EV ✔

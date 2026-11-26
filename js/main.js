@@ -784,7 +784,7 @@
           baris('Pajak tahunan', pjk ? 'jatuh tempo ' + namaTanggal(m.pajakTempo) : (m.pajakTempo - S.hari) + ' hari lagi') +
           baris('Harga jual (usia & odometer)', m.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, m))) + '</ul>' +
           (listrik ? '' : '<p class="catatan">Isi bensin: ketuk bar Bensin di bagian atas layar.</p>') +
-          '<div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="oli:1">Ganti oli ' + rupiah(N.rawat.oli) + '</button><button type="button" class="chip-tombol" data-aksi="servis:1">Servis ' + rupiah(N.rawat.servis) + '</button><button type="button" class="chip-tombol" data-aksi="banMotor:1">Ganti ban ' + rupiah(MOTOR.hargaBan(m)) + '</button>' +
+          '<div class="chip-baris"><button type="button" class="chip-tombol pilih" data-aksi="bukaBensin:motor">' + (listrik ? '⚡ Cek baterai' : '⛽ Isi bensin') + '</button><button type="button" class="chip-tombol" data-aksi="oli:1">Ganti oli ' + rupiah(N.rawat.oli) + '</button><button type="button" class="chip-tombol" data-aksi="servis:1">Servis ' + rupiah(N.rawat.servis) + '</button><button type="button" class="chip-tombol" data-aksi="banMotor:1">Ganti ban ' + rupiah(MOTOR.hargaBan(m)) + '</button>' +
           (pjk ? '<button type="button" class="chip-tombol" data-aksi="pajakMotor:1">Bayar pajak ' + rupiah(pjk) + '</button>' : '') +
           (m.kredit ? '<button type="button" class="chip-tombol" data-aksi="lunasMotor:1">Lunasi kredit</button>' : '<button type="button" class="chip-tombol" data-aksi="jualMotor:1">Jual motor</button>') + '</div>' +
           '<h3 class="subjudul">Perlengkapan antar</h3><ul class="daftar angka">' + N.aksesoris.map(function (a) {
@@ -806,7 +806,7 @@
           baris('Pajak tahunan', pj ? 'jatuh tempo ' + namaTanggal(c.pajakTempo) : (c.pajakTempo - S.hari) + ' hari lagi') +
           baris('Harga jual (usia & odometer)', c.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, c))) + '</ul>' +
           '<p class="catatan">' + (cEv ? 'Cas baterai EV: ketuk bar Bensin/Daya di bagian atas layar.' : 'Isi bensin: ketuk bar Bensin di bagian atas layar.') + '</p>' +
-          '<div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="servisMobil:1">Servis ' + rupiah(N.rawatMobil.servis) + '</button><button type="button" class="chip-tombol" data-aksi="banMobil:1">Ganti 4 ban ' + rupiah(MOBIL.hargaBan(c)) + '</button>' +
+          '<div class="chip-baris"><button type="button" class="chip-tombol pilih" data-aksi="bukaBensin:mobil">' + (cEv ? '⚡ Cas SPKLU' : '⛽ Isi bensin') + '</button><button type="button" class="chip-tombol" data-aksi="servisMobil:1">Servis ' + rupiah(N.rawatMobil.servis) + '</button><button type="button" class="chip-tombol" data-aksi="banMobil:1">Ganti 4 ban ' + rupiah(MOBIL.hargaBan(c)) + '</button>' +
           (pj ? '<button type="button" class="chip-tombol" data-aksi="pajakMobil:1">Bayar pajak ' + rupiah(pj) + '</button>' : '') +
           (c.kredit ? '<button type="button" class="chip-tombol" data-aksi="lunasMobil:1">Lunasi kredit</button>' : '<button type="button" class="chip-tombol" data-aksi="jualMobil:1">Jual mobil</button>') + '</div>' +
           (MOBIL.pikap(S) ?
@@ -2094,6 +2094,7 @@
     else if (nama === 'bayarUtangPas') { var rbu = DIRI.bayarUtangPasangan(S); hasilAksi(rbu && rbu.ok ? true : rbu, rbu && rbu.teks); }
     else if (nama === 'mintaBantu') { var rmb = DIRI.mintaBantuanPasangan(S, nilai === 'semua' ? 'semua' : +nilai); hasilAksi(rmb && rmb.ok ? true : rmb, rmb && rmb.teks); }
     else if (nama === 'aktivitasKel') { var pak = nilai.split('|'), rak = DIRI.aturAktivitasKeluarga(S, pak[0], pak[1]); hasilAksi(rak && rak.ok ? true : rak, rak && rak.teks); }
+    else if (nama === 'bukaBensin') return popupBensin(null, false, nilai);
     else if (nama === 'onlineCar') return mulaiNarik(nilai || 'gojek', 'mobil');
     else if (nama === 'hbLokasi') {
       var phl = nilai.split('|');
@@ -2535,7 +2536,11 @@
   function mulaiNarik(pid, mode) {
     var md = mode === 'mobil' ? 'mobil' : 'motor';
     if (!S.usaha.berhentiSewa && S.fase === 'buka' && !kepalaMasuk()) { app.pesan = 'Kedai sedang buka. Narik sebelum buka atau setelah tutup, atau tugaskan kepala toko.'; app.salah = true; return bukaHP('driver'); }
-    var e = OJEK.bisaOnline(S, md); if (e) { app.pesan = e; app.salah = true; return bukaHP('driver'); }
+    var e = OJEK.bisaOnline(S, md);
+    if (e) {
+      if (md === 'mobil' && /bensin|baterai/i.test(e)) return popupBensin(e, true, 'mobil');
+      app.pesan = e; app.salah = true; return bukaHP('driver');
+    }
     tutupLembar(); if (R) tutupRacik();
     if (S.usaha.berhentiSewa) {
       S.diri.posisi = 'kedai';
@@ -2747,7 +2752,7 @@
     html += '<h3 class="subjudul">Tarif standar dari ' + esc(kota) + ' (per kursi)</h3><ul class="daftar angka">' + daf.map(function (x) {
       return baris(esc(RUTE.nama(x.id)) + '<small>' + x.j.km.toLocaleString('id-ID') + ' km' + (x.j.tol ? ' · tol ' + rupiah(x.j.tol) : '') + (x.j.laut ? ' · kapal' : '') + '</small>', rupiah(RUTE.tarifStandar(x.j)));
     }).join('') + '</ul>' +
-      '<p class="catatan">Pilih tujuan, tunggu kursi terisi (boleh jemput maksimal 3 penumpang di kota yang sama), lalu berangkat. Gigi 1–5 mengatur kecepatan: makin cepat makin boros bensin. Gigi ⚡ (100–200 km/j) hanya malam hari dan tidak saat hujan; berisiko tilang dan senggolan. Penumpang ⚡ minta cepat dan membayar lebih kalau tiba tepat waktu; penumpang 🐢 minta santai dan takut kalau kamu ngebut. Naik-turunkan tarif sesuai fasilitas: murah cepat penuh, mahal butuh waktu. Tol dan kapal dibayar otomatis. Kamu tidak bisa berhenti travel sebelum kembali ke ' + esc(RUTE.nama(S.kota)) + '.</p>';
+      '<p class="catatan">Pilih tujuan, tunggu kursi terisi (boleh jemput maksimal 3 penumpang di kota yang sama), lalu berangkat. Level 1–5 mengatur kecepatan sesuai top speed asli mobil: makin cepat makin boros bahan bakar. Penumpang ⚡ minta cepat dan membayar lebih kalau tiba tepat waktu; penumpang 🐢 minta santai. Naik-turunkan tarif sesuai kenyamanan mobil. Tol dan kapal dibayar otomatis. Pembayaran penumpang masuk tunai dompet atau QRIS merchant (cair hari kerja berikutnya).</p>';
     return html;
   }
   function tidurMalam() {
@@ -2761,11 +2766,13 @@
   function isiKosAksi() {
     var malam = S.fase === 'malam' || (S.menit % 1440) >= 1080 || !!S.usaha.berhentiSewa, ada = function (id) { return DIRI.punya(S, id); };
     var bisaNarikKos = N.ojol.platform.some(function (p) { return OJEK.aktif(S, p.id); });
+    var bisaCarKos = !!S.mobil && !MOBIL.pikap(S);
     var masak = ada('ricecooker') || ada('kompor');
     var rtAktif = S.rumahTangga && (S.rumahTangga.aktifSampai || -1) >= S.hari;
     var pas = DIRI.pasanganAktif(S);
     var tombol = [], lain = [];
     if (bisaNarikKos) tombol.push(['narik:1', 'Narik ojol']);
+    if (bisaCarKos) tombol.push(['gocar:1', 'Narik GoCar'], ['travel:1', 'Travel']);
     tombol.push(['app:makan', 'Makan']);
     if (pas && pas.lokasi !== 'kedai') {
       var kdm = (S.kesehatan && S.kesehatan.kondom) || 0;
@@ -2797,6 +2804,8 @@
     else if (nama === 'bangun') { S.diri.bangun = Math.max(240, Math.min(720, S.diri.bangun + +nilai)); perbaruiAksi(); return; }
     else if (nama === 'pulang') { tutupLembar(); return pindah('kos', true); }
     else if (nama === 'narik') return mulaiNarik();
+    else if (nama === 'gocar') return mulaiNarik('gojek', 'mobil');
+    else if (nama === 'travel') return mulaiTravel();
     else if (nama === 'app') { app.pesan = ''; return bukaHP(nilai); }
     else if (nama === 'tutup') { tutupLembar(); if (S.fase === 'buka') { tutupKedai(true); } return; }
     else if (nama === 'autoMakan') { S.autoMakanMinum = !S.autoMakanMinum; toast(S.autoMakanMinum ? 'Auto Makan & Minum aktif (hemat biaya).' : 'Auto Makan & Minum mati.', 2000); simpan(); perbaruiAksi(); if (lembar === 'diri') bukaDiri(); return; }
@@ -2858,16 +2867,27 @@
         return '<button type="button" class="chip-tombol" data-hud="energi:' + e.id + '">' + esc(e.nama) + ' · ' + rupiah(e.harga) + ' · +' + e.stamina + '</button>';
       }).join('') + '</div><p class="catatan">Lebih dari 3 kali sehari bikin kesehatan turun. Tidur tetap cara terbaik memulihkan stamina.</p>');
   }
-  function popupBensin(pesan, salah) {
-    var mobil = jenisKendaraanJalan() === 'mobil', m = mobil ? S.mobil : S.motor;
+  function popupBensin(pesan, salah, paksaTarget) {
+    if (paksaTarget) app.bensinTarget = paksaTarget;
+    var punyaMtr = !!S.motor, punyaMbl = !!S.mobil;
+    var mobil = app.bensinTarget ? (app.bensinTarget === 'mobil' && punyaMbl) : (jenisKendaraanJalan() === 'mobil');
+    if (mobil && !punyaMbl) mobil = false;
+    if (!mobil && !punyaMtr && punyaMbl) mobil = true;
+    app.bensinTarget = mobil ? 'mobil' : 'motor';
+    var m = mobil ? S.mobil : S.motor;
     if (!m) return toast('Belum punya kendaraan.', 1800);
-    if (!mobil && m.bbm === 'listrik') return toast('Motor listrik dicas otomatis tiap malam di tempat tinggal.', 2400);
-    var tangki = m.tangki, isiL = mobil ? m.isi * tangki : m.isi, kosong = Math.max(0, Math.round((tangki - isiL) * 10) / 10);
+    var switchTab = (punyaMtr && punyaMbl) ? '<div class="chip-baris" style="margin-bottom:8px"><button type="button" class="chip-tombol' + (!mobil ? ' pilih' : '') + '" data-hud="pilihKend:motor">🏍️ ' + esc(S.motor.nama) + '</button><button type="button" class="chip-tombol' + (mobil ? ' pilih' : '') + '" data-hud="pilihKend:mobil">🚗 ' + esc(S.mobil.nama) + '</button></div>' : '';
+    if (!mobil && m.bbm === 'listrik') {
+      return bukaLembar('hudBensin', kepala('Baterai motor listrik', m.nama) + switchTab +
+        '<div class="saldo-besar"><small>Daya baterai</small><b>' + Math.round(m.baterai || 0) + ' / ' + (m.jarakPenuh || 60) + ' km</b>' + persenBar((m.baterai || 0) / (m.jarakPenuh || 60) * 100) + '</div>' +
+        '<p class="catatan">Motor listrik dicas otomatis tiap malam di tempat tinggal.</p>');
+    }
+    var tangki = m.tangki || 40, isiL = mobil ? (Math.max(0, Math.min(1, Number(m.isi) || 0)) * tangki) : (Number(m.isi) || 0), kosong = Math.max(0, Math.round((tangki - isiL) * 10) / 10);
     var anjuran = m.bbm, ev = anjuran === 'listrik', sat = ev ? 'kWh' : 'L';
     var jenisList = ev ? ['listrik'] : anjuran === 'solar' ? ['solar'] : ['pertalite', 'pertamax', 'turbo'];
     var jenis = app.bbmPilih && jenisList.indexOf(app.bbmPilih) >= 0 ? app.bbmPilih : anjuran, h = MOTOR.hargaBbm(S, jenis);
     var pilih = (ev ? [5, 10, 20, 30] : [1, 2, 5, 10, 20]).filter(function (l) { return l <= kosong + 0.01; });
-    bukaLembar('hudBensin', kepala(ev ? 'Cas mobil listrik' : 'Isi bensin', m.nama) + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
+    bukaLembar('hudBensin', kepala(ev ? 'Cas mobil listrik' : 'Isi bensin', m.nama) + switchTab + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
       '<div class="saldo-besar"><small>' + (ev ? 'Daya baterai' : 'Isi tangki') + '</small><b>' + isiL.toFixed(1).replace('.', ',') + ' / ' + String(tangki).replace('.', ',') + ' ' + sat + '</b>' + persenBar(isiL / tangki * 100) + '</div>' +
       (jenisList.length > 1 ? '<div class="chip-baris" style="margin-top:8px">' + jenisList.map(function (j) { return '<button type="button" class="chip-tombol' + (j === jenis ? ' pilih' : '') + '" data-hud="bbm:' + j + '">' + N.bbm.nama[j] + (j === anjuran ? ' ✓' : '') + '</button>'; }).join('') + '</div>' : '') +
       (kosong < 0.2 ? '<p class="catatan">' + (ev ? 'Baterai sudah penuh.' : 'Tangki sudah penuh.') + '</p>' :
@@ -2877,27 +2897,32 @@
       '<p class="catatan" style="margin-top:6px">' + (ev ? ('Tarif listrik SPKLU ' + rupiah(h) + ' per kWh. Mobil listrik tanpa bensin dan bebas ngelitik.') : (N.bbm.nama[jenis] + ' ' + rupiah(h) + ' per liter. Tanda ✓ = anjuran pabrik; bensin di bawah anjuran membuat mesin ngelitik.')) + '</p>');
   }
   function aksiHud(nama, nilai) {
-    var mobil = jenisKendaraanJalan() === 'mobil';
+    if (nama === 'pilihKend') { app.bensinTarget = nilai; app.bbmPilih = null; return popupBensin(); }
+    var mobil = app.bensinTarget ? (app.bensinTarget === 'mobil' && !!S.mobil) : (jenisKendaraanJalan() === 'mobil');
     if (nama === 'casHp') { var rc = DIRI.toggleCasHp(S); if (rc === true || rc == null) { simpan(); perbaruiHUD(true); } return popupHp(rc === true || rc == null ? (S.hp && S.hp.cas ? 'Charger dicolokkan. Baterai sedang diisi.' : 'Charger dicabut.') : rc, !(rc === true || rc == null)); }
     if (nama === 'bbm') { app.bbmPilih = nilai; return popupBensin(); }
     if (nama === 'energi') { var re = DIRI.minumEnergi(S, nilai); if (re && re.ok) { simpan(); perbaruiHUD(true); return popupStamina(re.teks, false); } return popupStamina(re, true); }
     if (nama === 'meTime') { var rm = mulaiMeTime(); if (rm === true) { tutupLembar(); return; } return popupHb(rm, true); }
     var jenis, liter;
     if (nama === 'isi') { var p = nilai.split('-'); jenis = p[0]; liter = p[1]; }
-    else if (nama === 'isiLiter') { jenis = nilai; liter = $('in-liter') ? parseFloat($('in-liter').value) : 0; if (!(liter > 0)) return popupBensin('Isi jumlah liter dulu.', true); }
+    else if (nama === 'isiLiter') { jenis = nilai; liter = $('in-liter') ? parseFloat($('in-liter').value) : 0; if (!(liter > 0)) return popupBensin('Masukkan jumlah yang valid dulu.', true); }
     var r = mobil ? MOBIL.isiBensin(S, jenis, liter) : MOTOR.isiBensin(S, jenis, liter);
-    if (r && r.ok) { if (SUARA) SUARA.bunyi('beli'); simpan(); perbaruiHUD(true); return popupBensin('Isi ' + N.bbm.nama[r.jenis] + ' ' + r.liter.toLocaleString('id-ID') + ' L · ' + rupiah(r.biaya) + '.'); }
+    if (r && r.ok) {
+      if (SUARA) SUARA.bunyi('beli'); simpan(); perbaruiHUD(true);
+      var satR = r.jenis === 'listrik' ? ' kWh' : ' L';
+      return popupBensin((r.jenis === 'listrik' ? 'Cas ' : 'Isi ') + N.bbm.nama[r.jenis] + ' ' + r.liter.toLocaleString('id-ID') + satR + ' · ' + rupiah(r.biaya) + '.');
+    }
     if (SUARA) SUARA.bunyi('salah'); popupBensin(r, true);
   }
-  /* bar bahan bakar kendaraan yang sedang dipakai, di samping bar baterai HP */
+  /* bar bahan bakar / daya baterai kendaraan aktif di samping bar baterai HP */
   function barBensin() {
-    var pakaiMobil = S.mobil && ((S.travel && S.travel.aktif) || !S.motor || (S.ojek && !S.ojek.online && !S.motor));
+    var pakaiMobil = jenisKendaraanJalan() === 'mobil' && !!S.mobil;
     var m = pakaiMobil ? S.mobil : S.motor;
     if (!m) return '';
-    var listrik = !pakaiMobil && m.bbm === 'listrik' && m.jarakPenuh;
-    /* mobil menyimpan isi sebagai pecahan 0-1, motor sebagai liter */
-    var v = listrik ? m.baterai / m.jarakPenuh * 100 : pakaiMobil ? (m.isi || 0) * 100 : (m.isi || 0) / (m.tangki || 1) * 100;
-    return bar(listrik ? '⚡Motor' : 'Bensin', Math.max(0, Math.min(100, v)), false, 'bensin');
+    var evMobil = pakaiMobil && m.bbm === 'listrik';
+    var listrikMtr = !pakaiMobil && m.bbm === 'listrik' && m.jarakPenuh;
+    var v = listrikMtr ? (m.baterai || 0) / m.jarakPenuh * 100 : pakaiMobil ? (Math.max(0, Math.min(1, Number(m.isi) || 0))) * 100 : (Number(m.isi) || 0) / (m.tangki || 1) * 100;
+    return bar(evMobil ? '⚡Mobil' : listrikMtr ? '⚡Motor' : 'Bensin', Math.max(0, Math.min(100, v)), false, 'bensin');
   }
   function bar(nama, v, isHb, hud) {
     var cls = isHb ? (v >= 85 ? ' hb kritis' : ' hb') : (v < 20 ? ' kritis' : '');

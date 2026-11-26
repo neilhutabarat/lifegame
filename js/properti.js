@@ -190,7 +190,7 @@
     var barang = S.rumah.barang, infoBarang = S.rumah.infoBarang || {};
     if (ke === 'rumah') {
       r.dihuni = true;
-      S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S).jarak[r.tipe] };
+      S.rumah = { jenis: 'rumah', tipe: r.tipe, sewa: 0, kwh: 0, barang: barang, infoBarang: infoBarang, wifi: false, tempo: S.rumah.tempo, padam: true, jarak: dataKota(S, r.kota).jarak[r.tipe] };
     } else {
       if (r) r.dihuni = false;
       S.rumah = { jenis: 'kos', sewa: kos.kos, kwh: 10, barang: barang, infoBarang: infoBarang, wifi: false, tempo: Math.min(28, KAL.tgl(S.hari).d), padam: false, jarak: N.jarakKos };

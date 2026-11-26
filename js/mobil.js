@@ -15,6 +15,12 @@
       if (ref && ref.bbm === 'listrik' && S.mobil.bbm !== 'listrik') {
         S.mobil.bbm = 'listrik'; S.mobil.kml = ref.kml; S.mobil.tangki = ref.tangki; S.mobil.ngelitik = false;
       }
+      if (ref) {
+        if (!(S.mobil.kml > 0)) S.mobil.kml = ref.kml || 12;
+        if (!(S.mobil.tangki > 0)) S.mobil.tangki = ref.tangki || 45;
+      }
+      if (typeof S.mobil.isi !== 'number' || isNaN(S.mobil.isi)) S.mobil.isi = 0.5;
+      if (S.mobil.isi > 1) S.mobil.isi = Math.min(1, S.mobil.isi / (S.mobil.tangki || 45));
       if (S.mobil.kmBan == null) S.mobil.kmBan = S.mobil.km || 0;
       if (S.mobil.totalHasil == null) S.mobil.totalHasil = 0;
     }
@@ -207,10 +213,15 @@
   }
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
   function kmhGigi(S) { return gigi(S).mid * kecepatan(S) / KECEPATAN.biasa; }
-  function cukup(S, km) { var m = S.mobil; return !!m && m.isi * m.tangki >= km / m.kml * gigi(S).boros; }
+  function cukup(S, km) {
+    var m = S.mobil;
+    if (!m || !(m.kml > 0) || !(m.tangki > 0)) return false;
+    var isi = Math.max(0, Math.min(1, Number(m.isi) || 0));
+    return isi * m.tangki >= (km / m.kml) * (gigi(S).boros || 1);
+  }
   function jalan(S, km, stop) {
     var m = S.mobil;
-    if (!cukup(S, km)) return { ok: false, alasan: 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
+    if (!cukup(S, km)) return { ok: false, alasan: m && m.bbm === 'listrik' ? 'Daya baterai mobil listrik tidak cukup. Cas dulu di SPKLU.' : 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
     var menit = Math.round(km / kmhGigi(S) * 60) + 5 * (stop || 1), kabar = [];
     m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
     if (Math.random() < 0.002 + (m.ngelitik ? 0.01 : 0) + (telatServis(S) + telatBan(S) * 0.5) / 1000 * 0.01) {

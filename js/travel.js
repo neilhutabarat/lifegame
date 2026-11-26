@@ -252,7 +252,7 @@
     var m = S.mobil; if (!m) return 'Belum punya mobil.';
     var r = g.KK_MOBIL.isiBensin(S, m.bbm, liter); if (!r || !r.ok) return r;
     if (S.travel.trip) S.travel.trip.menitHenti += 10;
-    return { ok: true, menit: 10, teks: 'Isi ' + r.liter.toLocaleString('id-ID') + ' liter, ' + rp(r.biaya) + '.' };
+    return { ok: true, menit: 10, teks: (m.bbm === 'listrik' ? 'Cas ' : 'Isi ') + r.liter.toLocaleString('id-ID') + (m.bbm === 'listrik' ? ' kWh, ' : ' liter, ') + rp(r.biaya) + '.' };
   }
 
   /* ---------- tiba dan penilaian ---------- */
