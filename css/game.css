@@ -342,3 +342,25 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .ojek-bare .ojek-tombol { display: flex; justify-content: flex-end; }
 .ojek-kartu.kecil { padding: 8px 12px; border-radius: 14px; background: rgba(251,250,246,.88); }
 .ojek-kartu.kecil small { margin: 2px 0 4px; font-size: 12px; }
+
+/* ---------- tampilan HP rapi, ringkas & anti-scroll panjang (P40) ---------- */
+.saldo-ringkas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.saldo-ringkas .saldo-besar { margin: 0; padding: 9px 11px; border-radius: 13px; }
+.saldo-ringkas .saldo-besar small { font-size: 10.5px; }
+.saldo-ringkas .saldo-besar b { font-size: 18px; }
+.grid-nominal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 6px; }
+.grid-nominal .chip-tombol { padding: 7px 2px; font-size: 11.5px; border-radius: 9px; text-align: center; }
+.kartu-lipat { margin-top: 6px; border-radius: 11px; background: rgba(29,43,51,.05); padding: 6px 9px; }
+.kartu-lipat > summary { cursor: pointer; font-weight: 800; font-size: 12.5px; color: var(--kontainer-tua); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.kartu-lipat > summary::-webkit-details-marker { display: none; }
+.kartu-lipat > summary::after { content: '▾'; font-size: 12px; opacity: .7; }
+.kartu-lipat[open] > summary::after { content: '▴'; }
+.kartu-lipat[open] > summary { margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px dashed rgba(29,43,51,.12); }
+.chip-tombol.bahaya-kecil { background: rgba(217,68,58,.13); color: var(--merah-libur); }
+.lembar-isi .subjudul { margin: 12px 0 6px; font-size: 13.5px; }
+.lembar-isi .chip-baris { gap: 5px; margin-top: 6px; }
+.lembar-isi .chip-tombol { padding: 7px 10px; font-size: 12.5px; border-radius: 10px; }
+.lembar-isi .saldo-besar { padding: 11px 14px; border-radius: 15px; margin-bottom: 8px; }
+.lembar-isi .saldo-besar b { font-size: 24px; }
+.lembar-isi .daftar li { padding: 8px 10px; }
+.lembar-isi .catatan { font-size: 12px; margin-top: 6px; line-height: 1.38; }

@@ -186,7 +186,7 @@
     var by = bayarDealer(S, u.harga, 'Beli ' + b.nama + ' ' + u.tahun, cara);
     if (by !== true) return by;
     var m = motorBaru({ id: b.id, nama: b.nama.replace(' (bekas)', '') + ' ' + u.tahun, harga: u.harga, kml: b.kml, bbm: b.bbm, tangki: b.tangki, muat: b.muat, kuat: b.kuat, olisamping: b.olisamping });
-    m.dibeli = S.hari; m.bekas = { kondisi: u.kondisi, tahun: u.tahun }; m.km = u.km; m.kmOli = u.km - Math.floor(Math.random() * 2500); m.kmServis = u.km - Math.floor(Math.random() * 5000);
+    m.dibeli = S.hari; m.bekas = { kondisi: u.kondisi, tahun: u.tahun }; m.km = u.km; m.kmOli = u.km - Math.floor(Math.random() * 2500); m.kmServis = u.km - Math.floor(Math.random() * 5000); m.kmBan = u.km - Math.floor(Math.random() * 15000);
     m.pajakTempo = S.hari + 30 + Math.floor(Math.random() * 300);
     tambahArmada(S, m); S.pasarBekas.unit.splice(i, 1);
     return true;
@@ -258,13 +258,13 @@
   function telatServis(S) { var m = S.motor; return m ? Math.max(0, m.km - m.kmServis - R.servisKm) : 0; }
   function peluangMogok(S) {
     var m = S.motor; if (!m) return 0;
-    var p = m.bekas ? { baik: 0.01, sedang: 0.025, kurang: 0.05 }[m.bekas.kondisi] : 0.003;
-    if (m.olisamping) p += 0.01;
-    if (m.ngelitik) p += 0.015;
-    p += (telatOli(S) + telatServis(S) + telatBan(S) * 0.5) / 1000 * 0.02;
-    return Math.min(0.35, p);
+    var p = m.bekas ? { baik: 0.008, sedang: 0.02, kurang: 0.04 }[m.bekas.kondisi] : 0.0015;
+    if (m.olisamping) p += 0.008;
+    if (m.ngelitik) p += 0.012;
+    p += (telatOli(S) + telatServis(S) + telatBan(S) * 0.4) / 2500 * 0.015;
+    return Math.min(0.3, p);
   }
-  function telatBan(S) { var m = S.motor; return m ? Math.max(0, m.km - (m.kmBan || 0) - (R.banKm || 18000)) : 0; }
+  function telatBan(S) { var m = S.motor; return m ? Math.max(0, m.km - (m.kmBan || 0) - (R.banKm || 40000)) : 0; }
   function hargaBan(m) {
     if (!m) return 420000;
     var ref = N.motor.filter(function (x) { return x.id === m.id; })[0];

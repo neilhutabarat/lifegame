@@ -348,9 +348,10 @@
   }
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
   function kmhGigi(S, km) {
-    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa * 0.76;
-    /* batas realistis kecepatan rata-rata di jalan kota (<35 km: maks 58 km/j) & lintas luar kota (>=35 km: maks 82 km/j) */
-    var batas = (km || 0) >= 35 ? 82 : 58;
+    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
+    var vmax = (g.KK_RUTE && g.KK_RUTE.vmaxKendaraan) ? g.KK_RUTE.vmaxKendaraan(S, 'mobil') : 170;
+    /* batas realistis kecepatan rata-rata: dalam kota (<35 km: maks 58), luar kota (35–50 km: maks 90), antarkota (>=50 km: hingga 130 km/j) */
+    var batas = (km || 0) >= 50 ? Math.min(vmax, 130) : (km || 0) >= 35 ? 90 : 58;
     return Math.max(8, Math.min(batas, v));
   }
   function cukup(S, km) {

@@ -136,21 +136,37 @@
   }
   function pakaiKuota(S, gb) {
     if (!S.hp) return true;
-    if (S.hp.baterai <= 0) return 'Baterai HP habis (0%)! Cas HP dulu di aplikasi Gadget & Kuota.';
+    var pbInfoQ = pbAktifInfo(S);
+    var pbOkQ = !!(S.hp.pbPasang && pbInfoQ && pbInfoQ.state.sisaMah > 0);
+    if ((S.hp.baterai || 0) <= 0 && !pbOkQ) return 'Baterai HP habis (0%)! Cas HP atau sambungkan Power Bank di aplikasi Gadget & Kuota.';
     if (adaWifi(S)) return true;
     if (S.hp.masaAktif != null && S.hari > S.hp.masaAktif) {
       return 'Masa aktif kartu ' + (S.hp.nomor || '081256000088') + ' sudah habis (masa tenggang)! Isi pulsa dulu untuk memperpanjang masa aktif kartu.';
     }
-    if ((S.hp.kuota || 0) >= gb) {
+    gb = Math.max(0, +gb || 0);
+    if (gb <= 0) return true;
+    S.hp.kuota = Math.max(0, +(S.hp.kuota || 0));
+    if (S.hp.kuota >= gb) {
       S.hp.kuota = Math.max(0, S.hp.kuota - gb);
       return true;
     }
-    /* fallback potong pulsa Rp2.000 per 0.1 GB jika kuota habis */
-    var potongPulsa = Math.max(500, Math.round(gb * 15000 / 500) * 500);
-    if ((S.hp.pulsa || 0) >= potongPulsa) {
-      S.hp.pulsa -= potongPulsa;
-      return true;
+    /* habiskan sisa kuota dulu, lalu akumulasi kelebihan GB agar pulsa tidak terpotong Rp500 setiap frame */
+    var kurangGb = gb - S.hp.kuota;
+    S.hp.kuota = 0;
+    S.hp.kuotaUtangGb = (S.hp.kuotaUtangGb || 0) + kurangGb;
+    var blok = Math.floor(S.hp.kuotaUtangGb / 0.1); /* Rp1.500 per 100 MB (0,1 GB) */
+    if (blok > 0) {
+      var biayaPulsa = blok * 1500;
+      if ((S.hp.pulsa || 0) >= biayaPulsa) {
+        S.hp.pulsa -= biayaPulsa;
+        S.hp.kuotaUtangGb = Math.max(0, S.hp.kuotaUtangGb - blok * 0.1);
+        return true;
+      }
+      S.hp.kuotaUtangGb = 0;
+      return 'Kuota internet & pulsa habis! Isi kuota/pulsa di aplikasi Gadget & Kuota atau pasang WiFi.';
     }
+    if ((S.hp.pulsa || 0) >= 1500) return true;
+    S.hp.kuotaUtangGb = 0;
     return 'Kuota internet & pulsa habis! Isi kuota/pulsa di aplikasi Gadget & Kuota atau pasang WiFi.';
   }
   function punya(S, id) { if (id === 'tv') return !!(S.rumah.barang.tv || S.rumah.barang.tv55); return !!S.rumah.barang[id]; }

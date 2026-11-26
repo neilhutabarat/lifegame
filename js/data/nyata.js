@@ -204,17 +204,33 @@
       { id: 'galaxys24', jenis: 'hp', tahun: 2024, merek: 'Samsung', nama: 'Samsung Galaxy S24 5G (Charger 25W)', ram: 8, storage: 256, mah: 4000, watt: 25, kamera: 1.75, harga: 12999000, ket: 'Exynos 2400 · Galaxy AI · Layar 120Hz' },
       { id: 'oppoa3', jenis: 'hp', tahun: 2024, merek: 'OPPO', nama: 'OPPO A3 (Charger 45W)', ram: 8, storage: 256, mah: 5100, watt: 45, kamera: 1.15, harga: 2999000, ket: 'Snapdragon 6s Gen 1 · Layar 90Hz · SUPERVOOC 45W' },
       { id: 'vivov40', jenis: 'hp', tahun: 2024, merek: 'Vivo', nama: 'Vivo V40 5G (Charger 80W)', ram: 12, storage: 256, mah: 5500, watt: 80, kamera: 1.7, harga: 7499000, ket: 'Snapdragon 7 Gen 3 · Kamera ZEISS 50 MP · FlashCharge 80W' },
+      /* HP 2025–2026 & Flagship Gaming / Baterai Jumbo */
+      { id: 'tecnopova6p', jenis: 'hp', tahun: 2025, merek: 'TECNO', nama: 'TECNO POVA 6 Pro 5G (6.000 mAh · 70W)', ram: 12, storage: 256, mah: 6000, watt: 70, kamera: 1.35, harga: 3299000, ket: 'Dimensity 6080 · AMOLED 120Hz · Baterai 6.000 mAh + Fast Charge 70W' },
+      { id: 'pocox7pro', jenis: 'hp', tahun: 2025, merek: 'Xiaomi', nama: 'POCO X7 Pro 5G (6.000 mAh · 90W)', ram: 12, storage: 512, mah: 6000, watt: 90, kamera: 1.55, harga: 4999000, ket: 'Dimensity 8400 Ultra · Baterai Silicon-Carbon 6.000 mAh · HyperCharge 90W' },
+      { id: 'iqoo13', jenis: 'hp', tahun: 2025, merek: 'Vivo', nama: 'iQOO 13 5G (6.150 mAh · 120W)', ram: 16, storage: 512, mah: 6150, watt: 120, kamera: 1.78, harga: 9999000, ket: 'Snapdragon 8 Elite · Layar 144Hz LTPO · Baterai 6.150 mAh + 120W' },
+      { id: 'unihertz_tank3p', jenis: 'hp', tahun: 2025, merek: 'Unihertz', nama: 'Unihertz 8849 Tank 3 Pro (23.800 mAh · 120W)', ram: 16, storage: 512, mah: 23800, watt: 120, kamera: 1.8, harga: 12999000, ket: 'Baterai monster 23.800 mAh + Proyektor DLP built-in + Fast Charge 120W' },
+      { id: 'redmagic10p', jenis: 'hp', tahun: 2025, merek: 'ASUS', nama: 'RedMagic 10 Pro Gaming (7.050 mAh · 100W)', ram: 16, storage: 512, mah: 7050, watt: 100, kamera: 1.65, harga: 14999000, ket: 'Snapdragon 8 Elite · Kipas pendingin internal · Baterai gaming 7.050 mAh' },
+      { id: 'vivox200p', jenis: 'hp', tahun: 2025, merek: 'Vivo', nama: 'Vivo X200 Pro ZEISS 200MP (6.000 mAh · 90W)', ram: 16, storage: 512, mah: 6000, watt: 90, kamera: 2.05, harga: 17999000, ket: 'Telephoto ZEISS APO 200 MP · Dimensity 9400 · Baterai 6.000 mAh' },
+      { id: 'xiaomi15u', jenis: 'hp', tahun: 2025, merek: 'Xiaomi', nama: 'Xiaomi 15 Ultra Leica (6.000 mAh · 90W)', ram: 16, storage: 512, mah: 6000, watt: 90, kamera: 2.1, harga: 18999000, ket: 'Kamera 1 inci Leica Summilux + Periscope 200 MP · Snapdragon 8 Elite' },
+      { id: 'rogphone9p', jenis: 'hp', tahun: 2025, merek: 'ASUS', nama: 'ASUS ROG Phone 9 Pro (5.800 mAh · 65W)', ram: 16, storage: 512, mah: 5800, watt: 65, kamera: 1.75, harga: 19999000, ket: 'Snapdragon 8 Elite · AniMe Vision LED · 185Hz AMOLED · AirTrigger' },
+      { id: 's25ultra', jenis: 'hp', tahun: 2025, merek: 'Samsung', nama: 'Samsung Galaxy S25 Ultra 5G (5.000 mAh · 45W)', ram: 12, storage: 512, mah: 5000, watt: 45, kamera: 2.1, harga: 22999000, ket: 'Snapdragon 8 Elite for Galaxy · Titanium · S-Pen · Kamera 200 MP' },
+      { id: 'zfold6', jenis: 'hp', tahun: 2025, merek: 'Samsung', nama: 'Samsung Galaxy Z Fold6 5G (4.400 mAh · 25W)', ram: 12, storage: 512, mah: 4400, watt: 25, kamera: 1.85, harga: 26499000, ket: 'Layar lipat tablet 7,6" Dynamic AMOLED 2X · Multitasking bisnis' },
+      { id: 'iphone17pm', jenis: 'hp', tahun: 2026, merek: 'Apple', nama: 'iPhone 17 Pro Max 512GB (4.850 mAh · 40W)', ram: 12, storage: 512, mah: 4850, watt: 40, kamera: 2.2, harga: 27999000, ket: 'Chip A19 Pro · Triple 48 MP Pro Fusion · Layar 6,9" ProMotion · 40W' },
 
       /* Tablet */
       { id: 'mipad6', jenis: 'tablet', tahun: 2023, merek: 'Xiaomi', nama: 'Xiaomi Pad 6 11" 144Hz', ram: 8, storage: 256, mah: 8840, watt: 33, kamera: 1.2, harga: 4999000, sewaHarian: 55000, ket: 'Snapdragon 870 · Layar 2.8K 144Hz · Quad Speaker Dolby Atmos' },
       { id: 'tabs9fe', jenis: 'tablet', tahun: 2023, merek: 'Samsung', nama: 'Samsung Galaxy Tab S9 FE', ram: 6, storage: 128, mah: 8000, watt: 45, kamera: 1.25, harga: 6499000, sewaHarian: 70000, ket: 'Termasuk S-Pen IP68 · Layar 10,9" 90Hz · Cocok desain & kasir' },
       { id: 'ipadairm2', jenis: 'tablet', tahun: 2024, merek: 'Apple', nama: 'Apple iPad Air M2 11"', ram: 8, storage: 128, mah: 7606, watt: 20, kamera: 1.45, harga: 11999000, sewaHarian: 115000, ket: 'Chip Apple M2 · Liquid Retina · Edit konten & bisnis super lancar' },
+      { id: 'tabs10u', jenis: 'tablet', tahun: 2025, merek: 'Samsung', nama: 'Samsung Galaxy Tab S10 Ultra 14,6"', ram: 12, storage: 512, mah: 11200, watt: 45, kamera: 1.6, harga: 20999000, sewaHarian: 185000, ket: 'Layar raksasa 14,6" Dynamic AMOLED 2X · S-Pen + Galaxy AI' },
+      { id: 'ipadprom4', jenis: 'tablet', tahun: 2025, merek: 'Apple', nama: 'Apple iPad Pro M4 13" Tandem OLED', ram: 16, storage: 512, mah: 10290, watt: 30, kamera: 1.75, harga: 21999000, sewaHarian: 195000, ket: 'Chip Apple M4 · Ultra Retina XDR Tandem OLED · Tipis 5,1 mm' },
 
       /* Laptop */
       { id: 'vivobook14', jenis: 'laptop', tahun: 2023, merek: 'ASUS', nama: 'ASUS Vivobook Go 14 Ryzen 3', ram: 8, storage: 256, mah: 11000, watt: 45, kamera: 1.0, harga: 6299000, sewaHarian: 65000, ket: 'AMD Ryzen 3 7320U · RAM 8 GB LPDDR5 · SSD 256 GB · Ringan 1,38 kg' },
       { id: 'ideapad3', jenis: 'laptop', tahun: 2023, merek: 'Lenovo', nama: 'Lenovo IdeaPad Slim 3 Core i5', ram: 8, storage: 512, mah: 12500, watt: 65, kamera: 1.0, harga: 8499000, sewaHarian: 85000, ket: 'Intel Core i5-12450H · SSD 512 GB · Rapid Charge 65W' },
       { id: 'macbookm2', jenis: 'laptop', tahun: 2023, merek: 'Apple', nama: 'MacBook Air M2 13,6"', ram: 8, storage: 256, mah: 14000, watt: 30, kamera: 1.3, harga: 16999000, sewaHarian: 150000, ket: 'Chip Apple M2 · Liquid Retina · Baterai tahan 18 jam · MagSafe 3' },
-      { id: 'rogzephyrus', jenis: 'laptop', tahun: 2024, merek: 'ASUS ROG', nama: 'ROG Zephyrus G14 OLED RTX 4060', ram: 16, storage: 1024, mah: 19000, watt: 180, kamera: 1.2, harga: 28999000, sewaHarian: 240000, ket: 'Ryzen 9 8945HS · GeForce RTX 4060 · ROG Nebula OLED 120Hz · 1 TB SSD' }
+      { id: 'rogzephyrus', jenis: 'laptop', tahun: 2024, merek: 'ASUS ROG', nama: 'ROG Zephyrus G14 OLED RTX 4060', ram: 16, storage: 1024, mah: 19000, watt: 180, kamera: 1.2, harga: 28999000, sewaHarian: 240000, ket: 'Ryzen 9 8945HS · GeForce RTX 4060 · ROG Nebula OLED 120Hz · 1 TB SSD' },
+      { id: 'macbookm4p', jenis: 'laptop', tahun: 2025, merek: 'Apple', nama: 'MacBook Pro 14" Apple M4 Pro', ram: 24, storage: 1024, mah: 16000, watt: 96, kamera: 1.5, harga: 32999000, sewaHarian: 280000, ket: 'Chip M4 Pro 12-Core · RAM 24 GB · Liquid Retina XDR · Baterai 22 jam' },
+      { id: 'legionpro7', jenis: 'laptop', tahun: 2025, merek: 'Lenovo', nama: 'Lenovo Legion Pro 7i RTX 4080', ram: 32, storage: 2048, mah: 20000, watt: 240, kamera: 1.2, harga: 42999000, sewaHarian: 340000, ket: 'Core i9-14900HX · GeForce RTX 4080 12GB · RAM 32 GB · 2 TB SSD' }
     ],
 
     /* katalog power bank HP (5.000 mAh – 100.000 mAh, kapasitas & efisiensi konversi 80% sesuai dunia nyata) */
@@ -364,6 +380,12 @@
       { id: 'vespasprint', nama: 'Vespa Sprint 150 i-get ABS', harga: 57100000, kml: 40, bbm: 'pertamax', tangki: 7, muat: 4, kelebihan: 'Lampu heksagonal sporty, favorit anak muda kota' },
       { id: 'xmax250', nama: 'Yamaha XMAX 250 Connected', harga: 67900000, kml: 34, bbm: 'pertamax', tangki: 13, muat: 8, kelebihan: 'Big skutik 250 cc bagasi super luas, nyaman turing' },
       { id: 'forza250', nama: 'Honda Forza 250', harga: 90500000, kml: 33, bbm: 'pertamax', tangki: 11.7, muat: 8, kelebihan: 'Skutik flagship 250 cc elektrik windshield mewah' },
+      { id: 'pcxroadsync', nama: 'Honda PCX 160 ABS RoadSync', harga: 40350000, kml: 45, bbm: 'pertamax', tangki: 8.1, muat: 6, kelebihan: 'Layar TFT navigasi & konektivitas HP, super nyaman' },
+      { id: 'aeroxalpha', nama: 'Yamaha Aerox Alpha Turbo Ultimate', harga: 41730000, kml: 42, bbm: 'pertamax', tangki: 5.5, muat: 4, kelebihan: 'YECVT Turbo mode, cakram belakang & desain agresif' },
+      { id: 'nmaxturbo', nama: 'Yamaha NMAX Turbo Tech MAX', harga: 43250000, kml: 40, bbm: 'pertamax', tangki: 7.1, muat: 6, kelebihan: 'Transmisi YECVT Turbo 3-level & jok premium' },
+      { id: 'em1e', nama: 'Honda EM1 e: Plus (Listrik)', harga: 40500000, kml: 0, bbm: 'listrik', jarakPenuh: 45, kwh: 1.5, muat: 4, kelebihan: 'Motor listrik Honda baterai MPP e: lepas-pasang' },
+      { id: 'alvacervo', nama: 'Alva Cervo Q (Listrik EV)', harga: 49500000, kml: 0, bbm: 'listrik', jarakPenuh: 125, kwh: 3.6, muat: 6, kelebihan: 'Motor listrik kencang 103 km/j, dual baterai jarak jauh' },
+      { id: 'vespagts', nama: 'Vespa GTS Super Tech 300', harga: 163200000, kml: 30, bbm: 'pertamax', tangki: 8.5, muat: 4, kelebihan: 'Big body Vespa 300 cc HPE, layar TFT mewah' },
       /* motor sport & trail: harga OTR Jakarta varian termurah */
       { id: 'satriafu', kelas: 'sport', nama: 'Suzuki Satria F150 (FU)', harga: 29165000, kml: 40, bbm: 'pertamax', tangki: 4, muat: 2, kelebihan: 'Ayam jago DOHC 150 cc legendaris, lincah dan kencang' },
       { id: 'cb150r', kelas: 'sport', nama: 'Honda CB150R Streetfire', harga: 31780000, kml: 41, bbm: 'pertamax', tangki: 12, muat: 2, kelebihan: 'Naked sport 150 cc lincah dengan suspensi USD' },
@@ -374,17 +396,25 @@
       { id: 'gsxr150', kelas: 'sport', nama: 'Suzuki GSX-R150', harga: 35800000, kml: 40, bbm: 'pertamax', tangki: 11, muat: 2, kelebihan: 'Sport 150 cc termurah' },
       { id: 'cbr150', kelas: 'sport', nama: 'Honda CBR150R', harga: 39730000, kml: 40, bbm: 'pertamax', tangki: 12, muat: 2, kelebihan: 'Sport fairing harian' },
       { id: 'r15', kelas: 'sport', nama: 'Yamaha R15', harga: 42200000, kml: 40, bbm: 'pertamax', tangki: 11, muat: 2, kelebihan: 'Sport 155 cc paling dicari' },
+      { id: 'r15m', kelas: 'sport', nama: 'Yamaha YZF-R15M Connected/ABS', harga: 44825000, kml: 40, bbm: 'pertamax', tangki: 11, muat: 2, kelebihan: 'Quick Shifter, Traction Control & livery R1M' },
       { id: 'mt25', kelas: 'sport', nama: 'Yamaha MT-25', harga: 66450000, kml: 28, bbm: 'pertamax', tangki: 14, muat: 2, kelebihan: 'Naked 250 cc dua silinder' },
       { id: 'cbr250', kelas: 'sport', nama: 'Honda CBR250RR', harga: 66980000, kml: 28, bbm: 'pertamax', tangki: 14.5, muat: 2, kelebihan: 'Sport 250 cc, gengsi tinggi' },
+      { id: 'cbr250sp', kelas: 'sport', nama: 'Honda CBR250RR SP Quick Shifter', harga: 81500000, kml: 27, bbm: 'pertamax', tangki: 14.5, muat: 2, kelebihan: '42 PS tenaga terbesar 250 cc 2-silinder + Quick Shifter' },
       { id: 'ninja250', kelas: 'sport', nama: 'Kawasaki Ninja 250', harga: 69800000, kml: 28, bbm: 'pertamax', tangki: 14, muat: 2, kelebihan: 'Sport 250 cc legendaris' },
       { id: 'r25', kelas: 'sport', nama: 'Yamaha R25', harga: 76250000, kml: 28, bbm: 'pertamax', tangki: 14, muat: 2, kelebihan: 'Sport 250 cc' },
       { id: 'zx25r', kelas: 'sport', nama: 'Kawasaki Ninja ZX-25R', harga: 111100000, kml: 22, bbm: 'pertamax', tangki: 15, muat: 2, kelebihan: '250 cc empat silinder, suaranya khas' },
+      { id: 'zx25rr', kelas: 'sport', nama: 'Kawasaki Ninja ZX-25RR KRT', harga: 133500000, kml: 22, bbm: 'pertamax', tangki: 15, muat: 2, kelebihan: 'Suspensi Showa BFRC-lite & Quick Shifter 4-silinder' },
+      { id: 'vespa946', kelas: 'sport', nama: 'Vespa 946 Dragon Edition', harga: 267000000, kml: 35, bbm: 'pertamax', tangki: 8.5, muat: 2, kelebihan: 'Skutik kolektor edisi terbatas Italia, prestise sultan' },
       /* moge: harga Maret 2026 (VIVA) */
       { id: 'zx4rr', kelas: 'moge', nama: 'Kawasaki Ninja ZX-4RR', harga: 248000000, kml: 20, bbm: 'turbo', tangki: 15, muat: 2, kelebihan: '400 cc empat silinder' },
       { id: 'zx6r', kelas: 'moge', nama: 'Kawasaki Ninja ZX-6R KRT', harga: 365500000, kml: 17, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Supersport 636 cc' },
       { id: 'zx10r', kelas: 'moge', nama: 'Kawasaki Ninja ZX-10R KRT', harga: 572200000, kml: 14, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Superbike 1.000 cc' },
+      { id: 'harleysport', kelas: 'moge', nama: 'Harley-Davidson Sportster S 1250', harga: 690000000, kml: 16, bbm: 'turbo', tangki: 11.8, muat: 2, kelebihan: 'Cruiser Revolution Max 1250T bertenaga & ikonik' },
+      { id: 'r1m', kelas: 'moge', nama: 'Yamaha YZF-R1M Carbon', harga: 812000000, kml: 13, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Superbike Crossplane 1.000 cc full serat karbon + Ohlins' },
       { id: 'cbr1000', kelas: 'moge', nama: 'Honda CBR1000RR-R Fireblade', harga: 828965000, kml: 14, bbm: 'turbo', tangki: 16.1, muat: 2, kelebihan: 'Superbike Honda' },
-      { id: 'h2', kelas: 'moge', nama: 'Kawasaki Ninja H2', harga: 890500000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Mesin supercharger, level sultan' }
+      { id: 'h2', kelas: 'moge', nama: 'Kawasaki Ninja H2', harga: 890500000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Mesin supercharger, level sultan' },
+      { id: 's1000rr', kelas: 'moge', nama: 'BMW S 1000 RR M Package', harga: 1150000000, kml: 14, bbm: 'turbo', tangki: 16.5, muat: 2, kelebihan: 'Superbike Jerman 210 HP dengan winglet karbon' },
+      { id: 'panigalev4', kelas: 'moge', nama: 'Ducati Panigale V4 S', harga: 1390000000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Superbike V4 Italia paling eksotis, top speed 308 km/j!' }
     ],
     /* motor bekas: perkiraan pasar; tiap unit punya tahun, kilometer, dan kondisi */
     motorBekas: [
@@ -405,6 +435,8 @@
       { id: 'carry', kelas: 'pikap', bentuk: 'pikap', nama: 'Suzuki Carry Flat-Deck', harga: 170700000, kml: 11, bbm: 'pertalite', tangki: 46, kursi: 2, muat: 400, kelebihan: 'Bak luas, perawatan murah' },
       { id: 'hilux', kelas: 'pikap', bentuk: 'pikap', nama: 'Toyota Hilux Rangga', harga: 194300000, kml: 11, bbm: 'pertalite', tangki: 55, kursi: 2, muat: 450, kelebihan: 'Pikap Toyota terbaru' },
       { id: 'l300', kelas: 'pikap', bentuk: 'pikap', nama: 'Mitsubishi L300 Flat Deck', harga: 241600000, kml: 10, bbm: 'solar', tangki: 47, kursi: 2, muat: 600, kelebihan: 'Diesel, muatan paling besar' },
+      { id: 'traga', kelas: 'pikap', bentuk: 'pikap', nama: 'Isuzu Traga Pick Up Diesel', harga: 283000000, kml: 11, bbm: 'solar', tangki: 50, kursi: 2, muat: 700, kelebihan: 'Mesin Panther diesel 2.5L legendaris, bak ekstra panjang' },
+      { id: 'triton', kelas: 'pikap', bentuk: 'pikap', nama: 'Mitsubishi Triton Pick Up HDX 4×4', harga: 310000000, kml: 10, bbm: 'solar', tangki: 75, kursi: 2, muat: 650, kelebihan: 'Pikap 4×4 tangguh medan kebun & lintas pulau' },
       { id: 'calya', kelas: 'keluarga', bentuk: 'mpv', nama: 'Toyota Calya', harga: 173600000, kml: 14, bbm: 'pertalite', tangki: 36, kursi: 7, muat: 80, kelebihan: 'Mobil keluarga termurah (6 pnp)' },
       { id: 'sigra', kelas: 'keluarga', bentuk: 'mpv', nama: 'Daihatsu Sigra 1.2 R', harga: 164000000, kml: 15, bbm: 'pertalite', tangki: 36, kursi: 7, muat: 80, kelebihan: 'LCGC 7-seater paling terjangkau & irit (6 pnp)' },
       { id: 'ayla', kelas: 'keluarga', bentuk: 'hatch', nama: 'Daihatsu All New Ayla 1.2', harga: 162000000, kml: 16, bbm: 'pertalite', tangki: 36, kursi: 5, muat: 50, kelebihan: 'City car lincah parkir mudah di jalan sempit (4 pnp)' },
@@ -426,7 +458,14 @@
       { id: 'hrv', kelas: 'keluarga', bentuk: 'suv', nama: 'Honda HR-V SE CVT Sensing', harga: 424000000, kml: 13, bbm: 'pertamax', tangki: 40, kursi: 5, muat: 85, kelebihan: 'SUV kompak paling stylish dengan Honda Sensing (4 pnp)' },
       { id: 'innova', kelas: 'keluarga', bentuk: 'mpv', nama: 'Toyota Kijang Innova Reborn 2.4 G Diesel', harga: 416600000, kml: 13, bbm: 'solar', tangki: 55, kursi: 8, muat: 125, kelebihan: 'MPV lebar legendaris travel Indonesia, kabin lega muat 7 penumpang + 1 supir' },
       { id: 'zenix', kelas: 'keluarga', bentuk: 'mpv', nama: 'Toyota Kijang Innova Zenix', harga: 437700000, kml: 12, bbm: 'pertamax', tangki: 52, kursi: 8, muat: 120, kelebihan: 'MPV besar & lebar, kabin lega 8-seater (7 penumpang + 1 supir)' },
+      { id: 'raize', kelas: 'keluarga', bentuk: 'suv', nama: 'Toyota Raize 1.0T GR Sport', harga: 288000000, kml: 15, bbm: 'pertamax', tangki: 36, kursi: 5, muat: 70, kelebihan: 'Compact SUV Turbo lincah & stylish (4 pnp)' },
+      { id: 'brv', kelas: 'keluarga', bentuk: 'suv', nama: 'Honda BR-V N7X Prestige', harga: 348000000, kml: 14, bbm: 'pertamax', tangki: 42, kursi: 7, muat: 100, kelebihan: 'LSUV 7-seater gagah dengan Honda Sensing (6 pnp)' },
+      { id: 'cloudev', kelas: 'keluarga', bentuk: 'hatch', nama: 'Wuling Cloud EV', harga: 398000000, kml: 9.1, bbm: 'listrik', tangki: 50.6, kursi: 5, muat: 75, kelebihan: 'EV kabin sofa luas (~460 km/cas · 4 pnp)' },
+      { id: 'yariscross', kelas: 'keluarga', bentuk: 'suv', nama: 'Toyota Yaris Cross Hybrid', harga: 440600000, kml: 22, bbm: 'pertamax', tangki: 36, kursi: 5, muat: 85, kelebihan: 'SUV Hybrid super irit 22 km/L & panoramic glass roof (4 pnp)' },
+      { id: 'atto3', kelas: 'keluarga', bentuk: 'suv', nama: 'BYD Atto 3 Superior', harga: 515000000, kml: 7.9, bbm: 'listrik', tangki: 60.5, kursi: 5, muat: 95, kelebihan: 'SUV listrik Blade Battery (~480 km/cas · 4 pnp)' },
+      { id: 'hiace', kelas: 'keluarga', bentuk: 'van', nama: 'Toyota HiAce Premio 2.8 Diesel', harga: 668000000, kml: 10, bbm: 'solar', tangki: 70, kursi: 12, muat: 180, kelebihan: 'Raja travel antarkota Indonesia! Muat 11 penumpang + 1 supir' },
       { id: 'jimny', kelas: 'mewah', bentuk: 'suv', nama: 'Suzuki Jimny 5-Door 4×4', harga: 495000000, kml: 11, bbm: 'pertamax', tangki: 40, kursi: 5, muat: 70, kelebihan: 'SUV 4×4 ikonik kolektor, tahan segala medan (4 pnp)' },
+      { id: 'hiluxdc', kelas: 'mewah', bentuk: 'suv', nama: 'Toyota Hilux Double Cabin 4×4', harga: 539000000, kml: 11, bbm: 'solar', tangki: 80, kursi: 5, muat: 160, kelebihan: 'Double cabin tangguh lintas Kalimantan/Sumatera (4 pnp)' },
       { id: 'fortuner', kelas: 'mewah', bentuk: 'suv', nama: 'Toyota Fortuner 4×2', harga: 584500000, kml: 11, bbm: 'solar', tangki: 80, kursi: 7, muat: 110, kelebihan: 'SUV gagah, tangki jumbo 80 L (6 pnp)' },
       { id: 'pajerosport', kelas: 'mewah', bentuk: 'suv', nama: 'Mitsubishi Pajero Sport Dakar 4×2', harga: 650000000, kml: 11, bbm: 'solar', tangki: 68, kursi: 7, muat: 110, kelebihan: 'SUV ladder-frame bertenaga MIVEC Turbo Diesel (6 pnp)' },
       { id: 'civicrs', kelas: 'mewah', bentuk: 'sedan', nama: 'Honda Civic RS Turbo', harga: 616800000, kml: 13, bbm: 'pertamax', tangki: 47, kursi: 5, muat: 60, kelebihan: 'Sedan sporty VTEC Turbo bergengsi tinggi (4 pnp)' },
@@ -435,8 +474,16 @@
       { id: 'ioniq5', kelas: 'mewah', bentuk: 'suv', nama: 'Hyundai IONIQ 5 Signature Long Range', harga: 870000000, kml: 6.2, bbm: 'listrik', tangki: 72.6, kursi: 5, muat: 95, kelebihan: 'SUV listrik Parametric Pixel & V2L (~451 km/cas · 4 pnp)' },
       { id: 'camry', kelas: 'mewah', bentuk: 'sedan', nama: 'Toyota Camry', harga: 856200000, kml: 14, bbm: 'pertamax', tangki: 50, kursi: 5, muat: 60, kelebihan: 'Sedan eksekutif (4 pnp)' },
       { id: 'gr86', kelas: 'mewah', bentuk: 'sport', nama: 'Toyota GR 86', harga: 922900000, kml: 11, bbm: 'turbo', tangki: 50, kursi: 2, muat: 30, kelebihan: 'Mobil sport dua pintu (1 pnp)' },
+      { id: 'staria', kelas: 'mewah', bentuk: 'van', nama: 'Hyundai Staria Signature 9', harga: 924000000, kml: 11, bbm: 'solar', tangki: 75, kursi: 9, muat: 150, kelebihan: 'MPV futuristik diesel 9-seater mewah (8 penumpang + 1 supir!)' },
+      { id: 'palisade', kelas: 'mewah', bentuk: 'suv', nama: 'Hyundai Palisade Signature AWD', harga: 1110000000, kml: 11, bbm: 'solar', tangki: 71, kursi: 7, muat: 120, kelebihan: 'Flagship SUV diesel 2.2 CRDi mewah & lega (6 pnp)' },
+      { id: 'model3', kelas: 'mewah', bentuk: 'sedan', nama: 'Tesla Model 3 Highland Performance', harga: 1150000000, kml: 7.2, bbm: 'listrik', tangki: 79, kursi: 5, muat: 65, kelebihan: 'Sedan listrik kencang 261 km/j (~568 km/cas · 4 pnp)' },
+      { id: 'bmw330i', kelas: 'mewah', bentuk: 'sedan', nama: 'BMW 330i M Sport Pro', harga: 1167000000, kml: 13, bbm: 'turbo', tangki: 59, kursi: 5, muat: 60, kelebihan: 'Sedan sport eksekutif Jerman 258 HP, top speed 250 km/j (4 pnp)' },
       { id: 'alphard', kelas: 'sultan', bentuk: 'van', nama: 'Toyota Alphard', harga: 1288000000, kml: 9, bbm: 'pertamax', tangki: 75, kursi: 7, muat: 120, kelebihan: 'MPV mewah, level sultan (6 pnp)' },
-      { id: 'landcruiser', kelas: 'sultan', bentuk: 'suv', nama: 'Toyota Land Cruiser Hybrid', harga: 2716000000, kml: 9, bbm: 'pertamax', tangki: 80, kursi: 7, muat: 120, kelebihan: 'SUV paling mahal di dealer Toyota, tangki 80 L (6 pnp)' }
+      { id: 'vellfire', kelas: 'sultan', bentuk: 'van', nama: 'Toyota Vellfire Hybrid VIP', harga: 1844000000, kml: 16, bbm: 'pertamax', tangki: 60, kursi: 7, muat: 120, kelebihan: 'MPV Sultan Hybrid super senyap, captain seat pijat (6 pnp)' },
+      { id: 'lexuslm', kelas: 'sultan', bentuk: 'van', nama: 'Lexus LM 350h Executive VIP', harga: 2695000000, kml: 15, bbm: 'pertamax', tangki: 60, kursi: 5, muat: 110, kelebihan: 'First-class MPV layar 48 inci, tarif VIP Sultan tertinggi (4 pnp)' },
+      { id: 'landcruiser', kelas: 'sultan', bentuk: 'suv', nama: 'Toyota Land Cruiser Hybrid', harga: 2716000000, kml: 9, bbm: 'pertamax', tangki: 80, kursi: 7, muat: 120, kelebihan: 'SUV paling tangguh di dealer Toyota, tangki 80 L (6 pnp)' },
+      { id: 'porsche911', kelas: 'sultan', bentuk: 'sport', nama: 'Porsche 911 Carrera S', harga: 4250000000, kml: 9, bbm: 'turbo', tangki: 64, kursi: 2, muat: 25, kelebihan: 'Supercar ikonik Jerman 308 km/j, prestise sultan (1 pnp)' },
+      { id: 'mercg63', kelas: 'sultan', bentuk: 'suv', nama: 'Mercedes-AMG G 63 V8 Biturbo', harga: 6850000000, kml: 7, bbm: 'turbo', tangki: 100, kursi: 5, muat: 120, kelebihan: 'SUV Sultan V8 585 HP, tangki raksasa 100 L (4 pnp)' }
     ],
     /* kredit mobil (perkiraan): bunga flat sekitar 5% setahun + asuransi all risk sekitar 2% setahun */
     kreditMobil: { dp: [0.2, 0.25, 0.3], tenor: [12, 24, 36, 48, 60], bungaFlat: 0.0042, asuransi: 0.0017, dendaHarian: 0.005, tarikSetelahBulan: 3, leasing: 'Leasing mobil' },

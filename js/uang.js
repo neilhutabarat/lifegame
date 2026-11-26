@@ -33,7 +33,23 @@
   function pasangQris(S, id) {
     if (S.merchants[id]) return 'QRIS ' + qrisData(id).nama + ' sudah terpasang.';
     S.merchants[id] = { tersedia: 0, menunggu: [], tarikBulanIni: 0, aktifPada: S.hari + 1 };
+    if (!S.qris || !S.merchants[S.qris]) S.qris = id;
     return true;
+  }
+  function tutupQris(S, id) {
+    if (!S.merchants || !S.merchants[id]) return 'Akun QRIS tersebut tidak terdaftar.';
+    var q = qrisData(id), m = S.merchants[id];
+    var sisaTersedia = Math.max(0, Math.round(m.tersedia || 0));
+    var sisaTunggu = Math.max(0, Math.round((m.menunggu || []).reduce(function (t, x) { return t + (x.jml || 0); }, 0)));
+    var totalSisa = sisaTersedia + sisaTunggu;
+    if (totalSisa > 0) {
+      S.bank.saldo += totalSisa;
+      catat(S, 'Penutupan akun ' + (q ? q.app : id) + ' (sisa saldo cair)', totalSisa);
+    }
+    delete S.merchants[id];
+    var sisaIds = Object.keys(S.merchants);
+    if (S.qris === id) S.qris = sisaIds[0] || null;
+    return { ok: true, nama: q ? q.app : id, sisa: totalSisa, teks: 'Akun ' + (q ? q.app : id) + ' berhasil ditutup.' + (totalSisa > 0 ? ' Sisa saldo ' + rp(totalSisa) + ' otomatis ditransfer ke rekening bank.' : '') };
   }
   function biayaTransfer(S) { var b = bankIni(S); return b.gratisTransfer && S.bank.transferBulanIni < b.gratisTransfer ? 0 : N.biFast; }
   function catatTransfer(S) { S.bank.transferBulanIni = (S.bank.transferBulanIni || 0) + 1; }
@@ -78,11 +94,20 @@
     if (uang >= 50000) u.besar += uang; else u.kecil += uang;
     return { ok: true, uang: uang, kembalian: kembali };
   }
-  /* penumpang / pembeli memindai salah satu stiker QRIS yang terpasang */
+  /* penumpang / pembeli memindai salah satu stiker QRIS yang terpasang; jika semua akun QRIS ditutup, otomatis masuk bank */
   function terimaQris(S, bersih) {
-    if (!S.merchants || !Object.keys(S.merchants).length) migrasi(S);
-    var a = qrisAktif(S), id = a[Math.floor(Math.random() * a.length)] || Object.keys(S.merchants)[0] || S.qris || 'gopay';
-    if (!S.merchants[id]) S.merchants[id] = { tersedia: 0, menunggu: [], tarikBulanIni: 0 };
+    if (!S.merchants) S.merchants = {};
+    var a = qrisAktif(S);
+    if (!a.length) {
+      var keys = Object.keys(S.merchants);
+      if (!keys.length) {
+        S.bank.saldo += bersih;
+        catat(S, 'Pembayaran transfer langsung (QRIS nonaktif)', bersih);
+        return;
+      }
+      a = keys;
+    }
+    var id = a[Math.floor(Math.random() * a.length)];
     S.merchants[id].menunggu.push({ n: S.hari, jml: bersih });
   }
   function laci(S) { return S.uang.kecil + S.uang.besar; }
@@ -110,19 +135,22 @@
   }
   /* Tabungan Khusus: tidak akan tertarik otomatis oleh sistem/gaji/pembelian kecuali diambil sendiri */
   function isiTabunganGaji(S, jml) {
-    jml = Math.min(+jml || 0, S.bank.saldo);
-    if (jml <= 0) return 'Saldo rekening utama tidak cukup untuk dipindahkan ke Tabungan Khusus.';
-    S.bank.saldo -= jml;
-    S.bank.tabunganGaji = (S.bank.tabunganGaji || 0) + jml;
-    catat(S, 'Sisihkan ke Tabungan Khusus', -jml);
+    var nom = (jml === 'semua' || jml === Infinity) ? S.bank.saldo : Math.min(+jml || 0, S.bank.saldo);
+    nom = Math.floor(nom);
+    if (nom <= 0) return 'Saldo rekening utama tidak cukup untuk dipindahkan ke Tabungan Khusus.';
+    S.bank.saldo -= nom;
+    S.bank.tabunganGaji = (S.bank.tabunganGaji || 0) + nom;
+    catat(S, 'Sisihkan ke Tabungan Khusus', -nom);
     return true;
   }
   function tarikTabunganGaji(S, jml) {
-    jml = Math.min(+jml || 0, S.bank.tabunganGaji || 0);
-    if (jml <= 0) return 'Saldo Tabungan Khusus kosong.';
-    S.bank.tabunganGaji -= jml;
-    S.bank.saldo += jml;
-    catat(S, 'Tarik dari Tabungan Khusus', jml);
+    var tab = S.bank.tabunganGaji || 0;
+    var nom = (jml === 'semua' || jml === Infinity) ? tab : Math.min(+jml || 0, tab);
+    nom = Math.floor(nom);
+    if (nom <= 0) return 'Saldo Tabungan Khusus kosong.';
+    S.bank.tabunganGaji -= nom;
+    S.bank.saldo += nom;
+    catat(S, 'Tarik dari Tabungan Khusus', nom);
     return true;
   }
   function saldoMerchant(m) { return m.tersedia + m.menunggu.reduce(function (t, x) { return t + x.jml; }, 0); }
@@ -134,32 +162,36 @@
     return !!(g.KK_STAF && S.staf && S.staf.some(function (k) { return !k.cabang && g.KK_STAF.hadir(S, k); }));
   }
   function setor(S, jml, sumber) {
-    var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM';
+    var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM / Teller';
     if (!bolehKeAtm(S)) return 'Kedai sedang buka tanpa karyawan. Tutup sementara dulu atau rekrut karyawan agar bisa ke ' + tempat + '.';
     var dariDompet = sumber === 'dompet' || (S.usaha && S.usaha.berhentiSewa);
-    jml = Math.min(jml, dariDompet ? dompet(S) : S.uang.besar + S.uang.kecil);
-    if (T) { jml = Math.min(jml, T.maks); if (jml < T.min) return 'Setor di ' + tempat + ' minimal ' + rp(T.min) + '.'; if (S.bank.saldo + jml < T.biaya) return 'Saldo tidak cukup untuk biaya ' + rp(T.biaya) + '.'; }
+    var stok = dariDompet ? dompet(S) : (S.uang.besar + S.uang.kecil);
+    jml = (jml === 'semua' || jml === Infinity) ? stok : Math.min(+jml || 0, stok);
+    jml = Math.floor(jml);
     if (jml <= 0) return dariDompet ? 'Dompet kosong.' : 'Laci kosong.';
+    var kenaIndomaret = !!(T && jml <= T.maks);
+    if (kenaIndomaret && jml < T.min) return 'Setor di ' + tempat + ' minimal ' + rp(T.min) + '.';
+    var biaya = kenaIndomaret ? T.biaya : 0;
+    if (S.bank.saldo + jml < biaya) return 'Saldo tidak cukup untuk biaya ' + rp(biaya) + '.';
     if (dariDompet) { S.uang.dompet -= jml; }
     else { var dariBesar = Math.min(jml, S.uang.besar); S.uang.besar -= dariBesar; S.uang.kecil -= jml - dariBesar; }
-    S.bank.saldo += jml; catat(S, 'Setor tunai ' + tempat + (dariDompet ? ' (dari dompet)' : ''), jml);
-    if (T) { S.bank.saldo -= T.biaya; catat(S, 'Biaya setor tunai ' + tempat, -T.biaya); }
+    S.bank.saldo += jml; catat(S, 'Setor tunai ' + (kenaIndomaret ? tempat : 'Teller') + (dariDompet ? ' (dari dompet)' : ''), jml);
+    if (biaya > 0) { S.bank.saldo -= biaya; catat(S, 'Biaya setor tunai ' + tempat, -biaya); }
     return true;
   }
   function tarik(S, jml, tujuan) {
-    var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM';
+    var b = bankIni(S), T = b.tunai, tempat = T ? T.tempat : 'ATM / Teller';
     if (!bolehKeAtm(S)) return 'Kedai sedang buka tanpa karyawan. Tutup sementara dulu atau rekrut karyawan agar bisa ke ' + tempat + '.';
-    if (T) {
-      if (jml > T.maks) return 'Tarik di ' + tempat + ' paling banyak ' + rp(T.maks) + ' sekali.';
-      if (S.bank.tarikHariIni + jml > T.tarikHarian) return 'Batas tarik tunai ' + rp(T.tarikHarian) + ' sehari sudah tercapai.';
-    }
-    var biaya = T ? T.biaya : 0;
-    if (S.bank.saldo < jml + biaya) return 'Saldo rekening tidak cukup.';
+    jml = Math.floor(+jml || 0);
+    if (jml <= 0) return 'Nominal tarik tidak valid.';
+    var kenaIndomaret = !!(T && jml <= T.maks);
+    var biaya = kenaIndomaret ? T.biaya : 0;
+    if (S.bank.saldo < jml + biaya) return 'Saldo rekening tidak cukup (' + rp(S.bank.saldo) + ').';
     S.bank.saldo -= jml + biaya;
     if (tujuan === 'dompet') S.uang.dompet = (S.uang.dompet || 0) + jml;
     else S.uang.besar += jml;
     S.bank.tarikHariIni += jml;
-    catat(S, 'Tarik tunai ' + tempat + (tujuan === 'dompet' ? ' (ke dompet)' : '') + (biaya ? ' (biaya ' + rp(biaya) + ')' : ''), -(jml + biaya));
+    catat(S, 'Tarik tunai ' + (kenaIndomaret ? tempat : 'Teller') + (tujuan === 'dompet' ? ' (ke dompet)' : '') + (biaya ? ' (biaya ' + rp(biaya) + ')' : ''), -(jml + biaya));
     return true;
   }
   function tukarReceh(S, jml) {
@@ -389,9 +421,9 @@
     if (kk.status !== 'tidak') {
       if (tB.m !== tL.m) {
         var bunga = 0;
-        /* jika tagihan bulan lalu belum lunas penuh, kena bunga BI maks 1,75% sebulan */
+        /* jika tagihan bulan lalu belum lunas penuh, kena bunga BI maks 1,75% sebulan (hanya atas sisa tagihan tercetak, bukan pemakaian baru) */
         if (kk.tagihan > 0) {
-          bunga = Math.round((kk.tagihan + kk.pakai) * KK.bungaBulan);
+          bunga = Math.round(kk.tagihan * KK.bungaBulan);
           kk.tagihan += bunga;
           catatKk(S, 'Bunga kartu kredit 1,75%', -bunga, nBaru);
         }
@@ -436,7 +468,7 @@
   }
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
 
-  g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris,
+  g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris, tutupQris: tutupQris,
     biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, isiTabunganGaji: isiTabunganGaji, tarikTabunganGaji: tarikTabunganGaji, merchantTotal: merchantTotal,
     bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,

@@ -127,7 +127,7 @@
     { a: 'jambi', b: 'palembang', km: 275, tol: 0 },
     { a: 'palembang', b: 'lampung', km: 340, tol: 330000 },
     { a: 'lampung', b: 'bakauheni', km: 90, tol: 90000 },
-    { a: 'bakauheni', b: 'merak', km: 30, tol: 0, laut: true, jam: 3.5, kapalMobil: 481800, kapalOrang: 22700 },
+    { a: 'bakauheni', b: 'merak', km: 30, tol: 0, laut: true, jam: 2.0, kapalMobil: 481800, kapalOrang: 22700 },
     { a: 'merak', b: 'jakarta', km: 105, tol: 70000 },
     { a: 'jakarta', b: 'bandung', km: 150, tol: 55000 },
     { a: 'jakarta', b: 'cirebon', km: 230, tol: 150000 },
@@ -236,7 +236,7 @@
     { a: 'tanjungselor', b: 'tarakan', km: 48, tol: 0, laut: true, jam: 1.5, kapalMobil: 260000, kapalOrang: 95000, jalan: 'Feri / Speedboat Kayan (Tanjung Selor–Tarakan)', kondisi: 'mulus' },
     { a: 'tanjungselor', b: 'tanatidung', km: 124, tol: 0, jalan: 'Trans-Kalimantan Utara (Tanjung Selor–Sekatak–Tideng Pale)', kondisi: 'bergelombang' },
     { a: 'tanatidung', b: 'malinau', km: 112, tol: 0, jalan: 'Jl. Nasional Tideng Pale–Malinau', kondisi: 'bergelombang' },
-    { a: 'tanatidung', b: 'nunukan', km: 148, tol: 0, laut: true, jam: 2.0, kapalMobil: 290000, kapalOrang: 85000, jalan: 'Jl. Sei Ular–Feri Penyeberangan ke Pulau Nunukan', kondisi: 'bergelombang' },
+    { a: 'tanatidung', b: 'nunukan', km: 148, tol: 0, laut: true, jam: 4.5, kapalMobil: 290000, kapalOrang: 85000, jalan: 'Jl. Sei Ular–Feri Penyeberangan ke Pulau Nunukan', kondisi: 'bergelombang' },
     { a: 'tarakan', b: 'nunukan', km: 125, tol: 0, laut: true, jam: 3.5, kapalMobil: 390000, kapalOrang: 150000, jalan: 'Feri Penyeberangan Tarakan–Tunon Taka Nunukan', kondisi: 'mulus' },
     { a: 'surabaya', b: 'makassar', km: 780, tol: 0, laut: true, jam: 20, kapalMobil: 1650000, kapalOrang: 320000 },
     { a: 'makassar', b: 'parepare', km: 155, tol: 0 },
@@ -265,21 +265,23 @@
   ];
   var VMAX = { hatch: 160, mpv: 170, suv: 180, van: 185, sedan: 205, sport: 226, pikap: 135 };
   var VMAX_MOBIL = {
-    granmax: 130, carry: 130, hilux: 145, l300: 130,
-    calya: 160, sigra: 160, ayla: 155, agya: 160, brio: 165, airev: 100, binguoev: 130,
+    granmax: 130, carry: 130, hilux: 145, l300: 130, traga: 135, triton: 145,
+    calya: 160, sigra: 160, ayla: 155, agya: 160, brio: 165, airev: 100, binguoev: 130, cloudev: 150,
     xenia: 170, avanza: 170, ertiga: 170, terios: 170, rush: 170, xl7: 170, veloz: 175, xpander: 175, stargazer: 175,
-    bydm6: 180, creta: 180, hrv: 180, innova: 175, zenix: 180, jimny: 145,
+    raize: 175, brv: 180, yariscross: 180, atto3: 160, hiace: 160,
+    bydm6: 180, creta: 180, hrv: 180, innova: 175, zenix: 180, jimny: 145, hiluxdc: 175,
     fortuner: 185, pajerosport: 190, civicrs: 200, bydseal: 180, crv: 190, ioniq5: 185, camry: 210, gr86: 226,
-    alphard: 180, landcruiser: 210
+    staria: 185, palisade: 195, model3: 261, bmw330i: 250,
+    alphard: 180, vellfire: 185, lexuslm: 190, landcruiser: 210, porsche911: 308, mercg63: 240
   };
   var VMAX_MOTOR = {
     dazz: 90, revo: 95, mio: 95, beat: 95, 'beat-bekas': 92, gear: 100, supra: 105, 'supra-bekas': 102,
-    scoopy: 95, vario: 108, mxking: 132, icon: 55, aerox: 122, vario160: 122, nmax: 120, pcx160: 120,
+    scoopy: 95, vario: 108, mxking: 132, icon: 55, em1e: 50, alvacervo: 103, aerox: 122, aeroxalpha: 128, vario160: 122, nmax: 120, nmaxturbo: 126, pcx160: 120, pcxroadsync: 122,
     nex2: 95, address: 95, genio: 95, fazzio: 95, lexi155: 118, filano: 98, stylo160: 120, adv160: 120,
-    vespa: 108, vespasprint: 110, xmax250: 145, forza250: 145,
+    vespa: 108, vespasprint: 110, vespagts: 135, vespa946: 112, xmax250: 145, forza250: 145,
     satriafu: 142, cb150r: 138, klx150: 115, w175: 118, crf150l: 115, wr155r: 128, gsxr150: 148,
-    cbr150: 142, r15: 145, mt25: 168, cbr250: 179, 'cbr250-bekas': 176, ninja250: 175, r25: 175, zx25r: 187,
-    rxking: 140, r6: 260, zx4rr: 220, zx6r: 265, zx10r: 299, cbr1000: 299, h2: 300
+    cbr150: 142, r15: 145, r15m: 148, mt25: 168, cbr250: 179, cbr250sp: 182, 'cbr250-bekas': 176, ninja250: 175, r25: 175, zx25r: 187, zx25rr: 192,
+    rxking: 140, r6: 260, zx4rr: 220, zx6r: 265, zx10r: 299, harleysport: 220, r1m: 299, cbr1000: 299, h2: 300, s1000rr: 303, panigalev4: 308
   };
   function vmaxKendaraan(S, jenis) {
     if (jenis === 'mobil') {

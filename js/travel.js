@@ -779,7 +779,7 @@
         else { ket = 'minta santai, nyaman'; if (n >= 4.5) { var tp = Math.round(bayarKursi * 0.05 / 1000) * 1000; tip += tp; } }
       } else {
         if (telat > 1.8) { n -= 1; ket = 'merasa kelamaan'; }
-        if (pangsa5 > 0.6) n -= 0.8;
+        if (pangsa5 > 0.85) n -= 0.3;
       }
       n = Math.max(1, Math.min(5, n)); sumNilai += n; total += bayarKursi; rinci.push({ nama: p.nama, tipe: p.tipe, nilai: Math.round(n * 10) / 10, bayar: bayarKursi, ket: ket });
     });

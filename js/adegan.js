@@ -1229,8 +1229,8 @@
   }
 
   /* ---------- motor sendiri (bentuk vektor asli per jenis), ngojek, mobil, pindahan ---------- */
-  var SPORT = { gsxr150: '#2f6fb0', cbr150: '#d9443a', r15: '#2f6fb0', mt25: '#3b3f46', cbr250: '#d9443a', ninja250: '#4fa53a', r25: '#2f6fb0', zx25r: '#4fa53a', zx4rr: '#4fa53a', zx6r: '#4fa53a', zx10r: '#4fa53a', cbr1000: '#d9443a', h2: '#2b2f36', r6: '#2f6fb0', 'cbr250-bekas': '#d9443a' };
-  var RETRO = { scoopy: 1, vespa: 1 }, MAXI = { nmax: 1, pcx160: 1 }, AYAGO = { satriafu: 1, mxking: 1 };
+  var SPORT = { gsxr150: '#2f6fb0', cbr150: '#d9443a', r15: '#2f6fb0', r15m: '#1f4e8c', mt25: '#3b3f46', cbr250: '#d9443a', cbr250sp: '#c62828', ninja250: '#4fa53a', r25: '#2f6fb0', zx25r: '#4fa53a', zx25rr: '#43a047', zx4rr: '#4fa53a', zx6r: '#4fa53a', zx10r: '#4fa53a', cbr1000: '#d9443a', h2: '#2b2f36', r6: '#2f6fb0', r1m: '#1f3a60', s1000rr: '#1565c0', panigalev4: '#c62828', harleysport: '#26292e', 'cbr250-bekas': '#d9443a' };
+  var RETRO = { scoopy: 1, vespa: 1, vespasprint: 1, vespagts: 1, vespa946: 1, fazzio: 1, filano: 1, stylo160: 1 }, MAXI = { nmax: 1, nmaxturbo: 1, pcx160: 1, pcxroadsync: 1, adv160: 1, xmax250: 1, forza250: 1, aeroxalpha: 1, alvacervo: 1 }, AYAGO = { satriafu: 1, mxking: 1 };
   /* motor menghadap kanan; dasar = permukaan jalan */
   function gambarMotorKu(x, y, id, o, t) {
     o = o || {};
