@@ -236,20 +236,18 @@
     return r.reduce(function (t, x) { return t + x.laba; }, 0) / r.length * 30;
   }
   function syaratKur(S) {
-    var sb = !!(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S));
     return [
-      { ok: sb || S.hariKe >= N.kur.syaratHari, teks: 'Usaha berjalan 6 bulan (sekarang hari ke-' + S.hariKe + ')' },
-      { ok: sb || !!S.nib, teks: 'Punya NIB dari OSS' },
-      { ok: sb || !S.kreditBuruk, teks: 'Tidak ada riwayat telat bayar cicilan' },
+      { ok: S.hariKe >= N.kur.syaratHari, teks: 'Usaha berjalan 6 bulan (sekarang hari ke-' + S.hariKe + ')' },
+      { ok: !!S.nib, teks: 'Punya NIB dari OSS' },
+      { ok: !S.kreditBuruk, teks: 'Tidak ada riwayat telat bayar cicilan' },
       { ok: S.kur.status !== 'aktif' && S.kur.status !== 'menunggu', teks: 'Tidak sedang punya KUR berjalan' }
     ];
   }
   function ajukanKur(S, plafon, tenor) {
     if (!syaratKur(S).every(function (x) { return x.ok; })) return 'Syarat KUR belum terpenuhi.';
-    var sb = !!(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S));
     var a = angsuran(plafon, tenor), batas = labaBulanan(S) / 2;
-    if (!sb && a > batas) return 'Ditolak: angsuran ' + a.toLocaleString('id-ID') + ' sebulan terlalu besar dibanding penghasilan bulanan. Coba plafon lebih kecil atau tenor lebih panjang.';
-    S.kur = { status: 'menunggu', plafon: plafon, tenor: tenor, angsuran: a, siapPada: S.hari + (sb ? 0 : N.kur.hariProses) };
+    if (a > batas) return 'Ditolak: angsuran ' + a.toLocaleString('id-ID') + ' sebulan terlalu besar dibanding penghasilan bulanan. Coba plafon lebih kecil atau tenor lebih panjang.';
+    S.kur = { status: 'menunggu', plafon: plafon, tenor: tenor, angsuran: a, siapPada: S.hari + N.kur.hariProses };
     return true;
   }
 
@@ -264,11 +262,11 @@
     return Math.min(KK.limitMaks, Math.max(KK.limitMin, Math.round(gj * KK.kaliLimit / 1000000) * 1000000));
   }
   function syaratKk(S) {
-    var KK = N.kartuKredit, gj = penghasilanKk(S), sb = !!(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S));
+    var KK = N.kartuKredit, gj = penghasilanKk(S);
     return [
-      { ok: sb || S.hariKe >= KK.syaratHari, teks: 'Usaha berjalan minimal 1 bulan (sekarang hari ke-' + S.hariKe + ')' },
-      { ok: sb || gj >= KK.syaratGaji, teks: 'Penghasilan minimal ' + rp(KK.syaratGaji) + ' sebulan (sekarang ' + rp(gj) + ')' },
-      { ok: sb || !S.kreditBuruk, teks: 'Riwayat kredit lancar (SLIK OJK bersih)' },
+      { ok: S.hariKe >= KK.syaratHari, teks: 'Usaha berjalan minimal 1 bulan (sekarang hari ke-' + S.hariKe + ')' },
+      { ok: gj >= KK.syaratGaji, teks: 'Penghasilan minimal ' + rp(KK.syaratGaji) + ' sebulan (sekarang ' + rp(gj) + ')' },
+      { ok: !S.kreditBuruk, teks: 'Riwayat kredit lancar (SLIK OJK bersih)' },
       { ok: !S.kk || S.kk.status === 'tidak', teks: 'Belum punya kartu kredit di ' + bankIni(S).nama }
     ];
   }

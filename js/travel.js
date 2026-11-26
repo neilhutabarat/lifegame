@@ -458,19 +458,9 @@
   function gigiObj(n, S) { return R.gigiInfo ? R.gigiInfo(S, 'mobil', Math.max(1, Math.min(5, n))) : R.gigi[Math.max(1, Math.min(5, n)) - 1]; }
   function hujan(S) { return !!(g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)); }
   function malam(S) { var m = S.menit % 1440; return m >= 1320 || m < 300; }
-  function vvipAktif(S) { return !!(S && S.vvip && S.vvip.aktif); }
-  function bukaVvip(S, paksaGratis) {
-    S.vvip = S.vvip || { aktif: false };
-    if (S.vvip.aktif) return { ok: true, teks: 'Mode VVIP sudah aktif — Kecepatan Level 5 terbuka.' };
-    if (!paksaGratis && !S.vvip.pernahBeli) {
-      if (!S.bank || S.bank.saldo < VVIP_HARGA) return 'Saldo rekening bank belum cukup untuk membuka Mode VVIP (' + rp(VVIP_HARGA) + ').';
-      S.bank.saldo -= VVIP_HARGA;
-      M().catatBank(S, 'Buka Mode VVIP (Gembok Kecepatan Lv 5)', -VVIP_HARGA);
-      S.vvip.pernahBeli = true;
-    }
-    S.vvip.aktif = true;
-    S.vvip.dibukaHari = S.hari || 0;
-    return { ok: true, teks: '🔓 Gembok Mode VVIP terbuka! Kecepatan Level 5 (Top Speed) kini bisa dipakai.' };
+  function vvipAktif(S) { return false; /* Level 5 dipertahankan dalam keadaan tergembok 🔒 untuk sementara */ }
+  function bukaVvip(S) {
+    return '🔒 Kecepatan Level 5 (Mode VVIP) masih tergembok untuk saat ini.';
   }
   function kunciVvip(S) {
     S.vvip = S.vvip || { aktif: false };

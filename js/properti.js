@@ -196,9 +196,9 @@
     return { harga: h, dp: uangMuka, pokok: pokok, bunga: K.bungaFix, biaya: biaya, bphtb: bb, bayarAwal: uangMuka + biaya + bb, angsuran: ang, angsuranFloating: angFloat, tenor: tenorTahun * 12 };
   }
   function syarat(S, tipe, x) {
-    var daftar = [], sb = !!(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S));
+    var daftar = [];
     if (x.tunai) { daftar.push({ teks: 'Saldo rekening ' + rp(x.bayarAwal), ok: S.bank.saldo >= x.bayarAwal }); return daftar; }
-    daftar.push({ teks: 'Tidak ada riwayat telat bayar cicilan (SLIK OJK)', ok: sb || !S.kreditBuruk });
+    daftar.push({ teks: 'Tidak ada riwayat telat bayar cicilan (SLIK OJK)', ok: !S.kreditBuruk });
     daftar.push({ teks: 'Saldo rekening untuk uang muka dan biaya ' + rp(x.bayarAwal), ok: S.bank.saldo >= x.bayarAwal });
     return daftar;
   }

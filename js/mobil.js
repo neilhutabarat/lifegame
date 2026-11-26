@@ -201,8 +201,8 @@
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = model(id); if (!m) return 'Mobil tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
-    if (!bebasThn && (m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var thn = KAL.tgl(S.hari).y;
+    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
     tambahArmada(S, mobilBaru(m, S)); return true;
@@ -214,10 +214,10 @@
   }
   function beliKredit(S, id, dp, tenor, cara) {
     var e = cekGarasi(S); if (e) return e;
-    if (S.kreditBuruk && !(g.KK_TOWER && g.KK_TOWER.sandboxAktif(S))) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
+    if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = model(id); if (!m) return 'Mobil tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
-    if (!bebasThn && (m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var thn = KAL.tgl(S.hari).y;
+    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;

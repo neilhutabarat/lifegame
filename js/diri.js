@@ -186,9 +186,8 @@
   /* ---------- waktu berjalan ---------- */
   function jalan(S, dMenit, kerja) {
     var d = S.diri, j = dMenit / 60, kabar = [];
-    var sbKebal = !!(S.sandbox && S.sandbox.aktif && S.sandbox.kebal);
-    d.kenyang = sbKebal ? Math.max(95, d.kenyang) : batas(d.kenyang - TURUN.kenyang * j);
-    d.minum = sbKebal ? Math.max(95, d.minum) : batas(d.minum - TURUN.minum * j);
+    d.kenyang = batas(d.kenyang - TURUN.kenyang * j);
+    d.minum = batas(d.minum - TURUN.minum * j);
     /* HB bar (gairah/kedekatan pasangan) perlahan meningkat sepanjang hari */
     var lajuHb = 2.2 * (d.stamina > 45 && !d.sakit ? 1.15 : 0.65);
     d.hb = batas((d.hb || 0) + lajuHb * j);
@@ -228,10 +227,9 @@
     }
     var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0) + (d.sakit ? (d.sakit.berat ? 5 : 2.5) : 0) + (d.kesehatan < 50 ? 2 : 0);
     if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'kursipijat') ? 18 : punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
-    d.stamina = sbKebal ? Math.max(95, d.stamina) : batas(d.stamina - turunStamina * j);
-    if (sbKebal) { d.kesehatan = Math.max(98, d.kesehatan); d.sakit = null; if (S.hp) S.hp.baterai = Math.max(95, S.hp.baterai || 95); }
+    d.stamina = batas(d.stamina - turunStamina * j);
     /* peluang sakit akibat aktivitas berlebihan, telat makan, atau cuaca hujan */
-    if (!sbKebal && !d.sakit && S.hari > (d.kebalSampai || -1) && j > 0) {
+    if (!d.sakit && S.hari > (d.kebalSampai || -1) && j > 0) {
       var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S);
       var naikMobilOnline = S.ojek && S.ojek.online && S.ojek.mode === 'mobil';
       var diluarHujan = hujan && d.posisi !== 'kos' && !(S.mobil && (!S.ojek.online || naikMobilOnline));
@@ -645,8 +643,8 @@
   }
   function beliGame(S, gameId, caraBayar) {
     var gm = gameModel(gameId); if (!gm) return 'Game tidak dikenal.';
-    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahun || 2023), bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
-    if (!bebasThn && rilis > thnKini) return gm.nama + ' baru rilis tahun ' + rilis + ' (tahun saat ini ' + thnKini + ').';
+    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahun || 2023);
+    if (rilis > thnKini) return gm.nama + ' baru rilis tahun ' + rilis + ' (tahun saat ini ' + thnKini + ').';
     if (S.game.kaset && S.game.kaset[gameId]) return 'Sudah punya ' + gm.nama + '.';
     if (!bisaMainGame(S, gm)) {
       var km = konsolModel(gm.konsol);
@@ -756,8 +754,8 @@
   }
   function beliGadget(S, id, caraBayar) {
     var gm = gadgetModel(id); if (!gm) return 'Gadget tidak dikenal.';
-    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahunRilis || gm.tahun || 2023), bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
-    if (!bebasThn && rilis > thnKini) return gm.nama + ' belum rilis (rilis ' + rilis + ', tahun game sekarang ' + thnKini + ').';
+    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahunRilis || gm.tahun || 2023);
+    if (rilis > thnKini) return gm.nama + ' belum rilis (rilis ' + rilis + ', tahun game sekarang ' + thnKini + ').';
     if (S.gadget && S.gadget[id]) return 'Sudah punya ' + gm.nama + '.';
     var d = diskonToko(S, 'tokopedia');
     var h = d ? Math.round(gm.harga * (1 - d) / 5000) * 5000 : gm.harga;
@@ -2163,8 +2161,8 @@
   function belikanHadiah(S, targetJenis, targetId, itemId, kredit) {
     var it = KATALOG_HADIAH.filter(function (x) { return x.id === itemId; })[0];
     if (!it) return 'Barang tidak ditemukan.';
-    var thnH = KAL.tgl(S.hari).y, bebasThn = !!(g.KK_TOWER && g.KK_TOWER.bukaSemuaTahun(S));
-    if (!bebasThn && (it.tahun || 2023) > thnH) return it.nama + ' baru rilis tahun ' + it.tahun + ' (tahun saat ini ' + thnH + ').';
+    var thnH = KAL.tgl(S.hari).y;
+    if ((it.tahun || 2023) > thnH) return it.nama + ' baru rilis tahun ' + it.tahun + ' (tahun saat ini ' + thnH + ').';
     var target = targetJenis === 'teman'
       ? (S.teman || []).filter(function (x) { return x.id === targetId; })[0]
       : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];

@@ -66,6 +66,23 @@
     <p id="info-simpan" class="kecil"></p>
   </section>
 
+  <section id="layar-karakter" class="layar" hidden>
+    <h1 class="judul-game" style="font-size:30px">Isi data karakter<small>Tentukan nama, jenis kelamin, dan tanggal lahirmu sebelum mulai.</small></h1>
+    <div class="kartu-form">
+      <div class="karakter-preview"><span id="awal-avatar"></span><div><b id="awal-nama-prev">Driver</b><small id="awal-usia-prev">Usia 23 tahun · Tahun 2023</small></div></div>
+      <label class="form-lbl">Nama karakter<input id="in-awal-nama" class="input-teks" type="text" maxlength="24" placeholder="Masukkan namamu (mis. Budi)"></label>
+      <div class="form-lbl">Jenis kelamin
+        <div class="chip-baris" style="margin-top:4px">
+          <button type="button" class="chip-tombol" data-awal-gender="cowok">👨 Cowok</button>
+          <button type="button" class="chip-tombol pilih" data-awal-gender="cewek">👩 Cewek</button>
+        </div>
+      </div>
+      <label class="form-lbl">Tanggal lahir (TTL)<input id="in-awal-ttl" class="input-teks" type="date" value="1999-05-15" min="1965-01-01" max="2005-12-31"></label>
+    </div>
+    <button id="b-lanjut-karakter" class="aksi" type="button">Lanjut pilih kota</button>
+    <button id="b-kembali-karakter" class="tombol-lain" type="button">Kembali</button>
+  </section>
+
   <section id="layar-kota" class="layar" hidden>
     <h1 class="judul-game" style="font-size:32px">Mulai di kota mana?<small>Kota menentukan tarif, jarak, dan suasana jalan.</small></h1>
     <div id="kota-daftar" class="kota-daftar"></div>
@@ -124,7 +141,6 @@
 <script src="js/jualan.js"></script>
 <script src="js/adegan.js"></script>
 <script src="js/suara.js"></script>
-<script src="js/tower.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
