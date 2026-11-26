@@ -31,6 +31,7 @@
   }
   function pilihAktif(S, idx) {
     if (!S.armadaMotor || !S.armadaMotor[idx]) return 'Motor tidak ditemukan.';
+    if (S.ojek && S.ojek.online && S.ojek.mode !== 'mobil') return 'Berhenti narik ojol motor dulu sebelum ganti motor utama.';
     S.motorAktif = idx;
     S.armadaMotor.forEach(function (mt) {
       if (mt.kmBan == null) mt.kmBan = mt.km || 0;
@@ -56,8 +57,7 @@
   }
   function cekGarasi(S) {
     S.armadaMotor = S.armadaMotor || (S.motor ? [S.motor] : []);
-    if (S.armadaMotor.length >= 5) return 'Garasi motor penuh (maksimal 5 unit). Jual salah satu kalau mau beli lagi.';
-    return null;
+    return null; /* bisa punya lebih dari 1 motor tanpa batas */
   }
   function bayarDealer(S, jml, ket, cara) {
     if (cara === 'kk') {
@@ -296,39 +296,44 @@
 
   /* ---------- ganti hari ---------- */
   function gantiHari(S, nLama, nBaru) {
-    var kabar = [], tB = KAL.tgl(nBaru), m = S.motor;
+    var kabar = [], tB = KAL.tgl(nBaru);
     if (tB.d === 1) {
       ['pertamax', 'turbo'].forEach(function (j) { S.bbmFaktor[j] = Math.max(0.9, Math.min(1.15, S.bbmFaktor[j] * (1 + (Math.random() - 0.5) * 0.06))); });
       kabar.push('Harga Pertamax bulan ini ' + rp(hargaBbm(S, 'pertamax')) + ' per liter.');
     }
     if (Math.floor(nBaru / 7) !== S.pasarBekas.minggu) bekasBaru(S);
-    if (!m) return kabar;
-    if (m.bbm === 'listrik' && m.baterai < m.jarakPenuh) {
-      var kwh = (m.jarakPenuh - m.baterai) / m.jarakPenuh * m.kwh, biaya = Math.round(kwh * R.tarifListrik);
-      m.baterai = m.jarakPenuh; S.hariIni.listrikMotor = (S.hariIni.listrikMotor || 0) + biaya;
-    }
-    var k = m.kredit;
-    if (k && (k.sisa > 0 || k.tunggakan > 0)) {
-      if (k.sisa > 0 && tB.d === k.tempo) {
-        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('🏍️ Autodebit angsuran motor ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
-        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran motor (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
+    S.armadaMotor = S.armadaMotor || (S.motor ? [S.motor] : []);
+    var armadaM = S.armadaMotor;
+    if (!armadaM.length) return kabar;
+    for (var mi = armadaM.length - 1; mi >= 0; mi--) {
+      var mt = armadaM[mi];
+      if (mt.bbm === 'listrik' && mt.baterai < mt.jarakPenuh) {
+        var kwh = (mt.jarakPenuh - mt.baterai) / mt.jarakPenuh * mt.kwh, biaya = Math.round(kwh * R.tarifListrik);
+        mt.baterai = mt.jarakPenuh; S.hariIni.listrikMotor = (S.hariIni.listrikMotor || 0) + biaya;
       }
-      if (k.tunggakan > 0) {
-        k.denda += Math.round(k.tunggakan * KR.dendaHarian);
-        var bayar = Math.min(k.tunggakan + k.denda, S.bank.saldo);
-        if (bayar >= k.tunggakan + k.denda) { S.bank.saldo -= bayar; catatBank(S, 'Autodebit tunggakan + denda motor', -bayar, nBaru); kabar.push('🏍️ Tunggakan motor & denda ' + rp(bayar) + ' dibayar otomatis.'); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; }
-        else if (k.bulanTelat >= KR.tarikSetelahBulan) {
-          kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.');
-          if (S.armadaMotor && S.armadaMotor.length) { S.armadaMotor.splice(S.motorAktif || 0, 1); S.motorAktif = 0; sinkronAktif(S); }
-          else S.motor = null;
-          return kabar;
+      var k = mt.kredit;
+      if (k && (k.sisa > 0 || k.tunggakan > 0)) {
+        if (k.sisa > 0 && tB.d === k.tempo) {
+          if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + mt.nama, -k.angsuran, nBaru); kabar.push('🏍️ Autodebit angsuran ' + mt.nama + ' ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
+          else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran ' + mt.nama + ' (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
         }
+        if (k.tunggakan > 0) {
+          k.denda += Math.round(k.tunggakan * KR.dendaHarian);
+          var bayar = Math.min(k.tunggakan + k.denda, S.bank.saldo);
+          if (bayar >= k.tunggakan + k.denda) { S.bank.saldo -= bayar; catatBank(S, 'Autodebit tunggakan + denda ' + mt.nama, -bayar, nBaru); kabar.push('🏍️ Tunggakan ' + mt.nama + ' & denda ' + rp(bayar) + ' dibayar otomatis.'); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; }
+          else if (k.bulanTelat >= KR.tarikSetelahBulan) {
+            kabar.push(KR.leasing + ' menarik ' + mt.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.');
+            armadaM.splice(mi, 1); sinkronAktif(S);
+            continue;
+          }
+        }
+        if (k.sisa <= 0 && k.tunggakan === 0) { mt.kredit = null; kabar.push('🎉 Kredit ' + mt.nama + ' lunas! BPKB diambil di ' + KR.leasing + '.'); }
       }
-      if (k.sisa <= 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('🎉 Kredit motor lunas! BPKB diambil di ' + KR.leasing + '.'); }
+      if (nBaru === mt.pajakTempo - 14) kabar.push('Pajak tahunan ' + mt.nama + ' jatuh tempo 2 minggu lagi.');
+      if (nBaru > mt.pajakTempo && (nBaru - mt.pajakTempo) % 30 === 1) { mt.dendaPajak = (mt.dendaPajak || 0) + Math.round(mt.harga * R.pkb * R.dendaPajak); kabar.push('Pajak ' + mt.nama + ' telat, denda bertambah.'); }
     }
-    if (nBaru === m.pajakTempo - 14) kabar.push('Pajak tahunan ' + m.nama + ' jatuh tempo 2 minggu lagi.');
-    if (nBaru > m.pajakTempo && (nBaru - m.pajakTempo) % 30 === 1) { m.dendaPajak = (m.dendaPajak || 0) + Math.round(m.harga * R.pkb * R.dendaPajak); kabar.push('Pajak motor telat, denda bertambah.'); }
-    if (telatOli(S) > 0 && tB.dow === 1) kabar.push('Oli motor sudah lewat waktunya. Motor lebih sering mogok.');
+    sinkronAktif(S);
+    if (S.motor && telatOli(S) > 0 && tB.dow === 1) kabar.push('Oli motor sudah lewat waktunya. Motor lebih sering mogok.');
     return kabar;
   }
 

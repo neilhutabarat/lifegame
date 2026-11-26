@@ -192,16 +192,18 @@
       } else if (DIRI.pasanganAktif(S) && ((S.profil && S.profil.gender) === 'cowok') && DIRI.sisaHariNafkah && DIRI.sisaHariNafkah(S) <= 3) {
         chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">💝 Nafkah H-' + DIRI.sisaHariNafkah(S) + '</span>';
       }
-      if (S.mobil && S.mobil.kredit) {
-        var kmbl = S.mobil.kredit, hMbl = selisihTgl(kmbl.tempo);
-        if (kmbl.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="motor">🚗 Tunggakan Mobil ' + rupiahPendek(kmbl.tunggakan + (kmbl.denda || 0)) + '</span>';
-        else if (hMbl <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🚗 Cicilan Mobil ' + (hMbl === 0 ? 'Hari ini' : 'H-' + hMbl) + ' · ' + rupiahPendek(kmbl.angsuran) + '</span>';
-      }
-      if (S.motor && S.motor.kredit) {
-        var kmtr = S.motor.kredit, hMtr = selisihTgl(kmtr.tempo);
-        if (kmtr.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="motor">🏍️ Tunggakan Motor ' + rupiahPendek(kmtr.tunggakan + (kmtr.denda || 0)) + '</span>';
-        else if (hMtr <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🏍️ Cicilan Motor ' + (hMtr === 0 ? 'Hari ini' : 'H-' + hMtr) + ' · ' + rupiahPendek(kmtr.angsuran) + '</span>';
-      }
+      (S.armadaMobil || (S.mobil ? [S.mobil] : [])).forEach(function (mb) {
+        if (!mb || !mb.kredit) return;
+        var kmbl = mb.kredit, hMbl = selisihTgl(kmbl.tempo);
+        if (kmbl.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="motor">🚗 Tunggakan ' + esc(mb.nama.split(' ')[0]) + ' ' + rupiahPendek(kmbl.tunggakan + (kmbl.denda || 0)) + '</span>';
+        else if (hMbl <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🚗 Cicilan ' + esc(mb.nama.split(' ')[0]) + ' ' + (hMbl === 0 ? 'Hari ini' : 'H-' + hMbl) + ' · ' + rupiahPendek(kmbl.angsuran) + '</span>';
+      });
+      (S.armadaMotor || (S.motor ? [S.motor] : [])).forEach(function (mt) {
+        if (!mt || !mt.kredit) return;
+        var kmtr = mt.kredit, hMtr = selisihTgl(kmtr.tempo);
+        if (kmtr.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="motor">🏍️ Tunggakan ' + esc(mt.nama.split(' ')[0]) + ' ' + rupiahPendek(kmtr.tunggakan + (kmtr.denda || 0)) + '</span>';
+        else if (hMtr <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🏍️ Cicilan ' + esc(mt.nama.split(' ')[0]) + ' ' + (hMtr === 0 ? 'Hari ini' : 'H-' + hMtr) + ' · ' + rupiahPendek(kmtr.angsuran) + '</span>';
+      });
       (PROPERTI.daftarRumah ? PROPERTI.daftarRumah(S) : []).forEach(function (rm) {
         if (rm.tagihanAir > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="properti">💧 PDAM ' + rupiahPendek(rm.tagihanAir) + '</span>';
         if (rm.kpr) {
@@ -800,15 +802,21 @@
   }
   function chipTab(aksi, daftar, pilih) { return '<div class="chip-baris">' + daftar.map(function (t) { return '<button type="button" class="chip-tombol' + (t[0] === pilih ? ' pilih' : '') + '" data-aksi="' + aksi + ':' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>'; }
   function layarMotor() {
-    var tab = app.motorTab || (S.motor || S.mobil ? 'garasi' : 'dealer'), m = S.motor, html = kepalaApp('Kendaraan', [S.motor ? S.motor.nama : '', S.mobil ? S.mobil.nama : ''].filter(Boolean).join(' · ') || 'Belum punya kendaraan') +
+    var tab = app.motorTab || (S.motor || S.mobil ? 'garasi' : 'dealer'), m = S.motor;
+    var subKend = [
+      S.motor ? S.motor.nama + ((S.armadaMotor && S.armadaMotor.length > 1) ? ' (' + S.armadaMotor.length + ' unit)' : '') : '',
+      S.mobil ? S.mobil.nama + ((S.armadaMobil && S.armadaMobil.length > 1) ? ' (' + S.armadaMobil.length + ' unit)' : '') : ''
+    ].filter(Boolean).join(' · ') || 'Belum punya kendaraan';
+    var html = kepalaApp('Kendaraan', subKend) +
       chipTab('motorTab', [['garasi', 'Garasi'], ['dealer', 'Dealer motor'], ['mobil', 'Dealer mobil'], ['bekas', 'Motor bekas']], tab) + pesanApp();
     if (tab === 'garasi') {
       var armada = S.armadaMotor || (m ? [m] : []);
       if (!armada.length && !S.mobil) return html + '<p class="catatan">Tanpa kendaraan, belanja ke pasar naik ojek ' + rupiah(N.ojek.pasar) + ' pulang-pergi, dan pesanan antar harus pakai kurir ' + esc(N.kurir.nama) + '. Pesanan tunai tidak bisa diantar.</p>';
       if (armada.length > 1) {
-        html += '<h3 class="subjudul">Armada motor (' + armada.length + '/5 unit · dipakai sendiri & kurir)</h3><div class="chip-baris">' +
+        html += '<h3 class="subjudul">🏍️ Armada Motor (' + armada.length + ' unit · pilih motor utama)</h3><div class="chip-baris">' +
           armada.map(function (mt, idx) {
-            return '<button type="button" class="chip-tombol' + (idx === (S.motorAktif || 0) ? ' pilih' : '') + '" data-aksi="pilihMotor:' + idx + '">' + (idx + 1) + '. ' + esc(mt.nama) + '</button>';
+            var akt = idx === (S.motorAktif || 0);
+            return '<button type="button" class="chip-tombol' + (akt ? ' pilih' : '') + '" data-aksi="pilihMotor:' + idx + '">' + (idx + 1) + '. ' + esc(mt.nama) + (akt ? ' ★ Utama' : '') + '</button>';
           }).join('') + '</div>';
       }
       if (m) {
@@ -834,6 +842,14 @@
           '<h3 class="subjudul">Perlengkapan antar</h3><ul class="daftar angka">' + N.aksesoris.map(function (a) {
             return '<li><span>' + esc(a.nama) + '<small>' + esc(a.ket) + '</small></span><span>' + (m.aks[a.id] ? 'terpasang' : '<button type="button" class="chip-tombol" data-aksi="aks:' + a.id + '">' + rupiah(a.harga) + '</button>') + '</span></li>';
           }).join('') + '</ul><p class="catatan">Bensin, oli, servis, dan perlengkapan motor dibayar tunai dari dompet.</p>';
+      }
+      var armadaC = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+      if (armadaC.length > 1) {
+        html += '<h3 class="subjudul">🚗 Armada Mobil (' + armadaC.length + ' unit · pilih mobil utama yang dipakai)</h3><div class="chip-baris">' +
+          armadaC.map(function (mb, idx) {
+            var aktC = idx === (S.mobilAktif || 0);
+            return '<button type="button" class="chip-tombol' + (aktC ? ' pilih' : '') + '" data-aksi="pilihMobil:' + idx + '">' + (idx + 1) + '. ' + esc(mb.nama) + (aktC ? ' ★ Utama' : '') + '</button>';
+          }).join('') + '</div>';
       }
       var c = S.mobil;
       if (c) {
@@ -872,14 +888,14 @@
       return html + chipTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + '<ul class="daftar belanja">' + N.motor.filter(function (x) { return (x.kelas || 'harian') === kls; }).map(function (x) {
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? 'Listrik, sekitar ' + x.jarakPenuh + ' km sekali cas' : '±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm]) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></span></li>';
-      }).join('') + '</ul><p class="catatan">Harga OTR 2026 varian termurah. Bisa punya sampai 5 motor. Bisa bayar dari rekening, kartu kredit, atau cicilan leasing.</p>';
+      }).join('') + '</ul><p class="catatan">Harga OTR 2026 varian termurah. Bisa punya lebih dari 1 motor tanpa batas (pilih motor utama di Garasi). Bisa bayar dari rekening, kartu kredit, atau cicilan leasing.</p>';
     }
     if (tab === 'mobil') {
       var km2 = app.kelasMobil || 'pikap';
       return html + chipTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + '<ul class="daftar belanja">' + N.mobil.filter(function (x) { return x.kelas === km2; }).map(function (x) {
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? ('Listrik EV · ' + x.tangki + ' kWh (~' + Math.round(x.kml * x.tangki) + ' km/cas)') : ('±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm])) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunaiMobil:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiMobilKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditMobilPilih:' + x.id + '">Kredit</button></span></li>';
-      }).join('') + '</ul><p class="catatan">Harga OTR Jabodetabek 2026, varian termurah. Bisa bayar lewat rekening, kartu kredit, atau kredit leasing. Satu mobil dalam satu waktu.</p>';
+      }).join('') + '</ul><p class="catatan">Harga OTR Jabodetabek 2026, varian termurah. Bisa punya lebih dari 1 mobil (pikap, keluarga, mewah, EV) dan pilih mobil utama yang dipakai di Garasi.</p>';
     }
     return html + '<ul class="daftar belanja">' + S.pasarBekas.unit.map(function (u, i) {
       var b = N.motorBekas.filter(function (x) { return x.id === u.id; })[0];
@@ -2037,17 +2053,18 @@
     else if (nama === 'motorTab') { app.motorTab = nilai; app.pesan = ''; }
     else if (nama === 'kelasMotor') { app.kelasMotor = nilai; app.pesan = ''; }
     else if (nama === 'kelasMobil') { app.kelasMobil = nilai; app.pesan = ''; }
-    else if (nama === 'tunaiMobil') { hasilAksi(MOBIL.beliTunai(S, nilai, 'bank'), 'Mobil sudah di garasi. Bensin terisi seperempat.'); if (S.mobil) app.motorTab = 'garasi'; }
-    else if (nama === 'tunaiMobilKk') { hasilAksi(MOBIL.beliTunai(S, nilai, 'kk'), 'Mobil dibeli pakai kartu kredit dan sudah di garasi.'); if (S.mobil) app.motorTab = 'garasi'; }
+    else if (nama === 'tunaiMobil') { var rtm = MOBIL.beliTunai(S, nilai, 'bank'); hasilAksi(rtm, 'Mobil baru masuk garasi & dijadikan mobil utama. Bensin terisi seperempat.'); if (rtm === true) app.motorTab = 'garasi'; }
+    else if (nama === 'tunaiMobilKk') { var rtmk = MOBIL.beliTunai(S, nilai, 'kk'); hasilAksi(rtmk, 'Mobil baru dibeli pakai kartu kredit & dijadikan mobil utama.'); if (rtmk === true) app.motorTab = 'garasi'; }
     else if (nama === 'kreditMobilPilih') { app.kreditMobil = nilai; app.pesan = ''; app.nama = 'kreditMobil'; }
     else if (nama === 'kreditMobilDp') { app.kreditMobilDp = +nilai; app.pesan = ''; }
     else if (nama === 'kreditMobilTenor') { app.kreditMobilTenor = +nilai; app.pesan = ''; }
-    else if (nama === 'kreditMobil') { hasilAksi(MOBIL.beliKredit(S, app.kreditMobil, app.kreditMobilDp || 0.2, app.kreditMobilTenor || 60, nilai === 'kk' ? 'kk' : 'bank'), 'Kredit disetujui. Mobil sudah di garasi.'); if (S.mobil) { app.nama = 'motor'; app.motorTab = 'garasi'; } }
+    else if (nama === 'kreditMobil') { var rkm = MOBIL.beliKredit(S, app.kreditMobil, app.kreditMobilDp || 0.2, app.kreditMobilTenor || 60, nilai === 'kk' ? 'kk' : 'bank'); hasilAksi(rkm, 'Kredit disetujui. Mobil baru masuk garasi & jadi mobil utama.'); if (rkm === true) { app.nama = 'motor'; app.motorTab = 'garasi'; } }
     else if (nama === 'bensinMobil') { var pm2 = nilai.split('-'), bm = MOBIL.isiBensin(S, pm2[0], pm2[1]); hasilAksi(bm && bm.ok ? true : bm, bm && bm.ok ? 'Isi ' + bm.liter.toLocaleString('id-ID') + ' liter, ' + rupiah(bm.biaya) + '.' : ''); }
     else if (nama === 'servisMobil') hasilAksi(MOBIL.servis(S), 'Mobil sudah diservis.');
     else if (nama === 'pajakMobil') hasilAksi(MOBIL.bayarPajak(S), 'Pajak mobil lunas setahun.');
     else if (nama === 'jualMotor') { var jm = MOTOR.jual(S); hasilAksi(jm && jm.ok ? true : jm, jm && jm.ok ? 'Motor terjual ' + rupiah(jm.harga) + ', masuk rekening.' : ''); }
-    else if (nama === 'pilihMotor') { hasilAksi(MOTOR.pilihAktif(S, +nilai), 'Motor aktif diganti ke ' + (S.motor ? S.motor.nama : '') + '.'); }
+    else if (nama === 'pilihMotor') { hasilAksi(MOTOR.pilihAktif(S, +nilai), 'Motor utama diganti ke ' + (S.motor ? S.motor.nama : '') + '.'); }
+    else if (nama === 'pilihMobil') { hasilAksi(MOBIL.pilihAktif(S, +nilai), 'Mobil utama diganti ke ' + (S.mobil ? S.mobil.nama : '') + '.'); }
     else if (nama === 'mulaiTravel') return mulaiTravel();
     else if (nama === 'daftarCar') { hasilAksi(MOBIL.daftarCar(S), 'Akun GoCar / GrabCar aktif! Bisa langsung ambil order.'); }
     else if (nama === 'orderCar') {
@@ -2098,14 +2115,14 @@
     }
     else if (nama === 'beliTanah') { var bt = PROPERTI.beliTanah(S, v); hasilAksi(bt && bt.ok ? true : bt, bt && bt.ok ? 'Tanah ' + v + ' m² sudah atas namamu. Total ' + rupiah(bt.total) + '.' : ''); }
     else if (nama === 'jualTanah') { var jt = PROPERTI.jualTanah(S, v); hasilAksi(jt && jt.ok ? true : jt, jt && jt.ok ? 'Tanah terjual, bersih ' + rupiah(jt.bersih) + '.' : ''); }
-    else if (nama === 'tunai') { hasilAksi(MOTOR.beliTunai(S, nilai, 'bank'), 'Motor sudah di garasi. Bensin diisi sedikit dari dealer.'); if (S.motor) app.motorTab = 'garasi'; }
-    else if (nama === 'tunaiKk') { hasilAksi(MOTOR.beliTunai(S, nilai, 'kk'), 'Motor dibeli pakai kartu kredit dan sudah di garasi.'); if (S.motor) app.motorTab = 'garasi'; }
+    else if (nama === 'tunai') { var rt = MOTOR.beliTunai(S, nilai, 'bank'); hasilAksi(rt, 'Motor baru masuk garasi & dijadikan motor utama. Bensin diisi sedikit dari dealer.'); if (rt === true) app.motorTab = 'garasi'; }
+    else if (nama === 'tunaiKk') { var rtk = MOTOR.beliTunai(S, nilai, 'kk'); hasilAksi(rtk, 'Motor baru dibeli pakai kartu kredit & dijadikan motor utama.'); if (rtk === true) app.motorTab = 'garasi'; }
     else if (nama === 'kreditPilih') { app.kreditMotor = nilai; app.pesan = ''; app.nama = 'kredit'; }
     else if (nama === 'kreditDp') { app.kreditDp = +nilai; app.pesan = ''; }
     else if (nama === 'kreditTenor') { app.kreditTenor = +nilai; app.pesan = ''; }
-    else if (nama === 'kredit') { hasilAksi(MOTOR.beliKredit(S, app.kreditMotor, app.kreditDp || 0.1, app.kreditTenor || 35, nilai === 'kk' ? 'kk' : 'bank'), 'Kredit disetujui. Motor sudah di garasi.'); if (S.motor) { app.nama = 'motor'; app.motorTab = 'garasi'; } }
-    else if (nama === 'bekas') { hasilAksi(MOTOR.beliBekas(S, +nilai, 'bank'), 'Motor bekas sudah di garasi.'); if (S.motor) app.motorTab = 'garasi'; }
-    else if (nama === 'bekasKk') { hasilAksi(MOTOR.beliBekas(S, +nilai, 'kk'), 'Motor bekas dibeli pakai kartu kredit dan sudah di garasi.'); if (S.motor) app.motorTab = 'garasi'; }
+    else if (nama === 'kredit') { var rk = MOTOR.beliKredit(S, app.kreditMotor, app.kreditDp || 0.1, app.kreditTenor || 35, nilai === 'kk' ? 'kk' : 'bank'); hasilAksi(rk, 'Kredit disetujui. Motor baru masuk garasi & jadi motor utama.'); if (rk === true) { app.nama = 'motor'; app.motorTab = 'garasi'; } }
+    else if (nama === 'bekas') { var rbk = MOTOR.beliBekas(S, +nilai, 'bank'); hasilAksi(rbk, 'Motor bekas masuk garasi & dijadikan motor utama.'); if (rbk === true) app.motorTab = 'garasi'; }
+    else if (nama === 'bekasKk') { var rbkk = MOTOR.beliBekas(S, +nilai, 'kk'); hasilAksi(rbkk, 'Motor bekas dibeli pakai kartu kredit & dijadikan motor utama.'); if (rbkk === true) app.motorTab = 'garasi'; }
     else if (nama === 'beliMakan' || nama === 'minumAir' || nama === 'ngopi' || nama === 'ngopiSusu' || nama === 'makanRumah') {
       var bm2 = nilai.split('-'), rmk = nama === 'makanRumah' ? DIRI.makanDiRumah(S) : nama === 'minumAir' ? DIRI.makan(S, 'air') : nama === 'ngopi' ? DIRI.makan(S, 'kopi') : nama === 'ngopiSusu' ? DIRI.makan(S, 'kopisusu') : DIRI.beli(S, bm2[0], bm2[1]);
       if (rmk && rmk.ok) { if (rmk.menit) lompatWaktu(rmk.menit); hasilAksi(true, rmk.teks); } else hasilAksi(rmk);

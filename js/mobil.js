@@ -8,25 +8,48 @@
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function M() { return g.KK_MOTOR; }
   function model(id) { return N.mobil.filter(function (x) { return x.id === id; })[0]; }
+  function sinkronAktif(S) {
+    S.armadaMobil = S.armadaMobil || [];
+    if (!S.armadaMobil.length) { S.mobilAktif = 0; S.mobil = null; return; }
+    if (S.mobilAktif == null || S.mobilAktif < 0 || S.mobilAktif >= S.armadaMobil.length) S.mobilAktif = 0;
+    S.mobil = S.armadaMobil[S.mobilAktif];
+  }
+  function normMobil(c) {
+    if (!c || !c.id) return;
+    var ref = model(c.id);
+    if (ref && ref.bbm === 'listrik' && c.bbm !== 'listrik') {
+      c.bbm = 'listrik'; c.kml = ref.kml; c.tangki = ref.tangki; c.ngelitik = false;
+    }
+    if (ref) {
+      if (!(c.kml > 0)) c.kml = ref.kml || 12;
+      if (!(c.tangki > 0)) c.tangki = ref.tangki || 45;
+    }
+    if (typeof c.isi !== 'number' || isNaN(c.isi)) c.isi = 0.5;
+    if (c.isi > 1) c.isi = Math.min(1, c.isi / (c.tangki || 45));
+    if (c.kmBan == null) c.kmBan = c.km || 0;
+    if (c.totalHasil == null) c.totalHasil = 0;
+  }
   function siapkan(S) {
     if (S.mobil === undefined) S.mobil = null;
-    if (S.mobil && S.mobil.id) {
-      var ref = model(S.mobil.id);
-      if (ref && ref.bbm === 'listrik' && S.mobil.bbm !== 'listrik') {
-        S.mobil.bbm = 'listrik'; S.mobil.kml = ref.kml; S.mobil.tangki = ref.tangki; S.mobil.ngelitik = false;
-      }
-      if (ref) {
-        if (!(S.mobil.kml > 0)) S.mobil.kml = ref.kml || 12;
-        if (!(S.mobil.tangki > 0)) S.mobil.tangki = ref.tangki || 45;
-      }
-      if (typeof S.mobil.isi !== 'number' || isNaN(S.mobil.isi)) S.mobil.isi = 0.5;
-      if (S.mobil.isi > 1) S.mobil.isi = Math.min(1, S.mobil.isi / (S.mobil.tangki || 45));
-      if (S.mobil.kmBan == null) S.mobil.kmBan = S.mobil.km || 0;
-      if (S.mobil.totalHasil == null) S.mobil.totalHasil = 0;
+    if (!S.armadaMobil) {
+      S.armadaMobil = S.mobil ? [S.mobil] : [];
+      S.mobilAktif = 0;
     }
+    S.armadaMobil.forEach(normMobil);
+    sinkronAktif(S);
     if (!S.bisnisMobil) S.bisnisMobil = { carAktif: false, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
     return S;
   }
+  function pilihAktif(S, idx) {
+    if (!S.armadaMobil || !S.armadaMobil[idx]) return 'Mobil tidak ditemukan.';
+    if (S.ojek && S.ojek.online && S.ojek.mode === 'mobil') return 'Berhenti narik GoCar/GrabCar dulu sebelum ganti mobil utama.';
+    if (S.travel && S.travel.aktif) return 'Selesaikan Travel dulu sebelum ganti mobil utama.';
+    S.mobilAktif = idx;
+    S.armadaMobil.forEach(normMobil);
+    sinkronAktif(S);
+    return true;
+  }
+  function jumlah(S) { return S.armadaMobil ? S.armadaMobil.length : (S.mobil ? 1 : 0); }
   function punya(S) { return !!S.mobil; }
   function pikap(S) { return !!S.mobil && S.mobil.bentuk === 'pikap'; }
   function kapasitasPenumpang(S) {
@@ -109,7 +132,16 @@
     return { id: m.id, nama: m.nama, harga: m.harga, kml: m.kml, bbm: m.bbm, tangki: m.tangki, isi: 0.25, muat: m.muat, bentuk: m.bentuk, kelas: m.kelas,
       km: 0, kmServis: 0, kmBan: 0, totalHasil: 0, kredit: null, pajakTempo: S.hari + 365, dibeli: S.hari };
   }
-  function cekGarasi(S) { return S.mobil ? 'Sudah punya ' + S.mobil.nama + '. Jual dulu kalau mau ganti.' : null; }
+  function cekGarasi(S) {
+    S.armadaMobil = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    return null; /* bisa punya lebih dari 1 mobil tanpa batas */
+  }
+  function tambahArmada(S, unit) {
+    S.armadaMobil = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    S.armadaMobil.push(unit);
+    S.mobilAktif = S.armadaMobil.length - 1;
+    sinkronAktif(S);
+  }
   function bayarDealer(S, jml, ket, cara) {
     if (cara === 'kk') {
       var err = g.KK_UANG.pakaiKk(S, jml, 'Dealer Mobil: ' + ket);
@@ -124,7 +156,7 @@
     var m = model(id);
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
-    S.mobil = mobilBaru(m, S); return true;
+    tambahArmada(S, mobilBaru(m, S)); return true;
   }
   function hitungKredit(harga, dp, tenor) {
     var uangMuka = Math.round(harga * dp / 1e6) * 1e6, pokok = harga - uangMuka;
@@ -137,14 +169,20 @@
     var m = model(id), k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
     if (by !== true) return by;
-    S.mobil = mobilBaru(m, S);
-    S.mobil.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    var unit = mobilBaru(m, S);
+    unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    tambahArmada(S, unit);
     return true;
   }
-  function jual(S) {
-    var m = S.mobil; if (!m) return 'Belum punya mobil.';
+  function jual(S, idx) {
+    var i = idx != null ? +idx : (S.mobilAktif || 0);
+    var m = (S.armadaMobil && S.armadaMobil[i]) || S.mobil;
+    if (!m) return 'Belum punya mobil.';
     if (m.kredit) return 'Mobil masih kredit. Lunasi dulu sebelum dijual.';
-    var h = M().nilaiJual(S, m); S.bank.saldo += h; M().catatBank(S, 'Jual ' + m.nama, h); S.mobil = null;
+    if (i === (S.mobilAktif || 0) && ((S.ojek && S.ojek.online && S.ojek.mode === 'mobil') || (S.travel && S.travel.aktif))) return 'Selesaikan GoCar/Travel dulu sebelum menjual mobil aktif.';
+    var h = M().nilaiJual(S, m); S.bank.saldo += h; M().catatBank(S, 'Jual ' + m.nama, h);
+    if (S.armadaMobil && S.armadaMobil.length) { S.armadaMobil.splice(i, 1); S.mobilAktif = 0; sinkronAktif(S); }
+    else S.mobil = null;
     return { ok: true, harga: h };
   }
   function bayarCicilan(S) {
@@ -252,30 +290,39 @@
   }
 
   function gantiHari(S, nLama, nBaru) {
-    var kabar = [], tB = KAL.tgl(nBaru), m = S.mobil;
+    var kabar = [], tB = KAL.tgl(nBaru);
     if (S.bisnisMobil && S.bisnisMobil.hariIni && S.bisnisMobil.hariIni.trip) {
       kabar.push('Kemarin bisnis mobil/travel ' + S.bisnisMobil.hariIni.trip + ' trip, bersih ' + rp(S.bisnisMobil.hariIni.bersih) + '.');
       S.bisnisMobil.hariIni = { trip: 0, bersih: 0 };
     }
-    if (!m) return kabar;
-    var k = m.kredit;
-    if (k && (k.sisa > 0 || k.tunggakan > 0)) {
-      if (k.sisa > 0 && tB.d === k.tempo) {
-        if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; M().catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('🚗 Autodebit angsuran mobil ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
-        else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran mobil (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
+    S.armadaMobil = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    var armada = S.armadaMobil;
+    if (!armada.length) return kabar;
+    for (var i = armada.length - 1; i >= 0; i--) {
+      var m = armada[i], k = m.kredit;
+      if (k && (k.sisa > 0 || k.tunggakan > 0)) {
+        if (k.sisa > 0 && tB.d === k.tempo) {
+          if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; M().catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('🚗 Autodebit angsuran ' + m.nama + ' ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
+          else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran ' + m.nama + ' (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
+        }
+        if (k.tunggakan > 0) {
+          k.denda += Math.round(k.tunggakan * KR.dendaHarian);
+          if (S.bank.saldo >= k.tunggakan + k.denda) { var b = k.tunggakan + k.denda; S.bank.saldo -= b; M().catatBank(S, 'Autodebit tunggakan + denda ' + m.nama, -b, nBaru); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; kabar.push('🚗 Tunggakan ' + m.nama + ' & denda ' + rp(b) + ' dibayar otomatis.'); }
+          else if (k.bulanTelat >= KR.tarikSetelahBulan) {
+            kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.');
+            armada.splice(i, 1); sinkronAktif(S);
+            continue;
+          }
+        }
+        if (k.sisa <= 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('🎉 Kredit ' + m.nama + ' lunas! BPKB diambil di ' + KR.leasing + '.'); }
       }
-      if (k.tunggakan > 0) {
-        k.denda += Math.round(k.tunggakan * KR.dendaHarian);
-        if (S.bank.saldo >= k.tunggakan + k.denda) { var b = k.tunggakan + k.denda; S.bank.saldo -= b; M().catatBank(S, 'Autodebit tunggakan + denda mobil', -b, nBaru); k.tunggakan = 0; k.denda = 0; k.bulanTelat = 0; kabar.push('🚗 Tunggakan mobil & denda ' + rp(b) + ' dibayar otomatis.'); }
-        else if (k.bulanTelat >= KR.tarikSetelahBulan) { kabar.push(KR.leasing + ' menarik ' + m.nama + ' karena menunggak ' + k.bulanTelat + ' bulan.'); S.mobil = null; return kabar; }
-      }
-      if (k.sisa <= 0 && k.tunggakan === 0) { m.kredit = null; kabar.push('🎉 Kredit mobil lunas! BPKB diambil di ' + KR.leasing + '.'); }
+      if (nBaru === m.pajakTempo - 14) kabar.push('Pajak tahunan ' + m.nama + ' jatuh tempo 2 minggu lagi.');
+      if (nBaru > m.pajakTempo && (nBaru - m.pajakTempo) % 30 === 1) { m.dendaPajak = (m.dendaPajak || 0) + Math.round(m.harga * R.pkb * R.dendaPajak); kabar.push('Pajak ' + m.nama + ' telat, denda bertambah.'); }
     }
-    if (nBaru === m.pajakTempo - 14) kabar.push('Pajak tahunan ' + m.nama + ' jatuh tempo 2 minggu lagi.');
-    if (nBaru > m.pajakTempo && (nBaru - m.pajakTempo) % 30 === 1) { m.dendaPajak = (m.dendaPajak || 0) + Math.round(m.harga * R.pkb * R.dendaPajak); kabar.push('Pajak mobil telat, denda bertambah.'); }
+    sinkronAktif(S);
     return kabar;
   }
 
-  g.KK_MOBIL = { siapkan: siapkan, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
+  g.KK_MOBIL = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
     isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);
