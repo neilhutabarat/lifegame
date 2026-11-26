@@ -104,12 +104,22 @@
     nunukan: { nama: 'Kab. Nunukan', pulau: 'Kalimantan', prov: 'Kalimantan Utara', luas: 13556, tema: 'pelabuhan', ramai: 0.85, ket: 'Pulau Nunukan & Sebatik, gerbang perbatasan Sabah Malaysia' },
     makassar: { nama: 'Makassar', pulau: 'Sulawesi', tema: 'metropolis', ramai: 1.35, ket: 'Pantai Losari, Kota Daeng' },
     parepare: { nama: 'Parepare', pulau: 'Sulawesi', tema: 'pelabuhan', ramai: 0.8, ket: 'Pelabuhan lintas Sulawesi–Kalimantan' },
+    mamuju: { nama: 'Mamuju', pulau: 'Sulawesi', prov: 'Sulawesi Barat', tema: 'pantai', ramai: 0.82, ket: 'Ibu kota Sulbar, Pantai Manakarra' },
     palu: { nama: 'Palu', pulau: 'Sulawesi', tema: 'pantai', ramai: 0.85, ket: 'Teluk Palu' },
+    gorontalo: { nama: 'Gorontalo', pulau: 'Sulawesi', prov: 'Gorontalo', tema: 'pantai', ramai: 0.85, ket: 'Serambi Madinah, Benteng Otanaha' },
     manado: { nama: 'Manado', pulau: 'Sulawesi', tema: 'pantai', ramai: 1.1, ket: 'Bunaken, Sulawesi Utara' },
     kendari: { nama: 'Kendari', pulau: 'Sulawesi', tema: 'pantai', ramai: 0.9, ket: 'Teluk Kendari' },
+    tanjungpinang: { nama: 'Tanjung Pinang', pulau: 'Sumatra', prov: 'Kepulauan Riau', tema: 'pelabuhan', ramai: 0.95, ket: 'Ibu kota Kepri, Pulau Bintan & Penyengat' },
+    pangkalpinang: { nama: 'Pangkalpinang', pulau: 'Sumatra', prov: 'Kep. Bangka Belitung', tema: 'pantai', ramai: 0.92, ket: 'Ibu kota Babel, Negeri Serumpun Sebalai' },
+    serang: { nama: 'Serang', pulau: 'Jawa', prov: 'Banten', tema: 'budaya', ramai: 1.05, ket: 'Ibu kota Banten, Masjid Agung Banten Lama' },
     ambon: { nama: 'Ambon', pulau: 'Maluku', tema: 'pantai', ramai: 0.85, ket: 'Ambon Manise, Kepulauan Maluku' },
-    sorong: { nama: 'Sorong', pulau: 'Papua', tema: 'pelabuhan', ramai: 0.85, ket: 'Gerbang Raja Ampat' },
-    jayapura: { nama: 'Jayapura', pulau: 'Papua', tema: 'pantai', ramai: 1.0, ket: 'Jembatan Youtefa, ujung timur Indonesia' }
+    sofifi: { nama: 'Sofifi', pulau: 'Maluku', prov: 'Maluku Utara', tema: 'pelabuhan', ramai: 0.8, ket: 'Ibu kota Maluku Utara di Pulau Halmahera' },
+    sorong: { nama: 'Sorong', pulau: 'Papua', prov: 'Papua Barat Daya', tema: 'pelabuhan', ramai: 0.88, ket: 'Ibu kota Papua Barat Daya, gerbang Raja Ampat' },
+    manokwari: { nama: 'Manokwari', pulau: 'Papua', prov: 'Papua Barat', tema: 'pantai', ramai: 0.85, ket: 'Ibu kota Papua Barat, Teluk Doreri' },
+    nabire: { nama: 'Nabire', pulau: 'Papua', prov: 'Papua Tengah', tema: 'pantai', ramai: 0.84, ket: 'Ibu kota Papua Tengah, Teluk Cenderawasih' },
+    wamena: { nama: 'Wamena', pulau: 'Papua', prov: 'Papua Pegunungan', tema: 'gunung', ramai: 0.78, ket: 'Ibu kota Papua Pegunungan, Lembah Baliem' },
+    merauke: { nama: 'Merauke', pulau: 'Papua', prov: 'Papua Selatan', tema: 'pantai', ramai: 0.85, ket: 'Ibu kota Papua Selatan, titik paling timur Indonesia' },
+    jayapura: { nama: 'Jayapura', pulau: 'Papua', prov: 'Papua', tema: 'pantai', ramai: 1.0, ket: 'Jembatan Youtefa, ibu kota Papua' }
   };
   /* ruas: a-b dua arah. km jalan, tol golongan I (Rp), laut = penyeberangan kapal */
   var RUAS = [
@@ -241,10 +251,27 @@
     { a: 'surabaya', b: 'makassar', km: 780, tol: 0, laut: true, jam: 20, kapalMobil: 1650000, kapalOrang: 320000 },
     { a: 'makassar', b: 'parepare', km: 155, tol: 0 },
     { a: 'makassar', b: 'kendari', km: 620, tol: 0 },
+    { a: 'parepare', b: 'mamuju', km: 285, tol: 0, jalan: 'Trans-Sulawesi Barat (Parepare–Majene–Mamuju)', kondisi: 'bergelombang' },
+    { a: 'mamuju', b: 'palu', km: 340, tol: 0, jalan: 'Trans-Sulawesi Barat (Mamuju–Pasangkayu–Palu)', kondisi: 'bergelombang' },
     { a: 'parepare', b: 'palu', km: 590, tol: 0 },
-    { a: 'palu', b: 'manado', km: 960, tol: 0 },
+    { a: 'palu', b: 'gorontalo', km: 530, tol: 0, jalan: 'Trans-Sulawesi Tengah–Gorontalo', kondisi: 'mulus' },
+    { a: 'gorontalo', b: 'manado', km: 425, tol: 0, jalan: 'Trans-Sulawesi Utara (Gorontalo–Kotamobagu–Manado)', kondisi: 'mulus' },
+    { a: 'merak', b: 'serang', km: 42, tol: 25000, jalan: 'Tol Tangerang–Merak (Merak–Serang)', kondisi: 'tol' },
+    { a: 'serang', b: 'jakarta', km: 85, tol: 55000, jalan: 'Tol Tangerang–Merak (Serang–Jakarta)', kondisi: 'tol' },
+    { a: 'pekanbaru', b: 'tanjungpinang', km: 280, tol: 0, laut: true, jam: 8, kapalMobil: 950000, kapalOrang: 195000, jalan: 'Feri Ro-Ro Buton/Dumai–Tanjung Pinang', kondisi: 'mulus' },
+    { a: 'palembang', b: 'tanjungpinang', km: 490, tol: 0, laut: true, jam: 14, kapalMobil: 1250000, kapalOrang: 260000, jalan: 'Feri Laut Palembang–Tanjung Pinang', kondisi: 'mulus' },
+    { a: 'palembang', b: 'pangkalpinang', km: 215, tol: 0, laut: true, jam: 6, kapalMobil: 680000, kapalOrang: 145000, jalan: 'Feri ASDP Tanjung Api-Api–Muntok–Pangkalpinang', kondisi: 'mulus' },
+    { a: 'manado', b: 'sofifi', km: 320, tol: 0, laut: true, jam: 10, kapalMobil: 1100000, kapalOrang: 220000, jalan: 'Feri Laut Maluku (Bitung–Ternate/Sofifi)', kondisi: 'mulus' },
+    { a: 'ambon', b: 'sofifi', km: 510, tol: 0, laut: true, jam: 15, kapalMobil: 1350000, kapalOrang: 270000, jalan: 'Kapal Ro-Ro Ambon–Sofifi', kondisi: 'mulus' },
     { a: 'makassar', b: 'ambon', km: 950, tol: 0, laut: true, jam: 24, kapalMobil: 1900000, kapalOrang: 380000 },
     { a: 'ambon', b: 'sorong', km: 540, tol: 0, laut: true, jam: 16, kapalMobil: 1450000, kapalOrang: 280000 },
+    { a: 'sorong', b: 'manokwari', km: 340, tol: 0, jalan: 'Trans-Papua Barat (Sorong–Bintuni–Manokwari)', kondisi: 'bergelombang' },
+    { a: 'manokwari', b: 'nabire', km: 370, tol: 0, jalan: 'Trans-Papua (Manokwari–Wasior–Nabire)', kondisi: 'rusak' },
+    { a: 'nabire', b: 'jayapura', km: 540, tol: 0, laut: true, jam: 16, kapalMobil: 1450000, kapalOrang: 290000, jalan: 'Kapal Ro-Ro Nabire–Jayapura', kondisi: 'mulus' },
+    { a: 'nabire', b: 'wamena', km: 380, tol: 0, jalan: 'Trans-Papua Pegunungan (Nabire–Enarotali–Wamena)', kondisi: 'tanah' },
+    { a: 'jayapura', b: 'wamena', km: 575, tol: 0, jalan: 'Trans-Papua (Jayapura–Yalimo–Wamena)', kondisi: 'rusak' },
+    { a: 'jayapura', b: 'merauke', km: 760, tol: 0, laut: true, jam: 20, kapalMobil: 1750000, kapalOrang: 350000, jalan: 'Kapal Pelni/Ro-Ro Jayapura–Merauke', kondisi: 'mulus' },
+    { a: 'nabire', b: 'merauke', km: 820, tol: 0, laut: true, jam: 22, kapalMobil: 1850000, kapalOrang: 370000, jalan: 'Kapal Ro-Ro Nabire–Timika–Merauke', kondisi: 'mulus' },
     { a: 'sorong', b: 'jayapura', km: 980, tol: 0, laut: true, jam: 24, kapalMobil: 2100000, kapalOrang: 420000 }
   ];
   /* 5 level kecepatan mobil: 1 (0-25), 2 (25-50), 3 (50-75), 4 (75-100), 5 (100 - top speed asli mobil) */

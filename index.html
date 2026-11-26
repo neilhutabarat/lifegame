@@ -18,9 +18,9 @@
   <canvas id="adegan" aria-label="Adegan The Driver di jalan dan rumah"></canvas>
 
   <header id="hud" hidden>
-    <div class="kartu-hud tanggal"><span class="foto-wajah foto-hud" id="h-foto"></span><div class="tgl-teks"><b id="h-hari">Senin, 2 Januari</b><span id="h-tahun">Tahun ke-1 · Hari ke-1</span></div></div>
-    <div class="kartu-hud jam"><b id="h-jam">06.00</b><span id="h-status">Belum buka</span></div>
-    <button id="h-uang" class="kartu-hud uang" type="button" aria-label="Lihat jualan hari ini">
+    <div class="kartu-hud tanggal"><span class="foto-wajah foto-hud" id="h-foto"></span><div class="tgl-teks"><b id="h-hari">Senin, 5 Januari</b><span id="h-tahun">2026 · Hari ke-1</span></div></div>
+    <div class="kartu-hud jam"><b id="h-jam">06.00</b><span id="h-status">Mode driver</span></div>
+    <button id="h-uang" class="kartu-hud uang mode-driver" type="button" aria-label="Lihat ringkasan harian">
       <span><small>Laci</small><b id="h-laci">Rp0</b></span>
       <span><small>Dompet</small><b id="h-dompet">Rp0</b></span>
       <span><small id="h-merchant-nama">QRIS</small><b id="h-merchant">Rp0</b></span>
@@ -52,7 +52,7 @@
         </button>
       </div>
     </div>
-    <button id="h-diri" class="kartu-hud diri dok-diri" type="button" aria-label="Kondisi badan: makan, minum, stamina, HB, HP, bensin"></button>
+    <button id="h-diri" class="kartu-hud diri dok-diri" type="button" aria-label="Kondisi badan: makan & minum, stamina, HB, HP, bensin"></button>
   </footer>
 
   <button id="popup-teman" class="popup-bulat" type="button" hidden aria-label="Klip kiriman"></button>
@@ -67,24 +67,38 @@
   </section>
 
   <section id="layar-karakter" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:30px">Isi data karakter<small>Tentukan nama, jenis kelamin, dan tanggal lahirmu sebelum mulai.</small></h1>
+    <h1 class="judul-game" style="font-size:26px">Buat karaktermu<small style="margin-top:3px;font-size:13px">Atur identitas & tampilan wajah sebelum mulai di tahun 2026.</small></h1>
     <div class="kartu-form">
-      <div class="karakter-preview"><span id="awal-avatar"></span><div><b id="awal-nama-prev">Driver</b><small id="awal-usia-prev">Usia 23 tahun · Tahun 2023</small></div></div>
-      <label class="form-lbl">Nama karakter<input id="in-awal-nama" class="input-teks" type="text" maxlength="24" placeholder="Masukkan namamu (mis. Budi)"></label>
+      <div class="karakter-preview"><span id="awal-avatar"></span><div style="min-width:0;flex:1"><b id="awal-nama-prev">Driver</b><small id="awal-usia-prev">Cewek · Usia 25 tahun · Tahun 2026</small><small id="awal-info-prev">Islam · Suku Jawa</small></div></div>
+      <div class="form-grid-2">
+        <label class="form-lbl">Nama karakter<input id="in-awal-nama" class="input-teks" type="text" maxlength="24" placeholder="Mis. Budi / Sari"></label>
+        <label class="form-lbl">Tanggal lahir (TTL)<input id="in-awal-ttl" class="input-teks" type="date" value="2000-05-15" min="1965-01-01" max="2008-12-31"></label>
+      </div>
       <div class="form-lbl">Jenis kelamin
-        <div class="chip-baris" style="margin-top:4px">
+        <div class="opsi-chip">
           <button type="button" class="chip-tombol" data-awal-gender="cowok">👨 Cowok</button>
           <button type="button" class="chip-tombol pilih" data-awal-gender="cewek">👩 Cewek</button>
         </div>
       </div>
-      <label class="form-lbl">Tanggal lahir (TTL)<input id="in-awal-ttl" class="input-teks" type="date" value="1999-05-15" min="1965-01-01" max="2005-12-31"></label>
+      <div class="form-grid-2">
+        <label class="form-lbl">Agama<select id="in-awal-agama" class="input-teks"></select></label>
+        <label class="form-lbl">Etnis / Suku<select id="in-awal-etnis" class="input-teks"></select></label>
+      </div>
+      <div class="form-lbl">Warna kulit<div id="awal-kulit" class="swatch-baris"></div></div>
+      <div class="form-lbl">Gaya rambut<div id="awal-rambut" class="opsi-chip"></div></div>
+      <div class="form-lbl">Warna rambut<div id="awal-warna-rambut" class="swatch-baris"></div></div>
+      <div class="form-lbl">Jenis mata<div id="awal-mata" class="opsi-chip"></div></div>
+      <div class="form-lbl">Jenis mulut<div id="awal-mulut" class="opsi-chip"></div></div>
     </div>
-    <button id="b-lanjut-karakter" class="aksi" type="button">Lanjut pilih kota</button>
-    <button id="b-kembali-karakter" class="tombol-lain" type="button">Kembali</button>
+    <div class="form-aksi-bawah">
+      <button id="b-kembali-karakter" class="tombol-lain" type="button">Kembali</button>
+      <button id="b-lanjut-karakter" class="aksi" type="button">Lanjut pilih kota ›</button>
+    </div>
   </section>
 
   <section id="layar-kota" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:32px">Mulai di kota mana?<small>Kota menentukan tarif, jarak, dan suasana jalan.</small></h1>
+    <h1 class="judul-game" style="font-size:28px">Mulai di ibu kota mana?<small style="font-size:13px;margin-top:4px">Seluruh 38 ibu kota provinsi di Indonesia (UMK & BBM 2026).</small></h1>
+    <div id="kota-filter" class="kota-filter"></div>
     <div id="kota-daftar" class="kota-daftar"></div>
     <button id="b-kembali" class="tombol-lain" type="button">Kembali</button>
   </section>

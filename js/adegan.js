@@ -656,16 +656,25 @@
     o = o || {};
     var sk = o.skala || 1, cewek = gender === 'cewek', bob = Math.sin(t / 480 + x) * 1.1;
     var baju = o.baju || (cewek ? '#c86a84' : '#2f6fb0');
+    var kulit = o.kulit || '#f1c39b';
+    var rambut = o.warnaRambut || '#2a1d1a';
+    var gaya = o.gayaRambut || '';
     cx.save(); cx.translate(x, y + bob); cx.scale(sk, sk);
     cx.fillStyle = 'rgba(0,0,0,.16)'; cx.beginPath(); cx.ellipse(0, 1, 13, 3.5, 0, 0, Math.PI * 2); cx.fill();
     kotak(-6, -16, 5, 16, '#33414d'); kotak(1, -16, 5, 16, '#33414d');
-    if (cewek) { kotakBulat(-12, -46, 24, 24, 9, '#2a1d1a'); }
+    if (cewek && gaya === 'hijab') { kotakBulat(-13, -62, 26, 36, 12, baju); }
+    else if (cewek) { kotakBulat(-12, -46, 24, 24, 9, rambut); }
     kotakBulat(-11, -41, 22, 26, 7, baju);
     if (o.hamil) { bulat(7, -23, 7, baju); }
-    bulat(0, -51, 11, '#f1c39b');
-    cx.fillStyle = '#2a1d1a';
-    cx.beginPath(); cx.arc(0, -53, 11.5, Math.PI * 1.02, Math.PI * 1.98); cx.fill();
-    if (cewek) { kotak(-12, -53, 4.5, 14, '#2a1d1a'); kotak(7.5, -53, 4.5, 14, '#2a1d1a'); }
+    bulat(0, -51, 11, kulit);
+    if (cewek && gaya === 'hijab') {
+      cx.strokeStyle = baju; cx.lineWidth = 4; cx.beginPath(); cx.arc(0, -51, 11.5, 0, Math.PI * 2); cx.stroke();
+    } else {
+      cx.fillStyle = rambut;
+      cx.beginPath(); cx.arc(0, -53, 11.5, Math.PI * 1.02, Math.PI * 1.98); cx.fill();
+      if (cewek) { kotak(-12, -53, 4.5, 14, rambut); kotak(7.5, -53, 4.5, 14, rambut); }
+      if (!cewek && gaya === 'peci') { kotakBulat(-10, -64, 20, 8, 2, '#1b1d22'); }
+    }
     bulat(-4, -50, 1.6, '#2a1d1a'); bulat(4, -50, 1.6, '#2a1d1a');
     bulat(-7, -47, 2.2, 'rgba(235,110,120,.4)'); bulat(7, -47, 2.2, 'rgba(235,110,120,.4)');
     cx.strokeStyle = '#2a1d1a'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(0, -47, 3, 0.2, Math.PI - 0.2); cx.stroke();
@@ -822,8 +831,9 @@
     } else {
       var ekspPemain = s.sakitPemain ? '🤒' : s.capekPemain ? '😓' : s.hbTinggi ? '❤️' : ['😊', '☕', '✨'][Math.floor(t / 4000) % 3];
       var imP = imCharFull(s.namaPemain, s.gender || 'cewek');
+      var tp = s.tampilan || {};
       if (!gambarKarakterPenuh(imP, 228, yLantai + 162, 160, t, { gerak: 4, bingkai: '#1f8a80', ikonEkspresi: ekspPemain, label: s.namaPemain || 'Kamu' })) {
-        gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
+        gambarKarakterRumah(132, yLantai + 102, s.gender || 'cewek', t, { baju: s.gender === 'cewek' ? '#7a3e54' : '#1f8a80', kulit: tp.kulitHex, warnaRambut: tp.rambutHex, gayaRambut: tp.rambut, hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu' });
       }
       if (pas) {
         var ekspPas = pas.hamil ? '🤰' : s.hbTinggi ? '😘' : ['🥰', '😊', '💕'][Math.floor(t / 4500) % 3];

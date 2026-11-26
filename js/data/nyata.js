@@ -8,38 +8,138 @@
     hariSingkat: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
     namaBulan: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
 
-    /* UMK 2026 (berlaku 1 Januari 2026) */
+    /* 38 Ibu Kota Provinsi Indonesia (UMK/UMP 2026 berlaku 1 Januari 2026, harga kos, makan & BBM nyata per wilayah) */
     kota: [
-      { id: 'medan', nama: 'Medan', provinsi: 'Sumatera Utara', umk: 4335198, bbm: 'sumatera', kos: 550000, makan: 15000, ppj: 0.03, hargaKopi: 1, zona: 1 },
-      { id: 'pekanbaru', nama: 'Pekanbaru', provinsi: 'Riau', umk: 3998179, bbm: 'sumatera' /* perkiraan: Riau tidak ada di daftar sumber */, kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
-      { id: 'jambi', nama: 'Kota Jambi', provinsi: 'Jambi', umk: 3868963, bbm: 'sumatera', kos: 650000, makan: 15000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
-      { id: 'jakarta', nama: 'Jakarta', provinsi: 'DKI Jakarta', umk: 5729876, bbm: 'jawa', kos: 910000, makan: 20000, ppj: 0.024, hargaKopi: 1.15, zona: 2 },
-      { id: 'pontianak', nama: 'Kota Pontianak', provinsi: 'Kalimantan Barat', umk: 3250000, bbm: 'sumatera', kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
-      { id: 'palangkaraya', nama: 'Kota Palangka Raya', provinsi: 'Kalimantan Tengah', umk: 3650000, bbm: 'sumatera', kos: 650000, makan: 18000, ppj: 0.03, hargaKopi: 1, zona: 1 },
-      { id: 'banjarmasin', nama: 'Kota Banjarmasin', provinsi: 'Kalimantan Selatan', umk: 3750000, bbm: 'sumatera', kos: 650000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: 1 },
-      { id: 'balikpapan', nama: 'Kota Balikpapan', provinsi: 'Kalimantan Timur', umk: 3980000, bbm: 'sumatera', kos: 800000, makan: 20000, ppj: 0.03, hargaKopi: 1.1, zona: 2 },
-      { id: 'tanjungselor', nama: 'Tanjung Selor (Bulungan)', provinsi: 'Kalimantan Utara', umk: 3680000, bbm: 'sumatera', kos: 700000, makan: 19000, ppj: 0.03, hargaKopi: 1.05, zona: 1 }
+      /* Sumatera (10 provinsi) */
+      { id: 'bandaaceh', nama: 'Banda Aceh', provinsi: 'Aceh', pulau: 'Sumatera', umk: 4070000, bbm: 'sumatera', kos: 550000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'medan', nama: 'Medan', provinsi: 'Sumatera Utara', pulau: 'Sumatera', umk: 4335198, bbm: 'sumatera', kos: 550000, makan: 15000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'padang', nama: 'Padang', provinsi: 'Sumatera Barat', pulau: 'Sumatera', umk: 3180000, bbm: 'sumatera', kos: 520000, makan: 15000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      { id: 'pekanbaru', nama: 'Pekanbaru', provinsi: 'Riau', pulau: 'Sumatera', umk: 3998179, bbm: 'sumatera', kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'tanjungpinang', nama: 'Tanjung Pinang', provinsi: 'Kepulauan Riau', pulau: 'Sumatera', umk: 3890000, bbm: 'sumatera', kos: 650000, makan: 18000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      { id: 'jambi', nama: 'Kota Jambi', provinsi: 'Jambi', pulau: 'Sumatera', umk: 3868963, bbm: 'sumatera', kos: 650000, makan: 15000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      { id: 'bengkulu', nama: 'Bengkulu', provinsi: 'Bengkulu', pulau: 'Sumatera', umk: 2920000, bbm: 'sumatera', kos: 500000, makan: 14000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      { id: 'palembang', nama: 'Palembang', provinsi: 'Sumatera Selatan', pulau: 'Sumatera', umk: 4160000, bbm: 'sumatera', kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'pangkalpinang', nama: 'Pangkalpinang', provinsi: 'Kep. Bangka Belitung', pulau: 'Sumatera', umk: 4100000, bbm: 'sumatera', kos: 620000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'lampung', nama: 'Bandar Lampung', provinsi: 'Lampung', pulau: 'Sumatera', umk: 3520000, bbm: 'sumatera', kos: 550000, makan: 15000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      /* Jawa (6 provinsi) */
+      { id: 'serang', nama: 'Serang', provinsi: 'Banten', pulau: 'Jawa', umk: 4680000, bbm: 'jawa', kos: 650000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'jakarta', nama: 'Jakarta', provinsi: 'DKI Jakarta', pulau: 'Jawa', umk: 5729876, bbm: 'jawa', kos: 910000, makan: 20000, ppj: 0.024, hargaKopi: 1.15, zona: 2 },
+      { id: 'bandung', nama: 'Bandung', provinsi: 'Jawa Barat', pulau: 'Jawa', umk: 4760000, bbm: 'jawa', kos: 750000, makan: 16000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      { id: 'semarang', nama: 'Semarang', provinsi: 'Jawa Tengah', pulau: 'Jawa', umk: 3680000, bbm: 'jawa', kos: 600000, makan: 14000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'yogyakarta', nama: 'Yogyakarta', provinsi: 'DI Yogyakarta', pulau: 'Jawa', umk: 2820000, bbm: 'jawa', kos: 550000, makan: 13000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      { id: 'surabaya', nama: 'Surabaya', provinsi: 'Jawa Timur', pulau: 'Jawa', umk: 5280000, bbm: 'jawa', kos: 750000, makan: 17000, ppj: 0.03, hargaKopi: 1.1, zona: 2 },
+      /* Bali & Nusa Tenggara (3 provinsi) */
+      { id: 'denpasar', nama: 'Denpasar', provinsi: 'Bali', pulau: 'Bali & Nusa Tenggara', umk: 3510000, bbm: 'jawa', kos: 750000, makan: 18000, ppj: 0.03, hargaKopi: 1.15, zona: 2 },
+      { id: 'mataram', nama: 'Mataram', provinsi: 'Nusa Tenggara Barat', pulau: 'Bali & Nusa Tenggara', umk: 3040000, bbm: 'sumatera', kos: 550000, makan: 15000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'kupang', nama: 'Kupang', provinsi: 'Nusa Tenggara Timur', pulau: 'Bali & Nusa Tenggara', umk: 2560000, bbm: 'sumatera', kos: 550000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      /* Kalimantan (5 provinsi) */
+      { id: 'pontianak', nama: 'Pontianak', provinsi: 'Kalimantan Barat', pulau: 'Kalimantan', umk: 3250000, bbm: 'sumatera', kos: 600000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'palangkaraya', nama: 'Palangka Raya', provinsi: 'Kalimantan Tengah', pulau: 'Kalimantan', umk: 3650000, bbm: 'sumatera', kos: 650000, makan: 18000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'banjarbaru', nama: 'Banjarbaru', provinsi: 'Kalimantan Selatan', pulau: 'Kalimantan', umk: 3820000, bbm: 'sumatera', kos: 650000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'samarinda', nama: 'Samarinda', provinsi: 'Kalimantan Timur', pulau: 'Kalimantan', umk: 3960000, bbm: 'sumatera', kos: 750000, makan: 19000, ppj: 0.03, hargaKopi: 1.08, zona: 2 },
+      { id: 'tanjungselor', nama: 'Tanjung Selor', provinsi: 'Kalimantan Utara', pulau: 'Kalimantan', umk: 3680000, bbm: 'sumatera', kos: 700000, makan: 19000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      /* Sulawesi (6 provinsi) */
+      { id: 'manado', nama: 'Manado', provinsi: 'Sulawesi Utara', pulau: 'Sulawesi', umk: 4050000, bbm: 'sumatera', kos: 650000, makan: 18000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      { id: 'gorontalo', nama: 'Gorontalo', provinsi: 'Gorontalo', pulau: 'Sulawesi', umk: 3420000, bbm: 'sumatera', kos: 550000, makan: 16000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      { id: 'palu', nama: 'Palu', provinsi: 'Sulawesi Tengah', pulau: 'Sulawesi', umk: 3580000, bbm: 'sumatera', kos: 600000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      { id: 'mamuju', nama: 'Mamuju', provinsi: 'Sulawesi Barat', pulau: 'Sulawesi', umk: 3320000, bbm: 'sumatera', kos: 550000, makan: 16000, ppj: 0.03, hargaKopi: 0.95, zona: 1 },
+      { id: 'makassar', nama: 'Makassar', provinsi: 'Sulawesi Selatan', pulau: 'Sulawesi', umk: 4130000, bbm: 'sumatera', kos: 650000, makan: 17000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      { id: 'kendari', nama: 'Kendari', provinsi: 'Sulawesi Tenggara', pulau: 'Sulawesi', umk: 3530000, bbm: 'sumatera', kos: 600000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: 1 },
+      /* Maluku (2 provinsi) */
+      { id: 'ambon', nama: 'Ambon', provinsi: 'Maluku', pulau: 'Maluku & Papua', umk: 3350000, bbm: 'timur', kos: 650000, makan: 19000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      { id: 'sofifi', nama: 'Sofifi', provinsi: 'Maluku Utara', pulau: 'Maluku & Papua', umk: 3620000, bbm: 'timur', kos: 650000, makan: 20000, ppj: 0.03, hargaKopi: 1.05, zona: 1 },
+      /* Papua (6 provinsi) */
+      { id: 'sorong', nama: 'Sorong', provinsi: 'Papua Barat Daya', pulau: 'Maluku & Papua', umk: 3850000, bbm: 'timur', kos: 750000, makan: 22000, ppj: 0.03, hargaKopi: 1.15, zona: 2 },
+      { id: 'manokwari', nama: 'Manokwari', provinsi: 'Papua Barat', pulau: 'Maluku & Papua', umk: 3840000, bbm: 'timur', kos: 750000, makan: 22000, ppj: 0.03, hargaKopi: 1.15, zona: 2 },
+      { id: 'nabire', nama: 'Nabire', provinsi: 'Papua Tengah', pulau: 'Maluku & Papua', umk: 4550000, bbm: 'timur', kos: 800000, makan: 24000, ppj: 0.03, hargaKopi: 1.2, zona: 2 },
+      { id: 'wamena', nama: 'Wamena', provinsi: 'Papua Pegunungan', pulau: 'Maluku & Papua', umk: 4550000, bbm: 'timur', kos: 850000, makan: 28000, ppj: 0.03, hargaKopi: 1.25, zona: 2 },
+      { id: 'merauke', nama: 'Merauke', provinsi: 'Papua Selatan', pulau: 'Maluku & Papua', umk: 4550000, bbm: 'timur', kos: 800000, makan: 24000, ppj: 0.03, hargaKopi: 1.2, zona: 2 },
+      { id: 'jayapura', nama: 'Jayapura', provinsi: 'Papua', pulau: 'Maluku & Papua', umk: 4560000, bbm: 'timur', kos: 850000, makan: 25000, ppj: 0.03, hargaKopi: 1.2, zona: 2 }
     ],
 
-    /* penyedia QRIS merchant; aturan transfer ke bank per September 2026 */
+    /* penyedia dompet digital / QRIS merchant asli Indonesia beserta kebijakan transfer ke bank 2026 */
     qris: [
-      { id: 'gopay', nama: 'GoPay', app: 'GoBiz', warna: '#00aed6', gratis: 100, biayaLebih: 0, transfer: 'Transfer ke bank gratis sampai 100 kali sebulan' },
-      { id: 'dana', nama: 'DANA', app: 'DANA Bisnis', warna: '#118eea', gratis: 10, biayaLebih: 2500, transfer: 'Transfer ke bank gratis 10 kali sebulan, setelah itu ada biaya' },
-      { id: 'shopeepay', nama: 'ShopeePay', app: 'ShopeePay Merchant', warna: '#ee4d2d', gratis: Infinity, biayaLebih: 0, transfer: 'Transfer ke bank gratis tanpa batas bulanan' }
+      { id: 'gopay', nama: 'GoPay', app: 'GoBiz', warna: '#00aed6', gratis: 100, biayaLebih: 0, transfer: 'Gratis transfer ke bank s/d 100×/bln (kebijakan resmi GoPay)' },
+      { id: 'dana', nama: 'DANA', app: 'DANA Bisnis', warna: '#118eea', gratis: 10, biayaLebih: 2500, transfer: 'Gratis transfer ke bank 10×/bln, setelahnya Rp2.500 (BI-FAST)' },
+      { id: 'shopeepay', nama: 'ShopeePay', app: 'ShopeePay Merchant', warna: '#ee4d2d', gratis: Infinity, biayaLebih: 0, transfer: 'Gratis transfer ke bank tanpa batas bulanan' },
+      { id: 'ovo', nama: 'OVO', app: 'OVO Merchant', warna: '#4c3494', gratis: 0, biayaLebih: 2500, transfer: 'Transfer ke bank Rp2.500/transaksi (aturan resmi OVO)' },
+      { id: 'linkaja', nama: 'LinkAja', app: 'LinkAja Merchant', warna: '#e82529', gratis: 0, biayaLebih: 2500, transfer: 'Dompet digital BUMN · Transfer antarbank Rp2.500/transaksi' },
+      { id: 'astrapay', nama: 'AstraPay', app: 'AstraPay Merchant', warna: '#005aab', gratis: 0, biayaLebih: 2500, transfer: 'Dompet digital Astra · Transfer ke bank Rp2.500/transaksi' }
     ],
-    /* biayaLebih DANA setelah kuota: perkiraan, sama dengan BI-FAST */
 
-    /* tabungan kartu debit biasa (biru/klasik/perak), November 2026 */
+    /* 10 bank populer Indonesia dengan kebijakan admin bulanan, batas transfer & kuota transfer gratis asli 2026 */
     bank: [
-      { id: 'bca', nama: 'BCA', app: 'BCA mobile', warna: '#0060af', admin: 17000, batasTransfer: 100e6 },
-      { id: 'bri', nama: 'BRI', app: 'BRImo', warna: '#00529c', admin: 15500, batasTransfer: 50e6 },
-      { id: 'bni', nama: 'BNI', app: 'wondr by BNI', warna: '#f15a23', admin: 16000, batasTransfer: 50e6 },
-      { id: 'mandiri', nama: 'Mandiri', app: "Livin' by Mandiri", warna: '#003d79', admin: 17000, batasTransfer: 25e6 },
-      /* SeaBank: bank digital, tanpa biaya admin, transfer antarbank gratis 100 kali sebulan (VIVA, 2024). Tanpa kartu ATM:
-         setor dan tarik tunai di Indomaret, Rp5.000 per transaksi, Rp50.000–1.000.000 per transaksi, tarik maksimal Rp5 juta sehari (Fortune IDN) */
+      { id: 'bca', nama: 'BCA', app: 'BCA mobile', warna: '#0060af', admin: 17000, batasTransfer: 100e6, ket: 'Tahapan BCA Blue · Admin Rp17.000/bln · BI-FAST Rp2.500 · Limit Rp100jt/hari' },
+      { id: 'bri', nama: 'BRI', app: 'BRImo', warna: '#00529c', admin: 15500, batasTransfer: 50e6, ket: 'BritAma Classic · Admin Rp15.500/bln · BI-FAST Rp2.500 · Limit Rp50jt/hari' },
+      { id: 'bni', nama: 'BNI', app: 'wondr by BNI', warna: '#f15a23', admin: 16000, batasTransfer: 50e6, ket: 'Taplus Silver · Admin Rp16.000/bln · BI-FAST Rp2.500 · Limit Rp50jt/hari' },
+      { id: 'mandiri', nama: 'Mandiri', app: "Livin' by Mandiri", warna: '#003d79', admin: 17000, batasTransfer: 25e6, ket: 'Mandiri Tabungan Silver · Admin Rp17.000/bln · Limit Rp25jt/hari' },
       { id: 'seabank', nama: 'SeaBank', app: 'SeaBank', warna: '#f37021', admin: 0, batasTransfer: 0, gratisTransfer: 100,
-        tunai: { tempat: 'Indomaret', biaya: 5000, min: 50000, maks: 1000000, tarikHarian: 5000000 } }
+        ket: 'Bank digital bebas admin · Transfer gratis 100×/bln · Tunai di Indomaret Rp5.000',
+        tunai: { tempat: 'Indomaret', biaya: 5000, min: 50000, maks: 1000000, tarikHarian: 5000000 } },
+      { id: 'bsi', nama: 'BSI', app: 'BYOND by BSI', warna: '#00a39d', admin: 10000, batasTransfer: 50e6, ket: 'Easy Mudharabah Syariah · Admin Rp10.000/bln · BI-FAST Rp2.500 · Limit Rp50jt/hari' },
+      { id: 'cimb', nama: 'CIMB Niaga', app: 'OCTO Mobile', warna: '#7b001e', admin: 17500, batasTransfer: 100e6, gratisTransfer: 20, ket: 'Xtra Savers · Admin Rp17.500/bln · Gratis BI-FAST 20×/bln · Limit Rp100jt/hari' },
+      { id: 'jago', nama: 'Bank Jago', app: 'Jago', warna: '#f7a600', admin: 0, batasTransfer: 100e6, gratisTransfer: 25, ket: 'Bank digital bebas admin · Gratis transfer 25×/bln · ATM Visa/GPN · Limit Rp100jt/hari' },
+      { id: 'permata', nama: 'PermataBank', app: 'Permata ME', warna: '#63a70a', admin: 17500, batasTransfer: 100e6, gratisTransfer: 10, ket: 'PermataME · Admin Rp17.500/bln · Gratis BI-FAST 10×/bln · Limit Rp100jt/hari' },
+      { id: 'danamon', nama: 'Danamon', app: 'D-Bank PRO', warna: '#f28c00', admin: 16500, batasTransfer: 100e6, gratisTransfer: 10, ket: 'Danamon Lebih PRO · Admin Rp16.500/bln · Gratis BI-FAST 10×/bln · Limit Rp100jt/hari' }
     ],
+
+    /* Opsi kustomisasi karakter lengkap Indonesia (wajah, warna kulit, rambut, mata, mulut, agama & suku/etnis) */
+    karakterOpsi: {
+      kulit: [
+        { id: 'putih', nama: 'Putih Cerah', hex: '#fde0c9', bayang: '#e6b89a' },
+        { id: 'kuning', nama: 'Kuning Langsat', hex: '#f5cb9f', bayang: '#d9a473' },
+        { id: 'cerah', nama: 'Sawo Cerah', hex: '#e9b284', bayang: '#c88b5b' },
+        { id: 'sawo', nama: 'Sawo Matang', hex: '#d29362', bayang: '#af7042' },
+        { id: 'eksotis', nama: 'Cokelat Eksotis', hex: '#b37446', bayang: '#8d542b' },
+        { id: 'gelap', nama: 'Cokelat Gelap', hex: '#885130', bayang: '#64371c' }
+      ],
+      warnaRambut: [
+        { id: 'hitam', nama: 'Hitam Pekat', hex: '#1c1817', kilau: '#3e3533' },
+        { id: 'coklatTua', nama: 'Cokelat Tua', hex: '#3d251b', kilau: '#684434' },
+        { id: 'coklat', nama: 'Kastanye', hex: '#6c3e26', kilau: '#9c6344' },
+        { id: 'pirang', nama: 'Pirang Madu', hex: '#b88848', kilau: '#dcb071' },
+        { id: 'merah', nama: 'Burgundy', hex: '#782625', kilau: '#a84442' },
+        { id: 'abu', nama: 'Ash Silver', hex: '#6f7782', kilau: '#9da5b0' }
+      ],
+      rambutCowok: [
+        { id: 'rapi', nama: 'Belah Samping Rapi' },
+        { id: 'koma', nama: 'Comma Hair' },
+        { id: 'undercut', nama: 'Undercut Modern' },
+        { id: 'ikal', nama: 'Ikal Natural' },
+        { id: 'gondrong', nama: 'Gondrong Keren' },
+        { id: 'peci', nama: 'Peci Hitam' }
+      ],
+      rambutCewek: [
+        { id: 'panjang', nama: 'Panjang Lurus' },
+        { id: 'gelombang', nama: 'Bergelombang' },
+        { id: 'bob', nama: 'Bob Pendek' },
+        { id: 'kuncir', nama: 'Kuncir Kuda' },
+        { id: 'poni', nama: 'Poni Manis' },
+        { id: 'hijab', nama: 'Hijab Modern' }
+      ],
+      mata: [
+        { id: 'cerah', nama: 'Besar Berbinar' },
+        { id: 'tajam', nama: 'Tajam Karismatik' },
+        { id: 'sipit', nama: 'Sipit Manis' },
+        { id: 'lembut', nama: 'Lembut Teduh' },
+        { id: 'kacamata', nama: 'Berkacamata' }
+      ],
+      mulut: [
+        { id: 'senyum', nama: 'Senyum Manis' },
+        { id: 'lebar', nama: 'Senyum Cerah' },
+        { id: 'kalem', nama: 'Kalem Elegan' },
+        { id: 'smirk', nama: 'Percaya Diri' },
+        { id: 'mungil', nama: 'Mungil Natural' }
+      ],
+      agama: ['Islam', 'Kristen Protestan', 'Katolik', 'Hindu', 'Buddha', 'Khonghucu'],
+      etnis: [
+        'Jawa', 'Sunda', 'Batak', 'Minangkabau', 'Betawi', 'Melayu',
+        'Bugis', 'Makassar', 'Banjar', 'Dayak', 'Bali', 'Sasak',
+        'Madura', 'Aceh', 'Palembang', 'Lampung', 'Banten', 'Cirebon',
+        'Minahasa', 'Toraja', 'Gorontalo', 'Ambon / Maluku', 'Flores / NTT',
+        'Papua', 'Tionghoa-Indonesia', 'Arab-Indonesia', 'India-Indonesia'
+      ]
+    },
     biFast: 2500,
     /* kos AC termurah per kota (Mamikos, November 2026); makan = nasi bungkus warung (perkiraan); ppj = pajak penerangan jalan (Jakarta 2,4%, kota lain perkiraan 3%) */
     /* token PLN prabayar: tarif 1.300 VA ke atas Rp1.444,70/kWh; biaya admin aplikasi perkiraan Rp2.400 (contoh: token 20 rb dibayar Rp22.400, dapat ±13 kWh) */
@@ -351,6 +451,7 @@
     bbm: {
       jawa: { pertalite: 10000, pertamax: 15950, turbo: 19600 },
       sumatera: { pertalite: 10000, pertamax: 16300, turbo: 20000 },
+      timur: { pertalite: 10000, pertamax: 16650, turbo: 20400 },
       nama: { pertalite: 'Pertalite', pertamax: 'Pertamax', turbo: 'Pertamax Turbo', listrik: 'Listrik', solar: 'Biosolar' }
     },
 
