@@ -643,6 +643,8 @@
   }
   function beliGame(S, gameId, caraBayar) {
     var gm = gameModel(gameId); if (!gm) return 'Game tidak dikenal.';
+    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahun || 2023);
+    if (rilis > thnKini) return gm.nama + ' baru rilis tahun ' + rilis + ' (tahun saat ini ' + thnKini + ').';
     if (S.game.kaset && S.game.kaset[gameId]) return 'Sudah punya ' + gm.nama + '.';
     if (!bisaMainGame(S, gm)) {
       var km = konsolModel(gm.konsol);
@@ -752,6 +754,8 @@
   }
   function beliGadget(S, id, caraBayar) {
     var gm = gadgetModel(id); if (!gm) return 'Gadget tidak dikenal.';
+    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahunRilis || gm.tahun || 2023);
+    if (rilis > thnKini) return gm.nama + ' belum rilis (rilis ' + rilis + ', tahun game sekarang ' + thnKini + ').';
     if (S.gadget && S.gadget[id]) return 'Sudah punya ' + gm.nama + '.';
     var d = diskonToko(S, 'tokopedia');
     var h = d ? Math.round(gm.harga * (1 - d) / 5000) * 5000 : gm.harga;
@@ -2139,21 +2143,26 @@
     });
     return { ok: true, menit: x.jam * 60, teks: '🚗 Jalan-jalan ke ' + x.nama + ' (' + rp(x.biaya) + ', ' + x.km + ' km) selesai! Kebahagiaan keluarga +' + x.bahagia + '%!' };
   }
-  /* belikan / kredit hadiah (HP, Motor, Rumah) untuk keluarga atau teman */
+  /* belikan / kredit hadiah (HP, Motor, Rumah) untuk keluarga atau teman — mengikuti tahun rilis game */
   var KATALOG_HADIAH = [
-    { id: 'hp_redmi', kat: 'HP', nama: 'Xiaomi Redmi 14C', harga: 1800000, dp: 0.1, tenor: 12, naik: 16 },
-    { id: 'hp_samsung', kat: 'HP', nama: 'Samsung Galaxy A55 5G', harga: 6000000, dp: 0.1, tenor: 12, naik: 24 },
-    { id: 'hp_iphone', kat: 'HP', nama: 'iPhone 16 Pro Max', harga: 21000000, dp: 0.1, tenor: 12, naik: 36 },
-    { id: 'mtr_beat', kat: 'Motor', nama: 'Honda BeAT CBS', harga: 19400000, dp: 0.1, tenor: 24, naik: 32 },
-    { id: 'mtr_nmax', kat: 'Motor', nama: 'Yamaha NMAX 155', harga: 32200000, dp: 0.1, tenor: 24, naik: 40 },
-    { id: 'mtr_vespa', kat: 'Motor', nama: 'Vespa Primavera 150', harga: 54100000, dp: 0.1, tenor: 24, naik: 48 },
-    { id: 'rmh_subsidi', kat: 'Rumah', nama: 'Rumah Subsidi Tipe 36', harga: 166000000, dp: 0.05, tenor: 180, naik: 50 },
-    { id: 'rmh_45', kat: 'Rumah', nama: 'Rumah Tipe 45', harga: 450000000, dp: 0.1, tenor: 180, naik: 60 },
-    { id: 'rmh_mewah', kat: 'Rumah', nama: 'Rumah Mewah Tipe 200', harga: 2500000000, dp: 0.1, tenor: 180, naik: 80 }
+    { id: 'hp_redmi12c', kat: 'HP', tahun: 2023, nama: 'Xiaomi Redmi 12C', harga: 1400000, dp: 0.1, tenor: 12, naik: 16 },
+    { id: 'hp_a54', kat: 'HP', tahun: 2023, nama: 'Samsung Galaxy A54 5G', harga: 6000000, dp: 0.1, tenor: 12, naik: 24 },
+    { id: 'hp_iphone15', kat: 'HP', tahun: 2023, nama: 'iPhone 15 Pro Max', harga: 24500000, dp: 0.1, tenor: 12, naik: 36 },
+    { id: 'hp_redmi', kat: 'HP', tahun: 2024, nama: 'Xiaomi Redmi 14C', harga: 1800000, dp: 0.1, tenor: 12, naik: 17 },
+    { id: 'hp_samsung', kat: 'HP', tahun: 2024, nama: 'Samsung Galaxy A55 5G', harga: 6000000, dp: 0.1, tenor: 12, naik: 25 },
+    { id: 'hp_iphone', kat: 'HP', tahun: 2024, nama: 'iPhone 16 Pro Max', harga: 25500000, dp: 0.1, tenor: 12, naik: 38 },
+    { id: 'mtr_beat', kat: 'Motor', tahun: 2023, nama: 'Honda BeAT CBS', harga: 19400000, dp: 0.1, tenor: 24, naik: 32 },
+    { id: 'mtr_nmax', kat: 'Motor', tahun: 2023, nama: 'Yamaha NMAX 155', harga: 32200000, dp: 0.1, tenor: 24, naik: 40 },
+    { id: 'mtr_vespa', kat: 'Motor', tahun: 2023, nama: 'Vespa Primavera 150', harga: 54100000, dp: 0.1, tenor: 24, naik: 48 },
+    { id: 'rmh_subsidi', kat: 'Rumah', tahun: 2023, nama: 'Rumah Subsidi Tipe 36', harga: 166000000, dp: 0.05, tenor: 180, naik: 50 },
+    { id: 'rmh_45', kat: 'Rumah', tahun: 2023, nama: 'Rumah Tipe 45', harga: 450000000, dp: 0.1, tenor: 180, naik: 60 },
+    { id: 'rmh_mewah', kat: 'Rumah', tahun: 2023, nama: 'Rumah Mewah Tipe 200', harga: 2500000000, dp: 0.1, tenor: 180, naik: 80 }
   ];
   function belikanHadiah(S, targetJenis, targetId, itemId, kredit) {
     var it = KATALOG_HADIAH.filter(function (x) { return x.id === itemId; })[0];
     if (!it) return 'Barang tidak ditemukan.';
+    var thnH = KAL.tgl(S.hari).y;
+    if ((it.tahun || 2023) > thnH) return it.nama + ' baru rilis tahun ' + it.tahun + ' (tahun saat ini ' + thnH + ').';
     var target = targetJenis === 'teman'
       ? (S.teman || []).filter(function (x) { return x.id === targetId; })[0]
       : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];

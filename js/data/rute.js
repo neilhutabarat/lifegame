@@ -319,11 +319,12 @@
   };
   var DASAR = { perKm: 520, tetap: 25000, minimal: 50000, tambahLaut: 40000 };
 
-  /* level kecepatan 1-5; hujan membatasi sampai level 4 */
+  /* level kecepatan 1-4 normal (realistis); level 5 khusus Mode VVIP terbuka & tidak hujan */
   function gigiEfektif(S, jenis) {
-    var gi = Math.max(1, Math.min(5, Math.round(S.gigiJalan || 2)));
+    var gi = Math.max(1, Math.min(5, Math.round((S && S.gigiJalan) || 2)));
+    var vvip = !!(S && S.vvip && S.vvip.aktif);
     var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S);
-    if (hujan && gi > 4) gi = 4;
+    if ((!vvip || hujan) && gi > 4) gi = 4;
     return gi;
   }
   function gigiInfo(S, jenis, id) {
@@ -333,7 +334,7 @@
     var hi = gi === 5 ? Math.max(lo + 5, vmax) : Math.min(t.hi, vmax);
     return { id: gi, nama: t.nama, lo: lo, hi: hi, mid: Math.max(8, (lo + hi) / 2), boros: t.boros * (jenis === 'mobil' ? 1.2 : 1.15), ngebut: !!t.ngebut, vmax: vmax };
   }
-  function bolehKhususJalan(S) { var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S); return !hujan; }
+  function bolehKhususJalan(S) { var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S); return !!(S && S.vvip && S.vvip.aktif) && !hujan; }
   function nama(id) { return KOTA[id] ? KOTA[id].nama : id; }
   function ruasAntara(a, b) { for (var i = 0; i < RUAS.length; i++) { var r = RUAS[i]; if ((r.a === a && r.b === b) || (r.a === b && r.b === a)) return r; } return null; }
   function tetangga(id) {

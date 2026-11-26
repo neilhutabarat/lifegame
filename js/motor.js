@@ -82,7 +82,9 @@
   }
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
-    var m = N.motor.filter(function (x) { return x.id === id; })[0];
+    var m = N.motor.filter(function (x) { return x.id === id; })[0]; if (!m) return 'Motor tidak dikenal.';
+    var thn = KAL.tgl(S.hari).y;
+    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
     var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
@@ -157,7 +159,10 @@
   function beliKredit(S, id, dp, tenor, cara) {
     var e = cekGarasi(S); if (e) return e;
     if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
-    var m = N.motor.filter(function (x) { return x.id === id; })[0], k = hitungKredit(m.harga, dp, tenor);
+    var m = N.motor.filter(function (x) { return x.id === id; })[0]; if (!m) return 'Motor tidak dikenal.';
+    var thn = KAL.tgl(S.hari).y;
+    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;
     var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
@@ -166,12 +171,13 @@
     return true;
   }
   function bekasBaru(S) {
-    var unit = [];
+    var unit = [], thnKini = KAL.tgl(S.hari).y;
     for (var i = 0; i < 4; i++) {
       var b = N.motorBekas[i === 0 ? 0 : 1 + Math.floor(Math.random() * (N.motorBekas.length - 1))];
       if (i === 1 && Math.random() < 0.5) b = N.motorBekas[0];
       if (b.jarang && Math.random() > b.jarang) b = N.motorBekas[1];
-      var tahun = b.tahun[0] + Math.floor(Math.random() * (b.tahun[1] - b.tahun[0] + 1));
+      var thnMaks = Math.min(b.tahun[1], thnKini), thnMin = Math.min(b.tahun[0], thnMaks);
+      var tahun = thnMin + Math.floor(Math.random() * (thnMaks - thnMin + 1));
       var kondisi = ['baik', 'sedang', 'kurang'][Math.floor(Math.random() * 3)];
       var mutu = { baik: 0.8, sedang: 0.45, kurang: 0.15 }[kondisi] + (Math.random() - 0.5) * 0.2;
       var harga = Math.round((b.min + (b.maks - b.min) * Math.max(0, Math.min(1, mutu))) / 100000) * 100000;

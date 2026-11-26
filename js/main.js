@@ -59,7 +59,7 @@
   function isiKota() {
     $('kota-daftar').innerHTML = N.kota.map(function (k) {
       return '<button type="button" class="kota" data-kota="' + k.id + '"><b>' + esc(k.nama) + '</b>' +
-        '<span class="ciri">' + esc(k.provinsi) + '</span><span class="umk">UMK 2026 ' + rupiah(k.umk) + ' sebulan</span></button>';
+        '<span class="ciri">' + esc(k.provinsi) + '</span><span class="umk">UMK ' + rupiah(k.umk) + ' sebulan</span></button>';
     }).join('');
   }
 
@@ -151,6 +151,11 @@
       d.bonusBank5M = true;
     }
     if (d.tagihanNafkah) d.tagihanNafkah = null;
+    d.vvip = d.vvip || { aktif: false };
+    if (!d.vvip.aktif) {
+      if (d.gigiJalan > 4) d.gigiJalan = 4;
+      if (d.travel && d.travel.gigi > 4) d.travel.gigi = 4;
+    }
     if (d.travel && TRAVEL && TRAVEL.pastikanKasTravel && (d.mobil || (d.travel.supir && d.travel.supir.length))) TRAVEL.pastikanKasTravel(d, 0);
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
@@ -594,6 +599,12 @@
         '<div class="atur-baris" style="display:block"><div><b>Nama pemain</b><span>Nama pemilik rekening</span></div><input id="in-pemain" class="input-teks" type="text" maxlength="24" value="' + esc(S.namaPemain || 'Pemilik') + '"></div>' +
       '<div class="atur-baris"><div><b>Gender karakter</b><span>Memengaruhi tampilan karakter</span></div><div class="chip-baris" style="margin:0"><button type="button" class="chip-tombol' + (pr.gender === 'cewek' ? ' pilih' : '') + '" data-gender="cewek">Cewek</button><button type="button" class="chip-tombol' + (pr.gender === 'cowok' ? ' pilih' : '') + '" data-gender="cowok">Cowok</button></div></div>' +
       '<div class="atur-baris" style="display:block"><div><b>Tanggal lahir (TTL)</b><span>Tahun game ' + thn + ' · Usia saat ini: <b>' + usia + ' tahun</b></span></div><input id="in-ttl" class="input-teks" type="date" value="' + esc(pr.tglLahir || '1999-05-15') + '"><div style="margin-top:8px"><button type="button" class="chip-tombol pilih" data-simpan-nama>Simpan profil & nama</button></div></div>' +
+      '<h3 class="subjudul">Mode VVIP (Gembok Kecepatan Level 5)</h3>' +
+      '<div class="atur-baris"><div><b>' + (TRAVEL.vvipAktif(S) ? '🔓 Mode VVIP Aktif' : '🔒 Mode VVIP Terkunci') + '</b><span>' + (TRAVEL.vvipAktif(S) ? 'Kecepatan Level 5 (Top Speed) terbuka penuh.' : 'Mode normal maks Level 4 (realistis). Buka gembok VVIP (' + (S.vvip && S.vvip.pernahBeli ? 'sudah dibeli' : rupiah(TRAVEL.VVIP_HARGA || 50000000)) + ') untuk Level 5.') + '</span></div><div>' +
+      (TRAVEL.vvipAktif(S)
+        ? '<button type="button" class="chip-tombol" data-vvip="kunci">🔒 Kunci lagi</button>'
+        : '<button type="button" class="chip-tombol pilih" data-vvip="popup">🔓 Buka Gembok</button>') +
+      '</div></div>' +
       '<h3 class="subjudul">Suara & lagu tema</h3>' +
       '<div class="atur-baris"><div><b>Lagu tema orisinal</b><span>Pagi, siang, dan malam beda suasana</span></div><div><button type="button" class="chip-tombol' + (mOn ? ' pilih' : '') + '" data-suara="musik">' + (mOn ? 'Nyala' : 'Mati') + '</button></div></div>' +
       '<div class="atur-baris"><div><b>Efek suara</b><span>Mesin motor, notifikasi, dan tombol</span></div><div><button type="button" class="chip-tombol' + (eOn ? ' pilih' : '') + '" data-suara="efek">' + (eOn ? 'Nyala' : 'Mati') + '</button></div></div>' +
@@ -1059,22 +1070,24 @@
       return html;
     }
     if (tab === 'dealer') {
-      var kls = app.kelasMotor || 'harian';
-      return html + chipTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + '<ul class="daftar belanja">' + N.motor.filter(function (x) { return (x.kelas || 'harian') === kls; }).map(function (x) {
+      var kls = app.kelasMotor || 'harian', thnM = KAL.tgl(S.hari).y;
+      var listMotor = N.motor.filter(function (x) { return (x.kelas || 'harian') === kls && (x.tahun || 2023) <= thnM; });
+      return html + chipTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + '<ul class="daftar belanja">' + listMotor.map(function (x) {
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + (x.bbm === 'listrik' ? 'Listrik, sekitar ' + x.jarakPenuh + ' km sekali cas' : '±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm]) + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></span></li>';
-      }).join('') + '</ul><p class="catatan">Harga OTR 2026 varian termurah. Bisa punya lebih dari 1 motor tanpa batas (pilih motor utama di Garasi). Bisa bayar dari rekening, kartu kredit, atau cicilan leasing.</p>';
+      }).join('') + '</ul><p class="catatan">Harga OTR tahun ' + thnM + ' varian termurah. Model rilisan tahun berikutnya otomatis muncul saat tahun berganti. Bisa punya lebih dari 1 motor tanpa batas (pilih motor utama di Garasi).</p>';
     }
     if (tab === 'mobil') {
-      var km2 = app.kelasMobil || 'pikap';
-      return html + chipTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + '<ul class="daftar belanja">' + N.mobil.filter(function (x) { return x.kelas === km2; }).map(function (x) {
+      var km2 = app.kelasMobil || 'pikap', thnC = KAL.tgl(S.hari).y;
+      var listMobil = N.mobil.filter(function (x) { return x.kelas === km2 && (x.tahun || 2023) <= thnC; });
+      return html + chipTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + '<ul class="daftar belanja">' + listMobil.map(function (x) {
         var pnpM = x.bentuk === 'pikap' ? 0 : Math.max(0, (x.kursi || (N.bisnisMobil && N.bisnisMobil.kapasitas[x.bentuk]) || 5) - 1);
         var infoTangki = x.bbm === 'listrik'
           ? ('Listrik EV · Baterai <b>' + x.tangki + ' kWh</b> (~' + Math.round(x.kml * x.tangki) + ' km/cas)')
           : ('±' + x.kml + ' km/l · ' + N.bbm.nama[x.bbm] + ' · <b>Tangki ' + x.tangki + ' L</b> (~' + Math.round(x.kml * x.tangki) + ' km)');
         return '<li><span><b>' + esc(x.nama) + '</b><small>' + infoTangki + (pnpM > 0 ? ' · <b>' + pnpM + ' pnp</b>' : '') + ' · ' + esc(x.kelebihan) + '</small><small class="harga">' + rupiah(x.harga) + '</small></span>' +
           '<span class="tombol-tegak"><button type="button" class="chip-tombol" data-aksi="tunaiMobil:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiMobilKk:' + x.id + '">Kartu kredit</button><button type="button" class="chip-tombol pilih" data-aksi="kreditMobilPilih:' + x.id + '">Kredit</button></span></li>';
-      }).join('') + '</ul><p class="catatan">Harga OTR Jabodetabek 2026. Beli lewat <b>Kartu kredit</b> langsung LUNAS di dealer (tanpa leasing, tagihan hanya di Kartu Kredit). Beli lewat <b>Kredit</b> memakai cicilan leasing bulanan.</p>';
+      }).join('') + '</ul><p class="catatan">Harga OTR tahun ' + thnC + '. Model rilisan tahun berikutnya otomatis muncul saat tahun berganti. Beli lewat <b>Kartu kredit</b> langsung LUNAS di dealer; <b>Kredit</b> memakai cicilan leasing bulanan.</p>';
     }
     return html + '<ul class="daftar belanja">' + S.pasarBekas.unit.map(function (u, i) {
       var b = N.motorBekas.filter(function (x) { return x.id === u.id; })[0];
@@ -1234,7 +1247,7 @@
       return '<li><span><b>Kavling ' + l + ' m²</b><small>Sertifikat SHM, pinggir kota. Ditambah BPHTB dan notaris</small><small class="harga">' + rupiah(PROPERTI.hargaTanah(S, l)) + '</small></span><span><button type="button" class="chip-tombol pilih" data-aksi="beliTanah:' + l + '">Beli</button></span></li>';
     }).join('') + S.properti.tanah.map(function (t, i) {
       return '<li><span><b>Tanahmu ' + t.luas + ' m²</b><small>Dibeli ' + rupiah(t.hargaBeli) + ' · nilai sekarang ' + rupiah(PROPERTI.nilaiTanah(S, t)) + '</small></span><span><button type="button" class="chip-tombol" data-aksi="jualTanah:' + i + '">Jual</button></span></li>';
-    }).join('') + '</ul><p class="catatan">Harga rumah subsidi dan bunga KPR mengikuti aturan 2026; harga rumah komersial, mewah, dan tanah adalah perkiraan dari iklan. Nilai tanah naik sekitar ' + Math.round(P.kenaikanTanah * 100) + '% setahun. Jual rumah atau tanah kena PPh ' + (P.pphJual * 100).toString().replace('.', ',') + '%.</p>';
+    }).join('') + '</ul><p class="catatan">Harga rumah subsidi dan bunga KPR mengikuti ketentuan tahun ' + KAL.tgl(S.hari).y + '; harga rumah komersial, mewah, dan tanah mengikuti pasaran kota. Nilai tanah naik sekitar ' + Math.round(P.kenaikanTanah * 100) + '% setahun. Jual rumah atau tanah kena PPh ' + (P.pphJual * 100).toString().replace('.', ',') + '%.</p>';
     return html;
   }
   function layarKredit() {
@@ -1471,8 +1484,13 @@
       return html;
     }
     if (tab === 'kaset') {
+      var thnGm = KAL.tgl(S.hari).y;
       html += chipTab('gameKonsolFilter', [['semua', 'Semua'], ['ps1', 'PS1'], ['ps2', 'PS2'], ['ps3', 'PS3'], ['ps4', 'PS4'], ['ps5', 'PS5']], filterK);
-      var daftarG = (N.gameKonsol || []).filter(function (g) { return filterK === 'semua' || g.konsol === filterK; });
+      var daftarG = (N.gameKonsol || []).filter(function (g) {
+        if (filterK !== 'semua' && g.konsol !== filterK) return false;
+        var milikG = !!(S.game && S.game.kaset && S.game.kaset[g.id]);
+        return milikG || (g.tahun || 2023) <= thnGm;
+      });
       html += '<ul class="daftar belanja">' + daftarG.map(function (g) {
         var milik = S.game && S.game.kaset && S.game.kaset[g.id];
         var bisa = DIRI.bisaMainGame(S, g);
@@ -1484,7 +1502,7 @@
           '<small class="harga">' + rupiah(g.harga) + '</small></span>' +
           '<span class="tombol-tegak">' + (milik ? '<button type="button" class="chip-tombol" data-aksi="jualGame:' + g.id + '">Jual ' + rupiah(hJual) + '</button>' :
             '<button type="button" class="chip-tombol pilih" data-aksi="beliGame:' + g.id + '">Rekening</button><button type="button" class="chip-tombol" data-aksi="beliGameKk:' + g.id + '">Kartu kredit</button>') + '</span></li>';
-      }).join('') + '</ul><p class="catatan">Semua kaset & Blu-ray adalah rilisan fisik original. PS2 bisa memutar CD original PS1, dan PS5 bisa memainkan game PS4.</p>';
+      }).join('') + '</ul><p class="catatan">Semua kaset & Blu-ray adalah rilisan fisik original hingga tahun ' + thnGm + ' (judul rilisan tahun berikutnya muncul otomatis saat tahun berganti). PS2 bisa memutar CD original PS1, dan PS5 bisa memainkan game PS4.</p>';
       return html;
     }
     var kIds = Object.keys((S.game && S.game.konsol) || {}), gIds = Object.keys((S.game && S.game.kaset) || {});
@@ -1694,6 +1712,9 @@
       var listG = N.daftarGadget.filter(function (g) {
         if (tab === 'hp' && g.jenis !== 'hp') return false;
         if (tab === 'tablap' && g.jenis === 'hp') return false;
+        var rilisG = +(g.tahunRilis || g.tahun || 2023);
+        var sudahPunya = !!(S.gadget && S.gadget[g.id]);
+        if (!sudahPunya && rilisG > thnKini) return false;
         if (tab === 'hp' && merekFilter === 'jumbo') return (g.mah || 0) >= 6000;
         if (tab === 'hp' && merekFilter !== 'semua' && g.merek !== merekFilter) return false;
         return true;
@@ -1705,13 +1726,13 @@
         return '<li><span><b>[' + esc(g.merek) + '] ' + esc(g.nama) + ' (' + rilis + ')</b>' +
           '<small>RAM <b>' + g.ram + ' GB</b> · Storage <b>' + g.storage + ' GB</b> · Baterai <b>' + g.mah + ' mAh</b> · Charger <b>' + g.watt + 'W</b></small>' +
           '<small>' + esc(g.ket) + (g.jenis === 'hp' ? ' · Kamera ×' + g.kamera.toFixed(2).replace('.', ',') : '') + (g.sewaHarian ? ' · Bisa disewa ' + rupiah(g.sewaHarian) + '/hr' : '') + '</small>' +
-          '<small class="harga">' + rupiah(g.harga) + (rilis > thnKini ? ' · Seri ' + rilis : '') + (milik ? ' · nilai jual ' + rupiah(hJual) : '') + '</small></span>' +
+          '<small class="harga">' + rupiah(g.harga) + (milik ? ' · nilai jual ' + rupiah(hJual) : '') + '</small></span>' +
           '<span class="tombol-tegak">' + (milik ?
             (g.jenis === 'hp' && !dipakai ? '<button type="button" class="chip-tombol pilih" data-aksi="pakaiHp:' + g.id + '">Pakai HP ini</button>' : dipakai ? '<small><b>Sedang dipakai ✓</b></small>' : '') +
             '<button type="button" class="chip-tombol" data-aksi="jualGadget:' + g.id + '">Jual ' + rupiah(hJual) + '</button>' :
             '<button type="button" class="chip-tombol pilih" data-aksi="beliGadget:' + g.id + '-bank">Rekening</button><button type="button" class="chip-tombol" data-aksi="beliGadget:' + g.id + '-dompet">Dompet</button><button type="button" class="chip-tombol" data-aksi="beliGadget:' + g.id + '-kk">Kartu kredit</button>') +
           '</span></li>';
-      }).join('') + '</ul><p class="catatan">Spesifikasi baterai (mAh), kecepatan charger (Watt), RAM, storage, dan harga sesuai seri asli. Charger Watt besar mengisi penuh baterai jauh lebih cepat!</p>';
+      }).join('') + '</ul><p class="catatan">Katalog tahun ' + thnKini + ': hanya menampilkan seri yang sudah rilis sampai ' + thnKini + '. Seri tahun berikutnya otomatis muncul saat tahun game berganti! Spesifikasi baterai (mAh) & charger (Watt) sesuai seri asli.</p>';
       return html;
     }
     /* tab === 'apk' */
@@ -3026,9 +3047,10 @@
       ? (S.teman || []).filter(function (x) { return x.id === targetId; })[0]
       : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
     if (!target) return toast('Penerima tidak ditemukan.', 2000);
-    var balikApp = targetJenis === 'teman' ? 'teman' : 'keluarga';
-    bukaLembar('hadiah', kepala('🎁 Belikan / Kredit untuk ' + target.nama, 'Pilih HP, Motor, atau Rumah (Tunai atau Kredit)', '<button type="button" class="panah" data-app="' + balikApp + '" aria-label="Kembali">‹</button>') +
-      '<ul class="daftar belanja">' + (DIRI.KATALOG_HADIAH || []).map(function (it) {
+    var balikApp = targetJenis === 'teman' ? 'teman' : 'keluarga', thnHad = KAL.tgl(S.hari).y;
+    var listHad = (DIRI.KATALOG_HADIAH || []).filter(function (it) { return (it.tahun || 2023) <= thnHad; });
+    bukaLembar('hadiah', kepala('🎁 Belikan / Kredit untuk ' + target.nama, 'Pilih HP, Motor, atau Rumah (Katalog ' + thnHad + ')', '<button type="button" class="panah" data-app="' + balikApp + '" aria-label="Kembali">‹</button>') +
+      '<ul class="daftar belanja">' + listHad.map(function (it) {
         var dpRp = Math.round(it.harga * it.dp / 10000) * 10000;
         var pokok = it.harga - dpRp;
         var angs = Math.round((pokok * (1 + 0.008 * it.tenor) / it.tenor) / 1000) * 1000;
@@ -3089,16 +3111,38 @@
     toast('Offline dari ' + nmOff + '. Hari ini ' + S.ojek.hariIni.trip + ' order, ' + rupiah(S.ojek.hariIni.bersih) + '.', 2600);
   }
   var NAMA_JENIS = { penumpang: 'penumpang', barang: 'paket', makanan: 'makanan' };
-  /* baris percepatan (gigi) untuk kendaraan sehari-hari: ojek, pulang, berangkat */
+  /* baris percepatan (gigi) untuk kendaraan sehari-hari: normal 1–4 realistis, Level 5 terkunci 🔒 khusus Mode VVIP */
   var seretGigi = false;
+  function bukaPopupVvip() {
+    var aktif = TRAVEL.vvipAktif(S), pernah = !!(S.vvip && S.vvip.pernahBeli), biaya = TRAVEL.VVIP_HARGA || 50000000;
+    bukaLembar('vvip',
+      kepala(aktif ? '🔓 Mode VVIP Aktif' : '🔒 Gembok Mode VVIP (Level 5)', 'Kecepatan Top Speed Kendaraan') +
+      '<div class="saldo-ringkas" style="background:' + (aktif ? '#1f8a80' : '#4a3a7a') + '"><div><small>Status Mode VVIP</small><b>' + (aktif ? 'TERBUKA 🔓' : 'TERKUNCI 🔒') + '</b></div>' +
+      '<div><small>Biaya Buka Gembok</small><b>' + (pernah ? 'Sudah Dibeli ✓' : rupiah(biaya)) + '</b></div></div>' +
+      '<ul class="daftar angka">' +
+      baris('Mode Normal (Gratis)', 'Level 1 – 4 · Kecepatan realistis sesuai kondisi jalan (tol/mulus/rusak/hujan)') +
+      baris('Mode VVIP (Berbayar)', 'Membuka gembok 🔒 Level 5 (Top Speed penuh mobil & motor)') +
+      '</ul>' +
+      '<div class="chip-baris" style="margin-top:10px">' +
+      (aktif
+        ? '<button type="button" class="chip-tombol" data-vvip="kunci">🔒 Kunci Kembali ke Normal (Lv 1–4)</button>'
+        : '<button type="button" class="aksi" data-vvip="buka">' + (pernah ? '🔓 Buka Kembali Mode VVIP' : '🔓 Buka Gembok VVIP (' + rupiah(biaya) + ')') + '</button>') +
+      '</div><p class="catatan">Tanpa Mode VVIP, batas kecepatan maksimal adalah Level 4 dengan perhitungan kecepatan asli sesuai kondisi jalan & cuaca. Mode VVIP bisa dikunci atau dibuka kembali kapan saja di Pengaturan.</p>');
+  }
   function labelGigi(jenis, id) {
+    var vvip = TRAVEL.vvipAktif(S);
     var gi = RUTE.gigiInfo(S, jenis === 'mobil' ? 'mobil' : 'motor', id);
-    if (jenis === 'mobil' && gi.id === 5 && S.travel && S.travel.aktif) return 'Level 5 (MAKS) · ' + gi.hi + ' km/j';
+    if (gi.id === 5 && !vvip) return '🔒 Level 5 (VVIP Terkunci)';
+    if (jenis === 'mobil' && gi.id === 5 && S.travel && S.travel.aktif) return '🔓 Lv 5 VVIP · ' + gi.hi + ' km/j';
+    if (gi.id === 5) return '🔓 Lv 5 VVIP · ' + gi.lo + '–' + gi.hi + ' km/j';
     return 'Level ' + gi.nama + ' · ' + gi.lo + '–' + gi.hi + ' km/j';
   }
   function barisGigi(jenis) {
-    var gi = RUTE.gigiInfo(S, jenis);
-    return '<div class="gigi-slider"><span id="gigi-label">' + labelGigi(jenis, gi.id) + '</span><input type="range" min="1" max="5" step="1" value="' + gi.id + '" data-gigi="ojek:' + jenis + '" aria-label="Level kecepatan"></div>';
+    var vvip = TRAVEL.vvipAktif(S), gi = RUTE.gigiInfo(S, jenis);
+    var val = vvip ? gi.id : Math.min(4, gi.id);
+    return '<div class="gigi-slider"><span id="gigi-label">' + labelGigi(jenis, val) + '</span>' +
+      '<input type="range" min="1" max="5" step="1" value="' + val + '" data-gigi="ojek:' + jenis + '" aria-label="Level kecepatan">' +
+      '<button type="button" class="chip-tombol" style="padding:2px 7px;font-size:11px;flex-shrink:0" data-vvip="popup">' + (vvip ? '🔓 VVIP' : '🔒 Lv5') + '</button></div>';
   }
   function jenisKendaraanJalan() {
     if (S.ojek && S.ojek.online) return S.ojek.mode === 'mobil' ? 'mobil' : 'motor';
@@ -3108,7 +3152,7 @@
   }
   function panelOjek(paksa) {
     var o = S.ojek, f = OJEK.fase(S), x, jnK = o.mode === 'mobil' ? 'mobil' : 'motor';
-    var k = (S.gigiJalan || 2) + '|' + jnK + '|' + (o.mult || 1) + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
+    var k = (S.gigiJalan || 2) + '|' + (TRAVEL.vvipAktif(S) ? 'V' : 'N') + '|' + jnK + '|' + (o.mult || 1) + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
     if (seretGigi || (!paksa && k === panelKunci)) return; panelKunci = k;
     var el = $('ojek-panel'), html = '';
     if (!o.online) { el.innerHTML = ''; return; }
@@ -3131,6 +3175,7 @@
   function aksiOjek(nama) {
     if (nama.indexOf('gigi:') === 0) {
       var gn = Math.max(1, Math.min(5, +nama.split(':')[1]));
+      if (gn === 5 && !TRAVEL.vvipAktif(S)) { bukaPopupVvip(); panelOjek(true); return; }
       if (gn === 5 && !RUTE.bolehKhususJalan(S)) { toast('Hujan deras: kecepatan dibatasi sampai level 4.', 2200); panelOjek(true); return; }
       S.gigiJalan = gn; simpan(); panelOjek(true); return;
     }
@@ -3219,7 +3264,10 @@
       html = '<div class="ojek-kartu travel"><b>Menyeberang ' + esc(RUTE.nama(f.dari)) + ' → ' + esc(RUTE.nama(f.ke)) + ' · <span id="trv-kmh"></span>' + (S.hiburan && DIRI.HIBURAN[S.hiburan] ? ' · 📺 ' + DIRI.HIBURAN[S.hiburan].nama : '') + '</b><small id="trv-info"></small><div class="meteran"><i id="trv-maju"></i></div>' +
         (travelMini ? '' : '<small>Kamu dan penumpang istirahat di kapal, badan pulih pelan.</small>' + chipHiburan()) + '<div class="ojek-tombol">' + tMini + '</div></div>';
     } else {
-      var gr = '<div class="gigi-slider"><span id="gigi-label">' + labelGigi('mobil', Math.min(5, T.gigi || 3)) + '</span><input type="range" min="1" max="5" step="1" value="' + Math.min(5, T.gigi || 3) + '" data-gigi="trv" aria-label="Level kecepatan"></div>';
+      var vvipT = TRAVEL.vvipAktif(S), valT = vvipT ? Math.min(5, T.gigi || 3) : Math.min(4, T.gigi || 3);
+      var gr = '<div class="gigi-slider"><span id="gigi-label">' + labelGigi('mobil', valT) + '</span>' +
+        '<input type="range" min="1" max="5" step="1" value="' + valT + '" data-gigi="trv" aria-label="Level kecepatan">' +
+        '<button type="button" class="chip-tombol" style="padding:2px 7px;font-size:11px;flex-shrink:0" data-vvip="popup">' + (vvipT ? '🔓 VVIP' : '🔒 Lv5') + '</button></div>';
       html = '<div class="ojek-bare"><div class="meteran"><i id="trv-maju"></i></div>' + gr + '<div class="ojek-tombol"><button type="button" class="chip-tombol" data-trv="henti">Berhenti / bensin / istirahat</button></div></div>';
     }
     el.innerHTML = html; if (f.mode !== 'kota') trvLive(f);
@@ -3333,7 +3381,7 @@
         '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-app="qriskaryawan">📲 Menu QRIS Karyawan (' + rupiah(totQrisSp) + ')</button><button type="button" class="chip-tombol" data-app="kastravel">💼 Kas Travel (' + rupiah(T.kas || 0) + ')</button></div>' +
         '<small style="display:block;margin-top:4px">🔧 Supir Travel otomatis merawat mobilnya (servis berkala, ganti ban, pajak tahunan) dan biaya bensin/tol/perawatan dipotong dari <b>Kas Travel</b>.</small></div>';
       if (T.supir && T.supir.length) {
-        html += '<h3 class="subjudul">Supir Travel Aktif (' + T.supir.length + '/3)</h3><ul class="daftar pesanan">' + T.supir.map(function (sp) {
+        html += '<h3 class="subjudul">Supir Travel Aktif (' + T.supir.length + '/' + (TRAVEL.MAKS_SUPIR || 10) + ')</h3><ul class="daftar pesanan">' + T.supir.map(function (sp) {
           var puas = TRAVEL.kepuasanSupir(S, sp), lblP = TRAVEL.labelPuasSupir(puas);
           var wrnP = puas >= 75 ? '#00a651' : puas >= 45 ? '#e0a916' : '#d9443a';
           var mSpInfo = TRAVEL.mobilUntukSupir ? TRAVEL.mobilUntukSupir(S, sp) : null;
@@ -3412,7 +3460,7 @@
     html += '<ul class="daftar angka">' + baris('Mobil', m ? esc(m.nama) + ' · ' + TRAVEL.kursi(S) + ' kursi penumpang' + esc(klsTrvTxt) : 'Belum punya mobil') + baris('Nilai dari penumpang', '★ ' + T.rating.toLocaleString('id-ID')) +
       baris('Saldo Kas Travel', rupiah(T.kas || 0)) +
       baris('Hari ini', T.hariIni.trip + ' trip · ' + rupiah(T.hariIni.bersih)) + baris('Total', T.total.trip + ' trip · ' + Math.round(T.total.km).toLocaleString('id-ID') + ' km · ' + rupiah(T.total.bersih)) + '</ul>' +
-      '<div class="chip-baris" style="margin:6px 0"><button type="button" class="chip-tombol" data-app="kastravel">💼 Kelola Kas Travel</button><button type="button" class="chip-tombol" data-app="qriskaryawan">📲 QRIS Karyawan</button></div>' +
+      '<div class="chip-baris" style="margin:6px 0"><button type="button" class="chip-tombol" data-app="kastravel">💼 Kelola Kas Travel</button><button type="button" class="chip-tombol" data-app="qriskaryawan">📲 QRIS Karyawan</button><button type="button" class="chip-tombol' + (TRAVEL.vvipAktif(S) ? ' pilih' : '') + '" data-vvip="popup">' + (TRAVEL.vvipAktif(S) ? '🔓 VVIP Lv 5 Aktif' : '🔒 VVIP Lv 5') + '</button></div>' +
       (T.aktif ? '<p class="catatan">Travel sedang berjalan. Tutup HP untuk melanjutkan.</p>' : e ? '<p class="racik-pesan salah">' + esc(e) + '</p>' :
         '<div style="margin:10px 0"><button type="button" class="aksi" data-aksi="mulaiTravel:1">Mulai travel dari ' + esc(kota) + '</button></div>');
     var daf = Object.keys(RUTE.kota).filter(function (id) { return id !== asal && cocokFilterWil(RUTE.kota[id], flt); }).map(function (id) { var j = RUTE.jalur(asal, id); return j ? { id: id, j: j } : null; }).filter(Boolean);
@@ -3862,9 +3910,25 @@
       else pindah('kos', true);
     };
     $('travel-panel').onclick = function (e) {
+      var v = e.target.closest('[data-vvip]'); if (v) return aksiVvip(v.dataset.vvip);
       var o = e.target.closest('[data-ojek]'); if (o) return aksiOjek(o.dataset.ojek);
       var b = e.target.closest('[data-trv]'); if (b) { var tv = b.dataset.trv.split(':'); aksiTravel(tv[0], tv.slice(1).join(':')); }
     };
+    function aksiVvip(cmd) {
+      if (cmd === 'popup') return bukaPopupVvip();
+      if (cmd === 'buka') {
+        var r = TRAVEL.bukaVvip(S, false);
+        if (r && r.ok) { toast(r.teks, 2800); simpan(); travelKunci = ''; panelTravel(true); panelOjek(true); perbaruiHUD(true); bukaPopupVvip(); }
+        else toast(r || 'Gagal membuka Mode VVIP.', 2600);
+        return;
+      }
+      if (cmd === 'kunci') {
+        var rk = TRAVEL.kunciVvip(S);
+        toast((rk && rk.teks) || 'Mode VVIP dikunci.', 2400);
+        simpan(); travelKunci = ''; panelTravel(true); panelOjek(true); perbaruiHUD(true);
+        if (lembar === 'atur') bukaAtur(); else bukaPopupVvip();
+      }
+    }
     function onSliderInput(e) {
       var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = true;
       var jn = s.dataset.gigi === 'trv' ? 'mobil' : (s.dataset.gigi.split(':')[1] === 'mobil' ? 'mobil' : 'motor'), lb = $('gigi-label'); if (lb) lb.textContent = labelGigi(jn, +s.value);
@@ -3872,14 +3936,24 @@
     function onSliderChange(e) {
       var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = false; var n = Math.max(1, Math.min(5, +s.value));
       if (s.dataset.gigi === 'trv') {
+        if (n === 5 && !TRAVEL.vvipAktif(S)) {
+          s.value = Math.min(4, S.travel.gigi || 3);
+          travelKunci = ''; panelTravel(true); bukaPopupVvip(); return;
+        }
         var r = TRAVEL.setGigi(S, n); if (r !== true) toast(r, 2200); travelKunci = ''; panelTravel(true); simpan();
-      } else aksiOjek('gigi:' + n);
+      } else {
+        if (n === 5 && !TRAVEL.vvipAktif(S)) s.value = Math.min(4, S.gigiJalan || 2);
+        aksiOjek('gigi:' + n);
+      }
     }
     $('ojek-panel').oninput = onSliderInput;
     $('ojek-panel').onchange = onSliderChange;
     $('travel-panel').oninput = onSliderInput;
     $('travel-panel').onchange = onSliderChange;
-    $('ojek-panel').onclick = function (e) { var b = e.target.closest('[data-ojek]'); if (b) aksiOjek(b.dataset.ojek); };
+    $('ojek-panel').onclick = function (e) {
+      var v = e.target.closest('[data-vvip]'); if (v) return aksiVvip(v.dataset.vvip);
+      var b = e.target.closest('[data-ojek]'); if (b) aksiOjek(b.dataset.ojek);
+    };
     if ($('popup-teman')) $('popup-teman').onclick = function () { this.hidden = true; this.classList.remove('muncul'); bukaHP('keluarga'); };
     $('kos-aksi').onclick = function (e) { var b = e.target.closest('[data-diri]'); if (b) { var dd = b.dataset.diri.split(':'); aksiDiri(dd[0], dd.slice(1).join(':')); } };
     if ($('kedai-aksi')) $('kedai-aksi').onclick = function (e) {
@@ -3976,6 +4050,7 @@
     $('lembar').onclick = function (e) {
       if (e.target === $('lembar') || e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
+      if ((b = e.target.closest('[data-vvip]'))) return aksiVvip(b.dataset.vvip);
       if ((b = e.target.closest('[data-trv]'))) { var tv = b.dataset.trv.split(':'); return aksiTravel(tv[0], tv.slice(1).join(':')); }
       if ((b = e.target.closest('[data-hud]'))) { var hu = b.dataset.hud.split(':'); return aksiHud(hu[0], hu.slice(1).join(':')); }
       if ((b = e.target.closest('[data-besok]'))) return besok();

@@ -5,7 +5,8 @@
   'use strict';
   var N = g.KK_NYATA, R = g.KK_RUTE;
   var CEPAT_JALAN = 8, CEPAT_TUNGGU = 1; /* waktu berjalan lebih cepat saat menyetir atau menunggu penumpang (setelan) */
-  var MULT_MIN = 0.6, MULT_MAKS = 1.6, JEMPUT_MAKS = 3;
+  var MULT_MIN = 0.6, MULT_MAKS = 1.6, JEMPUT_MAKS = 3, MAKS_SUPIR = 10;
+  var VVIP_HARGA = 50000000; /* mode VVIP berbayar untuk membuka gembok Kecepatan Level 5 (Top Speed) */
   var KAS_MIN = 50000000; /* batas minimum Kas Travel: auto top-up dari bank jika di bawah Rp50.000.000 */
   var JAM_RAMAI = [0.2, 0.1, 0.1, 0.2, 0.8, 1.4, 1.6, 1.4, 1.1, 1, 1, 1.1, 1.2, 1.2, 1.3, 1.5, 1.7, 1.5, 1.1, 0.8, 0.5, 0.4, 0.3, 0.2];
 
@@ -155,10 +156,21 @@
     return null;
   }
   function buatPelamarSupir(S) {
-    var namaCalon = ['Rudi Hartono', 'Slamet Riyadi', 'Hendra Wijaya', 'Agus Supriyanto', 'Bambang Kusuma', 'Dedi Setiawan', 'Wahyu Pratama', 'Joko Susilo'];
+    var namaCalon = [
+      'Rudi Hartono', 'Slamet Riyadi', 'Hendra Wijaya', 'Agus Supriyanto', 'Bambang Kusuma',
+      'Dedi Setiawan', 'Wahyu Pratama', 'Joko Susilo', 'Arif Budiman', 'Yusuf Maulana',
+      'Taufik Hidayat', 'Eko Prasetyo', 'Fajar Nugroho', 'Surya Saputra', 'Irfan Hakim',
+      'Teguh Santoso', 'Andri Kurniawan', 'Rizky Ramadhan'
+    ];
+    var sudah = {};
+    ((S && S.travel && S.travel.supir) || []).forEach(function (sp) { sudah[sp.nama] = true; });
+    var tersedia = namaCalon.filter(function (nm) { return !sudah[nm]; });
+    if (!tersedia.length) tersedia = namaCalon.slice();
     var hasil = [];
-    for (var i = 0; i < 4; i++) {
-      var nm = namaCalon[((S.hari || 0) + i * 2) % namaCalon.length];
+    var jml = Math.min(4, tersedia.length);
+    for (var i = 0; i < jml; i++) {
+      var nm = tersedia[((S.hari || 0) + i * 2) % tersedia.length];
+      if (hasil.some(function (x) { return x.nama === nm; })) nm = tersedia[(i + 1) % tersedia.length];
       hasil.push({
         id: 'sp-' + ((S.hari || 0) + 1) + '-' + i + '-' + Math.floor(Math.random() * 999),
         nama: nm,
@@ -193,7 +205,7 @@
     var T = siapkan(S);
     var listM = daftarMobilPenumpang(S), aktIdx = S.mobilAktif || 0;
     if (!listM.length) return 'Butuh mobil penumpang (MPV/SUV/Sedan/Hatchback) untuk mempekerjakan supir travel.';
-    if (T.supir.length >= 3) return 'Maksimal 3 supir travel yang bisa dipekerjakan.';
+    if (T.supir.length >= MAKS_SUPIR) return 'Maksimal ' + MAKS_SUPIR + ' supir travel yang bisa dipekerjakan.';
     var idx = -1;
     for (var i = 0; i < T.pelamar.length; i++) if (T.pelamar[i].id === pelamarId) { idx = i; break; }
     if (idx < 0) return 'Pelamar tidak ditemukan.';
@@ -446,29 +458,52 @@
   function gigiObj(n, S) { return R.gigiInfo ? R.gigiInfo(S, 'mobil', Math.max(1, Math.min(5, n))) : R.gigi[Math.max(1, Math.min(5, n)) - 1]; }
   function hujan(S) { return !!(g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)); }
   function malam(S) { var m = S.menit % 1440; return m >= 1320 || m < 300; }
-  function bolehKhusus(S) { return !!S.mobil; }
+  function vvipAktif(S) { return !!(S && S.vvip && S.vvip.aktif); }
+  function bukaVvip(S, paksaGratis) {
+    S.vvip = S.vvip || { aktif: false };
+    if (S.vvip.aktif) return { ok: true, teks: 'Mode VVIP sudah aktif — Kecepatan Level 5 terbuka.' };
+    if (!paksaGratis && !S.vvip.pernahBeli) {
+      if (!S.bank || S.bank.saldo < VVIP_HARGA) return 'Saldo rekening bank belum cukup untuk membuka Mode VVIP (' + rp(VVIP_HARGA) + ').';
+      S.bank.saldo -= VVIP_HARGA;
+      M().catatBank(S, 'Buka Mode VVIP (Gembok Kecepatan Lv 5)', -VVIP_HARGA);
+      S.vvip.pernahBeli = true;
+    }
+    S.vvip.aktif = true;
+    S.vvip.dibukaHari = S.hari || 0;
+    return { ok: true, teks: '🔓 Gembok Mode VVIP terbuka! Kecepatan Level 5 (Top Speed) kini bisa dipakai.' };
+  }
+  function kunciVvip(S) {
+    S.vvip = S.vvip || { aktif: false };
+    S.vvip.aktif = false;
+    if (S.travel && S.travel.gigi > 4) S.travel.gigi = 4;
+    if (S.gigiJalan && S.gigiJalan > 4) S.gigiJalan = 4;
+    return { ok: true, teks: '🔒 Mode VVIP dikunci kembali. Kecepatan kembali ke mode normal (maks Level 4).' };
+  }
+  function bolehKhusus(S) { return !!S.mobil && vvipAktif(S); }
 
   /* ---------- uang (semua operasional Travel lewat Kas Travel, auto top-up dari bank < 50 juta) ---------- */
   function dana(S) { return danaKas(S) + Math.max(0, (S.uang && S.uang.dompet) || 0); }
   function bayar(S, jml, ket) { return bayarKasTravel(S, jml, ket, S.hari, true); }
 
-  /* ---------- perhitungan kecepatan per ruas (Level 5 membuka kecepatan maksimal penuh mobil di mode Travel!) ---------- */
+  /* ---------- perhitungan kecepatan per ruas (Normal Lv 1–4 realistis sesuai kondisi jalan; Lv 5 Top Speed khusus VVIP 🔓) ---------- */
   function kecepatanRuas(S, r, levelGigi, pakaiVariasi, kenaHujan) {
     var n = Math.max(1, Math.min(5, levelGigi || 3)), ket = '', m = S.mobil;
+    var vvip = vvipAktif(S);
+    if (n >= 5 && !vvip) n = 4; /* mode normal maksimal Level 4 dengan perhitungan kecepatan & kondisi jalan realistis */
     var isHujan = kenaHujan != null ? !!kenaHujan : hujan(S);
     var vmax = R.vmaxKendaraan ? R.vmaxKendaraan(S, 'mobil') : (R.vmax[m ? m.bentuk : 'mpv'] || 170);
     var kdJ = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 0.76, vMaxJalan: 92, nama: 'Aspal Mulus' };
     var kId = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
     var v, batasJalan;
-    if (n === 5) {
-      /* Mode Travel Level 5: mobil dapat menggunakan kecepatan maksimal penuh (vmax + bonus upgrade mesin) */
+    if (n === 5 && vvip) {
+      /* Mode VVIP terbuka (Level 5): mobil bisa memakai kecepatan maksimal penuh (vmax + upgrade mesin) */
       var vTop = pakaiVariasi ? vmax * (0.96 + 0.04 * Math.sin(S.menit / 5)) : vmax;
       var fTop = kId === 'tol' || kId === 'mulus' ? 1 : kId === 'bergelombang' ? 0.76 : kId === 'rusak' ? 0.56 : 0.42;
       v = vTop * fTop * (isHujan ? (kId === 'tanah' ? 0.75 : 0.88) : 1);
       batasJalan = Math.round(vmax * fTop);
-      if (isHujan) ket = 'Hujan: kecepatan tinggi ' + Math.round(v) + ' km/j.';
-      else if (kId === 'tol' || kId === 'mulus') ket = 'Top Speed Maksimal (' + Math.round(vmax) + ' km/j)!';
-      else ket = kdJ.nama + ' (maks ' + Math.round(v) + ' km/j)';
+      if (isHujan) ket = 'VVIP Hujan: ' + Math.round(v) + ' km/j.';
+      else if (kId === 'tol' || kId === 'mulus') ket = 'VVIP Top Speed (' + Math.round(vmax) + ' km/j)!';
+      else ket = 'VVIP · ' + kdJ.nama + ' (maks ' + Math.round(v) + ' km/j)';
     } else {
       var gi = gigiObj(n, S);
       v = pakaiVariasi
@@ -642,6 +677,7 @@
   }
   function setGigi(S, n) {
     var T = siapkan(S); n = +n; if (n < 1 || n > 5) return 'Level kecepatan 1–5.';
+    if (n === 5 && !vvipAktif(S)) return '🔒 Level 5 terkunci (Mode VVIP). Buka gembok VVIP dulu untuk memakai Top Speed!';
     T.gigi = n; return true;
   }
 
@@ -845,5 +881,6 @@
     setGigi: setGigi, kecepatan: kecepatan, kecepatanRuas: kecepatanRuas, jalan: jalan, istirahat: istirahat, isiBensin: isiBensin, fase: fase, cepatWaktu: cepatWaktu, estimasi: estimasi, rencana: rencana, laju: laju, bolehKhusus: bolehKhusus,
     KAS_MIN: KAS_MIN, pastikanKasTravel: pastikanKasTravel, danaKas: danaKas, bayarKasTravel: bayarKasTravel, isiKasTravel: isiKasTravel, tarikKasTravel: tarikKasTravel, toggleAutoKasTravel: toggleAutoKasTravel,
     kepuasanSupir: kepuasanSupir, labelPuasSupir: labelPuasSupir, daftarMobilPenumpang: daftarMobilPenumpang, sinkronMobilSupir: sinkronMobilSupir, mobilUntukSupir: mobilUntukSupir, rekrutSupir: rekrutSupir, aturSupir: aturSupir, pecatSupir: pecatSupir, totalQrisSupir: totalQrisSupir, tarikQrisSupir: tarikQrisSupir, ruteUntukSupir: ruteUntukSupir, gantiHari: gantiHari,
-    dana: dana, CEPAT_JALAN: CEPAT_JALAN, MULT_MIN: MULT_MIN, MULT_MAKS: MULT_MAKS, JEMPUT_MAKS: JEMPUT_MAKS };
+    dana: dana, CEPAT_JALAN: CEPAT_JALAN, MULT_MIN: MULT_MIN, MULT_MAKS: MULT_MAKS, JEMPUT_MAKS: JEMPUT_MAKS, MAKS_SUPIR: MAKS_SUPIR,
+    VVIP_HARGA: VVIP_HARGA, vvipAktif: vvipAktif, bukaVvip: bukaVvip, kunciVvip: kunciVvip };
 })(window);

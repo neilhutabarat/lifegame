@@ -1315,18 +1315,164 @@
   }
   var WARNA_MOBIL = { granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', calya: '#b8bcc0', agya: '#d9443a', avanza: '#e8e4da', rush: '#2b2f36', veloz: '#8a2a2a', innova: '#c8ccd0', zenix: '#d8d4cc', fortuner: '#2b2f36', camry: '#3a3f46', gr86: '#d9443a', alphard: '#f3f1ea', landcruiser: '#2b2f36' };
   var FALLBACK_MOBIL = { mpv: 'avanza', suv: 'fortuner', van: 'alphard', hatch: 'brio', sedan: 'civicrs', sport: 'gr86', pikap: 'granmax' };
-  function gambarMobil(x, y, bentuk, id, kiri, roda) {
+  /* koordinat roda terukur dari 9 sprite PNG mobil: [rearX, frontX, wheelY, tireRadiusH] (rasio 0..1 dari lebar & tinggi sprite) */
+  var RODA_MOBIL = {
+    alphard:     [0.205, 0.817, 0.818, 0.160],
+    avanza:      [0.195, 0.824, 0.808, 0.168],
+    brio:        [0.155, 0.802, 0.810, 0.162],
+    civicrs:     [0.200, 0.807, 0.774, 0.194],
+    fortuner:    [0.210, 0.800, 0.804, 0.172],
+    gr86:        [0.195, 0.800, 0.750, 0.210],
+    granmax:     [0.245, 0.871, 0.838, 0.138],
+    innova:      [0.205, 0.805, 0.806, 0.166],
+    landcruiser: [0.229, 0.817, 0.802, 0.172]
+  };
+  function gambarRodaPutar(wx, wy, rTire, sudut, gerak) {
+    var rRim = rTire * 0.64;
+    cx.save();
+    cx.translate(wx, wy);
+    /* ban karet gelap (tetap menutup pelek statis pada PNG) */
+    cx.fillStyle = '#171a1f';
+    cx.beginPath(); cx.arc(0, 0, rTire, 0, Math.PI * 2); cx.fill();
+    /* dinding ban & alur putar halus */
+    cx.strokeStyle = '#2d333c';
+    cx.lineWidth = Math.max(1.2, rTire * 0.14);
+    cx.beginPath(); cx.arc(0, 0, rTire * 0.82, 0, Math.PI * 2); cx.stroke();
+    cx.save();
+    cx.rotate(sudut);
+    cx.strokeStyle = 'rgba(130,142,158,.24)';
+    cx.lineWidth = Math.max(0.9, rTire * 0.08);
+    for (var tr = 0; tr < 6; tr++) {
+      var aTr = tr * (Math.PI / 3);
+      cx.beginPath(); cx.arc(0, 0, rTire * 0.84, aTr, aTr + 0.22); cx.stroke();
+    }
+    cx.restore();
+    /* latar cakram rem di balik velg */
+    var gDisc = cx.createRadialGradient(0, 0, rRim * 0.15, 0, 0, rRim);
+    gDisc.addColorStop(0, '#303640');
+    gDisc.addColorStop(0.65, '#464e5a');
+    gDisc.addColorStop(1, '#1a1e24');
+    cx.fillStyle = gDisc;
+    cx.beginPath(); cx.arc(0, 0, rRim, 0, Math.PI * 2); cx.fill();
+    /* kaliper rem statis (tidak ikut berputar, memberi efek realistis!) */
+    cx.fillStyle = '#a8342a';
+    cx.beginPath(); cx.arc(0, 0, rRim * 0.72, -2.55, -1.75); cx.arc(0, 0, rRim * 0.44, -1.75, -2.55, true); cx.closePath(); cx.fill();
+    /* ring bibir velg metalik */
+    cx.strokeStyle = '#c8d1da';
+    cx.lineWidth = Math.max(1.1, rRim * 0.14);
+    cx.beginPath(); cx.arc(0, 0, rRim * 0.94, 0, Math.PI * 2); cx.stroke();
+    /* palang 5-spoke velg alloy yang berputar halus */
+    cx.save();
+    cx.rotate(sudut);
+    for (var s = 0; s < 5; s++) {
+      var ang = s * (Math.PI * 2 / 5);
+      cx.save();
+      cx.rotate(ang);
+      cx.fillStyle = '#dfe6ee';
+      cx.beginPath();
+      cx.moveTo(-rRim * 0.13, -rRim * 0.22);
+      cx.lineTo(rRim * 0.13, -rRim * 0.22);
+      cx.lineTo(rRim * 0.08, -rRim * 0.90);
+      cx.lineTo(-rRim * 0.08, -rRim * 0.90);
+      cx.closePath();
+      cx.fill();
+      cx.fillStyle = 'rgba(95,108,122,.55)';
+      cx.fillRect(0, -rRim * 0.88, rRim * 0.07, rRim * 0.65);
+      cx.restore();
+    }
+    /* efek motion-blur melingkar saat mobil melaju kencang */
+    if (gerak) {
+      cx.strokeStyle = 'rgba(230,238,246,.32)';
+      cx.lineWidth = Math.max(1.2, rRim * 0.18);
+      for (var mb = 0; mb < 3; mb++) {
+        var aM = mb * (Math.PI * 2 / 3);
+        cx.beginPath(); cx.arc(0, 0, rRim * 0.58, aM, aM + 0.75); cx.stroke();
+      }
+    }
+    /* dop tengah velg */
+    cx.fillStyle = '#232830';
+    cx.beginPath(); cx.arc(0, 0, rRim * 0.25, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = '#cfd7df';
+    cx.beginPath(); cx.arc(0, 0, rRim * 0.11, 0, Math.PI * 2); cx.fill();
+    cx.restore();
+    cx.restore();
+  }
+  function gambarMobil(x, y, bentuk, id, kiri, roda, gp) {
+    var spriteKey = id;
     var imC = muatLazily(mobilImgs, id, 'img/mobil-' + id + '.png');
     if (!imC) {
       var fbId = (id === 'zenix') ? 'innova' : (FALLBACK_MOBIL[bentuk] || 'avanza');
-      if (fbId && fbId !== id) imC = muatLazily(mobilImgs, fbId, 'img/mobil-' + fbId + '.png');
+      if (fbId && fbId !== id) {
+        imC = muatLazily(mobilImgs, fbId, 'img/mobil-' + fbId + '.png');
+        if (imC) spriteKey = fbId;
+      }
     }
+    var malamF = gp != null ? Math.max(0, Math.min(1, gp)) : 0;
     if (imC) {
       var th = (bentuk === 'sport' || bentuk === 'sedan') ? 46 : (bentuk === 'hatch') ? 50 : (bentuk === 'van' || bentuk === 'pikap') ? 60 : 56;
       var tw = th * (imC.naturalWidth / imC.naturalHeight);
+      var rm = RODA_MOBIL[spriteKey] || RODA_MOBIL.avanza;
+      var gerak = !!(roda && Math.abs(roda) > 0.001);
+      var bob = gerak ? Math.sin(roda * 0.7) * 0.85 : 0;
+      var wx1 = -tw / 2 + tw * rm[0];
+      var wx2 = -tw / 2 + tw * rm[1];
+      var wy = -th + 4 + th * rm[2];
+      var rTire = th * rm[3];
       cx.save(); cx.translate(x, y); if (kiri) cx.scale(-1, 1);
-      cx.fillStyle = 'rgba(0,0,0,.32)'; cx.beginPath(); cx.ellipse(0, 2, Math.max(46, tw * 0.44), 5.5, 0, 0, Math.PI * 2); cx.fill();
-      cx.drawImage(imC, -tw / 2, -th + 4, tw, th);
+      /* 1. Bayangan kontak 2 lapis menempel kuat di aspal (tidak ikut memantul naik bersama bodi) */
+      var gSh = cx.createRadialGradient(0, 1, tw * 0.08, 0, 1, tw * 0.52);
+      gSh.addColorStop(0, 'rgba(0,0,0,.48)');
+      gSh.addColorStop(0.68, 'rgba(0,0,0,.24)');
+      gSh.addColorStop(1, 'rgba(0,0,0,0)');
+      cx.fillStyle = gSh;
+      cx.beginPath(); cx.ellipse(0, 1.5, Math.max(46, tw * 0.50), 7.5, 0, 0, Math.PI * 2); cx.fill();
+      /* bayangan tapak ban kiri & kanan menempel ketat ke aspal */
+      cx.fillStyle = 'rgba(0,0,0,.65)';
+      cx.beginPath(); cx.ellipse(wx1, 1.5, rTire * 1.12, 3.0, 0, 0, Math.PI * 2); cx.fill();
+      cx.beginPath(); cx.ellipse(wx2, 1.5, rTire * 1.12, 3.0, 0, 0, Math.PI * 2); cx.fill();
+      /* 2. Bodi mobil dengan suspensi halus terpisah dari permukaan jalan */
+      cx.drawImage(imC, -tw / 2, -th + 4 + bob, tw, th);
+      /* 3. Roda & velg alloy berputar presisi di posisi lubang spakbor (saat jalan maupun parkir) */
+      if (gerak) {
+        gambarRodaPutar(wx1, wy + bob * 0.25, rTire, roda, true);
+        gambarRodaPutar(wx2, wy + bob * 0.25, rTire, roda, true);
+      }
+      /* 4. Integrasi pencahayaan malam: lampu depan LED, lampu rem belakang merah, & bias atmosfer malam */
+      if (malamF > 0.16) {
+        var frontX = tw * 0.45, rearX = -tw * 0.45, lampY = -th * 0.36 + bob;
+        if (gerak) {
+          /* sorot lampu utama ke depan aspal saat mobil melaju */
+          var gHead = cx.createLinearGradient(frontX, lampY, frontX + 68, lampY + 14);
+          gHead.addColorStop(0, 'rgba(255,248,215,' + (malamF * 0.42).toFixed(3) + ')');
+          gHead.addColorStop(1, 'rgba(255,248,215,0)');
+          cx.fillStyle = gHead;
+          cx.beginPath();
+          cx.moveTo(frontX, lampY - 3);
+          cx.lineTo(frontX + 70, lampY - 12);
+          cx.lineTo(frontX + 70, lampY + 22);
+          cx.lineTo(frontX, lampY + 4);
+          cx.closePath();
+          cx.fill();
+          /* titik pijar lampu depan LED */
+          var gHl = cx.createRadialGradient(frontX, lampY, 1, frontX, lampY, 11);
+          gHl.addColorStop(0, 'rgba(255,253,235,' + (malamF * 0.92).toFixed(3) + ')');
+          gHl.addColorStop(1, 'rgba(255,245,195,0)');
+          cx.fillStyle = gHl;
+          cx.beginPath(); cx.arc(frontX, lampY, 11, 0, Math.PI * 2); cx.fill();
+          /* titik pijar lampu belakang LED merah */
+          var gTl = cx.createRadialGradient(rearX, lampY, 1, rearX, lampY, 11);
+          gTl.addColorStop(0, 'rgba(255,48,38,' + (malamF * 0.85).toFixed(3) + ')');
+          gTl.addColorStop(1, 'rgba(255,30,25,0)');
+          cx.fillStyle = gTl;
+          cx.beginPath(); cx.arc(rearX, lampY, 11, 0, Math.PI * 2); cx.fill();
+          /* refleksi merah tipis di aspal belakang */
+          var gTr = cx.createRadialGradient(rearX - 6, 2, 1, rearX - 6, 2, 18);
+          gTr.addColorStop(0, 'rgba(255,40,30,' + (malamF * 0.24).toFixed(3) + ')');
+          gTr.addColorStop(1, 'rgba(255,40,30,0)');
+          cx.fillStyle = gTr;
+          cx.beginPath(); cx.ellipse(rearX - 6, 2, 18, 4.5, 0, 0, Math.PI * 2); cx.fill();
+        }
+      }
       cx.restore();
       return;
     }
@@ -1382,11 +1528,11 @@
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
     /* kendaraan lain menyalip pelan */
     var sx = W + 80 - ((t * 0.03) % (W + 260));
-    gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t);
+    gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp);
     var antar = f.status === 'antar', goyang = Math.sin(t / 90) * 1.2;
     if (f.mode === 'mobil' && s.mobil) {
-      gambarMobil(W * 0.44, jalan + 76 + goyang, s.mobil.bentuk, s.mobil.id, false, t * 0.6);
-      pencahayaanLuar(m, t, jalan, W * 0.44 + 46, jalan + 54 + goyang);
+      gambarMobil(W * 0.44, jalan + 76, s.mobil.bentuk, s.mobil.id, false, t * 0.018, gp);
+      pencahayaanLuar(m, t, jalan, W * 0.44 + 46, jalan + 54);
     } else {
       gambarMotorKu(W * 0.42, jalan + 52 + goyang, s.motorId, { naik: true, jalan: true, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
       pencahayaanLuar(m, t, jalan, W * 0.42 + 28, jalan + 24 + goyang);
@@ -1400,8 +1546,8 @@
     var gp = gelap(m); if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     kotak(0, dasarRuko, W, jalan - dasarRuko, '#b9b2a6'); kotak(0, jalan, W, H - jalan, '#4a4d52');
     cx.fillStyle = '#e9e4d4'; for (var x1 = 8; x1 < W; x1 += 70) cx.fillRect(x1, jalan + 64, 34, 3);
-    var x = -90 + u * (W + 180), y = jalan + 90 + Math.sin(t / 80);
-    gambarMobil(x, y, 'pikap', s.pindah.pikap ? s.pindah.warna : 'granmax', false, t);
+    var x = -90 + u * (W + 180), y = jalan + 90;
+    gambarMobil(x, y, 'pikap', s.pindah.pikap ? s.pindah.warna : 'granmax', false, t * 0.014, gp);
     /* muatan di bak */
     kotakBulat(x - 56, y - 60, 60, 14, 5, '#f3f1ea'); kotak(x - 30, y - 74, 18, 14, '#c8a06a'); kotak(x - 50, y - 72, 16, 12, '#c8a06a'); kotakBulat(x - 10, y - 66, 18, 20, 3, '#9aa3a6');
     cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
@@ -1409,7 +1555,7 @@
   }
 
   /* ---------- Travel antarkota: pemandangan tiap kota, jalan raya, kapal ---------- */
-  var tJarak = 0;
+  var tJarak = 0, tRoda = 0;
   function poli(p, w) { cx.fillStyle = w; cx.beginPath(); cx.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) cx.lineTo(p[i], p[i + 1]); cx.closePath(); cx.fill(); }
   function bukitLatar(dasar, tinggi, warna, off, lebar, seed) {
     cx.fillStyle = warna; cx.beginPath(); cx.moveTo(0, dasar);
@@ -1491,7 +1637,7 @@
     selimutMalam(gp, 0.34);
     kotak(18, G.jalanTop - 30, 4, 34, '#59656d'); kotakBulat(6, G.jalanTop - 52, 112, 24, 6, '#6a4fd8'); cx.font = '800 13px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText('POOL TRAVEL', 62, G.jalanTop - 40);
     var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
-    gambarMobil(W * 0.3, G.carY, mob.bentuk, mob.id, false, 0);
+    gambarMobil(W * 0.3, G.carY, mob.bentuk, mob.id, false, 0, gp);
     var warna = ['#d9553a', '#3b6fa0', '#4a9a5a', '#8a5aa0', '#e0b23a', '#2b8a8a'];
     for (var i = 0; i < f.penumpang; i++) orangAntre(W * 0.54 + i * 14, G.carY - 4 + (i % 2) * 3, 1.05, warna[i % warna.length], i % 2 ? '#7a4a2e' : null);
     teksTengah(RUTE_NAMA(f.kota) + (f.tujuan ? ' → ' + RUTE_NAMA(f.tujuan) : ''), 182, 17);
@@ -1502,6 +1648,7 @@
   function gambarJalanTravel(s, t, dt) {
     var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = G.hor, jt = G.jalanTop, u = f.u;
     tJarak += dt * f.kmh * 0.0045; var geser = tJarak;
+    tRoda += dt * Math.max(8, f.kmh || 0) * 0.00055;
     gambarLangit(m, t);
     var tema = u < 0.5 ? f.temaA : f.temaB; latarTema(tema, hor, geser, gp, m);
     if (u < 0.3) ikonKota(f.dari, 200 - u / 0.3 * 340, hor + 2, G.sk, gp);
@@ -1527,10 +1674,10 @@
     if (u < 0.2) { tx = 230 - u / 0.2 * 300; tek = 'Meninggalkan ' + RUTE_NAMA(f.dari).slice(0, 14); } else if (u > 0.82) { tx = 240 - (u - 0.82) / 0.18 * 280; tek = 'Menuju ' + RUTE_NAMA(f.ke).slice(0, 15); }
     if (tx !== null) { kotak(tx + 54, jt - 14, 4, 22, '#59656d'); kotakBulat(tx, jt - 36, 112, 22, 5, '#1f8a80'); cx.font = '800 11px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText(tek, tx + 56, jt - 25); }
     selimutMalam(gp, 0.36);
-    var goyF = knd === 'tanah' ? 3.2 : knd === 'rusak' ? 2.4 : knd === 'bergelombang' ? 1.6 : 1.0;
-    var goyang = Math.sin(t / (knd === 'tanah' || knd === 'rusak' ? 55 : 85)) * Math.min(3.5, (f.kmh / 55) * goyF), mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
-    var sx = -90 + ((t * (0.02 + f.kmh * 0.0004)) % (W + 300)); gambarMobil(sx, jt + 26, ['mpv', 'hatch', 'suv'][Math.floor(t / 11000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 11000) % 3], false, t);
-    gambarMobil(W * 0.46, G.carY + goyang, mob.bentuk, mob.id, false, t * (0.3 + f.kmh / 80));
+    var goyF = knd === 'tanah' ? 2.2 : knd === 'rusak' ? 1.6 : knd === 'bergelombang' ? 1.0 : 0.35;
+    var goyang = Math.sin(t / (knd === 'tanah' || knd === 'rusak' ? 55 : 90)) * Math.min(2.4, (f.kmh / 70) * goyF), mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
+    var sx = -90 + ((t * (0.02 + f.kmh * 0.0004)) % (W + 300)); gambarMobil(sx, jt + 26, ['mpv', 'hatch', 'suv'][Math.floor(t / 11000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 11000) % 3], false, t * 0.014, gp);
+    gambarMobil(W * 0.46, G.carY + goyang, mob.bentuk, mob.id, false, tRoda, gp);
     pencahayaanLuar(m, t, jt, W * 0.46 + 46, G.carY - 22 + goyang);
     if (f.kmh > 55) { cx.strokeStyle = 'rgba(255,255,255,' + Math.min(0.5, (f.kmh - 55) / 150) + ')'; cx.lineWidth = 1.5; for (var sl = 0; sl < 8; sl++) { var ly = jt + 12 + acak(sl + 31) * 50, lx = ((t * (0.5 + f.kmh / 100) + sl * 97) % (W + 100)); cx.beginPath(); cx.moveTo(W - lx, ly); cx.lineTo(W - lx + 30 + f.kmh / 4, ly); cx.stroke(); } }
     gambarHujanRealistis(s, t, jt, 0);
@@ -1543,7 +1690,7 @@
     ikonKota(f.dari === 'bakauheni' ? 'bakauheni' : 'merak', 60 - f.u * 200, hor + 2, G.sk, gp); ikonKota(f.ke === 'merak' ? 'merak' : 'bakauheni', 330 + (1 - f.u) * 260, hor + 2, G.sk, gp);
     var gl = Math.sin(t / 700) * 3, y0 = G.bawah - 40 + gl;
     poli([40, y0, 320, y0, 296, y0 + 30, 64, y0 + 30], '#e8e4da'); poli([40, y0, 320, y0, 316, y0 - 8, 44, y0 - 8], '#d9553a'); kotak(226, y0 - 46, 64, 38, '#f6f3ea'); kotak(232, y0 - 38, 50, 9, '#5b7a8a'); kotak(250, y0 - 62, 14, 18, '#d9553a');
-    var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(130, y0 - 6, mob.bentuk, mob.id, false, 0);
+    var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(130, y0 - 6, mob.bentuk, mob.id, false, 0, gp);
     cx.strokeStyle = 'rgba(255,255,255,.6)'; cx.lineWidth = 2; for (var w4 = 0; w4 < 9; w4++) { var wx = ((w4 * 52 - t * 0.05) % (W + 60) + W + 60) % (W + 60) - 30, wy = y0 + 36 + (w4 % 4) * 12; cx.beginPath(); cx.moveTo(wx, wy); cx.quadraticCurveTo(wx + 8, wy - 4, wx + 16, wy); cx.stroke(); }
     selimutMalam(gp, 0.36); hujanTravel(s, t);
     teksTengah('Kapal ' + RUTE_NAMA(f.dari) + ' → ' + RUTE_NAMA(f.ke), 182, 16);
@@ -1562,9 +1709,9 @@
     kotak(0, jalan, W, H - jalan, s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)');
     var g3 = (geser * 3.4) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
-    if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t); }
+    if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp); }
     var goyang = Math.sin(t / 90) * 1.2;
-    if (f.kend === 'mobil') { var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(W * 0.46, jalan + 84 + goyang, mob.bentuk, mob.id, false, t * 0.6); }
+    if (f.kend === 'mobil') { var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(W * 0.46, jalan + 84, mob.bentuk, mob.id, false, t * 0.016, gp); }
     else if (f.kend === 'kaki') {
       if (!gambarKarakterPenuh(imCharFull(s.namaPemain, s.gender), W * 0.45, jalan + 88, 126, t * 2.4, { label: s.namaPemain || 'Kamu' })) {
         gambarKarakterRumah(W * 0.45, jalan + 78, s.gender === 'cowok' ? 'cowok' : 'cewek', t * 2.4, { skala: 1.5, label: s.namaPemain || 'Kamu' });
@@ -1714,8 +1861,7 @@
     }
     if (s.mobil) {
       var carStandby = s.ojek && s.ojek.status === 'standby' && s.ojek.mode === 'mobil';
-      gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, carStandby ? t * 0.2 : 0);
-      if (!carStandby && gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.3).toFixed(2) + ')'; cx.fillRect(10, jalan - 30, 140, 74); }
+      gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, 0, gelap(m));
     }
     if (s.ojek && s.ojek.status === 'standby' && s.ojek.mode !== 'mobil' && s.motorId) gambarMotorKu(300, jalan + 32, s.motorId, { naik: true, hp: true, kiri: true }, t);
     else if (s.motorParkir) { if (SPORT[s.motorParkir]) gambarMotorKu(312, jalan + 32, s.motorParkir, { kiri: true }, t); else gambarParkir(312, jalan + 20, s.motorParkir, m); }
