@@ -19,7 +19,7 @@
     if (!nama) return 'Isi nama dulu.';
     if (!PERAN[peran] || peran === 'mantan') peran = 'teman';
     var x = { id: 'tm' + Date.now().toString(36) + Math.floor(Math.random() * 999), nama: nama, gender: gender === 'cowok' ? 'cowok' : 'cewek', peran: peran,
-      tglLahir: tglLahir || '1998-01-01', hubungan: peran === 'pacar' ? 60 : peran === 'sahabat' ? 65 : 45, interaksiHari: -1 };
+      tglLahir: tglLahir || '1998-01-01', hubungan: peran === 'pacar' ? 60 : peran === 'sahabat' ? 65 : 45, perasaan: peran === 'pacar' ? 65 : peran === 'sahabat' ? 45 : 25, interaksiHari: -1 };
     siap(S).push(x);
     return { ok: true, teks: nama + ' ditambahkan sebagai ' + PERAN[peran].toLowerCase() + '.' };
   }
@@ -35,19 +35,21 @@
       if (x.interaksiHari === S.hari) return 'Kamu sudah menghubungi ' + x.nama + ' hari ini.';
       x.interaksiHari = S.hari;
       var naik = x.hubungan < 30 && Math.random() < 0.4 ? 1 : 5; x.hubungan = Math.min(100, x.hubungan + naik);
-      return { ok: true, teks: 'Ngobrol dengan ' + x.nama + '. Hubungan ' + Math.round(x.hubungan) + '%.' };
+      x.perasaan = Math.min(100, (x.perasaan == null ? 30 : x.perasaan) + 4);
+      return { ok: true, teks: 'Ngobrol dengan ' + x.nama + '. Hubungan ' + Math.round(x.hubungan) + '% · Perasaan ' + Math.round(x.perasaan) + '%.' };
     }
     if (jenis === 'traktir') {
       if (!bayar(50000, 'Traktir ' + x.nama)) return 'Uang tidak cukup untuk traktir (Rp50.000).';
       x.hubungan = Math.min(100, x.hubungan + 10);
-      return { ok: true, teks: 'Traktir ' + x.nama + ' Rp50.000. Hubungan ' + Math.round(x.hubungan) + '%.' };
+      x.perasaan = Math.min(100, (x.perasaan == null ? 30 : x.perasaan) + 10);
+      return { ok: true, teks: 'Traktir ' + x.nama + ' Rp50.000. Hubungan ' + Math.round(x.hubungan) + '% · Perasaan ' + Math.round(x.perasaan) + '%.' };
     }
-    if (jenis === 'ribut') { x.hubungan = Math.max(0, x.hubungan - 20); return { ok: true, teks: 'Kamu ribut dengan ' + x.nama + '. Hubungan ' + Math.round(x.hubungan) + '%.' }; }
+    if (jenis === 'ribut') { x.hubungan = Math.max(0, x.hubungan - 20); x.perasaan = Math.max(0, (x.perasaan == null ? 30 : x.perasaan) - 18); return { ok: true, teks: 'Kamu ribut dengan ' + x.nama + '. Hubungan ' + Math.round(x.hubungan) + '%.' }; }
     return 'Aksi tidak dikenal.';
   }
   function tambahMantan(S, kl, alasan) {
     var x = { id: 'tm' + Date.now().toString(36) + Math.floor(Math.random() * 999), nama: kl.nama, gender: kl.gender || 'cewek', peran: 'mantan', tglLahir: kl.tglLahir || '1998-01-01',
-      hubungan: Math.max(5, Math.min(70, Math.round((kl.bahagia || 60) - (/selingkuh/i.test(alasan || '') ? 45 : 25)))), interaksiHari: -1 };
+      hubungan: Math.max(5, Math.min(70, Math.round((kl.bahagia || 60) - (/selingkuh/i.test(alasan || '') ? 45 : 25)))), perasaan: 25, interaksiHari: -1 };
     siap(S).push(x); return x;
   }
 
@@ -57,6 +59,7 @@
   function tolakHb(S, id) {
     var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0]; if (!kl) return;
     kl.tolak = (kl.tolak || 0) + 1; kl.bahagia = Math.max(0, hubunganKl(kl) - 6);
+    kl.perasaan = Math.max(0, (kl.perasaan == null ? 70 : kl.perasaan) - 8);
   }
   function resetTolak(S, id) { var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0]; if (kl) kl.tolak = 0; }
   function izinKerja(S, id, nilai) { var kl = (S.keluarga || []).filter(function (x) { return x.id === id; })[0]; if (!kl) return 'Tidak ditemukan.'; kl.izinKerja = !!nilai; return { ok: true, teks: kl.nama + (nilai ? ' boleh bekerja di siang hari (hari kerja).' : ' tidak lagi bekerja.') }; }

@@ -89,6 +89,10 @@
         if (!kl.aktivitas) kl.aktivitas = 'rumah';
       }
       if (!kl.hadiah) kl.hadiah = [];
+      if (typeof kl.perasaan !== 'number') kl.perasaan = adalahPasangan(kl) ? 75 : adalahIpar(kl) ? 50 : 75;
+    });
+    (S.teman || []).forEach(function (tm) {
+      if (typeof tm.perasaan !== 'number') tm.perasaan = tm.peran === 'pacar' ? 65 : tm.peran === 'sahabat' ? 45 : tm.peran === 'mantan' ? 30 : 25;
     });
     S.sewaBarang = S.sewaBarang || {};
     Object.keys(S.rumah.barang).forEach(function (id) {
@@ -194,7 +198,8 @@
     /* peluang sakit akibat aktivitas berlebihan, telat makan, atau cuaca hujan */
     if (!d.sakit && S.hari > (d.kebalSampai || -1) && j > 0) {
       var hujan = g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S);
-      var diluarHujan = hujan && d.posisi !== 'kos' && !(S.mobil && !S.ojek.online);
+      var naikMobilOnline = S.ojek && S.ojek.online && S.ojek.mode === 'mobil';
+      var diluarHujan = hujan && d.posisi !== 'kos' && !(S.mobil && (!S.ojek.online || naikMobilOnline));
       var pSakit = 0, idPenyakit = 'demam';
       if (d.stamina < 12) { pSakit = 0.08; idPenyakit = 'tifus'; }
       else if (d.kenyang < 8) { pSakit = 0.06; idPenyakit = 'maag'; }
@@ -1233,9 +1238,12 @@
     /* KASUS 1B: TEMAN / SAHABAT / PACAR / MANTAN (hotel) */
     if (jenisTarget === 'teman' && stafTarget) {
       var tm = stafTarget, sebelum = typeof S.diri.kesehatan === 'number' ? S.diri.kesehatan : 100;
-      S.diri.hb = 0; S.diri.stamina = 100; tm.hubungan = Math.min(100, tm.hubungan + 8);
+      var adaFpT = tm.foreplayHari === S.hari;
+      S.diri.hb = 0; S.diri.stamina = 100; tm.hubungan = Math.min(100, tm.hubungan + (adaFpT ? 14 : 8));
+      tm.perasaan = Math.min(100, (tm.perasaan == null ? 50 : tm.perasaan) + (adaFpT ? 30 : 18));
+      tm.foreplayHari = -1;
       if (!pakaiKondom) S.diri.kesehatan = Math.max(10, Math.round(sebelum - 8));
-      var teksT = 'Waktu berdua bersama ' + tm.nama + ' (' + g.KK_TEMAN.PERAN[tm.peran].toLowerCase() + ') di hotel selesai. Stamina penuh, hubungan ' + Math.round(tm.hubungan) + '%.' + (pakaiKondom ? ' (Aman memakai kondom).' : ' (Tanpa pengaman, kesehatan turun).');
+      var teksT = 'Waktu berdua bersama ' + tm.nama + ' (' + g.KK_TEMAN.PERAN[tm.peran].toLowerCase() + ') di hotel selesai.' + (adaFpT ? ' Didahului foreplay hangat — suasana makin romantis!' : '') + ' Stamina penuh, hubungan ' + Math.round(tm.hubungan) + '%, perasaan ' + Math.round(tm.perasaan) + '%.' + (pakaiKondom ? ' (Aman memakai kondom).' : ' (Tanpa pengaman, kesehatan turun).');
       var psT = pasanganAktif(S);
       if (psT) {
         S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 30);
@@ -1273,10 +1281,13 @@
     /* KASUS 3: PASANGAN SAH (ISTRI/SUAMI) ATAU SELINGKUH DENGAN ADIK/KAKAK IPAR */
     var kbAktif = jenisTarget === 'pasangan' && (S.kesehatan.kbSampai || -1) >= S.hari;
     var terlindungi = !!pakaiKondom || kbAktif;
+    var adaFp = p.foreplayHari === S.hari;
     S.diri.hb = 0;
     S.diri.stamina = 100;
     p.bahagia = 100;
     p.hb = 0;
+    p.perasaan = adaFp ? 100 : Math.min(100, (p.perasaan == null ? 75 : p.perasaan) + 18);
+    p.foreplayHari = -1;
     if (jenisTarget === 'pasangan') { g.KK_TEMAN.resetTolak(S, p.id); p.ketahuan = null; }
     if (jenisTarget === 'pasangan') {
       /* HB dengan pasangan sah: kesehatan full, stamina full, bahagia full, rasa bersalah hilang */
@@ -1294,7 +1305,7 @@
         hamilBaru = true;
       }
     }
-    var teks = 'Momen intim bersama ' + p.nama + ' (' + labelPeran(S, p) + ') selesai' + (pakaiGerigi ? ' (memakai Kondom Bergerigi — kepuasan maksimal!)' : '') + '. HB bar 0%, Stamina' + (jenisTarget === 'pasangan' ? ', Kesehatan & Kebahagiaan' : ' & Bahagia') + ' penuh 100%!' +
+    var teks = 'Momen intim bersama ' + p.nama + ' (' + labelPeran(S, p) + ') selesai' + (adaFp ? ' (didahului foreplay hangat — kepuasan & romansa maksimal!)' : '') + (pakaiGerigi ? ' (memakai Kondom Bergerigi — kepuasan maksimal!)' : '') + '. HB bar 0%, Perasaan ' + Math.round(p.perasaan) + '%, Stamina' + (jenisTarget === 'pasangan' ? ', Kesehatan & Kebahagiaan' : ' & Bahagia') + ' penuh 100%!' +
       (malamSkipSubuh ? ' Tidur nyenyak hingga pukul 04.00 subuh.' : ' (' + durasiMenit + ' menit).') +
       (terlindungi ? ' (Aman memakai ' + (pakaiKondom ? 'kondom' : 'KB') + ').' : ' (Tanpa kontrasepsi — peluang hamil 65%).');
     if (jenisTarget === 'ipar') {
@@ -2072,6 +2083,61 @@
     if (x.harga >= 350000) { S.diri.kenyang = Math.min(100, S.diri.kenyang + 35); S.diri.minum = Math.min(100, S.diri.minum + 35); }
     return { ok: true, menit: x.jam * 60, teks: 'Menginap di ' + x.nama + ' (' + rp(x.harga) + ', ' + x.jam + ' jam). Stamina ' + Math.round(S.diri.stamina) + '%, kesehatan ' + Math.round(S.diri.kesehatan) + '%!' };
   }
+  /* bar perasaan, ciuman, dan foreplay untuk pasangan, keluarga dewasa (ipar), dan teman */
+  function labelPerasaan(v) {
+    var n = Math.round(v == null ? 50 : v);
+    return n >= 85 ? 'Penuh Cinta' : n >= 60 ? 'Sayang & Terbuka' : n >= 35 ? 'Mulai Nyaman' : 'Dingin';
+  }
+  function momenMesra(S, aksi, targetJenis, targetId) {
+    if (S.diri.sakit) return 'Kamu sedang sakit. Obati dulu di Apotek K-24.';
+    var isTeman = targetJenis === 'teman';
+    var target = isTeman
+      ? (S.teman || []).filter(function (x) { return x.id === targetId; })[0]
+      : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
+    if (!target) return 'Karakter tidak ditemukan.';
+    var usia = KAL.usia(S.hari, target.tglLahir);
+    var isPas = !isTeman && adalahPasangan(target);
+    if (!isPas && usia < 18) return 'Aksi ini hanya untuk karakter dewasa (18 tahun ke atas).';
+    if (!isTeman && !isPas && target.peran === 'anak') return 'Aksi mesra tidak bisa dilakukan ke anak.';
+    if (!isTeman) {
+      if (target.sakit) return target.nama + ' sedang sakit. Obati dulu di Apotek K-24.';
+      if (g.KK_TEMAN && g.KK_TEMAN.sedangKeluar(target, S)) return target.nama + ' sedang tidak di rumah (' + g.KK_TEMAN.alasanTeks(target) + ').';
+    }
+    var pr = typeof target.perasaan === 'number' ? target.perasaan : (isPas ? 75 : isTeman ? (target.hubungan || 45) : 50);
+    var hub = isTeman ? (target.hubungan || 45) : (target.bahagia == null ? 80 : target.bahagia);
+    var punyaPas = !!pasanganAktif(S);
+
+    if (aksi === 'ciuman') {
+      if (isPas && pr < 20 && hub < 25) return target.nama + ' masih kesal (perasaan ' + Math.round(pr) + '%). Perbaiki hubungan atau ajak jalan-jalan dulu.';
+      if (!isPas && isTeman && pr < 35 && hub < 50) {
+        target.hubungan = Math.max(0, hub - 3);
+        return target.nama + ' menghindar malu: "Eh, kita belum sedekat itu..." (butuh hubungan ≥50% atau perasaan ≥35%).';
+      }
+      if (!isPas && !isTeman && pr < 40 && hub < 55) {
+        return target.nama + ' masih canggung (butuh perasaan ≥40% atau bahagia ≥55%).';
+      }
+      target.perasaan = Math.min(100, pr + (isPas ? 15 : 16));
+      if (isTeman) target.hubungan = Math.min(100, hub + 8);
+      else { target.bahagia = Math.min(100, hub + (isPas ? 10 : 8)); target.hb = Math.min(100, (target.hb || 30) + 12); }
+      S.diri.hb = Math.min(100, (S.diri.hb || 0) + 12);
+      S.diri.stamina = Math.min(100, (S.diri.stamina || 50) + 5);
+      if (!isPas && punyaPas) S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 6);
+      return { ok: true, menit: 12, teks: '💋 Ciuman hangat bersama ' + target.nama + '! Bar Perasaan naik ke ' + Math.round(target.perasaan) + '% (' + labelPerasaan(target.perasaan) + '), suasana makin mesra.' };
+    }
+
+    if (aksi === 'foreplay') {
+      if (isPas && pr < 40) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman dulu sampai perasaan minimal 40%!';
+      if (!isPas && pr < 55 && hub < 60) return 'Perasaan ' + target.nama + ' baru ' + Math.round(pr) + '%. Mulai dengan 💋 Ciuman atau lebih akrab dulu (perasaan ≥55% atau hubungan ≥60%).';
+      target.perasaan = Math.min(100, pr + 22);
+      if (isTeman) target.hubungan = Math.min(100, hub + 12);
+      else { target.bahagia = Math.min(100, hub + 14); target.hb = Math.min(100, (target.hb || 30) + 28); }
+      target.foreplayHari = S.hari;
+      S.diri.hb = Math.min(100, (S.diri.hb || 0) + 25);
+      if (!isPas && punyaPas) S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 12);
+      return { ok: true, menit: 25, teks: '🔥 Foreplay romantis bersama ' + target.nama + '! Bar Perasaan ' + Math.round(target.perasaan) + '% (' + labelPerasaan(target.perasaan) + ') · Siap lanjut HB dengan kepuasan maksimal!' };
+    }
+    return 'Aksi tidak dikenal.';
+  }
   /* pemain sedang melayani: stamina rendah atau sakit membuat lambat dan kurang ramah */
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
@@ -2090,7 +2156,7 @@
     aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,
     hargaRumahTangga: hargaRumahTangga, beriRumahTangga: beriRumahTangga, makanDiRumah: makanDiRumah,
     daftarKuliahPasangan: daftarKuliahPasangan, aturKerjaPasangan: aturKerjaPasangan, daftarSekolahAnak: daftarSekolahAnak,
-    itemApotek: itemApotek, beliApotek: beliApotek, pakaiObat: pakaiObat, lakukanHb: lakukanHb,
+    itemApotek: itemApotek, beliApotek: beliApotek, pakaiObat: pakaiObat, lakukanHb: lakukanHb, momenMesra: momenMesra, labelPerasaan: labelPerasaan,
     daftarBisaDisewa: daftarBisaDisewa, toggleSewaBarang: toggleSewaBarang,
     infoLokasiRental: infoLokasiRental, bukaRentalPs: bukaRentalPs, beliTvRentalPs: beliTvRentalPs, tambahUnitRentalPs: tambahUnitRentalPs,
     aturTarifRentalPs: aturTarifRentalPs, beliKasetRentalPs: beliKasetRentalPs, aturPenjagaRentalPs: aturPenjagaRentalPs,

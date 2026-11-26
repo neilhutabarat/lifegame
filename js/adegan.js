@@ -1655,8 +1655,12 @@
         if (si % 2) { cx.save(); cx.translate(sx, sy); cx.rotate(1.3); kotak(-4, -5, 8, 10, '#dfeef3'); cx.restore(); } else bulat(sx, sy, 3, '#f3f1ea');
       }
     }
-    if (s.mobil) { gambarMobil(80, jalan + 38, s.mobil.bentuk, s.mobil.id, true); if (gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.3).toFixed(2) + ')'; cx.fillRect(10, jalan - 30, 140, 74); } }
-    if (s.ojek && s.ojek.status === 'standby' && s.motorId) gambarMotorKu(300, jalan + 32, s.motorId, { naik: true, hp: true, kiri: true }, t);
+    if (s.mobil) {
+      var carStandby = s.ojek && s.ojek.status === 'standby' && s.ojek.mode === 'mobil';
+      gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, carStandby ? t * 0.2 : 0);
+      if (!carStandby && gelap(m) > 0.4) { cx.fillStyle = 'rgba(10,18,45,' + (gelap(m) * 0.3).toFixed(2) + ')'; cx.fillRect(10, jalan - 30, 140, 74); }
+    }
+    if (s.ojek && s.ojek.status === 'standby' && s.ojek.mode !== 'mobil' && s.motorId) gambarMotorKu(300, jalan + 32, s.motorId, { naik: true, hp: true, kiri: true }, t);
     else if (s.motorParkir) { if (SPORT[s.motorParkir]) gambarMotorKu(312, jalan + 32, s.motorParkir, { kiri: true }, t); else gambarParkir(312, jalan + 20, s.motorParkir, m); }
     anim.motor.forEach(function (mt) { gambarMotor(mt, jalan, m, t); });
     pencahayaanLuar(m, t, jalan, null, null);
