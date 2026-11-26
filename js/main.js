@@ -101,9 +101,33 @@
       d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Tambahan modal', jml: 200000000 });
       d.bonusBank200jt = true;
     }
+    if (!d.bonusBank500jt && d.bank && typeof d.bank.saldo === 'number') {
+      d.bank.saldo += 500000000;
+      d.bank.mutasi = d.bank.mutasi || [];
+      d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Tambahan modal 500 juta', jml: 500000000 });
+      d.bonusBank500jt = true;
+    }
     d.hariIni = d.hariIni || JUAL.hariBaru();
     d.hariIni.tanpaKembalian = d.hariIni.tanpaKembalian || 0;
     STOK.siapkan(d); MOTOR.siapkan(d); MOBIL.siapkan(d); OJEK.siapkan(d); PROPERTI.siapkan(d); TRAVEL.siapkan(d); ANTAR.siapkan(d); STAF.siapkan(d); DUNIA.siapkan(d); USAHA.siapkan(d); DUNIA.terapkanHarga(d); DIRI.siapkan(d);
+    if (!d.pemutihanKredit2) {
+      var tPm = KAL.tgl(d.hari || 0), blnPm = tPm.y * 12 + tPm.m;
+      d.kreditBuruk = false;
+      (d.armadaMobil || []).forEach(function (mb) {
+        if (mb && mb.kredit) { mb.kredit.tunggakan = 0; mb.kredit.denda = 0; mb.kredit.bulanTelat = 0; mb.kredit.terbayarSampai = Math.max(mb.kredit.terbayarSampai || 0, blnPm); }
+      });
+      (d.armadaMotor || []).forEach(function (mt) {
+        if (mt && mt.kredit) { mt.kredit.tunggakan = 0; mt.kredit.denda = 0; mt.kredit.bulanTelat = 0; mt.kredit.terbayarSampai = Math.max(mt.kredit.terbayarSampai || 0, blnPm); }
+      });
+      ((d.properti && d.properti.daftarRumah) || []).forEach(function (rm) {
+        if (rm && rm.kpr) { rm.kpr.tunggakan = 0; rm.kpr.bulanTelat = 0; rm.kpr.terbayarSampai = Math.max(rm.kpr.terbayarSampai || 0, blnPm); }
+      });
+      if (d.kk) { d.kk.denda = 0; if (d.kk.status === 'blokir') d.kk.status = 'aktif'; }
+      if (d.kur) d.kur.tunggakan = 0;
+      if (d.rumah) d.rumah.tunggakan = 0;
+      if (d.kesehatan && d.kesehatan.bpjs) { d.kesehatan.bpjs.tunggakan = 0; if (d.kesehatan.bpjs.kelas > 0) d.kesehatan.bpjs.aktif = true; }
+      d.pemutihanKredit2 = true;
+    }
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
