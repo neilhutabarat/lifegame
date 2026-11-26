@@ -49,6 +49,7 @@
     S.mobilAktif = idx;
     S.armadaMobil.forEach(normMobil);
     sinkronAktif(S);
+    if (g.KK_TRAVEL && g.KK_TRAVEL.sinkronMobilSupir) g.KK_TRAVEL.sinkronMobilSupir(S);
     return true;
   }
   function jumlah(S) { return S.armadaMobil ? S.armadaMobil.length : (S.mobil ? 1 : 0); }
@@ -195,6 +196,13 @@
           } else baruSwM[k] = S.sewaBarang[k];
         });
         S.sewaBarang = baruSwM;
+      }
+      if (S.travel && S.travel.supir && S.travel.supir.length) {
+        S.travel.supir.forEach(function (sp) {
+          if (sp.mobilIdx === i) sp.mobilIdx = null;
+          else if (sp.mobilIdx > i) sp.mobilIdx--;
+        });
+        if (g.KK_TRAVEL && g.KK_TRAVEL.sinkronMobilSupir) g.KK_TRAVEL.sinkronMobilSupir(S);
       }
     }
     else { S.mobil = null; if (S.sewaBarang) delete S.sewaBarang['mobil:0']; }

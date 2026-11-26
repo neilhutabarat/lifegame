@@ -19,7 +19,51 @@
     if (!S.travel.pelamar || !S.travel.pelamar.length) S.travel.pelamar = buatPelamarSupir(S);
     /* jika tidak sedang aktif travel, selalu sinkronkan kota asal pool dengan kota tempat tinggal sekarang */
     if (!S.travel.aktif || (!S.travel.trip && !R.kota[S.travel.di])) S.travel.di = S.kota;
+    sinkronMobilSupir(S);
     return S.travel;
+  }
+  function daftarMobilPenumpang(S) {
+    var armada = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    var out = [];
+    armada.forEach(function (c, idx) { if (c && c.bentuk !== 'pikap') out.push({ idx: idx, mobil: c, utama: idx === (S.mobilAktif || 0) }); });
+    return out;
+  }
+  function cariMobilBebasSupir(S, excludeSupirId) {
+    var list = daftarMobilPenumpang(S), aktIdx = S.mobilAktif || 0;
+    var dipakaiLain = {};
+    ((S.travel && S.travel.supir) || []).forEach(function (x) {
+      if (x.id !== excludeSupirId && x.mobilIdx != null) dipakaiLain[x.mobilIdx] = true;
+    });
+    var cadanganBebas = list.filter(function (x) { return x.idx !== aktIdx && !dipakaiLain[x.idx]; });
+    if (cadanganBebas.length) return cadanganBebas[0].idx;
+    var cadanganAda = list.filter(function (x) { return x.idx !== aktIdx; });
+    if (cadanganAda.length) return cadanganAda[0].idx;
+    return list.length === 1 ? list[0].idx : -1;
+  }
+  function sinkronMobilSupir(S) {
+    if (!S || !S.travel || !S.travel.supir || !S.travel.supir.length) return;
+    var list = daftarMobilPenumpang(S), aktIdx = S.mobilAktif || 0;
+    var adaCadangan = list.some(function (x) { return x.idx !== aktIdx; });
+    S.travel.supir.forEach(function (sp) {
+      var valid = sp.mobilIdx != null && list.some(function (x) { return x.idx === sp.mobilIdx; });
+      if (!valid || (adaCadangan && sp.mobilIdx === aktIdx)) {
+        var baru = cariMobilBebasSupir(S, sp.id);
+        sp.mobilIdx = baru >= 0 ? baru : null;
+      }
+    });
+  }
+  function mobilUntukSupir(S, sp) {
+    var armada = S.armadaMobil || (S.mobil ? [S.mobil] : []), list = daftarMobilPenumpang(S), aktIdx = S.mobilAktif || 0;
+    var adaCadangan = list.some(function (x) { return x.idx !== aktIdx; });
+    if (sp && sp.mobilIdx != null && armada[sp.mobilIdx] && armada[sp.mobilIdx].bentuk !== 'pikap') {
+      if (!adaCadangan || sp.mobilIdx !== aktIdx) return { idx: sp.mobilIdx, mobil: armada[sp.mobilIdx], berbagi: sp.mobilIdx === aktIdx };
+    }
+    var idx = cariMobilBebasSupir(S, sp ? sp.id : null);
+    if (idx >= 0 && armada[idx]) {
+      if (sp) sp.mobilIdx = idx;
+      return { idx: idx, mobil: armada[idx], berbagi: idx === aktIdx };
+    }
+    return null;
   }
   function buatPelamarSupir(S) {
     var namaCalon = ['Rudi Hartono', 'Slamet Riyadi', 'Hendra Wijaya', 'Agus Supriyanto', 'Bambang Kusuma', 'Dedi Setiawan', 'Wahyu Pratama', 'Joko Susilo'];
@@ -58,11 +102,15 @@
   }
   function rekrutSupir(S, pelamarId, cfg) {
     var T = siapkan(S);
-    if (!S.mobil || (g.KK_MOBIL && g.KK_MOBIL.pikap(S))) return 'Butuh mobil penumpang (MPV/SUV/Sedan/Hatchback) untuk mempekerjakan supir travel.';
+    var listM = daftarMobilPenumpang(S), aktIdx = S.mobilAktif || 0;
+    if (!listM.length) return 'Butuh mobil penumpang (MPV/SUV/Sedan/Hatchback) untuk mempekerjakan supir travel.';
     if (T.supir.length >= 3) return 'Maksimal 3 supir travel yang bisa dipekerjakan.';
     var idx = -1;
     for (var i = 0; i < T.pelamar.length; i++) if (T.pelamar[i].id === pelamarId) { idx = i; break; }
     if (idx < 0) return 'Pelamar tidak ditemukan.';
+    var adaCadangan = listM.some(function (x) { return x.idx !== aktIdx; });
+    var mIdx = (cfg && cfg.mobilIdx != null && cfg.mobilIdx !== '' && listM.some(function (x) { return x.idx === +cfg.mobilIdx; })) ? +cfg.mobilIdx : cariMobilBebasSupir(S, null);
+    if (adaCadangan && mIdx === aktIdx) mIdx = cariMobilBebasSupir(S, null);
     var p = T.pelamar[idx];
     var per = (cfg && cfg.periode) || 'bulan';
     var sp = {
@@ -72,19 +120,27 @@
       uangMakan: Math.max(0, Math.round(+(cfg && cfg.uangMakan != null ? cfg.uangMakan : 40000))),
       insentif: Math.max(0, Math.round(+(cfg && cfg.insentif != null ? cfg.insentif : 25000))),
       bpjs: !!(cfg && cfg.bpjs),
+      mobilIdx: mIdx >= 0 ? mIdx : null,
       ruteId: (cfg && cfg.ruteId) || 'otomatis',
       aktif: true, totalTrip: 0, totalBersih: 0, hariMasuk: S.hari, terakhirGaji: S.hari
     };
     T.supir.push(sp);
     T.pelamar.splice(idx, 1);
     if (!T.pelamar.length) T.pelamar = buatPelamarSupir(S);
-    var puas = kepuasanSupir(S, sp);
-    return { ok: true, teks: sp.nama + ' (' + sp.sim + ') resmi bekerja sebagai Supir Travel! Kepuasan gaji: ' + puas + '% (' + labelPuasSupir(puas) + ').' };
+    var puas = kepuasanSupir(S, sp), mSp = mobilUntukSupir(S, sp);
+    return { ok: true, teks: sp.nama + ' (' + sp.sim + ') resmi bekerja' + (mSp ? ' memakai ' + mSp.mobil.nama : '') + '! Kepuasan gaji: ' + puas + '% (' + labelPuasSupir(puas) + ').' };
   }
   function aturSupir(S, id, cfg) {
     var T = siapkan(S);
     var sp = T.supir.filter(function (x) { return x.id === id; })[0];
     if (!sp) return 'Supir tidak ditemukan.';
+    if (cfg.mobilIdx != null) {
+      var mi = +cfg.mobilIdx, listM = daftarMobilPenumpang(S), aktIdx = S.mobilAktif || 0;
+      var adaCadangan = listM.some(function (x) { return x.idx !== aktIdx; });
+      if (!listM.some(function (x) { return x.idx === mi; })) return 'Mobil penumpang tidak ditemukan.';
+      if (adaCadangan && mi === aktIdx) return 'Mobil ini sedang jadi mobil utamamu! Pilih mobil lain untuk supir, atau ganti mobil utamamu dulu di Garasi.';
+      sp.mobilIdx = mi;
+    }
     if (cfg.periode) sp.periode = cfg.periode;
     if (cfg.gajiPokok != null && !isNaN(+cfg.gajiPokok)) sp.gajiPokok = Math.max(0, Math.round(+cfg.gajiPokok));
     if (cfg.uangMakan != null && !isNaN(+cfg.uangMakan)) sp.uangMakan = Math.max(0, Math.round(+cfg.uangMakan));
@@ -92,8 +148,8 @@
     if (cfg.bpjs != null) sp.bpjs = !!cfg.bpjs;
     if (cfg.ruteId != null) sp.ruteId = cfg.ruteId;
     if (cfg.aktif != null) sp.aktif = !!cfg.aktif;
-    var puas = kepuasanSupir(S, sp);
-    return { ok: true, teks: 'Pengaturan ' + sp.nama + ' disimpan. Kepuasan: ' + puas + '% (' + labelPuasSupir(puas) + ').' };
+    var puas = kepuasanSupir(S, sp), mSp2 = mobilUntukSupir(S, sp);
+    return { ok: true, teks: 'Pengaturan ' + sp.nama + (cfg.mobilIdx != null && mSp2 ? ' (mobil: ' + mSp2.mobil.nama + ')' : '') + ' disimpan. Kepuasan: ' + puas + '% (' + labelPuasSupir(puas) + ').' };
   }
   function pecatSupir(S, id) {
     var T = siapkan(S);
@@ -106,10 +162,8 @@
     var T = siapkan(S), kabar = [];
     if (!T.supir || !T.supir.length) return kabar;
     var tB = g.KK_KAL.tgl(nBaru), gantiBulan = tB.d === 1;
-    var armadaC = S.armadaMobil || (S.mobil ? [S.mobil] : []);
-    var mobilPenumpang = armadaC.filter(function (c) { return c && c.bentuk !== 'pikap'; });
-    var m = mobilPenumpang.filter(function (c) { return c !== S.mobil; })[0] || (!T.aktif ? mobilPenumpang[0] : null);
-    var bisaJalan = !!m;
+    sinkronMobilSupir(S);
+    var pemainPakaiMobil = !!(T.aktif || (S.ojek && S.ojek.online && S.ojek.mode === 'mobil'));
     for (var i = T.supir.length - 1; i >= 0; i--) {
       var sp = T.supir[i], puas = kepuasanSupir(S, sp);
       if (puas < 30 && Math.random() < 0.25) {
@@ -117,7 +171,9 @@
         T.supir.splice(i, 1);
         continue;
       }
-      if (sp.aktif && bisaJalan) {
+      var resM = mobilUntukSupir(S, sp);
+      var m = resM && (!resM.berbagi || !pemainPakaiMobil) ? resM.mobil : null;
+      if (sp.aktif && m) {
         /* pilih rute otomatis / pilihan supir di pulau yang sama (jarak 40-350 km) */
         var asal = S.kota, tujuanId = sp.ruteId && sp.ruteId !== 'otomatis' && R.kota[sp.ruteId] ? sp.ruteId : null;
         if (!tujuanId || tujuanId === asal) {
@@ -138,13 +194,13 @@
             var upahJalan = (sp.periode === 'jalan' ? sp.gajiPokok * tripHari : 0) + (sp.uangMakan || 0) + (sp.insentif || 0) * tripHari;
             var bersih = kotor - bbmRp - tolRp - upahJalan;
             S.bank.saldo += bersih;
-            M().catatBank(S, 'Supir Travel ' + sp.nama + ' (' + tripHari + '× ' + R.nama(tujuanId) + ')', bersih, nBaru);
+            M().catatBank(S, 'Supir Travel ' + sp.nama + ' [' + m.nama + '] (' + tripHari + '× ' + R.nama(tujuanId) + ')', bersih, nBaru);
             m.km = (m.km || 0) + Math.round(j.km * tripHari);
             m.totalHasil = (m.totalHasil || 0) + Math.max(0, bersih);
             S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + Math.max(0, bersih);
             T.total.trip += tripHari; T.total.bersih += bersih; T.total.km += Math.round(j.km * tripHari);
             sp.totalTrip = (sp.totalTrip || 0) + tripHari; sp.totalBersih = (sp.totalBersih || 0) + bersih;
-            kabar.push('🚐 Supir ' + sp.nama + ' narik travel ke ' + R.nama(tujuanId) + ' (' + tripHari + ' trip, ' + pnp + ' pnp): bersih ' + rp(bersih) + ' masuk rekening.');
+            kabar.push('🚐 Supir ' + sp.nama + ' (pakai ' + m.nama + ') narik travel ke ' + R.nama(tujuanId) + ' (' + tripHari + ' trip, ' + pnp + ' pnp): bersih ' + rp(bersih) + ' masuk rekening.');
           } else {
             kabar.push('Supir ' + sp.nama + ' bolos hari ini karena kurang puas dengan gaji (' + puas + '%).');
           }
@@ -541,6 +597,6 @@
 
   g.KK_TRAVEL = { siapkan: siapkan, kursi: kursi, bisaMulai: bisaMulai, mulai: mulai, selesaiParkir: selesaiParkir, pilihTujuan: pilihTujuan, ubahTarif: ubahTarif, jemput: jemput, berangkat: berangkat,
     setGigi: setGigi, kecepatan: kecepatan, jalan: jalan, istirahat: istirahat, isiBensin: isiBensin, fase: fase, cepatWaktu: cepatWaktu, estimasi: estimasi, rencana: rencana, laju: laju, bolehKhusus: bolehKhusus,
-    kepuasanSupir: kepuasanSupir, labelPuasSupir: labelPuasSupir, rekrutSupir: rekrutSupir, aturSupir: aturSupir, pecatSupir: pecatSupir, gantiHari: gantiHari,
+    kepuasanSupir: kepuasanSupir, labelPuasSupir: labelPuasSupir, daftarMobilPenumpang: daftarMobilPenumpang, sinkronMobilSupir: sinkronMobilSupir, mobilUntukSupir: mobilUntukSupir, rekrutSupir: rekrutSupir, aturSupir: aturSupir, pecatSupir: pecatSupir, gantiHari: gantiHari,
     dana: dana, CEPAT_JALAN: CEPAT_JALAN, MULT_MIN: MULT_MIN, MULT_MAKS: MULT_MAKS, JEMPUT_MAKS: JEMPUT_MAKS };
 })(window);

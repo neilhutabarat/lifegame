@@ -2288,6 +2288,7 @@
     else if (nama === 'spRekrut') {
       var rsr2 = TRAVEL.rekrutSupir(S, nilai, {
         periode: app.spPerBaru || 'bulan',
+        mobilIdx: app.spMobilBaru,
         gajiPokok: $('in-spnew-gp') ? +$('in-spnew-gp').value : (app.spPerBaru === 'jalan' ? 150000 : app.spPerBaru === 'minggu' ? 900000 : 3500000),
         uangMakan: $('in-spnew-um') ? +$('in-spnew-um').value : 40000,
         insentif: $('in-spnew-ins') ? +$('in-spnew-ins').value : 25000,
@@ -2297,6 +2298,8 @@
     }
     else if (nama === 'spPerBaru') { app.spPerBaru = nilai; app.pesan = ''; }
     else if (nama === 'spBpjsBaru') { app.spBpjsBaru = !app.spBpjsBaru; app.pesan = ''; }
+    else if (nama === 'spMobilBaru') { app.spMobilBaru = +nilai; app.pesan = ''; }
+    else if (nama === 'spMobil') { var psm = nilai.split('|'), rsm = TRAVEL.aturSupir(S, psm[0], { mobilIdx: +psm[1] }); hasilAksi(rsm && rsm.ok ? true : rsm, rsm && rsm.teks); }
     else if (nama === 'spPeriode') { var psp = nilai.split('|'), rsp2 = TRAVEL.aturSupir(S, psp[0], { periode: psp[1] }); hasilAksi(rsp2 && rsp2.ok ? true : rsp2, rsp2 && rsp2.teks); }
     else if (nama === 'spBpjs') { var spO = (S.travel.supir || []).filter(function (x) { return x.id === nilai; })[0]; var rsb = TRAVEL.aturSupir(S, nilai, { bpjs: !(spO && spO.bpjs) }); hasilAksi(rsb && rsb.ok ? true : rsb, rsb && rsb.teks); }
     else if (nama === 'spAktif') { var spA = (S.travel.supir || []).filter(function (x) { return x.id === nilai; })[0]; var rsa2 = TRAVEL.aturSupir(S, nilai, { aktif: !(spA && spA.aktif) }); hasilAksi(rsa2 && rsa2.ok ? true : rsa2, rsa2 && rsa2.teks); }
@@ -3081,17 +3084,31 @@
     var html = kepalaApp('Travel antarkota', T.aktif ? 'Sedang di ' + kota : 'Siap berangkat dari ' + kota) +
       chipTab('travelTab', [['sendiri', '🚐 Travel Sendiri'], ['supir', '👨‍✈️ Supir Travel (' + (T.supir ? T.supir.length : 0) + ')']], tab) + pesanApp();
     if (tab === 'supir') {
-      if (!m || MOBIL.pikap(S)) {
+      var listMblP = TRAVEL.daftarMobilPenumpang ? TRAVEL.daftarMobilPenumpang(S) : [];
+      if (!listMblP.length) {
         return html + '<p class="racik-pesan salah">Butuh mobil penumpang (MPV/SUV/Sedan/Hatchback) dulu di aplikasi Kendaraan untuk mempekerjakan Supir Travel.</p>';
       }
+      var aktIdxM = S.mobilAktif || 0, cadanganList = listMblP.filter(function (x) { return x.idx !== aktIdxM; });
       var perB = app.spPerBaru || 'bulan', defGp = perB === 'jalan' ? 150000 : perB === 'minggu' ? 900000 : 3500000;
-      html += '<p class="catatan">Pekerjakan supir travel untuk mengoperasikan ' + esc(m.nama) + ' secara otomatis tiap hari saat kamu tidak sedang menyetir travel. Tentukan sendiri periode gaji, gaji pokok, uang makan, insentif, dan BPJS — perhatikan persenan kepuasan pekerja!</p>';
+      html += '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin-bottom:8px;background:rgba(31,138,128,.1)">' +
+        '<b>🚗 Mobil Utamamu (Dipakai Kamu): ' + esc(m ? m.nama : '-') + '</b>' +
+        '<small>' + (cadanganList.length
+          ? 'Mobil utamamu tidak akan dipakai supir! Pilih mobil cadangan (' + cadanganList.map(function (x) { return '#' + (x.idx + 1) + ' ' + esc(x.mobil.nama); }).join(', ') + ') untuk tiap supir di bawah.'
+          : 'Kamu baru punya 1 mobil penumpang. Beli mobil kedua di Dealer Mobil agar supir memakai mobil terpisah (saat 1 mobil, supir hanya narik jika mobil sedang tidak kamu pakai).') + '</small></div>';
       if (T.supir && T.supir.length) {
         html += '<h3 class="subjudul">Supir Travel Aktif (' + T.supir.length + '/3)</h3><ul class="daftar pesanan">' + T.supir.map(function (sp) {
           var puas = TRAVEL.kepuasanSupir(S, sp), lblP = TRAVEL.labelPuasSupir(puas);
           var wrnP = puas >= 75 ? '#00a651' : puas >= 45 ? '#e0a916' : '#d9443a';
+          var mSpInfo = TRAVEL.mobilUntukSupir ? TRAVEL.mobilUntukSupir(S, sp) : null;
+          var pilihMobilHtml = '<small><b>🚗 Mobil yang Dipakai Supir: ' + esc(mSpInfo ? ('#' + (mSpInfo.idx + 1) + ' ' + mSpInfo.mobil.nama) : 'Belum ada') + '</b></small><div class="chip-baris">' +
+            listMblP.map(function (xm) {
+              var dip = mSpInfo && mSpInfo.idx === xm.idx;
+              var milikKamu = cadanganList.length > 0 && xm.idx === aktIdxM;
+              return '<button type="button" class="chip-tombol' + (dip ? ' pilih' : '') + '"' + (milikKamu ? ' disabled style="opacity:.5"' : '') + ' data-aksi="spMobil:' + sp.id + '|' + xm.idx + '">' + (xm.idx + 1) + '. ' + esc(xm.mobil.nama) + (xm.idx === aktIdxM ? ' (★ Kamu)' : dip ? ' ✓' : '') + '</button>';
+            }).join('') + '</div>';
           return '<li class="kartu-pesanan"><div><b>👨‍✈️ ' + esc(sp.nama) + ' (' + esc(sp.sim) + ' · ★' + sp.rating + ')</b>' +
             '<small>Pengalaman ' + sp.pengalaman + ' thn · Total ' + (sp.totalTrip || 0) + ' trip · Bersih ' + rupiah(sp.totalBersih || 0) + '</small>' +
+            pilihMobilHtml +
             '<div style="margin:5px 0"><small>Kepuasan Gaji Pekerja: <b style="color:' + wrnP + '">' + puas + '%</b> — ' + esc(lblP) + '</small><div class="meteran" style="margin-top:3px"><i style="width:' + puas + '%;background:' + wrnP + '"></i></div></div>' +
             '<small><b>Periode Gaji:</b></small><div class="chip-baris">' +
             [['jalan', 'Per Jalan'], ['minggu', 'Per Minggu'], ['bulan', 'Per Bulan']].map(function (pr) {
@@ -3108,9 +3125,15 @@
             '<button type="button" class="chip-tombol" data-aksi="spPecat:' + sp.id + '">Berhentikan</button></div></div></li>';
         }).join('') + '</ul>';
       }
+      var defMobBaru = (app.spMobilBaru != null && listMblP.some(function (x) { return x.idx === app.spMobilBaru && (!cadanganList.length || x.idx !== aktIdxM); })) ? app.spMobilBaru : (cadanganList.length ? cadanganList[0].idx : listMblP[0].idx);
+      app.spMobilBaru = defMobBaru;
       var previewPuas = TRAVEL.kepuasanSupir(S, { periode: perB, gajiPokok: defGp, uangMakan: 40000, insentif: 25000, bpjs: !!app.spBpjsBaru });
       html += '<h3 class="subjudul">Rekrut Supir Travel Baru</h3>' +
         '<div class="kartu-pesanan" style="padding:10px 12px;border-radius:12px;margin-bottom:8px">' +
+        (cadanganList.length ? '<small><b>🚗 Pilih Mobil untuk Supir Baru:</b></small><div class="chip-baris" style="margin-bottom:6px">' +
+          cadanganList.map(function (xm) {
+            return '<button type="button" class="chip-tombol' + (defMobBaru === xm.idx ? ' pilih' : '') + '" data-aksi="spMobilBaru:' + xm.idx + '">' + (xm.idx + 1) + '. ' + esc(xm.mobil.nama) + '</button>';
+          }).join('') + '</div>' : '') +
         '<small><b>Atur Paket Gaji Awal Pelamar:</b></small><div class="chip-baris">' +
         [['jalan', 'Per Jalan'], ['minggu', 'Per Minggu'], ['bulan', 'Per Bulan']].map(function (pr) {
           return '<button type="button" class="chip-tombol' + (perB === pr[0] ? ' pilih' : '') + '" data-aksi="spPerBaru:' + pr[0] + '">' + pr[1] + '</button>';
