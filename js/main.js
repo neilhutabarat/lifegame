@@ -3755,8 +3755,8 @@
     var mulai = S.menit, t = DIRI.tidur(S, Math.min(S.menit, 1439), S.diri.bangun);
     S.tidurAnim = true; setTimeout(function () { S.tidurAnim = false; }, 1600);
     gelapSebentar();
-    besok(S.diri.bangun);
-    toast('Tidur ' + t.jam.toFixed(1).replace('.', ',') + ' jam' + (t.ac ? ' pakai AC.' : ', AC mati karena token habis, kurang nyenyak.'), 2600);
+    besok(t.bangunEf || S.diri.bangun);
+    toast('Tidur ' + t.jam.toFixed(1).replace('.', ',') + ' jam' + (t.gelisah ? ' (gelisah karena Bar HB penuh, bangun +30 mnt & stamina kurang maksimal).' : t.ac ? ' pakai AC.' : ', AC mati karena token habis, kurang nyenyak.'), 3000);
   }
   var kosLainnya = false;
   function isiKosAksi() {
@@ -3798,6 +3798,7 @@
     }
     tombol.push(['tidurMalam:1', '😴 Tidur']);
     tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
+    lain.push(['istirahat:olahraga', '🏃 Olahraga']);
     if ((S.diri.hb || 0) >= 15) lain.push(['meTime:1', 'Me time']);
     if (rtAktif) lain.push(['makanRumah:1', 'Makan Rumah']);
     if (masak) lain.push(['makan:masak', 'Masak']);
@@ -3998,10 +3999,11 @@
     besok(null, true); return true;
   }
   function popupHb(pesan, salah) {
-    bukaLembar('hudHb', kepala('Bar HB', Math.round(S.diri.hb || 0) + '%') + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
-      '<div class="saldo-besar"><small>HB</small><b>' + Math.round(S.diri.hb || 0) + '%</b>' + persenBar(S.diri.hb || 0) + '</div>' +
-      '<div class="chip-baris" style="margin-top:8px"><button type="button" class="aksi" data-hud="meTime">Me time (turun 25–35%)</button></div>' +
-      '<p class="catatan">Hanya bisa di rumah. HB penuh dengan pasangan tetap menurunkan bar sampai 0%.</p>');
+    var hbN = Math.round(S.diri.hb || 0);
+    bukaLembar('hudHb', kepala('Bar HB', hbN + '%') + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
+      '<div class="saldo-besar" style="background:#ad1457"><small>Bar HB' + (hbN >= 95 ? ' · ⚠️ Penuh (fokus & tidur terganggu)' : '') + '</small><b>' + hbN + '%</b>' + persenBar(hbN) + '</div>' +
+      '<div class="chip-baris" style="margin-top:8px"><button type="button" class="aksi" data-hud="meTime">Me time (−25–35%)</button><button type="button" class="chip-tombol pilih" style="width:100%;padding:10px" data-hud="olahraga">🏃 Olahraga / Jogging (−28% HB · +Sehat)</button></div>' +
+      '<p class="catatan">Jika dibiarkan penuh (95–100%), tidur jadi gelisah, fokus kerja turun, dan hubungan pasangan menegang. Atasi dengan HB bersama pasangan, Me Time di rumah, atau Olahraga.</p>');
   }
   function popupStamina(pesan, salah) {
     bukaLembar('hudStamina', kepala('Stamina', Math.round(S.diri.stamina) + '%') + (pesan ? '<p class="racik-pesan ' + (salah ? 'salah' : 'siap') + '">' + esc(pesan) + '</p>' : '') +
@@ -4049,6 +4051,7 @@
     if (nama === 'bbm') { app.bbmPilih = nilai; return popupBensin(); }
     if (nama === 'energi') { var re = DIRI.minumEnergi(S, nilai); if (re && re.ok) { simpan(); perbaruiHUD(true); return popupStamina(re.teks, false); } return popupStamina(re, true); }
     if (nama === 'meTime') { var rm = mulaiMeTime(); if (rm === true) { tutupLembar(); return; } return popupHb(rm, true); }
+    if (nama === 'olahraga') { var rol = DIRI.istirahat(S, 'olahraga'); if (rol && rol.ok) { lompatWaktu(rol.menit); simpan(); perbaruiHUD(true); tutupLembar(); toast(rol.teks, 2600); return; } return popupHb(rol, true); }
     var jenis, liter;
     if (nama === 'isi') { var p = nilai.split('-'); jenis = p[0]; liter = p[1]; }
     else if (nama === 'isiLiter') { jenis = nilai; liter = $('in-liter') ? parseFloat($('in-liter').value) : 0; if (!(liter > 0)) return popupBensin('Masukkan jumlah yang valid dulu.', true); }

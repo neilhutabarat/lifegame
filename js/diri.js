@@ -312,7 +312,7 @@
         kabar.push((viaTelp ? '📞 Telepon dari ' : '💬 WhatsApp dari ') + pUtama.nama + ': "' + teksPesan + '"');
       }
     }
-    var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0) + (d.sakit ? (d.sakit.berat ? 5 : 2.5) : 0) + (d.kesehatan < 50 ? 2 : 0);
+    var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) + (kerja && (d.hb || 0) >= 95 ? 2.2 : 0) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0) + (d.sakit ? (d.sakit.berat ? 5 : 2.5) : 0) + (d.kesehatan < 50 ? 2 : 0);
     if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'kursipijat') ? 18 : punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
     d.stamina = batas(d.stamina - turunStamina * j);
     /* peluang sakit akibat aktivitas berlebihan, telat makan, atau cuaca hujan */
@@ -546,6 +546,17 @@
   }
   function istirahat(S, jenis) {
     var d = S.diri;
+    if (jenis === 'olahraga') {
+      if (d.sakit) return 'Sedang sakit, istirahat dulu sebelum olahraga.';
+      if (d.stamina < 15) return 'Stamina terlalu rendah untuk olahraga.';
+      var adaTread = punya(S, 'treadmill') && d.posisi === 'kos';
+      d.hb = batas((d.hb || 0) - (adaTread ? 32 : 28));
+      d.kesehatan = batas((d.kesehatan == null ? 100 : d.kesehatan) + (adaTread ? 9 : 6));
+      d.stamina = batas(d.stamina - 10);
+      d.minum = batas(d.minum - 12);
+      if (adaTread) catatPakai(S, 'treadmill');
+      return { ok: true, menit: 30, teks: (adaTread ? 'Lari di Treadmill 30 menit' : 'Jogging & olahraga 30 menit') + '. Pikiran lebih segar (HB turun, kesehatan naik)!' };
+    }
     if (d.posisi !== 'kos') return 'Pulang dulu.';
     if (jenis === 'ps' && !adaKonsol(S)) return 'Belum punya konsol PlayStation. Beli dulu di Toko Game.';
     if (jenis === 'tv' && !punya(S, 'tv')) return 'Belum punya TV.';
@@ -560,6 +571,7 @@
       if (kAktif) { kAktif.pakai = (kAktif.pakai || 0) + 1; catatPakai(S, kAktif.id); }
       if (gAktif && S.game.kaset[gAktif.id]) S.game.kaset[gAktif.id].pakai = (S.game.kaset[gAktif.id].pakai || 0) + 1;
       catatPakai(S, 'tv55'); catatPakai(S, 'tv');
+      d.hb = batas((d.hb || 0) - 8);
     } else if (jenis === 'tv') {
       catatPakai(S, 'tv55'); catatPakai(S, 'tv'); catatPakai(S, 'sofa'); catatPakai(S, 'karpet');
     }
@@ -571,16 +583,18 @@
   }
   /* tidur malam: dari jam sekarang sampai jam bangun besok. Mengembalikan menit tidur */
   function tidur(S, menitSekarang, bangun) {
-    var d = S.diri, lama = Math.max(60, (S.menit < 1440 ? 1440 - S.menit : -(S.menit - 1440)) + bangun), jam = lama / 60;
+    var d = S.diri, gelisah = (d.hb || 0) >= 95;
+    var bangunEf = gelisah ? Math.min(720, bangun + 30) : bangun;
+    var lama = Math.max(60, (S.menit < 1440 ? 1440 - S.menit : -(S.menit - 1440)) + bangunEf), jam = lama / 60;
     var ac = !S.rumah.padam && adaAc(S);
     listrikKos(S, lama, true);
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
     if (S.hp && !S.rumah.padam) { S.hp.baterai = 100; S.hp.cas = false; }
     var spb = adaSpringbed(S), bnsH = (S.rumah && S.rumah.jenis !== 'rumah') ? (hunianInfo(S.rumah && S.rumah.hunianId).bonusTidur || 1) : 0.92;
-    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * (punya(S, 'airpurifier') ? 1.05 : 1);
+    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * (punya(S, 'airpurifier') ? 1.05 : 1) * (gelisah ? 0.8 : 1);
     d.stamina = batas(d.stamina + jam * 14 * mutu);
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
-    return { jam: jam, ac: ac, mutu: mutu };
+    return { jam: jam, ac: ac, mutu: mutu, gelisah: gelisah, bangunEf: bangunEf };
   }
 
   /* ---------- isi kos, toko game & jual barang ---------- */
@@ -1907,6 +1921,22 @@
   function gantiHari(S, nLama, nBaru) {
     var kabar = [], r = S.rumah, t = KAL.tgl(nBaru);
     bayarJajanHarian(S, kabar);
+    /* efek Bar HB penuh berhari-hari: hubungan pasangan menegang & diingatkan pagi hari */
+    if ((S.diri.hb || 0) >= 95) {
+      S.diri.hariHbPenuh = (S.diri.hariHbPenuh || 0) + 1;
+      if (S.diri.hariHbPenuh >= 2) {
+        var pasHb = pasanganAktif(S);
+        if (pasHb) {
+          pasHb.bahagia = Math.max(0, (pasHb.bahagia == null ? 80 : pasHb.bahagia) - 4);
+          pasHb.perasaan = Math.max(0, (pasHb.perasaan == null ? 70 : pasHb.perasaan) - 4);
+          kabar.push('Bar HB penuh ' + S.diri.hariHbPenuh + ' hari berturut-turut: tidur kurang nyenyak & ' + pasHb.nama + ' merasa diabaikan. Atasi dengan HB, Me Time, atau Olahraga.');
+        } else {
+          kabar.push('Bar HB penuh ' + S.diri.hariHbPenuh + ' hari: fokus kerja menurun & tidur kurang nyenyak. Atasi dengan Me Time atau Olahraga.');
+        }
+      }
+    } else {
+      S.diri.hariHbPenuh = 0;
+    }
     listrikKos(S, 0, false);
     if (!S.game || !S.game.pasar || S.game.pasar.minggu !== Math.floor(nBaru / 7)) acakPasarGame(S);
     if (r.jenis === 'kos' && t.d === r.tempo) {
