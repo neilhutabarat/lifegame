@@ -780,7 +780,8 @@
       '<div class="form-lbl" style="margin-top:6px">Jenis mata<div class="opsi-chip">' + (K.mata || []).map(function (m) { return '<button type="button" class="chip-tombol' + (tp.mata === m.id ? ' pilih' : '') + '" data-atur-tp="mata:' + m.id + '">' + esc(m.nama) + '</button>'; }).join('') + '</div></div>' +
       '<div class="form-lbl" style="margin-top:6px">Jenis mulut<div class="opsi-chip">' + (K.mulut || []).map(function (m) { return '<button type="button" class="chip-tombol' + (tp.mulut === m.id ? ' pilih' : '') + '" data-atur-tp="mulut:' + m.id + '">' + esc(m.nama) + '</button>'; }).join('') + '</div></div>' +
       '<div style="margin-top:8px"><button type="button" class="chip-tombol pilih" data-simpan-nama>Simpan profil & identitas</button></div></details>' +
-      '<h3 class="subjudul">Kecepatan & Panduan</h3>' +
+      '<h3 class="subjudul">Mode Promo & Panduan</h3>' +
+      '<div class="atur-baris"><div><b>📢 Mode Promo</b><span>Order ojol, driver, & pelanggan naik +50%–80%</span></div><div><button type="button" class="chip-tombol' + (S.promoAktif ? ' pilih' : '') + '" data-promo="1">' + (S.promoAktif ? 'Aktif ✓' : 'Mati') + '</button></div></div>' +
       '<div class="atur-baris"><div><b>🔒 Kecepatan Level 5 (Top Speed)</b><span>Mode normal maks Level 4 (realistis). Level 5 terkunci.</span></div><div><button type="button" class="chip-tombol" data-vvip="popup">🔒 Terkunci</button></div></div>' +
       '<div class="atur-baris"><div><b>📖 Panduan Permainan</b><span>Lihat kembali tutorial dasar cara bermain</span></div><div><button type="button" class="chip-tombol" data-tut="0">Buka Tutorial</button></div></div>' +
       '<h3 class="subjudul">Suara & lagu tema</h3>' +
@@ -1640,7 +1641,7 @@
         var thnLahir = String(x.tglLahir || '1998-01-01').slice(0, 4);
         return kepala(x.nama, TEMAN.PERAN[x.peran] + ' · ' + (x.gender === 'cowok' ? 'Cowok' : 'Cewek') + ' · ' + usiaD + ' thn (' + thnLahir + ')', '<button type="button" class="panah" data-aksi="tutupTeman:1" aria-label="Kembali ke daftar teman">‹</button>') + pesanApp() +
           '<div class="kartu-item" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px">' +
-          fotoWajah(x.gender === 'cowok' ? 'char-pemain' : 'char-istri', 60, 'rgba(31,138,128,.45)', x.nama, x.gender, usiaD, x.peran) +
+          fotoWajah(x.gender === 'cowok' ? 'char-pemain' : 'char-istri', 60, 'rgba(31,138,128,.45)', x.nama, x.gender, usiaD, x.peran, x.tampilan) +
           '<div style="min-width:0;flex:1"><b>' + esc(x.nama) + '</b>' +
           '<small>' + (x.kerja ? esc(x.kerja) + ' · ' : '') + '<b>' + esc(statusPacar) + '</b></small>' +
           '<small>Hubungan: <b>' + Math.round(x.hubungan) + '%</b>' + (x.foreplayHari === S.hari ? ' · 🔥 Foreplay siap' : '') + '</small>' +
@@ -1663,11 +1664,23 @@
     var html = kepalaApp('Teman', daftar.length + ' kontak (' + jmlCwk + ' cewek · ' + jmlCwk2 + ' cowok)') +
       segTab('temanTab', [['daftar', '👥 Kontak (' + daftar.length + ')'], ['tambah', '➕ Tambah Kontak']], tTab) + pesanApp();
     if (tTab === 'tambah') {
-      return html + '<div class="kartu-item"><b style="font-size:14px">➕ Tambah Kontak Baru</b>' +
+      var K = N.karakterOpsi || {};
+      app.tmTampilan = tampilanLengkap(app.tmTampilan, g0);
+      var tpTm = app.tmTampilan, nmPrev = (app.tmNama || '').trim() || 'Teman Baru', ttlPrev = app.tmTtl || '2001-05-15';
+      var listRTm = g0 === 'cowok' ? (K.rambutCowok || []) : (K.rambutCewek || []);
+      return html + '<div class="kartu-item" style="gap:8px">' +
+        '<div style="display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--panel-garis)">' +
+        fotoWajah(g0 === 'cowok' ? 'char-pemain' : 'char-istri', 56, 'rgba(31,138,128,.45)', nmPrev, g0, KAL.usia(S.hari, ttlPrev), p0, tpTm) +
+        '<div style="min-width:0;flex:1"><b style="font-size:14px">' + esc(nmPrev) + '</b><small>' + (g0 === 'cowok' ? 'Cowok' : 'Cewek') + ' · ' + TEMAN.PERAN[p0] + ' · ' + KAL.usia(S.hari, ttlPrev) + ' thn</small></div></div>' +
         '<label class="form-lbl">Nama lengkap<input id="in-tm-nama" class="input-teks" type="text" maxlength="24" placeholder="Mis. Nadia / Rizky" value="' + esc(app.tmNama || '') + '"></label>' +
         segTab('tmGender', [['cewek', '👩 Cewek'], ['cowok', '👨 Cowok']], g0) +
         segTab('tmPeran', [['teman', 'Teman'], ['sahabat', 'Sahabat'], ['pacar', 'Pacar']], p0) +
-        '<label class="form-lbl">Tanggal lahir<input id="in-tm-ttl" class="input-teks" type="date" value="' + esc(app.tmTtl || '2001-05-15') + '"></label>' +
+        '<label class="form-lbl">Tanggal lahir<input id="in-tm-ttl" class="input-teks" type="date" value="' + esc(ttlPrev) + '"></label>' +
+        '<div class="form-lbl">Warna kulit<div class="swatch-baris">' + (K.kulit || []).map(function (c) { return '<button type="button" class="swatch' + (tpTm.kulit === c.id ? ' pilih' : '') + '" style="background:' + c.hex + '" title="' + esc(c.nama) + '" data-aksi="tmTp:kulit|' + c.id + '"></button>'; }).join('') + '</div></div>' +
+        '<div class="form-lbl">Gaya rambut<div class="opsi-chip">' + listRTm.map(function (r) { return '<button type="button" class="chip-tombol' + (tpTm.rambut === r.id ? ' pilih' : '') + '" data-aksi="tmTp:rambut|' + r.id + '">' + esc(r.nama) + '</button>'; }).join('') + '</div></div>' +
+        '<div class="form-lbl">Warna rambut<div class="swatch-baris">' + (K.warnaRambut || []).map(function (c) { return '<button type="button" class="swatch' + (tpTm.warnaRambut === c.id ? ' pilih' : '') + '" style="background:' + c.hex + '" title="' + esc(c.nama) + '" data-aksi="tmTp:warnaRambut|' + c.id + '"></button>'; }).join('') + '</div></div>' +
+        '<div class="form-lbl">Jenis mata<div class="opsi-chip">' + (K.mata || []).map(function (m) { return '<button type="button" class="chip-tombol' + (tpTm.mata === m.id ? ' pilih' : '') + '" data-aksi="tmTp:mata|' + m.id + '">' + esc(m.nama) + '</button>'; }).join('') + '</div></div>' +
+        '<div class="form-lbl">Jenis mulut<div class="opsi-chip">' + (K.mulut || []).map(function (m) { return '<button type="button" class="chip-tombol' + (tpTm.mulut === m.id ? ' pilih' : '') + '" data-aksi="tmTp:mulut|' + m.id + '">' + esc(m.nama) + '</button>'; }).join('') + '</div></div>' +
         '<button type="button" class="aksi kecil" style="margin-top:6px" data-aksi="temanTambah:1">Simpan Kontak</button></div>';
     }
     if (!daftar.length) return html + '<p class="catatan">Belum ada teman. Buka tab <b>➕ Tambah Kontak</b> untuk menambahkan teman baru.</p>';
@@ -1690,7 +1703,7 @@
         var stTag = x.peran === 'pacar' ? '❤️ Pacarmu' : x.pacarId ? '💑 Pacaran' : TEMAN.PERAN[x.peran];
         var clsTag = x.peran === 'pacar' ? 'promo' : hub >= 70 ? 'milik' : '';
         return '<button type="button" class="kartu-item kartu-teman" data-aksi="bukaTeman:' + x.id + '">' +
-          '<div class="kt-head">' + fotoWajah(x.gender === 'cowok' ? 'char-pemain' : 'char-istri', 42, 'rgba(31,138,128,.4)', x.nama, x.gender, usia, x.peran) +
+          '<div class="kt-head">' + fotoWajah(x.gender === 'cowok' ? 'char-pemain' : 'char-istri', 42, 'rgba(31,138,128,.4)', x.nama, x.gender, usia, x.peran, x.tampilan) +
           '<div class="kt-info"><b>' + esc(x.nama) + '</b><small>' + usia + ' thn · ' + esc(x.kerja || (x.gender === 'cowok' ? 'Cowok' : 'Cewek')) + '</small></div></div>' +
           '<div><div class="ki-top" style="margin-top:2px"><span class="ki-tag ' + clsTag + '">' + esc(stTag) + '</span><span style="font-size:10.5px;font-weight:800;color:var(--kontainer-tua)">' + hub + '%</span></div>' +
           '<div class="meteran" style="height:5px;margin-top:4px"><i style="width:' + Math.max(0, Math.min(100, hub)) + '%"></i></div></div></button>';
@@ -2770,9 +2783,18 @@
     else if (nama === 'konfrontasi') { var kf = nilai.split('|'), rkf = TEMAN.konfrontasi(S, kf[0], kf[1], DIRI.ceraiPasangan); hasilAksi(rkf && rkf.ok ? true : rkf, rkf && rkf.ok ? rkf.teks : ''); }
     else if (nama === 'temanTambah') {
       var gT = app.tmGender || 'cewek', pT = app.tmPeran || 'teman', nmT = $('in-tm-nama') ? $('in-tm-nama').value : '', ttT = $('in-tm-ttl') ? $('in-tm-ttl').value : '';
-      var rtm = TEMAN.tambah(S, nmT, gT, pT, ttT); if (rtm && rtm.ok) { app.tmNama = ''; app.tmTtl = ''; app.temanTab = 'daftar'; } hasilAksi(rtm && rtm.ok ? true : rtm, rtm && rtm.ok ? rtm.teks : '');
+      var tpT = tampilanLengkap(app.tmTampilan, gT);
+      var rtm = TEMAN.tambah(S, nmT, gT, pT, ttT, tpT); if (rtm && rtm.ok) { app.tmNama = ''; app.tmTtl = ''; app.tmTampilan = null; app.temanTab = 'daftar'; } hasilAksi(rtm && rtm.ok ? true : rtm, rtm && rtm.ok ? rtm.teks : '');
     }
-    else if (nama === 'tmGender' || nama === 'tmPeran') { app.tmNama = $('in-tm-nama') ? $('in-tm-nama').value : ''; app.tmTtl = $('in-tm-ttl') ? $('in-tm-ttl').value : ''; if (nama === 'tmGender') app.tmGender = nilai; else app.tmPeran = nilai; app.pesan = ''; }
+    else if (nama === 'tmGender' || nama === 'tmPeran') { app.tmNama = $('in-tm-nama') ? $('in-tm-nama').value : ''; app.tmTtl = $('in-tm-ttl') ? $('in-tm-ttl').value : ''; if (nama === 'tmGender') { app.tmGender = nilai; app.tmTampilan = tampilanLengkap(app.tmTampilan, nilai); } else app.tmPeran = nilai; app.pesan = ''; }
+    else if (nama === 'tmTp') {
+      app.tmNama = $('in-tm-nama') ? $('in-tm-nama').value : '';
+      app.tmTtl = $('in-tm-ttl') ? $('in-tm-ttl').value : '';
+      var ptp = nilai.split('|');
+      app.tmTampilan = tampilanLengkap(app.tmTampilan, app.tmGender || 'cewek');
+      app.tmTampilan[ptp[0]] = ptp[1];
+      app.pesan = '';
+    }
     else if (nama === 'tmInteraksi') {
       var ti = nilai.split('|'), rti = TEMAN.interaksi(S, ti[0], ti[1], function (jml, ket) { return bayarPribadi(jml, ket); });
       hasilAksi(rti && rti.ok ? true : rti, rti && rti.ok ? rti.teks : '');
@@ -3751,14 +3773,11 @@
         tombol.push(['pulang:1', '🏠 Pulang']);
       }
       tombol.push(['app:makan', '🍽️ Makan'], ['bensinHud:1', '⛽ Isi BBM']);
-      tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan']);
+      tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
       if (sedangTunggu) {
         Object.keys(DIRI.HIBURAN || {}).forEach(function (hk) {
           tombol.push(['hiburan:' + hk, (S.hiburan === hk ? '✓ ' : '🎬 ') + DIRI.HIBURAN[hk].nama]);
         });
-      }
-      if (!S.usaha.berhentiSewa) {
-        tombol.push(['promoKedai:1', S.promoAktif ? '✓ Promo' : 'Promo']);
       }
       $('kos-aksi').innerHTML = tombol.map(function (x) {
         var isAkt = x[1].indexOf('✓ ') === 0;
@@ -3778,7 +3797,7 @@
       lain.push(['ciuman:' + pas.id, '💋 Ciuman'], ['foreplay:' + pas.id, '🔥 Foreplay']);
     }
     tombol.push(['tidurMalam:1', '😴 Tidur']);
-    tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan']);
+    tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
     if ((S.diri.hb || 0) >= 15) lain.push(['meTime:1', 'Me time']);
     if (rtAktif) lain.push(['makanRumah:1', 'Makan Rumah']);
     if (masak) lain.push(['makan:masak', 'Masak']);

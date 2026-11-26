@@ -138,7 +138,7 @@
     S.seedTeman50 = true;
   }
 
-  function tambah(S, nama, gender, peran, tglLahir) {
+  function tambah(S, nama, gender, peran, tglLahir, tampilan) {
     nama = String(nama || '').trim().slice(0, 24);
     if (!nama) return 'Isi nama dulu.';
     var gChar = gender === 'cowok' ? 'cowok' : 'cewek';
@@ -147,7 +147,8 @@
     if (peran === 'pacar' && gChar === gPem) return 'Pacaran hanya bisa dengan lawan jenis.';
     var x = { id: 'tm' + Date.now().toString(36) + Math.floor(Math.random() * 999), nama: nama, gender: gChar, peran: peran,
       tglLahir: tglLahir || '1998-01-01', hubungan: peran === 'pacar' ? 60 : peran === 'sahabat' ? 65 : 45,
-      perasaan: peran === 'pacar' ? 65 : peran === 'sahabat' ? 45 : 25, hb: 30, pacarId: null, pacarNama: '', interaksiHari: -1 };
+      perasaan: peran === 'pacar' ? 65 : peran === 'sahabat' ? 45 : 25, hb: 30, pacarId: null, pacarNama: '', interaksiHari: -1,
+      tampilan: tampilan || null };
     siap(S).push(x);
     return { ok: true, teks: nama + ' ditambahkan sebagai ' + PERAN[peran].toLowerCase() + '.' };
   }
