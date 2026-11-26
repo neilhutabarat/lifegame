@@ -1342,8 +1342,13 @@
     var sx = W + 80 - ((t * 0.03) % (W + 260));
     gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t);
     var antar = f.status === 'antar', goyang = Math.sin(t / 90) * 1.2;
-    gambarMotorKu(W * 0.42, jalan + 52 + goyang, s.motorId, { naik: true, jalan: true, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
-    pencahayaanLuar(m, t, jalan, W * 0.42 + 28, jalan + 24 + goyang);
+    if (f.mode === 'mobil' && s.mobil) {
+      gambarMobil(W * 0.44, jalan + 76 + goyang, s.mobil.bentuk, s.mobil.id, false, t * 0.6);
+      pencahayaanLuar(m, t, jalan, W * 0.44 + 46, jalan + 54 + goyang);
+    } else {
+      gambarMotorKu(W * 0.42, jalan + 52 + goyang, s.motorId, { naik: true, jalan: true, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
+      pencahayaanLuar(m, t, jalan, W * 0.42 + 28, jalan + 24 + goyang);
+    }
     gambarHujanRealistis(s, t, jalan, 0);
   }
   /* adegan pindahan: pikap membawa kasur, kardus, dan barang */
@@ -1562,7 +1567,7 @@
       if (s.travel.mode === 'jalan') gambarJalanTravel(s, t, dt); else if (s.travel.mode === 'kapal') gambarKapalTravel(s, t); else gambarPoolTravel(s, t);
       kotakKedai = null; kotakBarista = null; kotakDepan = null; return;
     }
-    if (s.ojek && s.ojek.status !== 'standby' && s.motorId) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarJalanRaya(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.ojek && s.ojek.status !== 'standby' && (s.ojek.mode === 'mobil' ? s.mobil : s.motorId)) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarJalanRaya(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
     /* angkat adegan saat panel racik menutupi kaki pembeli */

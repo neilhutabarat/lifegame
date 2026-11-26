@@ -14,7 +14,8 @@
   function platform(id) { return O.platform.filter(function (p) { return p.id === id; })[0]; }
 
   function siapkan(S) {
-    if (!S.ojek) S.ojek = { daftar: {}, platform: null, online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, mult: 1, jauhHariIni: 0, jatahJauh: 2, pos: { x: 0, y: 0 }, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (!S.ojek) S.ojek = { daftar: {}, platform: null, mode: 'motor', online: false, dompet: 0, tawaran: null, trip: null, berikut: 0, tolak: 0, mult: 1, jauhHariIni: 0, jatahJauh: 2, pos: { x: 0, y: 0 }, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (!S.ojek.mode) S.ojek.mode = 'motor';
     if (typeof S.ojek.mult !== 'number' || isNaN(S.ojek.mult)) S.ojek.mult = 1;
     if (S.ojek.jauhHariIni == null) S.ojek.jauhHariIni = 0;
     if (S.ojek.jatahJauh == null) S.ojek.jatahJauh = 1 + Math.floor(Math.random() * 4);
@@ -63,7 +64,15 @@
     S.ojek.mult = Math.round(Math.max(0.7, Math.min(1.6, (S.ojek.mult || 1) + delta)) * 100) / 100;
     return true;
   }
-  function bisaOnline(S) {
+  function bisaOnline(S, mode) {
+    if (mode === 'mobil') {
+      var c = S.mobil;
+      if (!c) return 'Belum punya mobil untuk GoCar/GrabCar.';
+      if (g.KK_MOBIL && g.KK_MOBIL.pikap(S)) return 'Mobil pikap tidak bisa untuk GoCar/GrabCar.';
+      if (!g.KK_MOBIL.cukup(S, 6)) return c.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis. Cas dulu.' : 'Bensin mobil hampir habis. Isi dulu.';
+      if (S.diri && S.diri.stamina < 15) return 'Stamina terlalu rendah untuk narik. Istirahat dulu.';
+      return null;
+    }
     var m = S.motor;
     if (!m) return 'Belum punya motor.';
     if (!O.platform.some(function (p) { return aktif(S, p.id); })) return 'Akun driver belum aktif.';
@@ -71,10 +80,12 @@
     if (S.diri && S.diri.stamina < 15) return 'Stamina terlalu rendah untuk narik. Istirahat dulu.';
     return null;
   }
-  function online(S, pid) {
-    var e = bisaOnline(S); if (e) return e;
-    if (!aktif(S, pid)) pid = O.platform.filter(function (p) { return aktif(S, p.id); })[0].id;
-    var o = S.ojek; o.online = true; o.platform = pid; o.tawaran = null; o.trip = null;
+  function online(S, pid, mode) {
+    var md = mode === 'mobil' ? 'mobil' : 'motor';
+    var e = bisaOnline(S, md); if (e) return e;
+    if (md === 'mobil') { pid = pid === 'grab' ? 'grab' : 'gojek'; }
+    else if (!aktif(S, pid)) { pid = O.platform.filter(function (p) { return aktif(S, p.id); })[0].id; }
+    var o = S.ojek; o.online = true; o.mode = md; o.platform = pid; o.tawaran = null; o.trip = null;
     o.berikut = waktu(S) + jeda(S);
     return true;
   }
@@ -97,8 +108,8 @@
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
     r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
-    var mult = (S.ojek && S.ojek.mult) || 1;
-    var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(S.motor, 'motor') : 1;
+    var mult = (S.ojek && S.ojek.mult) || 1, isCar = S.ojek && S.ojek.mode === 'mobil';
+    var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(isCar ? S.mobil : S.motor, isCar ? 'mobil' : 'motor') : 1;
     r *= Math.max(0.25, Math.min(1.6, Math.pow(nyaman / mult, 1.5)));
     return r * Math.max(0.6, 1 - S.ojek.tolak * 0.05);
   }
@@ -106,7 +117,8 @@
 
   function buatTawaran(S) {
     var jam = Math.floor(S.menit / 60) % 24, makan = (jam >= 11 && jam < 14) || (jam >= 18 && jam < 21);
-    var r = Math.random(), jenis = r < (makan ? 0.45 : 0.15) ? 'makanan' : r < (makan ? 0.6 : 0.35) ? 'barang' : 'penumpang';
+    var isCar = S.ojek && S.ojek.mode === 'mobil';
+    var r = Math.random(), jenis = isCar ? 'penumpang' : (r < (makan ? 0.45 : 0.15) ? 'makanan' : r < (makan ? 0.6 : 0.35) ? 'barang' : 'penumpang');
     /* sehari-hari 1-10 km, dan 1-4 kali sehari muncul order jarak jauh hingga 30 km */
     var bisaJauh = (S.ojek.jauhHariIni || 0) < (S.ojek.jatahJauh || 2) && Math.random() < 0.28;
     var km;
@@ -120,16 +132,22 @@
     var arah = Math.random() * Math.PI * 2;
     var dx = Math.round(km * Math.cos(arah) * 100) / 100;
     var dy = Math.round(km * Math.sin(arah) * 100) / 100;
-    var t = tarif(S, km), p = platform(S.ojek.platform);
-    return { jenis: jenis, layanan: p.layanan[jenis], km: km, jemput: jemput, dx: dx, dy: dy, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - O.potongan)),
+    var p = platform(S.ojek.platform || 'gojek');
+    var kaliCar = isCar ? ((N.bisnisMobil && N.bisnisMobil.kaliTarifCar) || 2.3) : 1;
+    var pot = isCar ? ((N.bisnisMobil && N.bisnisMobil.potonganCar) || 0.1) : O.potongan;
+    var t = Math.round(tarif(S, km) * kaliCar / 500) * 500;
+    var lay = isCar ? (p.id === 'grab' ? 'GrabCar' : 'GoCar') : p.layanan[jenis];
+    return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0 };
   }
   function ambil(S) {
     var o = S.ojek, x = o.tawaran; if (!x) return 'Order sudah tidak ada.';
-    var km = x.jemput + x.km;
-    if (!g.KK_MOTOR.cukup(S, km)) return 'Bensin tidak cukup untuk order ini.';
-    var r = g.KK_MOTOR.jalan(S, km, 1);
+    var km = x.jemput + x.km, isCar = o.mode === 'mobil';
+    var kend = isCar ? g.KK_MOBIL : g.KK_MOTOR;
+    if (!kend.cukup(S, km)) return isCar ? 'Bensin / baterai mobil tidak cukup untuk order ini.' : 'Bensin tidak cukup untuk order ini.';
+    var r = kend.jalan(S, km, 1);
+    if (!r || !r.ok) return (r && r.alasan) || 'Kendaraan tidak siap.';
     var tunggu = x.jenis === 'makanan' ? 8 + Math.floor(Math.random() * 10) : x.jenis === 'barang' ? 4 : 2;
     var menitJemput = Math.round(r.menit * x.jemput / km) + tunggu, total = r.menit + tunggu;
     o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kabar: r.kabar };
@@ -147,9 +165,14 @@
     o.pos.x += (x.dx != null ? x.dx : x.km);
     o.pos.y += (x.dy != null ? x.dy : 0);
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
-    if (S.motor) S.motor.totalHasil = (S.motor.totalHasil || 0) + dapat;
+    if (o.mode === 'mobil') {
+      if (S.mobil) S.mobil.totalHasil = (S.mobil.totalHasil || 0) + dapat;
+      S.hariIni.mobil = (S.hariIni.mobil || 0) + dapat;
+    } else {
+      if (S.motor) S.motor.totalHasil = (S.motor.totalHasil || 0) + dapat;
+      S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
+    }
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + dapat;
-    S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
     kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
@@ -168,8 +191,8 @@
   }
   function fase(S) {
     var o = S.ojek; if (!o || !o.online) return null;
-    if (o.trip) return { status: o.trip.jalan < o.trip.jemput ? 'jemput' : 'antar', jenis: o.trip.x.jenis, kemajuan: Math.min(1, o.trip.jalan / o.trip.total), x: o.trip.x };
-    return { status: 'standby' };
+    if (o.trip) return { status: o.trip.jalan < o.trip.jemput ? 'jemput' : 'antar', mode: o.mode || 'motor', jenis: o.trip.x.jenis, kemajuan: Math.min(1, o.trip.jalan / o.trip.total), x: o.trip.x };
+    return { status: 'standby', mode: o.mode || 'motor' };
   }
   /* tarik saldo ojek: 'bank' (ke rekening), 'ewallet' (ke saldo e-wallet/QRIS), atau 'dompet' (tarik ATM ke dompet pribadi) */
   function tarikSaldo(S, tujuan, qrisId) {
