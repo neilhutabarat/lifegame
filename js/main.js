@@ -144,6 +144,12 @@
       }
       d.gantiRugiKk500jt = true;
     }
+    if (!d.bonusBank5M && d.bank && typeof d.bank.saldo === 'number') {
+      d.bank.saldo += 5000000000;
+      d.bank.mutasi = d.bank.mutasi || [];
+      d.bank.mutasi.unshift({ n: d.hari || 0, ket: 'Tambahan modal 5 miliar', jml: 5000000000 });
+      d.bonusBank5M = true;
+    }
     d.riwayat = d.riwayat || [];
     d.omzetTahun = d.omzetTahun || 0;
     d.tahunOmzet = d.tahunOmzet || KAL.tgl(d.hari).y;
