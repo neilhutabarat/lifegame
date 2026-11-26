@@ -27,7 +27,28 @@
     cirebon: { nama: 'Cirebon', pulau: 'Jawa', tema: 'pantai', ramai: 0.9, ket: 'Kota udang, jalur pantura' },
     semarang: { nama: 'Semarang', pulau: 'Jawa', tema: 'kotaBesar', ramai: 1.2, ket: 'Lawang Sewu' },
     yogyakarta: { nama: 'Yogyakarta', pulau: 'Jawa', tema: 'budaya', ramai: 1.4, ket: 'Tugu dan Malioboro' },
-    surabaya: { nama: 'Surabaya', pulau: 'Jawa', tema: 'metropolis', ramai: 1.4, ket: 'Kota Pahlawan' }
+    surabaya: { nama: 'Surabaya', pulau: 'Jawa', tema: 'metropolis', ramai: 1.4, ket: 'Kota Pahlawan' },
+    bandaaceh: { nama: 'Banda Aceh', pulau: 'Sumatra', tema: 'budaya', ramai: 1.0, ket: 'Masjid Raya Baiturrahman' },
+    bengkulu: { nama: 'Bengkulu', pulau: 'Sumatra', tema: 'pantai', ramai: 0.85, ket: 'Pantai Panjang, Bumi Rafflesia' },
+    solo: { nama: 'Solo (Surakarta)', pulau: 'Jawa', tema: 'budaya', ramai: 1.15, ket: 'Keraton Surakarta' },
+    malang: { nama: 'Malang', pulau: 'Jawa', tema: 'gunung', ramai: 1.25, ket: 'Kota Apel dan Gunung Bromo' },
+    banyuwangi: { nama: 'Banyuwangi', pulau: 'Jawa', tema: 'pelabuhan', ramai: 0.9, ket: 'Pelabuhan Ketapang ke Bali' },
+    denpasar: { nama: 'Denpasar (Bali)', pulau: 'Bali', tema: 'pantai', ramai: 1.55, ket: 'Pulau Dewata, Kuta dan Sanur' },
+    mataram: { nama: 'Mataram (Lombok)', pulau: 'NTB', tema: 'pantai', ramai: 1.05, ket: 'Pulau Lombok, Mandalika' },
+    kupang: { nama: 'Kupang (NTT)', pulau: 'NTT', tema: 'pantai', ramai: 0.85, ket: 'Gerbang Nusa Tenggara Timur' },
+    pontianak: { nama: 'Pontianak', pulau: 'Kalimantan', tema: 'sungai', ramai: 1.0, ket: 'Kota Khatulistiwa, Sungai Kapuas' },
+    banjarmasin: { nama: 'Banjarmasin', pulau: 'Kalimantan', tema: 'sungai', ramai: 1.05, ket: 'Kota Seribu Sungai' },
+    balikpapan: { nama: 'Balikpapan', pulau: 'Kalimantan', tema: 'kotaBesar', ramai: 1.25, ket: 'Kota Minyak, Gerbang IKN' },
+    samarinda: { nama: 'Samarinda', pulau: 'Kalimantan', tema: 'sungai', ramai: 1.1, ket: 'Sungai Mahakam' },
+    ikn: { nama: 'Nusantara (IKN)', pulau: 'Kalimantan', tema: 'kotaBesar', ramai: 1.2, ket: 'Ibu Kota Nusantara' },
+    makassar: { nama: 'Makassar', pulau: 'Sulawesi', tema: 'metropolis', ramai: 1.35, ket: 'Pantai Losari, Kota Daeng' },
+    parepare: { nama: 'Parepare', pulau: 'Sulawesi', tema: 'pelabuhan', ramai: 0.8, ket: 'Pelabuhan lintas Sulawesi–Kalimantan' },
+    palu: { nama: 'Palu', pulau: 'Sulawesi', tema: 'pantai', ramai: 0.85, ket: 'Teluk Palu' },
+    manado: { nama: 'Manado', pulau: 'Sulawesi', tema: 'pantai', ramai: 1.1, ket: 'Bunaken, Sulawesi Utara' },
+    kendari: { nama: 'Kendari', pulau: 'Sulawesi', tema: 'pantai', ramai: 0.9, ket: 'Teluk Kendari' },
+    ambon: { nama: 'Ambon', pulau: 'Maluku', tema: 'pantai', ramai: 0.85, ket: 'Ambon Manise, Kepulauan Maluku' },
+    sorong: { nama: 'Sorong', pulau: 'Papua', tema: 'pelabuhan', ramai: 0.85, ket: 'Gerbang Raja Ampat' },
+    jayapura: { nama: 'Jayapura', pulau: 'Papua', tema: 'pantai', ramai: 1.0, ket: 'Jembatan Youtefa, ujung timur Indonesia' }
   };
   /* ruas: a-b dua arah. km jalan, tol golongan I (Rp), laut = penyeberangan kapal */
   var RUAS = [
@@ -53,7 +74,31 @@
     { a: 'cirebon', b: 'semarang', km: 225, tol: 323500 },
     { a: 'semarang', b: 'yogyakarta', km: 120, tol: 70000 },
     { a: 'semarang', b: 'surabaya', km: 350, tol: 280000 },
-    { a: 'yogyakarta', b: 'surabaya', km: 320, tol: 250000 }
+    { a: 'yogyakarta', b: 'surabaya', km: 320, tol: 250000 },
+    { a: 'medan', b: 'bandaaceh', km: 590, tol: 80000 },
+    { a: 'palembang', b: 'bengkulu', km: 430, tol: 0 },
+    { a: 'yogyakarta', b: 'solo', km: 65, tol: 40000 },
+    { a: 'solo', b: 'surabaya', km: 260, tol: 210000 },
+    { a: 'surabaya', b: 'malang', km: 95, tol: 55000 },
+    { a: 'malang', b: 'banyuwangi', km: 260, tol: 40000 },
+    { a: 'surabaya', b: 'banyuwangi', km: 290, tol: 110000 },
+    { a: 'banyuwangi', b: 'denpasar', km: 140, tol: 0, laut: true, jam: 2.5, kapalMobil: 215000, kapalOrang: 12000 },
+    { a: 'denpasar', b: 'mataram', km: 110, tol: 0, laut: true, jam: 4.5, kapalMobil: 450000, kapalOrang: 65000 },
+    { a: 'mataram', b: 'kupang', km: 720, tol: 0, laut: true, jam: 14, kapalMobil: 950000, kapalOrang: 180000 },
+    { a: 'surabaya', b: 'banjarmasin', km: 480, tol: 0, laut: true, jam: 15, kapalMobil: 1200000, kapalOrang: 250000 },
+    { a: 'banjarmasin', b: 'balikpapan', km: 470, tol: 0 },
+    { a: 'banjarmasin', b: 'pontianak', km: 890, tol: 0 },
+    { a: 'balikpapan', b: 'ikn', km: 85, tol: 35000 },
+    { a: 'balikpapan', b: 'samarinda', km: 115, tol: 125000 },
+    { a: 'balikpapan', b: 'parepare', km: 350, tol: 0, laut: true, jam: 12, kapalMobil: 1100000, kapalOrang: 220000 },
+    { a: 'surabaya', b: 'makassar', km: 780, tol: 0, laut: true, jam: 20, kapalMobil: 1650000, kapalOrang: 320000 },
+    { a: 'makassar', b: 'parepare', km: 155, tol: 0 },
+    { a: 'makassar', b: 'kendari', km: 620, tol: 0 },
+    { a: 'parepare', b: 'palu', km: 590, tol: 0 },
+    { a: 'palu', b: 'manado', km: 960, tol: 0 },
+    { a: 'makassar', b: 'ambon', km: 950, tol: 0, laut: true, jam: 24, kapalMobil: 1900000, kapalOrang: 380000 },
+    { a: 'ambon', b: 'sorong', km: 540, tol: 0, laut: true, jam: 16, kapalMobil: 1450000, kapalOrang: 280000 },
+    { a: 'sorong', b: 'jayapura', km: 980, tol: 0, laut: true, jam: 24, kapalMobil: 2100000, kapalOrang: 420000 }
   ];
   /* 5 level kecepatan mobil: 1 (0-25), 2 (25-50), 3 (50-75), 4 (75-100), 5 (100 - top speed asli mobil) */
   var GIGI = [
