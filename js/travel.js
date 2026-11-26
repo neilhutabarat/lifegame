@@ -260,7 +260,7 @@
           if (tripHari > 0) {
             var krs = kursi(S, m) || Math.max(2, (m.bentuk === 'mpv' ? 6 : m.bentuk === 'suv' ? 5 : 4));
             var pnp = Math.max(1, Math.round(krs * (0.55 + Math.random() * 0.45)));
-            var tf = Math.round(R.tarifStandar(j) * (T.mult || 1) / 1000) * 1000;
+            var tf = Math.round(R.tarifStandar(j, m) * (T.mult || 1) / 1000) * 1000;
             var kotor = pnp * tf * tripHari;
             var bbmRp = Math.round((j.km / (m.kml || 12)) * M().hargaBbm(S, m.bbm) * tripHari);
             var tolRp = (j.tol || 0) * tripHari;
@@ -365,7 +365,7 @@
   /* ---------- rencana perjalanan ---------- */
   function rencana(S, tujuan) {
     var T = siapkan(S), j = R.jalur(T.di || S.kota, tujuan); if (!j) return null;
-    var m = S.mobil, gi = gigiObj(T.gigi, S), std = R.tarifStandar(j), pnp = Math.max(1, T.antri.length);
+    var m = S.mobil, gi = gigiObj(T.gigi, S), std = R.tarifStandar(j, m), pnp = Math.max(1, T.antri.length);
     var laut = 0, jamLaut = 0, kondisiTerburuk = 'mulus', bobotKond = { tol: 0, mulus: 1, bergelombang: 2, rusak: 3, tanah: 4 };
     var jamDarat = 0, liter = 0;
     j.ruas.forEach(function (r, idxR) {

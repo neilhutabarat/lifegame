@@ -148,10 +148,12 @@
     var dx = Math.round(km * Math.cos(arah) * 100) / 100;
     var dy = Math.round(km * Math.sin(arah) * 100) / 100;
     var p = platform(S.ojek.platform || 'gojek');
-    var kaliCar = isCar ? ((N.bisnisMobil && N.bisnisMobil.kaliTarifCar) || 2.3) : 1;
+    var pengaliMbl = (isCar && g.KK_RUTE && g.KK_RUTE.pengaliKelasMobil) ? g.KK_RUTE.pengaliKelasMobil(S.mobil) : 1;
+    var kaliCar = isCar ? (((N.bisnisMobil && N.bisnisMobil.kaliTarifCar) || 2.3) * pengaliMbl) : 1;
     var pot = isCar ? ((N.bisnisMobil && N.bisnisMobil.potonganCar) || 0.1) : O.potongan;
     var t = Math.round(tarif(S, km) * kaliCar / 500) * 500;
-    var lay = isCar ? (p.id === 'grab' ? 'GrabCar' : 'GoCar') : p.layanan[jenis];
+    var sufLayanan = (isCar && S.mobil) ? (S.mobil.kelas === 'sultan' ? ' VIP Sultan' : S.mobil.kelas === 'mewah' ? ' Luxe' : S.mobil.harga >= 300e6 ? ' Comfort' : '') : '';
+    var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : p.layanan[jenis];
     var tipJauh = isCar && bisaJauh ? (Math.random() < 0.45 ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
       : (Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0);
     return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),

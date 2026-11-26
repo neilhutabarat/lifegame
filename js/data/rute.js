@@ -357,9 +357,25 @@
   }
   function bulat5k(n) { return Math.round(n / 5000) * 5000; }
   /* tarif standar per kursi. Jakarta–Bandung ±Rp105.000, Jakarta–Semarang ±Rp265.000 */
-  function tarifStandar(j) {
+  /* pengali tarif berdasarkan kelas mobil (Reguler ×1,00 · Comfort/Innova ×1,25 · Mewah/Luxe ×1,65 · Sultan/VIP ×2,35) + bonus upgrade mesin */
+  function pengaliKelasMobil(k) {
+    if (!k) return 1;
+    var dasar = k.kelas === 'sultan' ? 2.35 : k.kelas === 'mewah' ? 1.65 : (k.harga >= 300e6 ? 1.25 : 1);
+    var bonusUpg = (k.upg && k.upg.mesin) ? k.upg.mesin * 0.03 : 0;
+    return Math.round((dasar + bonusUpg) * 100) / 100;
+  }
+  function labelKelasLayanan(k) {
+    if (!k) return 'Reguler';
+    if (k.kelas === 'sultan') return 'VIP Sultan';
+    if (k.kelas === 'mewah') return 'Luxe Mewah';
+    if (k.harga >= 300e6) return 'Comfort Executive';
+    return 'Reguler';
+  }
+  function tarifStandar(j, mobil) {
     var t = Math.max(DASAR.minimal, j.km * DASAR.perKm + DASAR.tetap) + (j.laut ? DASAR.tambahLaut : 0);
-    return bulat5k(t);
+    var base = bulat5k(t);
+    if (!mobil) return base;
+    return Math.round(base * pengaliKelasMobil(mobil) / 1000) * 1000;
   }
   /* kondisi jalan asli: memengaruhi kecepatan efektif, batas aman realistis jalan (vMaxJalan km/j), konsumsi BBM, dan risiko ban bocor */
   var KONDISI_JALAN = {
@@ -373,5 +389,5 @@
     var k = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
     return KONDISI_JALAN[k] || KONDISI_JALAN.mulus;
   }
-  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
+  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, pengaliKelasMobil: pengaliKelasMobil, labelKelasLayanan: labelKelasLayanan, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
 })(window);

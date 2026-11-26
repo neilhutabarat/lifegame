@@ -955,6 +955,7 @@
           baris('Lama dimiliki', lamaC + ' hari' + (lamaC >= 30 ? ' (' + (lamaC / 30).toFixed(1).replace('.', ',') + ' bln)' : '')) +
           baris('Total penghasilan', rupiah(c.totalHasil || 0)) +
           baris('Top speed · Kenyamanan', (RUTE.vmaxKendaraan ? RUTE.vmaxKendaraan(S, 'mobil') : 170) + ' km/j · ×' + nymC.toFixed(2).replace('.', ',')) +
+          (!MOBIL.pikap(S) && RUTE.pengaliKelasMobil ? baris('Kelas tarif (GoCar & Travel)', esc(RUTE.labelKelasLayanan(c)) + ' · ×' + RUTE.pengaliKelasMobil(c).toFixed(2).replace('.', ',')) : '') +
           baris('Konsumsi', cEv ? (c.kml + ' km/kWh (~' + Math.round(c.kml * c.tangki) + ' km)') : (c.kml + ' km/liter')) +
           baris(cEv ? 'Kapasitas baterai' : 'Kapasitas tangki BBM', cEv ? (c.tangki + ' kWh (~' + Math.round(c.kml * c.tangki) + ' km/cas)') : (c.tangki + ' liter (~' + Math.round(c.kml * c.tangki) + ' km penuh)')) +
           (MOBIL.pikap(S) ? '' : baris('Kapasitas kursi', TRAVEL.kursi(S, c) + ' penumpang + 1 supir')) +
@@ -3330,7 +3331,8 @@
         }).join('') + '</ul>';
       return html;
     }
-    html += '<ul class="daftar angka">' + baris('Mobil', m ? esc(m.nama) + ' · ' + TRAVEL.kursi(S) + ' kursi penumpang' : 'Belum punya mobil') + baris('Nilai dari penumpang', '★ ' + T.rating.toLocaleString('id-ID')) +
+    var klsTrvTxt = (m && RUTE.pengaliKelasMobil) ? (' · ' + RUTE.labelKelasLayanan(m) + ' (Tarif ×' + RUTE.pengaliKelasMobil(m).toFixed(2).replace('.', ',') + ')') : '';
+    html += '<ul class="daftar angka">' + baris('Mobil', m ? esc(m.nama) + ' · ' + TRAVEL.kursi(S) + ' kursi penumpang' + esc(klsTrvTxt) : 'Belum punya mobil') + baris('Nilai dari penumpang', '★ ' + T.rating.toLocaleString('id-ID')) +
       baris('Hari ini', T.hariIni.trip + ' trip · ' + rupiah(T.hariIni.bersih)) + baris('Total', T.total.trip + ' trip · ' + Math.round(T.total.km).toLocaleString('id-ID') + ' km · ' + rupiah(T.total.bersih)) + '</ul>' +
       (T.aktif ? '<p class="catatan">Travel sedang berjalan. Tutup HP untuk melanjutkan.</p>' : e ? '<p class="racik-pesan salah">' + esc(e) + '</p>' :
         '<div style="margin:10px 0"><button type="button" class="aksi" data-aksi="mulaiTravel:1">Mulai travel dari ' + esc(kota) + '</button></div>');
@@ -3340,7 +3342,7 @@
       chipTab('trvFilter', FILTER_WIL, flt) +
       '<ul class="daftar angka">' + daf.map(function (x) {
         var k = RUTE.kota[x.id], r0 = x.j.ruas[0], kd = RUTE.infoKondisi ? RUTE.infoKondisi(r0) : { nama: 'Aspal Mulus' };
-        return baris(esc(k.nama) + '<small>' + esc(k.prov || k.pulau) + (k.luas ? ' · ' + k.luas.toLocaleString('id-ID') + ' km²' : '') + ' · ' + x.j.km.toLocaleString('id-ID') + ' km · ' + esc(kd.nama) + (x.j.tol ? ' · tol ' + rupiah(x.j.tol) : '') + (x.j.laut ? ' · kapal' : '') + '</small>', rupiah(RUTE.tarifStandar(x.j)));
+        return baris(esc(k.nama) + '<small>' + esc(k.prov || k.pulau) + (k.luas ? ' · ' + k.luas.toLocaleString('id-ID') + ' km²' : '') + ' · ' + x.j.km.toLocaleString('id-ID') + ' km · ' + esc(kd.nama) + (x.j.tol ? ' · tol ' + rupiah(x.j.tol) : '') + (x.j.laut ? ' · kapal' : '') + '</small>', rupiah(RUTE.tarifStandar(x.j, m)));
       }).join('') + '</ul>' +
       '<p class="catatan">Termasuk lengkap seluruh 57 kota & kabupaten di Kalimantan Barat, Tengah, Selatan, Timur (+IKN), dan Utara dengan jarak, luas wilayah, jalur asli, dan kondisi jalan (tol, aspal mulus, bergelombang, rusak, hingga jalan tanah pedalaman).</p>';
     return html;

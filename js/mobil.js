@@ -117,8 +117,9 @@
     if (!cukup(S, km)) return 'Bensin mobil tidak cukup untuk order ' + km + ' km. Isi bensin dulu.';
     var r = jalan(S, km, 1); if (!r.ok) return r.alasan;
     var BM = N.bisnisMobil, tarifDasar = g.KK_OJEK ? g.KK_OJEK.tarif(S, km) : km * 3000;
+    var pengaliKls = (g.KK_RUTE && g.KK_RUTE.pengaliKelasMobil) ? g.KK_RUTE.pengaliKelasMobil(m) : 1;
     var promo = S.promoAktif ? (1.5 + Math.random() * 0.3) : 1;
-    var kotor = Math.round(tarifDasar * BM.kaliTarifCar * promo / 1000) * 1000;
+    var kotor = Math.round(tarifDasar * BM.kaliTarifCar * pengaliKls * promo / 1000) * 1000;
     var bersih = Math.round(kotor * (1 - BM.potonganCar) / 500) * 500;
     S.ojek.dompet += bersih;
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bersih;
