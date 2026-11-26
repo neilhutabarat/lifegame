@@ -199,6 +199,7 @@
   function angsuran(plafon, tenor) { var r = N.kur.bunga / 12; return Math.round(plafon * r / (1 - Math.pow(1 + r, -tenor))); }
   /* setelan: bank menyetujui kalau angsuran tidak lebih dari separuh rata-rata laba kotor sebulan */
   function labaBulanan(S) {
+    if (S.usaha && S.usaha.berhentiSewa && g.KK_PROPERTI && g.KK_PROPERTI.penghasilan) return g.KK_PROPERTI.penghasilan(S);
     var r = S.riwayat.slice(-30); if (!r.length) return 0;
     return r.reduce(function (t, x) { return t + x.laba; }, 0) / r.length * 30;
   }
@@ -213,7 +214,7 @@
   function ajukanKur(S, plafon, tenor) {
     if (!syaratKur(S).every(function (x) { return x.ok; })) return 'Syarat KUR belum terpenuhi.';
     var a = angsuran(plafon, tenor), batas = labaBulanan(S) / 2;
-    if (a > batas) return 'Ditolak: angsuran ' + a.toLocaleString('id-ID') + ' sebulan terlalu besar dibanding laba kedai. Coba plafon lebih kecil atau tenor lebih panjang.';
+    if (a > batas) return 'Ditolak: angsuran ' + a.toLocaleString('id-ID') + ' sebulan terlalu besar dibanding penghasilan bulanan. Coba plafon lebih kecil atau tenor lebih panjang.';
     S.kur = { status: 'menunggu', plafon: plafon, tenor: tenor, angsuran: a, siapPada: S.hari + N.kur.hariProses };
     return true;
   }

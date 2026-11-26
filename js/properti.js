@@ -166,10 +166,11 @@
     return { ok: true, teks: 'Kontrak sewa ' + r.nama + ' dihentikan.' };
   }
 
-  /* penghasilan sebulan: rata-rata laba kedai + ngojek 30 hari terakhir */
+  /* penghasilan sebulan: rata-rata penghasilan ojol + GoCar/Travel + sewa/rental + usaha 30 hari terakhir */
   function penghasilan(S) {
-    var r = (S.riwayat || []).slice(-30); if (!r.length) return 0;
-    return Math.round(r.reduce(function (t, x) { return t + (x.laba || 0) + (x.ojek || 0); }, 0) / r.length * 30);
+    var r = (S.riwayat || []).slice(-30); if (!r.length) return Math.max(0, Math.round(S.penghasilanBulanIni || 0));
+    var rata = Math.round(r.reduce(function (t, x) { return t + Math.max(0, x.laba || 0) + (x.ojek || 0) + (x.mobil || 0) + (x.rental || 0); }, 0) / r.length * 30);
+    return Math.max(rata, Math.round(S.penghasilanBulanIni || 0));
   }
   function hitung(S, tipe, dp, tenorTahun, tunai, kotaId, wil) {
     var h = harga(S, tipe, kotaId, wil), K = P.komersial;

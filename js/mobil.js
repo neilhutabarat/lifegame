@@ -181,8 +181,21 @@
     if (m.kredit) return 'Mobil masih kredit. Lunasi dulu sebelum dijual.';
     if (i === (S.mobilAktif || 0) && ((S.ojek && S.ojek.online && S.ojek.mode === 'mobil') || (S.travel && S.travel.aktif))) return 'Selesaikan GoCar/Travel dulu sebelum menjual mobil aktif.';
     var h = M().nilaiJual(S, m); S.bank.saldo += h; M().catatBank(S, 'Jual ' + m.nama, h);
-    if (S.armadaMobil && S.armadaMobil.length) { S.armadaMobil.splice(i, 1); S.mobilAktif = 0; sinkronAktif(S); }
-    else S.mobil = null;
+    if (S.armadaMobil && S.armadaMobil.length) {
+      S.armadaMobil.splice(i, 1); S.mobilAktif = 0; sinkronAktif(S);
+      if (S.sewaBarang) {
+        var baruSwM = {};
+        Object.keys(S.sewaBarang).forEach(function (k) {
+          if (k.indexOf('mobil:') === 0) {
+            var ki = +k.slice(6);
+            if (ki < i) baruSwM[k] = S.sewaBarang[k];
+            else if (ki > i) baruSwM['mobil:' + (ki - 1)] = S.sewaBarang[k];
+          } else baruSwM[k] = S.sewaBarang[k];
+        });
+        S.sewaBarang = baruSwM;
+      }
+    }
+    else { S.mobil = null; if (S.sewaBarang) delete S.sewaBarang['mobil:0']; }
     return { ok: true, harga: h };
   }
   function bayarCicilan(S) {

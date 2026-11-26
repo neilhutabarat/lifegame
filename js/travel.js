@@ -104,7 +104,10 @@
     var T = siapkan(S), kabar = [];
     if (!T.supir || !T.supir.length) return kabar;
     var tB = g.KK_KAL.tgl(nBaru), gantiBulan = tB.d === 1;
-    var m = S.mobil, bisaJalan = !!m && !(g.KK_MOBIL && g.KK_MOBIL.pikap(S)) && !T.aktif;
+    var armadaC = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    var mobilPenumpang = armadaC.filter(function (c) { return c && c.bentuk !== 'pikap'; });
+    var m = mobilPenumpang.filter(function (c) { return c !== S.mobil; })[0] || (!T.aktif ? mobilPenumpang[0] : null);
+    var bisaJalan = !!m;
     for (var i = T.supir.length - 1; i >= 0; i--) {
       var sp = T.supir[i], puas = kepuasanSupir(S, sp);
       if (puas < 30 && Math.random() < 0.25) {
@@ -124,7 +127,8 @@
         if (j) {
           var tripHari = puas >= 75 ? (Math.random() < 0.5 ? 2 : 1) : (puas >= 45 ? 1 : (Math.random() < 0.55 ? 1 : 0));
           if (tripHari > 0) {
-            var krs = Math.max(2, kursi(S)), pnp = Math.max(1, Math.round(krs * (0.55 + Math.random() * 0.45)));
+            var krs = Math.max(2, (m.bentuk === 'mpv' ? 6 : m.bentuk === 'suv' ? 5 : 4) - 1);
+            var pnp = Math.max(1, Math.round(krs * (0.55 + Math.random() * 0.45)));
             var tf = Math.round(R.tarifStandar(j) * (T.mult || 1) / 1000) * 1000;
             var kotor = pnp * tf * tripHari;
             var bbmRp = Math.round((j.km / (m.kml || 12)) * M().hargaBbm(S, m.bbm) * tripHari);
@@ -277,10 +281,10 @@
     if (dana(S) < wajib) return 'Uang untuk tol dan kapal kurang. Butuh sekitar ' + rp(wajib) + '.';
     if (S.diri.stamina < 12) return 'Kamu terlalu capek dan ngantuk untuk menyetir jauh. Istirahat dulu.';
     var m = S.mobil;
-    if (m.isi * m.tangki < 3) return 'Bensin hampir habis. Isi dulu di aplikasi Kendaraan.';
+    if (m.isi * m.tangki < 3) return m.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis. Cas dulu di aplikasi Kendaraan.' : 'Bensin hampir habis. Isi dulu di aplikasi Kendaraan.';
     var pnp = T.antri.length;
     T.trip = { dari: T.di, ke: T.tujuan, simpul: rc.jalur.simpul, ruas: rc.jalur.ruas, km: rc.km, idx: 0, kmRuas: 0, kmSelesai: 0, mulai: waktu(S), menitGerak: 0, menitHenti: 0, sisaKapal: 0,
-      gigiMenit: [0, 0, 0, 0, 0, 0, 0], tarifKursi: rc.tarif, tol: 0, kapal: 0, penalti: 0, penaltiTipe: { cepat: 0, santai: 0, biasa: 0 }, kejadian: [], bensin0: m.isi * m.tangki, peringatan: false, tolAsal: rc.tol };
+      gigiMenit: [0, 0, 0, 0, 0, 0, 0], tarifKursi: rc.tarif, tol: 0, kapal: 0, penalti: 0, penaltiTipe: { cepat: 0, santai: 0, biasa: 0 }, kejadian: [], bensin0: m.isi * m.tangki, bensinTerpakai: 0, peringatan: false, tolAsal: rc.tol };
     T.status = 'jalan';
     var kabar = masukRuas(S);
     return { ok: true, kabar: kabar, teks: pnp ? 'Berangkat ke ' + rc.nama + ' bersama ' + pnp + ' penumpang.' : 'Berangkat ke ' + rc.nama + ' tanpa penumpang.' };
@@ -342,13 +346,14 @@
     if (!m) { T.status = 'tunggu'; T.trip = null; return ['Mobil tidak ada, perjalanan dibatalkan.']; }
     var r = tr.ruas[tr.idx], kdR = R.infoKondisi ? R.infoKondisi(r) : { boros: 1, risikoBan: 1 }, v = kecepatan(S), gi = gigiObj(v.gigi, S), km = Math.min(v.kmh * dMenit / 60, r.km - tr.kmRuas);
     var liter = km / m.kml * gi.boros * (kdR.boros || 1) * (m.ngelitik ? 1.08 : 1);
+    var evM = m.bbm === 'listrik';
     if (m.isi * m.tangki < liter + 0.2) {
-      var derek = Math.min(750000, dana(S)); var bayarDerek = bayar(S, derek, 'Derek dan bensin darurat');
-      m.isi = Math.min(1, m.isi + 8 / m.tangki); tambahKejadian(T, 'Bensin habis di jalan. Derek dan bensin darurat ' + rp(bayarDerek) + '.', bayarDerek, 90, 0.7);
-      kabar.push('Bensin habis di jalan. Derek dan beli bensin darurat ' + rp(bayarDerek) + ', telat sekitar 1,5 jam.'); return kabar;
+      var derek = Math.min(750000, dana(S)); var bayarDerek = bayar(S, derek, evM ? 'Derek dan cas darurat' : 'Derek dan bensin darurat');
+      m.isi = Math.min(1, m.isi + 8 / m.tangki); tambahKejadian(T, (evM ? 'Baterai habis di jalan. Derek dan cas darurat ' : 'Bensin habis di jalan. Derek dan bensin darurat ') + rp(bayarDerek) + '.', bayarDerek, 90, 0.7);
+      kabar.push((evM ? 'Baterai mobil listrik habis di jalan. Derek dan cas darurat ' : 'Bensin habis di jalan. Derek dan beli bensin darurat ') + rp(bayarDerek) + ', telat sekitar 1,5 jam.'); return kabar;
     }
-    m.isi = Math.max(0, m.isi - liter / m.tangki); m.km += km; tr.kmRuas += km; tr.kmSelesai += km; tr.menitGerak += dMenit; tr.gigiMenit[v.gigi] += dMenit;
-    if (!tr.peringatan && m.isi < 0.12) { tr.peringatan = true; kabar.push('Bensin tinggal sedikit. Tekan Berhenti untuk isi di SPBU.'); }
+    m.isi = Math.max(0, m.isi - liter / m.tangki); tr.bensinTerpakai = (tr.bensinTerpakai || 0) + liter; m.km += km; tr.kmRuas += km; tr.kmSelesai += km; tr.menitGerak += dMenit; tr.gigiMenit[v.gigi] += dMenit;
+    if (!tr.peringatan && m.isi < 0.12) { tr.peringatan = true; kabar.push(evM ? 'Daya baterai tinggal sedikit. Tekan Berhenti untuk cas di SPKLU.' : 'Bensin tinggal sedikit. Tekan Berhenti untuk isi di SPBU.'); }
     if (m.isi > 0.3) tr.peringatan = false;
     var jamFrac = dMenit / 60, r2 = Math.random();
     if (v.gigi === 5 && v.kmh > 115 && r2 < 0.02 * jamFrac) {
@@ -451,7 +456,7 @@
       }
       n = Math.max(1, Math.min(5, n)); sumNilai += n; total += bayarKursi; rinci.push({ nama: p.nama, tipe: p.tipe, nilai: Math.round(n * 10) / 10, bayar: bayarKursi, ket: ket });
     });
-    var tujuan = tr.ke, dari = tr.dari, bensin = Math.max(0, tr.bensin0 - S.mobil.isi * S.mobil.tangki);
+    var tujuan = tr.ke, dari = tr.dari, bensin = tr.bensinTerpakai > 0 ? tr.bensinTerpakai : Math.max(0, tr.bensin0 - S.mobil.isi * S.mobil.tangki);
     var biayaPerjalanan = tr.tol + tr.kapal;
     if (pnp) {
       var bersihBayar = total + tip, bayarTunai = 0, bayarQris = 0;
@@ -469,7 +474,7 @@
     }
     T.total.km += tr.km;
     S.hariIni.travel = (S.hariIni.travel || 0) + (pnp ? total + tip - biayaPerjalanan : -biayaPerjalanan);
-    T.laporan = { dari: dari, ke: tujuan, km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10,
+    T.laporan = { dari: dari, ke: tujuan, km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10, ev: !!(S.mobil && S.mobil.bbm === 'listrik'),
       kejadian: tr.kejadian.slice(), rating: T.rating, hari: S.hari };
     kabar.push('Tiba di ' + R.nama(tujuan) + (pnp ? '. Pendapatan ' + rp(total + tip) + ' (Tunai ' + rp(bayarTunai || 0) + ', QRIS ' + rp(bayarQris || 0) + ' cair besok).' : '.'));
     T.di = tujuan; T.status = 'tunggu'; T.trip = null; T.antri = []; T.tujuan = null; T.jemput = 0; T.berikut = 0;

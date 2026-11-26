@@ -178,7 +178,8 @@
     if (adaPembersih) d.kotor = Math.max(0, d.kotor - dMenit * 0.5);
     var c = d.cuaca;
     if (c && c.hari === S.hari) {
-      if (S.menit >= c.mulai && S.menit - dMenit < c.mulai) kabar.push(c.banjir ? 'Hujan deras, jalan depan kedai banjir. Pembeli jarang datang.' : 'Hujan turun. Pembeli berkurang, pesanan antar naik.');
+      var drvOnly = !!(S.usaha && S.usaha.berhentiSewa);
+      if (S.menit >= c.mulai && S.menit - dMenit < c.mulai) kabar.push(drvOnly ? (c.banjir ? 'Hujan deras, beberapa ruas jalan banjir. Order ojol & GoCar naik!' : 'Hujan turun. Order ojol & GoCar makin ramai!') : (c.banjir ? 'Hujan deras, jalan depan kedai banjir. Pembeli jarang datang.' : 'Hujan turun. Pembeli berkurang, pesanan antar naik.'));
       if (S.menit >= c.selesai && S.menit - dMenit < c.selesai) kabar.push('Hujan reda.');
     }
     var p = dMenit / 60;

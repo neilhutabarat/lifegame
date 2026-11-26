@@ -100,8 +100,21 @@
     if (m.kredit) return 'Motor masih kredit. Lunasi dulu sebelum dijual.';
     if (S.ojek && S.ojek.online && i === (S.motorAktif || 0)) return 'Matikan aplikasi driver dulu.';
     var h = nilaiJual(S, m); S.bank.saldo += h; catatBank(S, 'Jual ' + m.nama, h);
-    if (S.armadaMotor && S.armadaMotor.length) { S.armadaMotor.splice(i, 1); S.motorAktif = 0; sinkronAktif(S); }
-    else S.motor = null;
+    if (S.armadaMotor && S.armadaMotor.length) {
+      S.armadaMotor.splice(i, 1); S.motorAktif = 0; sinkronAktif(S);
+      if (S.sewaBarang) {
+        var baruSw = {};
+        Object.keys(S.sewaBarang).forEach(function (k) {
+          if (k.indexOf('motor:') === 0) {
+            var ki = +k.slice(6);
+            if (ki < i) baruSw[k] = S.sewaBarang[k];
+            else if (ki > i) baruSw['motor:' + (ki - 1)] = S.sewaBarang[k];
+          } else baruSw[k] = S.sewaBarang[k];
+        });
+        S.sewaBarang = baruSw;
+      }
+    }
+    else { S.motor = null; if (S.sewaBarang) delete S.sewaBarang['motor:0']; }
     return { ok: true, harga: h };
   }
   function bayarCicilan(S) {
@@ -178,10 +191,10 @@
   /* isi bensin per liter atau penuh; jenis bisa dipilih. Bensin di bawah anjuran pabrik (mis. Pertalite di motor
      yang dianjurkan Pertamax) membuat mesin ngelitik: sedikit lebih sering mogok sampai diisi bensin yang sesuai */
   var RON = { pertalite: 90, pertamax: 92, turbo: 98 };
-  function bayarTunaiMotor(S, biaya) {
+  function bayarTunaiMotor(S, biaya, ket) {
     if (S.usaha && S.usaha.berhentiSewa) {
       if (g.KK_UANG.bayarDompet && g.KK_UANG.bayarDompet(S, biaya)) return true;
-      if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; return true; }
+      if (S.bank.saldo >= biaya) { S.bank.saldo -= biaya; catatBank(S, ket || 'Biaya kendaraan motor', -biaya); return true; }
       return false;
     }
     if (g.KK_UANG.laci(S) >= biaya) { bayarLaci(S, biaya); return true; }
@@ -195,7 +208,7 @@
     var kosong = Math.round((m.tangki - m.isi) * 100) / 100; if (kosong < 0.2) return 'Tangki sudah penuh.';
     liter = liter === 'penuh' || !liter ? kosong : Math.min(+liter, kosong);
     var biaya = Math.round(liter * hargaBbm(S, jenis) / 100) * 100;
-    if (!bayarTunaiMotor(S, biaya)) return 'Uang di dompet & rekening' + ' tidak cukup untuk bensin ' + rp(biaya) + '.';
+    if (!bayarTunaiMotor(S, biaya, 'Bensin motor ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L')) return 'Uang di dompet & rekening tidak cukup untuk bensin ' + rp(biaya) + '.';
     m.isi = Math.min(m.tangki, m.isi + liter); S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
     m.ngelitik = RON[jenis] < RON[m.bbm];
     return { ok: true, liter: liter, biaya: biaya, jenis: jenis, ngelitik: m.ngelitik };
@@ -208,7 +221,7 @@
   function rawat(S, jenis) {
     var m = S.motor; if (!m) return 'Belum punya motor.';
     var biaya = jenis === 'oli' ? R.oli : R.servis;
-    if (!bayarTunaiMotor(S, biaya)) return 'Dana tidak cukup untuk ' + jenis + ' (' + rp(biaya) + ').';
+    if (!bayarTunaiMotor(S, biaya, (jenis === 'oli' ? 'Ganti oli ' : 'Servis ') + m.nama)) return 'Dana tidak cukup untuk ' + jenis + ' (' + rp(biaya) + ').';
     S.hariIni.bengkel = (S.hariIni.bengkel || 0) + biaya;
     if (jenis === 'oli') m.kmOli = m.km; else { m.kmServis = m.km; m.kmOli = m.km; }
     return true;
@@ -217,7 +230,7 @@
     var m = S.motor; if (!m) return 'Belum punya motor.';
     var a = N.aksesoris.filter(function (x) { return x.id === id; })[0];
     if (m.aks[id]) return 'Sudah terpasang.';
-    if (!bayarTunaiMotor(S, a.harga)) return 'Dana tidak cukup.';
+    if (!bayarTunaiMotor(S, a.harga, 'Perlengkapan motor: ' + a.nama)) return 'Dana tidak cukup.';
     m.aks[id] = true; S.hariIni.belanja = (S.hariIni.belanja || 0) + a.harga;
     return true;
   }
@@ -288,7 +301,7 @@
     m.km += km;
     if (Math.random() < peluangMogok(S)) {
       var bengkel = 50000 + Math.floor(Math.random() * 3) * 50000;
-      menit += 60; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; bayarTunaiMotor(S, bengkel);
+      menit += 60; S.hariIni.bengkel = (S.hariIni.bengkel || 0) + bengkel; bayarTunaiMotor(S, bengkel, 'Bengkel motor mogok ' + m.nama);
       kabar.push('Motor mogok di jalan. Ke bengkel ' + rp(bengkel) + ', telat sekitar 1 jam.');
     }
     return { ok: true, menit: menit, kabar: kabar };

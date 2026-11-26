@@ -622,7 +622,7 @@
     if (!S.hp) return 'HP belum siap.';
     if (!S.hp.cas) {
       if (S.diri.posisi === 'kos' && S.rumah.padam) return 'Listrik ' + tempat(S) + ' sedang padam. Isi token PLN dulu.';
-      if (S.diri.posisi === 'kedai' && g.KK_USAHA && !g.KK_USAHA.listrikNyala(S)) return 'Listrik kedai sedang padam.';
+      if (S.diri.posisi === 'kedai' && g.KK_USAHA && !g.KK_USAHA.listrikNyala(S)) return 'Listrik sedang padam.';
       if (S.hp.baterai >= 100) return 'Baterai HP sudah penuh 100%.';
     }
     S.hp.cas = !S.hp.cas;
@@ -876,7 +876,7 @@
       balasan = '"Halo kak! Aman kok di rumah, nanti kalau butuh bantuan kabarin aja ya."';
     } else {
       balasan = jenis === 'telepon'
-        ? '"Halo Ayah/Ibu! ' + kl.nama + ' baru selesai belajar nih. Nanti pulang bawain cemilan kedai ya!"'
+        ? '"Halo Ayah/Ibu! ' + kl.nama + ' baru selesai belajar nih. Nanti pulang bawain jajan ya!"'
         : '"Siap Ayah/Ibu! ' + kl.nama + ' baik-baik di rumah, semangat kerjanya ya!"';
     }
     kl.bahagia = Math.min(100, (kl.bahagia || 80) + (jenis === 'telepon' ? 10 : 6));
@@ -1178,6 +1178,11 @@
       if (jenisTarget === 'pasangan' && g.KK_TEMAN.hubunganKl(p) < 25) return p.nama + ' lagi marah besar dan menolak. Perbaiki hubungan dulu.';
     }
 
+    var pakaiGerigi = false;
+    if (pakaiKondom && (S.kesehatan.kondom || 0) <= 0) {
+      return 'Stok kondom habis! Beli dulu di aplikasi Apotek & RS.';
+    }
+
     var biayaPsk = 300000;
     if (jenisTarget === 'teman' && !lokasiObj) {
       var hotel = g.KK_TEMAN.HOTEL;
@@ -1196,9 +1201,7 @@
       }
     }
 
-    var pakaiGerigi = false;
     if (pakaiKondom) {
-      if ((S.kesehatan.kondom || 0) <= 0) return 'Stok kondom habis! Beli dulu di aplikasi Apotek K-24.';
       S.kesehatan.kondom--;
       if ((S.kesehatan.kondomGerigi || 0) > 0) {
         S.kesehatan.kondomGerigi--;
@@ -1384,13 +1387,13 @@
     var pg = (S.profil && S.profil.gender) || 'cewek';
     if (peran === 'istri' && pg === 'cewek' && false) return '';
     if (S.bank.saldo + ((S.uang && S.uang.dompet) || 0) < pk.biaya) return 'Uang tidak cukup untuk ' + pk.nama + ' (' + rp(pk.biaya) + ').';
+    var r = tambahKeluarga(S, x.nama, x.gender, x.tglLahir, peran);
+    if (typeof r === 'string') return r;
     var dompet = (S.uang && S.uang.dompet) || 0, dariDompet = Math.min(dompet, pk.biaya);
     if (dariDompet > 0 && g.KK_UANG.bayarDompet) g.KK_UANG.bayarDompet(S, dariDompet);
     var sisa = pk.biaya - dariDompet;
     if (sisa > 0) { S.bank.saldo -= sisa; S.bank.mutasi.unshift({ n: S.hari, ket: 'Biaya pernikahan (' + pk.nama + ')', jml: -sisa }); }
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + pk.biaya;
-    var r = tambahKeluarga(S, x.nama, x.gender, x.tglLahir, peran);
-    if (typeof r === 'string') { S.bank.saldo += sisa; return r; }
     var baru = S.keluarga[S.keluarga.length - 1]; baru.bahagia = Math.min(100, 70 + Math.round(x.hubungan / 5));
     T.hapus(S, id);
     S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - 20);
@@ -1414,19 +1417,20 @@
       var k = S.game.konsol[id], kunci = 'konsol:' + id;
       list.push({ kunci: kunci, nama: k.nama, kat: 'Rental PS', tarif: TARIF_SEWA_KONSOL[id] || 50000, aktif: !!sw[kunci], ket: 'Disewa harian oleh anak kos/tetangga sekitar' });
     });
-    /* motor di armada (selain yang sedang dipakai narik ojol) */
+    /* motor di armada */
     var armada = S.armadaMotor || (S.motor ? [S.motor] : []);
     armada.forEach(function (m, idx) {
       var kunci = 'motor:' + idx;
-      var tarif = Math.max(45000, Math.min(350000, Math.round((m.hargaBeli || 18000000) * 0.0032 / 5000) * 5000));
-      list.push({ kunci: kunci, nama: m.nama + ' (Motor #' + (idx + 1) + ')', kat: 'Rental Motor', tarif: tarif, aktif: !!sw[kunci], ket: idx === (S.motorAktif || 0) ? 'Motor utama (tetap bisa disewakan ke kenalan)' : 'Motor cadangan armada' });
+      var tarif = Math.max(45000, Math.min(350000, Math.round((m.harga || m.hargaBeli || 18000000) * 0.0032 / 5000) * 5000));
+      list.push({ kunci: kunci, nama: m.nama + (armada.length > 1 ? ' (Motor #' + (idx + 1) + ')' : ''), kat: 'Rental Motor', tarif: tarif, aktif: !!sw[kunci], ket: idx === (S.motorAktif || 0) ? 'Motor utama (tetap bisa disewakan ke kenalan)' : 'Motor cadangan armada' });
     });
-    /* mobil */
-    if (S.mobil) {
-      var kunciM = 'mobil:0';
-      var tarifM = Math.max(220000, Math.min(1500000, Math.round((S.mobil.hargaBeli || 200000000) * 0.0014 / 10000) * 10000));
-      list.push({ kunci: kunciM, nama: S.mobil.nama, kat: 'Rental Mobil', tarif: tarifM, aktif: !!sw[kunciM], ket: 'Lepas kunci harian dalam kota' });
-    }
+    /* semua mobil di armada */
+    var armadaC = S.armadaMobil || (S.mobil ? [S.mobil] : []);
+    armadaC.forEach(function (mb, idx) {
+      var kunciM = 'mobil:' + idx;
+      var tarifM = Math.max(220000, Math.min(2500000, Math.round((mb.harga || mb.hargaBeli || 200000000) * 0.0014 / 10000) * 10000));
+      list.push({ kunci: kunciM, nama: mb.nama + (armadaC.length > 1 ? ' (Mobil #' + (idx + 1) + ')' : ''), kat: 'Rental Mobil', tarif: tarifM, aktif: !!sw[kunciM], ket: idx === (S.mobilAktif || 0) ? 'Mobil utama · lepas kunci harian dalam kota' : 'Mobil cadangan armada · lepas kunci harian' });
+    });
     /* tablet & laptop di S.gadget */
     Object.keys(S.gadget || {}).forEach(function (id) {
       var gm = gadgetModel(id);
@@ -1667,7 +1671,7 @@
         var bag = x.kunci.split(':');
         if (bag[0] === 'konsol' && S.game.konsol[bag[1]]) S.game.konsol[bag[1]].pakai = (S.game.konsol[bag[1]].pakai || 0) + 2;
         else if (bag[0] === 'motor' && S.armadaMotor && S.armadaMotor[+bag[1]]) S.armadaMotor[+bag[1]].km = (S.armadaMotor[+bag[1]].km || 0) + 35;
-        else if (bag[0] === 'mobil' && S.mobil) S.mobil.km = (S.mobil.km || 0) + 60;
+        else if (bag[0] === 'mobil') { var mbS = (S.armadaMobil && S.armadaMobil[+bag[1]]) || S.mobil; if (mbS) mbS.km = (mbS.km || 0) + 60; }
         else if (bag[0] === 'gadget' && S.gadget && S.gadget[bag[1]]) S.gadget[bag[1]].pakai = (S.gadget[bag[1]].pakai || 0) + 1;
         else if (bag[0] === 'barang') catatPakai(S, bag[1]);
       });
@@ -2166,6 +2170,11 @@
   function masukRumahSakit(S, layananId, targetId) {
     var l = LAYANAN_RS.filter(function (x) { return x.id === layananId; })[0];
     if (!l) return 'Layanan rumah sakit tidak ditemukan.';
+    var kl = null;
+    if (targetId && targetId !== 'pemain') {
+      kl = (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
+      if (!kl) return 'Pasien tidak ditemukan.';
+    }
     var bp = (S.kesehatan && S.kesehatan.bpjs) || { kelas: 0, aktif: false };
     var biaya = hargaRs(S, layananId);
     if (biaya > 0) {
@@ -2175,14 +2184,12 @@
       S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
     }
     var namaP = S.namaPemain || 'Kamu';
-    if (!targetId || targetId === 'pemain') {
+    if (!kl) {
       S.diri.sakit = null;
       S.diri.kesehatan = l.sehat >= 100 ? 100 : Math.min(100, (S.diri.kesehatan || 60) + l.sehat);
       S.diri.stamina = Math.min(100, Math.max(S.diri.stamina, l.stamina));
       S.diri.kebalSampai = Math.max(S.diri.kebalSampai || -1, S.hari + l.kebal);
     } else {
-      var kl = (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
-      if (!kl) return 'Pasien tidak ditemukan.';
       namaP = kl.nama;
       kl.sakit = null;
       kl.bahagia = Math.min(100, (kl.bahagia || 80) + 18);
