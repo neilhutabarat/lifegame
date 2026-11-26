@@ -171,18 +171,23 @@
     return true;
   }
   function bekasBaru(S) {
-    var unit = [], thnKini = KAL.tgl(S.hari).y;
-    for (var i = 0; i < 4; i++) {
-      var b = N.motorBekas[i === 0 ? 0 : 1 + Math.floor(Math.random() * (N.motorBekas.length - 1))];
-      if (i === 1 && Math.random() < 0.5) b = N.motorBekas[0];
-      if (b.jarang && Math.random() > b.jarang) b = N.motorBekas[1];
-      var thnMaks = Math.min(b.tahun[1], thnKini), thnMin = Math.min(b.tahun[0], thnMaks);
+    var unit = [], thnKini = KAL.tgl(S.hari).y, pool = N.motorBekas.slice(), dipakai = {};
+    /* selalu tampilkan 10 unit motor bekas beragam agar pilihan luas (termasuk minimal 2 motor terjangkau <12jt) */
+    var murah = pool.filter(function (x) { return x.min <= 7e6; });
+    for (var i = 0; i < 10; i++) {
+      var calon = i < 2 && murah.length ? murah[i % murah.length] : pool[Math.floor(Math.random() * pool.length)];
+      if (calon.jarang && Math.random() > calon.jarang) calon = pool[Math.floor(Math.random() * Math.min(10, pool.length))];
+      var coba = 0;
+      while (dipakai[calon.id] && coba++ < 8) calon = pool[Math.floor(Math.random() * pool.length)];
+      dipakai[calon.id] = true;
+      var thnMaks = Math.min(calon.tahun[1], thnKini), thnMin = Math.min(calon.tahun[0], thnMaks);
       var tahun = thnMin + Math.floor(Math.random() * (thnMaks - thnMin + 1));
       var kondisi = ['baik', 'sedang', 'kurang'][Math.floor(Math.random() * 3)];
-      var mutu = { baik: 0.8, sedang: 0.45, kurang: 0.15 }[kondisi] + (Math.random() - 0.5) * 0.2;
-      var harga = Math.round((b.min + (b.maks - b.min) * Math.max(0, Math.min(1, mutu))) / 100000) * 100000;
-      unit.push({ id: b.id, tahun: tahun, kondisi: kondisi, km: 15000 + Math.floor(Math.random() * 60000), harga: harga });
+      var mutu = { baik: 0.8, sedang: 0.48, kurang: 0.16 }[kondisi] + (Math.random() - 0.5) * 0.16;
+      var harga = Math.round((calon.min + (calon.maks - calon.min) * Math.max(0, Math.min(1, mutu))) / 100000) * 100000;
+      unit.push({ id: calon.id, tahun: tahun, kondisi: kondisi, km: 12000 + Math.floor(Math.random() * 62000), harga: harga });
     }
+    unit.sort(function (a, b) { return a.harga - b.harga; });
     S.pasarBekas = { minggu: Math.floor(S.hari / 7), unit: unit };
   }
   function beliBekas(S, i, cara) {

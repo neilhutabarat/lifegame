@@ -77,7 +77,41 @@
     S.armadaMobil.forEach(normMobil);
     sinkronAktif(S);
     if (!S.bisnisMobil) S.bisnisMobil = { carAktif: false, hariIni: { trip: 0, bersih: 0 }, total: { trip: 0, bersih: 0 } };
+    if (!S.pasarMobilBekas || !S.pasarMobilBekas.unit || !S.pasarMobilBekas.unit.length) bekasBaru(S);
     return S;
+  }
+  function bekasBaru(S) {
+    var pool = (N.mobilBekas || []).slice(), unit = [], thnKini = KAL.tgl(S.hari || 0).y, dipakai = {};
+    if (!pool.length) { S.pasarMobilBekas = { minggu: Math.floor((S.hari || 0) / 7), unit: [] }; return; }
+    for (var i = 0; i < Math.min(8, pool.length); i++) {
+      var b = pool[Math.floor(Math.random() * pool.length)], coba = 0;
+      while (dipakai[b.id] && coba++ < 10) b = pool[Math.floor(Math.random() * pool.length)];
+      dipakai[b.id] = true;
+      var thnMaks = Math.min(b.tahun[1], thnKini), thnMin = Math.min(b.tahun[0], thnMaks);
+      var tahun = thnMin + Math.floor(Math.random() * (thnMaks - thnMin + 1));
+      var kondisi = ['baik', 'sedang', 'kurang'][Math.floor(Math.random() * 3)];
+      var mutu = { baik: 0.82, sedang: 0.5, kurang: 0.18 }[kondisi] + (Math.random() - 0.5) * 0.14;
+      var harga = Math.round((b.min + (b.maks - b.min) * Math.max(0, Math.min(1, mutu))) / 500000) * 500000;
+      unit.push({ id: b.id, tahun: tahun, kondisi: kondisi, km: 28000 + Math.floor(Math.random() * 110000), harga: harga });
+    }
+    unit.sort(function (a, b) { return a.harga - b.harga; });
+    S.pasarMobilBekas = { minggu: Math.floor((S.hari || 0) / 7), unit: unit };
+  }
+  function beliBekas(S, i, cara) {
+    var e = cekGarasi(S); if (e) return e;
+    if (!S.pasarMobilBekas || !S.pasarMobilBekas.unit || !S.pasarMobilBekas.unit[i]) return 'Unit mobil bekas sudah terjual.';
+    var u = S.pasarMobilBekas.unit[i];
+    var b = (N.mobilBekas || []).filter(function (x) { return x.id === u.id; })[0];
+    if (!b) return 'Model mobil bekas tidak dikenal.';
+    var by = bayarDealer(S, u.harga, 'Beli bekas ' + b.nama.replace(' (bekas)', '') + ' ' + u.tahun, cara);
+    if (by !== true) return by;
+    var unit = mobilBaru({ id: b.id, nama: b.nama.replace(' (bekas)', '') + ' ' + u.tahun, harga: u.harga, kml: b.kml, bbm: b.bbm, tangki: b.tangki, kursi: b.kursi, muat: b.muat, bentuk: b.bentuk, kelas: b.kelas }, S);
+    unit.bekas = { kondisi: u.kondisi, tahun: u.tahun };
+    unit.km = u.km; unit.kmServis = u.km - Math.floor(Math.random() * 8000); unit.kmBan = u.km - Math.floor(Math.random() * 25000);
+    unit.pajakTempo = S.hari + 30 + Math.floor(Math.random() * 300);
+    tambahArmada(S, unit);
+    S.pasarMobilBekas.unit.splice(i, 1);
+    return true;
   }
   function pilihAktif(S, idx) {
     if (!S.armadaMobil || !S.armadaMobil[idx]) return 'Mobil tidak ditemukan.';
@@ -389,6 +423,7 @@
       kabar.push('Kemarin bisnis mobil/travel ' + S.bisnisMobil.hariIni.trip + ' trip, bersih ' + rp(S.bisnisMobil.hariIni.bersih) + '.');
       S.bisnisMobil.hariIni = { trip: 0, bersih: 0 };
     }
+    if (S.pasarMobilBekas && Math.floor(nBaru / 7) !== S.pasarMobilBekas.minggu) bekasBaru(S);
     S.armadaMobil = S.armadaMobil || (S.mobil ? [S.mobil] : []);
     var armada = S.armadaMobil;
     if (!armada.length) return kabar;
@@ -419,7 +454,7 @@
     return kabar;
   }
 
-  g.KK_MOBIL = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
+  g.KK_MOBIL = { siapkan: siapkan, pilihAktif: pilihAktif, jumlah: jumlah, punya: punya, pikap: pikap, kapasitasPenumpang: kapasitasPenumpang, daftarCar: daftarCar, ambilOrderCar: ambilOrderCar, ruteTravel: ruteTravel, jalanTravel: jalanTravel, jalanAngkutan: jalanAngkutan, model: model, beliTunai: beliTunai, beliKredit: beliKredit, beliBekas: beliBekas, bekasBaru: bekasBaru, hitungKredit: hitungKredit, jual: jual, bayarCicilan: bayarCicilan, lunasi: lunasi,
     UPGRADE_MAKS: UPGRADE_MAKS, UPGRADE_INFO: UPGRADE_INFO, biayaUpgrade: biayaUpgrade, upgrade: upgrade,
     isiBensin: isiBensin, servis: servis, tagihanPajak: tagihanPajak, bayarPajak: bayarPajak, telatServis: telatServis, telatBan: telatBan, hargaBan: hargaBan, gantiBan: gantiBan, kecepatan: kecepatan, gigi: gigi, kmhGigi: kmhGigi, cukup: cukup, jalan: jalan, gantiHari: gantiHari };
 })(window);

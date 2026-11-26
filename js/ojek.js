@@ -37,9 +37,10 @@
   }
   function aktif(S, pid) { var d = S.ojek.daftar[pid]; return !!d && d.status === 'aktif'; }
   function daftar(S, pid) {
-    if (!g.KK_MOTOR.punya(S)) return 'Daftar driver butuh motor sendiri, SIM C, dan STNK. Beli motor dulu.';
-    if (S.ojek.daftar[pid]) return 'Sudah mendaftar di ' + platform(pid).nama + '.';
-    S.ojek.daftar[pid] = { status: 'proses', aktifPada: S.hari + O.verifikasiHari };
+    if (!g.KK_MOTOR.punya(S)) return 'Daftar driver butuh motor sendiri, SIM C, dan STNK. Beli motor dulu di Dealer Motor atau Agen Bekas.';
+    if (S.ojek.daftar[pid] && S.ojek.daftar[pid].status === 'aktif') return 'Sudah aktif sebagai mitra ' + platform(pid).nama + '.';
+    /* verifikasi e-KYC digital langsung aktif hari itu juga agar pemain bisa langsung bekerja */
+    S.ojek.daftar[pid] = { status: 'aktif', aktifPada: S.hari };
     return true;
   }
   function putus(S, pid) {

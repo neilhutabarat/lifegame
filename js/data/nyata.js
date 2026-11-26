@@ -519,14 +519,42 @@
       { id: 's1000rr', kelas: 'moge', nama: 'BMW S 1000 RR M Package', harga: 1150000000, kml: 14, bbm: 'turbo', tangki: 16.5, muat: 2, kelebihan: 'Superbike Jerman 210 HP dengan winglet karbon' },
       { id: 'panigalev4', kelas: 'moge', nama: 'Ducati Panigale V4 S', harga: 1390000000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Superbike V4 Italia paling eksotis, top speed 308 km/j!' }
     ],
-    /* motor bekas: perkiraan pasar; tiap unit punya tahun, kilometer, dan kondisi */
+    /* motor bekas (16 model populer Indonesia): harga pasar bekas nyata sesuai tahun & kondisi */
     motorBekas: [
-      { id: 'rxking', nama: 'Yamaha RX-King', min: 15e6, maks: 75e6, kml: 27, bbm: 'pertamax', tangki: 10, muat: 4, olisamping: true, kelebihan: 'Gengsi tinggi, harga naik terus, lebih sering mogok', tahun: [1995, 2008] },
-      { id: 'beat-bekas', nama: 'Honda BeAT (bekas)', min: 7e6, maks: 12e6, kml: 55, bbm: 'pertalite', tangki: 4, muat: 4, kelebihan: 'Murah, gampang dijual lagi', tahun: [2015, 2022] },
-      { id: 'supra-bekas', nama: 'Honda Supra X 125 (bekas)', min: 7e6, maks: 11e6, kml: 50, bbm: 'pertalite', tangki: 4, muat: 4, kelebihan: 'Kuat untuk jalan rusak', kuat: true, tahun: [2012, 2021] },
-      /* Yamaha R6 berhenti diproduksi 2020 dan tidak dijual resmi lagi: hanya unit bekas. Harga baru 2021 Rp270 juta (oto.com); harga bekas perkiraan */
-      { id: 'r6', nama: 'Yamaha YZF-R6 (bekas)', min: 180e6, maks: 300e6, kml: 16, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Sudah berhenti produksi; jarang ada yang jual', tahun: [2017, 2020], jarang: 0.25 },
-      { id: 'cbr250-bekas', nama: 'Honda CBR250RR (bekas)', min: 42e6, maks: 58e6, kml: 28, bbm: 'pertamax', tangki: 14.5, muat: 2, kelebihan: 'Sport 250 cc lebih murah', tahun: [2018, 2023] }
+      { id: 'beat-bekas', nama: 'Honda BeAT CBS (bekas)', min: 65e5, maks: 135e5, kml: 56, bbm: 'pertalite', tangki: 4.2, muat: 4, kelebihan: 'Paling irit & sparepart melimpah', tahun: [2016, 2024] },
+      { id: 'supra-bekas', nama: 'Honda Supra X 125 (bekas)', min: 6e6, maks: 125e5, kml: 52, bbm: 'pertalite', tangki: 4, muat: 4, kelebihan: 'Bandul kuat untuk jalan rusak', kuat: true, tahun: [2013, 2023] },
+      { id: 'revo-bekas', nama: 'Honda Revo Fit (bekas)', min: 55e5, maks: 11e6, kml: 58, bbm: 'pertalite', tangki: 4, muat: 4, kelebihan: 'Bebek paling hemat untuk pemula', tahun: [2015, 2023] },
+      { id: 'mio-bekas', nama: 'Yamaha Mio M3 125 (bekas)', min: 6e6, maks: 115e5, kml: 48, bbm: 'pertalite', tangki: 4.2, muat: 4, kelebihan: 'Ringan & lincah di gang sempit', tahun: [2016, 2023] },
+      { id: 'scoopy-bekas', nama: 'Honda Scoopy Prestige (bekas)', min: 11e6, maks: 185e5, kml: 56, bbm: 'pertalite', tangki: 4.2, muat: 6, kelebihan: 'Retro stylish & irit BBM', tahun: [2018, 2024] },
+      { id: 'vario-bekas', nama: 'Honda Vario 125 (bekas)', min: 115e5, maks: 195e5, kml: 49, bbm: 'pertalite', tangki: 5.5, muat: 6, kelebihan: 'Bagasi luas, favorit driver ojol', tahun: [2017, 2024] },
+      { id: 'vario160-bekas', nama: 'Honda Vario 160 ABS (bekas)', min: 18e6, maks: 245e5, kml: 45, bbm: 'pertamax', tangki: 5.5, muat: 6, kelebihan: 'Tenaga 160 cc responsif & dek rata', tahun: [2022, 2025] },
+      { id: 'aerox-bekas', nama: 'Yamaha Aerox 155 (bekas)', min: 16e6, maks: 235e5, kml: 42, bbm: 'pertamax', tangki: 5.5, muat: 4, kelebihan: 'Skutik sporty bertenaga & keren', tahun: [2018, 2024] },
+      { id: 'nmax-bekas', nama: 'Yamaha NMAX 155 (bekas)', min: 18e6, maks: 27e6, kml: 40, bbm: 'pertamax', tangki: 7.1, muat: 6, kelebihan: 'Nyaman jarak jauh, jok empuk', tahun: [2018, 2024] },
+      { id: 'pcx160-bekas', nama: 'Honda PCX 160 (bekas)', min: 21e6, maks: 285e5, kml: 44, bbm: 'pertamax', tangki: 8.1, muat: 6, kelebihan: 'Maxi elegan tangki besar 8,1 L', tahun: [2021, 2025] },
+      { id: 'satriafu-bekas', nama: 'Suzuki Satria F150 FI (bekas)', min: 11e6, maks: 19e6, kml: 39, bbm: 'pertamax', tangki: 4, muat: 2, kelebihan: 'Ayam jago DOHC kencang & lincah', tahun: [2016, 2023] },
+      { id: 'klx150-bekas', nama: 'Kawasaki KLX 150 (bekas)', min: 17e6, maks: 26e6, kml: 36, bbm: 'pertalite', tangki: 6.9, muat: 2, kelebihan: 'Trail tangguh libas banjir & lubang', kuat: true, tahun: [2017, 2024] },
+      { id: 'cbr150-bekas', nama: 'Honda CBR150R (bekas)', min: 17e6, maks: 28e6, kml: 39, bbm: 'pertamax', tangki: 12, muat: 2, kelebihan: 'Sport fairing 150 cc harian', tahun: [2018, 2024] },
+      { id: 'vespa-bekas', nama: 'Vespa Primavera 150 (bekas)', min: 32e6, maks: 45e6, kml: 39, bbm: 'pertamax', tangki: 7, muat: 4, kelebihan: 'Retro premium Italia harga stabil', tahun: [2019, 2024] },
+      { id: 'cbr250-bekas', nama: 'Honda CBR250RR (bekas)', min: 38e6, maks: 56e6, kml: 28, bbm: 'pertamax', tangki: 14.5, muat: 2, kelebihan: 'Sport 250 cc 2-silinder bergengsi', tahun: [2018, 2024] },
+      { id: 'rxking', nama: 'Yamaha RX-King Kolektor', min: 18e6, maks: 75e6, kml: 27, bbm: 'pertamax', tangki: 10, muat: 4, olisamping: true, kelebihan: 'Legenda 2-tak, harga kolektor naik', tahun: [1995, 2008] },
+      { id: 'r6', nama: 'Yamaha YZF-R6 (bekas)', min: 180e6, maks: 300e6, kml: 16, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Supersport langka (stop produksi)', tahun: [2017, 2020], jarang: 0.28 }
+    ],
+    /* mobil bekas (14 model populer Indonesia): harga pasar bekas nyata sesuai tahun & kondisi */
+    mobilBekas: [
+      { id: 'ayla', kelas: 'keluarga', bentuk: 'hatch', nama: 'Daihatsu Ayla 1.2 (bekas)', min: 82e6, maks: 128e6, kml: 16, bbm: 'pertalite', tangki: 36, kursi: 5, muat: 50, kelebihan: 'City car ekonomis untuk GoCar pemula', tahun: [2017, 2024] },
+      { id: 'agya', kelas: 'keluarga', bentuk: 'hatch', nama: 'Toyota Agya G (bekas)', min: 88e6, maks: 138e6, kml: 16, bbm: 'pertalite', tangki: 33, kursi: 5, muat: 50, kelebihan: 'Irit, lincah, pajak & perawatan murah', tahun: [2017, 2024] },
+      { id: 'sigra', kelas: 'keluarga', bentuk: 'mpv', nama: 'Daihatsu Sigra R (bekas)', min: 95e6, maks: 138e6, kml: 15, bbm: 'pertalite', tangki: 36, kursi: 7, muat: 80, kelebihan: 'MPV 7-seater bekas paling terjangkau', tahun: [2018, 2024] },
+      { id: 'calya', kelas: 'keluarga', bentuk: 'mpv', nama: 'Toyota Calya G (bekas)', min: 102e6, maks: 148e6, kml: 14, bbm: 'pertalite', tangki: 36, kursi: 7, muat: 80, kelebihan: 'Favorit GoCar & Travel pemula (6 pnp)', tahun: [2018, 2024] },
+      { id: 'granmax', kelas: 'pikap', bentuk: 'pikap', nama: 'Daihatsu Gran Max PU (bekas)', min: 85e6, maks: 135e6, kml: 11, bbm: 'pertalite', tangki: 43, kursi: 2, muat: 400, kelebihan: 'Pikap angkutan barang tahan banting', tahun: [2017, 2024] },
+      { id: 'brio', kelas: 'keluarga', bentuk: 'hatch', nama: 'Honda Brio Satya E (bekas)', min: 118e6, maks: 168e6, kml: 16, bbm: 'pertalite', tangki: 35, kursi: 5, muat: 55, kelebihan: 'Harga jual kembali kuat & sangat irit', tahun: [2018, 2024] },
+      { id: 'xenia', kelas: 'keluarga', bentuk: 'mpv', nama: 'Daihatsu Xenia R (bekas)', min: 115e6, maks: 185e6, kml: 13, bbm: 'pertalite', tangki: 43, kursi: 7, muat: 100, kelebihan: 'MPV keluarga luas & awet', tahun: [2017, 2024] },
+      { id: 'avanza', kelas: 'keluarga', bentuk: 'mpv', nama: 'Toyota Avanza G (bekas)', min: 128e6, maks: 205e6, kml: 13, bbm: 'pertalite', tangki: 43, kursi: 7, muat: 100, kelebihan: 'MPV sejuta umat, andalan travel & GoCar', tahun: [2017, 2024] },
+      { id: 'ertiga', kelas: 'keluarga', bentuk: 'mpv', nama: 'Suzuki Ertiga GX (bekas)', min: 135e6, maks: 215e6, kml: 15, bbm: 'pertamax', tangki: 45, kursi: 7, muat: 100, kelebihan: 'Suspensi empuk, penumpang betah', tahun: [2018, 2024] },
+      { id: 'l300', kelas: 'pikap', bentuk: 'pikap', nama: 'Mitsubishi L300 Diesel (bekas)', min: 135e6, maks: 195e6, kml: 10, bbm: 'solar', tangki: 47, kursi: 2, muat: 600, kelebihan: 'Pikap diesel muatan terbesar', tahun: [2016, 2024] },
+      { id: 'xpander', kelas: 'keluarga', bentuk: 'mpv', nama: 'Mitsubishi Xpander Ultimate (bekas)', min: 185e6, maks: 265e6, kml: 13, bbm: 'pertamax', tangki: 45, kursi: 7, muat: 105, kelebihan: 'Kabin senyap & kelas Comfort', tahun: [2018, 2024] },
+      { id: 'innova', kelas: 'keluarga', bentuk: 'mpv', nama: 'Innova Reborn 2.4 Diesel (bekas)', min: 275e6, maks: 365e6, kml: 13, bbm: 'solar', tangki: 55, kursi: 8, muat: 125, kelebihan: 'Raja travel 7 pnp + diesel irit', tahun: [2017, 2024] },
+      { id: 'fortuner', kelas: 'mewah', bentuk: 'suv', nama: 'Toyota Fortuner VRZ (bekas)', min: 365e6, maks: 495e6, kml: 11, bbm: 'solar', tangki: 80, kursi: 7, muat: 110, kelebihan: 'SUV gagah tarif Luxe & tangki 80 L', tahun: [2018, 2024] },
+      { id: 'alphard', kelas: 'sultan', bentuk: 'van', nama: 'Toyota Alphard G (bekas)', min: 680e6, maks: 980e6, kml: 9, bbm: 'pertamax', tangki: 75, kursi: 7, muat: 120, kelebihan: 'MPV VIP Sultan harga lebih hemat', tahun: [2018, 2023] }
     ],
     /* menjual kendaraan ke pedagang (perkiraan): tahun pertama turun 20%, lalu 8% setahun, dan berkurang menurut kilometer */
     jualKendaraan: { awal: 0.8, perTahun: 0.08, perKm: 0.000002, min: 0.3 },
@@ -638,7 +666,7 @@
         { id: 'gojek', nama: 'Gojek', app: 'Gojek Driver', warna: '#00aa13', layanan: { penumpang: 'GoRide', barang: 'GoSend', makanan: 'GoFood' } },
         { id: 'grab', nama: 'Grab', app: 'Grab Driver', warna: '#00b14f', layanan: { penumpang: 'GrabBike', barang: 'GrabExpress', makanan: 'GrabFood' } }
       ],
-      verifikasiHari: 3, tunai: 0.3
+      verifikasiHari: 0, tunai: 0.3
     },
 
     /* properti. Rumah subsidi FLPP: harga maksimal Rp166 juta (Jawa dan Sumatera) dan Rp185 juta (Jabodetabek), DP mulai 1%, bunga 5% tetap,
