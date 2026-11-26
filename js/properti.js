@@ -5,6 +5,8 @@
   var N = g.KK_NYATA, KAL = g.KK_KAL, P = N.properti;
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+  function blnNo(n) { var t = KAL.tgl(n); return t.y * 12 + t.m; }
+  function blnTagih(S, tempo) { var t = KAL.tgl(S.hari); return t.y * 12 + t.m + (t.d > tempo ? 1 : 0); }
   function M() { return g.KK_MOTOR; }
   /* daftar kota & daerah seluruh Indonesia untuk beli properti (gabungan peta rute + kota utama Nusantara) */
   var KOTA_EXTRA = {
@@ -213,7 +215,7 @@
     M().catatBank(S, (tunai ? 'Beli tunai ' : 'Uang muka + biaya KPR ') + T.nama + ' (' + lblLok + ')', -x.bayarAwal);
     var baru = { id: 'rmh-' + S.hari + '-' + Math.floor(Math.random() * 999), tipe: tipe, kota: kId, wilayah: wId, alamatWilayah: nmW, lokasiTeks: lblLok, nama: T.nama, harga: x.harga, status: 'akad', kunciPada: S.hari + P.akadHari, dihuni: false, dibeli: S.hari,
       ruangan: buatRuangan(tipe), tagihanAir: 0, sewa: null,
-      kpr: tunai ? null : { angsuran: x.angsuran, pokok: x.pokok, bunga: x.bunga, fixSampai: tipe === 'subsidi' ? Infinity : S.hari + P.komersial.tahunFix * 365, sisa: x.tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0 } };
+      kpr: tunai ? null : { angsuran: x.angsuran, pokok: x.pokok, bunga: x.bunga, fixSampai: tipe === 'subsidi' ? Infinity : S.hari + P.komersial.tahunFix * 365, sisa: x.tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), terbayarSampai: blnNo(S.hari), tunggakan: 0, bulanTelat: 0 } };
     S.properti.daftarRumah.push(baru);
     sinkronRumahUtama(S);
     S.properti.pernahRumah = true;
@@ -271,8 +273,10 @@
     if (S.bank.saldo < bA) return 'Saldo rekening tidak cukup untuk bayar angsuran KPR ' + rp(bA) + '.';
     S.bank.saldo -= bA; M().catatBank(S, 'Bayar angsuran KPR ' + nmLok, -bA);
     k.pokok = Math.max(0, k.pokok - (bA - k.pokok * k.bunga / 12)); k.sisa--;
+    var nb = blnTagih(S, k.tempo);
+    k.terbayarSampai = Math.max(k.terbayarSampai || (nb - 1), nb - 1) + 1;
     if (k.sisa <= 0 && !k.tunggakan) { r.kpr = null; return { ok: true, jml: bA, teks: 'Angsuran terakhir ' + rp(bA) + ' dibayar! KPR ' + nmLok + ' LUNAS!' }; }
-    return { ok: true, jml: bA, teks: 'Angsuran KPR ' + nmLok + ' (' + rp(bA) + ') dibayar. Sisa ' + k.sisa + ' bulan.' };
+    return { ok: true, jml: bA, teks: 'Angsuran KPR ' + nmLok + ' (' + rp(bA) + ') dibayar (bulan ini lunas, tidak ditagih lagi). Sisa ' + k.sisa + ' bulan.' };
   }
   function nilaiRumah(S, rObj) { var r = rObj || S.properti.rumah; return r ? Math.round(r.harga * Math.pow(1.04, (S.hari - r.dibeli) / 365) / 1e6) * 1e6 : 0; }
   function sisaPokok(S, rObj) { var r = rObj || S.properti.rumah; return r && r.kpr ? Math.round(r.kpr.pokok + r.kpr.tunggakan) : 0; }
@@ -340,9 +344,10 @@
           kabar.push('💧 Tagihan air ledeng (PDAM) ' + nmLok + ' ' + rp(r.tagihanAir) + ' belum dibayar!');
         }
       }
-      var k = r.kpr;
+      var k = r.kpr, blnBaruP = blnNo(nBaru);
       if (k && (k.sisa > 0 || k.tunggakan > 0)) {
-        if (k.sisa > 0 && tB.d === k.tempo) {
+        if (k.sisa > 0 && tB.d === k.tempo && (k.terbayarSampai || 0) < blnBaruP) {
+          k.terbayarSampai = blnBaruP;
           if (r.tipe !== 'subsidi' && nBaru >= k.fixSampai && k.bunga !== P.komersial.bungaFloating) {
             k.bunga = P.komersial.bungaFloating; k.angsuran = Math.round(anuitas(k.pokok, k.bunga, k.sisa) / 100) * 100;
             kabar.push('Masa bunga tetap KPR ' + nmLok + ' habis. Bunga floating ' + (k.bunga * 100).toFixed(1).replace('.', ',') + '%, angsuran jadi ' + rp(k.angsuran) + '.');

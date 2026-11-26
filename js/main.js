@@ -184,32 +184,33 @@
       var kelSakit = (S.keluarga || []).filter(function (kl) { return !!kl.sakit; });
       var tunggakGaji = STAF.totalTunggakanGaji ? STAF.totalTunggakanGaji(S) : 0;
       /* Notice pembayaran & cicilan di HUD (mobil, motor, rumah KPR, PDAM, KK, nafkah, BPJS, cicilan hadiah) agar tidak lupa */
-      var tglSkrg = KAL.tgl(S.hari).d;
+      var tSkrg = KAL.tgl(S.hari), tglSkrg = tSkrg.d, blnIniH = tSkrg.y * 12 + tSkrg.m;
       function selisihTgl(tempo) { var sd = tempo - tglSkrg; if (sd < 0) sd += 30; return sd; }
+      function blnTagihH(tempo) { return blnIniH + (tglSkrg > tempo ? 1 : 0); }
       var chipBayar = '';
       if (S.tagihanNafkah && !S.tagihanNafkah.lunas) {
         chipBayar += '<span class="chip libur bisa-tap" data-chipapp="keluarga">📢 Nafkah ' + rupiahPendek(S.tagihanNafkah.jumlah) + '</span>';
-      } else if (DIRI.pasanganAktif(S) && ((S.profil && S.profil.gender) === 'cowok') && DIRI.sisaHariNafkah && DIRI.sisaHariNafkah(S) <= 3) {
+      } else if (DIRI.pasanganAktif(S) && ((S.profil && S.profil.gender) === 'cowok') && (S.nafkahTerbayarSampai || 0) < (blnIniH + 1) && DIRI.sisaHariNafkah && DIRI.sisaHariNafkah(S) <= 3) {
         chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">💝 Nafkah H-' + DIRI.sisaHariNafkah(S) + '</span>';
       }
       (S.armadaMobil || (S.mobil ? [S.mobil] : [])).forEach(function (mb) {
         if (!mb || !mb.kredit) return;
-        var kmbl = mb.kredit, hMbl = selisihTgl(kmbl.tempo);
+        var kmbl = mb.kredit, hMbl = selisihTgl(kmbl.tempo), sudahBlnM = (kmbl.terbayarSampai || 0) >= blnTagihH(kmbl.tempo);
         if (kmbl.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="motor">🚗 Tunggakan ' + esc(mb.nama.split(' ')[0]) + ' ' + rupiahPendek(kmbl.tunggakan + (kmbl.denda || 0)) + '</span>';
-        else if (hMbl <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🚗 Cicilan ' + esc(mb.nama.split(' ')[0]) + ' ' + (hMbl === 0 ? 'Hari ini' : 'H-' + hMbl) + ' · ' + rupiahPendek(kmbl.angsuran) + '</span>';
+        else if (!sudahBlnM && hMbl <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🚗 Cicilan ' + esc(mb.nama.split(' ')[0]) + ' ' + (hMbl === 0 ? 'Hari ini' : 'H-' + hMbl) + ' · ' + rupiahPendek(kmbl.angsuran) + '</span>';
       });
       (S.armadaMotor || (S.motor ? [S.motor] : [])).forEach(function (mt) {
         if (!mt || !mt.kredit) return;
-        var kmtr = mt.kredit, hMtr = selisihTgl(kmtr.tempo);
+        var kmtr = mt.kredit, hMtr = selisihTgl(kmtr.tempo), sudahBlnMt = (kmtr.terbayarSampai || 0) >= blnTagihH(kmtr.tempo);
         if (kmtr.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="motor">🏍️ Tunggakan ' + esc(mt.nama.split(' ')[0]) + ' ' + rupiahPendek(kmtr.tunggakan + (kmtr.denda || 0)) + '</span>';
-        else if (hMtr <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🏍️ Cicilan ' + esc(mt.nama.split(' ')[0]) + ' ' + (hMtr === 0 ? 'Hari ini' : 'H-' + hMtr) + ' · ' + rupiahPendek(kmtr.angsuran) + '</span>';
+        else if (!sudahBlnMt && hMtr <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="motor">🏍️ Cicilan ' + esc(mt.nama.split(' ')[0]) + ' ' + (hMtr === 0 ? 'Hari ini' : 'H-' + hMtr) + ' · ' + rupiahPendek(kmtr.angsuran) + '</span>';
       });
       (PROPERTI.daftarRumah ? PROPERTI.daftarRumah(S) : []).forEach(function (rm) {
         if (rm.tagihanAir > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="properti">💧 PDAM ' + rupiahPendek(rm.tagihanAir) + '</span>';
         if (rm.kpr) {
-          var hKpr = selisihTgl(rm.kpr.tempo);
+          var hKpr = selisihTgl(rm.kpr.tempo), sudahBlnK = (rm.kpr.terbayarSampai || 0) >= blnTagihH(rm.kpr.tempo);
           if (rm.kpr.tunggakan > 0) chipBayar += '<span class="chip libur bisa-tap" data-chipapp="properti">🏠 Tunggakan KPR ' + rupiahPendek(rm.kpr.tunggakan) + '</span>';
-          else if (hKpr <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="properti">🏠 KPR ' + (hKpr === 0 ? 'Hari ini' : 'H-' + hKpr) + ' · ' + rupiahPendek(rm.kpr.angsuran) + '</span>';
+          else if (!sudahBlnK && hKpr <= 3) chipBayar += '<span class="chip event bisa-tap" data-chipapp="properti">🏠 KPR ' + (hKpr === 0 ? 'Hari ini' : 'H-' + hKpr) + ' · ' + rupiahPendek(rm.kpr.angsuran) + '</span>';
         }
       });
       if (S.kk && S.kk.status && S.kk.status !== 'tidak' && ((S.kk.tagihan || 0) + (S.kk.denda || 0)) > 0) {
@@ -220,8 +221,11 @@
         chipBayar += '<span class="chip libur bisa-tap" data-chipapp="apotek">🏥 Tunggakan BPJS ' + rupiahPendek(S.kesehatan.bpjs.tunggakan) + '</span>';
       }
       if (S.cicilanHadiah && S.cicilanHadiah.length && DIRI.sisaHariNafkah && DIRI.sisaHariNafkah(S) <= 3) {
-        var totHdh = S.cicilanHadiah.reduce(function (a, x) { return a + (x.angsuran || 0); }, 0);
-        chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">🎁 Cicilan Hadiah H-' + DIRI.sisaHariNafkah(S) + ' · ' + rupiahPendek(totHdh) + '</span>';
+        var belumHdh = S.cicilanHadiah.filter(function (x) { return (x.terbayarSampai || 0) < (blnIniH + 1); });
+        if (belumHdh.length) {
+          var totHdh = belumHdh.reduce(function (a, x) { return a + (x.angsuran || 0); }, 0);
+          chipBayar += '<span class="chip event bisa-tap" data-chipapp="keluarga">🎁 Cicilan Hadiah H-' + DIRI.sisaHariNafkah(S) + ' · ' + rupiahPendek(totHdh) + '</span>';
+        }
       }
       var chipDunia = chipBayar + (d.sakit ? '<span class="chip libur bisa-tap" data-chipapp="apotek">Sakit: ' + esc(d.sakit.nama) + ' (Apotek & RS)</span>' : '') +
         (d.hiv ? '<span class="chip libur">HIV+ · ' + ((S.kesehatan && S.kesehatan.arvSampai >= S.hari) ? 'ARV Aktif' : 'Beli ARV di Apotek!') + '</span>' : '') +
@@ -834,7 +838,7 @@
           (m.ngelitik ? baris('Mesin', 'ngelitik, bensin kurang sesuai', 'rugi') : '') +
           baris('Peluang mogok per perjalanan', (MOTOR.peluangMogok(S) * 100).toFixed(1).replace('.', ',') + '%') +
           (m.bekas ? baris('Kondisi', 'Bekas ' + m.bekas.tahun + ', ' + m.bekas.kondisi) : '') +
-          (m.kredit ? baris('Angsuran', rupiah(m.kredit.angsuran) + ' tiap tanggal ' + m.kredit.tempo + ', sisa ' + m.kredit.sisa + ' bulan' + (m.kredit.tunggakan ? ', nunggak ' + rupiah(m.kredit.tunggakan) : ''), m.kredit.tunggakan ? 'rugi' : '') : '') +
+          (m.kredit ? baris('Angsuran', rupiah(m.kredit.angsuran) + ' tiap tgl ' + m.kredit.tempo + ', sisa ' + m.kredit.sisa + ' bln' + (m.kredit.tunggakan ? ', nunggak ' + rupiah(m.kredit.tunggakan) : ((m.kredit.terbayarSampai || 0) >= (KAL.tgl(S.hari).y * 12 + KAL.tgl(S.hari).m + (KAL.tgl(S.hari).d > m.kredit.tempo ? 1 : 0)) ? ' · ✓ Bulan ini lunas' : '')), m.kredit.tunggakan ? 'rugi' : '') : '') +
           baris('Pajak tahunan', pjk ? 'jatuh tempo ' + namaTanggal(m.pajakTempo) : (m.pajakTempo - S.hari) + ' hari lagi') +
           baris('Harga jual (usia & odometer)', m.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, m))) + '</ul>' +
           (listrik ? '' : '<p class="catatan">Isi bensin: ketuk bar Bensin di bagian atas layar.</p>') +
@@ -864,7 +868,7 @@
           baris('Top speed · Kenyamanan', (RUTE.vmaxKendaraan ? RUTE.vmaxKendaraan(S, 'mobil') : 170) + ' km/j · ×' + nymC.toFixed(2).replace('.', ',')) +
           baris('Konsumsi', cEv ? (c.kml + ' km/kWh (~' + Math.round(c.kml * c.tangki) + ' km)') : (c.kml + ' km/liter')) +
           '</ul>' + barRawat('Servis', svm, N.rawatMobil.servisKm) + barRawat('Ban (4 roda)', sisaBanC, banKmC) + '<ul class="daftar angka">' + (c.ngelitik ? baris('Mesin', 'ngelitik, bensin kurang sesuai', 'rugi') : '') +
-          (c.kredit ? baris('Angsuran', rupiah(c.kredit.angsuran) + ' tiap tanggal ' + c.kredit.tempo + ', sisa ' + c.kredit.sisa + ' bulan' + (c.kredit.tunggakan ? ', nunggak ' + rupiah(c.kredit.tunggakan) : ''), c.kredit.tunggakan ? 'rugi' : '') : '') +
+          (c.kredit ? baris('Angsuran', rupiah(c.kredit.angsuran) + ' tiap tgl ' + c.kredit.tempo + ', sisa ' + c.kredit.sisa + ' bln' + (c.kredit.tunggakan ? ', nunggak ' + rupiah(c.kredit.tunggakan) : ((c.kredit.terbayarSampai || 0) >= (KAL.tgl(S.hari).y * 12 + KAL.tgl(S.hari).m + (KAL.tgl(S.hari).d > c.kredit.tempo ? 1 : 0)) ? ' · ✓ Bulan ini lunas' : '')), c.kredit.tunggakan ? 'rugi' : '') : '') +
           baris('Pajak tahunan', pj ? 'jatuh tempo ' + namaTanggal(c.pajakTempo) : (c.pajakTempo - S.hari) + ' hari lagi') +
           baris('Harga jual (usia & odometer)', c.kredit ? 'lunasi kredit dulu' : rupiah(MOTOR.nilaiJual(S, c))) + '</ul>' +
           '<p class="catatan">' + (cEv ? 'Cas baterai EV: ketuk bar Bensin/Daya di bagian atas layar.' : 'Isi bensin: ketuk bar Bensin di bagian atas layar.') + '</p>' +
@@ -1000,7 +1004,7 @@
           '<ul class="daftar angka" style="margin-top:6px">' +
           baris('Status', stTeks) +
           baris('Harga beli · Nilai kini', rupiah(r.harga) + ' · ' + rupiah(PROPERTI.nilaiRumah(S, r))) +
-          (k ? baris('Angsuran KPR<small>tiap tgl ' + k.tempo + ', sisa ' + k.sisa + ' bln</small>', rupiah(k.angsuran)) + (k.tunggakan ? baris('Tunggakan', rupiah(k.tunggakan), 'rugi') : '') : baris('Kepemilikan', 'lunas, SHM di tangan')) +
+          (k ? baris('Angsuran KPR<small>tiap tgl ' + k.tempo + ', sisa ' + k.sisa + ' bln' + (!k.tunggakan && (k.terbayarSampai || 0) >= (KAL.tgl(S.hari).y * 12 + KAL.tgl(S.hari).m + (KAL.tgl(S.hari).d > k.tempo ? 1 : 0)) ? ' · ✓ Bulan ini lunas' : '') + '</small>', rupiah(k.angsuran)) + (k.tunggakan ? baris('Tunggakan', rupiah(k.tunggakan), 'rugi') : '') : baris('Kepemilikan', 'lunas, SHM di tangan')) +
           (!r.sewa ? baris('Air ledeng (PDAM)', r.tagihanAir > 0 ? ('Belum lunas: ' + rupiah(r.tagihanAir)) : ('Lunas (±' + rupiah(airEst) + '/bln)'), r.tagihanAir > 0 ? 'rugi' : '') : baris('Air ledeng (PDAM)', 'ditanggung penyewa')) +
           baris('Jarak ke pusat kota', (dkR.jarak[r.tipe] + ((PROPERTI.WILAYAH && PROPERTI.WILAYAH[r.wilayah] && PROPERTI.WILAYAH[r.wilayah].jarakTambah) || 0)) + ' km') + '</ul>' +
           '<div class="chip-baris" style="margin-top:6px">' +
@@ -1611,9 +1615,12 @@
         }).join('') + '</ul>';
     }
     if (S.cicilanHadiah && S.cicilanHadiah.length) {
+      var blnNextK = KAL.tgl(S.hari).y * 12 + KAL.tgl(S.hari).m + 1;
       html += '<h3 class="subjudul">🎁 Cicilan Hadiah Aktif</h3><ul class="daftar angka" style="margin-bottom:10px">' +
-        S.cicilanHadiah.map(function (ch) {
-          return baris(esc(ch.nama) + ' <small>untuk ' + esc(ch.untuk) + ' · sisa ' + ch.sisa + ' bln</small>', rupiah(ch.angsuran) + '/bln');
+        S.cicilanHadiah.map(function (ch, idxH) {
+          var lunasBlnH = (ch.terbayarSampai || 0) >= blnNextK;
+          return '<li><span>' + esc(ch.nama) + '<small>untuk ' + esc(ch.untuk) + ' · sisa ' + ch.sisa + ' bln' + (lunasBlnH ? ' · ✓ Bulan depan lunas' : '') + '</small></span>' +
+            '<span><button type="button" class="chip-tombol" data-aksi="bayarHadiah:' + idxH + '">💳 ' + rupiahPendek(ch.angsuran) + '</button></span></li>';
         }).join('') + '</ul>';
     }
 
@@ -2089,6 +2096,7 @@
     else if (nama === 'jualMobil') { var jb = MOBIL.jual(S); hasilAksi(jb && jb.ok ? true : jb, jb && jb.ok ? 'Mobil terjual ' + rupiah(jb.harga) + ', masuk rekening.' : ''); }
     else if (nama === 'lunasMobil') { var lb = MOBIL.lunasi(S); hasilAksi(lb && lb.ok ? true : lb, lb && lb.ok ? 'Kredit mobil lunas, dibayar ' + rupiah(lb.jml) + '.' : ''); }
     else if (nama === 'bayarKpr') { var bkp = PROPERTI.bayarCicilanKpr(S, +nilai); hasilAksi(bkp && bkp.ok ? true : bkp, bkp && bkp.teks); }
+    else if (nama === 'bayarHadiah') { var bhd = DIRI.bayarCicilanHadiah(S, +nilai); hasilAksi(bhd && bhd.ok ? true : bhd, bhd && bhd.teks); }
     else if (nama === 'daftarDriver') hasilAksi(OJEK.daftar(S, nilai), 'Pendaftaran dikirim. Akun aktif dalam ' + N.ojol.verifikasiHari + ' hari.');
     else if (nama === 'putusDriver') hasilAksi(OJEK.putus(S, nilai), 'Kerjasama mitra driver ' + OJEK.platform(nilai).nama + ' resmi diputus.');
     else if (nama === 'onlineDriver') return mulaiNarik(nilai);

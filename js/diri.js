@@ -7,6 +7,7 @@
   var TURUN = { kenyang: 5, minum: 7, stamina: 4.2 };
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+  function blnNo(n) { var t = KAL.tgl(n); return t.y * 12 + t.m; }
   function kota(S) {
     var k = N.kota.filter(function (x) { return x.id === S.kota; })[0];
     if (k) return k;
@@ -1830,6 +1831,7 @@
     });
     /* nafkah wajib bulanan setiap awal bulan (40% penghasilan suami) */
     if (gantiBulan) {
+      var blnBaruD = blnNo(nBaru);
       var gPemain = (S.profil && S.profil.gender) || 'cewek';
       var pasList = daftarPasangan(S);
       if (pasList.length) {
@@ -1840,8 +1842,13 @@
           }
           var hasilBln = Math.max(0, Math.round(S.penghasilanBulanIni || 0));
           var jmlNafkah = Math.max(500000, Math.round(hasilBln * 0.4 / 1000) * 1000);
-          S.tagihanNafkah = { bulan: t.m, tahun: t.y, penghasilan: hasilBln, jumlah: jmlNafkah, lunas: false };
-          kabar.push('📢 Notice Nafkah Awal Bulan: 40% dari penghasilan bulan lalu (' + rp(hasilBln) + ') = ' + rp(jmlNafkah) + '. Segera bayar di aplikasi Keluarga agar keharmonisan terjaga!');
+          if ((S.nafkahTerbayarSampai || 0) >= blnBaruD) {
+            S.tagihanNafkah = { bulan: t.m, tahun: t.y, penghasilan: hasilBln, jumlah: 0, lunas: true };
+            kabar.push('💝 Nafkah bulan ini sudah kamu bayarkan lebih awal (lunas, tidak ditagih lagi).');
+          } else {
+            S.tagihanNafkah = { bulan: t.m, tahun: t.y, penghasilan: hasilBln, jumlah: jmlNafkah, lunas: false };
+            kabar.push('📢 Notice Nafkah Awal Bulan: 40% dari penghasilan bulan lalu (' + rp(hasilBln) + ') = ' + rp(jmlNafkah) + '. Segera bayar di aplikasi Keluarga agar keharmonisan terjaga!');
+          }
         } else {
           var nafkahMasuk = Math.round((kota(S).umk || 4000000) * 1.15 * 0.4 / 1000) * 1000;
           S.bank.saldo += nafkahMasuk;
@@ -1854,6 +1861,8 @@
       if (S.cicilanHadiah && S.cicilanHadiah.length) {
         for (var ci = S.cicilanHadiah.length - 1; ci >= 0; ci--) {
           var ch = S.cicilanHadiah[ci];
+          if ((ch.terbayarSampai || 0) >= blnBaruD) continue;
+          ch.terbayarSampai = blnBaruD;
           if (S.bank.saldo >= ch.angsuran) {
             S.bank.saldo -= ch.angsuran;
             S.bank.mutasi.unshift({ n: nBaru, ket: 'Cicilan ' + ch.nama + ' (' + ch.untuk + ')', jml: -ch.angsuran });
@@ -1886,7 +1895,8 @@
       }
       /* iuran bulanan BPJS Kesehatan (Kelas 1/2/3 asli) */
       var bp = S.kesehatan && S.kesehatan.bpjs;
-      if (bp && bp.kelas > 0 && BPJS_KELAS[bp.kelas]) {
+      if (bp && bp.kelas > 0 && BPJS_KELAS[bp.kelas] && (bp.terbayarSampai || 0) < blnBaruD) {
+        bp.terbayarSampai = blnBaruD;
         var jmlP = 1 + (S.keluarga ? S.keluarga.length : 0);
         var iuranB = BPJS_KELAS[bp.kelas].iuran * jmlP;
         if (S.bank.saldo >= iuranB) {
@@ -2015,7 +2025,7 @@
       S.bank.saldo -= dpRp;
       S.bank.mutasi.unshift({ n: S.hari, ket: 'DP Kredit ' + it.nama + ' untuk ' + target.nama, jml: -dpRp });
       S.cicilanHadiah = S.cicilanHadiah || [];
-      S.cicilanHadiah.push({ nama: it.nama, untuk: target.nama, angsuran: angs, sisa: it.tenor });
+      S.cicilanHadiah.push({ nama: it.nama, untuk: target.nama, angsuran: angs, sisa: it.tenor, terbayarSampai: blnNo(S.hari) });
       target.hadiah = target.hadiah || [];
       target.hadiah.push(it.nama + ' (Kredit)');
       if (targetJenis === 'teman') target.hubungan = Math.min(100, (target.hubungan || 50) + it.naik);
@@ -2031,11 +2041,26 @@
     else target.bahagia = Math.min(100, (target.bahagia || 80) + it.naik);
     return { ok: true, teks: '🎁 Kamu membelikan ' + it.nama + ' (' + rp(it.harga) + ') untuk ' + target.nama + '! Dia sangat senang!' };
   }
+  function bayarCicilanHadiah(S, idx) {
+    if (!S.cicilanHadiah || !S.cicilanHadiah[idx]) return 'Cicilan hadiah tidak ditemukan.';
+    var ch = S.cicilanHadiah[idx];
+    if (S.bank.saldo < ch.angsuran) return 'Saldo rekening tidak cukup untuk bayar cicilan ' + ch.nama + ' (' + rp(ch.angsuran) + ').';
+    S.bank.saldo -= ch.angsuran;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Bayar cicilan ' + ch.nama + ' (' + ch.untuk + ')', jml: -ch.angsuran });
+    ch.sisa--;
+    var blnNext = blnNo(S.hari) + 1;
+    ch.terbayarSampai = Math.max(ch.terbayarSampai || (blnNext - 1), blnNext - 1) + 1;
+    if (ch.sisa <= 0) {
+      S.cicilanHadiah.splice(idx, 1);
+      return { ok: true, teks: '🎉 Cicilan ' + ch.nama + ' untuk ' + ch.untuk + ' sudah LUNAS!' };
+    }
+    return { ok: true, teks: 'Cicilan ' + ch.nama + ' (' + rp(ch.angsuran) + ') dibayar (bulan ini lunas, tidak ditagih lagi). Sisa ' + ch.sisa + ' bln.' };
+  }
   /* ---------- keuangan pasangan, nafkah 40%, pinjam/bantuan beli, aktivitas keluarga, penginapan/hotel ---------- */
   function bayarNafkah(S) {
     var pas = pasanganAktif(S); if (!pas) return 'Belum punya pasangan.';
-    var tg = S.tagihanNafkah;
-    var jml = (tg && !tg.lunas) ? tg.jumlah : Math.max(500000, Math.round((S.penghasilanBulanIni || 0) * 0.4 / 1000) * 1000);
+    var tg = S.tagihanNafkah, adaTagih = !!(tg && !tg.lunas);
+    var jml = adaTagih ? tg.jumlah : Math.max(500000, Math.round((S.penghasilanBulanIni || 0) * 0.4 / 1000) * 1000);
     if (S.bank.saldo >= jml) {
       S.bank.saldo -= jml;
       S.bank.mutasi.unshift({ n: S.hari, ket: 'Nafkah bulanan untuk ' + pas.nama, jml: -jml });
@@ -2045,10 +2070,16 @@
     pas.dompet = (pas.dompet || 0) + Math.round(jml * 0.35);
     pas.tabungan = (pas.tabungan || 0) + (jml - Math.round(jml * 0.35));
     pas.bahagia = Math.min(100, (pas.bahagia || 80) + 12);
-    if (tg) tg.lunas = true;
+    var blnIni = blnNo(S.hari);
+    if (adaTagih) {
+      tg.lunas = true;
+      S.nafkahTerbayarSampai = Math.max(S.nafkahTerbayarSampai || 0, blnIni);
+    } else {
+      S.nafkahTerbayarSampai = Math.max(S.nafkahTerbayarSampai || blnIni, blnIni) + 1;
+    }
     /* uang istri dipakai untuk seluruh kebutuhan rumah tangga sebulan */
     S.rumahTangga = { aktifSampai: Math.max((S.rumahTangga && S.rumahTangga.aktifSampai) || S.hari, S.hari) + 30, paket: 'cukup' };
-    return { ok: true, teks: 'Nafkah ' + rp(jml) + ' diberikan ke ' + pas.nama + '. Kebutuhan rumah tangga 30 hari terjamin & keharmonisan naik!' };
+    return { ok: true, teks: 'Nafkah ' + rp(jml) + ' diberikan ke ' + pas.nama + (adaTagih ? ' (lunas bulan ini).' : ' (dibayar lebih awal untuk bulan depan, tidak ditagih lagi tgl 1).') + ' Kebutuhan rumah tangga 30 hari terjamin!' };
   }
   function pinjamPasangan(S, id, jml) {
     var ps = (S.keluarga || []).filter(function (x) { return x.id === id; })[0] || pasanganAktif(S);
@@ -2159,7 +2190,7 @@
     if (S.bank.saldo >= totalIuran) { S.bank.saldo -= totalIuran; S.bank.mutasi.unshift({ n: S.hari, ket: 'Iuran ' + k.nama + ' (' + jmlOrg + ' org)', jml: -totalIuran }); }
     else if ((S.uang.dompet || 0) >= totalIuran) S.uang.dompet -= totalIuran;
     else return 'Saldo tidak cukup untuk iuran bulan pertama ' + k.nama + ' (' + rp(totalIuran) + ' untuk ' + jmlOrg + ' org).';
-    S.kesehatan.bpjs = { kelas: kelas, aktif: true, tunggakan: 0 };
+    S.kesehatan.bpjs = { kelas: kelas, aktif: true, tunggakan: 0, terbayarSampai: blnNo(S.hari) };
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + totalIuran;
     return { ok: true, teks: '🏥 ' + k.nama + ' aktif untuk ' + jmlOrg + ' orang! Iuran ' + rp(totalIuran) + '/bln. Biaya Rumah Sakit kini jauh lebih murah!' };
   }
@@ -2270,7 +2301,7 @@
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
-    bayarNafkah: bayarNafkah, sisaHariNafkah: sisaHariNafkah, bayarKebutuhanKeluarga: bayarKebutuhanKeluarga, JALAN_KELUARGA: JALAN_KELUARGA, jalanKeluarga: jalanKeluarga, KATALOG_HADIAH: KATALOG_HADIAH, belikanHadiah: belikanHadiah, pinjamPasangan: pinjamPasangan, bayarUtangPasangan: bayarUtangPasangan, mintaBantuanPasangan: mintaBantuanPasangan, aturAktivitasKeluarga: aturAktivitasKeluarga, PENGINAPAN_LUAR: PENGINAPAN_LUAR, menginapLuar: menginapLuar,
+    bayarNafkah: bayarNafkah, sisaHariNafkah: sisaHariNafkah, bayarCicilanHadiah: bayarCicilanHadiah, bayarKebutuhanKeluarga: bayarKebutuhanKeluarga, JALAN_KELUARGA: JALAN_KELUARGA, jalanKeluarga: jalanKeluarga, KATALOG_HADIAH: KATALOG_HADIAH, belikanHadiah: belikanHadiah, pinjamPasangan: pinjamPasangan, bayarUtangPasangan: bayarUtangPasangan, mintaBantuanPasangan: mintaBantuanPasangan, aturAktivitasKeluarga: aturAktivitasKeluarga, PENGINAPAN_LUAR: PENGINAPAN_LUAR, menginapLuar: menginapLuar,
     tambahKeluarga: tambahKeluarga, ubahTtlKeluarga: ubahTtlKeluarga, aturJajan: aturJajan, ENERGI: ENERGI, minumEnergi: minumEnergi, meTime: meTime, HIBURAN: HIBURAN, hiburanJalan: hiburanJalan, PAKET_NIKAH: PAKET_NIKAH, nikahiTeman: nikahiTeman, faktorPromo: faktorPromo, ubahNamaKeluarga: ubahNamaKeluarga, ubahStatusKeluarga: ubahStatusKeluarga, ceraiPasangan: ceraiPasangan,
     kirimPesanKeluarga: kirimPesanKeluarga, belanjaPasarPokok: belanjaPasarPokok,
     aturLokasiKeluarga: aturLokasiKeluarga, beriBiayaKeluarga: beriBiayaKeluarga, hapusKeluarga: hapusKeluarga,

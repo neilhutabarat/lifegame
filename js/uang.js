@@ -360,7 +360,8 @@
       S.bank.saldo += k.plafon; catat(S, 'Pencairan KUR', k.plafon, nBaru);
       kabar.push('KUR ' + rp(k.plafon) + ' disetujui dan cair ke rekening. Angsuran ' + rp(k.angsuran) + ' tiap tanggal ' + k.tempo + '.');
     } else if (k.status === 'aktif') {
-      if (tB.d === k.tempo && k.sisa > 0) { k.tunggakan += k.angsuran; k.sisa--; }
+      var blnBaruK = tB.y * 12 + tB.m;
+      if (tB.d === k.tempo && k.sisa > 0 && (k.terbayarSampai || 0) < blnBaruK) { k.terbayarSampai = blnBaruK; k.tunggakan += k.angsuran; k.sisa--; }
       if (k.tunggakan > 0) {
         var bayar = Math.min(k.tunggakan, S.bank.saldo);
         if (bayar > 0) { S.bank.saldo -= bayar; k.tunggakan -= bayar; catat(S, 'Angsuran KUR', -bayar, nBaru); }

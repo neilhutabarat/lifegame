@@ -6,6 +6,8 @@
   var KECEPATAN = { biasa: 28, pulangKantor: 15, hujan: 20, banjir: 8 };
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+  function blnNo(n) { var t = KAL.tgl(n); return t.y * 12 + t.m; }
+  function blnTagih(S, tempo) { var t = KAL.tgl(S.hari); return t.y * 12 + t.m + (t.d > tempo ? 1 : 0); }
   function M() { return g.KK_MOTOR; }
   function model(id) { return N.mobil.filter(function (x) { return x.id === id; })[0]; }
   function sinkronAktif(S) {
@@ -170,7 +172,7 @@
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
     if (by !== true) return by;
     var unit = mobilBaru(m, S);
-    unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), terbayarSampai: blnNo(S.hari), tunggakan: 0, bulanTelat: 0, denda: 0 };
     tambahArmada(S, unit);
     return true;
   }
@@ -214,8 +216,10 @@
     if (S.bank.saldo < bA) return 'Saldo rekening tidak cukup untuk bayar angsuran ' + rp(bA) + '.';
     S.bank.saldo -= bA; M().catatBank(S, 'Bayar angsuran ' + KR.leasing + ' ' + m.nama, -bA);
     k.sisa--;
+    var nb = blnTagih(S, k.tempo);
+    k.terbayarSampai = Math.max(k.terbayarSampai || (nb - 1), nb - 1) + 1;
     if (k.sisa <= 0 && !k.tunggakan) { m.kredit = null; return { ok: true, jml: bA, teks: 'Angsuran terakhir ' + rp(bA) + ' dibayar! Kredit mobil LUNAS, BPKB di tangan.' }; }
-    return { ok: true, jml: bA, teks: 'Angsuran mobil ' + rp(bA) + ' dibayar. Sisa ' + k.sisa + ' bulan.' };
+    return { ok: true, jml: bA, teks: 'Angsuran mobil ' + rp(bA) + ' dibayar (bulan ini lunas, tidak ditagih lagi). Sisa ' + k.sisa + ' bulan.' };
   }
   function lunasi(S) {
     var m = S.mobil; if (!m || !m.kredit) return 'Tidak ada kredit mobil.';
@@ -283,9 +287,9 @@
   }
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
   function kmhGigi(S, km) {
-    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa;
-    /* batas realistis kecepatan rata-rata di jalan kota (<35 km: maks 68 km/j) & lintas luar kota (>=35 km: maks 90 km/j) */
-    var batas = (km || 0) >= 35 ? 90 : 68;
+    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa * 0.76;
+    /* batas realistis kecepatan rata-rata di jalan kota (<35 km: maks 58 km/j) & lintas luar kota (>=35 km: maks 82 km/j) */
+    var batas = (km || 0) >= 35 ? 82 : 58;
     return Math.max(8, Math.min(batas, v));
   }
   function cukup(S, km) {
@@ -316,10 +320,12 @@
     S.armadaMobil = S.armadaMobil || (S.mobil ? [S.mobil] : []);
     var armada = S.armadaMobil;
     if (!armada.length) return kabar;
+    var blnBaru = blnNo(nBaru);
     for (var i = armada.length - 1; i >= 0; i--) {
       var m = armada[i], k = m.kredit;
       if (k && (k.sisa > 0 || k.tunggakan > 0)) {
-        if (k.sisa > 0 && tB.d === k.tempo) {
+        if (k.sisa > 0 && tB.d === k.tempo && (k.terbayarSampai || 0) < blnBaru) {
+          k.terbayarSampai = blnBaru;
           if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; M().catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + m.nama, -k.angsuran, nBaru); kabar.push('🚗 Autodebit angsuran ' + m.nama + ' ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
           else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran ' + m.nama + ' (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
         }

@@ -6,6 +6,8 @@
   var KECEPATAN = { biasa: 25, pulangKantor: 18, hujan: 15 };
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+  function blnNo(n) { var t = KAL.tgl(n); return t.y * 12 + t.m; }
+  function blnTagih(S, tempo) { var t = KAL.tgl(S.hari); return t.y * 12 + t.m + (t.d > tempo ? 1 : 0); }
   function wilayah(S) { var k = N.kota.filter(function (x) { return x.id === S.kota; })[0]; return (k && k.bbm) || 'sumatera'; }
   function catatBank(S, ket, jml, n) { S.bank.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket, jml: jml }); if (S.bank.mutasi.length > 40) S.bank.mutasi.length = 40; }
 
@@ -133,8 +135,10 @@
     if (S.bank.saldo < bA) return 'Saldo rekening tidak cukup untuk bayar angsuran ' + rp(bA) + '.';
     S.bank.saldo -= bA; catatBank(S, 'Bayar angsuran ' + KR.leasing + ' ' + m.nama, -bA);
     k.sisa--;
+    var nb = blnTagih(S, k.tempo);
+    k.terbayarSampai = Math.max(k.terbayarSampai || (nb - 1), nb - 1) + 1;
     if (k.sisa <= 0 && !k.tunggakan) { m.kredit = null; return { ok: true, jml: bA, teks: 'Angsuran terakhir ' + rp(bA) + ' dibayar! Kredit motor LUNAS.' }; }
-    return { ok: true, jml: bA, teks: 'Angsuran motor ' + rp(bA) + ' dibayar. Sisa ' + k.sisa + ' bulan.' };
+    return { ok: true, jml: bA, teks: 'Angsuran motor ' + rp(bA) + ' dibayar (bulan ini lunas, tidak ditagih lagi). Sisa ' + k.sisa + ' bulan.' };
   }
   function lunasi(S) {
     var m = S.motor; if (!m || !m.kredit) return 'Tidak ada kredit motor.';
@@ -156,7 +160,7 @@
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, cara);
     if (by !== true) return by;
     var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
-    unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), tunggakan: 0, bulanTelat: 0, denda: 0 };
+    unit.kredit = { angsuran: k.angsuran, sisa: tenor, tenor: tenor, tempo: Math.min(28, KAL.tgl(S.hari).d), terbayarSampai: blnNo(S.hari), tunggakan: 0, bulanTelat: 0, denda: 0 };
     tambahArmada(S, unit);
     return true;
   }
@@ -290,12 +294,17 @@
   /* gigi (percepatan) mempengaruhi kecepatan dan pemakaian bensin */
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'motor') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
   function borosGigi(S) { return gigi(S).boros; }
-  function kmhGigi(S) { return gigi(S).mid * kecepatan(S) / KECEPATAN.biasa; }
+  function kmhGigi(S, km) {
+    var v = gigi(S).mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
+    /* batas realistis kecepatan rata-rata motor di jalan kota (<15 km: maks 55 km/j) & jarak jauh (>=15 km: maks 72 km/j) */
+    var batas = (km || 0) >= 15 ? 72 : 55;
+    return Math.max(8, Math.min(batas, v));
+  }
   /* jalan: kurangi bensin, tambah km, hitung waktu dan kejadian */
   function jalan(S, km, stop) {
     var m = S.motor;
     if (!cukup(S, km)) return { ok: false, alasan: m.bbm === 'listrik' ? 'Baterai motor tidak cukup.' : 'Bensin tidak cukup. Isi bensin dulu di aplikasi Motor.' };
-    var menit = Math.round(km / kmhGigi(S) * 60) + 3 * (stop || 1), kabar = [];
+    var menit = Math.round(km / kmhGigi(S, km) * 60) + 3 * (stop || 1), kabar = [];
     if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml * borosGigi(S));
     if (m.olisamping) S.hariIni.bensin = (S.hariIni.bensin || 0) + Math.round(km / m.kml * 3000); /* oli samping 2-tak, perkiraan */
     m.km += km;
@@ -318,6 +327,7 @@
     S.armadaMotor = S.armadaMotor || (S.motor ? [S.motor] : []);
     var armadaM = S.armadaMotor;
     if (!armadaM.length) return kabar;
+    var blnBaruM = blnNo(nBaru);
     for (var mi = armadaM.length - 1; mi >= 0; mi--) {
       var mt = armadaM[mi];
       if (mt.bbm === 'listrik' && mt.baterai < mt.jarakPenuh) {
@@ -326,7 +336,8 @@
       }
       var k = mt.kredit;
       if (k && (k.sisa > 0 || k.tunggakan > 0)) {
-        if (k.sisa > 0 && tB.d === k.tempo) {
+        if (k.sisa > 0 && tB.d === k.tempo && (k.terbayarSampai || 0) < blnBaruM) {
+          k.terbayarSampai = blnBaruM;
           if (S.bank.saldo >= k.angsuran) { S.bank.saldo -= k.angsuran; k.sisa--; catatBank(S, 'Autodebit angsuran ' + KR.leasing + ' ' + mt.nama, -k.angsuran, nBaru); kabar.push('🏍️ Autodebit angsuran ' + mt.nama + ' ' + rp(k.angsuran) + ' berhasil. Sisa ' + k.sisa + ' bulan.'); }
           else { k.tunggakan += k.angsuran; k.sisa--; k.bulanTelat++; S.kreditBuruk = true; kabar.push('⚠️ Saldo kurang untuk autodebit angsuran ' + mt.nama + ' (' + rp(k.angsuran) + '). Denda harian berjalan.'); }
         }
