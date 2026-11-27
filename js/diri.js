@@ -8,13 +8,23 @@
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function blnNo(n) { var t = KAL.tgl(n); return t.y * 12 + t.m; }
+  var UMK_KALTENG_2026 = {
+    palangkaraya: 3525154, kotawaringinbarat: 3700658, sukamara: 3716340, lamandau: 3781317,
+    seruyan: 3870690, kotawaringintimur: 3559112, katingan: 3561258, pulangpisau: 3481226,
+    kapuas: 3473621, gunungmas: 3544506, baritoselatan: 3829097, baritotimur: 3498701,
+    baritoutara: 3900362, murungraya: 3968616
+  };
   function kota(S) {
     var k = N.kota.filter(function (x) { return x.id === S.kota; })[0];
     if (k) return k;
+    var kb = g.KK_WILAYAH && (g.KK_WILAYAH.kab ? g.KK_WILAYAH.kab(S.kota) : (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[S.kota]));
+    if (kb) {
+      var isKalteng = kb.prov === 'Kalimantan Tengah' || (g.KK_WILAYAH.provDariKab && g.KK_WILAYAH.provDariKab(S.kota) === 'kalteng');
+      var umkK = isKalteng ? (UMK_KALTENG_2026[S.kota] || 3550000) : 3054552;
+      return { id: S.kota, nama: kb.nama, provinsi: kb.prov || (isKalteng ? 'Kalimantan Tengah' : 'Kalimantan Barat'), umk: umkK, bbm: 'sumatera', kos: isKalteng ? 600000 : 550000, makan: isKalteng ? 17000 : 16000, ppj: 0.03, hargaKopi: 1, zona: 1 };
+    }
     var rk = g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[S.kota];
     if (rk) return { id: S.kota, nama: rk.nama, provinsi: rk.prov || rk.pulau || 'Indonesia', umk: 3600000, bbm: rk.pulau === 'Jawa' ? 'jawa' : 'sumatera', kos: 650000, makan: 17000, ppj: 0.03, hargaKopi: 1, zona: rk.tema === 'metropolis' ? 2 : 1 };
-    var kb = g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[S.kota];
-    if (kb) return { id: S.kota, nama: kb.nama, provinsi: 'Kalimantan Barat', umk: 3054552, bbm: 'sumatera', kos: 550000, makan: 16000, ppj: 0.03, hargaKopi: 1, zona: 1 };
     return N.kota[0];
   }
   function batas(x) { return Math.max(0, Math.min(100, x)); }

@@ -1225,6 +1225,11 @@
       cewek: ['Nor', 'Siti', 'Aisyah', 'Rahmah', 'Halimah', 'Jamilah', 'Maimunah', 'Nurlaila', 'Rusidah', 'Salmah', 'Dayang', 'Aji', 'Gusti', 'Putri', 'Dewi', 'Fitri', 'Indah', 'Kartika', 'Laila', 'Maya', 'Nadia', 'Oktavia', 'Ratna', 'Sari', 'Tiara', 'Ulfah', 'Vina', 'Wulan', 'Yanti', 'Zahra', 'Amalia', 'Bela', 'Citra', 'Dina', 'Eka', 'Fina', 'Gita', 'Hana', 'Intan', 'Jihan', 'Kiki', 'Lina', 'Mona', 'Nisa', 'Olin', 'Rina', 'Sinta', 'Tika', 'Winda', 'Yuni'],
       belakang: ['Anshari', 'Arsyad', 'Banjari', 'Basri', 'Darmawan', 'Effendi', 'Fadli', 'Ghani', 'Hakim', 'Ibrahim', 'Jafar', 'Kaderi', 'Latif', 'Mahmud', 'Noor', 'Qadri', 'Rahman', 'Sani', 'Tahir', 'Usman', 'Wahab', 'Yacob', 'Zaini', 'Al-Banjari', 'Hidayat', 'Pratama', 'Saputra', 'Ramadhan', 'Maulana', 'Akbar', 'Fauzan', 'Kurniawan', 'Nugroho', 'Santoso', 'Setiawan', 'Wibowo', 'Wijaya', 'Kusuma', 'Putra', 'Putri', 'Sari', 'Lestari', 'Wulandari', 'Rahmawati', 'Safitri', 'Ningsih', 'Handayani', 'Anggraini', 'Puspita', 'Permata', 'Maharani', 'Oktaviani', 'Fitriani', 'Cahyani', 'Azzahra', 'Salsabila', 'Humaira', 'Syifa', 'Hasanah', 'Khairunnisa']
     },
+    kalteng_dayak: {
+      cowok: ['Tjilik', 'Agustin', 'Sigit', 'Yansen', 'Bambang', 'Hendri', 'Yohanes', 'Christian', 'Daniel', 'Emanuel', 'Ferdinand', 'Gideon', 'Harun', 'Imanuel', 'Jonathan', 'Kristian', 'Lukas', 'Markus', 'Nikolas', 'Oktavianus', 'Paulus', 'Rafael', 'Samuel', 'Thomas', 'Victor', 'Willy', 'Yosua', 'Andrian', 'Beni', 'Dedi', 'Eko', 'Ferry', 'Guntur', 'Hery', 'Irwan', 'Jefry', 'Kurnia', 'Leno', 'Marthin', 'Nopri', 'Oki', 'Piter', 'Rico', 'Roni', 'Sandi', 'Tomi', 'Ujang', 'Viko', 'Wendi', 'Yudi'],
+      cewek: ['Nadia', 'Yuliana', 'Kristina', 'Maria', 'Agnes', 'Bella', 'Clara', 'Debora', 'Ester', 'Febriana', 'Grace', 'Hana', 'Irene', 'Jessica', 'Klara', 'Lidya', 'Marta', 'Natalia', 'Olivia', 'Priska', 'Rachel', 'Sinta', 'Theresia', 'Veronika', 'Winda', 'Yohana', 'Ayu', 'Citra', 'Dewi', 'Eka', 'Fitri', 'Gita', 'Indah', 'Kartika', 'Lestari', 'Maya', 'Nita', 'Oktavia', 'Putri', 'Ratna', 'Sari', 'Tiara', 'Ulfa', 'Vina', 'Wulan', 'Yanti', 'Elisa', 'Friska', 'Hesti', 'Riska'],
+      belakang: ['Riwut', 'Naras', 'Teras', 'Binti', 'Kiting', 'Nahan', 'Sangkai', 'Rangin', 'Usup', 'Tundjan', 'Djamin', 'Daman', 'Lampe', 'Garang', 'Singam', 'Tampung', 'Baring', 'Kahan', 'Mihar', 'Nyahu', 'Pahoe', 'Rambang', 'Samba', 'Tambun', 'Ugang', 'Wawan', 'Batuah', 'Danum', 'Kahayan', 'Mentaya', 'Barito', 'Kapuas', 'Katingan', 'Rungan', 'Manuhing', 'Tingang', 'Garing', 'Talawang', 'Mandau', 'Mahar', 'Pangkalan', 'Palangka', 'Buntok', 'Sampit', 'Kasongan', 'Kurun', 'Teweh', 'Cahu', 'Pratama', 'Saputra', 'Wijaya', 'Kusuma', 'Nugroho', 'Santoso', 'Setiawan', 'Sari', 'Lestari', 'Putri', 'Wulandari', 'Oktaviani']
+    },
     sulawesi: {
       cowok: ['Andi', 'Daeng', 'La', 'Wa', 'Muhammad', 'Muh', 'Asrul', 'Basri', 'Chairul', 'Darma', 'Erwin', 'Fadli', 'Guntur', 'Hasrul', 'Ikhsan', 'Jufri', 'Kadir', 'Lukman', 'Mansur', 'Nasrul', 'Oktavianus', 'Piter', 'Qadri', 'Rusdi', 'Syamsul', 'Taufik', 'Usman', 'Vicky', 'Wahyudi', 'Yusuf', 'Zul', 'Steven', 'Kevin', 'Billy', 'Jefry', 'Rico', 'Rendy', 'Reza', 'Rian', 'Rizal', 'Ardi', 'Arman', 'Budi', 'Dedi', 'Fajar', 'Hendra', 'Ilham', 'Irwan', 'Rizky', 'Surya'],
       cewek: ['Andi', 'Bes', 'St', 'Sitti', 'Nurul', 'Fitriani', 'Hasnah', 'Indah', 'Jumriati', 'Kartini', 'Lestari', 'Mardiana', 'Nadia', 'Oktavia', 'Putri', 'Rahma', 'Sari', 'Tika', 'Ulfa', 'Vivi', 'Wahyuni', 'Yanti', 'Zahra', 'Grace', 'Priscilla', 'Jessica', 'angel', 'Bella', 'Cindy', 'Dian', 'Eka', 'Fani', 'Gita', 'Hana', 'Intan', 'Jihan', 'Kiki', 'Lia', 'Maya', 'Nisa', 'Olin', 'Rina', 'Sinta', 'Tari', 'Umi', 'Vina', 'Wulan', 'Yuni', 'Ayu', 'Citra'],
@@ -1241,12 +1246,16 @@
   var MAKS_RIWAYAT = 320;
   var KALBAR_DAYAK_DOM = { landak: 1, sanggau: 1, sekadau: 1, sintang: 1, melawi: 1, kapuashulu: 1, bengkayang: 1 };
   var KALBAR_MELAYU_DOM = { pontianak: 1, kuburaya: 1, mempawah: 1, sambas: 1, ketapang: 1, kayongutara: 1 };
+  var KALTENG_DAYAK_DOM = { palangkaraya: 1, katingan: 1, gunungmas: 1, pulangpisau: 1, kapuas: 1, baritoselatan: 1, baritotimur: 1, baritoutara: 1, murungraya: 1, lamandau: 1 };
+  var KALTENG_PESISIR_DOM = { kotawaringinbarat: 1, kotawaringintimur: 1, sukamara: 1, seruyan: 1 };
 
   function pilihProfilWilayah(kotaId) {
     var k = String(kotaId || 'pontianak').toLowerCase(), r = Math.random();
     if (k === 'singkawang') return r < 0.40 ? 'kalbar_tionghoa' : r < 0.76 ? 'kalbar_melayu' : 'kalbar_dayak';
     if (KALBAR_DAYAK_DOM[k]) return r < 0.56 ? 'kalbar_dayak' : r < 0.88 ? 'kalbar_melayu' : 'kalbar_tionghoa';
     if (KALBAR_MELAYU_DOM[k]) return r < 0.58 ? 'kalbar_melayu' : r < 0.80 ? 'kalbar_dayak' : (r < 0.94 ? 'kalbar_tionghoa' : 'jawa');
+    if (KALTENG_DAYAK_DOM[k]) return r < 0.56 ? 'kalteng_dayak' : r < 0.86 ? 'kalimantan_lain' : 'jawa';
+    if (KALTENG_PESISIR_DOM[k]) return r < 0.48 ? 'kalimantan_lain' : r < 0.78 ? 'kalteng_dayak' : 'jawa';
     if (/jakarta|bandung|semarang|yogyakarta|surabaya|serang|solo|malang|cirebon|merak|banyuwangi/.test(k)) return 'jawa';
     if (/medan|padang|pekanbaru|palembang|jambi|bengkulu|lampung|bandaaceh|tanjungpinang|pangkalpinang|binjai|berastagi|siantar|parapat|bukittinggi|bakauheni/.test(k)) return 'sumatra';
     if (/makassar|manado|palu|gorontalo|mamuju|kendari|parepare/.test(k)) return 'sulawesi';

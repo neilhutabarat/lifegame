@@ -506,9 +506,9 @@
     return { kmh: Math.max(6, v), gigi: n, ket: ket, batasJalan: batasJalan, vmax: vmax };
   }
 
-  /* ---------- rencana perjalanan (mendukung jalur alternatif pilihan pemain & tujuan spesifik kecamatan/desa Kalbar) ---------- */
+  /* ---------- rencana perjalanan (mendukung jalur alternatif pilihan pemain & tujuan spesifik kecamatan/desa seluruh provinsi terpetakan) ---------- */
   function tambahSegmenDesa(S, jDasar, tujuan, detail) {
-    if (!jDasar || !detail || !detail.kecId || !g.KK_WILAYAH || !g.KK_WILAYAH.kalbar || !g.KK_WILAYAH.kalbar[tujuan]) return jDasar;
+    if (!jDasar || !detail || !detail.kecId || !g.KK_WILAYAH || !(g.KK_WILAYAH.kab ? g.KK_WILAYAH.kab(tujuan) : (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]))) return jDasar;
     var W = g.KK_WILAYAH;
     var ibu = W.titikAwal(tujuan);
     var tDesa = W.cariTitik ? W.cariTitik(tujuan, detail.kecId, detail.desa) : ibu;
@@ -555,8 +555,8 @@
     var det = detailTujuan !== undefined ? detailTujuan : (tujuan === T.tujuan ? T.tujuanDetail : null);
     var jBase = jalurKustom || (tujuan === T.tujuan && T.jalurPilihan && T.jalurPilihan.simpul && T.jalurPilihan.simpul[0] === asal && T.jalurPilihan.simpul[T.jalurPilihan.simpul.length - 1] === tujuan ? T.jalurPilihan : null);
     if (!jBase) {
-      if (asal === tujuan && det && det.kecId && g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]) {
-        /* Travel dalam kabupaten menuju kecamatan/desa ujung (mis. Pontianak/Ketapang kota ke Kendawangan/Manis Mata/Paloh/Badau) */
+      if (asal === tujuan && det && det.kecId && g.KK_WILAYAH && (g.KK_WILAYAH.kab ? g.KK_WILAYAH.kab(tujuan) : (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]))) {
+        /* Travel dalam kabupaten menuju kecamatan/desa ujung (seluruh Kab/Kota Kalbar & Kalteng) */
         jBase = { simpul: [asal], ruas: [], km: 0, tol: 0, laut: false, viaTeks: 'Jalan Kabupaten/Kecamatan', label: '🛣️ Jalur Lokal Kabupaten' };
       } else {
         jBase = R.jalur(asal, tujuan);
@@ -611,7 +611,7 @@
     var hindari = ((T && T.antri) || []).map(function (x) { return x.nama; });
     var nm = (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S, { kotaId: (T && T.di) || S.kota, hindari: hindari }) : N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)];
     var turun = '';
-    if (T && T.tujuan && g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[T.tujuan]) {
+    if (T && T.tujuan && g.KK_WILAYAH && (g.KK_WILAYAH.kab ? g.KK_WILAYAH.kab(T.tujuan) : (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[T.tujuan]))) {
       var td = (T.tujuanDetail && T.tujuanDetail.kecId) ? g.KK_WILAYAH.desaAcak(T.tujuan, T.tujuanDetail.kecId) : g.KK_WILAYAH.desaAcak(T.tujuan);
       if (td) turun = td.desa + ', Kec. ' + td.kecNama;
     }
@@ -908,9 +908,9 @@
     S.hariIni.travel = (S.hariIni.travel || 0) + (pnp ? total + tip - biayaPerjalanan : -biayaPerjalanan);
     T.laporan = { dari: dari, ke: tujuan, tujuanNama: tr.tujuanNama || R.nama(tujuan), km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10, ev: !!(S.mobil && S.mobil.bbm === 'listrik'),
       kejadian: tr.kejadian.slice(), rating: T.rating, hari: S.hari };
-    /* Sinkronkan lokasi karakter ke desa/kecamatan/kota tujuan Travel (Kalbar maupun seluruh Indonesia) */
+    /* Sinkronkan lokasi karakter ke desa/kecamatan/kota tujuan Travel (Kalbar, Kalteng, maupun seluruh Indonesia) */
     if (S.ojek && g.KK_WILAYAH) {
-      if (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]) {
+      if (g.KK_WILAYAH.kab ? g.KK_WILAYAH.kab(tujuan) : (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan])) {
         S.ojek.lokasi = (tr.tujuanDetail && tr.tujuanDetail.kecId && g.KK_WILAYAH.cariTitik)
           ? g.KK_WILAYAH.cariTitik(tujuan, tr.tujuanDetail.kecId, tr.tujuanDetail.desa)
           : g.KK_WILAYAH.titikAwal(tujuan);
@@ -926,7 +926,7 @@
   /* ---------- untuk adegan dan HUD ---------- */
   function lokasiPool(S, kotaId) {
     var W = g.KK_WILAYAH;
-    if (W && W.kalbar && W.kalbar[kotaId]) {
+    if (W && (W.kab ? W.kab(kotaId) : (W.kalbar && W.kalbar[kotaId]))) {
       if (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId === kotaId && S.ojek.lokasi.kecNama) return S.ojek.lokasi;
       return W.titikAwal(kotaId);
     }

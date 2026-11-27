@@ -381,16 +381,23 @@
     return MEDAN_INFO[pilih] || MEDAN_INFO.mulus;
   }
 
+  /* Registri multi-provinsi modular (Kalbar + Kalteng + siap ekspansi seluruh 38 provinsi tanpa lag) */
+  var SEMUA_KAB = {};
+  var PROVINSI = {};
+  var PROV_BY_KAB = {};
+  var CACHE_PROV = {};
+
   /* Koordinat presisi tiap desa di dalam kecamatan (offset deterministik ±0,008° ≈ 0,5–1,4 km agar jarak antar desa presisi) */
   function titikDesa(kabId, kecObj, namaDesa) {
+    var kb = SEMUA_KAB[kabId] || KALBAR[kabId];
     var idx = (kecObj.desa || []).indexOf(namaDesa);
     if (idx < 0) idx = 0;
     var sudut = (idx * 2.39996) % (Math.PI * 2);
     var radOff = idx === 0 ? 0 : (0.004 + (idx % 4) * 0.0028);
     return {
       kabId: kabId,
-      kabNama: (KALBAR[kabId] && KALBAR[kabId].nama) || kabId,
-      prov: 'Kalimantan Barat',
+      kabNama: (kb && kb.nama) || kabId,
+      prov: (kb && kb.prov) || 'Kalimantan Barat',
       kecId: kecObj.id,
       kecNama: kecObj.nama,
       medan: kecObj.medan || 'mulus',
@@ -401,10 +408,12 @@
     };
   }
 
-  function semuaTitikKalbar() {
+  function bangunTitikProv(provId) {
+    var p = PROVINSI[provId];
+    if (!p) return [];
     var out = [];
-    Object.keys(KALBAR).forEach(function (kabId) {
-      var kb = KALBAR[kabId];
+    Object.keys(p.data).forEach(function (kabId) {
+      var kb = p.data[kabId];
       kb.kec.forEach(function (kc) {
         (kc.desa || [kc.nama]).forEach(function (ds) {
           out.push(titikDesa(kabId, kc, ds));
@@ -413,19 +422,34 @@
     });
     return out;
   }
-  var CACHE_KALBAR = null;
-  function daftarTitikKalbar() {
-    if (!CACHE_KALBAR) CACHE_KALBAR = semuaTitikKalbar();
-    return CACHE_KALBAR;
+  function daftarTitikProv(provId) {
+    var id = provId || 'kalbar';
+    if (!CACHE_PROV[id]) CACHE_PROV[id] = bangunTitikProv(id);
+    return CACHE_PROV[id];
   }
+  function daftarTitikSemua() {
+    var out = [];
+    Object.keys(PROVINSI).forEach(function (pid) {
+      var arr = daftarTitikProv(pid);
+      for (var i = 0; i < arr.length; i++) out.push(arr[i]);
+    });
+    return out;
+  }
+  function daftarTitikKalbar() { return daftarTitikProv('kalbar'); }
 
   function apakahKalbar(kotaId) {
     return !!KALBAR[kotaId];
   }
+  function kab(kotaId) {
+    return SEMUA_KAB[kotaId] || null;
+  }
+  function provDariKab(kotaId) {
+    return PROV_BY_KAB[kotaId] || null;
+  }
 
-  /* Titik awal rumah / pangkalan berdasarkan kota (mendukung 14 Kab/Kota Kalbar & seluruh 105 kota/kabupaten Indonesia) */
+  /* Titik awal rumah / pangkalan berdasarkan kota (mendukung seluruh provinsi terpetakan & seluruh 105 kota/kabupaten Indonesia) */
   function namaKotaRute(kotaId) {
-    if (KALBAR[kotaId]) return KALBAR[kotaId].nama;
+    if (SEMUA_KAB[kotaId]) return SEMUA_KAB[kotaId].nama;
     if (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[kotaId]) return g.KK_RUTE.kota[kotaId].nama;
     return kotaId || 'Kota';
   }
@@ -439,15 +463,15 @@
     return { kabId: id, kabNama: nm, prov: prov, kecId: id + '_0', kecNama: nm, medan: 'mulus', pulau: false, desa: ds, lat: null, lon: null };
   }
   function titikAwal(kotaId, kecId) {
-    if (KALBAR[kotaId]) {
-      var kb = KALBAR[kotaId];
+    var kb = SEMUA_KAB[kotaId];
+    if (kb) {
       var kc = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[0];
       return titikDesa(kotaId, kc, kc.desa[0]);
     }
     return titikKotaUmum(kotaId);
   }
 
-  /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang — bebas acak ke segala arah daratan (antardesa, antarkecamatan, hingga antarkabupaten seperti Satong → Sukadana / Sandai / Tayap / Kendawangan / Sungai Melayu tanpa terjebak bolak-balik, dan TIDAK pernah mengarahkan motor/mobil menyeberang laut ke pulau!) */
+  /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang — bebas acak ke segala arah daratan (antardesa, antarkecamatan, antarkabupaten hingga lintas perbatasan provinsi Kalbar ↔ Kalteng) dan TIDAK pernah mengarahkan motor/mobil menyeberang laut ke pulau */
   function pilihTujuan(asal, minKm, maxKm, riwayatDesa) {
     if (!asal || asal.lat == null) {
       var listK = KEC_UMUM[asal && asal.kabId] || ['Pusat Kota', 'Kecamatan Timur', 'Kecamatan Barat', 'Kecamatan Selatan', 'Kecamatan Utara'];
@@ -455,7 +479,8 @@
       var kmAcak = Math.round((minKm + Math.random() * Math.max(0.5, maxKm - minKm)) * 10) / 10;
       return { titik: { kabId: (asal && asal.kabId) || 'kota', kabNama: (asal && asal.kabNama) || 'Kota', prov: 'Indonesia', kecId: pilihK, kecNama: pilihK, medan: 'kota', pulau: false, desa: pilihK, lat: null, lon: null }, km: kmAcak, medan: MEDAN_INFO.kota };
     }
-    var semua = daftarTitikKalbar();
+    var provAsal = PROV_BY_KAB[asal.kabId] || 'kalbar';
+    var semua = (maxKm >= 55 && Object.keys(PROVINSI).length > 1) ? daftarTitikSemua() : daftarTitikProv(provAsal);
     var hindari = Array.isArray(riwayatDesa) ? riwayatDesa : [];
     var asalPulau = !!asal.pulau;
     function cariDalam(lo, hi, skipRiwayat) {
@@ -464,7 +489,6 @@
         var t = semua[i];
         if (Math.abs(t.lat - asal.lat) > maxDeg || Math.abs(t.lon - asal.lon) > maxDeg) continue;
         if (t.desa === asal.desa && t.kecId === asal.kecId) continue;
-        /* Proteksi realistis: kendaraan darat di daratan tidak bisa dapat order menyeberang laut ke pulau (Karimata / Pulau Maya / Batu Ampar); jika di pulau hanya keliling di kecamatan pulau yang sama */
         if (!asalPulau && t.pulau) continue;
         if (asalPulau && t.kecId !== asal.kecId) continue;
         if (skipRiwayat && (hindari.indexOf(t.desa) >= 0 || hindari.indexOf(t.kecId + ':' + t.desa) >= 0)) continue;
@@ -505,20 +529,20 @@
   }
 
   function daftarKecamatan(kotaId) {
-    if (KALBAR[kotaId]) return KALBAR[kotaId].kec;
+    if (SEMUA_KAB[kotaId]) return SEMUA_KAB[kotaId].kec;
     return (KEC_UMUM[kotaId] || ['Pusat Kota']).map(function (nm, i) { return { id: kotaId + '_' + i, nama: nm, medan: 'kota', pulau: false, desa: [nm], lat: null, lon: null }; });
   }
 
-  /* Cari titik desa/kecamatan spesifik dari 14 Kab/Kota · 174 Kecamatan · 1.562 Desa Kalbar */
+  /* Cari titik desa/kecamatan spesifik dari seluruh provinsi terpetakan (Kalbar, Kalteng, dll) */
   function cariTitik(kabId, kecId, namaDesa) {
-    var kb = KALBAR[kabId];
+    var kb = SEMUA_KAB[kabId];
     if (!kb) return titikAwal(kabId, kecId);
     var kc = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[0];
     var ds = (namaDesa && kc.desa.indexOf(namaDesa) >= 0) ? namaDesa : kc.desa[0];
     return titikDesa(kabId, kc, ds);
   }
   function desaAcak(kabId, kecId) {
-    var kb = KALBAR[kabId];
+    var kb = SEMUA_KAB[kabId];
     if (!kb) return titikAwal(kabId, kecId);
     var kc = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[Math.floor(Math.random() * kb.kec.length)];
     var ds = kc.desa[Math.floor(Math.random() * kc.desa.length)];
@@ -553,18 +577,18 @@
 
   function titikKoridorRuas(kabA, kabB, u) {
     u = Math.max(0, Math.min(1, Number(u) || 0));
-    var aKalbar = !!KALBAR[kabA], bKalbar = !!KALBAR[kabB];
-    /* Ruas di luar Kalbar (Kalteng, Kalsel, Kaltim, Kaltara, Jawa, Sumatra, dll): selalu kembalikan kota/kabupaten aktual di ruas agar HUD tidak mental ke kota asal */
-    if (!aKalbar && !bKalbar) {
+    var aMap = !!SEMUA_KAB[kabA], bMap = !!SEMUA_KAB[kabB];
+    /* Ruas di luar provinsi terpetakan detail (Kalsel, Kaltim, Kaltara, Jawa, Sumatra, dll): kembalikan kota/kabupaten aktual di ruas agar HUD tidak macet */
+    if (!aMap && !bMap) {
       return titikKotaUmum(u < 0.5 ? kabA : kabB);
     }
     var list = KORIDOR_KALBAR[kabA + '|' + kabB];
     if (!list && KORIDOR_KALBAR[kabB + '|' + kabA]) list = KORIDOR_KALBAR[kabB + '|' + kabA].slice().reverse();
-    /* Ruas perbatasan Kalbar ↔ Luar Kalbar: lalui kecamatan/desa Kalbar sampai perbatasan lalu masuk ke kabupaten tujuan luar Kalbar */
-    if (aKalbar && !bKalbar) {
+    /* Ruas perbatasan Provinsi Terpetakan ↔ Luar Wilayah Terpetakan: lalui kecamatan/desa detail sampai perbatasan lalu masuk ke kabupaten tujuan */
+    if (aMap && !bMap) {
       if (u >= 0.78) return titikKotaUmum(kabB);
       u = u / 0.78;
-    } else if (!aKalbar && bKalbar) {
+    } else if (!aMap && bMap) {
       if (u < 0.22) return titikKotaUmum(kabA);
       u = (u - 0.22) / 0.78;
     }
@@ -576,7 +600,7 @@
     var idx = Math.max(0, Math.min(list.length - 1, Math.floor(pos)));
     var subU = pos - idx;
     var pair = list[idx];
-    var kb = KALBAR[pair[0]];
+    var kb = SEMUA_KAB[pair[0]];
     if (!kb) return titikAwal(kabA);
     var kc = kb.kec.filter(function (x) { return x.id === pair[1]; })[0] || kb.kec[0];
     var dIdx = Math.max(0, Math.min(kc.desa.length - 1, Math.floor(subU * Math.min(4, kc.desa.length))));
@@ -679,14 +703,56 @@
     return Math.max(0.8, Math.min(1.42, Math.round(f * 100) / 100));
   }
 
+  function daftarProvinsi(id, nama, dataObj, koridorObj, masjidObj) {
+    if (!id || !dataObj) return;
+    var jmlKab = 0, jmlKec = 0, jmlDesa = 0;
+    Object.keys(dataObj).forEach(function (kId) {
+      var kb = dataObj[kId];
+      if (!kb.prov) kb.prov = nama;
+      SEMUA_KAB[kId] = kb;
+      PROV_BY_KAB[kId] = id;
+      jmlKab++;
+      jmlKec += kb.kec.length;
+      kb.kec.forEach(function (kc) { jmlDesa += (kc.desa || []).length; });
+    });
+    PROVINSI[id] = { id: id, nama: nama, data: dataObj, jmlKab: jmlKab, jmlKec: jmlKec, jmlDesa: jmlDesa };
+    delete CACHE_PROV[id];
+    if (koridorObj) {
+      Object.keys(koridorObj).forEach(function (rk) { KORIDOR_KALBAR[rk] = koridorObj[rk]; });
+    }
+    if (masjidObj) {
+      Object.keys(masjidObj).forEach(function (mk) { MASJID_KHAS[mk] = masjidObj[mk]; });
+    }
+    if (g.KK_WILAYAH) g.KK_WILAYAH[id] = dataObj;
+  }
+  function daftarProvinsiList() {
+    return Object.keys(PROVINSI).map(function (id) {
+      var p = PROVINSI[id];
+      return { id: p.id, nama: p.nama, jmlKab: p.jmlKab, jmlKec: p.jmlKec, jmlDesa: p.jmlDesa };
+    });
+  }
+  function daftarKab(provId) {
+    var src = (provId && PROVINSI[provId]) ? PROVINSI[provId].data : SEMUA_KAB;
+    return Object.keys(src).map(function (id) {
+      return { id: id, nama: src[id].nama, prov: src[id].prov || '', provId: PROV_BY_KAB[id] || provId || '', jmlKec: src[id].kec.length, penduduk: PENDUDUK_WILAYAH[id] || 200000 };
+    });
+  }
+
   g.KK_WILAYAH = {
     kalbar: KALBAR,
+    semuaKab: SEMUA_KAB,
+    provinsi: PROVINSI,
     MEDAN_INFO: MEDAN_INFO,
     PENDUDUK_WILAYAH: PENDUDUK_WILAYAH,
     pendudukWilayah: pendudukWilayah,
     formatPenduduk: formatPenduduk,
     faktorPenduduk: faktorPenduduk,
     apakahKalbar: apakahKalbar,
+    kab: kab,
+    provDariKab: provDariKab,
+    daftarProvinsi: daftarProvinsi,
+    daftarProvinsiList: daftarProvinsiList,
+    daftarKab: daftarKab,
     jarakKm: jarakKm,
     medanJalan: medanJalan,
     titikAwal: titikAwal,
@@ -697,6 +763,13 @@
     pilihTujuan: pilihTujuan,
     daftarKecamatan: daftarKecamatan,
     tempatIbadahTerdekat: tempatIbadahTerdekat,
-    daftarKabKalbar: function () { return Object.keys(KALBAR).map(function (id) { return { id: id, nama: KALBAR[id].nama, jmlKec: KALBAR[id].kec.length, penduduk: PENDUDUK_WILAYAH[id] || 300000 }; }); }
+    daftarKabKalbar: function () { return daftarKab('kalbar'); }
   };
+
+  /* Daftarkan Provinsi Kalimantan Barat sebagai modul inti pertama + proses modul provinsi lain bila sudah mengantri */
+  daftarProvinsi('kalbar', 'Kalimantan Barat', KALBAR);
+  if (Array.isArray(g._KK_PENDING_PROV)) {
+    g._KK_PENDING_PROV.forEach(function (args) { daftarProvinsi.apply(null, args); });
+    delete g._KK_PENDING_PROV;
+  }
 })(window);

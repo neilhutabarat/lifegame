@@ -605,8 +605,13 @@
       if (lok.kecId === 'ptk_utr' || lok.kecId === 'skw_utr' || lok.kecId === 'skw_tim') return 'kabupaten';
       return 'kota';
     }
+    if (lok.kabId === 'palangkaraya') {
+      if (lok.kecId === 'plk_rakumpit') return 'desa';
+      if (lok.kecId === 'plk_bbatu' || lok.kecId === 'plk_sabangau') return 'kabupaten';
+      return 'kota';
+    }
     /* ibu kota kabupaten (kecamatan pertama di daftar kab) = kabupaten, kecamatan pedalaman lainnya = desa */
-    var kb = g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[lok.kabId];
+    var kb = g.KK_WILAYAH && (g.KK_WILAYAH.kab ? g.KK_WILAYAH.kab(lok.kabId) : (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[lok.kabId]));
     if (kb && kb.kec && kb.kec.length) {
       if (kb.kec[0].id === lok.kecId) return 'kabupaten';
       return 'desa';
@@ -618,8 +623,8 @@
     siapkan(S);
     if (S.surat.tilang && S.surat.tilang.length > 0) return 'Lunasi dulu tilang ETLE di menu 🪪 Surat & Polisi sebelum pindah domisili.';
     var W = g.KK_WILAYAH;
-    if (!W || !W.kalbar || !W.kalbar[kabId]) return 'Wilayah tujuan belum tersedia.';
-    var kb = W.kalbar[kabId];
+    var kb = W && (W.kab ? W.kab(kabId) : (W.kalbar && W.kalbar[kabId]));
+    if (!kb) return 'Wilayah tujuan belum tersedia.';
     var kc = kb.kec.filter(function (x) { return x.id === kecId; })[0] || kb.kec[0];
     var titik = W.titikDesa(kabId, kc, kc.desa[0]);
     S.kota = kabId;

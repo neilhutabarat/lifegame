@@ -52,6 +52,13 @@
       { id: 'kul_lidahbuaya', nama: '🧊 Es Lidah Buaya Pontianak', harga: 12000, kenyang: 14, minum: 55, kalori: 180, sehat: true, ket: 'Segar dingin pelepas dahaga khatulistiwa' },
       { id: 'kul_sotong', nama: '🦑 Sotong Pangkong Malam', harga: 35000, kenyang: 45, minum: 5, kalori: 340, sehat: true, ket: 'Cumi kering panggang geprek dengan kuah kacang & ebi pedas' }
     ],
+    kalteng: [
+      { id: 'kul_juhusingkah', nama: '🍲 Juhu Singkah (Umbut Rotan & Patin)', harga: 28000, kenyang: 68, minum: 24, kalori: 420, sehat: true, ket: 'Sayur umbut rotan muda dimasak bersama ikan patin & terung asam khas Dayak Ngaju Kalteng' },
+      { id: 'kul_wadipatin', nama: '🐟 Wadi Ikan Patin Goreng + Sambal Serai', harga: 26000, kenyang: 66, minum: 12, kalori: 490, sehat: false, ket: 'Ikan patin fermentasi tradisional khas Palangka Raya & Kapuas, gurih wangi' },
+      { id: 'kul_kalumpe', nama: '🥗 Kalumpe (Karuang Daun Singkong)', harga: 18000, kenyang: 56, minum: 18, kalori: 340, sehat: true, ket: 'Daun singkong tumbuk + terong pipit & sambal terasi khas Kalimantan Tengah' },
+      { id: 'kul_sotomanggala', nama: '🥣 Soto Manggala Pangkalan Bun', harga: 24000, kenyang: 70, minum: 22, kalori: 510, sehat: true, ket: 'Soto singkong kuah kaldu ceker bening legendaris khas Kotawaringin Barat' },
+      { id: 'kul_jelawat', nama: '🔥 Ikan Jelawat Bakar + Kerupuk Basah Sampit', harga: 36000, kenyang: 74, minum: 10, kalori: 540, sehat: true, ket: 'Ikan sungai premium Sungai Mentaya & Barito dipadu kerupuk ikan pipih gurih' }
+    ],
     sumut: [
       { id: 'kul_sotomedan', nama: '🥣 Soto Medan Santan Rempah', harga: 28000, kenyang: 68, minum: 20, kalori: 580, sehat: false, ket: 'Kuah santan gurih + perkedel + daging empuk khas Medan' },
       { id: 'kul_miebalap', nama: '🍜 Mie Balap Seafood Medan', harga: 18000, kenyang: 60, minum: 8, kalori: 540, sehat: false, ket: 'Sarapan wajan api besar favorit warga Medan' },
@@ -156,8 +163,9 @@
     var list = POI_LOKAL.slice();
     var W = g.KK_WILAYAH;
     var sk = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null;
-    if (W && W.kalbar && sk && W.kalbar[sk.kabId]) {
-      var kabId = sk.kabId, kb = W.kalbar[kabId];
+    var kbSk = (W && sk && sk.kabId) ? (W.kab ? W.kab(sk.kabId) : (W.kalbar && W.kalbar[sk.kabId])) : null;
+    if (kbSk) {
+      var kabId = sk.kabId, kb = kbSk;
       var kecList = [];
       kb.kec.forEach(function (kc) {
         if (kc.id === sk.kecId || kc.nama === sk.kecNama) return;
@@ -446,9 +454,12 @@
 
   /* ---------- 4. Kuliner Khas Daerah Dinamis Sesuai Lokasi ---------- */
   function wilayahKuliner(S) {
-    var kid = String((S && S.kota) || 'pontianak').toLowerCase();
+    var lokSk = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null;
+    var kid = String((lokSk && lokSk.kabId) || (S && S.kota) || 'pontianak').toLowerCase();
     var prov = (g.KK_DIRI && g.KK_DIRI.kota) ? String(g.KK_DIRI.kota(S).provinsi || '').toLowerCase() : '';
-    if (prov.indexOf('kalimantan barat') >= 0 || (g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[kid])) return { kode: 'kalbar', label: 'Kalimantan Barat' };
+    var pId = (g.KK_WILAYAH && g.KK_WILAYAH.provDariKab) ? g.KK_WILAYAH.provDariKab(kid) : '';
+    if (pId === 'kalteng' || prov.indexOf('kalimantan tengah') >= 0) return { kode: 'kalteng', label: 'Kalimantan Tengah' };
+    if (pId === 'kalbar' || prov.indexOf('kalimantan barat') >= 0 || (g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[kid])) return { kode: 'kalbar', label: 'Kalimantan Barat' };
     if (kid === 'medan' || prov.indexOf('sumatera utara') >= 0) return { kode: 'sumut', label: 'Medan & Sumut' };
     if (kid === 'jakarta' || prov.indexOf('jakarta') >= 0 || prov.indexOf('banten') >= 0) return { kode: 'jakarta', label: 'Betawi / Jakarta' };
     if (kid === 'bandung' || prov.indexOf('jawa barat') >= 0) return { kode: 'jabar', label: 'Sunda / Bandung' };

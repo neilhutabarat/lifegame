@@ -49,7 +49,8 @@
     if (!S) return null;
     var W = g.KK_WILAYAH;
     if (S.rumah && S.rumah.wilayah && S.rumah.wilayah.kabId) {
-      if (!W || !W.kalbar || W.kalbar[S.rumah.wilayah.kabId] || S.rumah.wilayah.kabId === S.kota) return S.rumah.wilayah;
+      var punyaWil = !W || (W.kab ? !!W.kab(S.rumah.wilayah.kabId) : (W.kalbar && !!W.kalbar[S.rumah.wilayah.kabId]));
+      if (punyaWil || S.rumah.wilayah.kabId === S.kota) return S.rumah.wilayah;
     }
     var t0 = W ? W.titikAwal(S.kota) : { kabId: S.kota || 'pontianak', kabNama: kota(S).nama, kecId: 'pusat', kecNama: kota(S).nama, desa: kota(S).nama, lat: null, lon: null };
     if (S.rumah) S.rumah.wilayah = t0;

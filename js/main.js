@@ -622,7 +622,7 @@
   /* ---------- lembar bawah (otomatis pertahankan posisi scroll saat atur apa pun di layar yang sama) ---------- */
   function kunciLembar(nama) {
     if (nama === 'travelDesa') return 'travelDesa|' + (app._trvDesaKey || '');
-    if (nama === 'infoLokasi') return 'infoLokasi|' + (app._infoKab || '');
+    if (nama === 'infoLokasi') return 'infoLokasi|' + (app._infoProv || '') + '|' + (app._infoKab || '');
     if (nama !== 'hp') return nama;
     return [
       'hp', app.nama || '', app.tab || '', app.bankTab || '', app.qrisTab || '',
@@ -631,7 +631,7 @@
       app.gameTab || '', app.gameKonsolFilter || '', app.gadgetTab || '', app.merekGadget || '',
       app.apotekTab || '', app.kelTab || '', app.propTab || '', app.hunianKat || '', app.travelTab || '', app.trvFilter || '',
       app.temanTab || '', app.temanDetailId || '', app.tmFilter || '', app.rpsTab || '', app.hadiahKat || '', app.meter || '',
-      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || '', app.duniaTab || '', app.petaCara || '', app.realTab || ''
+      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || '', app.duniaTab || '', app.petaCara || '', app.petaProv || '', app.petaKab || '', app.realTab || ''
     ].join('|');
   }
   function bukaLembar(nama, html) {
@@ -2548,13 +2548,20 @@
         '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-aksi="pergiBebas:' + esc(tj.id) + '">Pergi ›</button></div></div>';
     }).join('') + '</div>';
     var W = window.KK_WILAYAH;
-    if (W && W.kalbar) {
-      var kabListP = W.daftarKabKalbar();
-      var pKab = (app.petaKab && W.kalbar[app.petaKab]) ? app.petaKab : ((lok && lok.kabId && W.kalbar[lok.kabId]) ? lok.kabId : 'pontianak');
-      var kbObjP = W.kalbar[pKab];
+    if (W && W.daftarProvinsiList) {
+      var provListP = W.daftarProvinsiList();
+      var lokProvP = (lok && lok.kabId && W.provDariKab) ? W.provDariKab(lok.kabId) : '';
+      var pProv = (app.petaProv && W.provinsi && W.provinsi[app.petaProv]) ? app.petaProv : (lokProvP || provListP[0].id);
+      var pObjP = W.provinsi[pProv];
+      var kabListP = W.daftarKab(pProv);
+      var pKab = (app.petaKab && pObjP.data[app.petaKab]) ? app.petaKab : ((lok && lok.kabId && pObjP.data[lok.kabId]) ? lok.kabId : kabListP[0].id);
+      var kbObjP = pObjP.data[pKab];
       var pKec = (app.petaKec && kbObjP.kec.some(function (x) { return x.id === app.petaKec; })) ? app.petaKec : kbObjP.kec[0].id;
       var kcObjP = kbObjP.kec.filter(function (x) { return x.id === pKec; })[0] || kbObjP.kec[0];
-      html += '<h3 class="subjudul">🗺️ Jelajah 14 Kab/Kota · 174 Kec · 1.562 Desa Kalbar</h3>' +
+      html += '<h3 class="subjudul">🗺️ Jelajah ' + esc(pObjP.nama) + ' (' + pObjP.jmlKab + ' Kab/Kota · ' + pObjP.jmlKec + ' Kec · ' + pObjP.jmlDesa.toLocaleString('id-ID') + ' Desa)</h3>' +
+        '<div class="cat-strip">' + provListP.map(function (pr) {
+          return '<button type="button" class="' + (pr.id === pProv ? 'pilih' : '') + '" data-aksi="petaProv:' + pr.id + '">🗺️ ' + esc(pr.nama) + ' (' + pr.jmlKab + ')</button>';
+        }).join('') + '</div>' +
         '<div class="cat-strip">' + kabListP.map(function (kb) {
           return '<button type="button" class="' + (kb.id === pKab ? 'pilih' : '') + '" data-aksi="petaKab:' + kb.id + '">' + esc(kb.nama.replace(/^Kab\. |^Kota /, '')) + ' (' + kb.jmlKec + ')</button>';
         }).join('') + '</div>' +
@@ -3633,6 +3640,7 @@
     else if (nama === 'catKnd' && EKO) { var pck = nilai.split('|'), rck2 = EKO.catKendaraan(S, pck[0], pck[1]); if (rck2 && rck2.ok && rck2.menit) lompatWaktu(rck2.menit); hasilAksi(rck2 && rck2.ok ? true : rck2, rck2 && rck2.ok ? rck2.teks : ''); }
     else if (nama === 'petaCara') { app.petaCara = nilai; app.pesan = ''; }
     else if (nama === 'petaTeman') { app.petaTemanId = nilai; app.pesan = ''; }
+    else if (nama === 'petaProv') { app.petaProv = nilai; app.petaKab = null; app.petaKec = null; app.pesan = ''; }
     else if (nama === 'petaKab') { app.petaKab = nilai; app.petaKec = null; app.pesan = ''; }
     else if (nama === 'petaKec') { app.petaKec = nilai; app.pesan = ''; }
     else if (nama === 'realTab') { app.realTab = nilai; app.pesan = ''; }
@@ -4117,6 +4125,7 @@
         return;
       }
     }
+    else if (nama === 'lihatProv') { return bukaInfoLokasi(null, nilai); }
     else if (nama === 'lihatKab') { return bukaInfoLokasi(nilai); }
     else if (nama === 'tmHapus') { TEMAN.hapus(S, nilai); app.temanDetailId = null; hasilAksi(true, 'Dihapus dari daftar teman.'); }
     else if (nama === 'tmHb') { var th = nilai.split('|'); mulaiHb(th[1] === '1', 'teman:' + th[0]); return; }
@@ -5162,8 +5171,9 @@
     var chipF = '<div class="cat-strip">' + FILTER_WIL.map(function (fw) {
       return '<button type="button" class="' + (fw[0] === flt ? 'pilih' : '') + '" data-trv="filter:' + fw[0] + '">' + fw[1] + '</button>';
     }).join('') + '</div>';
-    var lokalBtn = (W && W.kalbar && W.kalbar[T.di])
-      ? '<div class="kartu-item" style="margin-bottom:8px"><div><span class="ki-tag milik">Dalam Kabupaten · ' + W.kalbar[T.di].kec.length + ' Kec</span><b>📍 Travel ke Kecamatan / Desa di ' + esc(RUTE.nama(T.di)) + '</b><small>Antar penumpang hingga kecamatan & desa pedalaman/pesisir</small></div><div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-trv="pilihDesa:' + T.di + '">Pilih Kec/Desa</button></div></div>'
+    var kbDi = (W && W.kab) ? W.kab(T.di) : (W && W.kalbar && W.kalbar[T.di]);
+    var lokalBtn = kbDi
+      ? '<div class="kartu-item" style="margin-bottom:8px"><div><span class="ki-tag milik">Dalam Kabupaten · ' + kbDi.kec.length + ' Kec</span><b>📍 Travel ke Kecamatan / Desa di ' + esc(RUTE.nama(T.di)) + '</b><small>Antar penumpang hingga kecamatan & desa pedalaman/pesisir</small></div><div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-trv="pilihDesa:' + T.di + '">Pilih Kec/Desa</button></div></div>'
       : '';
     bukaLembar('travelTujuan', kepala('Pilih Tujuan (' + ids.length + ' kota)', 'Dari ' + RUTE.nama(T.di) + ' · tarif ×' + T.mult.toLocaleString('id-ID')) + chipF + lokalBtn + (pesan ? '<p class="racik-pesan salah">' + esc(pesan) + '</p>' : '') +
       '<div class="grid-2">' + ids.map(function (x) {
@@ -5171,17 +5181,17 @@
         var kdLbl = (RUTE.kondisiJalan && RUTE.kondisiJalan[rc.kondisi] && RUTE.kondisiJalan[rc.kondisi].nama) || 'Aspal Mulus';
         var satBbm = S.mobil && S.mobil.bbm === 'listrik' ? 'kWh' : 'L';
         var jmlAlt = RUTE.semuaJalur ? RUTE.semuaJalur(T.di, x.id, 3).length : 1;
-        var isKalbarK = !!(W && W.kalbar && W.kalbar[x.id]);
+        var adaDesaK = !!(W && (W.kab ? W.kab(x.id) : (W.kalbar && W.kalbar[x.id])));
         return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + rc.km.toLocaleString('id-ID') + ' km · ±' + jamTeks(rc.jam) + '</span>' + (jmlAlt >= 2 ? '<span class="ki-tag promo">' + jmlAlt + ' Jalur</span>' : (rc.laut ? '<span class="ki-tag">⛴️</span>' : '')) + '</div>' +
           '<b>' + esc(k.nama) + '</b><small>' + esc(kdLbl) + ' · ±' + Math.round(rc.liter) + satBbm + (rc.tol ? ' · Tol ' + rupiahPendek(rc.tol) : '') + '</small>' +
           '<div class="ki-harga">' + rupiah(rc.tarif) + '/kursi</div></div>' +
-          '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-trv="tujuan:' + x.id + '">Pilih</button>' + (isKalbarK ? '<button type="button" class="chip-tombol" data-trv="pilihDesa:' + x.id + '">📍 Kec/Desa</button>' : '') + '</div></div>';
+          '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-trv="tujuan:' + x.id + '">Pilih</button>' + (adaDesaK ? '<button type="button" class="chip-tombol" data-trv="pilihDesa:' + x.id + '">📍 Kec/Desa</button>' : '') + '</div></div>';
       }).join('') + '</div>');
   }
   function bukaPilihDesaTravel(kabId, kecId) {
     var W = window.KK_WILAYAH;
-    if (!W || !W.kalbar || !W.kalbar[kabId]) return bukaTujuanTravel();
-    var kb = W.kalbar[kabId];
+    var kb = W && (W.kab ? W.kab(kabId) : (W.kalbar && W.kalbar[kabId]));
+    if (!kb) return bukaTujuanTravel();
     var kcAkt = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[0];
     app._trvDesaKey = kabId + '|' + kcAkt.id;
     var T = S.travel, intraKab = T && T.di === kabId;
@@ -5670,7 +5680,7 @@
           '<button type="button" class="chip-tombol" data-hud="hbCepat:0|' + esc(c.kode) + '">Tanpa</button></div></div>';
       }).join('') + '</div>');
   }
-  function bukaInfoLokasi(kabLihat) {
+  function bukaInfoLokasi(kabLihat, provLihat) {
     var W = window.KK_WILAYAH;
     var lok = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
     var rm = (OJEK && OJEK.lokasiRumah) ? OJEK.lokasiRumah(S) : null;
@@ -5682,13 +5692,20 @@
       '<div class="stat-box"><small>Jarak dari Rumah</small><b>🏠 +' + jr.toLocaleString('id-ID') + ' km</b></div>' +
       '<div class="stat-box"><small>Desa / Kelurahan</small><b>' + esc(lok ? lok.desa : '-') + '</b></div>' +
       '<div class="stat-box"><small>Rumah / Basecamp</small><b>' + esc(rm ? (rm.kecNama + ' (' + rm.kabNama + ')') : kotaIni().nama) + '</b></div></div>';
-    if (W && W.kalbar) {
-      var listKab = W.daftarKabKalbar();
-      var totalKecProv = listKab.reduce(function (a, b) { return a + (b.jmlKec || 0); }, 0);
-      if (!W.kalbar[kabId]) kabId = 'pontianak';
+    if (W && W.daftarProvinsiList) {
+      var provList = W.daftarProvinsiList();
+      var provId = provLihat || (kabLihat && W.provDariKab ? W.provDariKab(kabLihat) : null) || (W.provDariKab ? W.provDariKab(kabId) : null) || app._infoProv || provList[0].id;
+      if (!W.provinsi || !W.provinsi[provId]) provId = provList[0].id;
+      var pObj = W.provinsi[provId];
+      var listKab = W.daftarKab(provId);
+      if (!pObj.data[kabId]) kabId = listKab[0].id;
+      app._infoProv = provId;
       app._infoKab = kabId;
-      var kbObj = W.kalbar[kabId];
-      html += '<h3 class="subjudul">🗺️ Provinsi Kalimantan Barat (14 Kab/Kota · ' + totalKecProv + ' Kecamatan Resmi BPS)</h3>' +
+      var kbObj = pObj.data[kabId];
+      html += '<h3 class="subjudul">🗺️ Provinsi ' + esc(pObj.nama) + ' (' + pObj.jmlKab + ' Kab/Kota · ' + pObj.jmlKec + ' Kec · ' + pObj.jmlDesa.toLocaleString('id-ID') + ' Desa/Kel)</h3>' +
+        '<div class="cat-strip">' + provList.map(function (pr) {
+          return '<button type="button" class="' + (pr.id === provId ? 'pilih' : '') + '" data-aksi="lihatProv:' + pr.id + '">🗺️ ' + esc(pr.nama) + ' (' + pr.jmlKab + ')</button>';
+        }).join('') + '</div>' +
         '<div class="cat-strip">' + listKab.map(function (kb) {
           return '<button type="button" class="' + (kb.id === kabId ? 'pilih' : '') + '" data-aksi="lihatKab:' + kb.id + '">' + esc(kb.nama.replace(/^Kab\. |^Kota /, '')) + ' (' + kb.jmlKec + ')</button>';
         }).join('') + '</div>' +
