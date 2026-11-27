@@ -177,11 +177,13 @@
     var jamBagus = S.menit >= 1140 && S.menit <= 1260 ? 1.5 : S.menit >= 690 && S.menit <= 780 ? 1.2 : 0.8;
     var tren = acak(M.MENU).id === so.tren ? 1.3 : 1, dasar = jenis === 'tiktok' ? 60 : jenis === 'threads' ? 25 : 35;
     var akun = jenis === 'tiktok' ? 'tiktok' : jenis === 'threads' ? 'threads' : 'ig';
-    var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200) * (g.KK_DIRI ? g.KK_DIRI.kameraHp(S) : 1));
+    var efHpD = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : null;
+    var kntBonus = efHpD ? (1 + (efHpD.kontenBonus || 0)) : 1;
+    var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200) * (g.KK_DIRI ? g.KK_DIRI.kameraHp(S) : 1) * kntBonus);
     so[akun] = (so[akun] || 0) + baru;
     if (so.postHari !== S.hari) { so.postHari = S.hari; so.postJenis = []; }
     so.postJenis.push(jenis);
-    var viral = Math.random() < (jenis === 'tiktok' ? 0.04 : jenis === 'threads' ? 0.03 : 0.02) * jamBagus;
+    var viral = Math.random() < (jenis === 'tiktok' ? 0.04 : jenis === 'threads' ? 0.03 : 0.02) * jamBagus * (1 + (kntBonus - 1) * 0.65);
     if (viral) { so.viralSampai = S.hari + 2; so[akun] += 800; }
     return { ok: true, baru: baru, viral: viral, jangkauan: baru * (15 + Math.floor(Math.random() * 20)) };
   }

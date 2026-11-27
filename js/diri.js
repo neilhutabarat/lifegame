@@ -40,8 +40,10 @@
     if (typeof S.rumah.kwh !== 'number' || isNaN(S.rumah.kwh)) { S.rumah.kwh = 10; S.rumah.padam = false; }
     if (S.rumah.jarak == null) S.rumah.jarak = N.jarakKos;
     S.rumah.infoBarang = S.rumah.infoBarang || {};
-    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0 };
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0, pola: 'off', tetapId: null, autoBeli: false, akumBatang: 0 };
     S.rokok.stok = S.rokok.stok || {};
+    if (!S.rokok.pola) S.rokok.pola = 'off';
+    if (typeof S.rokok.akumBatang !== 'number' || isNaN(S.rokok.akumBatang)) S.rokok.akumBatang = 0;
     S.game = S.game || { konsol: {}, kaset: {}, pasar: null };
     S.game.konsol = S.game.konsol || {};
     S.game.kaset = S.game.kaset || {};
@@ -471,7 +473,8 @@
         var sedangTrip = pakaiOjek && S.ojek.trip;
         var pakaiTravel = S.travel && S.travel.aktif;
         var lajuKuras = sedangTrip ? 8 : (pakaiOjek || pakaiTravel) ? 4.5 : 1.2;
-        var butuhMah = lajuKuras * 50 * j;
+        var effHp = efekHp(S, hm).efisiensiBaterai || 1;
+        var butuhMah = lajuKuras * 50 * effHp * j;
         var pbList = pbDipakaiList(S), pbSum = pbRingkasan(S);
         if (pbList.length && pbSum.adaDaya) {
           /* suplai dari gabungan hingga 5 Power Bank aktif; UNEED Real Capacity = 100% efisiensi, merk standar = 80% */
@@ -534,6 +537,35 @@
     }
     if (d.stamina < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
     if (d.stamina < 3) { d.ketiduran = 120; kabar.push('Kamu kelelahan dan harus istirahat 2 jam.'); d.stamina = 20; }
+    /* Auto-Merokok realistis sesuai pola perokok (hanya berjalan saat bangun; banyak tidur → lebih awet, begadang → bisa 2 bks!) */
+    if (S.rokok && S.rokok.pola && S.rokok.pola !== 'off' && !S.tidurAnim && j > 0) {
+      var prAuto = POLA_ROKOK[S.rokok.pola];
+      if (prAuto && prAuto.btgPer16Jam > 0) {
+        S.rokok.akumBatang = (S.rokok.akumBatang || 0) + (prAuto.btgPer16Jam / 16) * j;
+        var batasLoop = 0;
+        while (S.rokok.akumBatang >= 1 && batasLoop < 6) {
+          batasLoop++;
+          S.rokok.akumBatang -= 1;
+          var idHisap = (S.rokok.tetapId && S.rokok.stok && S.rokok.stok[S.rokok.tetapId] > 0)
+            ? S.rokok.tetapId
+            : Object.keys((S.rokok && S.rokok.stok) || {}).filter(function (k) { return S.rokok.stok[k] > 0; })[0];
+          if (!idHisap && S.rokok.autoBeli && S.rokok.tetapId) {
+            var rbAuto = beliRokokAuto(S, S.rokok.tetapId);
+            if (rbAuto && rbAuto.ok) {
+              kabar.push(rbAuto.teks);
+              idHisap = S.rokok.tetapId;
+            } else {
+              S.rokok.akumBatang = 0;
+              if (rbAuto) kabar.push('🚬 Auto-beli rokok gagal: ' + rbAuto);
+              break;
+            }
+          }
+          if (!idHisap) { S.rokok.akumBatang = 0; break; }
+          var rHisap = merokok(S, idHisap, true);
+          if (rHisap && rHisap.ok && rHisap.warn) kabar.push(rHisap.warn);
+        }
+      }
+    }
     /* Auto Makan & Minum hemat biaya (jika diaktifkan pemain) */
     if (S.autoMakanMinum && j > 0) {
       if (d.minum < 30) {
@@ -929,6 +961,27 @@
     if (punya(S, 'ringlight')) k += 0.15;
     if (punya(S, 'osmoaction')) k += 0.35;
     return k;
+  }
+  /* Dampak nyata spesifikasi HP: semakin tinggi kelas HP (Flagship/iPhone/Ultra), makin gacor GPS ojol, konten & prestise sosial, dan chip makin hemat baterai */
+  function efekHp(S, model) {
+    var m = model || hpAktif(S) || { harga: 1200000, ram: 4, kamera: 1, merek: 'Xiaomi', watt: 10, mah: 5000 };
+    var h = +(m.harga || 1200000), ram = +(m.ram || 4), kam = +(m.kamera || 1);
+    var isApple = String(m.merek || '').toLowerCase() === 'apple';
+    var gpsBonus = h >= 22000000 ? 0.35 : h >= 14000000 ? 0.28 : h >= 8000000 ? 0.20 : h >= 4000000 ? 0.12 : h >= 2200000 ? 0.06 : 0;
+    if (ram >= 12 && gpsBonus < 0.35) gpsBonus = Math.min(0.35, gpsBonus + 0.03);
+    var kontenBonus = h >= 22000000 ? 1.20 : h >= 14000000 ? 0.85 : h >= 8000000 ? 0.55 : h >= 4000000 ? 0.30 : h >= 2200000 ? 0.12 : 0;
+    if (kam >= 2.2) kontenBonus += 0.15;
+    var prestiseBonus = (h >= 22000000 ? 0.22 : h >= 14000000 ? 0.16 : h >= 8000000 ? 0.10 : h >= 4000000 ? 0.05 : 0) + (isApple ? 0.06 : 0);
+    var efisiensiBaterai = h >= 20000000 ? 0.74 : h >= 12000000 ? 0.80 : h >= 6000000 ? 0.88 : h >= 3000000 ? 0.94 : 1.0;
+    var tierLabel = h >= 20000000 ? 'Ultra Flagship' : h >= 11000000 ? 'Flagship' : h >= 4500000 ? 'Menengah Pro' : h >= 2200000 ? 'Menengah' : 'Entry-Level';
+    return {
+      gpsBonus: Math.round(gpsBonus * 100) / 100,
+      kontenBonus: Math.round(kontenBonus * 100) / 100,
+      prestiseBonus: Math.round(prestiseBonus * 100) / 100,
+      efisiensiBaterai: efisiensiBaterai,
+      hematPersen: Math.round((1 - efisiensiBaterai) * 100),
+      tierLabel: tierLabel
+    };
   }
 
   /* ---------- pulsa, kuota, WiFi, gadget asli (HP, tablet, laptop) & instal APK ---------- */
@@ -2756,10 +2809,11 @@
       if (!hbPenuhT && !isPas && !isTeman && pr < 40 && hub < 55) {
         return target.nama + ' masih canggung (butuh perasaan ≥40%, bahagia ≥55%, atau Bar HB 100%).';
       }
-      target.perasaan = Math.min(100, pr + (isPas ? 15 : 16));
+      var prst = 1 + (efekHp(S).prestiseBonus || 0);
+      target.perasaan = Math.min(100, pr + Math.round((isPas ? 15 : 16) * prst));
       target.hb = Math.min(100, (target.hb == null ? 30 : target.hb) + 15);
-      if (isTeman) target.hubungan = Math.min(100, hub + 8);
-      else target.bahagia = Math.min(100, hub + (isPas ? 10 : 8));
+      if (isTeman) target.hubungan = Math.min(100, hub + Math.round(8 * prst));
+      else target.bahagia = Math.min(100, hub + Math.round((isPas ? 10 : 8) * prst));
       S.diri.hb = Math.min(100, (S.diri.hb || 0) + 12);
       S.diri.stamina = Math.min(100, (S.diri.stamina || 50) + 5);
       if (!isPas && punyaPas) S.diri.rasaBersalah = Math.min(100, (S.diri.rasaBersalah || 0) + 6);
@@ -2780,7 +2834,53 @@
     }
     return 'Aksi tidak dikenal.';
   }
-  /* ---------- Rokok Legal & Rokok Ilegal per Daerah Indonesia ---------- */
+  /* ---------- Rokok Legal & Rokok Ilegal per Daerah Indonesia + Pola Konsumsi Otomatis ---------- */
+  var POLA_ROKOK = {
+    off: { id: 'off', nama: 'Manual', btgPer16Jam: 0, ket: 'Hisap rokok manual saja' },
+    ringan: { id: 'ringan', nama: 'Ringan', btgPer16Jam: 6, ket: '1 bungkus habis 2–3 hari' },
+    normal: { id: 'normal', nama: 'Normal', btgPer16Jam: 16, ket: '±1 bungkus/hari (banyak tidur → 2 hr; begadang → 2 bks)' },
+    berat: { id: 'berat', nama: 'Berat', btgPer16Jam: 32, ket: '±2 bungkus/hari' },
+    gila: { id: 'gila', nama: 'Gila', btgPer16Jam: 56, ket: '±3–4 bungkus/hari (rantai nonstop)' }
+  };
+  function aturPolaRokok(S, pola) {
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0, pola: 'off', tetapId: null, autoBeli: false, akumBatang: 0 };
+    if (!POLA_ROKOK[pola]) return 'Pola perokok tidak dikenal.';
+    S.rokok.pola = pola;
+    if (pola !== 'off' && !S.rokok.tetapId) {
+      var stK = Object.keys(S.rokok.stok || {}).filter(function (k) { return S.rokok.stok[k] > 0; })[0];
+      if (stK) S.rokok.tetapId = stK;
+    }
+    return { ok: true, teks: '🚬 Mode konsumsi rokok diubah ke ' + POLA_ROKOK[pola].nama + ' (' + POLA_ROKOK[pola].ket + ').' };
+  }
+  function setRokokTetap(S, id) {
+    var rk = cariRokok(S, id);
+    if (!rk) return 'Merek rokok tidak ditemukan.';
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0, pola: 'off', tetapId: null, autoBeli: false, akumBatang: 0 };
+    S.rokok.tetapId = id;
+    return { ok: true, teks: '⭐ ' + rk.item.nama + ' ditetapkan sebagai Rokok Tetap harianmu!' };
+  }
+  function toggleAutoBeliRokok(S) {
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0, pola: 'off', tetapId: null, autoBeli: false, akumBatang: 0 };
+    if (!S.rokok.autoBeli && !S.rokok.tetapId) {
+      var stK = Object.keys(S.rokok.stok || {}).filter(function (k) { return S.rokok.stok[k] > 0; })[0];
+      S.rokok.tetapId = stK || (N.rokokLegal && N.rokokLegal[0] && N.rokokLegal[0].id) || 'sampoerna_mild16';
+    }
+    S.rokok.autoBeli = !S.rokok.autoBeli;
+    var rk = S.rokok.tetapId ? cariRokok(S, S.rokok.tetapId) : null;
+    return { ok: true, teks: S.rokok.autoBeli ? ('🚬 Auto-Beli Rokok Tetap AKTIF (' + (rk ? rk.item.nama : 'otomatis') + ' saat stok habis).') : 'Auto-Beli Rokok Tetap dimatikan.' };
+  }
+  function beliRokokAuto(S, id) {
+    var rk = cariRokok(S, id);
+    if (!rk) return 'Rokok tetap tidak ditemukan.';
+    var h = rk.item.harga, qty = rk.item.isi || 16;
+    if (g.KK_UANG.bayarDompet && g.KK_UANG.bayarDompet(S, h)) { /* cash */ }
+    else if (g.KK_UANG.bayarQris && g.KK_UANG.bayarQris(S, h)) { /* e-wallet */ }
+    else if (S.bank && S.bank.saldo >= h) { S.bank.saldo -= h; S.bank.mutasi.unshift({ n: S.hari, ket: 'Auto-beli rokok: ' + rk.item.nama, jml: -h }); }
+    else return 'Saldo tidak cukup untuk auto-beli ' + rk.item.nama + ' (' + rp(h) + ').';
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
+    S.rokok.stok[id] = (S.rokok.stok[id] || 0) + qty;
+    return { ok: true, teks: '🚬 Auto-beli 1 bks ' + rk.item.nama + ' (' + rp(h) + ', +' + qty + ' btg).' };
+  }
   function daftarRokok(S) {
     var k = kota(S), pulau = (k && k.pulau) || 'Kalimantan';
     var ilMap = N.rokokIlegal || {};
@@ -2815,12 +2915,13 @@
     var by = g.KK_UANG.bayarPilihan(S, harga, 'Beli ' + rk.item.nama + (isEcer ? ' (1 btg)' : ' (1 bks)'), S._metodeBayar || 'dompet');
     if (by !== true) return by;
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + harga;
-    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0 };
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0, pola: 'off', tetapId: null, autoBeli: false, akumBatang: 0 };
     S.rokok.stok[id] = (S.rokok.stok[id] || 0) + qty;
+    if (!S.rokok.tetapId) S.rokok.tetapId = id;
     return { ok: true, teks: '🚬 Membeli ' + rk.item.nama + ' (+' + qty + ' batang, ' + rp(harga) + '). Total stok: ' + totalBatangRokok(S) + ' batang.' };
   }
-  function merokok(S, id) {
-    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0 };
+  function merokok(S, id, otomatis) {
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0, pola: 'off', tetapId: null, autoBeli: false, akumBatang: 0 };
     if (S.rokok.hariTercatat !== S.hari) { S.rokok.hariTercatat = S.hari; S.rokok.hariIni = 0; }
     var targetId = id;
     if (!targetId || !(S.rokok.stok[targetId] > 0)) {
@@ -2834,19 +2935,20 @@
     S.rokok.hariIni = (S.rokok.hariIni || 0) + 1;
     S.rokok.efekSampai = S.hari * 1440 + S.menit + 120; /* 2 jam efek tahan lapar & lambatkan turun stamina */
     var d = S.diri;
-    d.kenyang = batas((d.kenyang || 0) + 6);
-    d.rasaBersalah = Math.max(0, (d.rasaBersalah || 0) - 8);
-    d.hb = batas((d.hb || 0) - 5);
-    var bebanSehat = (rk.ilegal ? 1.4 : 0.6) + (S.rokok.hariIni > 6 ? 2.5 : 0);
+    d.kenyang = batas((d.kenyang || 0) + (otomatis ? 3 : 6));
+    d.rasaBersalah = Math.max(0, (d.rasaBersalah || 0) - (otomatis ? 3 : 8));
+    d.hb = batas((d.hb || 0) - (otomatis ? 2 : 5));
+    if (typeof d.stres === 'number') d.stres = Math.max(0, d.stres - (otomatis ? 2 : 6));
+    var bebanSehat = (rk.ilegal ? 0.55 : 0.25) + (S.rokok.hariIni > 24 ? 1.4 : S.rokok.hariIni > 16 ? 0.6 : 0);
     d.kesehatan = Math.max(10, (d.kesehatan == null ? 100 : d.kesehatan) - bebanSehat);
     var warnBatuk = '';
-    if (S.rokok.hariIni > 8 && !d.sakit && Math.random() < 0.22) {
+    if (S.rokok.hariIni > 22 && !d.sakit && Math.random() < (otomatis ? 0.04 : 0.15)) {
       d.sakit = { id: 'flu', nama: 'Batuk & Sesak Napas (ISPA)', berat: false, sampai: S.hari + 3 };
-      warnBatuk = ' ⚠️ Kebanyakan merokok hari ini membuatmu batuk/ISPA!';
+      warnBatuk = '⚠️ Kebanyakan merokok hari ini (' + S.rokok.hariIni + ' btg) membuatmu batuk/ISPA!';
     }
     return {
-      ok: true, menit: 5,
-      teks: '🚬 Menikmati 1 batang ' + rk.item.nama + (rk.ilegal ? ' (tanpa cukai)' : '') + ' · lapar tertahan & stamina lebih awet 2 jam, stres reda! (Hari ini: ' + S.rokok.hariIni + ' btg)' + warnBatuk
+      ok: true, menit: otomatis ? 0 : 5, warn: warnBatuk,
+      teks: '🚬 Menikmati 1 batang ' + rk.item.nama + (rk.ilegal ? ' (tanpa cukai)' : '') + ' · lapar tertahan & stamina lebih awet 2 jam, stres reda! (Hari ini: ' + S.rokok.hariIni + ' btg)' + (warnBatuk ? ' ' + warnBatuk : '')
     };
   }
 
@@ -2941,7 +3043,7 @@
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
 
-  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, POLA_ROKOK: POLA_ROKOK, aturPolaRokok: aturPolaRokok, setRokokTetap: setRokokTetap, toggleAutoBeliRokok: toggleAutoBeliRokok, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, efekHp: efekHp, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,

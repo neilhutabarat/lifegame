@@ -310,6 +310,20 @@
     S.bank.saldo += jml - biaya; catat(S, 'Transfer dari ' + q.app + (biaya ? ' (biaya ' + biaya.toLocaleString('id-ID') + ')' : ''), jml - biaya);
     return true;
   }
+  function topupEwallet(S, id, jml) {
+    S.merchants = S.merchants || {};
+    var q = qrisData(id) || qrisIni(S);
+    if (!q) return 'Dompet digital tidak ditemukan.';
+    jml = Math.floor(+jml || 0);
+    if (jml < 10000) return 'Minimal Top Up Dompet Digital Rp10.000.';
+    var admin = 1000;
+    if (!S.bank || S.bank.saldo < jml + admin) return 'Saldo rekening ' + bankIni(S).nama + ' tidak cukup (' + rp((S.bank && S.bank.saldo) || 0) + ', butuh ' + rp(jml + admin) + ' termasuk admin Rp1.000).';
+    if (!S.merchants[q.id]) S.merchants[q.id] = { tersedia: 0, menunggu: [], tarikBulanIni: 0 };
+    S.bank.saldo -= (jml + admin);
+    S.merchants[q.id].tersedia = (S.merchants[q.id].tersedia || 0) + jml;
+    catat(S, 'Top Up ' + q.app + ' (+admin Rp1.000)', -(jml + admin));
+    return { ok: true, jml: jml, nama: q.app, teks: '💸 Top Up ' + q.app + ' ' + rp(jml) + ' berhasil (admin Rp1.000)! Saldo langsung aktif untuk pembayaran.' };
+  }
   function bayarPajak(S, i) {
     var t = S.pajak.tagihan[i]; if (!t || t.dibayar) return 'Tagihan tidak ditemukan.';
     var total = t.jml + t.denda;
@@ -594,7 +608,7 @@
 
   g.KK_UANG = { siapkan: siapkan, migrasi: migrasi, qrisData: qrisData, qrisAktif: qrisAktif, tersedia: tersedia, bayarQris: bayarQris, pasangQris: pasangQris, tutupQris: tutupQris,
     biayaTransfer: biayaTransfer, catatTransfer: catatTransfer, saldoMerchant: saldoMerchant, bayarTunai: bayarTunai, terimaQris: terimaQris, laci: laci, dompet: dompet, bayarDompet: bayarDompet, bayarPilihan: bayarPilihan, pindahKeDompet: pindahKeDompet, pindahKeLaci: pindahKeLaci, isiTabunganGaji: isiTabunganGaji, tarikTabunganGaji: tarikTabunganGaji, merchantTotal: merchantTotal,
-    bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
+    bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, topupEwallet: topupEwallet, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
     penghasilanKk: penghasilanKk, cicilKk: cicilKk, lunasiCicilanKk: lunasiCicilanKk, cicilanKk: cicilanKk, TENOR_KK: TENOR_KK, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,
     siapkanPaylater: siapkanPaylater, terpakaiPaylater: terpakaiPaylater, sisaLimitPaylater: sisaLimitPaylater, cicilanPaylater: cicilanPaylater, pakaiPaylater: pakaiPaylater, bayarPaylater: bayarPaylater, naikLimitPaylater: naikLimitPaylater,

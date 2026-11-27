@@ -160,6 +160,8 @@
     if (mudik === 'mudik') r *= 2.1;
     else if (mudik === 'balik') r *= 1.85;
     if ((S.ojek.rating || 4.85) >= 4.75) r *= 1.18; /* rating tinggi buka order prioritas */
+    var efHp = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : null;
+    if (efHp && efHp.gpsBonus > 0) r *= (1 + efHp.gpsBonus); /* sinyal & GPS flagship bikin order masuk lebih gacor */
     var mult = (S.ojek && S.ojek.mult) || 1, isCar = S.ojek && S.ojek.mode === 'mobil';
     var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(isCar ? S.mobil : S.motor, isCar ? 'mobil' : 'motor') : 1;
     r *= Math.max(0.25, Math.min(1.6, Math.pow(nyaman / mult, 1.5)));
@@ -196,12 +198,14 @@
     var kaliCar = isCar ? (((N.bisnisMobil && N.bisnisMobil.kaliTarifCar) || 2.3) * pengaliMbl) : 1;
     var pot = isCar ? ((N.bisnisMobil && N.bisnisMobil.potonganCar) || 0.1) : O.potongan;
     var tuslah = statusMudik(S.hari) ? 1.3 : 1; /* tuslah Lebaran / Mudik +30% */
-    var prioritas = (S.ojek.rating || 4.85) >= 4.75 && Math.random() < 0.35;
+    var efHpT = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : null;
+    var gpsB = efHpT ? (efHpT.gpsBonus || 0) : 0;
+    var prioritas = (S.ojek.rating || 4.85) >= 4.75 && Math.random() < (0.35 + gpsB * 0.45);
     var t = Math.round(tarif(S, km) * kaliCar * tuslah * (prioritas ? 1.15 : 1) / 500) * 500;
     var sufLayanan = (isCar && S.mobil) ? (S.mobil.kelas === 'sultan' ? ' VIP Sultan' : S.mobil.kelas === 'mewah' ? ' Luxe' : S.mobil.harga >= 300e6 ? ' Comfort' : '') : (prioritas ? ' Prioritas' : '');
     var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : (p.layanan[jenis] + sufLayanan);
-    var tipJauh = isCar && bisaJauh ? (Math.random() < 0.45 ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
-      : (Math.random() < (prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
+    var tipJauh = isCar && bisaJauh ? (Math.random() < (0.45 + gpsB * 0.35) ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
+      : (Math.random() < ((prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) + gpsB * 0.25) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
     return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: tipJauh };

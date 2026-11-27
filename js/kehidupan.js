@@ -57,19 +57,54 @@
     { id: 'deposito', nama: 'Deposito Bank Berjangka', jenis: 'dep', satuan: 'slot', hargaDasar: 1000000, vol: 0, dividenThn: 0.045, ket: 'Bunga pasti 4,5%/tahun cair otomatis ke bank tiap bulan' }
   ];
 
-  /* ---------- 4. Pendidikan Terakhir, Karier Tetap & Kerja Sampingan ---------- */
+  /* ---------- 4. Pendidikan Terakhir, Lengkap 24 Jurusan Kuliah Indonesia, Karier Tetap (Jam Kantor Asli) & Sampingan ---------- */
   var PENDIDIKAN = [
     { id: 'sma', nama: 'SMA / SMK', level: 1, biayaKuliah: 0 },
     { id: 'd3', nama: 'D3 Diploma', level: 2, biayaKuliah: 8500000 },
     { id: 's1', nama: 'S1 Sarjana', level: 3, biayaKuliah: 16000000 },
     { id: 's2', nama: 'S2 Magister', level: 4, biayaKuliah: 32000000 }
   ];
+  var KAT_JURUSAN = [
+    ['semua', 'Semua (24)'],
+    ['teknik', '💻 Teknik & IT'],
+    ['ekonomi', '📊 Ekonomi & Bisnis'],
+    ['kesehatan', '🩺 Kesehatan'],
+    ['hukum', '⚖️ Hukum & Sosial'],
+    ['pendidikan', '📚 Pendidikan & Seni'],
+    ['alam', '🌾 Pertanian & MIPA']
+  ];
+  var JURUSAN_KULIAH = [
+    { id: 'ti', nama: 'Teknik Informatika / Ilmu Komputer', kat: 'teknik', gelar: 'S.Kom', bidang: 'it', ket: 'Pemrograman, AI & sistem informasi modern' },
+    { id: 'si', nama: 'Sistem Informasi', kat: 'teknik', gelar: 'S.Kom', bidang: 'it', ket: 'Analisis data bisnis & manajemen IT' },
+    { id: 'tsipil', nama: 'Teknik Sipil', kat: 'teknik', gelar: 'S.T', bidang: 'teknik', ket: 'Konstruksi jalan, jembatan & gedung' },
+    { id: 'tmesin', nama: 'Teknik Mesin', kat: 'teknik', gelar: 'S.T', bidang: 'teknik', ket: 'Otomotif, manufaktur & energi industri' },
+    { id: 'telektro', nama: 'Teknik Elektro', kat: 'teknik', gelar: 'S.T', bidang: 'teknik', ket: 'Kelistrikan, telekomunikasi & robotika' },
+    { id: 'tindustri', nama: 'Teknik Industri', kat: 'teknik', gelar: 'S.T', bidang: 'bisnis', ket: 'Optimasi logistik, gudang & rantai pasok' },
+    { id: 'arsitektur', nama: 'Arsitektur', kat: 'teknik', gelar: 'S.Ars', bidang: 'teknik', ket: 'Perancangan bangunan, rumah & tata kota' },
+    { id: 'manajemen', nama: 'Manajemen Bisnis', kat: 'ekonomi', gelar: 'S.M', bidang: 'bisnis', ket: 'Pemasaran, SDM, keuangan & operasional' },
+    { id: 'akuntansi', nama: 'Akuntansi', kat: 'ekonomi', gelar: 'S.Ak', bidang: 'keuangan', ket: 'Audit, pajak & pembukuan perusahaan' },
+    { id: 'ekonomi', nama: 'Ilmu Ekonomi & Pembangunan', kat: 'ekonomi', gelar: 'S.E', bidang: 'keuangan', ket: 'Perbankan, makroekonomi & kebijakan fiskal' },
+    { id: 'perhotelan', nama: 'Pariwisata & Perhotelan', kat: 'ekonomi', gelar: 'S.Par', bidang: 'bisnis', ket: 'Manajemen hotel, wisata & travel modern' },
+    { id: 'kedokteran', nama: 'Pendidikan Dokter', kat: 'kesehatan', gelar: 'dr.', bidang: 'medis', ket: 'Klinis, rumah sakit & pelayanan kesehatan' },
+    { id: 'keperawatan', nama: 'Ilmu Keperawatan', kat: 'kesehatan', gelar: 'S.Kep', bidang: 'medis', ket: 'Perawatan pasien & manajemen klinik/RS' },
+    { id: 'farmasi', nama: 'Farmasi', kat: 'kesehatan', gelar: 'S.Farm', bidang: 'medis', ket: 'Apoteker, formulasi obat & industri farmasi' },
+    { id: 'kesmas', nama: 'Kesehatan Masyarakat / Gizi', kat: 'kesehatan', gelar: 'S.KM', bidang: 'medis', ket: 'K3 perusahaan, nutrisi & epidemiologi' },
+    { id: 'hukum', nama: 'Ilmu Hukum', kat: 'hukum', gelar: 'S.H', bidang: 'hukum', ket: 'Advokat, notaris, legal perusahaan & hakim' },
+    { id: 'komunikasi', nama: 'Ilmu Komunikasi & PR', kat: 'hukum', gelar: 'S.I.Kom', bidang: 'sosial', ket: 'Jurnalistik, media digital & public relations' },
+    { id: 'psikologi', nama: 'Psikologi', kat: 'hukum', gelar: 'S.Psi', bidang: 'sosial', ket: 'HRD, konseling & pengembangan SDM' },
+    { id: 'admpublik', nama: 'Administrasi Publik / Negara', kat: 'hukum', gelar: 'S.AP', bidang: 'hukum', ket: 'Tata kelola pemerintahan, ASN & kebijakan' },
+    { id: 'hi', nama: 'Hubungan Internasional', kat: 'hukum', gelar: 'S.Hub.Int', bidang: 'sosial', ket: 'Diplomasi, ekspor-impor & korporasi global' },
+    { id: 'pgsd', nama: 'Pendidikan Guru (PGSD / FKIP)', kat: 'pendidikan', gelar: 'S.Pd', bidang: 'didik', ket: 'Tenaga pendidik sekolah & lembaga belajar' },
+    { id: 'dkv', nama: 'Desain Komunikasi Visual (DKV)', kat: 'pendidikan', gelar: 'S.Ds', bidang: 'kreatif', ket: 'Branding, UI/UX, ilustrasi & konten kreatif' },
+    { id: 'agrotek', nama: 'Agroteknologi / Agribisnis', kat: 'alam', gelar: 'S.P', bidang: 'alam', ket: 'Perkebunan, pertanian modern & pangan' },
+    { id: 'kelautan', nama: 'Perikanan, Kelautan & Kehutanan', kat: 'alam', gelar: 'S.Pi', bidang: 'alam', ket: 'Sumber daya alam, maritim & konservasi' }
+  ];
   var KARIER_TETAP = [
-    { id: 'kurir_hub', nama: 'Kurir / Admin Gudang Ekspedisi', minLvl: 1, gaji: 3600000, jam: 8, ket: 'Syarat SMA/SMK · Senin–Jumat · Gaji tgl 1 + THR 1× gaji' },
-    { id: 'staf_admin', nama: 'Staf Administrasi & Kasir Kantor', minLvl: 1, gaji: 4200000, jam: 8, ket: 'Syarat SMA/SMK · Senin–Jumat · Ruang ber-AC' },
-    { id: 'staf_it', nama: 'Staf Finance / IT Support', minLvl: 2, gaji: 5800000, jam: 8, ket: 'Syarat D3 Diploma · Senin–Jumat · Tunjangan makan & THR' },
-    { id: 'analis_spv', nama: 'Analis Bisnis / Supervisor', minLvl: 3, gaji: 9500000, jam: 8, ket: 'Syarat S1 Sarjana · Senin–Jumat · Karier mapan + THR' },
-    { id: 'manager_pro', nama: 'Senior Manager / Konsultan', minLvl: 4, gaji: 18000000, jam: 8, ket: 'Syarat S2 Magister · Senin–Jumat · Gaji eksekutif + THR' }
+    { id: 'kurir_hub', nama: 'Admin & Logistik Gudang Ekspedisi', kantorNama: 'Hub Logistik Nusantara', minLvl: 1, gaji: 3800000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 6.5, cocok: ['tindustri', 'manajemen'], ket: 'Syarat SMA/SMK · Jam 08.00–17.00 (Sen–Jum) · Gaji tgl 1 + THR' },
+    { id: 'staf_admin', nama: 'Staf Administrasi & Kasir Kantor', kantorNama: 'PT Sinar Niaga Mandiri', minLvl: 1, gaji: 4300000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 7.2, cocok: ['akuntansi', 'manajemen', 'admpublik'], ket: 'Syarat SMA/SMK · Jam 08.00–17.00 (Sen–Jum) · Ruang ber-AC' },
+    { id: 'staf_it', nama: 'Staf Finance / IT Support', kantorNama: 'PT Cakra Digital Indonesia', minLvl: 2, gaji: 6200000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 9.4, cocok: ['ti', 'si', 'akuntansi', 'telektro', 'dkv'], ket: 'Syarat D3 · Jam 08.00–17.00 (Sen–Jum) · +15% jika jurusan cocok' },
+    { id: 'analis_spv', nama: 'Analis Bisnis / Supervisor Operasional', kantorNama: 'Bank & Korporasi Regional', minLvl: 3, gaji: 9800000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 11.5, cocok: ['manajemen', 'ekonomi', 'akuntansi', 'hukum', 'ti', 'si', 'psikologi', 'komunikasi', 'tsipil', 'tmesin', 'kedokteran', 'farmasi'], ket: 'Syarat S1 · Jam 08.00–17.00 (Sen–Jum) · +15% jika jurusan cocok' },
+    { id: 'manager_pro', nama: 'Senior Manager / Konsultan Eksekutif', kantorNama: 'Menara Korporat Utama', minLvl: 4, gaji: 18500000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 13.8, cocok: ['manajemen', 'ekonomi', 'hukum', 'ti', 'tindustri', 'kedokteran', 'hi', 'arsitektur'], ket: 'Syarat S2 · Jam 08.00–17.00 (Sen–Jum) · Gaji eksekutif + THR' }
   ];
   var KERJA_SAMPINGAN = [
     { id: 'spx_borong', nama: 'Kurir Paket Borongan (SPX/J&T)', menit: 180, upah: 115000, stamina: -24, stres: 10, butuhMotor: true, ket: 'Antar 35 paket area sekitar (3 jam) · cair tunai langsung' },
@@ -92,6 +127,16 @@
   function namaDidik(id) {
     var f = PENDIDIKAN.filter(function (x) { return x.id === id; })[0];
     return f ? f.nama : 'SMA / SMK';
+  }
+  function namaJurusan(id) {
+    var f = JURUSAN_KULIAH.filter(function (x) { return x.id === id; })[0];
+    return f ? f.nama : '';
+  }
+  function gajiEfektif(S, kj) {
+    if (!kj) return 0;
+    var jur = S && S.profil && S.profil.jurusan;
+    var cocok = jur && kj.cocok && kj.cocok.indexOf(jur) >= 0;
+    return cocok ? Math.round(kj.gaji * 1.15 / 50000) * 50000 : kj.gaji;
   }
 
   function siapkan(S) {
@@ -284,17 +329,30 @@
     return { nilai: tot, modal: mod, laba: tot - mod };
   }
 
-  /* ---------- Karier Kantoran, Kuliah Malam & Kerja Sampingan ---------- */
+  /* ---------- Karier Kantoran, Kuliah Malam/Jurusan Lengkap & Kerja Sampingan ---------- */
+  function kuliahJurusan(S, jenjangId, jurusanId) {
+    siapkan(S);
+    var target = PENDIDIKAN.filter(function (x) { return x.id === jenjangId; })[0];
+    var jur = JURUSAN_KULIAH.filter(function (x) { return x.id === jurusanId; })[0];
+    if (!target || target.level < 2) return 'Pilih jenjang D3, S1, atau S2.';
+    if (!jur) return 'Pilih jurusan kuliah terlebih dahulu.';
+    var curLvl = levelDidik(S.profil.pendidikan);
+    if (curLvl >= target.level && S.profil.jurusan === jur.id) return 'Kamu sudah lulus ' + target.nama + ' ' + jur.nama + '.';
+    if (target.id === 's2' && curLvl < 3) return 'Untuk mendaftar S2 Magister, selesaikan S1 Sarjana terlebih dahulu.';
+    var biaya = target.biayaKuliah;
+    var by = UANG.bayarPilihan(S, biaya, 'Kuliah ' + target.nama + ' — ' + jur.nama, S._metodeBayar || 'bank');
+    if (by !== true) return by;
+    if (target.level >= curLvl) S.profil.pendidikan = target.id;
+    S.profil.jurusan = jur.id;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
+    return { ok: true, menit: 120, teks: '🎓 Selamat! Lulus ' + target.nama + ' Jurusan ' + jur.nama + ' (' + jur.gelar + ')! Karier gaji tinggi & bonus +15% jurusan linear kini terbuka.' };
+  }
   function kuliahUpgrade(S) {
     siapkan(S);
     var curLvl = levelDidik(S.profil.pendidikan);
     var next = PENDIDIKAN.filter(function (x) { return x.level === curLvl + 1; })[0];
     if (!next) return 'Pendidikanmu sudah tingkat tertinggi (S2 Magister)!';
-    var by = UANG.bayarPilihan(S, next.biayaKuliah, 'Biaya Kuliah Malam / UT: ' + next.nama, S._metodeBayar || 'bank');
-    if (by !== true) return by;
-    S.profil.pendidikan = next.id;
-    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + next.biayaKuliah;
-    return { ok: true, menit: 120, teks: '🎓 Selamat! Lulus kuliah malam & resmi menyandang pendidikan ' + next.nama + '! Karier gaji tinggi kini terbuka.' };
+    return kuliahJurusan(S, next.id, S.profil.jurusan || 'manajemen');
   }
   function lamarKerja(S, id) {
     siapkan(S);
@@ -302,17 +360,32 @@
     if (!kj) return 'Lowongan tidak ditemukan.';
     if (levelDidik(S.profil.pendidikan) < kj.minLvl) {
       var sy = PENDIDIKAN.filter(function (x) { return x.level === kj.minLvl; })[0];
-      return 'Butuh pendidikan minimal ' + (sy ? sy.nama : 'lebih tinggi') + ' untuk posisi ' + kj.nama + '. Ambil Kuliah Malam dulu!';
+      return 'Butuh pendidikan minimal ' + (sy ? sy.nama : 'lebih tinggi') + ' untuk posisi ' + kj.nama + '. Ambil Kuliah di tab 🎓 Kuliah dulu!';
     }
     S.karier.id = kj.id;
     S.karier.hadirBulan = 0;
-    return { ok: true, teks: '💼 Diterima bekerja sebagai ' + kj.nama + ' (gaji ' + rp(kj.gaji) + '/bln · Senin–Jumat)! Sore & Sabtu–Minggu tetap bebas ngojek.' };
+    var gj = gajiEfektif(S, kj);
+    return { ok: true, teks: '💼 Diterima bekerja sebagai ' + kj.nama + ' di ' + kj.kantorNama + ' (gaji ' + rp(gj) + '/bln · 08.00–17.00 Sen–Jum)! Pukul 07.00 akan muncul tombol Berangkat Kerja.' };
   }
   function berhentiKerja(S) {
     siapkan(S);
     if (!S.karier.id) return 'Kamu sedang tidak terikat pekerjaan kantoran.';
     S.karier.id = null;
     return { ok: true, teks: 'Resign dari pekerjaan kantoran selesai. Kini bebas penuh waktu.' };
+  }
+  function selesaiKerjaKantor(S) {
+    siapkan(S);
+    var kj = KARIER_TETAP.filter(function (x) { return x.id === S.karier.id; })[0];
+    if (!kj) return { ok: false, teks: 'Pekerjaan tidak ditemukan.' };
+    S.karier.kerjaHariIni = S.hari;
+    S.karier.hadirBulan = (S.karier.hadirBulan || 0) + 1;
+    S.diri.stamina = batas((S.diri.stamina || 60) - 26);
+    S.diri.kenyang = batas((S.diri.kenyang || 60) - 18);
+    S.diri.minum = batas((S.diri.minum || 60) - 20);
+    ubahStres(S, 12);
+    var uangMakan = 45000;
+    S.uang.dompet = (S.uang.dompet || 0) + uangMakan;
+    return { ok: true, teks: '🏢 Jam 17.00 selesai kerja di ' + kj.kantorNama + ' (hadir bulan ini: ' + S.karier.hadirBulan + ' hr) + uang makan ' + rp(uangMakan) + '! Sore ini bebas pulang atau narik ojol.' };
   }
   function masukKerjaHariIni(S) {
     siapkan(S);
@@ -321,16 +394,10 @@
     var dow = KAL.tgl(S.hari).dow;
     if (dow === 0 || dow === 6) return 'Hari ini akhir pekan (Sabtu/Minggu) — kantor libur! Nikmati waktu luang atau narik ojol.';
     if (S.karier.kerjaHariIni === S.hari) return 'Kamu sudah selesai sif kerja kantor hari ini! Sore ini bisa santai atau narik ojol.';
-    if (S.diri.stamina < 25) return 'Stamina terlalu rendah untuk kerja kantor. Tidur atau minum kopi dulu.';
-    S.karier.kerjaHariIni = S.hari;
-    S.karier.hadirBulan = (S.karier.hadirBulan || 0) + 1;
-    S.diri.stamina = batas(S.diri.stamina - 30);
-    S.diri.kenyang = batas(S.diri.kenyang - 22);
-    S.diri.minum = batas(S.diri.minum - 24);
-    ubahStres(S, 14);
-    var uangMakan = 45000;
-    S.uang.dompet = (S.uang.dompet || 0) + uangMakan;
-    return { ok: true, menit: kj.jam * 60, teks: '🏢 Selesai kerja ' + kj.nama + ' (8 jam · hadir bulan ini: ' + S.karier.hadirBulan + ' hr) + uang makan ' + rp(uangMakan) + '!' };
+    if (S.diri.stamina < 20) return 'Stamina terlalu rendah untuk kerja kantor. Tidur atau minum kopi dulu.';
+    var mSkrg = Math.floor(S.menit) % 1440;
+    if (mSkrg >= (kj.jamPulang || 17) * 60 - 30) return 'Jam kantor (08.00–17.00) sudah hampir habis hari ini. Berangkat besok pagi pukul 07.00!';
+    return { ok: true, job: kj };
   }
   function kerjaSampingan(S, id) {
     siapkan(S);
@@ -338,13 +405,14 @@
     if (!ks) return 'Pekerjaan sampingan tidak ditemukan.';
     if (ks.butuhMotor && !(g.KK_MOTOR && g.KK_MOTOR.siapPakai(S))) return 'Butuh motor yang tidak sedang disewakan untuk kerja sampingan ini.';
     if (S.diri.stamina < 18) return 'Stamina terlalu rendah. Istirahat dulu.';
-    var bonusKamera = id === 'jasa_konten' && g.KK_DIRI && g.KK_DIRI.kameraHp ? Math.round(ks.upah * Math.max(0, g.KK_DIRI.kameraHp(S) - 1) * 0.45 / 5000) * 5000 : 0;
-    var upah = ks.upah + bonusKamera;
+    var efHp = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : { kontenBonus: 0 };
+    var bonusHp = id === 'jasa_konten' ? Math.round(ks.upah * (efHp.kontenBonus || 0) / 5000) * 5000 : 0;
+    var upah = ks.upah + bonusHp;
     S.uang.dompet = (S.uang.dompet || 0) + upah;
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + upah;
     S.diri.stamina = batas(S.diri.stamina + ks.stamina);
     ubahStres(S, ks.stres);
-    return { ok: true, menit: ks.menit, teks: '⚡ Selesai ' + ks.nama + ' (' + ks.menit + ' mnt) · cair ' + rp(upah) + ' ke Dompet!' };
+    return { ok: true, menit: ks.menit, teks: '⚡ Selesai ' + ks.nama + ' (' + ks.menit + ' mnt) · cair ' + rp(upah) + (bonusHp > 0 ? ' (termasuk bonus HP +' + rp(bonusHp) + '!)' : '') + ' ke Dompet!' };
   }
 
   /* ---------- Bisnis Tambahan Nyata ---------- */
@@ -474,7 +542,7 @@
         var kj = KARIER_TETAP.filter(function (x) { return x.id === S.karier.id; })[0];
         if (kj) {
           var rasio = Math.min(1, Math.max(0.25, (S.karier.hadirBulan || 1) / 20));
-          var gaji = Math.round(kj.gaji * rasio / 10000) * 10000;
+          var gaji = Math.round(gajiEfektif(S, kj) * rasio / 10000) * 10000;
           S.bank.saldo += gaji;
           S.bank.mutasi.unshift({ n: nBaru, ket: 'Gaji bulanan: ' + kj.nama, jml: gaji });
           S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + gaji;
@@ -511,14 +579,14 @@
 
   g.KK_HIDUP = {
     BAN_MOTOR: BAN_MOTOR, BAN_MOBIL: BAN_MOBIL, PAKAIAN: PAKAIAN, AKS_DRIVER: AKS_DRIVER,
-    INVEST_KATALOG: INVEST_KATALOG, PENDIDIKAN: PENDIDIKAN, KARIER_TETAP: KARIER_TETAP,
+    INVEST_KATALOG: INVEST_KATALOG, PENDIDIKAN: PENDIDIKAN, KAT_JURUSAN: KAT_JURUSAN, JURUSAN_KULIAH: JURUSAN_KULIAH, KARIER_TETAP: KARIER_TETAP,
     KERJA_SAMPINGAN: KERJA_SAMPINGAN, BISNIS_LIST: BISNIS_LIST,
-    siapkan: siapkan, ubahStres: ubahStres, levelDidik: levelDidik, namaDidik: namaDidik,
+    siapkan: siapkan, ubahStres: ubahStres, levelDidik: levelDidik, namaDidik: namaDidik, namaJurusan: namaJurusan, gajiEfektif: gajiEfektif,
     perpanjangSim: perpanjangSim, bayarTilang: bayarTilang, cekRaziaJalan: cekRaziaJalan,
     gantiBanMerek: gantiBanMerek, tambalBan: tambalBan, cuciSteam: cuciSteam,
     beliPakaian: beliPakaian, pakaiBaju: pakaiBaju, warnaBajuAktif: warnaBajuAktif, beliAksDriver: beliAksDriver,
     hargaInvest: hargaInvest, beliInvest: beliInvest, jualInvest: jualInvest, nilaiPortofolio: nilaiPortofolio,
-    kuliahUpgrade: kuliahUpgrade, lamarKerja: lamarKerja, berhentiKerja: berhentiKerja, masukKerjaHariIni: masukKerjaHariIni, kerjaSampingan: kerjaSampingan,
+    kuliahUpgrade: kuliahUpgrade, kuliahJurusan: kuliahJurusan, lamarKerja: lamarKerja, berhentiKerja: berhentiKerja, masukKerjaHariIni: masukKerjaHariIni, selesaiKerjaKantor: selesaiKerjaKantor, kerjaSampingan: kerjaSampingan,
     bukaBisnis: bukaBisnis, infoSpotGacor: infoSpotGacor, acaraSosial: acaraSosial,
     tierWilayah: tierWilayah, pindahDomisili: pindahDomisili, gantiHari: gantiHari
   };
