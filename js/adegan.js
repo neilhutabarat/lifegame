@@ -727,68 +727,227 @@
     }
     cx.restore();
   }
-  function gambarMobilRealistis(bentuk, w, pt, lampuNyala) {
-    var kaca = 'rgba(130,175,205,.88)', rangka = '#23282e';
-    /* bayangan bawah mobil */
-    cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(0, 2, 62, 5, 0, 0, Math.PI * 2); cx.fill();
-    var tBadan = bentuk === 'suv' ? 24 : bentuk === 'mpv' ? 22 : bentuk === 'pikap' ? 18 : 19;
-    var tAtap = bentuk === 'suv' ? 46 : bentuk === 'mpv' ? 44 : bentuk === 'hatch' ? 38 : bentuk === 'pikap' ? 42 : 35;
-    if (bentuk === 'pikap') {
-      /* Gran Max / L300 pikap realistis */
-      kotakBulat(-58, -22, 74, 15, 3, w); /* bak */
-      kotak(-58, -24, 74, 3, '#9aa3a6'); /* bibir bak */
-      kotakBulat(14, -tAtap, 42, 35, 6, w); /* kabin */
-      cx.fillStyle = kaca; cx.beginPath(); cx.moveTo(20, -tAtap + 4); cx.lineTo(44, -tAtap + 4); cx.lineTo(52, -22); cx.lineTo(20, -22); cx.closePath(); cx.fill();
-      kotak(16, -24, 38, 1.5, 'rgba(0,0,0,.2)');
+  function geserHex(hexStr, d) {
+    var h = hex(hexStr || '#cbd5e1');
+    return 'rgb(' + Math.max(0, Math.min(255, h[0] + d)) + ',' + Math.max(0, Math.min(255, h[1] + d)) + ',' + Math.max(0, Math.min(255, h[2] + d)) + ')';
+  }
+  var PROFIL_MOBIL = {
+    airev: 'micro',
+    ayla: 'hatch', agya: 'hatch', brio: 'hatch', binguoev: 'hatch', cloudev: 'hatch',
+    calya: 'lmpv', sigra: 'lmpv', xenia: 'lmpv', avanza: 'lmpv', avanzahev27: 'lmpv', ertiga: 'lmpv', terios: 'csuv', rush: 'csuv', xl7: 'csuv', veloz: 'lmpv', xpander: 'lmpv', stargazer: 'lmpv', bydm6: 'lmpv',
+    innova: 'innova', zenix: 'innova', zenix27: 'innova',
+    raize: 'csuv', brv: 'csuv', yariscross: 'csuv', atto3: 'csuv', creta: 'csuv', hrv: 'csuv', hrvhev26: 'csuv', crv: 'csuv', ioniq5: 'csuv', sealion7: 'csuv',
+    fortuner: 'bigsuv', fortuner28: 'bigsuv', pajerosport: 'bigsuv', palisade: 'bigsuv', landcruiser: 'bigsuv',
+    jimny: 'boxy4x4', mercg63: 'boxy4x4',
+    alphard: 'luxvan', vellfire: 'luxvan', lexuslm: 'luxvan',
+    hiace: 'vancom', staria: 'staria',
+    civicrs: 'sedan', bydseal: 'sedan', camry: 'sedan', model3: 'sedan', bmw330i: 'sedan',
+    gr86: 'sport', porsche911: 'sport',
+    granmax: 'pikap', carry: 'pikap', l300: 'pikap', traga: 'pikap',
+    hilux: 'pikapdc', hiluxdc: 'pikapdc', triton: 'pikapdc'
+  };
+  function profilMobilDari(id, bentuk) {
+    var bid = String(id || '').replace(/-bekas$/, '');
+    if (PROFIL_MOBIL[bid]) return PROFIL_MOBIL[bid];
+    if (bentuk === 'van') return 'luxvan';
+    if (bentuk === 'sport') return 'sport';
+    if (bentuk === 'sedan') return 'sedan';
+    if (bentuk === 'suv') return 'csuv';
+    if (bentuk === 'hatch') return 'hatch';
+    if (bentuk === 'pikap') return 'pikap';
+    return 'lmpv';
+  }
+  function gambarMobilRealistis(bentuk, w, pt, lampuNyala, id) {
+    var prof = profilMobilDari(id, bentuk);
+    var isSport = prof === 'sport', isBoxy = prof === 'boxy4x4', isBig = prof === 'bigsuv' || isBoxy;
+    var isVan = prof === 'luxvan' || prof === 'vancom' || prof === 'staria';
+    var isMicro = prof === 'micro';
+    var kaliperMerah = isSport || prof === 'sedan' || id === 'mercg63' || id === 'fortuner' || id === 'fortuner28' || id === 'pajerosport' || id === 'sealion7';
+
+    /* Bayangan lembut bawah mobil */
+    var lenHalf = isMicro ? 36 : prof === 'hatch' ? 49 : isVan || isBig || prof === 'pikapdc' ? 62 : 58;
+    cx.fillStyle = 'rgba(0,0,0,.46)';
+    cx.beginPath(); cx.ellipse(0, 2, lenHalf + 4, 6.2, 0, 0, Math.PI * 2); cx.fill();
+
+    /* Gradien metalik 3D bodi */
+    var topY = isVan ? -52 : isBig ? -49 : prof === 'innova' || prof === 'csuv' ? -45 : prof === 'lmpv' ? -43 : isMicro ? -40 : prof === 'hatch' ? -39 : isSport ? -32 : -36;
+    var bg = cx.createLinearGradient(0, topY, 0, 0);
+    bg.addColorStop(0, geserHex(w, 46));
+    bg.addColorStop(0.36, geserHex(w, 10));
+    bg.addColorStop(0.55, geserHex(w, -28));
+    bg.addColorStop(0.68, geserHex(w, 16));
+    bg.addColorStop(1, geserHex(w, -58));
+
+    var glG = cx.createLinearGradient(0, topY + 2, 0, -20);
+    glG.addColorStop(0, '#090f1a');
+    glG.addColorStop(0.62, '#1e293b');
+    glG.addColorStop(1, '#38bdf866');
+
+    var rxA = isMicro ? -22 : prof === 'hatch' ? -31 : isBig || prof === 'pikapdc' ? -38 : -36;
+    var rxB = isMicro ? 22 : prof === 'hatch' ? 31 : isBig || prof === 'pikapdc' ? 38 : 36;
+    var rBan = isMicro ? 8.5 : isBig || prof === 'pikapdc' ? 12.6 : isSport ? 10.6 : 11;
+
+    if (prof === 'pikap') {
+      /* Gran Max / Carry / L300 / Traga: pikap pesek bak luas */
+      cx.fillStyle = bg;
+      kotakBulat(-58, -24, 72, 16, 3, bg);
+      kotak(-58, -26, 72, 3, '#94a3b8');
+      cx.fillStyle = bg;
+      cx.beginPath();
+      cx.moveTo(14, -8); cx.lineTo(14, -44); cx.lineTo(44, -44); cx.lineTo(54, -24); cx.lineTo(57, -8);
+      cx.closePath(); cx.fill();
+      cx.fillStyle = glG;
+      cx.beginPath(); cx.moveTo(19, -24); cx.lineTo(19, -40); cx.lineTo(42, -40); cx.lineTo(50, -24); cx.closePath(); cx.fill();
+      kotak(53, -21, 5, 5.5, '#e0f2fe'); kotak(-59, -21, 4, 6, '#ef4444');
+    } else if (prof === 'pikapdc') {
+      /* Hilux / Triton: pikap bermoncong gagah + rollbar */
+      cx.fillStyle = bg;
+      cx.beginPath();
+      cx.moveTo(-60, -9); cx.lineTo(-60, -27); cx.lineTo(-4, -27); cx.lineTo(0, -47);
+      cx.lineTo(28, -47); cx.lineTo(42, -28); cx.lineTo(60, -24); cx.lineTo(61, -9);
+      cx.closePath(); cx.fill();
+      kotak(-60, -29, 57, 3, '#334155');
+      cx.strokeStyle = '#1e293b'; cx.lineWidth = 3;
+      cx.beginPath(); cx.moveTo(-8, -28); cx.lineTo(-14, -45); cx.lineTo(-2, -45); cx.stroke();
+      cx.fillStyle = glG;
+      cx.beginPath(); cx.moveTo(4, -29); cx.lineTo(6, -43); cx.lineTo(26, -43); cx.lineTo(37, -29); cx.closePath(); cx.fill();
+      kotak(55, -22, 6, 5, '#e0f2fe'); kotak(-61, -24, 4, 7, '#ef4444');
     } else {
-      /* bodi bawah & kap mesin */
-      kotakBulat(-58, -tBadan - 6, 116, tBadan, 7, w);
-      /* rumah kabin & atap */
-      var dpnAtap = bentuk === 'sedan' ? 16 : bentuk === 'hatch' ? 24 : 26;
-      var blkAtap = bentuk === 'sedan' ? -30 : bentuk === 'hatch' ? -46 : -50;
-      cx.fillStyle = w; cx.beginPath();
-      cx.moveTo(blkAtap - 6, -tBadan - 5);
-      cx.lineTo(blkAtap, -tAtap);
-      cx.lineTo(dpnAtap - 6, -tAtap);
-      cx.lineTo(dpnAtap + 14, -tBadan - 5);
+      /* Bodi siluet autentik per profil */
+      cx.fillStyle = bg;
+      cx.beginPath();
+      if (isMicro) {
+        /* Wuling Air EV */
+        cx.moveTo(-34, -6); cx.lineTo(-35, -24); cx.lineTo(-30, -40); cx.lineTo(12, -40);
+        cx.lineTo(28, -24); cx.lineTo(35, -20); cx.lineTo(35, -6);
+      } else if (prof === 'hatch') {
+        /* Brio / Agya / Ayla / BinguoEV */
+        cx.moveTo(-48, -6); cx.lineTo(-49, -20); cx.lineTo(-39, -39); cx.lineTo(10, -39);
+        cx.lineTo(28, -24); cx.lineTo(48, -19); cx.lineTo(49, -6);
+      } else if (isSport) {
+        /* GR 86 / Porsche 911 */
+        cx.moveTo(-57, -5); cx.lineTo(-58, -16); cx.lineTo(-44, -24); cx.lineTo(-18, -33);
+        cx.lineTo(10, -32); cx.lineTo(32, -20); cx.lineTo(56, -14); cx.lineTo(58, -5);
+      } else if (prof === 'sedan') {
+        /* Civic RS / Camry / BMW 330i / BYD Seal / Model 3 */
+        cx.moveTo(-57, -6); cx.lineTo(-58, -19); cx.lineTo(-38, -23); cx.lineTo(-22, -36);
+        cx.lineTo(12, -36); cx.lineTo(30, -23); cx.lineTo(56, -18); cx.lineTo(58, -6);
+      } else if (isBoxy) {
+        /* Jimny / Mercedes-AMG G 63 */
+        cx.moveTo(-54, -9); cx.lineTo(-55, -48); cx.lineTo(16, -48); cx.lineTo(24, -29);
+        cx.lineTo(55, -27); cx.lineTo(57, -9);
+      } else if (prof === 'luxvan') {
+        /* Alphard / Vellfire / Lexus LM */
+        cx.moveTo(-59, -6); cx.lineTo(-60, -51); cx.lineTo(28, -51); cx.lineTo(48, -28);
+        cx.lineTo(60, -24); cx.lineTo(61, -6);
+      } else if (prof === 'staria') {
+        /* Hyundai Staria futuristik */
+        cx.moveTo(-59, -6); cx.lineTo(-60, -49); cx.lineTo(16, -49); cx.lineTo(54, -27);
+        cx.lineTo(61, -18); cx.lineTo(61, -6);
+      } else if (prof === 'vancom') {
+        /* Toyota HiAce */
+        cx.moveTo(-60, -6); cx.lineTo(-61, -50); cx.lineTo(38, -50); cx.lineTo(55, -26);
+        cx.lineTo(60, -22); cx.lineTo(60, -6);
+      } else if (prof === 'bigsuv') {
+        /* Fortuner / Pajero Sport / Palisade / Land Cruiser */
+        cx.moveTo(-59, -9); cx.lineTo(-60, -29); cx.lineTo(-49, -48); cx.lineTo(14, -48);
+        cx.lineTo(30, -30); cx.lineTo(59, -26); cx.lineTo(61, -9);
+      } else if (prof === 'csuv') {
+        /* Raize / HR-V / Creta / CR-V / IONIQ 5 / Sealion 7 */
+        cx.moveTo(-55, -8); cx.lineTo(-56, -25); cx.lineTo(-44, -44); cx.lineTo(12, -44);
+        cx.lineTo(29, -27); cx.lineTo(55, -22); cx.lineTo(56, -8);
+      } else if (prof === 'innova') {
+        /* Innova Reborn / Zenix */
+        cx.moveTo(-57, -6); cx.lineTo(-58, -25); cx.lineTo(-48, -45); cx.lineTo(14, -45);
+        cx.lineTo(33, -27); cx.lineTo(57, -21); cx.lineTo(59, -6);
+      } else {
+        /* LMPV: Avanza / Xenia / Xpander / Veloz / Ertiga / Calya */
+        cx.moveTo(-55, -6); cx.lineTo(-56, -23); cx.lineTo(-46, -42); cx.lineTo(16, -42);
+        cx.lineTo(34, -25); cx.lineTo(55, -20); cx.lineTo(56, -6);
+      }
       cx.closePath(); cx.fill();
-      /* kaca jendela menyatu dengan pilar B */
-      cx.fillStyle = kaca; cx.beginPath();
-      cx.moveTo(blkAtap - 2, -tBadan - 7);
-      cx.lineTo(blkAtap + 3, -tAtap + 3.5);
-      cx.lineTo(dpnAtap - 8, -tAtap + 3.5);
-      cx.lineTo(dpnAtap + 8, -tBadan - 7);
+
+      /* Garis lekukan bodi spekular (GTA V HD character line) */
+      cx.strokeStyle = 'rgba(255,255,255,0.62)'; cx.lineWidth = 1.25;
+      cx.beginPath(); cx.moveTo(-lenHalf + 6, -21); cx.lineTo(lenHalf - 6, -18); cx.stroke();
+
+      /* Kaca jendela gelap reflektif */
+      cx.fillStyle = glG;
+      cx.beginPath();
+      if (isMicro) {
+        cx.moveTo(-27, -25); cx.lineTo(-24, -37); cx.lineTo(10, -37); cx.lineTo(23, -25);
+      } else if (prof === 'hatch') {
+        cx.moveTo(-40, -24); cx.lineTo(-34, -36); cx.lineTo(8, -36); cx.lineTo(23, -24);
+      } else if (isSport) {
+        cx.moveTo(-36, -22); cx.lineTo(-16, -30); cx.lineTo(8, -29.5); cx.lineTo(26, -21);
+      } else if (prof === 'sedan') {
+        cx.moveTo(-33, -23); cx.lineTo(-20, -33.5); cx.lineTo(10, -33.5); cx.lineTo(25, -23);
+      } else if (isBoxy) {
+        cx.moveTo(-49, -29); cx.lineTo(-49, -44); cx.lineTo(13, -44); cx.lineTo(20, -29);
+      } else if (isVan) {
+        cx.moveTo(-53, -28); cx.lineTo(-53, -47); cx.lineTo(prof === 'staria' ? 14 : 25, -47); cx.lineTo(44, -28);
+      } else {
+        cx.moveTo(-48, -27); cx.lineTo(-42, topY + 4); cx.lineTo(12, topY + 4); cx.lineTo(28, -27);
+      }
       cx.closePath(); cx.fill();
-      /* pilar B & garis pintu */
-      var xPilar = (blkAtap + dpnAtap) / 2;
-      kotak(xPilar - 1.5, -tAtap + 3, 3, tAtap - tBadan - 8, rangka);
-      if (bentuk === 'mpv' || bentuk === 'suv') kotak(blkAtap + 14, -tAtap + 3, 2.5, tAtap - tBadan - 8, rangka);
-      /* roof rail SUV */
-      if (bentuk === 'suv') { kotak(blkAtap + 4, -tAtap - 3, dpnAtap - blkAtap - 14, 2.5, '#3b4249'); }
-      /* spion samping & gagang pintu */
-      kotakBulat(dpnAtap + 2, -tBadan - 9, 6, 4, 1.5, w);
-      kotak(xPilar - 10, -tBadan + 1, 6, 2, 'rgba(0,0,0,.35)');
-      kotak(xPilar + 6, -tBadan + 1, 6, 2, 'rgba(0,0,0,.35)');
-      /* grille depan & bumper */
-      kotak(54, -tBadan + 3, 4, 10, '#23282e');
-      kotak(-59, -11, 118, 4, 'rgba(0,0,0,.18)');
+
+      /* Kilau miring di kaca */
+      cx.fillStyle = 'rgba(255,255,255,0.22)';
+      cx.beginPath(); cx.moveTo(-18, topY + 5); cx.lineTo(-9, topY + 5); cx.lineTo(-15, -24); cx.lineTo(-24, -24); cx.closePath(); cx.fill();
+
+      /* Pilar B & C */
+      cx.fillStyle = '#0f172a';
+      if (!isMicro) {
+        cx.fillRect(-6, topY + 4, 3, Math.max(8, -24 - (topY + 4)));
+        if (!isSport && prof !== 'sedan' && prof !== 'hatch') cx.fillRect(-30, topY + 4, 2.6, Math.max(8, -24 - (topY + 4)));
+      }
+
+      /* Ciri khas unik tiap kelas */
+      if (isBoxy) {
+        /* Ban serep belakang ikonik Jimny & G-Class */
+        kotakBulat(-63, -36, 9, 20, 3, '#111827');
+        kotakBulat(-61, -33, 5, 14, 2, geserHex(w, -18));
+      }
+      if (isSport) {
+        /* Spoiler belakang GT */
+        kotak(-59, -27, 13, 2.8, '#0f172a'); kotak(-55, -24, 3, 6, '#0f172a');
+      }
+      if (prof === 'luxvan') {
+        /* Aksen krom VIP Alphard / Vellfire / Lexus LM */
+        kotak(56, -24, 5, 16, '#e2c87d'); kotak(-58, -27, 114, 2, '#e2c87d');
+      }
+      if (prof === 'bigsuv' || prof === 'csuv') {
+        /* Roof rail & pijakan kaki SUV */
+        kotak(-40, topY - 2.5, 50, 2.4, '#334155');
+        kotak(-24, -9, 48, 2.6, '#1e293b');
+      }
+      if (prof === 'staria') {
+        /* DRL LED penuh Staria */
+        kotak(49, -24, 11, 2.5, '#e0f2fe');
+      }
+      /* Lampu depan LED DRL & lampu rem */
+      kotakBulat(lenHalf - 6, isSport ? -15 : -22, 6.5, 4.5, 1.5, '#e0f2fe');
+      kotakBulat(-lenHalf - 1, isSport ? -16 : -23, 4.5, 6, 1.5, '#ef4444');
     }
-    /* lampu depan LED & lampu rem */
-    kotakBulat(53, -tBadan - 1, 6, 5, 1.5, '#fff6cc');
-    kotakBulat(-59, -tBadan - 1, 5, 6, 1.5, '#e03c31');
-    /* roda bervelg alloy berputar */
-    [-36, 36].forEach(function (rx) {
-      bulat(rx, -7, 11, '#181a1d');
-      bulat(rx, -7, 6.2, '#b9c2ca');
-      cx.strokeStyle = '#485058'; cx.lineWidth = 1.4; cx.beginPath();
-      for (var s = 0; s < 4; s++) { var a = pt + s * Math.PI / 4; cx.moveTo(rx + Math.cos(a) * 5.6, -7 + Math.sin(a) * 5.6); cx.lineTo(rx - Math.cos(a) * 5.6, -7 - Math.sin(a) * 5.6); }
+
+    /* Roda dengan velg alloy 6-spoke + kaliper rem */
+    [rxA, rxB].forEach(function (rx) {
+      bulat(rx, -rBan + 2, rBan, '#0b0f17');
+      bulat(rx, -rBan + 2, rBan * 0.62, '#cbd5e1');
+      if (kaliperMerah) { cx.fillStyle = '#ef4444'; cx.fillRect(rx + 1.5, -rBan + 0.5, 2.8, 3.6); }
+      cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.3; cx.beginPath();
+      for (var s = 0; s < 6; s++) {
+        var a = pt + s * (Math.PI / 3);
+        cx.moveTo(rx, -rBan + 2); cx.lineTo(rx + Math.cos(a) * (rBan * 0.56), -rBan + 2 + Math.sin(a) * (rBan * 0.56));
+      }
       cx.stroke();
-      bulat(rx, -7, 2, '#eef2f5');
+      bulat(rx, -rBan + 2, 2.1, '#f8fafc');
     });
+
     if (lampuNyala) {
-      var gr = cx.createRadialGradient(60, -tBadan + 2, 0, 60, -tBadan + 2, 54);
-      gr.addColorStop(0, 'rgba(255,244,190,.55)'); gr.addColorStop(1, 'rgba(255,244,190,0)');
-      cx.fillStyle = gr; cx.fillRect(54, -tBadan - 26, 66, 56);
+      var gr = cx.createRadialGradient(lenHalf + 2, -18, 0, lenHalf + 2, -18, 54);
+      gr.addColorStop(0, 'rgba(224,242,254,.62)'); gr.addColorStop(1, 'rgba(224,242,254,0)');
+      cx.fillStyle = gr; cx.fillRect(lenHalf - 2, -46, 66, 56);
     }
   }
 
@@ -1225,8 +1384,12 @@
     bulat(-lBahu - 1 - ayunKaki * 0.4, yBahu + pLengan + 2, 3.2, kulit);
     bulat(lBahu + 1 + ayunKaki * 0.4, yBahu + pLengan + 2, 3.2, kulit);
 
-    /* torso (bahu tegap cowok / siluet anggun cewek) */
-    cx.fillStyle = baju;
+    /* torso (bahu tegap cowok / siluet anggun cewek) dengan shading 3D halus (tidak datar seperti kertas) */
+    var grBaju = cx.createLinearGradient(-15, yBahu, 15, yPinggang);
+    grBaju.addColorStop(0, geserHex(baju, 24));
+    grBaju.addColorStop(0.55, baju);
+    grBaju.addColorStop(1, geserHex(baju, -34));
+    cx.fillStyle = grBaju;
     cx.beginPath();
     if (cewek) {
       cx.moveTo(-13.5, yBahu + 2);
@@ -1242,6 +1405,7 @@
       cx.lineTo(-12, yPinggang + 2);
     }
     cx.closePath(); cx.fill();
+    cx.strokeStyle = 'rgba(15,23,42,0.18)'; cx.lineWidth = 0.9; cx.stroke();
     /* kerah baju / detail jaket */
     if (!berhijab) {
       cx.fillStyle = kulit;
@@ -1983,10 +2147,19 @@
       cx.fillStyle = 'rgba(0,0,0,.025)';
       for (var wx = 0; wx < W; wx += 36) cx.fillRect(wx, 0, 1.5, lantai);
     }
+    /* P71: Ambient Occlusion dinding + lantai bertekstur & kilau cahaya jendela HD agar rumah tidak datar seperti kertas */
+    var aoAtas = cx.createLinearGradient(0, 0, 0, 56);
+    aoAtas.addColorStop(0, 'rgba(15,23,42,0.22)'); aoAtas.addColorStop(1, 'rgba(15,23,42,0)');
+    cx.fillStyle = aoAtas; cx.fillRect(0, 0, W, 56);
+    var aoBawah = cx.createLinearGradient(0, lantai - 28, 0, lantai);
+    aoBawah.addColorStop(0, 'rgba(15,23,42,0)'); aoBawah.addColorStop(1, 'rgba(15,23,42,0.16)');
+    cx.fillStyle = aoBawah; cx.fillRect(0, lantai - 28, W, 28);
     kotak(0, lantai - 7, W, 7, T.plint);
 
-    /* 2. Lantai sesuai material (keramik, granit, parket kayu, vinyl, marmer) */
-    kotak(0, lantai, W, H - lantai, T.lantai);
+    /* 2. Lantai sesuai material (keramik, granit, parket kayu, vinyl, marmer) + gradien kedalaman 3D */
+    var grLnt = cx.createLinearGradient(0, lantai, 0, H);
+    grLnt.addColorStop(0, T.lantai); grLnt.addColorStop(1, geserHex(T.lantai, -28));
+    cx.fillStyle = grLnt; cx.fillRect(0, lantai, W, H - lantai);
     if (T.ubin === 'parket') {
       cx.strokeStyle = 'rgba(75,45,20,.18)'; cx.lineWidth = 1;
       for (var py = lantai + 12; py < H; py += 14) { cx.beginPath(); cx.moveTo(0, py); cx.lineTo(W, py); cx.stroke(); }
@@ -2000,6 +2173,20 @@
       cx.strokeStyle = 'rgba(0,0,0,.075)'; cx.lineWidth = 1;
       for (var uy = lantai + stepU; uy < H; uy += stepU) { cx.beginPath(); cx.moveTo(0, uy); cx.lineTo(W, uy); cx.stroke(); }
       for (var ux = 0; ux < W + 30; ux += stepU * 1.6) { cx.beginPath(); cx.moveTo(ux, lantai); cx.lineTo(ux - 24, H); cx.stroke(); }
+    }
+    /* Kilau pantulan cahaya jendela & volumetric light shaft pada lantai rumah */
+    var gpR = gelap(m);
+    if (gpR < 0.65) {
+      var grSunR = cx.createLinearGradient(90, lantai - 120, 175, lantai + 120);
+      grSunR.addColorStop(0, 'rgba(255,244,205,' + (0.20 * (1 - gpR)).toFixed(3) + ')');
+      grSunR.addColorStop(1, 'rgba(255,244,205,0)');
+      cx.fillStyle = grSunR;
+      cx.beginPath(); cx.moveTo(86, lantai - 70); cx.lineTo(190, lantai - 70); cx.lineTo(245, lantai + 125); cx.lineTo(105, lantai + 125); cx.closePath(); cx.fill();
+    } else {
+      /* Halo hangat lampu plafon malam hari */
+      var grLpR = cx.createRadialGradient(180, 42, 4, 180, 42, 165);
+      grLpR.addColorStop(0, 'rgba(255,232,165,0.28)'); grLpR.addColorStop(1, 'rgba(255,232,165,0)');
+      cx.fillStyle = grLpR; cx.fillRect(0, 0, W, lantai + 90);
     }
 
     /* 3. Jendela & Pemandangan Luar (85 cm s/d 205 cm di dinding) */
@@ -2307,47 +2494,23 @@
     if (hp) { kotak(x + 7, yb + 5, 5, 9, '#222'); kotak(x + 8, yb + 6, 3, 6, '#7fd3e8'); }
   }
   var WARNA_MOBIL = {
-    granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#3e6fb0', traga: '#e8e4da', triton: '#3a4048',
-    calya: '#b8bcc0', sigra: '#c9ced4', ayla: '#e5a93c', agya: '#d9443a', brio: '#f0b92b', airev: '#8ecae6', binguoev: '#d6e5e3', cloudev: '#d8dde2',
-    xenia: '#cfd4d8', avanza: '#e8e4da', ertiga: '#7b8794', terios: '#d9d6cf', rush: '#2b2f36', xl7: '#59636e', veloz: '#8a2a2a', xpander: '#cfd4da', stargazer: '#bfc6cc',
+    granmax: '#e8e4da', carry: '#e8e4da', hilux: '#d6d8da', l300: '#2d5a8e', traga: '#e8e4da', triton: '#3a4048',
+    calya: '#b8bcc0', sigra: '#c9ced4', ayla: '#e5a93c', agya: '#d9443a', brio: '#f0b92b', airev: '#7ec8e3', binguoev: '#c8ded9', cloudev: '#d4dbe2',
+    xenia: '#cfd4d8', avanza: '#e8e4da', avanzahev27: '#dbe2ea', ertiga: '#7b8794', terios: '#d9d6cf', rush: '#2b2f36', xl7: '#59636e', veloz: '#8a2a2a', xpander: '#cfd4da', stargazer: '#bfc6cc',
     raize: '#d9443a', brv: '#d6dade', yariscross: '#1f7a8c', atto3: '#3a7ca5', hiace: '#eef0f2',
-    bydm6: '#4a5568', creta: '#c8cfd6', hrv: '#8d99ae', innova: '#c8ccd0', zenix: '#d8d4cc', jimny: '#a7b97d', hiluxdc: '#2b2f36',
-    fortuner: '#2b2f36', pajerosport: '#2c3138', civicrs: '#c62828', bydseal: '#457b9d', crv: '#3d4550', ioniq5: '#cfd6dc', camry: '#3a3f46', gr86: '#d9443a',
+    bydm6: '#4a5568', creta: '#c8cfd6', hrv: '#8d99ae', hrvhev26: '#94a3b8', innova: '#cfd4da', zenix: '#d8d4cc', zenix27: '#e2e6ec', jimny: '#9db372', hiluxdc: '#2b2f36',
+    fortuner: '#252a32', fortuner28: '#1e242c', pajerosport: '#2c3138', civicrs: '#c62828', bydseal: '#3a6b8c', crv: '#3d4550', ioniq5: '#cfd6dc', sealion7: '#1d4e89', camry: '#3a3f46', gr86: '#d9443a',
     staria: '#2e343d', palisade: '#262b33', model3: '#c92a2a', bmw330i: '#1d4e89',
     alphard: '#f3f1ea', vellfire: '#22262b', lexuslm: '#2d3138', landcruiser: '#2b2f36', porsche911: '#d93829', mercg63: '#1e2227'
   };
   function gambarMobil(x, y, bentuk, id, kiri, roda, gp, bawaDus) {
-    var w = WARNA_MOBIL[id] || '#e8e4da';
+    var bid = String(id || '').replace(/-bekas$/, '');
+    var w = WARNA_MOBIL[bid] || '#e2e8f0';
     var gerak = !!(roda && Math.abs(roda) > 0.001);
     var pt = gerak ? roda : 0;
     var lampu = (gp || 0) > 0.2 && gerak;
     cx.save(); cx.translate(x, y); if (kiri) cx.scale(-1, 1);
-    if (id === 'hilux' || id === 'triton') {
-      /* Pikap bermoncong (bonnet) 100% vektor dengan roda berputar */
-      cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(0, 2, 64, 5, 0, 0, Math.PI * 2); cx.fill();
-      kotakBulat(-58, -24, 62, 16, 3, w); kotak(-58, -26, 62, 3, '#8d969b');
-      kotakBulat(4, -24, 54, 16, 4, w);
-      cx.fillStyle = w; cx.beginPath(); cx.moveTo(4, -24); cx.lineTo(8, -44); cx.lineTo(30, -44); cx.lineTo(42, -24); cx.closePath(); cx.fill();
-      cx.fillStyle = 'rgba(130,175,205,.88)'; cx.beginPath(); cx.moveTo(10, -25); cx.lineTo(13, -40); cx.lineTo(28, -40); cx.lineTo(37, -25); cx.closePath(); cx.fill();
-      kotak(54, -20, 5, 6, '#fff6cc'); kotak(-59, -20, 4, 6, '#e03c31');
-      [-36, 38].forEach(function (rx) {
-        bulat(rx, -7, 11.5, '#181a1d'); bulat(rx, -7, 6.2, '#b9c2ca');
-        cx.strokeStyle = '#485058'; cx.lineWidth = 1.4; cx.beginPath();
-        for (var s = 0; s < 4; s++) { var a = pt + s * Math.PI / 4; cx.moveTo(rx + Math.cos(a) * 5.6, -7 + Math.sin(a) * 5.6); cx.lineTo(rx - Math.cos(a) * 5.6, -7 - Math.sin(a) * 5.6); }
-        cx.stroke();
-        bulat(rx, -7, 2, '#eef2f5');
-      });
-    } else if (bentuk === 'van') {
-      /* Alphard / Vellfire / HiAce / Staria: boxy MPV mewah + aksen krom */
-      gambarMobilRealistis('mpv', w, pt, lampu);
-      kotak(52, -28, 7, 18, '#c9b37a'); kotak(-56, -15, 112, 2.5, '#c9b37a');
-    } else if (bentuk === 'sport') {
-      /* GR 86 / Porsche 911: sports coupe ceper + spoiler belakang */
-      gambarMobilRealistis('sedan', w, pt, lampu);
-      kotak(-56, -32, 12, 3, '#1f2328'); kotak(-52, -29, 3, 5, '#1f2328');
-    } else {
-      gambarMobilRealistis(bentuk, w, pt, lampu);
-    }
+    gambarMobilRealistis(bentuk, w, pt, lampu, bid);
     if (bawaDus) {
       /* Rack atap mobil berisi dus kardus & koper baju saat pindah kota/daerah */
       kotak(-34, -47, 56, 3, '#334155');
@@ -2358,6 +2521,73 @@
       cx.beginPath(); cx.moveTo(-22, -47); cx.lineTo(-16, -71); cx.moveTo(8, -47); cx.lineTo(4, -66); cx.stroke();
     }
     cx.restore();
+  }
+  /* Preview SVG HD Mobil (12 profil siluet autentik) untuk Dealer Mobil, Agen Bekas, & Garasi */
+  function svgMobil(id, bentuk, warnaKustom) {
+    var bid = String(id || '').replace(/-bekas$/, '');
+    var prof = profilMobilDari(bid, bentuk);
+    var w = warnaKustom || WARNA_MOBIL[bid] || '#cbd5e1';
+    var wHi = geserHex(w, 42), wLo = geserHex(w, -46);
+    var uid = 'cm_' + bid + '_' + prof;
+    var body = '', glass = '', extra = '', rxA = 34, rxB = 106, rW = 11.5;
+    if (prof === 'micro') {
+      body = 'M36,56 L35,38 L40,22 L82,22 L98,38 L105,42 L105,56 Z';
+      glass = 'M43,37 L46,25 L80,25 L93,37 Z'; rxA = 48; rxB = 92; rW = 9;
+    } else if (prof === 'hatch') {
+      body = 'M22,56 L21,42 L31,23 L80,23 L98,38 L118,43 L119,56 Z';
+      glass = 'M30,38 L36,26 L78,26 L93,38 Z'; rxA = 39; rxB = 101;
+    } else if (prof === 'sport') {
+      body = 'M13,57 L12,46 L26,38 L52,29 L80,30 L102,42 L126,48 L128,57 Z';
+      glass = 'M34,40 L54,32 L78,32.5 L96,41 Z';
+      extra = '<rect x="11" y="34" width="13" height="3" fill="#0f172a"/><rect x="15" y="37" width="3" height="5" fill="#0f172a"/>';
+    } else if (prof === 'sedan') {
+      body = 'M13,56 L12,43 L32,39 L48,26 L82,26 L100,39 L126,44 L128,56 Z';
+      glass = 'M37,39 L50,28.5 L80,28.5 L95,39 Z';
+    } else if (prof === 'boxy4x4') {
+      body = 'M16,53 L15,14 L86,14 L94,33 L125,35 L127,53 Z';
+      glass = 'M21,33 L21,18 L83,18 L90,33 Z';
+      extra = '<rect x="7" y="25" width="9" height="20" rx="3" fill="#111827"/>'; rW = 12.8;
+    } else if (prof === 'luxvan') {
+      body = 'M11,56 L10,11 L98,11 L118,34 L130,38 L131,56 Z';
+      glass = 'M17,34 L17,15 L95,15 L114,34 Z';
+      extra = '<rect x="126" y="38" width="5" height="16" fill="#e2c87d"/><rect x="12" y="35" width="114" height="2" fill="#e2c87d"/>';
+    } else if (prof === 'staria') {
+      body = 'M11,56 L10,13 L86,13 L124,35 L131,44 L131,56 Z';
+      glass = 'M17,34 L17,17 L84,17 L114,34 Z';
+      extra = '<rect x="119" y="38" width="11" height="2.5" fill="#e0f2fe"/>';
+    } else if (prof === 'vancom') {
+      body = 'M10,56 L9,12 L108,12 L125,36 L130,40 L130,56 Z';
+      glass = 'M17,34 L17,16 L104,16 L120,34 Z';
+    } else if (prof === 'bigsuv') {
+      body = 'M11,53 L10,33 L21,14 L84,14 L100,32 L129,36 L131,53 Z';
+      glass = 'M22,34 L28,18 L82,18 L97,34 Z';
+      extra = '<rect x="28" y="11" width="52" height="2.5" fill="#334155"/>'; rW = 12.8;
+    } else if (prof === 'csuv') {
+      body = 'M15,54 L14,37 L26,18 L82,18 L99,35 L125,40 L126,54 Z';
+      glass = 'M24,35 L30,22 L80,22 L95,35 Z';
+      extra = '<rect x="30" y="15" width="48" height="2.2" fill="#334155"/>';
+    } else if (prof === 'innova') {
+      body = 'M13,56 L12,37 L22,17 L84,17 L103,35 L127,41 L129,56 Z';
+      glass = 'M22,35 L28,21 L82,21 L98,35 Z';
+    } else if (prof === 'pikap') {
+      body = 'M12,56 L12,38 L84,38 L84,18 L114,18 L124,38 L127,56 Z';
+      glass = 'M89,38 L89,22 L112,22 L120,38 Z';
+    } else if (prof === 'pikapdc') {
+      body = 'M10,53 L10,35 L66,35 L70,15 L98,15 L112,34 L130,38 L131,53 Z';
+      glass = 'M74,33 L76,19 L96,19 L107,33 Z'; rW = 12.6;
+    } else {
+      body = 'M15,56 L14,39 L24,20 L86,20 L104,37 L125,42 L126,56 Z';
+      glass = 'M23,36 L29,24 L83,24 L98,36 Z';
+    }
+    return '<svg viewBox="0 0 140 72" width="100%" height="58" style="display:block;margin:2px auto 4px">' +
+      '<defs><linearGradient id="' + uid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + wHi + '"/><stop offset="45%" stop-color="' + w + '"/><stop offset="100%" stop-color="' + wLo + '"/></linearGradient></defs>' +
+      '<ellipse cx="70" cy="63" rx="56" ry="5" fill="rgba(0,0,0,0.22)"/>' +
+      '<path d="' + body + '" fill="url(#' + uid + ')" stroke="rgba(15,23,42,0.35)" stroke-width="1"/>' +
+      '<path d="' + glass + '" fill="#1e293b"/>' +
+      '<path d="M52,24 L60,24 L54,36 L46,36 Z" fill="rgba(255,255,255,0.24)"/>' + extra +
+      '<circle cx="' + rxA + '" cy="54" r="' + rW + '" fill="#0f172a"/><circle cx="' + rxA + '" cy="54" r="' + (rW * 0.58).toFixed(1) + '" fill="#cbd5e1"/><circle cx="' + rxA + '" cy="54" r="2.2" fill="#f8fafc"/>' +
+      '<circle cx="' + rxB + '" cy="54" r="' + rW + '" fill="#0f172a"/><circle cx="' + rxB + '" cy="54" r="' + (rW * 0.58).toFixed(1) + '" fill="#cbd5e1"/><circle cx="' + rxB + '" cy="54" r="2.2" fill="#f8fafc"/>' +
+      '</svg>';
   }
   /* adegan jalan raya saat mengantar order ojol */
   function gambarLatarAwal(s, t) {
@@ -2941,7 +3171,11 @@
   function gambarPoolTravel(s, t) {
     var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = G.hor;
     gambarLangit(m, t, s); latarTema(f.tema, hor, 0, gp, m); ikonKota(f.kota, W * 0.68, hor + 2, G.sk, gp);
-    kotak(0, hor, W, G.jalanTop - hor + 6, '#c9c3b4'); kotak(0, G.jalanTop + 6, W, H - G.jalanTop, 'rgba(68,72,78,.95)');
+    kotak(0, hor, W, G.jalanTop - hor + 6, '#b8b2a4');
+    var grPl = cx.createLinearGradient(0, G.jalanTop + 6, 0, H);
+    grPl.addColorStop(0, '#444952'); grPl.addColorStop(1, '#262b32');
+    cx.fillStyle = grPl; cx.fillRect(0, G.jalanTop + 6, W, H - G.jalanTop);
+    if (texAspalHD) { for (var gxP = 0; gxP < W; gxP += 160) cx.drawImage(texAspalHD, gxP, G.jalanTop + 6, 160, Math.min(200, H - G.jalanTop)); }
     cx.fillStyle = '#e9e4d4'; for (var x1 = 8; x1 < W; x1 += 60) cx.fillRect(x1, G.jalanTop + 40, 30, 3);
     selimutMalam(gp, 0.34);
     kotak(18, G.jalanTop - 30, 4, 34, '#59656d'); kotakBulat(6, G.jalanTop - 52, 112, 24, 6, '#6a4fd8'); cx.font = '800 13px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText('POOL TRAVEL', 62, G.jalanTop - 40);
@@ -3053,8 +3287,13 @@
     if (A.jenis === 'spbu') {
       /* SPBU Pertamina + Petugas berseragam merah mengisi BBM ke motor/mobil */
       gambarLangit(m, t, s);
-      kotak(0, yTanah - 140, W, 140, '#e5e7eb');
-      kotak(0, yTanah, W, H - yTanah, '#475569');
+      var grSpW = cx.createLinearGradient(0, yTanah - 140, 0, yTanah);
+      grSpW.addColorStop(0, '#f1f5f9'); grSpW.addColorStop(1, '#cbd5e1');
+      cx.fillStyle = grSpW; cx.fillRect(0, yTanah - 140, W, 140);
+      var grSpF = cx.createLinearGradient(0, yTanah, 0, H);
+      grSpF.addColorStop(0, '#475569'); grSpF.addColorStop(1, '#1e293b');
+      cx.fillStyle = grSpF; cx.fillRect(0, yTanah, W, H - yTanah);
+      if (texAspalHD) { for (var gxSp = 0; gxSp < W; gxSp += 160) cx.drawImage(texAspalHD, gxSp, yTanah, 160, Math.min(200, H - yTanah)); }
       /* Kanopi ikonik SPBU merah-putih-biru */
       kotak(18, yTanah - 210, W - 36, 42, '#dc2626');
       kotak(18, yTanah - 172, W - 36, 9, '#ffffff');
@@ -3558,5 +3797,5 @@
   }
 
   function racikSaja() { anim.pantulBarista = 1; }
-  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja, pilihChar: pilihKunciChar };
+  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja, pilihChar: pilihKunciChar, svgMobil: svgMobil };
 })(window);

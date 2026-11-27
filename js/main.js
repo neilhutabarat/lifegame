@@ -1560,7 +1560,8 @@
     var cDisewakan = MOBIL.disewakan && MOBIL.disewakan(S);
     var pj = MOBIL.tagihanPajak(S), svm = N.rawatMobil.servisKm - (c.km - c.kmServis), banKmC = N.rawatMobil.banKm || 90000, sisaBanC = banKmC - (c.km - (c.kmBan || 0)), cEv = c.bbm === 'listrik';
     var lamaC = Math.max(0, S.hari - (c.dibeli == null ? S.hari : c.dibeli));
-    html += '<div class="saldo-besar"><small>' + esc(c.nama) + ' · ' + (cEv ? 'Listrik EV' : N.bbm.nama[c.bbm]) + (cDisewakan ? ' · 🔑 DISEWAKAN' : '') + '</small><b>' + (c.isi * c.tangki).toFixed(cEv ? 1 : 0) + ' / ' + c.tangki + (cEv ? ' kWh' : ' L') + '</b>' + persenBar(c.isi * 100) + '</div>' +
+    var prevMblGarasi = (ADEGAN && ADEGAN.svgMobil) ? ('<div style="background:linear-gradient(180deg,rgba(15,23,42,.08),rgba(15,23,42,.18));border-radius:12px;padding:6px 10px;margin-bottom:8px">' + ADEGAN.svgMobil(c.id, c.bentuk, c.warnaCat) + '</div>') : '';
+    html += prevMblGarasi + '<div class="saldo-besar"><small>' + esc(c.nama) + ' · ' + (cEv ? 'Listrik EV' : N.bbm.nama[c.bbm]) + (cDisewakan ? ' · 🔑 DISEWAKAN' : '') + '</small><b>' + (c.isi * c.tangki).toFixed(cEv ? 1 : 0) + ' / ' + c.tangki + (cEv ? ' kWh' : ' L') + '</b>' + persenBar(c.isi * 100) + '</div>' +
       (cDisewakan ? '<div class="isbat peringatan" style="margin:0 0 8px">🔑 Mobil ini sedang <b>disewakan</b> di Sewa Aset — tidak bisa dipakai GoCar/Travel sebelum sewa dihentikan.<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol pilih" data-aksi="sewaBarang:mobil:' + (S.mobilAktif || 0) + '">Hentikan Sewa Mobil</button></div></div>' : '') +
       '<div class="stat-grid-2">' +
       '<div class="stat-box"><small>Odometer · Usia</small><b>' + Math.round(c.km).toLocaleString('id-ID') + ' km · ' + lamaC + ' hr</b></div>' +
@@ -1628,6 +1629,7 @@
         var pnpM = x.bentuk === 'pikap' ? 0 : Math.max(0, (x.kursi || (N.bisnisMobil && N.bisnisMobil.kapasitas[x.bentuk]) || 5) - 1);
         var tag = x.bbm === 'listrik' ? ('EV ' + x.tangki + ' kWh') : (N.bbm.nama[x.bbm] + ' · ' + x.tangki + 'L');
         return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(tag) + '</span>' + (pnpM ? '<span class="ki-tag milik">' + pnpM + ' pnp</span>' : '') + (x.tahun >= 2026 ? '<span class="ki-tag promo">Baru ' + x.tahun + '</span>' : '') + '</div>' +
+          ((ADEGAN && ADEGAN.svgMobil) ? ADEGAN.svgMobil(x.id, x.bentuk) : '') +
           '<b>' + esc(x.nama) + '</b><small>' + esc(x.kelebihan) + '</small>' +
           '<div class="ki-harga">' + rupiahPendek(x.harga) + '</div></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol" data-aksi="tunaiMobil:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiMobilKk:' + x.id + '">KK</button><button type="button" class="chip-tombol pilih" data-aksi="kreditMobilPilih:' + x.id + '">Kredit</button></div></div>';
@@ -1657,6 +1659,7 @@
       var pnp = b.bentuk === 'pikap' ? 'Pikap' : Math.max(1, (b.kursi || 5) - 1) + ' pnp';
       var kdCls = u.kondisi === 'baik' ? 'milik' : u.kondisi === 'kurang' ? 'promo' : '';
       return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + u.tahun + ' · ' + pnp + '</span><span class="ki-tag ' + kdCls + '">' + esc(u.kondisi) + '</span></div>' +
+        ((ADEGAN && ADEGAN.svgMobil) ? ADEGAN.svgMobil(b.id, b.bentuk) : '') +
         '<b>' + esc(b.nama.replace(' (bekas)', '')) + '</b>' +
         '<small>' + u.km.toLocaleString('id-ID') + ' km · ' + N.bbm.nama[b.bbm] + '</small>' +
         '<div class="ki-harga">' + rupiahPendek(u.harga) + '</div></div>' +
