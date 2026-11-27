@@ -2387,9 +2387,7 @@
     kotak(0, jalan, W, H - jalan, tierW === 'desa' ? (s.hujan ? 'rgba(65,58,50,.85)' : 'rgba(98,92,84,.85)') : (s.hujan ? 'rgba(38,44,54,.72)' : 'rgba(68,72,78,.72)'));
     var g3 = (t * 0.32) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
-    /* pejalan kaki lalu-lalang di trotoar selama perjalanan */
-    anim.pejalan.forEach(function (pj) { gambarPejalanKaki(pj, jalan - 14, t, s.hujan); });
-    /* kendaraan lain menyalip pelan */
+    /* kendaraan lain menyalip pelan (tanpa pejalan kaki meluncur sejajar motor saat melaju kencang) */
     var sx = W + 80 - ((t * 0.03) % (W + 260));
     gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp);
     var antar = f.status === 'antar', goyang = Math.sin(t / 90) * 1.2;
@@ -2570,7 +2568,7 @@
     kotak(0, jalan, W, H - jalan, tierW === 'desa' ? (s.hujan ? 'rgba(65,58,50,.95)' : 'rgba(98,92,84,.95)') : (s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)'));
     var g3 = (geser * 3.4) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
-    anim.pejalan.forEach(function (pj) { gambarPejalanKaki(pj, jalan - 14, t, s.hujan); });
+    if (kaki) anim.pejalan.forEach(function (pj) { gambarPejalanKaki(pj, jalan - 14, t, s.hujan); });
     if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp); }
     var goyang = Math.sin(t / 90) * 1.2;
     if (f.kend === 'mobil') { var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(W * 0.46, jalan + 84, mob.bentuk, mob.id, false, t * 0.016, gp, !!f.bawaDus); }

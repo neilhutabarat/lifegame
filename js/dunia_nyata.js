@@ -206,8 +206,11 @@
       /* kendaraan sendiri (motor atau mobil) */
       var pakaiMbl = cara === 'mobil' && S.mobil;
       var knd = pakaiMbl ? g.KK_MOBIL : g.KK_MOTOR;
+      var kObj = pakaiMbl ? S.mobil : S.motor;
       if (pakaiMbl && !S.mobil) return 'Belum punya mobil. Pilih Motor atau Jalan Kaki.';
       if (!pakaiMbl && !S.motor) return 'Belum punya motor! Pilih Jalan Kaki atau Minta Dijemput Teman.';
+      if (kObj && kObj.mogokAir) return (pakaiMbl ? 'Mobil' : 'Motor') + ' sedang mogok kena banjir! Kuras mesin dulu di Garasi.';
+      if (knd && knd.disewakan && knd.disewakan(S)) return (pakaiMbl ? 'Mobil' : 'Motor') + ' sedang disewakan di Sewa Aset! Hentikan sewa dulu.';
       if (!knd || !knd.cukup(S, km)) return (pakaiMbl ? 'Bensin mobil' : 'Bensin motor') + ' tidak cukup untuk ' + km.toFixed(1) + ' km!';
       var rJ = knd.jalan(S, km, 1);
       if (!rJ || !rJ.ok) return (rJ && rJ.alasan) || 'Kendaraan tidak siap jalan.';
@@ -228,6 +231,9 @@
       S.diri.stamina = batas(S.diri.stamina + 12);
       S.diri.kesehatan = batas((S.diri.kesehatan || 100) + 5);
       S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - 6);
+    } else if (tj.aksi === 'ibadah' && g.KK_DIRI && g.KK_DIRI.ibadah) {
+      g.KK_DIRI.ibadah(S, 'Ibadah', 'Masjid / Tempat Ibadah Terdekat');
+      ket += ' 🙏 Selesai beribadah, hati tenang & stamina pulih.';
     }
     return { ok: true, menit: menit, aksi: tj.aksi, teks: ket };
   }
@@ -347,7 +353,7 @@
     if (!k || !km) return null;
     var diDesa = !!(S.ojek && S.ojek.lokasi && /desa|dusun|kampung|kec/i.test((S.ojek.lokasi.desa || '') + ' ' + (S.ojek.lokasi.kecNama || '')));
     var faktorLubang = diDesa ? 1.55 : 0.9;
-    var adaShockModif = !!(S.eko && S.eko.modif && S.eko.modif.shock);
+    var adaShockModif = !!(k.modif && k.modif.shock);
     k.suspensi = Math.max(0, Math.round(((k.suspensi == null ? 100 : k.suspensi) - km * 0.22 * faktorLubang * (adaShockModif ? 0.45 : 1)) * 10) / 10);
     k.aki = Math.max(0, Math.round(((k.aki == null ? 100 : k.aki) - km * 0.12) * 10) / 10);
     k.rem = Math.max(0, Math.round(((k.rem == null ? 100 : k.rem) - km * 0.18) * 10) / 10);
@@ -387,9 +393,12 @@
     var harga = jenis === 'mobil' ? (resmi ? 580000 : 340000) : (resmi ? 95000 : 52000);
     var by = g.KK_UANG.bayarPilihan(S, harga, (resmi ? 'Bengkel Resmi: ' : 'Bengkel Pinggir Jalan: ') + 'Ganti Oli ' + k.nama, S._metodeBayar || 'dompet');
     if (by !== true) return by;
+    k.kmOli = k.km || 0;
     k.oliKm = 0;
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + harga;
     if (!resmi && Math.random() < 0.22) {
+      k.kmServis = Math.max(0, (k.kmServis || 0) - (jenis === 'mobil' ? 4500 : 1800));
+      k.kmOli = Math.max(0, (k.km || 0) - (jenis === 'mobil' ? 2500 : 900));
       k.servisKm = (k.servisKm || 0) + (jenis === 'mobil' ? 4500 : 1800);
       k.oliKm = jenis === 'mobil' ? 2500 : 900;
       return { ok: true, menit: 25, palsu: true, teks: '⚠️ APES! Ganti oli di bengkel pinggir jalan (' + rp(harga) + ') ternyata dapat OLI PALSU! Mesin agak kasar & cepat panas.' };
@@ -480,7 +489,7 @@
   function klaimJht(S) {
     var R = siapkan(S);
     if ((R.jht.saldo || 0) < 100000) return 'Saldo JHT BPJS Ketenagakerjaan masih kosong (kerja kantoran dulu untuk iuran otomatis 5,7%/bulan).';
-    if (S.karier && S.karier.aktif) return 'Klaim penuh JHT hanya bisa dilakukan saat sudah resign/habis kontrak/PHK (atau ambil sebagian 10%).';
+    if (S.karier && S.karier.id) return 'Klaim penuh JHT hanya bisa dilakukan saat sudah resign/habis kontrak/PHK.';
     var jml = Math.round(R.jht.saldo);
     R.jht.saldo = 0;
     S.bank.saldo += jml;
@@ -493,6 +502,9 @@
   function kerjakanSkripsi(S) {
     var R = siapkan(S);
     if (!S.kuliahAktif) return 'Kamu tidak sedang menempuh kuliah S1/S2.';
+    if (R.skripsi.kuliahMulai !== S.kuliahAktif.mulaiHari) {
+      R.skripsi = { progres: 0, revisi: 0, selesai: false, kuliahMulai: S.kuliahAktif.mulaiHari };
+    }
     if (R.skripsi.selesai) return 'Skripsi sudah ACC & Lulus Sidang! Tunggu hari wisuda tiba.';
     if (S.diri.stamina < 18) return 'Stamina kurang untuk ngetik skripsi & bimbingan dosen.';
     S.diri.stamina = batas(S.diri.stamina - 16);
@@ -506,7 +518,7 @@
       return { ok: true, menit: 90, teks: '🎓 Ngerjain Skripsi lancar (+25% → ' + R.skripsi.progres + '%).' };
     }
     R.skripsi.selesai = true;
-    S.kuliahAktif.selesaiPada = Math.min(S.kuliahAktif.selesaiPada, S.hari + 3);
+    S.kuliahAktif.lulusPada = Math.min(S.kuliahAktif.lulusPada || (S.hari + 3), S.hari + 3);
     catatSejarah(S, '🎓', 'Lulus Sidang Skripsi dengan predikat Cumlaude!');
     return { ok: true, menit: 120, teks: '🎉 SELAMAT! Kamu LULUS SIDANG SKRIPSI! Ijazah & wisuda dipercepat (3 hari lagi).' };
   }
@@ -964,17 +976,21 @@
 
     /* 8. Ganti Bulan: JHT BPJS, Franchise Profit, Insentif RT, Asuransi Swasta, Apresiasi Rolex */
     if (gantiBulan) {
-      if (S.karier && S.karier.aktif && S.karier.gaji) {
-        var iuranJht = Math.round(S.karier.gaji * 0.057);
-        R.jht.saldo = (R.jht.saldo || 0) + iuranJht;
-        R.jht.kontrakBln = (R.jht.kontrakBln || 0) + 1;
-        /* Risiko kecil PHK efisiensi (2%/bln) lengkap pesangon */
-        if (R.jht.kontrakBln >= 6 && Math.random() < 0.025) {
-          var pesangon = Math.round(S.karier.gaji * 2.5);
-          S.bank.saldo += pesangon;
-          S.bank.mutasi.unshift({ n: nBaru, ket: 'Pesangon PHK Efisiensi Perusahaan', jml: pesangon });
-          S.karier.aktif = false; R.jht.phkRiwayat++;
-          kabar.push('📉 PHK Efisiensi perusahaan! Kamu menerima pesangon ' + rp(pesangon) + ' & bisa mencairkan JHT (' + rp(R.jht.saldo) + ').');
+      if (S.karier && S.karier.id && g.KK_HIDUP && g.KK_HIDUP.KARIER_TETAP) {
+        var kjJht = g.KK_HIDUP.KARIER_TETAP.filter(function (x) { return x.id === S.karier.id; })[0];
+        var gajiJht = kjJht ? kjJht.gaji : 0;
+        if (gajiJht > 0) {
+          var iuranJht = Math.round(gajiJht * 0.057);
+          R.jht.saldo = (R.jht.saldo || 0) + iuranJht;
+          R.jht.kontrakBln = (R.jht.kontrakBln || 0) + 1;
+          /* Risiko kecil PHK efisiensi (2.5%/bln setelah 6 bln) lengkap pesangon */
+          if (R.jht.kontrakBln >= 6 && Math.random() < 0.025) {
+            var pesangon = Math.round(gajiJht * 2.5);
+            S.bank.saldo += pesangon;
+            S.bank.mutasi.unshift({ n: nBaru, ket: 'Pesangon PHK Efisiensi Perusahaan', jml: pesangon });
+            S.karier.id = null; R.jht.phkRiwayat++;
+            kabar.push('📉 PHK Efisiensi perusahaan! Kamu menerima pesangon ' + rp(pesangon) + ' & bisa mencairkan JHT (' + rp(R.jht.saldo) + ').');
+          }
         }
       }
       var totFran = 0;
