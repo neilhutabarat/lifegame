@@ -992,8 +992,12 @@
   }
   function beliGadget(S, id, caraBayar) {
     var gm = gadgetModel(id); if (!gm) return 'Gadget tidak dikenal.';
-    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahunRilis || gm.tahun || 2023);
-    if (rilis > thnKini) return gm.nama + ' belum rilis (rilis ' + rilis + ', tahun game sekarang ' + thnKini + ').';
+    var tKini = KAL.tgl(S.hari), thnKini = tKini.y, blnKini = tKini.m;
+    var rilis = +(gm.tahunRilis || gm.tahun || 2023), rilisBln = +(gm.bulanRilis || 1);
+    if (rilis > thnKini || (rilis === thnKini && rilisBln > blnKini)) {
+      var nmBlnR = (N.namaBulan && N.namaBulan[rilisBln - 1]) || ('Bulan ' + rilisBln);
+      return gm.nama + ' belum rilis di Indonesia (jadwal rilis resmi: ' + nmBlnR + ' ' + rilis + ').';
+    }
     if (S.gadget && S.gadget[id]) return 'Sudah punya ' + gm.nama + '.';
     var d = diskonToko(S, 'tokopedia');
     var h = d ? Math.round(gm.harga * (1 - d) / 5000) * 5000 : gm.harga;
@@ -2772,11 +2776,24 @@
     }
     return 'Aksi tidak dikenal.';
   }
+  /* ibadah harian / hari besar sesuai agama di tempat ibadah terdekat */
+  function ibadah(S, namaIbadah, namaTempat) {
+    var d = S.diri;
+    if (!d) return 'Data karakter belum siap.';
+    var mnt = /Tarawih|Misa|Kebaktian|Natal/i.test(namaIbadah || '') ? 30 : 15;
+    d.stamina = batas((d.stamina || 50) + (mnt >= 30 ? 12 : 8));
+    d.kesehatan = batas((d.kesehatan == null ? 100 : d.kesehatan) + 4);
+    d.rasaBersalah = Math.max(0, (d.rasaBersalah || 0) - 12);
+    S.ibadahHariIni = S.ibadahHariIni || {};
+    S.ibadahHariIni[namaIbadah || 'Ibadah'] = S.hari;
+    var di = namaTempat ? (' di ' + namaTempat) : '';
+    return { ok: true, menit: mnt, teks: '🙏 Selesai ' + (namaIbadah || 'beribadah') + di + ' (' + mnt + ' mnt). Hati tenang, stamina & kesehatan pulih.' };
+  }
   /* pemain sedang melayani: stamina rendah atau sakit membuat lambat dan kurang ramah */
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
 
-  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,

@@ -188,12 +188,22 @@
     var km = x.jemput + x.km, isCar = o.mode === 'mobil';
     var kend = isCar ? g.KK_MOBIL : g.KK_MOTOR;
     if (!kend.cukup(S, km)) return isCar ? 'Bensin / baterai mobil tidak cukup untuk order ini.' : 'Bensin tidak cukup untuk order ini.';
+    /* ukur pemakaian BBM trip lalu kembalikan dulu agar berkurang bertahap selama perjalanan (tidak langsung loncat 100→94) */
+    var bbmTarget = null, bbmSebelum = 0, bbmDipakai = 0;
+    if (isCar && S.mobil) { bbmTarget = 'mobil'; bbmSebelum = S.mobil.isi; }
+    else if (!isCar && S.motor) {
+      if (S.motor.bbm === 'listrik') { bbmTarget = 'motorEv'; bbmSebelum = S.motor.baterai; }
+      else { bbmTarget = 'motor'; bbmSebelum = S.motor.isi; }
+    }
     var r = kend.jalan(S, km, 1);
     if (!r || !r.ok) return (r && r.alasan) || 'Kendaraan tidak siap.';
+    if (bbmTarget === 'mobil' && S.mobil) { bbmDipakai = Math.max(0, bbmSebelum - S.mobil.isi); S.mobil.isi = bbmSebelum; }
+    else if (bbmTarget === 'motorEv' && S.motor) { bbmDipakai = Math.max(0, bbmSebelum - S.motor.baterai); S.motor.baterai = bbmSebelum; }
+    else if (bbmTarget === 'motor' && S.motor) { bbmDipakai = Math.max(0, bbmSebelum - S.motor.isi); S.motor.isi = bbmSebelum; }
     if (S.hp && S.hp.cas) S.hp.cas = false; /* berhenti cas stopkontak toko saat berangkat antar penumpang */
     var tunggu = x.jenis === 'makanan' ? 8 + Math.floor(Math.random() * 10) : x.jenis === 'barang' ? 4 : 2;
     var menitJemput = Math.round(r.menit * x.jemput / km) + tunggu, total = r.menit + tunggu;
-    o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kabar: r.kabar };
+    o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kabar: r.kabar, bbmTarget: bbmTarget, bbmSisa: bbmDipakai };
     o.tawaran = null;
     return true;
   }
@@ -202,6 +212,12 @@
 
   function selesai(S) {
     var o = S.ojek, tr = o.trip, x = tr.x, kabar = tr.kabar.slice(), dapat = x.bersih + (x.tip || 0);
+    if (tr.bbmSisa > 0 && tr.bbmTarget) {
+      if (tr.bbmTarget === 'mobil' && S.mobil) S.mobil.isi = Math.max(0, S.mobil.isi - tr.bbmSisa);
+      else if (tr.bbmTarget === 'motorEv' && S.motor) S.motor.baterai = Math.max(0, S.motor.baterai - tr.bbmSisa);
+      else if (tr.bbmTarget === 'motor' && S.motor) S.motor.isi = Math.max(0, S.motor.isi - tr.bbmSisa);
+      tr.bbmSisa = 0;
+    }
     var caraTeks = '';
     if (x.tunai) {
       /* order bayar tunai: uang penumpang masuk langsung ke Dompet Pribadi, potongan aplikasi ditarik dari saldo dompet aplikasi (atau diselisihkan jika belum cukup) */
@@ -242,8 +258,17 @@
   function jalan(S, dMenit) {
     var o = S.ojek; if (!o.online) return [];
     if (o.trip) {
-      o.trip.jalan += dMenit;
-      if (o.trip.jalan >= o.trip.total) return selesai(S);
+      var tr = o.trip;
+      if (tr.bbmSisa > 0 && tr.bbmTarget && tr.total > 0) {
+        var sisaMnt = Math.max(0.1, tr.total - tr.jalan);
+        var kur = Math.min(tr.bbmSisa, (tr.bbmSisa / sisaMnt) * dMenit);
+        tr.bbmSisa = Math.max(0, tr.bbmSisa - kur);
+        if (tr.bbmTarget === 'mobil' && S.mobil) S.mobil.isi = Math.max(0, S.mobil.isi - kur);
+        else if (tr.bbmTarget === 'motorEv' && S.motor) S.motor.baterai = Math.max(0, S.motor.baterai - kur);
+        else if (tr.bbmTarget === 'motor' && S.motor) S.motor.isi = Math.max(0, S.motor.isi - kur);
+      }
+      tr.jalan += dMenit;
+      if (tr.jalan >= tr.total) return selesai(S);
       return [];
     }
     if (!o.tawaran && waktu(S) >= o.berikut) o.tawaran = buatTawaran(S);

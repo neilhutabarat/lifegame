@@ -2204,7 +2204,96 @@
     }
     cx.restore();
   }
-  function gambar(s, t) { gambarInti(s, t); if (s.ramadan && !s.hbAnim && cx) hiasRamadan(s, t); }
+  /* suasana Hari Raya: H-5..H-1 (50% menjelang Lebaran), 2 hari Lebaran penuh (ketupat & lentera), Malam Natal, & Kembang Api Tahun Baru */
+  function hiasHariRaya(s, t) {
+    cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
+    var m = s.menit % 1440, malam = m >= 1080 || m < 340;
+    if (s.lebaran === 1 || s.lebaran === 2) {
+      var penuh = s.lebaran === 2;
+      cx.save();
+      /* tali hiasan ketupat & janur kuning */
+      cx.strokeStyle = penuh ? 'rgba(242,185,35,.8)' : 'rgba(130,180,70,.55)';
+      cx.lineWidth = penuh ? 2 : 1.3;
+      cx.beginPath(); cx.moveTo(0, 194); cx.quadraticCurveTo(W / 2, 212, W, 194); cx.stroke();
+      var jmlK = penuh ? 7 : 4;
+      for (var k = 0; k < jmlK; k++) {
+        var xk = (W / (jmlK + 1)) * (k + 1), yk = 194 + Math.sin((xk / W) * Math.PI) * 9, swk = Math.sin(t / 650 + k * 1.1) * 3.5;
+        cx.strokeStyle = 'rgba(200,175,60,.75)'; cx.lineWidth = 1;
+        cx.beginPath(); cx.moveTo(xk, yk); cx.lineTo(xk + swk, yk + 11); cx.stroke();
+        /* bentuk ketupat wajik hijau-kuning */
+        cx.save(); cx.translate(xk + swk, yk + 19); cx.rotate(Math.PI / 4);
+        cx.fillStyle = k % 2 === 0 ? '#7cb342' : '#fbc02d';
+        cx.fillRect(-6, -6, 12, 12);
+        cx.strokeStyle = '#33691e'; cx.lineWidth = 0.8;
+        cx.strokeRect(-6, -6, 12, 12);
+        cx.beginPath(); cx.moveTo(-6, 0); cx.lineTo(6, 0); cx.moveTo(0, -6); cx.lineTo(0, 6); cx.stroke();
+        cx.restore();
+        /* pita ujung ketupat */
+        cx.strokeStyle = '#d4e157'; cx.lineWidth = 1.2;
+        cx.beginPath(); cx.moveTo(xk + swk, yk + 27); cx.lineTo(xk + swk - 3, yk + 33); cx.moveTo(xk + swk, yk + 27); cx.lineTo(xk + swk + 3, yk + 33); cx.stroke();
+        if (penuh && malam) {
+          var grL = cx.createRadialGradient(xk + swk, yk + 19, 0, xk + swk, yk + 19, 20);
+          grL.addColorStop(0, 'rgba(255,235,120,.38)'); grL.addColorStop(1, 'rgba(255,235,120,0)');
+          cx.fillStyle = grL; cx.fillRect(xk + swk - 20, yk, 40, 40);
+        }
+      }
+      if (penuh) {
+        /* spanduk tipis Idulfitri di puncak langit */
+        kotakBulat(W / 2 - 92, 170, 184, 20, 10, 'rgba(13,92,70,.82)');
+        cx.strokeStyle = 'rgba(242,195,55,.85)'; cx.lineWidth = 1;
+        cx.strokeRect(W / 2 - 90, 172, 180, 16);
+        cx.font = '800 10.5px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        cx.fillStyle = '#fff5cc'; cx.fillText('✨ Selamat Hari Raya Idulfitri ✨', W / 2, 180);
+      }
+      cx.restore();
+    }
+    if (s.natal) {
+      cx.save();
+      cx.strokeStyle = 'rgba(40,95,55,.8)'; cx.lineWidth = 2.2;
+      cx.beginPath(); cx.moveTo(0, 195); cx.quadraticCurveTo(W / 2, 210, W, 195); cx.stroke();
+      var wrN = ['#ff5252', '#ffd740', '#40c4ff', '#69f0ae', '#ff80ab'];
+      for (var ni = 0; ni < 11; ni++) {
+        var xn = 16 + ni * 32.8, yn = 195 + Math.sin((xn / W) * Math.PI) * 8;
+        var kedip = 0.5 + 0.5 * Math.sin(t / 320 + ni * 1.4);
+        cx.fillStyle = wrN[ni % wrN.length]; cx.globalAlpha = 0.45 + 0.55 * kedip;
+        cx.beginPath(); cx.arc(xn, yn + 4, 3.3, 0, Math.PI * 2); cx.fill();
+        if (malam) {
+          var grN = cx.createRadialGradient(xn, yn + 4, 0, xn, yn + 4, 14);
+          grN.addColorStop(0, wrN[ni % wrN.length]); grN.addColorStop(1, 'rgba(255,255,255,0)');
+          cx.globalAlpha = 0.25 * kedip; cx.fillStyle = grN; cx.fillRect(xn - 14, yn - 10, 28, 28);
+        }
+      }
+      cx.globalAlpha = 1;
+      cx.restore();
+    }
+    if (s.tahunBaru) {
+      cx.save();
+      var wrK = ['#ff5252', '#ffd740', '#40c4ff', '#ea80fc', '#69f0ae'];
+      for (var fi = 0; fi < 4; fi++) {
+        var siklus = ((t / 1400 + fi * 0.27) % 1);
+        var fx = 58 + fi * 82 + Math.sin(fi * 4.2) * 14;
+        var fy = 212 + (fi % 2) * 28;
+        var rad = 6 + siklus * 38, alpha = Math.max(0, 1 - Math.pow(siklus, 1.5));
+        cx.strokeStyle = wrK[fi % wrK.length]; cx.globalAlpha = alpha * 0.9; cx.lineWidth = 1.6;
+        for (var sp = 0; sp < 10; sp++) {
+          var ang = (sp / 10) * Math.PI * 2 + fi;
+          cx.beginPath();
+          cx.moveTo(fx + Math.cos(ang) * (rad * 0.45), fy + Math.sin(ang) * (rad * 0.45));
+          cx.lineTo(fx + Math.cos(ang) * rad, fy + Math.sin(ang) * rad);
+          cx.stroke();
+        }
+      }
+      cx.globalAlpha = 1;
+      cx.restore();
+    }
+  }
+  function gambar(s, t) {
+    gambarInti(s, t);
+    if (!s.hbAnim && cx) {
+      if (s.ramadan) hiasRamadan(s, t);
+      if (s.lebaran || s.natal || s.tahunBaru) hiasHariRaya(s, t);
+    }
+  }
   function gambarInti(s, t) {
     if (!cx) return;
     var dt = tAkhir ? Math.min(100, t - tAkhir) : 16; tAkhir = t; genderPemain = s.gender || 'cewek';

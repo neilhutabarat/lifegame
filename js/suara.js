@@ -337,6 +337,53 @@
       mainNada(74, 0.08, 'triangle', 0.2, 0, masterEfek);
       mainNada(79, 0.09, 'triangle', 0.22, 0.08, masterEfek);
       mainNada(83, 0.16, 'sine', 0.22, 0.16, masterEfek);
+    } else if (jenis === 'adzan') {
+      /* Alunan murrotal/adzan singkat maqam Hijaz ("Allaaaaaaaah..." lalu fade out halus ~2,8 detik) */
+      var tA = ctx.currentTime;
+      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), fA = ctx.createBiquadFilter(), gA = ctx.createGain();
+      o1.type = 'sawtooth'; o2.type = 'triangle';
+      /* D4 -> Eb4 -> F#4 (cengkok lembut) -> fade out */
+      o1.frequency.setValueAtTime(293.66, tA);
+      o1.frequency.linearRampToValueAtTime(311.13, tA + 0.35);
+      o1.frequency.linearRampToValueAtTime(369.99, tA + 0.85);
+      o1.frequency.linearRampToValueAtTime(392.00, tA + 1.35);
+      o1.frequency.linearRampToValueAtTime(369.99, tA + 1.85);
+      o1.frequency.linearRampToValueAtTime(311.13, tA + 2.35);
+      o2.frequency.setValueAtTime(587.33, tA);
+      o2.frequency.linearRampToValueAtTime(622.25, tA + 0.35);
+      o2.frequency.linearRampToValueAtTime(739.99, tA + 0.85);
+      o2.frequency.linearRampToValueAtTime(783.99, tA + 1.35);
+      o2.frequency.linearRampToValueAtTime(739.99, tA + 1.85);
+      o2.frequency.linearRampToValueAtTime(622.25, tA + 2.35);
+      fA.type = 'bandpass'; fA.frequency.setValueAtTime(760, tA); fA.Q.value = 2.6;
+      gA.gain.setValueAtTime(0.001, tA);
+      gA.gain.linearRampToValueAtTime(0.28, tA + 0.35);
+      gA.gain.setValueAtTime(0.26, tA + 1.55);
+      gA.gain.exponentialRampToValueAtTime(0.0008, tA + 2.85);
+      o1.connect(fA); o2.connect(fA); fA.connect(gA); gA.connect(masterEfek);
+      o1.start(tA); o2.start(tA); o1.stop(tA + 2.9); o2.stop(tA + 2.9);
+    } else if (jenis === 'sahur') {
+      /* Bedug & kentongan bangunin sahur: "dug-dug-dug tek-tek-tek!" */
+      var tS = ctx.currentTime;
+      [0, 0.24, 0.48, 0.92, 1.16].forEach(function (dl) {
+        var ob = ctx.createOscillator(), gb = ctx.createGain();
+        ob.type = 'sine';
+        ob.frequency.setValueAtTime(118, tS + dl);
+        ob.frequency.exponentialRampToValueAtTime(44, tS + dl + 0.14);
+        gb.gain.setValueAtTime(0.32, tS + dl);
+        gb.gain.exponentialRampToValueAtTime(0.001, tS + dl + 0.18);
+        ob.connect(gb); gb.connect(masterEfek);
+        ob.start(tS + dl); ob.stop(tS + dl + 0.2);
+      });
+      [0.64, 0.76, 1.34, 1.46, 1.58].forEach(function (dl) {
+        mainNada(86, 0.05, 'triangle', 0.22, dl, masterEfek);
+      });
+    } else if (jenis === 'ibadah') {
+      /* Alunan tenang penuh syukur setelah selesai ibadah */
+      [62, 66, 69, 74].forEach(function (nd, idx) { mainNada(nd, 0.45, 'sine', 0.16, idx * 0.09, masterEfek); });
+    } else if (jenis === 'meriah') {
+      /* Kembang api / perayaan Tahun Baru & Natal */
+      [72, 76, 79, 84, 88].forEach(function (nd, idx) { mainNada(nd, 0.25, 'triangle', 0.2, idx * 0.06, masterEfek); });
     }
   }
 

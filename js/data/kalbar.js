@@ -338,6 +338,46 @@
     return (KEC_UMUM[kotaId] || ['Pusat Kota']).map(function (nm, i) { return { id: kotaId + '_' + i, nama: nm, desa: [nm], lat: null, lon: null }; });
   }
 
+  /* Tempat ibadah terdekat yang berbeda-beda sesuai kecamatan/desa tempat karakter berada */
+  var MASJID_KHAS = {
+    ptk_kota: ['Masjid Raya Mujahidin Pontianak', 'Masjid Al-Falah Darat Sekip'],
+    ptk_tim: ['Masjid Jami Sultan Syarif Abdurrahman', 'Masjid Al-Mujahidin Saigon'],
+    ptk_sel: ['Masjid Al-Ikhlas Akcaya', 'Masjid Nurul Iman Kota Baru'],
+    ptk_tgr: ['Masjid Al-Muhtadin Untan', 'Masjid Darussalam Bansir'],
+    ptk_bar: ['Masjid Darul Falah Sungai Jawi', 'Masjid Al-Huda Pal Lima'],
+    ptk_utr: ['Masjid Al-Barkah Siantan', 'Masjid Al-Falah Batu Layang'],
+    kr_sraya: ['Masjid Agung Al-Falah Sungai Raya', 'Masjid Al-Muhajirin Arang Limbung'],
+    kr_skakap: ['Masjid Besar Al-Ikhlas Sungai Kakap', 'Masjid Nurul Huda Pal IX'],
+    ktp_dpawan: ['Masjid Agung Al-Ikhlas Ketapang', 'Masjid Al-Fallah Sampit', 'Masjid Babussalam Kali Nilam'],
+    ktp_bkayong: ['Masjid Jami Keraton Matan', 'Masjid Al-Mutaqin Mulia Kerta'],
+    ktp_mpawan: ['Masjid Nurul Yaqin Sungai Awan', 'Masjid Al-Muttaqin Tempurukan'],
+    skw_bar: ['Masjid Raya Singkawang', 'Masjid Baitul Makmur Pasiran'],
+    mpw_hilir: ['Masjid Agung Al-Falah Mempawah', 'Masjid Jami Keraton Amantubillah'],
+    sbs_sambas: ['Masjid Jami Sultan Muhammad Syafiuddin II', 'Masjid Agung Babul Jannah'],
+    sgu_kapuas: ['Masjid Agung Al-Mu\'awwanah Sanggau'],
+    stg_kota: ['Masjid Agung Al-Amin Sintang'],
+    kh_pututr: ['Masjid Agung Darunnajah Putussibau']
+  };
+  var NAMA_MASJID_LOKAL = ['Masjid Nurul Iman', 'Masjid Al-Hidayah', 'Masjid Baiturrahman', 'Masjid Al-Ikhlas', 'Masjid Al-Muttaqin', 'Masjid Darussalam'];
+  function tempatIbadahTerdekat(lokasi, agama) {
+    var kec = (lokasi && lokasi.kecNama) || 'Kota';
+    var desa = (lokasi && lokasi.desa) || kec;
+    var kecId = (lokasi && lokasi.kecId) || '';
+    var h = 0, s = String(kecId + desa);
+    for (var i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+    if (!agama || agama === 'Islam') {
+      var listM = MASJID_KHAS[kecId];
+      if (listM && listM.length) return listM[h % listM.length];
+      return NAMA_MASJID_LOKAL[h % NAMA_MASJID_LOKAL.length] + ' ' + desa;
+    }
+    if (agama === 'Kristen Protestan') return ['Gereja GPIB', 'Gereja HKBP', 'Gereja GKI', 'Gereja GPdI'][h % 4] + ' ' + kec;
+    if (agama === 'Katolik') return ['Gereja Katolik Paroki St. Yosef', 'Gereja Katolik St. Maria', 'Gereja Katolik St. Petrus'][h % 3] + ' ' + kec;
+    if (agama === 'Hindu') return 'Pura Agung Giripati ' + kec;
+    if (agama === 'Buddha') return ['Vihara Bodhisattva', 'Vihara Dhammasoka', 'Vihara Tri Ratna'][h % 3] + ' ' + kec;
+    if (agama === 'Konghucu') return ['Klenteng Tri Dharma', 'Lithang Khong Kauw Hwee'][h % 2] + ' ' + kec;
+    return 'Rumah Ibadah ' + kec;
+  }
+
   g.KK_WILAYAH = {
     kalbar: KALBAR,
     apakahKalbar: apakahKalbar,
@@ -346,6 +386,7 @@
     titikDesa: titikDesa,
     pilihTujuan: pilihTujuan,
     daftarKecamatan: daftarKecamatan,
+    tempatIbadahTerdekat: tempatIbadahTerdekat,
     daftarKabKalbar: function () { return Object.keys(KALBAR).map(function (id) { return { id: id, nama: KALBAR[id].nama, jmlKec: KALBAR[id].kec.length }; }); }
   };
 })(window);

@@ -246,8 +246,58 @@
     return hasil.slice(0, jumlah);
   }
 
+  /* suasana Lebaran (0 = biasa, 1 = mendekati H-5..H-1 50%, 2 = Hari Lebaran 2 hari penuh!) */
+  function statusLebaran(n) {
+    var t = tgl(n), l = lebaranTahun(t.y);
+    if (l == null) return 0;
+    if (n === l || n === l + 1) return 2;
+    if (n >= l - 5 && n <= l - 1) return 1;
+    return 0;
+  }
+  function apakahNatal(n, menit) {
+    var t = tgl(n), m = (menit == null ? 1200 : menit) % 1440;
+    return (t.m === 12 && t.d === 24 && m >= 1020) || (t.m === 12 && t.d === 25);
+  }
+  function apakahMalamTahunBaru(n, menit) {
+    var t = tgl(n), m = (menit == null ? 1320 : menit) % 1440;
+    return (t.m === 12 && t.d === 31 && m >= 1080) || (t.m === 1 && t.d === 1 && m < 300);
+  }
+  /* Jadwal sholat astronomis nyata mengikuti deklinasi matahari, equation of time, dan koordinat (lat, lon) kriteria Kemenag RI (Subuh -20°, Isya -18°) */
+  function jadwalSholat(n, lat, lon) {
+    var t = tgl(n);
+    var latDeg = (lat != null && !isNaN(lat)) ? lat : -0.0263;
+    var lonDeg = (lon != null && !isNaN(lon)) ? lon : 109.3335;
+    var tz = lonDeg >= 131 ? 9 : lonDeg >= 115.5 ? 8 : 7; /* WIB / WITA / WIT */
+    var doy = Math.max(1, n - dn(t.y, 1, 1) + 1);
+    var B = 2 * Math.PI * (doy - 81) / 365;
+    var eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B); /* menit */
+    var decl = 23.45 * Math.sin(2 * Math.PI * (284 + doy) / 365) * RAD;
+    var phi = latDeg * RAD;
+    var noonMin = 720 + 4 * (tz * 15 - lonDeg) - eot;
+    function sudutJam(altDeg) {
+      var cosH = (Math.sin(altDeg * RAD) - Math.sin(phi) * Math.sin(decl)) / (Math.cos(phi) * Math.cos(decl));
+      cosH = Math.max(-0.99, Math.min(0.99, cosH));
+      return (Math.acos(cosH) / RAD) * 4; /* menit */
+    }
+    var subuh = Math.round(noonMin - sudutJam(-20));
+    var dzuhur = Math.round(noonMin + 2);
+    var asharAlt = Math.atan(1 / (1 + Math.tan(Math.abs(phi - decl)))) / RAD;
+    var ashar = Math.round(noonMin + sudutJam(asharAlt));
+    var maghrib = Math.round(noonMin + sudutJam(-0.833) + 2);
+    var isya = Math.round(noonMin + sudutJam(-18));
+    return {
+      subuh: subuh,
+      dzuhur: dzuhur,
+      ashar: ashar,
+      maghrib: maghrib,
+      isya: isya,
+      tarawih: isya + 20,
+      sahur: Math.max(165, subuh - 75)
+    };
+  }
+
   var api = { dn: dn, tgl: tgl, kunci: kunci, liburTahun: liburTahun, hariIni: hariIni, apakahLibur: apakahLibur,
-    apakahRamadan: apakahRamadan, apakahMalamTakbiran: apakahMalamTakbiran, tanggalKembar: tanggalKembar, usia: usia,
+    apakahRamadan: apakahRamadan, apakahMalamTakbiran: apakahMalamTakbiran, statusLebaran: statusLebaran, apakahNatal: apakahNatal, apakahMalamTahunBaru: apakahMalamTahunBaru, jadwalSholat: jadwalSholat, tanggalKembar: tanggalKembar, usia: usia,
     berikutnya: berikutnya, ramadanTahun: ramadanTahun, lebaranTahun: lebaranTahun, faseBulan: faseBulan, paskah: paskah };
   g.KK_KAL = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
