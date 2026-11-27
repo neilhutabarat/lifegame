@@ -526,7 +526,8 @@
     anim.motor.forEach(function (mt) { mt.x += mt.arah * mt.v * dt / 1000 * lajuFaktor; mt.roda = (mt.roda || 0) + mt.v * dt / 1000 * 0.5; });
     anim.motor = anim.motor.filter(function (mt) { return mt.x > -130 && mt.x < W + 130; });
     /* Animasi pejalan kaki lalu-lalang di trotoar/pinggir jalan (ramai siang, sepi tengah malam) */
-    var ramaiP = (jam >= 6 && jam < 21) ? 1.15 : 0.25;
+    var jamP = ((m || 480) % 1440) / 60;
+    var ramaiP = (jamP >= 6 && jamP < 21) ? 1.15 : 0.25;
     anim.tPejalan -= dt * Math.max(0.5, kec);
     if (anim.tPejalan <= 0 && anim.pejalan.length < 6) {
       anim.tPejalan = (1800 + Math.random() * 2600) / ramaiP;
