@@ -47,24 +47,108 @@
     /* kurva suhu harian: paling sejuk ~05.00, paling panas ~14.00 */
     var diurnal = -Math.cos(((jam - 5) / 24) * Math.PI * 2) * 4.4;
     var kemarau = (t.m >= 6 && t.m <= 9) ? 1.2 : (t.m >= 11 || t.m <= 2) ? -0.8 : 0.3;
-    var hujan = hujanSekarang(S);
-    var deras = hujan && S.dunia && S.dunia.cuaca && S.dunia.cuaca.banjir;
+    var hInfo = infoCuacaSekarang(S);
+    var hujan = hInfo.hujan > 0;
+    var deras = hInfo.hujan >= 2;
     var kulminasi = S.kota === 'pontianak' && ((t.m === 3 || t.m === 9) && t.d >= 21 && t.d <= 23);
-    var koreksiHujan = deras ? -5.2 : hujan ? -3.8 : 0;
+    var koreksiHujan = hInfo.hujan >= 3 ? -6.2 : deras ? -5.0 : hujan ? -3.4 : hInfo.mendung > 0.5 ? -2.0 : hInfo.awan > 0.5 ? -1.0 : 0;
     var variasi = Math.sin(S.hari * 0.73) * 0.9;
     var c = Math.round(base + diurnal + kemarau + koreksiHujan + (kulminasi && jam >= 10 && jam <= 15 ? 2.2 : 0) + variasi);
     var malam = jam >= 18.2 || jam < 5.5;
-    var ikon = deras ? '⛈️' : hujan ? '🌧️' : malam ? '🌙' : (kulminasi && jam >= 11 && jam <= 14 ? '☀️' : c >= 33 ? '🥵' : jam >= 6 && jam < 17 ? '☀️' : '⛅');
-    var ket = deras ? 'Hujan Deras' : hujan ? 'Hujan' : (kulminasi && jam >= 11 && jam <= 14 ? 'Kulminasi Khatulistiwa' : c >= 34 ? 'Terik Panas' : malam ? 'Malam Cerah' : c <= 23 ? 'Sejuk' : 'Cerah Berawan');
-    return { c: c, ikon: ikon, ket: ket, kulminasi: kulminasi };
+    var ikon = hInfo.ikon || (malam ? '🌙' : '☀️');
+    if (hInfo.kode === 'cerah' && malam) ikon = '🌙';
+    if (hInfo.kode === 'cerah' && kulminasi && jam >= 11 && jam <= 14) ikon = '☀️';
+    var ket = hInfo.nama || (malam ? 'Malam Cerah' : 'Cerah');
+    if (hInfo.kode === 'cerah' && kulminasi && jam >= 11 && jam <= 14) ket = 'Kulminasi Khatulistiwa';
+    return { c: c, ikon: ikon, ket: ket, kulminasi: kulminasi, cuaca: hInfo };
   }
-  function hujanSekarang(S) { var c = S.dunia && S.dunia.cuaca; return !!(c && c.hari === S.hari && S.menit >= c.mulai && S.menit < c.selesai); }
+  /* ---------- Sistem Cuaca Realistis Variatif (Awan, Mendung Sebelum Hujan, Gerimis, Deras, Petir, Angin Ribut, Hujan Seharian/Berhari-hari & Banjir 60cm) ---------- */
+  var PROFIL_CUACA = {
+    cerah: { nama: 'Cerah', ikon: '☀️', awan: 0.12, mendung: 0, hujan: 0, petir: false, angin: 0.08 },
+    berawan: { nama: 'Berawan', ikon: '⛅', awan: 0.48, mendung: 0.1, hujan: 0, petir: false, angin: 0.16 },
+    berawan_tebal: { nama: 'Berawan Tebal', ikon: '☁️', awan: 0.78, mendung: 0.35, hujan: 0, petir: false, angin: 0.24 },
+    sebagian_mendung: { nama: 'Sebagian Mendung', ikon: '🌥️', awan: 0.65, mendung: 0.55, hujan: 0, petir: false, angin: 0.30 },
+    mendung: { nama: 'Mendung Gelap', ikon: '🌫️', awan: 0.95, mendung: 0.88, hujan: 0, petir: false, angin: 0.38 },
+    gerimis: { nama: 'Hujan Gerimis', ikon: '🌦️', awan: 0.88, mendung: 0.72, hujan: 1, petir: false, angin: 0.28 },
+    hujan_lokal: { nama: 'Hujan Lokal', ikon: '🌧️', awan: 0.75, mendung: 0.68, hujan: 1, petir: false, angin: 0.32 },
+    hujan_deras: { nama: 'Hujan Deras', ikon: '🌧️', awan: 1.0, mendung: 0.94, hujan: 2, petir: false, angin: 0.52 },
+    petir: { nama: 'Mendung Berpetir', ikon: '🌩️', awan: 0.96, mendung: 0.92, hujan: 0, petir: true, angin: 0.45 },
+    gerimis_petir: { nama: 'Gerimis Berpetir', ikon: '⛈️', awan: 0.92, mendung: 0.84, hujan: 1, petir: true, angin: 0.45 },
+    deras_petir: { nama: 'Hujan Deras & Petir', ikon: '⛈️', awan: 1.0, mendung: 0.98, hujan: 2, petir: true, angin: 0.66 },
+    angin_ribut: { nama: 'Hujan Angin Ribut', ikon: '🌪️', awan: 1.0, mendung: 1.0, hujan: 3, petir: true, angin: 1.0 }
+  };
+  function infoCuacaSekarang(S) {
+    var c = S && S.dunia && S.dunia.cuaca;
+    var m = (S && S.menit != null) ? (S.menit % 1440) : 480;
+    if (!c || c.hari !== S.hari) {
+      var p0 = PROFIL_CUACA.cerah;
+      return { kode: 'cerah', nama: p0.nama, ikon: p0.ikon, awan: p0.awan, mendung: 0, hujan: 0, petir: false, angin: p0.angin, banjirCm: 0, pola: '' };
+    }
+    var kode = c.dasar || 'berawan';
+    var banjirCm = c.banjirCm || 0;
+    if (c.mulai != null && c.selesai != null) {
+      if (m >= c.mulai && m < c.selesai) {
+        kode = c.jenis || 'hujan_deras';
+      } else if (m >= c.mulai - 90 && m < c.mulai) {
+        /* fase realistis: selalu mendung dulu 1,5 jam sebelum hujan turun */
+        kode = m >= c.mulai - 35 ? 'mendung' : 'sebagian_mendung';
+        if (c.jenis === 'deras_petir' || c.jenis === 'angin_ribut') kode = m >= c.mulai - 25 ? 'petir' : 'mendung';
+      } else if (m >= c.selesai && m < c.selesai + 75) {
+        kode = 'berawan_tebal';
+      }
+    }
+    /* banjir 60cm bisa tetap menggenang beberapa jam setelah hujan deras / hujan berhari-hari */
+    var genangSkrg = 0;
+    if (banjirCm > 0 && c.mulai != null && m >= c.mulai + 20 && m < (c.selesai + 240)) {
+      genangSkrg = m >= c.selesai ? Math.round(banjirCm * Math.max(0.25, 1 - (m - c.selesai) / 240)) : banjirCm;
+    }
+    var pr = PROFIL_CUACA[kode] || PROFIL_CUACA.cerah;
+    return {
+      kode: kode,
+      nama: pr.nama + (genangSkrg >= 40 ? ' · Banjir ' + genangSkrg + 'cm' : ''),
+      ikon: genangSkrg >= 40 ? '🌊' : pr.ikon,
+      awan: pr.awan,
+      mendung: pr.mendung,
+      hujan: pr.hujan,
+      petir: pr.petir,
+      angin: pr.angin,
+      banjirCm: genangSkrg,
+      pola: c.pola || ''
+    };
+  }
+  function hujanSekarang(S) {
+    var inf = infoCuacaSekarang(S);
+    return inf.hujan > 0;
+  }
   function aturCuaca(S, n) {
-    var t = KAL.tgl(n), hujanMusim = t.m >= 11 || t.m <= 3, peluang = hujanMusim ? 0.5 : (t.m >= 6 && t.m <= 9) ? 0.1 : 0.3;
-    if (Math.random() < peluang) {
-      var mulai = 600 + Math.floor(Math.random() * 10) * 60, lama = 120 + Math.floor(Math.random() * 3) * 60;
-      S.dunia.cuaca = { hari: n, mulai: mulai, selesai: mulai + lama, banjir: hujanMusim && Math.random() < 0.06 };
-    } else S.dunia.cuaca = null;
+    var t = KAL.tgl(n), hujanMusim = t.m >= 11 || t.m <= 3, kemarau = t.m >= 6 && t.m <= 9;
+    var streak = (S.dunia && S.dunia.hujanStreak) || 0;
+    var peluang = hujanMusim ? 0.62 : kemarau ? 0.16 : 0.40;
+    /* jika sedang musim hujan berhari-hari, teruskan 1-3 hari */
+    var lanjutStreak = streak > 0;
+    if (lanjutStreak || Math.random() < peluang) {
+      var rPola = Math.random();
+      var pola = lanjutStreak ? 'berhari' : rPola < 0.24 ? 'lokal' : rPola < 0.42 ? 'seharian' : rPola < 0.56 && hujanMusim ? 'berhari' : 'normal';
+      var mulai = pola === 'seharian' || pola === 'berhari' ? (300 + Math.floor(Math.random() * 180)) : (540 + Math.floor(Math.random() * 11) * 60);
+      var lama = pola === 'lokal' ? (40 + Math.floor(Math.random() * 50)) : (pola === 'seharian' || pola === 'berhari') ? (660 + Math.floor(Math.random() * 360)) : (100 + Math.floor(Math.random() * 180));
+      var rJ = Math.random();
+      var jenis = pola === 'lokal' ? 'hujan_lokal'
+        : rJ < 0.24 ? 'gerimis'
+        : rJ < 0.42 ? 'gerimis_petir'
+        : rJ < 0.66 ? 'hujan_deras'
+        : rJ < 0.86 ? 'deras_petir'
+        : 'angin_ribut';
+      var kenaBanjir = (jenis === 'hujan_deras' || jenis === 'deras_petir' || jenis === 'angin_ribut' || pola === 'seharian' || pola === 'berhari') && Math.random() < (pola === 'berhari' ? 0.55 : hujanMusim ? 0.24 : 0.08);
+      var banjirCm = kenaBanjir ? (Math.random() < 0.55 ? 60 : 40) : 0;
+      if (pola === 'berhari' && !lanjutStreak) S.dunia.hujanStreak = 1 + Math.floor(Math.random() * 2);
+      else if (lanjutStreak) S.dunia.hujanStreak = Math.max(0, streak - 1);
+      S.dunia.cuaca = { hari: n, dasar: 'berawan_tebal', jenis: jenis, pola: pola, mulai: mulai, selesai: Math.min(1435, mulai + lama), banjir: banjirCm >= 40, banjirCm: banjirCm };
+    } else {
+      S.dunia.hujanStreak = 0;
+      var rK = Math.random();
+      var dasar = rK < 0.34 ? 'cerah' : rK < 0.64 ? 'berawan' : rK < 0.82 ? 'berawan_tebal' : rK < 0.94 ? 'sebagian_mendung' : 'mendung';
+      S.dunia.cuaca = { hari: n, dasar: dasar, jenis: null, pola: '', mulai: null, selesai: null, banjir: false, banjirCm: 0 };
+    }
   }
 
   /* ---------- pengali keramaian ---------- */
@@ -174,18 +258,27 @@
       var ck = g.KK_DIRI.pakaiKuota(S, jenis === 'tiktok' ? 0.35 : 0.2);
       if (ck !== true) return ck;
     }
-    var jamBagus = S.menit >= 1140 && S.menit <= 1260 ? 1.5 : S.menit >= 690 && S.menit <= 780 ? 1.2 : 0.8;
-    var tren = acak(M.MENU).id === so.tren ? 1.3 : 1, dasar = jenis === 'tiktok' ? 60 : jenis === 'threads' ? 25 : 35;
-    var akun = jenis === 'tiktok' ? 'tiktok' : jenis === 'threads' ? 'threads' : 'ig';
+    var jamBagus = S.menit >= 1140 && S.menit <= 1260 ? 1.5 : S.menit >= 690 && S.menit <= 780 ? 1.2 : 0.85;
+    var tren = acak(M.MENU).id === so.tren ? 1.3 : 1;
+    var dasarMap = { tiktok: 65, ig: 45, threads: 30, x: 40, fb: 38 };
+    var dasar = dasarMap[jenis] || 35;
+    var akun = (jenis === 'tiktok' || jenis === 'threads' || jenis === 'x' || jenis === 'fb') ? jenis : 'ig';
     var efHpD = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : null;
     var kntBonus = efHpD ? (1 + (efHpD.kontenBonus || 0)) : 1;
-    var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200) * (g.KK_DIRI ? g.KK_DIRI.kameraHp(S) : 1) * kntBonus);
+    var popK = (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) ? g.KK_WILAYAH.faktorPenduduk(S) : 1;
+    var baru = Math.round((dasar + Math.random() * dasar) * jamBagus * tren * (1 + S.dunia.langganan / 200) * (g.KK_DIRI ? g.KK_DIRI.kameraHp(S) : 1) * kntBonus * popK);
     so[akun] = (so[akun] || 0) + baru;
     if (so.postHari !== S.hari) { so.postHari = S.hari; so.postJenis = []; }
     so.postJenis.push(jenis);
-    var viral = Math.random() < (jenis === 'tiktok' ? 0.04 : jenis === 'threads' ? 0.03 : 0.02) * jamBagus * (1 + (kntBonus - 1) * 0.65);
-    if (viral) { so.viralSampai = S.hari + 2; so[akun] += 800; }
-    return { ok: true, baru: baru, viral: viral, jangkauan: baru * (15 + Math.floor(Math.random() * 20)) };
+    var viral = Math.random() < (jenis === 'x' || jenis === 'tiktok' ? 0.05 : jenis === 'ig' ? 0.04 : 0.03) * jamBagus * (1 + (kntBonus - 1) * 0.65);
+    if (viral) { so.viralSampai = S.hari + 2; so[akun] += Math.round(700 * popK); }
+    var jangkauan = baru * (15 + Math.floor(Math.random() * 20));
+    /* tambah ke feed sosmed */
+    S.sosmedFeed = S.sosmedFeed || [];
+    var labelPl = { ig: 'Instagram', threads: 'Threads', x: 'X (Twitter)', fb: 'Facebook', tiktok: 'TikTok' }[akun] || 'Sosmed';
+    S.sosmedFeed.unshift({ hari: S.hari, jam: Math.floor(S.menit % 1440), platform: akun, nama: S.namaPemain || 'Kamu', teks: (viral ? '🔥 VIRAL di ' + labelPl + '! ' : '') + 'Berbagi update keseharian · ' + jangkauan.toLocaleString('id-ID') + ' tayangan (+' + baru + ' pengikut).', suka: Math.max(5, Math.round(baru * 1.4)) });
+    if (S.sosmedFeed.length > 30) S.sosmedFeed.length = 30;
+    return { ok: true, baru: baru, viral: viral, jangkauan: jangkauan };
   }
   function siaran(S) { if (S.dunia.sosmed.siaranHari === S.hari) return 'Siaran hari ini sudah dikirim.'; if (S.dunia.langganan < 5) return 'Belum cukup pelanggan langganan di daftar kontak (minimal 5).'; S.dunia.sosmed.siaranHari = S.hari; return true; }
   function iklan(S) { if (S.hari <= S.dunia.sosmed.iklanSampai) return 'Iklan masih berjalan.'; if (!bayarBank(S, BIAYA.iklanSeminggu, 'Iklan media sosial 7 hari')) return 'Saldo rekening tidak cukup.'; S.dunia.sosmed.iklanSampai = S.hari + 6; S.dunia.sosmed.ig += 150; return true; }
@@ -230,7 +323,11 @@
     d.ratingHari = { n: 0, total: 0 };
     d.kotor = Math.max(0, d.kotor - 30);
     aturCuaca(S, nBaru);
-    if (d.cuaca) kabar.push('Prakiraan cuaca: hujan sekitar pukul ' + Math.floor(d.cuaca.mulai / 60) + '.00–' + Math.floor(d.cuaca.selesai / 60) + '.00.');
+    if (d.cuaca) {
+      var nmCw = (PROFIL_CUACA[d.cuaca.jenis] && PROFIL_CUACA[d.cuaca.jenis].nama) || 'Hujan';
+      var bnjT = d.cuaca.banjirCm >= 35 ? ' (waspada banjir ' + d.cuaca.banjirCm + ' cm!)' : '';
+      kabar.push('🌦️ Prakiraan cuaca: ' + nmCw + ' sekitar pukul ' + Math.floor(d.cuaca.mulai / 60) + '.00–' + Math.floor(d.cuaca.selesai / 60) + '.00' + bnjT + '.');
+    }
     if (d.maps.status === 'proses' && nBaru >= d.maps.aktifPada) { d.maps.status = 'aktif'; kabar.push('Kedai sudah muncul di Google Maps.'); }
     if (t.dow === 1) {
       var mBaru = acak(M.MENU);
@@ -261,7 +358,7 @@
     return kabar;
   }
 
-  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang, suhuSekarang: suhuSekarang,
+  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, PROFIL_CUACA: PROFIL_CUACA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang, infoCuacaSekarang: infoCuacaSekarang, suhuSekarang: suhuSekarang,
     catatPembeli: catatPembeli, catatPergi: catatPergi, catatKomplain: catatKomplain, rataMaps: rataMaps, daftarMaps: daftarMaps, tambahFoto: tambahFoto, balas: balas,
     beliUlasan: beliUlasan, posting: posting, siaran: siaran, iklan: iklan, endorse: endorse, beliCekUang: beliCekUang, bersihkan: bersihkan, jalan: jalan, gantiHari: gantiHari };
 })(window);

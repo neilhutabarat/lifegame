@@ -296,8 +296,26 @@
     };
   }
 
+  /* Fase bulan astronomis untuk hari ke-n (siklus sinodis 29,530589 hari sejak bulan baru 6 Jan 2000) */
+  function infoFaseBulan(n) {
+    var ref = dn(2000, 1, 6) + 0.76;
+    var umur = ((n - ref) % 29.530588861 + 29.530588861) % 29.530588861;
+    var f = umur / 29.530588861; /* 0 = bulan baru, 0.25 = kuartal 1, 0.5 = purnama, 0.75 = kuartal 3 */
+    var ilum = (1 - Math.cos(f * Math.PI * 2)) / 2;
+    var nama = f < 0.04 || f > 0.96 ? 'Bulan Baru'
+      : f < 0.22 ? 'Sabit Awal'
+      : f < 0.28 ? 'Separuh Awal'
+      : f < 0.46 ? 'Cembung Awal'
+      : f < 0.54 ? 'Bulan Purnama'
+      : f < 0.72 ? 'Cembung Akhir'
+      : f < 0.78 ? 'Separuh Akhir'
+      : 'Sabit Tua';
+    /* Di Indonesia (ekuator): Sabit Awal (waxing, 0..0.5) sisi terang menghadap barat/kanan ke matahari terbenam; Sabit Tua (waning, 0.5..1) sisi terang menghadap timur/kiri ke matahari terbit */
+    return { fase: f, umur: umur, iluminasi: ilum, waxing: f < 0.5, nama: nama };
+  }
+
   var api = { dn: dn, tgl: tgl, kunci: kunci, liburTahun: liburTahun, hariIni: hariIni, apakahLibur: apakahLibur,
-    apakahRamadan: apakahRamadan, apakahMalamTakbiran: apakahMalamTakbiran, statusLebaran: statusLebaran, apakahNatal: apakahNatal, apakahMalamTahunBaru: apakahMalamTahunBaru, jadwalSholat: jadwalSholat, tanggalKembar: tanggalKembar, usia: usia,
+    apakahRamadan: apakahRamadan, apakahMalamTakbiran: apakahMalamTakbiran, statusLebaran: statusLebaran, apakahNatal: apakahNatal, apakahMalamTahunBaru: apakahMalamTahunBaru, jadwalSholat: jadwalSholat, infoFaseBulan: infoFaseBulan, tanggalKembar: tanggalKembar, usia: usia,
     berikutnya: berikutnya, ramadanTahun: ramadanTahun, lebaranTahun: lebaranTahun, faseBulan: faseBulan, paskah: paskah };
   g.KK_KAL = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

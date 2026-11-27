@@ -378,8 +378,49 @@
     return 'Rumah Ibadah ' + kec;
   }
 
+  /* Populasi nyata 2026 (BPS) untuk 14 Kab/Kota Kalbar & 38 Ibu Kota Provinsi Indonesia */
+  var PENDUDUK_WILAYAH = {
+    pontianak: 685000, kuburaya: 635000, ketapang: 595000, kayongutara: 132000,
+    mempawah: 315000, singkawang: 245000, sambas: 648000, bengkayang: 298000,
+    landak: 412000, sanggau: 496000, sekadau: 222000, sintang: 438000,
+    melawi: 236000, kapuashulu: 266000,
+    jakarta: 10720000, surabaya: 3010000, bandung: 2540000, medan: 2510000,
+    semarang: 1710000, palembang: 1780000, makassar: 1480000, pekanbaru: 1140000,
+    bandarlampung: 1230000, padang: 945000, denpasar: 745000, samarinda: 870000,
+    serang: 740000, jambi: 645000, banjarbaru: 285000, palangkaraya: 312000,
+    yogyakarta: 418000, mataram: 465000, kupang: 472000, manado: 468000,
+    palu: 392000, bengkulu: 398000, kendari: 368000, ambon: 358000,
+    jayapura: 418000, sorong: 298000, bandaaceh: 268000, pangkalpinang: 236000,
+    tanjungpinang: 238000, gorontalo: 206000, manokwari: 205000, mamuju: 286000,
+    merauke: 242000, nabire: 178000, wamena: 122000, tanjungselor: 64000, sofifi: 42000
+  };
+  function pendudukWilayah(S) {
+    var kabId = (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId) || (S && S.rumah && S.rumah.wilayah && S.rumah.wilayah.kabId) || (S && S.kota) || 'pontianak';
+    var dasar = PENDUDUK_WILAYAH[kabId] || 450000;
+    /* pertumbuhan penduduk alami ~1,1%/tahun + delta kelahiran/kematian NPC */
+    var thnJalan = Math.max(0, ((S && S.hari) || 0) / 365);
+    var delta = (S && S.popDelta) || 0;
+    return Math.max(10000, Math.round(dasar * (1 + thnJalan * 0.011) + delta));
+  }
+  function formatPenduduk(n) {
+    n = Math.round(+n || 0);
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.', ',') + 'jt';
+    if (n >= 1000) return Math.round(n / 1000) + 'rb';
+    return String(n);
+  }
+  function faktorPenduduk(S) {
+    var p = pendudukWilayah(S);
+    /* 130rb → 0.84, 685rb (Pontianak) → 1.00, 2.5jt → 1.18, 10.7jt (Jakarta) → 1.38 */
+    var f = 0.72 + Math.log10(Math.max(50000, p) / 50000) * 0.285;
+    return Math.max(0.8, Math.min(1.42, Math.round(f * 100) / 100));
+  }
+
   g.KK_WILAYAH = {
     kalbar: KALBAR,
+    PENDUDUK_WILAYAH: PENDUDUK_WILAYAH,
+    pendudukWilayah: pendudukWilayah,
+    formatPenduduk: formatPenduduk,
+    faktorPenduduk: faktorPenduduk,
     apakahKalbar: apakahKalbar,
     jarakKm: jarakKm,
     titikAwal: titikAwal,
@@ -387,6 +428,6 @@
     pilihTujuan: pilihTujuan,
     daftarKecamatan: daftarKecamatan,
     tempatIbadahTerdekat: tempatIbadahTerdekat,
-    daftarKabKalbar: function () { return Object.keys(KALBAR).map(function (id) { return { id: id, nama: KALBAR[id].nama, jmlKec: KALBAR[id].kec.length }; }); }
+    daftarKabKalbar: function () { return Object.keys(KALBAR).map(function (id) { return { id: id, nama: KALBAR[id].nama, jmlKec: KALBAR[id].kec.length, penduduk: PENDUDUK_WILAYAH[id] || 300000 }; }); }
   };
 })(window);

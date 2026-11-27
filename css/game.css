@@ -30,19 +30,21 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .kartu-hud { background: rgba(251, 250, 246, .93); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, .75); border-radius: 15px; padding: 7px 11px; box-shadow: 0 6px 18px -10px rgba(10, 20, 26, .48); pointer-events: auto; }
 .tanggal { padding: 6px 10px; }
 .tanggal b { display: block; font-family: var(--font-judul); font-size: 15px; line-height: 1.15; font-weight: 800; color: var(--tinta); white-space: nowrap; }
-.tanggal span, .jam span { display: block; font-size: 10.5px; color: var(--tinta-pudar); font-weight: 800; line-height: 1.2; white-space: nowrap; }
-.jam { text-align: right; min-width: 118px; display: flex; flex-direction: column; justify-content: center; gap: 1px; cursor: pointer; }
+.tanggal span, .jam span { display: block; font-size: 10.5px; color: var(--tinta-pudar); font-weight: 800; line-height: 1.2; }
+.jam { text-align: right; min-width: 132px; max-width: 186px; display: flex; flex-direction: column; justify-content: center; gap: 2px; cursor: pointer; overflow: hidden; }
 .jam-atas { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
 .jam b { display: block; font-family: var(--font-judul); font-size: 20px; line-height: 1; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .3px; color: var(--tinta); }
 .jarak-badge { display: inline-flex !important; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 999px; background: rgba(31, 138, 128, .16); color: var(--kontainer-tua) !important; font-size: 10px !important; font-weight: 800 !important; line-height: 1.1 !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .jarak-badge.jauh { background: rgba(217, 68, 58, .16); color: var(--merah-libur) !important; }
-.hud-kec { font-size: 10px !important; font-weight: 800 !important; color: var(--kontainer-tua) !important; max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: auto; }
+.hud-kec { font-size: 10px !important; font-weight: 800 !important; color: var(--kontainer-tua) !important; max-width: 100%; white-space: normal !important; overflow-wrap: break-word; line-height: 1.18 !important; text-align: right; }
+.hud-pop { font-size: 9.5px !important; font-weight: 800 !important; color: var(--tinta-pudar) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
 .status-buka { color: var(--kontainer) !important; }
-.chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; }
-.chip { pointer-events: auto; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: rgba(251, 250, 246, .92); border: 1px solid rgba(29, 43, 51, .08); color: var(--tinta); box-shadow: 0 2px 6px -4px rgba(0,0,0,.3); }
+.chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 3px; height: 22px; max-width: 100%; font-size: 10px; font-weight: 800; padding: 0 8px; border-radius: 7px; background: rgba(251, 250, 246, .94); border: 1px solid rgba(29, 43, 51, .11); color: var(--tinta); box-shadow: 0 2px 6px -4px rgba(0,0,0,.32); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; }
 .chip.libur { background: var(--merah-libur); color: #fff; border-color: transparent; }
 .chip.cuti { background: var(--cuti); color: #fff; border-color: transparent; }
 .chip.event { background: var(--kunyit); color: #2a1d00; border-color: transparent; }
+.chip.cuaca-chip { background: #1e3a5f; color: #e0f2fe; border-color: transparent; }
 
 /* ---------- kontrol bawah (presisi, simetris 3 lapis penuh) ---------- */
 #bawah { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 10px)) max(10px, env(safe-area-inset-left, 0px)); display: grid; gap: 6px; }
@@ -305,17 +307,24 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .gelas-isi i { height: 0; animation: isiGelas .75s ease-out forwards; }
 @keyframes isiGelas { from { height: 0; } to { height: 64px; } }
 
-/* ---------- kebutuhan pemain di dock bawah (5 bar presisi: Makan/Minum digabung, anti-luber) ---------- */
-.diri { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; padding: 8px 8px 9px; text-align: left; align-items: center; }
+/* ---------- kebutuhan pemain di dock bawah (5 bar presisi & simetris penuh, bebas terpotong) ---------- */
+.diri { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 8px 9px 9px; text-align: left; align-items: stretch; }
 .dok-diri { background: rgba(251, 250, 246, .95); border: 1px solid rgba(255, 255, 255, .82); border-radius: 15px; box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .5); }
-.diri > span { font-size: 9.5px; font-weight: 800; color: var(--tinta); display: grid; gap: 4px; white-space: nowrap; min-width: 0; overflow: hidden; }
-.diri > span .bar-lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 2px; line-height: 1; min-width: 0; overflow: hidden; }
-.diri > span .bar-lbl > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.2px; }
-.diri > span .bar-lbl em { flex-shrink: 0; font-style: normal; font-size: 9px; font-weight: 800; color: var(--tinta-pudar); font-variant-numeric: tabular-nums; }
-.diri .meteran { display: block; height: 6.5px; border-radius: 99px; background: rgba(29, 43, 51, .12); margin: 0; overflow: hidden; }
-.diri .meteran i { background: var(--kontainer); border-radius: 99px; }
+.diri > span { font-size: 9.5px; font-weight: 800; color: var(--tinta); display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 2px 0; white-space: nowrap; min-width: 0; overflow: visible; }
+.diri > span .bar-lbl { display: flex; justify-content: space-between; align-items: center; gap: 2px; height: 13px; line-height: 13px; min-width: 0; overflow: visible; }
+.diri > span .bar-lbl > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.15px; line-height: 13px; }
+.diri > span .bar-lbl em { flex-shrink: 0; font-style: normal; font-size: 9px; font-weight: 800; color: var(--tinta-pudar); font-variant-numeric: tabular-nums; line-height: 13px; }
+.diri .meteran { display: block; width: 100%; height: 7px; border-radius: 99px; background: rgba(29, 43, 51, .12); margin: 0; overflow: hidden; flex-shrink: 0; }
+.diri .meteran i { display: block; height: 100%; background: var(--kontainer); border-radius: 99px; }
 .diri .meteran.kritis i { background: var(--merah-libur); }
 .diri .meteran.hb i { background: #e91e63; }
+/* kartu profil MiChat & feed sosmed */
+.michat-kartu { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid rgba(29,43,51,.1); margin-bottom: 8px; }
+.michat-info { flex: 1; min-width: 0; }
+.michat-info b { display: block; font-size: 13.5px; color: var(--tinta); }
+.michat-info small { display: block; font-size: 11px; color: var(--tinta-pudar); margin: 2px 0 5px; line-height: 1.3; }
+.feed-item { padding: 9px 11px; border-radius: 12px; background: #fff; border: 1px solid rgba(29,43,51,.09); margin-bottom: 7px; font-size: 12px; line-height: 1.4; }
+.feed-item .feed-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 10.5px; color: var(--tinta-pudar); font-weight: 800; }
 .ikon.aktif-home { background: var(--kontainer); color: #fff; }
 #app.meracik .diri { display: none; }
 

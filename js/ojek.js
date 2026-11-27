@@ -155,6 +155,7 @@
     if (g.KK_DUNIA && g.KK_DUNIA.hujanSekarang(S)) r *= 1.6;
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
+    if (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) r *= g.KK_WILAYAH.faktorPenduduk(S); /* populasi kota/kabupaten memengaruhi volume order */
     r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
     var mudik = statusMudik(S.hari);
     if (mudik === 'mudik') r *= 2.1;

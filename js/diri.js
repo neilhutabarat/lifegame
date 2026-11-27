@@ -207,11 +207,23 @@
     }
     if (list.length >= 5) return 'Maksimal 5 Power Bank yang bisa dipakai bersamaan! Lepas salah satu dulu.';
     if ((st.sisaMah || 0) <= 0) return 'Daya ' + m.nama + ' habis (0 mAh). Cas dulu di rumah.';
+    /* Aturan kompatibilitas merk: menggabungkan Power Bank hanya kompatibel dengan MERK YANG SAMA */
+    var merkBaru = m.merek || 'Umum', merkBeda = [];
+    list.forEach(function (uid) {
+      var mu = pbModel(uid);
+      if (mu && (mu.merek || 'Umum') !== merkBaru) merkBeda.push(mu.merek || 'Umum');
+    });
     S.hp.cas = false;
+    if (merkBeda.length > 0) {
+      S.hp.pbPasangList = [id];
+      S.hp.pbAktif = id;
+      S.hp.pbPasang = true;
+      return { ok: true, teks: '⚠️ Power Bank beda merek tidak kompatibel digabung (' + merkBeda[0] + ' ≠ ' + merkBaru + ')! Unit ' + merkBeda[0] + ' otomatis dilepas, kini hanya memakai ' + m.nama + '.' };
+    }
     list.push(id);
     S.hp.pbAktif = id;
     S.hp.pbPasang = true;
-    return { ok: true, teks: '🔋 ' + m.nama + ' disambungkan ke HP (' + list.length + '/5 unit dipakai bersamaan)!' };
+    return { ok: true, teks: '🔋 ' + m.nama + ' (' + merkBaru + ') disambungkan ke HP (' + list.length + '/5 unit semerek aktif)!' };
   }
   function casDiPangkalan(S) {
     if (!S.hp) return 'HP belum siap.';

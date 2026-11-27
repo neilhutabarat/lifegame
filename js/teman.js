@@ -203,34 +203,104 @@
     siap(S).push(x); return x;
   }
 
-  /* harian: naikkan Bar HB semua karakter teman & simulasi pacaran antar teman (khusus cowok × cewek) */
+  /* harian: dinamika kehidupan NPC (HB pasangan rutin turun, nikah, hamil, melahirkan bayi baru, sakit, & mortalitas realistis < angka kelahiran) */
+  function postFeedNpc(S, teks, plat) {
+    S.sosmedFeed = S.sosmedFeed || [];
+    S.sosmedFeed.unshift({ hari: S.hari || 0, plat: plat || 'ig', penulis: 'Warga & Teman', teks: teks, suka: 15 + Math.floor(Math.random() * 140) });
+    if (S.sosmedFeed.length > 35) S.sosmedFeed.length = 35;
+  }
   function gantiHari(S, nLama, nBaru) {
     var daf = siap(S), kabar = [];
     if (!daf.length) return kabar;
-    var sudahCek = {};
+    var sudahCek = {}, meninggalIds = [], lahirBaru = [];
+    var tB = g.KK_KAL ? g.KK_KAL.tgl(nBaru) : { y: 2026, m: 1, d: 1 };
+    var tglHariIni = tB.y + '-' + (tB.m < 10 ? '0' : '') + tB.m + '-' + (tB.d < 10 ? '0' : '') + tB.d;
     daf.forEach(function (x) {
       var u = usiaTeman(S, x);
-      if (u >= 17) x.hb = batas((x.hb == null ? 30 : x.hb) + 7 + Math.floor(Math.random() * 10));
-      /* update pasangan NPC yang sudah pacaran (khusus lawan jenis) */
+      /* sakit & pemulihan NPC */
+      if (x.sakitSampai && nBaru >= x.sakitSampai) x.sakitSampai = 0;
+      else if (!x.sakitSampai && Math.random() < 0.004) x.sakitSampai = nBaru + 2 + Math.floor(Math.random() * 4);
+      if (u >= 17) {
+        var tambahHb = x.pacarId ? (4 + Math.floor(Math.random() * 6)) : (6 + Math.floor(Math.random() * 9));
+        if (x.sakitSampai) tambahHb = Math.floor(tambahHb * 0.3);
+        x.hb = batas((x.hb == null ? 30 : x.hb) + tambahHb);
+      }
+      /* proses persalinan NPC yang sedang hamil (270 hari) */
+      if (x.hamil && nBaru >= x.hamil.lahirPada) {
+        var genderBayi = Math.random() < 0.5 ? 'cowok' : 'cewek';
+        var namaBayi = (genderBayi === 'cowok' ? acak(['Kenzo', 'Arka', 'Alvaro', 'Rayyan', 'Zidan', 'Rafka']) : acak(['Alesha', 'Aisyah', 'Kayla', 'Mikayla', 'Naira', 'Zara'])) + ' ' + (x.nama.split(' ')[1] || 'Pratama');
+        lahirBaru.push({
+          id: 'npc_b' + nBaru + '_' + Math.floor(Math.random() * 999),
+          nama: namaBayi, gender: genderBayi, peran: 'teman',
+          tglLahir: tglHariIni, kerja: 'Balita / Anak Teman',
+          hubungan: 35, perasaan: 30, hb: 0, pacarId: null, pacarNama: '', interaksiHari: -1,
+          orangTua: x.nama + (x.pacarNama ? ' & ' + x.pacarNama : '')
+        });
+        x.hamil = null;
+        S.popDelta = (S.popDelta || 0) + 1;
+        var teksLahir = '👶 Kabar bahagia! ' + x.nama + (x.pacarNama ? ' & ' + x.pacarNama : '') + ' baru saja melahirkan bayi ' + (genderBayi === 'cowok' ? 'laki-laki' : 'perempuan') + ' bernama ' + namaBayi + '!';
+        kabar.push(teksLahir);
+        postFeedNpc(S, teksLahir, 'fb');
+      }
+      /* update pasangan NPC yang sudah pacaran / menikah (khusus lawan jenis) */
       if (x.pacarId && !sudahCek[x.id]) {
         var p = cari(S, x.pacarId);
         if (p && p.gender !== x.gender) {
           sudahCek[x.id] = true; sudahCek[p.id] = true;
-          if (Math.random() < 0.03) {
+          var uP = usiaTeman(S, p);
+          /* pasangan yang pacaran/menikah rutin HB bareng sehingga HB teman tidak menumpuk 100% terus */
+          if ((x.hb || 0) >= 55 && (p.hb || 0) >= 55 && !x.sakitSampai && !p.sakitSampai && Math.random() < (x.menikah ? 0.78 : 0.65)) {
+            x.hb = Math.max(8, (x.hb || 50) - (48 + Math.floor(Math.random() * 18)));
+            p.hb = Math.max(8, (p.hb || 50) - (48 + Math.floor(Math.random() * 18)));
+            /* peluang hamil bagi pasangan menikah (usia 20-40) */
+            var ibu = x.gender === 'cewek' ? x : p;
+            var uIbu = usiaTeman(S, ibu);
+            if (x.menikah && !ibu.hamil && uIbu >= 20 && uIbu <= 40 && Math.random() < 0.035) {
+              ibu.hamil = { mulai: nBaru, lahirPada: nBaru + 270 };
+              var teksHamil = '🤰 Kabar gembira: ' + x.nama + ' & ' + p.nama + ' sedang menantikan buah hati!';
+              kabar.push(teksHamil);
+              postFeedNpc(S, teksHamil, 'ig');
+            }
+          }
+          /* peluang menikah bagi pasangan pacaran dewasa (usia >= 22) */
+          if (!x.menikah && u >= 22 && uP >= 22 && Math.random() < 0.014) {
+            x.menikah = true; p.menikah = true;
+            x.nikahHari = nBaru; p.nikahHari = nBaru;
+            var teksNikah = '💍 Selamat! Temanmu ' + x.nama + ' & ' + p.nama + ' resmi menikah hari ini!';
+            kabar.push(teksNikah);
+            postFeedNpc(S, teksNikah, 'ig');
+          } else if (!x.menikah && Math.random() < 0.022) {
             lepasPacarNpc(S, x);
             kabar.push('💔 Kabar teman: ' + x.nama + ' & ' + p.nama + ' baru saja putus.');
-          } else if ((x.hb || 0) >= 75 && (p.hb || 0) >= 75 && Math.random() < 0.5) {
-            x.hb = Math.max(10, (x.hb || 50) - 55);
-            p.hb = Math.max(10, (p.hb || 50) - 55);
           }
         }
       }
+      /* peluang kematian realistis sangat kecil (< angka kelahiran), hanya untuk NPC biasa (bukan pacar pemain) & usia/sakit */
+      var peluangWafat = (x.peran === 'pacar' || daf.length <= 35) ? 0 : (u >= 58 ? 0.0007 : (x.sakitSampai ? 0.00045 : 0.00008));
+      if (peluangWafat > 0 && Math.random() < peluangWafat) {
+        meninggalIds.push(x.id);
+        S.popDelta = (S.popDelta || 0) - 1;
+        var teksDuka = '🕊️ Berita duka: Temanmu ' + x.nama + ' (' + u + ' thn) telah berpulang karena ' + (x.sakitSampai ? 'sakit' : 'faktor usia/kesehatan') + '.';
+        kabar.push(teksDuka);
+        postFeedNpc(S, teksDuka, 'fb');
+      }
     });
+    if (meninggalIds.length) {
+      meninggalIds.forEach(function (mid) {
+        var xm = cari(S, mid);
+        if (xm) lepasPacarNpc(S, xm);
+      });
+      S.teman = S.teman.filter(function (t) { return meninggalIds.indexOf(t.id) < 0; });
+      daf = S.teman;
+    }
+    if (lahirBaru.length) {
+      lahirBaru.forEach(function (b) { if (S.teman.length < 95) S.teman.push(b); });
+    }
     /* peluang terbentuk pasangan baru antar teman jomblo (strictly cowok × cewek, usia >= 17) */
     var jombloL = daf.filter(function (x) { return x.gender === 'cowok' && !x.pacarId && x.peran !== 'pacar' && usiaTeman(S, x) >= 17; });
     var jombloP = daf.filter(function (x) { return x.gender === 'cewek' && !x.pacarId && x.peran !== 'pacar' && usiaTeman(S, x) >= 17; });
     var jumlahPacaran = daf.filter(function (x) { return !!x.pacarId; }).length;
-    if (jombloL.length && jombloP.length && jumlahPacaran < Math.floor(daf.length * 0.55) && Math.random() < 0.22) {
+    if (jombloL.length && jombloP.length && jumlahPacaran < Math.floor(daf.length * 0.62) && Math.random() < 0.24) {
       var l = acak(jombloL), uL = usiaTeman(S, l);
       var cocokP = jombloP.filter(function (p) { return Math.abs(usiaTeman(S, p) - uL) <= 8; });
       var p = cocokP.length ? acak(cocokP) : acak(jombloP);

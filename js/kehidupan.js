@@ -57,12 +57,26 @@
     { id: 'deposito', nama: 'Deposito Bank Berjangka', jenis: 'dep', satuan: 'slot', hargaDasar: 1000000, vol: 0, dividenThn: 0.045, ket: 'Bunga pasti 4,5%/tahun cair otomatis ke bank tiap bulan' }
   ];
 
-  /* ---------- 4. Pendidikan Terakhir, Lengkap 24 Jurusan Kuliah Indonesia, Karier Tetap (Jam Kantor Asli) & Sampingan ---------- */
+  /* ---------- 4. Pendidikan Terakhir, Sekolah Kedinasan, Jalur Dokter Asli, 24 Jurusan, Karier & Sampingan ---------- */
   var PENDIDIKAN = [
-    { id: 'sma', nama: 'SMA / SMK', level: 1, biayaKuliah: 0 },
-    { id: 'd3', nama: 'D3 Diploma', level: 2, biayaKuliah: 8500000 },
-    { id: 's1', nama: 'S1 Sarjana', level: 3, biayaKuliah: 16000000 },
-    { id: 's2', nama: 'S2 Magister', level: 4, biayaKuliah: 32000000 }
+    { id: 'sma', nama: 'SMA / SMK', level: 1, biayaKuliah: 0, tahun: 0, ukt: 0 },
+    { id: 'd3', nama: 'D3 Diploma', level: 2, biayaKuliah: 3200000, tahun: 3, ukt: 3200000, semester: 6 },
+    { id: 's1', nama: 'S1 Sarjana', level: 3, biayaKuliah: 4500000, tahun: 4, ukt: 4500000, semester: 8 },
+    { id: 's2', nama: 'S2 Magister', level: 4, biayaKuliah: 9000000, tahun: 2, ukt: 9000000, semester: 4 }
+  ];
+  var SEKOLAH_KEDINASAN = [
+    { id: 'bintara_polri', nama: 'Pendidikan Bintara Polri (SPN)', ikon: '🚓', tahun: 1, semester: 2, daftar: 500000, ukt: 0, gelar: 'Bripda', ket: '1 tahun (2 sem) · Ikatan dinas gratis · Lulus langsung bisa jadi Anggota Polri' },
+    { id: 'akpol', nama: 'Akademi Kepolisian (AKPOL)', ikon: '⭐', tahun: 4, semester: 8, daftar: 1500000, ukt: 0, gelar: 'Ipda S.Tr.K', ket: '4 tahun (8 sem) · Pendidikan Perwira Polisi gratis · Buka karier Perwira Polri' },
+    { id: 'akmil', nama: 'Akademi Militer (AKMIL TNI)', ikon: '🎖️', tahun: 4, semester: 8, daftar: 1500000, ukt: 0, gelar: 'Letda S.Tr.Han', ket: '4 tahun (8 sem) · Ikatan dinas TNI gratis · Buka karier Perwira TNI' },
+    { id: 'stan_ipdn', nama: 'PKN STAN / IPDN Kedinasan', ikon: '🏛️', tahun: 4, semester: 8, daftar: 500000, ukt: 0, gelar: 'S.Tr.IP / ASN', ket: '4 tahun (8 sem) · Biaya negara · Buka karier ASN Kementerian / Pemda' },
+    { id: 'stip_pelayaran', nama: 'STIP Sekolah Tinggi Pelayaran', ikon: '⚓', tahun: 4, semester: 8, daftar: 4500000, ukt: 6500000, gelar: 'S.Tr.Pel (ANT-III)', ket: '4 tahun (8 sem) · UKT Rp6,5jt/sem · Buka karier Perwira Kapal / Nahkoda' },
+    { id: 'pilot_cpl', nama: 'Sekolah Penerbang (Pilot CPL-IR)', ikon: '✈️', tahun: 2, semester: 4, daftar: 45000000, ukt: 40000000, gelar: 'CPL-IR Pilot', ket: '2 tahun (4 sem) · Sekolah terbang profesional · Buka karier Pilot Maskapai (Rp36jt/bln!)' }
+  ];
+  var SPESIALIS_LIST = [
+    { id: 'Sp.PD', nama: 'Penyakit Dalam (Sp.PD)', tahun: 5 },
+    { id: 'Sp.B', nama: 'Bedah Umum (Sp.B)', tahun: 5 },
+    { id: 'Sp.A', nama: 'Kesehatan Anak (Sp.A)', tahun: 5 },
+    { id: 'Sp.JP', nama: 'Jantung & Pembuluh Darah (Sp.JP)', tahun: 6 }
   ];
   var KAT_JURUSAN = [
     ['semua', 'Semua (24)'],
@@ -104,7 +118,16 @@
     { id: 'staf_admin', nama: 'Staf Administrasi & Kasir Kantor', kantorNama: 'PT Sinar Niaga Mandiri', minLvl: 1, gaji: 4300000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 7.2, cocok: ['akuntansi', 'manajemen', 'admpublik'], ket: 'Syarat SMA/SMK · Jam 08.00–17.00 (Sen–Jum) · Ruang ber-AC' },
     { id: 'staf_it', nama: 'Staf Finance / IT Support', kantorNama: 'PT Cakra Digital Indonesia', minLvl: 2, gaji: 6200000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 9.4, cocok: ['ti', 'si', 'akuntansi', 'telektro', 'dkv'], ket: 'Syarat D3 · Jam 08.00–17.00 (Sen–Jum) · +15% jika jurusan cocok' },
     { id: 'analis_spv', nama: 'Analis Bisnis / Supervisor Operasional', kantorNama: 'Bank & Korporasi Regional', minLvl: 3, gaji: 9800000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 11.5, cocok: ['manajemen', 'ekonomi', 'akuntansi', 'hukum', 'ti', 'si', 'psikologi', 'komunikasi', 'tsipil', 'tmesin', 'kedokteran', 'farmasi'], ket: 'Syarat S1 · Jam 08.00–17.00 (Sen–Jum) · +15% jika jurusan cocok' },
-    { id: 'manager_pro', nama: 'Senior Manager / Konsultan Eksekutif', kantorNama: 'Menara Korporat Utama', minLvl: 4, gaji: 18500000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 13.8, cocok: ['manajemen', 'ekonomi', 'hukum', 'ti', 'tindustri', 'kedokteran', 'hi', 'arsitektur'], ket: 'Syarat S2 · Jam 08.00–17.00 (Sen–Jum) · Gaji eksekutif + THR' }
+    { id: 'manager_pro', nama: 'Senior Manager / Konsultan Eksekutif', kantorNama: 'Menara Korporat Utama', minLvl: 4, gaji: 18500000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 13.8, cocok: ['manajemen', 'ekonomi', 'hukum', 'ti', 'tindustri', 'kedokteran', 'hi', 'arsitektur'], ket: 'Syarat S2 · Jam 08.00–17.00 (Sen–Jum) · Gaji eksekutif + THR' },
+    /* Karier Kedinasan & Profesi Khusus */
+    { id: 'polri_bintara', nama: 'Anggota Polri (Bintara)', kantorNama: 'Polres / Polda Daerah', minLvl: 1, syaratKedinasan: ['bintara_polri', 'akpol'], gaji: 6400000, jamMasuk: 7, jamPulang: 16, jam: 9, jarakKm: 8.5, cocok: [], ket: 'Syarat lulus SPN Bintara / AKPOL · Tunjangan kinerja & seragam dinas' },
+    { id: 'polri_perwira', nama: 'Perwira Polisi (AKPOL)', kantorNama: 'Mapolda / Mabes Polri', minLvl: 1, syaratKedinasan: ['akpol'], gaji: 11800000, jamMasuk: 7, jamPulang: 16, jam: 9, jarakKm: 10.2, cocok: [], ket: 'Syarat lulus AKPOL (4 thn) · Gaji + tunjangan jabatan perwira' },
+    { id: 'tni_perwira', nama: 'Perwira TNI (AKMIL)', kantorNama: 'Kodam / Batalyon TNI', minLvl: 1, syaratKedinasan: ['akmil'], gaji: 12000000, jamMasuk: 7, jamPulang: 16, jam: 9, jarakKm: 11.0, cocok: [], ket: 'Syarat lulus AKMIL (4 thn) · Disiplin tinggi + tunjangan dinas' },
+    { id: 'asn_kedinasan', nama: 'ASN Kementerian / Pemda', kantorNama: 'Kantor Gubernur / Kementerian', minLvl: 1, syaratKedinasan: ['stan_ipdn'], gaji: 10800000, jamMasuk: 8, jamPulang: 16, jam: 8, jarakKm: 9.0, cocok: [], ket: 'Syarat lulus PKN STAN / IPDN · Tukin + gaji ke-13 & THR' },
+    { id: 'pelayaran', nama: 'Perwira Pelayaran / Nahkoda', kantorNama: 'Pelabuhan & Armada Niaga', minLvl: 1, syaratKedinasan: ['stip_pelayaran'], gaji: 19500000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 14.5, cocok: [], ket: 'Syarat lulus STIP Pelayaran · Karier maritim gaji tinggi' },
+    { id: 'pilot_maskapai', nama: 'Pilot Maskapai Komersial', kantorNama: 'Bandara Internasional', minLvl: 1, syaratKedinasan: ['pilot_cpl'], gaji: 36000000, jamMasuk: 7, jamPulang: 16, jam: 9, jarakKm: 18.0, cocok: [], ket: 'Syarat Lisensi Sekolah Penerbang CPL-IR · Gaji elit Rp36jt/bln!' },
+    { id: 'dokter_umum', nama: 'Dokter Umum (Klinik & RS)', kantorNama: 'RSUD / Klinik Pratama', minLvl: 3, syaratDokter: 'sip', gaji: 18500000, jamMasuk: 8, jamPulang: 16, jam: 8, jarakKm: 8.8, cocok: ['kedokteran'], ket: 'Syarat S1 Kedokteran + Koas (2 thn) + STR & SIP aktif' },
+    { id: 'dokter_spesialis', nama: 'Dokter Spesialis Rumah Sakit', kantorNama: 'RS Tipe A / Spesialis Utama', minLvl: 3, syaratDokter: 'spesialis', gaji: 42000000, jamMasuk: 8, jamPulang: 16, jam: 8, jarakKm: 10.5, cocok: ['kedokteran'], ket: 'Syarat lulus PPDS Spesialis (Sp.PD/Sp.B/Sp.A/Sp.JP) · Gaji Rp42jt/bln!' }
   ];
   var KERJA_SAMPINGAN = [
     { id: 'spx_borong', nama: 'Kurir Paket Borongan (SPX/J&T)', menit: 180, upah: 115000, stamina: -24, stres: 10, butuhMotor: true, ket: 'Antar 35 paket area sekitar (3 jam) · cair tunai langsung' },
@@ -143,6 +166,8 @@
     if (!S) return S;
     S.profil = S.profil || { gender: 'cewek', tglLahir: '2000-05-15', agama: 'Islam', etnis: 'Jawa' };
     if (!S.profil.pendidikan) S.profil.pendidikan = 'sma';
+    if (!S.profil.kedinasan) S.profil.kedinasan = {};
+    if (S.profil.jurusan === 'kedokteran' && !S.profil.dokterTahap && levelDidik(S.profil.pendidikan) >= 3) S.profil.dokterTahap = 'sked';
     if (S.diri && typeof S.diri.stres !== 'number') S.diri.stres = 12;
     S.surat = S.surat || { simC: (S.hari || 0) + 1825, simA: (S.hari || 0) + 1825, tilang: [] };
     S.surat.tilang = S.surat.tilang || [];
@@ -329,9 +354,10 @@
     return { nilai: tot, modal: mod, laba: tot - mod };
   }
 
-  /* ---------- Karier Kantoran, Kuliah Malam/Jurusan Lengkap & Kerja Sampingan ---------- */
+  /* ---------- Karier Kantoran, Kuliah Real-Time, Sekolah Kedinasan & Jalur Dokter Asli ---------- */
   function kuliahJurusan(S, jenjangId, jurusanId) {
     siapkan(S);
+    if (S.kuliahAktif) return 'Kamu sedang menempuh pendidikan ' + S.kuliahAktif.nama + ' (sisa ' + Math.max(1, S.kuliahAktif.lulusPada - S.hari) + ' hari). Selesaikan dulu atau berhenti studi.';
     var target = PENDIDIKAN.filter(function (x) { return x.id === jenjangId; })[0];
     var jur = JURUSAN_KULIAH.filter(function (x) { return x.id === jurusanId; })[0];
     if (!target || target.level < 2) return 'Pilih jenjang D3, S1, atau S2.';
@@ -339,13 +365,92 @@
     var curLvl = levelDidik(S.profil.pendidikan);
     if (curLvl >= target.level && S.profil.jurusan === jur.id) return 'Kamu sudah lulus ' + target.nama + ' ' + jur.nama + '.';
     if (target.id === 's2' && curLvl < 3) return 'Untuk mendaftar S2 Magister, selesaikan S1 Sarjana terlebih dahulu.';
-    var biaya = target.biayaKuliah;
-    var by = UANG.bayarPilihan(S, biaya, 'Kuliah ' + target.nama + ' — ' + jur.nama, S._metodeBayar || 'bank');
+    var ukt = (jur.id === 'kedokteran' && target.id === 's1') ? 12500000 : target.ukt;
+    var by = UANG.bayarPilihan(S, ukt, 'Daftar & UKT Sem 1 ' + target.nama + ' — ' + jur.nama, S._metodeBayar || 'bank');
     if (by !== true) return by;
-    if (target.level >= curLvl) S.profil.pendidikan = target.id;
-    S.profil.jurusan = jur.id;
-    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biaya;
-    return { ok: true, menit: 120, teks: '🎓 Selamat! Lulus ' + target.nama + ' Jurusan ' + jur.nama + ' (' + jur.gelar + ')! Karier gaji tinggi & bonus +15% jurusan linear kini terbuka.' };
+    var totalHari = target.tahun * 365;
+    S.kuliahAktif = {
+      tipe: 'kuliah', jenjang: target.id, jurusan: jur.id,
+      nama: target.nama + ' ' + jur.nama, gelar: jur.id === 'kedokteran' ? 'S.Ked' : jur.gelar,
+      mulaiHari: S.hari, lulusPada: S.hari + totalHari, totalHari: totalHari,
+      ukt: ukt, semesterTotal: target.semester, semesterBayar: 1, tagihBerikut: S.hari + 180
+    };
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + ukt;
+    return { ok: true, menit: 60, teks: '🎓 Resmi terdaftar kuliah ' + S.kuliahAktif.nama + ' (' + target.tahun + ' tahun / ' + target.semester + ' semester, UKT ' + rp(ukt) + '/sem)! Studi berjalan otomatis sesuai kalender game.' };
+  }
+  function daftarKedinasan(S, id) {
+    siapkan(S);
+    if (S.kuliahAktif) return 'Kamu sedang menempuh pendidikan ' + S.kuliahAktif.nama + '. Selesaikan dulu studi saat ini.';
+    var sk = SEKOLAH_KEDINASAN.filter(function (x) { return x.id === id; })[0];
+    if (!sk) return 'Sekolah kedinasan tidak ditemukan.';
+    if (S.profil.kedinasan && S.profil.kedinasan[id]) return 'Kamu sudah lulus dari ' + sk.nama + '.';
+    var biayaAwal = (sk.daftar || 0) + (sk.ukt || 0);
+    var by = UANG.bayarPilihan(S, biayaAwal, 'Daftar ' + sk.nama, S._metodeBayar || 'bank');
+    if (by !== true) return by;
+    var totalHari = sk.tahun * 365;
+    S.kuliahAktif = {
+      tipe: 'kedinasan', kedinasanId: sk.id,
+      nama: sk.nama, gelar: sk.gelar,
+      mulaiHari: S.hari, lulusPada: S.hari + totalHari, totalHari: totalHari,
+      ukt: sk.ukt || 0, semesterTotal: sk.semester, semesterBayar: 1, tagihBerikut: S.hari + 180
+    };
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biayaAwal;
+    return { ok: true, menit: 60, teks: sk.ikon + ' Lolos seleksi & resmi masuk ' + sk.nama + ' (' + sk.tahun + ' tahun)! Pendidikan berjalan otomatis sesuai kalender.' };
+  }
+  function lanjutTahapDokter(S, tahap, spesId) {
+    siapkan(S);
+    if (S.kuliahAktif) return 'Selesaikan dulu pendidikan yang sedang berjalan (' + S.kuliahAktif.nama + ').';
+    var tDok = S.profil.dokterTahap || '';
+    if (tahap === 'koas') {
+      if (S.profil.jurusan !== 'kedokteran' || levelDidik(S.profil.pendidikan) < 3) return 'Harus lulus S1 Pendidikan Dokter (S.Ked) dulu sebelum masuk Koas!';
+      if (tDok === 'koas_lulus' || tDok === 'sip' || tDok === 'spesialis') return 'Kamu sudah lulus program Koas (dr.).';
+      var uktK = 11000000;
+      var byK = UANG.bayarPilihan(S, uktK, 'Program Profesi Dokter (Koas) Sem 1', S._metodeBayar || 'bank');
+      if (byK !== true) return byK;
+      S.kuliahAktif = {
+        tipe: 'dokter_koas', nama: 'Program Profesi Dokter (Koas 2 Thn)', gelar: 'dr.',
+        mulaiHari: S.hari, lulusPada: S.hari + 730, totalHari: 730,
+        ukt: uktK, semesterTotal: 4, semesterBayar: 1, tagihBerikut: S.hari + 180
+      };
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + uktK;
+      return { ok: true, menit: 60, teks: '🩺 Resmi masuk Program Koas RS (2 tahun / 4 semester)! Setelah lulus dapat gelar dr.' };
+    }
+    if (tahap === 'sip') {
+      if (tDok !== 'koas_lulus') return 'Selesaikan Program Koas (dr.) dulu untuk mengurus STR & SIP Dokter Umum.';
+      var biayaSip = 2500000;
+      var byS = UANG.bayarPilihan(S, biayaSip, 'Pengurusan STR & SIP Dokter Umum (IDI & Dinkes)', S._metodeBayar || 'bank');
+      if (byS !== true) return byS;
+      S.kuliahAktif = {
+        tipe: 'dokter_sip', nama: 'Pengurusan STR & SIP Praktik Dokter', gelar: 'dr. (SIP)',
+        mulaiHari: S.hari, lulusPada: S.hari + 14, totalHari: 14,
+        ukt: 0, semesterTotal: 1, semesterBayar: 1, tagihBerikut: S.hari + 999
+      };
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biayaSip;
+      return { ok: true, menit: 60, teks: '📋 Permohonan STR & SIP Dokter Umum diproses (14 hari kalender). Setelah terbit bisa praktik Dokter Umum!' };
+    }
+    if (tahap === 'spesialis') {
+      if (tDok !== 'sip') return 'Harus memiliki STR & SIP Dokter Umum aktif sebelum mendaftar PPDS Dokter Spesialis!';
+      var sp = SPESIALIS_LIST.filter(function (x) { return x.id === spesId; })[0] || SPESIALIS_LIST[0];
+      var uktSp = 18000000;
+      var bySp = UANG.bayarPilihan(S, uktSp, 'Daftar PPDS Spesialis ' + sp.nama + ' Sem 1', S._metodeBayar || 'bank');
+      if (bySp !== true) return bySp;
+      var totH = sp.tahun * 365;
+      S.kuliahAktif = {
+        tipe: 'dokter_spesialis', spesialisId: sp.id, nama: 'PPDS ' + sp.nama + ' (' + sp.tahun + ' Thn)', gelar: sp.id,
+        mulaiHari: S.hari, lulusPada: S.hari + totH, totalHari: totH,
+        ukt: uktSp, semesterTotal: sp.tahun * 2, semesterBayar: 1, tagihBerikut: S.hari + 180
+      };
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + uktSp;
+      return { ok: true, menit: 60, teks: '🏥 Resmi diterima PPDS ' + sp.nama + ' (' + sp.tahun + ' tahun)! Setelah lulus membuka karier Dokter Spesialis (Rp42jt/bln).' };
+    }
+    return 'Tahap kedokteran tidak dikenal.';
+  }
+  function berhentiStudi(S) {
+    siapkan(S);
+    if (!S.kuliahAktif) return 'Tidak ada pendidikan yang sedang berjalan.';
+    var nm = S.kuliahAktif.nama;
+    S.kuliahAktif = null;
+    return { ok: true, teks: 'Berhenti dari studi ' + nm + '.' };
   }
   function kuliahUpgrade(S) {
     siapkan(S);
@@ -358,6 +463,15 @@
     siapkan(S);
     var kj = KARIER_TETAP.filter(function (x) { return x.id === id; })[0];
     if (!kj) return 'Lowongan tidak ditemukan.';
+    if (kj.syaratKedinasan && kj.syaratKedinasan.length) {
+      var punyaKed = kj.syaratKedinasan.some(function (kid) { return S.profil.kedinasan && S.profil.kedinasan[kid]; });
+      if (!punyaKed) return 'Butuh lulusan Sekolah Kedinasan (' + kj.syaratKedinasan.join(' / ') + ') untuk melamar ' + kj.nama + '. Daftar di tab 🎓 Kuliah & Kedinasan!';
+    }
+    if (kj.syaratDokter) {
+      var td = S.profil.dokterTahap || '';
+      if (kj.syaratDokter === 'sip' && td !== 'sip' && td !== 'spesialis') return 'Butuh lulus S1 Kedokteran → Koas (2 thn) → STR & SIP aktif untuk menjadi Dokter Umum!';
+      if (kj.syaratDokter === 'spesialis' && td !== 'spesialis') return 'Butuh lulus PPDS Dokter Spesialis (5–6 tahun) untuk menjadi Dokter Spesialis!';
+    }
     if (levelDidik(S.profil.pendidikan) < kj.minLvl) {
       var sy = PENDIDIKAN.filter(function (x) { return x.level === kj.minLvl; })[0];
       return 'Butuh pendidikan minimal ' + (sy ? sy.nama : 'lebih tinggi') + ' untuk posisi ' + kj.nama + '. Ambil Kuliah di tab 🎓 Kuliah dulu!';
@@ -365,7 +479,7 @@
     S.karier.id = kj.id;
     S.karier.hadirBulan = 0;
     var gj = gajiEfektif(S, kj);
-    return { ok: true, teks: '💼 Diterima bekerja sebagai ' + kj.nama + ' di ' + kj.kantorNama + ' (gaji ' + rp(gj) + '/bln · 08.00–17.00 Sen–Jum)! Pukul 07.00 akan muncul tombol Berangkat Kerja.' };
+    return { ok: true, teks: '💼 Diterima bekerja sebagai ' + kj.nama + ' di ' + kj.kantorNama + ' (gaji ' + rp(gj) + '/bln · ' + (kj.jamMasuk || 8) + '.00–' + (kj.jamPulang || 17) + '.00 Sen–Jum)!' };
   }
   function berhentiKerja(S) {
     siapkan(S);
@@ -507,10 +621,116 @@
     return { ok: true, teks: '🚚 Berhasil pindah domisili ke ' + titik.desa + ', Kec. ' + titik.kecNama + ' (' + titik.kabNama + ') · Suasana lingkungan: ' + tierWilayah(S).toUpperCase() + '!' };
   }
 
-  /* ---------- Pergantian Hari: Investasi, Gaji & THR Karier, Bisnis Tambahan ---------- */
+  /* ---------- Sosmed Endorse Monetisasi & Direktori MiChat ---------- */
+  function klaimEndorse(S) {
+    siapkan(S);
+    var sm = S.dunia && S.dunia.sosmed ? S.dunia.sosmed : {};
+    var totFol = (sm.ig || 0) + (sm.threads || 0) + (sm.x || 0) + (sm.fb || 0) + (sm.tiktok || 0);
+    if (totFol < 250) return 'Butuh minimal 250 total pengikut (IG + Threads + X + FB + TikTok) untuk menerima tawaran endorse. Rajin posting dulu!';
+    if (sm.endorseKlaimHari != null && (S.hari - sm.endorseKlaimHari) < 3) {
+      return 'Tawaran endorse berikutnya tersedia ' + (3 - (S.hari - sm.endorseKlaimHari)) + ' hari lagi.';
+    }
+    var efHp = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : { kontenBonus: 0 };
+    var fakPop = (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) ? g.KK_WILAYAH.faktorPenduduk(S) : 1;
+    var bayaran = Math.round(Math.min(18000000, Math.max(75000, totFol * 260 * (1 + (efHp.kontenBonus || 0)) * fakPop)) / 5000) * 5000;
+    sm.endorseKlaimHari = S.hari;
+    S.bank.saldo += bayaran;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Monetisasi & Endorse Sosmed (' + totFol.toLocaleString('id-ID') + ' pengikut)', jml: bayaran });
+    S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + bayaran;
+    return { ok: true, bayaran: bayaran, teks: '💸 Endorse & Monetisasi Sosmed cair ' + rp(bayaran) + ' ke Rekening Bank (' + totFol.toLocaleString('id-ID') + ' pengikut · Bonus HP +' + Math.round((efHp.kontenBonus || 0) * 100) + '%)!' };
+  }
+
+  var PROFIL_MICHAT = [
+    { id: 'mc_bella', nama: 'Bella', usia: 22, jarak: 0.6, tarif: 350000, rating: 4.8, bio: 'Open BO hotel / apartemen sekitar · ramah & wangi · full service', tampilan: { kulit: '#f1c29b', rambut: '#2b1b17', gayaRambut: 'panjang', baju: '#e11d48', hijab: false, gender: 'cewek' } },
+    { id: 'mc_clara', nama: 'Clara Cantik', usia: 24, jarak: 1.1, tarif: 500000, rating: 4.9, bio: 'Real pict 100% · short time / long time · bersih & nyaman', tampilan: { kulit: '#f7d5ba', rambut: '#4a2c2a', gayaRambut: 'gelombang', baju: '#9333ea', hijab: false, gender: 'cewek' } },
+    { id: 'mc_siska', nama: 'Siska Manja', usia: 21, jarak: 0.9, tarif: 300000, rating: 4.7, bio: 'Mahasiswi butuh biaya kos · lokasi dekat pusat kota · fast respon', tampilan: { kulit: '#e8b38a', rambut: '#1c1917', gayaRambut: 'sebahu', baju: '#ec4899', hijab: false, gender: 'cewek' } },
+    { id: 'mc_nadine', nama: 'Nadine VIP', usia: 25, jarak: 1.8, tarif: 850000, rating: 5.0, bio: 'Eks pramugari / model · khusus hotel bintang · privasi terjamin', tampilan: { kulit: '#fae0c8', rambut: '#5c3a21', gayaRambut: 'panjang', baju: '#b91c1c', hijab: false, gender: 'cewek' } },
+    { id: 'mc_amel', nama: 'Amel Chubby', usia: 26, jarak: 0.5, tarif: 250000, rating: 4.6, bio: 'Kost bebas di gang dekat pangkalan · ramah & no drama', tampilan: { kulit: '#dfaa80', rambut: '#1f1612', gayaRambut: 'ikat', baju: '#f97316', hijab: false, gender: 'cewek' } },
+    { id: 'mc_vanessa', nama: 'Vanessa Highclass', usia: 23, jarak: 2.4, tarif: 1200000, rating: 5.0, bio: 'Selebgram lokal · exclude room · kualitas premium & puas', tampilan: { kulit: '#fce5d2', rambut: '#3d2314', gayaRambut: 'gelombang', baju: '#7c3aed', hijab: false, gender: 'cewek' } },
+    { id: 'mc_tari', nama: 'Tari Eksotis', usia: 27, jarak: 1.4, tarif: 400000, rating: 4.8, bio: 'Pijat relaksasi + plus-plus · bisa dipanggil ke rumah/hotel', tampilan: { kulit: '#c98d63', rambut: '#111111', gayaRambut: 'panjang', baju: '#0f766e', hijab: false, gender: 'cewek' } },
+    { id: 'mc_angel', nama: 'Angel Model', usia: 24, jarak: 2.9, tarif: 1500000, rating: 5.0, bio: 'VIP Exclusive · wajah oriental · pengalaman bintang 5', tampilan: { kulit: '#fff0e2', rambut: '#3b2416', gayaRambut: 'panjang', baju: '#be123c', hijab: false, gender: 'cewek' } }
+  ];
+  function daftarMichat(S) {
+    return PROFIL_MICHAT;
+  }
+  function bookingMichat(S, id, pakaiKondom) {
+    siapkan(S);
+    var p = PROFIL_MICHAT.filter(function (x) { return x.id === id; })[0];
+    if (!p) return 'Profil MiChat tidak ditemukan.';
+    if (pakaiKondom) {
+      var stokK = (S.diri && S.diri.stokKb && S.diri.stokKb.kondom) || 0;
+      if (stokK <= 0) return 'Stok kondom habis! Beli dulu di Apotek atau pilih tanpa kondom (risiko kesehatan lebih tinggi).';
+    }
+    var by = UANG.bayarPilihan(S, p.tarif, 'Booking MiChat: ' + p.nama, S._metodeBayar || 'dompet');
+    if (by !== true) return by;
+    if (pakaiKondom && S.diri && S.diri.stokKb) S.diri.stokKb.kondom = Math.max(0, (S.diri.stokKb.kondom || 0) - 1);
+    if (S.diri) {
+      S.diri.hb = 0;
+      S.diri.stamina = batas((S.diri.stamina || 60) - 14);
+      if (!pakaiKondom && Math.random() < 0.08) S.diri.hiv = true;
+    }
+    ubahStres(S, -28);
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + p.tarif;
+    return {
+      ok: true, profil: p, pakaiKondom: !!pakaiKondom, menit: 60,
+      teks: '💋 Booking MiChat bersama ' + p.nama + ' (' + rp(p.tarif) + ', ' + (pakaiKondom ? 'pakai kondom aman' : 'tanpa kondom') + ') selesai! HB 0% & stres turun drastis.'
+    };
+  }
+
+  /* ---------- Pergantian Hari: Studi Real-Time, Rilis Produk Baru, Investasi, Gaji & THR ---------- */
   function gantiHari(S, nLama, nBaru) {
     siapkan(S);
     var kabar = [], tL = KAL.tgl(nLama), tB = KAL.tgl(nBaru);
+    /* 0. Progres Kuliah / Sekolah Kedinasan / Koas / SIP / PPDS secara real-time */
+    if (S.kuliahAktif) {
+      var ka = S.kuliahAktif;
+      /* Tagihan UKT semester berikutnya setiap 180 hari jika ada UKT */
+      if (ka.ukt > 0 && nBaru >= (ka.tagihBerikut || 999999) && ka.semesterBayar < ka.semesterTotal) {
+        ka.tagihBerikut = nBaru + 180;
+        if ((S.bank && S.bank.saldo >= ka.ukt)) {
+          S.bank.saldo -= ka.ukt;
+          S.bank.mutasi.unshift({ n: nBaru, ket: 'UKT Sem ' + (ka.semesterBayar + 1) + ' ' + ka.nama, jml: -ka.ukt });
+          ka.semesterBayar++;
+          kabar.push('🎓 UKT Semester ' + ka.semesterBayar + ' ' + ka.nama + ' (' + rp(ka.ukt) + ') terpotong otomatis dari bank.');
+        } else {
+          ka.lulusPada += 30; /* penundaan cuti 1 bulan bila telat UKT */
+          kabar.push('⚠️ Saldo bank kurang untuk UKT ' + ka.nama + ' (' + rp(ka.ukt) + '). Masa studi mundur 30 hari.');
+        }
+      }
+      if (nBaru >= ka.lulusPada) {
+        if (ka.tipe === 'kuliah') {
+          if (levelDidik(ka.jenjang) >= levelDidik(S.profil.pendidikan)) S.profil.pendidikan = ka.jenjang;
+          S.profil.jurusan = ka.jurusan;
+          if (ka.jurusan === 'kedokteran' && ka.jenjang === 's1') S.profil.dokterTahap = 'sked';
+          kabar.push('🎓 WISUDA! Kamu resmi lulus ' + ka.nama + ' (' + ka.gelar + ')!' + (ka.jurusan === 'kedokteran' ? ' Lanjut Program Koas (2 thn) untuk menjadi Dokter!' : ''));
+        } else if (ka.tipe === 'kedinasan') {
+          S.profil.kedinasan = S.profil.kedinasan || {};
+          S.profil.kedinasan[ka.kedinasanId] = true;
+          if (levelDidik(S.profil.pendidikan) < 3 && ka.kedinasanId !== 'bintara_polri') S.profil.pendidikan = 's1';
+          kabar.push('🎖️ PELANTIKAN! Kamu resmi lulus ' + ka.nama + ' (' + ka.gelar + ')! Karier kedinasan kini terbuka di menu Karier.');
+        } else if (ka.tipe === 'dokter_koas') {
+          S.profil.dokterTahap = 'koas_lulus';
+          kabar.push('🩺 SUMPAH DOKTER! Kamu lulus Koas & bergelar dr.! Sekarang urus STR & SIP (14 hari) untuk izin praktik Dokter Umum.');
+        } else if (ka.tipe === 'dokter_sip') {
+          S.profil.dokterTahap = 'sip';
+          kabar.push('📋 STR & SIP DOKTER TERBIT! Kamu resmi bisa melamar Dokter Umum (Rp18,5jt/bln) atau lanjut PPDS Spesialis!');
+        } else if (ka.tipe === 'dokter_spesialis') {
+          S.profil.dokterTahap = 'spesialis';
+          S.profil.spesialisGelar = ka.spesialisId || 'Sp.PD';
+          kabar.push('🏥 SELAMAT DOKTER SPESIALIS! Kamu resmi menyandang gelar ' + S.profil.spesialisGelar + '! Karier Dokter Spesialis (Rp42jt/bln) kini terbuka!');
+        }
+        S.kuliahAktif = null;
+      }
+    }
+    /* 0b. Notifikasi rilis HP, Motor & Mobil generasi terbaru saat memasuki bulan rilis baru */
+    if (tB.m !== tL.m) {
+      var hpBaru = (N.daftarGadget || []).filter(function (x) { return x.jenis === 'hp' && x.tahun === tB.y && x.bulanRilis === tB.m; }).map(function (x) { return x.nama; });
+      if (hpBaru.length) kabar.push('📱 Rilis HP Terbaru ' + tB.y + ': ' + hpBaru.slice(0, 3).join(', ') + (hpBaru.length > 3 ? ' dll.' : '') + ' kini tersedia di Toko Gadget!');
+      var mtBaru = (N.motor || []).filter(function (x) { return x.tahun === tB.y && x.bulanRilis === tB.m; }).map(function (x) { return x.nama; });
+      if (mtBaru.length) kabar.push('🏍️ Rilis Motor Terbaru ' + tB.y + ': ' + mtBaru.join(', ') + ' resmi masuk Dealer Motor!');
+      var mbBaru = (N.mobil || []).filter(function (x) { return x.tahun === tB.y && x.bulanRilis === tB.m; }).map(function (x) { return x.nama; });
+      if (mbBaru.length) kabar.push('🚗 Rilis Mobil Terbaru ' + tB.y + ': ' + mbBaru.join(', ') + ' resmi hadir di Dealer Mobil!');
+    }
     /* 1. Fluktuasi harga harian Emas Antam & Saham IHSG */
     INVEST_KATALOG.forEach(function (a) {
       if (a.vol > 0) {
@@ -579,14 +799,17 @@
 
   g.KK_HIDUP = {
     BAN_MOTOR: BAN_MOTOR, BAN_MOBIL: BAN_MOBIL, PAKAIAN: PAKAIAN, AKS_DRIVER: AKS_DRIVER,
-    INVEST_KATALOG: INVEST_KATALOG, PENDIDIKAN: PENDIDIKAN, KAT_JURUSAN: KAT_JURUSAN, JURUSAN_KULIAH: JURUSAN_KULIAH, KARIER_TETAP: KARIER_TETAP,
+    INVEST_KATALOG: INVEST_KATALOG, PENDIDIKAN: PENDIDIKAN, SEKOLAH_KEDINASAN: SEKOLAH_KEDINASAN, SPESIALIS_LIST: SPESIALIS_LIST,
+    KAT_JURUSAN: KAT_JURUSAN, JURUSAN_KULIAH: JURUSAN_KULIAH, KARIER_TETAP: KARIER_TETAP,
     KERJA_SAMPINGAN: KERJA_SAMPINGAN, BISNIS_LIST: BISNIS_LIST,
     siapkan: siapkan, ubahStres: ubahStres, levelDidik: levelDidik, namaDidik: namaDidik, namaJurusan: namaJurusan, gajiEfektif: gajiEfektif,
     perpanjangSim: perpanjangSim, bayarTilang: bayarTilang, cekRaziaJalan: cekRaziaJalan,
     gantiBanMerek: gantiBanMerek, tambalBan: tambalBan, cuciSteam: cuciSteam,
     beliPakaian: beliPakaian, pakaiBaju: pakaiBaju, warnaBajuAktif: warnaBajuAktif, beliAksDriver: beliAksDriver,
     hargaInvest: hargaInvest, beliInvest: beliInvest, jualInvest: jualInvest, nilaiPortofolio: nilaiPortofolio,
-    kuliahUpgrade: kuliahUpgrade, kuliahJurusan: kuliahJurusan, lamarKerja: lamarKerja, berhentiKerja: berhentiKerja, masukKerjaHariIni: masukKerjaHariIni, selesaiKerjaKantor: selesaiKerjaKantor, kerjaSampingan: kerjaSampingan,
+    kuliahUpgrade: kuliahUpgrade, kuliahJurusan: kuliahJurusan, daftarKedinasan: daftarKedinasan, lanjutTahapDokter: lanjutTahapDokter, berhentiStudi: berhentiStudi,
+    lamarKerja: lamarKerja, berhentiKerja: berhentiKerja, masukKerjaHariIni: masukKerjaHariIni, selesaiKerjaKantor: selesaiKerjaKantor, kerjaSampingan: kerjaSampingan,
+    klaimEndorse: klaimEndorse, daftarMichat: daftarMichat, bookingMichat: bookingMichat,
     bukaBisnis: bukaBisnis, infoSpotGacor: infoSpotGacor, acaraSosial: acaraSosial,
     tierWilayah: tierWilayah, pindahDomisili: pindahDomisili, gantiHari: gantiHari
   };

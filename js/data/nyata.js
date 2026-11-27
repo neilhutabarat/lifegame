@@ -402,6 +402,16 @@
       { id: 'rogphone10p', jenis: 'hp', tahun: 2026, bulanRilis: 3, merek: 'ASUS', nama: 'ASUS ROG Phone 10 Pro (6.500 mAh)', ram: 16, storage: 512, mah: 6500, watt: 80, kamera: 1.88, harga: 21499000, ket: 'Snapdragon 8 Elite Gen 5 · 185Hz · 6.500 mAh · Rilis Maret 2026' },
       { id: 'unihertz_tank3p', jenis: 'hp', tahun: 2025, bulanRilis: 2, merek: 'Unihertz', nama: 'Unihertz Tank 3 Pro (23.800 mAh)', ram: 16, storage: 512, mah: 23800, watt: 120, kamera: 1.8, harga: 12999000, ket: 'Baterai monster 23.800 mAh + Proyektor DLP + Fast Charge 120W' },
       { id: 'unihertz_tank4u', jenis: 'hp', tahun: 2026, bulanRilis: 5, merek: 'Unihertz', nama: 'Unihertz Tank 4 Ultra (25.000 mAh)', ram: 16, storage: 1024, mah: 25000, watt: 120, kamera: 1.9, harga: 14999000, ket: 'Baterai 25.000 mAh · Proyektor 720p · 120W · Rilis Mei 2026' },
+      /* === HP GENERASI MASA DEPAN 2027–2028 (TERBUKA OTOMATIS SESUAI TAHUN & BULAN KALENDER GAME) === */
+      { id: 'galaxys27u', jenis: 'hp', tahun: 2027, bulanRilis: 2, merek: 'Samsung', nama: 'Samsung Galaxy S27 Ultra 5G', ram: 16, storage: 512, mah: 5500, watt: 65, kamera: 2.38, harga: 24999000, ket: 'Snapdragon 8 Elite Gen 6 · Si/C 5.500 mAh · Kamera 200 MP AI Pro · Rilis Feb 2027' },
+      { id: 'xiaomi17u', jenis: 'hp', tahun: 2027, bulanRilis: 3, merek: 'Xiaomi', nama: 'Xiaomi 17 Ultra Leica (7.000 mAh)', ram: 16, storage: 1024, mah: 7000, watt: 120, kamera: 2.4, harga: 20499000, ket: 'Leica APO Optical Zoom · Baterai Si/C 7.000 mAh · 120W · Rilis Mar 2027' },
+      { id: 'vivox400p', jenis: 'hp', tahun: 2027, bulanRilis: 4, merek: 'Vivo', nama: 'Vivo X400 Pro ZEISS (7.000 mAh)', ram: 16, storage: 512, mah: 7000, watt: 100, kamera: 2.36, harga: 19499000, ket: 'Dimensity 9600 · ZEISS Dual Telephoto · 7.000 mAh · Rilis Apr 2027' },
+      { id: 'oppofindx10u', jenis: 'hp', tahun: 2027, bulanRilis: 5, merek: 'OPPO', nama: 'OPPO Find X10 Ultra Hasselblad', ram: 16, storage: 1024, mah: 7200, watt: 100, kamera: 2.42, harga: 23499000, ket: 'Hasselblad Master Optics · 7.200 mAh Si/C · IP69 · Rilis Mei 2027' },
+      { id: 'iphone19', jenis: 'hp', tahun: 2027, bulanRilis: 10, merek: 'Apple', nama: 'iPhone 19 256GB (20th Edition)', ram: 12, storage: 256, mah: 4200, watt: 40, kamera: 2.15, harga: 17999000, ket: 'Chip A21 · Layar Full-Display Tanpa Notch · Dual 48 MP · Rilis Okt 2027' },
+      { id: 'iphone19pm', jenis: 'hp', tahun: 2027, bulanRilis: 10, merek: 'Apple', nama: 'iPhone 19 Pro Max 512GB', ram: 16, storage: 512, mah: 5600, watt: 50, kamera: 2.48, harga: 29999000, ket: 'Chip A21 Pro · Under-Display Face ID · Triple 48 MP Pro · Rilis Okt 2027' },
+      { id: 'galaxys28u', jenis: 'hp', tahun: 2028, bulanRilis: 2, merek: 'Samsung', nama: 'Samsung Galaxy S28 Ultra 5G', ram: 16, storage: 1024, mah: 6000, watt: 65, kamera: 2.52, harga: 25999000, ket: 'Generasi 2028 · Baterai 6.000 mAh Si/C · Kamera 250 MP · Rilis Feb 2028' },
+      { id: 'xiaomi18u', jenis: 'hp', tahun: 2028, bulanRilis: 3, merek: 'Xiaomi', nama: 'Xiaomi 18 Ultra Leica (7.500 mAh)', ram: 24, storage: 1024, mah: 7500, watt: 120, kamera: 2.55, harga: 21499000, ket: 'RAM 24 GB · Leica Continuous Optical Zoom · 7.500 mAh · Rilis Mar 2028' },
+      { id: 'iphone20pm', jenis: 'hp', tahun: 2028, bulanRilis: 10, merek: 'Apple', nama: 'iPhone 20 Pro Max 1TB', ram: 16, storage: 1024, mah: 5900, watt: 55, kamera: 2.6, harga: 31999000, ket: 'Chip A22 Pro (1.4nm) · Full Glass Display · 10× Optical · Rilis Okt 2028' },
 
       /* Tablet */
       { id: 'mipad6', jenis: 'tablet', tahun: 2023, merek: 'Xiaomi', nama: 'Xiaomi Pad 6 11" 144Hz', ram: 8, storage: 256, mah: 8840, watt: 33, kamera: 1.2, harga: 4999000, sewaHarian: 55000, ket: 'Snapdragon 870 · Layar 2.8K 144Hz · Quad Speaker Dolby Atmos' },
@@ -609,7 +619,14 @@
       { id: 'cbr1000', kelas: 'moge', nama: 'Honda CBR1000RR-R Fireblade', harga: 828965000, kml: 14, bbm: 'turbo', tangki: 16.1, muat: 2, kelebihan: 'Superbike Honda' },
       { id: 'h2', kelas: 'moge', nama: 'Kawasaki Ninja H2', harga: 890500000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Mesin supercharger, level sultan' },
       { id: 's1000rr', kelas: 'moge', nama: 'BMW S 1000 RR M Package', harga: 1150000000, kml: 14, bbm: 'turbo', tangki: 16.5, muat: 2, kelebihan: 'Superbike Jerman 210 HP dengan winglet karbon' },
-      { id: 'panigalev4', kelas: 'moge', nama: 'Ducati Panigale V4 S', harga: 1390000000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Superbike V4 Italia paling eksotis, top speed 308 km/j!' }
+      { id: 'panigalev4', kelas: 'moge', nama: 'Ducati Panigale V4 S', harga: 1390000000, kml: 12, bbm: 'turbo', tangki: 17, muat: 2, kelebihan: 'Superbike V4 Italia paling eksotis, top speed 308 km/j!' },
+      /* Motor generasi terbaru 2026–2028 (rilis bertahap sesuai bulan & tahun kalender game) */
+      { id: 'stylo160', tahun: 2026, bulanRilis: 2, nama: 'Honda Stylo 160 ABS (2026)', harga: 31400000, kml: 45, bbm: 'pertamax', tangki: 5, muat: 6, kelebihan: 'Skutik retro modern 160 cc eSP+ bertenaga & stylish' },
+      { id: 'aeroxalpha', tahun: 2026, bulanRilis: 3, nama: 'Yamaha Aerox Alpha Turbo (2026)', harga: 39550000, kml: 42, bbm: 'pertamax', tangki: 5.5, muat: 4, kelebihan: 'YECVT Turbo + layar TFT navigasi & rem cakram belakang' },
+      { id: 'cuve', tahun: 2026, bulanRilis: 4, nama: 'Honda CUV e: RoadSync Duo (EV)', harga: 54450000, kml: 0, bbm: 'listrik', jarakPenuh: 81, kwh: 2.6, muat: 6, kelebihan: 'Motor listrik Honda 2 baterai MPP e: setara 110 cc, layar TFT 7 inci' },
+      { id: 'vario160_27', tahun: 2027, bulanRilis: 2, nama: 'All New Honda Vario 160 RoadSync (2027)', harga: 32650000, kml: 48, bbm: 'pertamax', tangki: 5.8, muat: 6, kelebihan: 'Generasi 2027 · Panel TFT navigasi, dek rata & mesin 160 cc lebih irit' },
+      { id: 'nmax_27', tahun: 2027, bulanRilis: 6, nama: 'Yamaha NMAX Turbo Hybrid (2027)', harga: 45500000, kml: 47, bbm: 'pertamax', tangki: 7.1, muat: 6, kelebihan: 'Generasi 2027 · YECVT + Power Assist Hybrid, akselerasi & irit maksimal' },
+      { id: 'pcx160_28', tahun: 2028, bulanRilis: 3, nama: 'Honda PCX 160 e:HEV Gen-2 (2028)', harga: 44800000, kml: 52, bbm: 'pertamax', tangki: 8.1, muat: 6, kelebihan: 'Generasi 2028 · Hybrid e:HEV 52 km/L, tangki 8,1 L & cruise control' }
     ],
     /* motor bekas (16 model populer Indonesia): harga pasar bekas nyata sesuai tahun & kondisi */
     motorBekas: [
@@ -705,7 +722,13 @@
       { id: 'lexuslm', tahun: 2024, kelas: 'sultan', bentuk: 'van', nama: 'Lexus LM 350h Executive VIP', harga: 2695000000, kml: 15, bbm: 'pertamax', tangki: 60, kursi: 5, muat: 110, kelebihan: 'First-class MPV layar 48 inci, tarif VIP Sultan tertinggi (4 pnp)' },
       { id: 'landcruiser', kelas: 'sultan', bentuk: 'suv', nama: 'Toyota Land Cruiser Hybrid', harga: 2716000000, kml: 9, bbm: 'pertamax', tangki: 80, kursi: 7, muat: 120, kelebihan: 'SUV paling tangguh di dealer Toyota, tangki 80 L (6 pnp)' },
       { id: 'porsche911', kelas: 'sultan', bentuk: 'sport', nama: 'Porsche 911 Carrera S', harga: 4250000000, kml: 9, bbm: 'turbo', tangki: 64, kursi: 2, muat: 25, kelebihan: 'Supercar ikonik Jerman 308 km/j, prestise sultan (1 pnp)' },
-      { id: 'mercg63', kelas: 'sultan', bentuk: 'suv', nama: 'Mercedes-AMG G 63 V8 Biturbo', harga: 6850000000, kml: 7, bbm: 'turbo', tangki: 100, kursi: 5, muat: 120, kelebihan: 'SUV Sultan V8 585 HP, tangki raksasa 100 L (4 pnp)' }
+      { id: 'mercg63', kelas: 'sultan', bentuk: 'suv', nama: 'Mercedes-AMG G 63 V8 Biturbo', harga: 6850000000, kml: 7, bbm: 'turbo', tangki: 100, kursi: 5, muat: 120, kelebihan: 'SUV Sultan V8 585 HP, tangki raksasa 100 L (4 pnp)' },
+      /* Mobil generasi terbaru 2026–2028 (rilis bertahap sesuai bulan & tahun kalender game) */
+      { id: 'sealion7', tahun: 2026, bulanRilis: 2, kelas: 'mewah', bentuk: 'suv', nama: 'BYD Sealion 7 Performance AWD (2026)', harga: 719000000, kml: 7.2, bbm: 'listrik', tangki: 82.5, kursi: 5, muat: 100, kelebihan: 'SUV listrik fastback 523 HP (~542 km/cas · 4 pnp)' },
+      { id: 'hrvhev26', tahun: 2026, bulanRilis: 5, kelas: 'keluarga', bentuk: 'suv', nama: 'Honda HR-V e:HEV RS Hybrid (2026)', harga: 488000000, kml: 23, bbm: 'pertamax', tangki: 40, kursi: 5, muat: 90, kelebihan: 'SUV Hybrid Honda 23 km/L & Honda Sensing terbaru (4 pnp)' },
+      { id: 'avanzahev27', tahun: 2027, bulanRilis: 3, kelas: 'keluarga', bentuk: 'mpv', nama: 'Toyota Avanza Hybrid HEV (2027)', harga: 298000000, kml: 22, bbm: 'pertamax', tangki: 43, kursi: 7, muat: 105, kelebihan: 'Generasi 2027 · MPV sejuta umat kini Hybrid super irit 22 km/L (6 pnp)' },
+      { id: 'zenix27', tahun: 2027, bulanRilis: 7, kelas: 'keluarga', bentuk: 'mpv', nama: 'Innova Zenix Hybrid Facelift (2027)', harga: 495000000, kml: 21, bbm: 'pertamax', tangki: 52, kursi: 8, muat: 125, kelebihan: 'Generasi 2027 · Kabin 8-seater senyap, TSS 3.0 & 21 km/L (7 pnp)' },
+      { id: 'fortuner28', tahun: 2028, bulanRilis: 4, kelas: 'mewah', bentuk: 'suv', nama: 'All New Toyota Fortuner Hybrid 48V (2028)', harga: 665000000, kml: 15, bbm: 'solar', tangki: 80, kursi: 7, muat: 115, kelebihan: 'Generasi 2028 · Mild Hybrid Diesel 48V tangguh & tangki 80 L (6 pnp)' }
     ],
     /* kredit mobil (perkiraan): bunga flat sekitar 5% setahun + asuransi all risk sekitar 2% setahun */
     kreditMobil: { dp: [0.2, 0.25, 0.3], tenor: [12, 24, 36, 48, 60], bungaFlat: 0.0042, asuransi: 0.0017, dendaHarian: 0.005, tarikSetelahBulan: 3, leasing: 'Leasing mobil' },

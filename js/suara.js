@@ -3,7 +3,8 @@
 (function (g) {
   'use strict';
   var KUNCI = 'kk_suara_v1';
-  var ctx = null, masterMusik = null, masterEfek = null;
+  var ctx = null, masterMusik = null, masterEfek = null, masterLim = null;
+  var VOL_MUSIK = 2.88, VOL_EFEK = 1.40; /* 400% volume dari setelan sebelumnya, dilindungi limiter anti-pecah */
   var setelan = { musik: true, efek: true };
   var suasanaAktif = 'pagi';
   var timerMusik = null, langkah = 0, sudahInteraksi = false;
@@ -25,13 +26,23 @@
       var AC = g.AudioContext || g.webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
+      masterLim = ctx.createDynamicsCompressor ? ctx.createDynamicsCompressor() : null;
+      if (masterLim) {
+        masterLim.threshold.value = -3;
+        masterLim.knee.value = 6;
+        masterLim.ratio.value = 12;
+        masterLim.attack.value = 0.003;
+        masterLim.release.value = 0.15;
+        masterLim.connect(ctx.destination);
+      }
+      var tujuanOut = masterLim || ctx.destination;
       masterMusik = ctx.createGain();
-      /* volume musik ditingkatkan 400% (dari 0.18 ke 0.72) */
-      masterMusik.gain.value = setelan.musik ? 0.72 : 0;
-      masterMusik.connect(ctx.destination);
+      /* volume game dinaikkan 400% (musik 0.72 -> 2.88, efek 0.35 -> 1.40) + limiter jernih */
+      masterMusik.gain.value = setelan.musik ? VOL_MUSIK : 0;
+      masterMusik.connect(tujuanOut);
       masterEfek = ctx.createGain();
-      masterEfek.gain.value = setelan.efek ? 0.35 : 0;
-      masterEfek.connect(ctx.destination);
+      masterEfek.gain.value = setelan.efek ? VOL_EFEK : 0;
+      masterEfek.connect(tujuanOut);
     }
     if (ctx.state === 'suspended') {
       try { ctx.resume(); } catch (e) {}
@@ -384,6 +395,17 @@
     } else if (jenis === 'meriah') {
       /* Kembang api / perayaan Tahun Baru & Natal */
       [72, 76, 79, 84, 88].forEach(function (nd, idx) { mainNada(nd, 0.25, 'triangle', 0.2, idx * 0.06, masterEfek); });
+    } else if (jenis === 'petir') {
+      /* Suara guntur / petir menggelegar */
+      var tP = ctx.currentTime, oP = ctx.createOscillator(), gP = ctx.createGain();
+      oP.type = 'sawtooth';
+      oP.frequency.setValueAtTime(95, tP);
+      oP.frequency.exponentialRampToValueAtTime(28, tP + 0.85);
+      gP.gain.setValueAtTime(0.001, tP);
+      gP.gain.linearRampToValueAtTime(0.32, tP + 0.05);
+      gP.gain.exponentialRampToValueAtTime(0.001, tP + 0.9);
+      oP.connect(gP); gP.connect(masterEfek);
+      oP.start(tP); oP.stop(tP + 0.95);
     }
   }
 
@@ -392,7 +414,7 @@
     simpanSetelan();
     pastikanCtx();
     if (masterMusik && ctx) {
-      masterMusik.gain.setValueAtTime(setelan.musik ? 0.72 : 0, ctx.currentTime);
+      masterMusik.gain.setValueAtTime(setelan.musik ? VOL_MUSIK : 0, ctx.currentTime);
     }
     if (setelan.musik) {
       sudahInteraksi = true;
@@ -409,7 +431,7 @@
     simpanSetelan();
     pastikanCtx();
     if (masterEfek && ctx) {
-      masterEfek.gain.setValueAtTime(setelan.efek ? 0.28 : 0, ctx.currentTime);
+      masterEfek.gain.setValueAtTime(setelan.efek ? VOL_EFEK : 0, ctx.currentTime);
     }
     if (setelan.efek) bunyi('tap');
     return setelan.efek;

@@ -76,21 +76,115 @@
     cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); cx.fill();
   }
 
-  function gambarLangit(m, t) {
-    var l = langit(m), gr = cx.createLinearGradient(0, 0, 0, H * 0.75);
+  /* Awan realistis vektor berlapis: cumulus cerah, stratocumulus, sebagian mendung, dan cumulonimbus gelap sebelum/saat hujan */
+  function gambarAwanLangit(m, t, cw) {
+    var awan = cw ? (cw.awan != null ? cw.awan : 0.3) : 0.25;
+    var mendung = cw ? (cw.mendung || 0) : 0;
+    var angin = cw ? (cw.angin || 0.15) : 0.15;
+    var gp = gelap(m);
+    var nAwan = Math.max(2, Math.round(2 + awan * 7));
+    var spd = 0.004 + angin * 0.024;
+    for (var ci = 0; ci < nAwan; ci++) {
+      var seed = ci * 31 + 7;
+      var cx0 = (((acak(seed) * (W + 140) + t * spd * (0.65 + (ci % 3) * 0.25)) % (W + 150)) - 75);
+      var cy0 = 42 + acak(seed + 3) * (H * 0.24) + (ci % 2) * 14;
+      var sk = 0.72 + acak(seed + 5) * 0.75 + mendung * 0.35;
+      var isGelap = mendung > 0.45 && (cw.kode !== 'sebagian_mendung' || ci % 2 === 0);
+      var rC, gC, bC, aC;
+      if (isGelap) {
+        rC = Math.round(92 - mendung * 38 - gp * 30);
+        gC = Math.round(102 - mendung * 40 - gp * 30);
+        bC = Math.round(118 - mendung * 38 - gp * 26);
+        aC = Math.min(0.92, 0.55 + mendung * 0.36);
+      } else {
+        var senja = (m >= 330 && m <= 410) || (m >= 1005 && m <= 1110);
+        rC = gp > 0.5 ? 60 : senja ? 248 : 246;
+        gC = gp > 0.5 ? 72 : senja ? 212 : 250;
+        bC = gp > 0.5 ? 100 : senja ? 190 : 255;
+        aC = gp > 0.5 ? 0.34 : (0.58 + awan * 0.25);
+      }
+      var colAtas = 'rgba(' + rC + ',' + gC + ',' + bC + ',' + aC.toFixed(2) + ')';
+      var colBawah = 'rgba(' + Math.max(20, rC - 28) + ',' + Math.max(24, gC - 26) + ',' + Math.max(32, bC - 20) + ',' + (aC * 0.85).toFixed(2) + ')';
+      cx.save(); cx.translate(cx0, cy0); cx.scale(sk, sk * (isGelap ? 0.92 : 0.78));
+      /* bayangan dasar awan */
+      bulat(0, 7, 24, colBawah); bulat(-22, 9, 17, colBawah); bulat(24, 9, 18, colBawah);
+      /* gumpalan cumulus atas */
+      bulat(-24, 2, 16, colAtas); bulat(-8, -8, 22, colAtas); bulat(12, -5, 20, colAtas); bulat(27, 3, 15, colAtas);
+      if (isGelap) { bulat(2, -16, 16, colAtas); }
+      cx.restore();
+    }
+    if (mendung > 0.35) {
+      cx.fillStyle = 'rgba(32,42,58,' + (mendung * 0.36).toFixed(3) + ')';
+      cx.fillRect(0, 0, W, H * 0.65);
+    }
+  }
+  function gambarLangit(m, t, s) {
+    var l = langit(m), cw = s && s.cuacaInfo, mendung = cw ? (cw.mendung || 0) : 0;
+    var gr = cx.createLinearGradient(0, 0, 0, H * 0.75);
     gr.addColorStop(0, l[0]); gr.addColorStop(1, l[1]);
     cx.fillStyle = gr; cx.fillRect(0, 0, W, H);
     var gp = gelap(m);
-    if (gp > 0.3) for (var i = 0; i < 40; i++) {
-      var kel = 0.5 + 0.5 * Math.sin(t / 700 + i * 3.1);
-      cx.fillStyle = 'rgba(255,255,240,' + ((gp - 0.3) * 0.9 * kel).toFixed(3) + ')';
-      cx.fillRect(acak(i + 50) * W, acak(i + 90) * H * 0.5, 1.6, 1.6);
+    if (gp > 0.3 && mendung < 0.75) {
+      var starVis = (gp - 0.3) * (1 - mendung * 0.85);
+      for (var i = 0; i < 42; i++) {
+        var kel = 0.45 + 0.55 * Math.sin(t / 700 + i * 3.1);
+        cx.fillStyle = 'rgba(255,255,240,' + (starVis * 0.92 * kel).toFixed(3) + ')';
+        cx.fillRect(acak(i + 50) * W, acak(i + 90) * H * 0.48, (i % 5 === 0) ? 2.1 : 1.4, (i % 5 === 0) ? 2.1 : 1.4);
+      }
     }
-    /* matahari 06.00–18.00, bulan 18.00–06.00, melintas dalam busur */
-    var siang = m >= 360 && m <= 1080, p = siang ? (m - 360) / 720 : ((m + 360) % 1440) / 720;
-    var x = 30 + p * (W - 60), y = H * 0.42 - Math.sin(p * Math.PI) * H * 0.3;
-    if (siang) { bulat(x, y, 30, 'rgba(255,236,170,.35)'); bulat(x, y, 19, '#ffe58f'); }
-    else { bulat(x, y, 15, '#f4f1dc'); bulat(x + 6, y - 4, 13, l[0]); }
+    /* Matahari (05.45–18.15) dengan pencahayaan atmosfer realistis; Bulan (18.15–05.45) dengan fase & arah sabit astronomis nyata */
+    var siang = m >= 345 && m <= 1095;
+    if (siang) {
+      var p = (m - 345) / 750;
+      var elev = Math.sin(p * Math.PI); /* 0 di cakrawala, 1 di zenith */
+      var x = 24 + p * (W - 48), y = H * 0.44 - elev * H * 0.33;
+      var redupAwan = 1 - mendung * 0.75;
+      var wrInti = elev < 0.25 ? '#ff9d52' : elev < 0.5 ? '#ffd479' : '#fff9dc';
+      var wrHalo = elev < 0.25 ? 'rgba(255,140,70,' : 'rgba(255,236,165,';
+      /* korona sinar matahari berlapis */
+      var grS = cx.createRadialGradient(x, y, 6, x, y, 72 + (1 - elev) * 28);
+      grS.addColorStop(0, wrHalo + (0.55 * redupAwan).toFixed(3) + ')');
+      grS.addColorStop(0.4, wrHalo + (0.20 * redupAwan).toFixed(3) + ')');
+      grS.addColorStop(1, wrHalo + '0)');
+      cx.fillStyle = grS; cx.beginPath(); cx.arc(x, y, 98, 0, Math.PI * 2); cx.fill();
+      if (redupAwan > 0.25) {
+        cx.save(); cx.globalAlpha = redupAwan;
+        bulat(x, y, 16 + (1 - elev) * 4, wrInti);
+        bulat(x, y, 11 + (1 - elev) * 2, '#fffef2');
+        cx.restore();
+      }
+    } else {
+      var pm = ((m + 345) % 1440) / 690;
+      var elevM = Math.sin(Math.min(1, Math.max(0, pm)) * Math.PI);
+      var xm = 30 + Math.min(1, Math.max(0, pm)) * (W - 60), ym = H * 0.40 - elevM * H * 0.28;
+      var fb = (s && s.faseBulan) || { fase: 0.2, iluminasi: 0.35, waxing: true };
+      var rB = 15, visM = Math.max(0.12, (1 - mendung * 0.8));
+      /* cahaya halo bulan proporsional dengan iluminasi fase (purnama paling terang!) */
+      var grM = cx.createRadialGradient(xm, ym, rB * 0.5, xm, ym, 34 + fb.iluminasi * 44);
+      grM.addColorStop(0, 'rgba(220,235,255,' + ((0.16 + fb.iluminasi * 0.34) * visM).toFixed(3) + ')');
+      grM.addColorStop(1, 'rgba(220,235,255,0)');
+      cx.fillStyle = grM; cx.beginPath(); cx.arc(xm, ym, 78, 0, Math.PI * 2); cx.fill();
+      /* gambar piringan bulan & arah sabit realistis (waxing = sisi terang kanan/barat, waning = sisi terang kiri/timur, diputar halus mengikuti busur ekuatorial) */
+      cx.save(); cx.translate(xm, ym);
+      cx.rotate(fb.waxing ? -0.35 : 0.35);
+      cx.globalAlpha = visM;
+      /* sisi gelap earthshine lembut */
+      bulat(0, 0, rB, 'rgba(30,44,74,.45)');
+      /* sisi terang sesuai fase sinodis 0..1 */
+      if (fb.iluminasi > 0.03) {
+        cx.save();
+        cx.beginPath(); cx.arc(0, 0, rB, 0, Math.PI * 2); cx.clip();
+        bulat(0, 0, rB, '#f7f4e2');
+        /* bayangan terminator: offset bergeser mulus dari penuh (-2r) ke purnama (0) ke penuh (+2r) */
+        if (fb.iluminasi < 0.96) {
+          var geserSh = (fb.waxing ? -1 : 1) * (fb.iluminasi * 2 * rB);
+          bulat(geserSh, 0, rB * 1.02, l[0]);
+        }
+        cx.restore();
+      }
+      cx.restore();
+    }
+    gambarAwanLangit(m, t, cw);
   }
 
   function gambarRuko(m, dasar) {
@@ -1467,55 +1561,88 @@
     }
   }
   function gambarHujanRealistis(s, t, yJalan, offY) {
-    if (!s.hujan) return;
-    var deras = s.hujan > 1, oy = offY || 0, yJ = yJalan != null ? yJalan : H * 0.62;
-    /* mendung & kabut tipis */
-    cx.fillStyle = 'rgba(18,28,44,' + (deras ? 0.30 : 0.18) + ')';
-    cx.fillRect(0, oy - 20, W, H + 40);
-    var kabut = cx.createLinearGradient(0, yJ - 60, 0, yJ + 50);
-    kabut.addColorStop(0, 'rgba(195,215,235,0)');
-    kabut.addColorStop(0.5, 'rgba(195,215,235,' + (deras ? 0.14 : 0.08) + ')');
-    kabut.addColorStop(1, 'rgba(195,215,235,0)');
-    cx.fillStyle = kabut; cx.fillRect(0, yJ - 60, W, 110);
+    var cw = s && s.cuacaInfo;
+    var lvlHujan = cw ? (cw.hujan || 0) : (s.hujan || 0);
+    var petirOn = cw ? !!cw.petir : (lvlHujan > 1);
+    var angin = cw ? (cw.angin || 0.25) : 0.25;
+    var banjirCm = cw ? (cw.banjirCm || 0) : (lvlHujan > 1 ? 40 : 0);
+    if (!lvlHujan && !petirOn && banjirCm <= 0) return;
+    var deras = lvlHujan >= 2, ribut = lvlHujan >= 3, oy = offY || 0, yJ = yJalan != null ? yJalan : H * 0.62;
+    /* mendung & kabut hujan */
+    if (lvlHujan > 0 || petirOn) {
+      cx.fillStyle = 'rgba(16,26,42,' + (ribut ? 0.36 : deras ? 0.28 : 0.16) + ')';
+      cx.fillRect(0, oy - 20, W, H + 40);
+      var kabut = cx.createLinearGradient(0, yJ - 60, 0, yJ + 50);
+      kabut.addColorStop(0, 'rgba(195,215,235,0)');
+      kabut.addColorStop(0.5, 'rgba(195,215,235,' + (deras ? 0.16 : 0.08) + ')');
+      kabut.addColorStop(1, 'rgba(195,215,235,0)');
+      cx.fillStyle = kabut; cx.fillRect(0, yJ - 60, W, 110);
+    }
     /* kilau aspal basah */
-    var basah = cx.createLinearGradient(0, yJ, 0, H);
-    basah.addColorStop(0, 'rgba(140,185,230,' + (deras ? 0.18 : 0.10) + ')');
-    basah.addColorStop(0.5, 'rgba(30,45,70,' + (deras ? 0.18 : 0.08) + ')');
-    basah.addColorStop(1, 'rgba(160,200,240,' + (deras ? 0.14 : 0.06) + ')');
-    cx.fillStyle = basah; cx.fillRect(0, yJ, W, H - yJ + 40);
-    /* riak & cipratan air di jalan aspal basah */
-    cx.strokeStyle = 'rgba(215,235,255,' + (deras ? 0.45 : 0.32) + ')'; cx.lineWidth = 1;
-    var nRiak = deras ? 20 : 12;
-    for (var ri = 0; ri < nRiak; ri++) {
-      var rx = acak(ri + 710) * W, ry = yJ + 8 + acak(ri + 810) * Math.max(30, H - yJ - 20);
-      var fase = ((t / 40 + ri * 7.3) % 12) / 12, rr = 2 + fase * 11;
-      cx.globalAlpha = (1 - fase) * (deras ? 0.65 : 0.45);
-      cx.beginPath(); cx.ellipse(rx, ry, rr, rr * 0.32, 0, 0, Math.PI * 2); cx.stroke();
+    if (lvlHujan > 0) {
+      var basah = cx.createLinearGradient(0, yJ, 0, H);
+      basah.addColorStop(0, 'rgba(140,185,230,' + (deras ? 0.20 : 0.11) + ')');
+      basah.addColorStop(0.5, 'rgba(30,45,70,' + (deras ? 0.20 : 0.08) + ')');
+      basah.addColorStop(1, 'rgba(160,200,240,' + (deras ? 0.14 : 0.06) + ')');
+      cx.fillStyle = basah; cx.fillRect(0, yJ, W, H - yJ + 40);
     }
-    cx.globalAlpha = 1;
-    /* 3 lapis hujan (jauh, sedang, dekat) */
-    var lapis = [
-      { n: deras ? 75 : 48, lw: 0.7, len: 10, spd: 0.34, sl: 2.5, col: 'rgba(200,220,245,.26)' },
-      { n: deras ? 85 : 55, lw: 1.15, len: 16, spd: 0.52, sl: 4.5, col: 'rgba(218,236,252,.48)' },
-      { n: deras ? 45 : 26, lw: 1.65, len: 24, spd: 0.78, sl: 7.0, col: 'rgba(238,248,255,.68)' }
-    ];
-    for (var li = 0; li < lapis.length; li++) {
-      var L = lapis[li];
-      cx.strokeStyle = L.col; cx.lineWidth = L.lw; cx.beginPath();
-      for (var hi = 0; hi < L.n; hi++) {
-        var sd = hi + li * 200;
-        var hx = (acak(sd + 500) * (W + 80) - 20 - (t * L.spd * 0.22) % (W + 80) + W + 80) % (W + 80) - 20;
-        var hy = (acak(sd + 600) * (H + 90) + t * L.spd) % (H + 90) - 40 + oy;
-        cx.moveTo(hx, hy); cx.lineTo(hx - L.sl, hy + L.len);
+    /* Genangan banjir realistis hingga 60 cm (menutupi bagian bawah ban kendaraan + riak arus cokelat keruh!) */
+    if (banjirCm >= 20) {
+      var tinggiAir = Math.min(26, Math.round(banjirCm * 0.42)); /* 60 cm = ~25 px setinggi setengah ban! */
+      var yAir = yJ + 16;
+      var grBnj = cx.createLinearGradient(0, yAir, 0, H);
+      grBnj.addColorStop(0, 'rgba(116,92,62,' + (banjirCm >= 50 ? 0.62 : 0.42) + ')');
+      grBnj.addColorStop(0.4, 'rgba(84,66,44,' + (banjirCm >= 50 ? 0.72 : 0.50) + ')');
+      grBnj.addColorStop(1, 'rgba(62,48,32,.78)');
+      cx.fillStyle = grBnj; cx.fillRect(0, yAir, W, H - yAir + 40);
+      /* garis gelombang & riak air banjir */
+      cx.strokeStyle = 'rgba(225,212,185,.38)'; cx.lineWidth = 1.4;
+      for (var bi = 0; bi < 8; bi++) {
+        var bx = ((t * 0.045 + bi * 58) % (W + 60)) - 30;
+        var by = yAir + 6 + (bi % 4) * (tinggiAir * 0.85 + 10);
+        cx.beginPath(); cx.moveTo(bx, by); cx.quadraticCurveTo(bx + 14, by - 3, bx + 28, by); cx.stroke();
       }
-      cx.stroke();
     }
-    /* genangan kecokelatan & kilatan petir saat hujan deras/banjir */
-    if (deras) {
-      cx.fillStyle = 'rgba(95,82,62,.28)'; cx.fillRect(0, yJ - 2, W, H - yJ + 40);
-      var siklusPetir = t % 7800;
-      if (siklusPetir < 130 || (siklusPetir > 190 && siklusPetir < 260)) {
-        cx.fillStyle = 'rgba(225,240,255,.28)'; cx.fillRect(0, oy - 20, W, H + 40);
+    /* riak & cipratan air di jalan basah */
+    if (lvlHujan > 0) {
+      cx.strokeStyle = 'rgba(215,235,255,' + (deras ? 0.48 : 0.30) + ')'; cx.lineWidth = 1;
+      var nRiak = ribut ? 26 : deras ? 20 : 10;
+      for (var ri = 0; ri < nRiak; ri++) {
+        var rx = acak(ri + 710) * W, ry = yJ + 8 + acak(ri + 810) * Math.max(30, H - yJ - 20);
+        var fase = ((t / 40 + ri * 7.3) % 12) / 12, rr = 2 + fase * 11;
+        cx.globalAlpha = (1 - fase) * (deras ? 0.68 : 0.42);
+        cx.beginPath(); cx.ellipse(rx, ry, rr, rr * 0.32, 0, 0, Math.PI * 2); cx.stroke();
+      }
+      cx.globalAlpha = 1;
+      /* 3 lapis hujan (miring deras mengikuti kecepatan angin ribut!) */
+      var slK = 1 + angin * 2.2;
+      var lapis = [
+        { n: ribut ? 95 : deras ? 72 : 34, lw: 0.7, len: ribut ? 14 : 10, spd: ribut ? 0.48 : 0.34, sl: 2.5 * slK, col: 'rgba(200,220,245,.26)' },
+        { n: ribut ? 110 : deras ? 82 : 40, lw: 1.15, len: ribut ? 22 : 16, spd: ribut ? 0.72 : 0.52, sl: 4.5 * slK, col: 'rgba(218,236,252,.48)' },
+        { n: ribut ? 62 : deras ? 44 : 18, lw: 1.65, len: ribut ? 30 : 24, spd: ribut ? 0.96 : 0.78, sl: 7.0 * slK, col: 'rgba(238,248,255,.70)' }
+      ];
+      for (var li = 0; li < lapis.length; li++) {
+        var L = lapis[li];
+        cx.strokeStyle = L.col; cx.lineWidth = L.lw; cx.beginPath();
+        for (var hi = 0; hi < L.n; hi++) {
+          var sd = hi + li * 200;
+          var hx = (acak(sd + 500) * (W + 100) - 20 - (t * L.spd * (0.2 + angin * 0.4)) % (W + 100) + W + 100) % (W + 100) - 20;
+          var hy = (acak(sd + 600) * (H + 90) + t * L.spd) % (H + 90) - 40 + oy;
+          cx.moveTo(hx, hy); cx.lineTo(hx - L.sl, hy + L.len);
+        }
+        cx.stroke();
+      }
+    }
+    /* Sambaran petir zig-zag realistis & kilatan langit */
+    if (petirOn) {
+      var siklusPetir = t % (ribut ? 4600 : 6800);
+      if (siklusPetir < 150 || (siklusPetir > 210 && siklusPetir < 290)) {
+        cx.fillStyle = 'rgba(225,242,255,.32)'; cx.fillRect(0, oy - 20, W, H + 40);
+        var px0 = 70 + ((Math.floor(t / 4600) * 97) % 220);
+        cx.strokeStyle = '#f0f9ff'; cx.lineWidth = 2.6; cx.lineCap = 'round';
+        cx.beginPath();
+        cx.moveTo(px0, 20); cx.lineTo(px0 - 14, 72); cx.lineTo(px0 + 8, 118); cx.lineTo(px0 - 18, 178); cx.lineTo(px0 + 4, 232);
+        cx.stroke();
       }
     }
   }
@@ -1987,7 +2114,7 @@
   /* adegan jalan raya saat mengantar order ojol */
   function gambarLatarAwal(s, t) {
     var m = s.menit % 1440, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.02) % lebar, gp = gelap(m);
-    gambarLangit(m, t);
+    gambarLangit(m, t, s);
     cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
     kotak(0, dasarRuko, W, jalan - dasarRuko, 'rgba(185,178,166,.55)');
     kotak(0, jalan, W, H - jalan, 'rgba(68,72,78,.8)');
@@ -2063,7 +2190,7 @@
   function gambarJalanRaya(s, t) {
     var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
     var gp = gelap(m), tierW = s.tierWilayah || 'kota';
-    gambarLangit(m, t);
+    gambarLangit(m, t, s);
     cx.save(); cx.translate(-geser, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.translate(lebar, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.restore();
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     kotak(0, dasarRuko, W, jalan - dasarRuko, tierW === 'desa' ? 'rgba(122,158,84,.72)' : 'rgba(185,178,166,.55)');
@@ -2087,7 +2214,7 @@
   /* adegan pindahan: pikap membawa kasur, kardus, dan barang */
   function gambarPindahan(s, t) {
     var m = s.menit % 1440, jalan = H * 0.5, dasarRuko = jalan - 60, u = Math.max(0, Math.min(1, s.pindah.u));
-    gambarLangit(m, t); gambarRuko(m, dasarRuko);
+    gambarLangit(m, t, s); gambarRuko(m, dasarRuko);
     var gp = gelap(m); if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     kotak(0, dasarRuko, W, jalan - dasarRuko, '#b9b2a6'); kotak(0, jalan, W, H - jalan, '#4a4d52');
     cx.fillStyle = '#e9e4d4'; for (var x1 = 8; x1 < W; x1 += 70) cx.fillRect(x1, jalan + 64, 34, 3);
@@ -2174,7 +2301,7 @@
   /* pool: mobil menunggu penumpang di kota */
   function gambarPoolTravel(s, t) {
     var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = G.hor;
-    gambarLangit(m, t); latarTema(f.tema, hor, 0, gp, m); ikonKota(f.kota, W * 0.68, hor + 2, G.sk, gp);
+    gambarLangit(m, t, s); latarTema(f.tema, hor, 0, gp, m); ikonKota(f.kota, W * 0.68, hor + 2, G.sk, gp);
     kotak(0, hor, W, G.jalanTop - hor + 6, '#c9c3b4'); kotak(0, G.jalanTop + 6, W, H - G.jalanTop, 'rgba(68,72,78,.95)');
     cx.fillStyle = '#e9e4d4'; for (var x1 = 8; x1 < W; x1 += 60) cx.fillRect(x1, G.jalanTop + 40, 30, 3);
     selimutMalam(gp, 0.34);
@@ -2192,7 +2319,7 @@
     var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = G.hor, jt = G.jalanTop, u = f.u;
     tJarak += dt * f.kmh * 0.0045; var geser = tJarak;
     tRoda += dt * Math.max(8, f.kmh || 0) * 0.00055;
-    gambarLangit(m, t);
+    gambarLangit(m, t, s);
     var tema = u < 0.5 ? f.temaA : f.temaB; latarTema(tema, hor, geser, gp, m);
     if (u < 0.3) ikonKota(f.dari, 200 - u / 0.3 * 340, hor + 2, G.sk, gp);
     if (u > 0.7) ikonKota(f.ke, 160 + (1 - u) / 0.3 * 340, hor + 2, G.sk, gp);
@@ -2228,7 +2355,7 @@
   }
   function gambarKapalTravel(s, t) {
     var f = s.travel, m = s.menit % 1440, gp = gelap(m), G = geomTravel(s), hor = Math.min(G.hor - 40, H * 0.5);
-    gambarLangit(m, t);
+    gambarLangit(m, t, s);
     var gr = cx.createLinearGradient(0, hor, 0, H); gr.addColorStop(0, 'rgba(120,190,225,1)'); gr.addColorStop(1, 'rgba(30,90,140,1)'); cx.fillStyle = gr; cx.fillRect(0, hor, W, H - hor);
     ikonKota(f.dari === 'bakauheni' ? 'bakauheni' : 'merak', 60 - f.u * 200, hor + 2, G.sk, gp); ikonKota(f.ke === 'merak' ? 'merak' : 'bakauheni', 330 + (1 - f.u) * 260, hor + 2, G.sk, gp);
     var gl = Math.sin(t / 700) * 3, y0 = G.bawah - 40 + gl;
@@ -2244,7 +2371,7 @@
     var f = s.transit, m = s.menit % 1440, gp = gelap(m), jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, tierW = s.tierWilayah || 'kota';
     var kaki = f.kend === 'kaki';
     tJarak += dt * (kaki ? 0.1 : 0.34); var geser = tJarak % lebar;
-    gambarLangit(m, t);
+    gambarLangit(m, t, s);
     cx.save(); cx.translate(-geser, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.translate(lebar, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.restore();
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     kotak(0, dasarRuko, W, jalan - dasarRuko, tierW === 'desa' ? 'rgba(122,158,84,.9)' : 'rgba(185,178,166,.9)');
@@ -2465,7 +2592,7 @@
     var f = cv.width / W;
     cx.setTransform(f, 0, 0, f, 0, -anim.angkat * f);
     var gp = gelap(m), tierW = s.tierWilayah || 'kota';
-    gambarLangit(m, t);
+    gambarLangit(m, t, s);
     gambarLatarWilayah(tierW, m, dasarRuko);
     if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }

@@ -355,11 +355,13 @@
     var lokHud = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
     var jrHud = (S.travel && S.travel.aktif) ? ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km) : (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0);
     var shHud = (DUNIA && DUNIA.suhuSekarang) ? DUNIA.suhuSekarang(S) : { c: 30, ikon: '☀️', ket: 'Cerah' };
+    var popHud = (window.KK_WILAYAH && window.KK_WILAYAH.pendudukWilayah) ? window.KK_WILAYAH.formatPenduduk(window.KK_WILAYAH.pendudukWilayah(S)) : '685rb';
     var warnaBajuHud = HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13';
-    var kunciHUD = S.hari + ':' + Math.floor(S.menit) + ':' + S.fase + ':' + bbmHud + ':' + bbmCar + ':' + (lokHud ? lokHud.kecNama : '') + ':' + Math.round((jrHud || 0) * 10) + ':' + shHud.c + ':' + warnaBajuHud;
+    var kunciHUD = S.hari + ':' + Math.floor(S.menit) + ':' + S.fase + ':' + bbmHud + ':' + bbmCar + ':' + (lokHud ? (lokHud.desa + lokHud.kecNama) : '') + ':' + Math.round((jrHud || 0) * 10) + ':' + shHud.c + ':' + shHud.ket + ':' + popHud + ':' + warnaBajuHud;
     if (!paksa && kunciHUD === hudTerakhir) return; hudTerakhir = kunciHUD;
     $('h-jam').textContent = jam(S.menit);
-    if ($('h-kec')) $('h-kec').textContent = shHud.ikon + ' ' + shHud.c + '°C · 📍 ' + ((lokHud && lokHud.kecNama) || kotaIni().nama);
+    if ($('h-kec')) $('h-kec').textContent = '📍 ' + ((lokHud && lokHud.kecNama) ? (lokHud.desa && lokHud.desa !== lokHud.kecNama ? lokHud.desa + ', ' + lokHud.kecNama : lokHud.kecNama) : kotaIni().nama);
+    if ($('h-pop')) $('h-pop').textContent = '👥 ' + popHud + ' · ' + shHud.ikon + ' ' + shHud.c + '°C';
     if ($('h-jarak')) {
       var jrN = Math.max(0, Number(jrHud) || 0);
       $('h-jarak').hidden = false;
@@ -375,26 +377,7 @@
     $('h-tahun').textContent = thn + ' · Hari ke-' + S.hariKe + ' · ' + uPemain + ' thn';
     var ramadan = KAL.apakahRamadan(S.hari);
     var st = $('h-status');
-    st.className = S.fase === 'buka' && !S.tutupSementara ? 'status-buka' : '';
-    st.textContent = S.tutupSementara ? 'Tutup sementara' : (S.fase === 'pagi' && ramadan) ? 'Ramadan · Buka 16.00 (Takjil)' : S.fase === 'pagi' ? 'Buka pukul ' + jam(S.jamBuka * 60) : S.fase === 'buka' ? 'Buka sampai ' + jam(S.jamTutup * 60) : 'Tutup';
-    if (S.hbRun) { st.className = ''; st.textContent = S.hbRun.metime ? 'Me time' : S.hbRun.varian === 'ciuman' ? 'Ciuman hangat 💋' : S.hbRun.varian === 'foreplay' ? 'Foreplay romantis 🔥' : 'Waktu berdua ❤️'; }
-    else if (S.kerjaRun) { st.className = ''; st.textContent = '🏢 Bekerja · ' + S.kerjaRun.kantor; }
-    else if (S.transit) { st.className = ''; st.textContent = S.transit.pindahWilayah ? '🚚 Pindah domisili' : S.transit.ke === 'kantor' ? '🏢 Berangkat kerja' : 'Di jalan · ' + (S.transit.ke === 'kos' ? 'pulang' : 'berangkat'); }
-    else if (S.usaha && S.usaha.berhentiSewa) {
-      st.className = '';
-      var adaOjol = N.ojol.platform.some(function (p) { return OJEK.aktif(S, p.id); });
-      var adaMobil = !!S.mobil, isPikap = MOBIL.pikap(S);
-      if (S.ojek && S.ojek.online) {
-        st.textContent = S.ojek.mode === 'mobil' ? (S.ojek.platform === 'grab' ? 'Online GrabCar' : 'Online GoCar') : 'Online ojol';
-      } else if (!adaOjol && adaMobil) {
-        st.textContent = isPikap ? 'Pekerjaan: Angkutan Pikap' : 'Pekerjaan: GoCar · Travel';
-      } else if (adaOjol && adaMobil && !isPikap) {
-        st.textContent = 'Driver Ojol · GoCar · Travel';
-      } else {
-        st.textContent = 'Mode driver';
-      }
-    }
-    if (S.travel && S.travel.aktif) { st.className = ''; st.textContent = S.travel.status === 'jalan' ? 'Di jalan' : S.travel.status === 'kapal' ? 'Di kapal' : 'Pool travel · ' + RUTE.nama(S.travel.di); }
+    if (st) { st.textContent = ''; st.hidden = true; }
     var d = S.diri, batHp = Math.round((S.hp && S.hp.baterai != null) ? S.hp.baterai : 95);
     var pbOn = !!(S.hp && S.hp.pbPasang && DIRI.pbAktifInfo && DIRI.pbAktifInfo(S) && DIRI.pbAktifInfo(S).state.sisaMah > 0);
     var lblHp = (S.hp && S.hp.cas) ? '⚡HP' : pbOn ? '🔋PB' : '🔋HP';
@@ -482,7 +465,13 @@
         (S.ojek.online ? '<span class="chip event">Narik ' + esc(S.ojek.mode === 'mobil' ? (S.ojek.platform === 'grab' ? 'GrabCar' : 'GoCar') : OJEK.platform(S.ojek.platform).nama) + ' · ' + S.ojek.hariIni.trip + ' order · ' + rupiah(S.ojek.hariIni.bersih) + '</span>' : '') +
         (!tanpaToko && S.diri.posisi === 'kos' && S.fase === 'buka' ? '<span class="chip libur">Kedai buka tanpa kamu</span>' : '') +
         (!tanpaToko && S.diri.posisi === 'kos' && S.fase === 'pagi' && S.menit >= S.jamBuka * 60 ? '<span class="chip libur">Kedai belum dibuka, kamu masih di ' + DIRI.tempat(S) + '</span>' : '') +
-        (DUNIA.hujanSekarang(S) ? '<span class="chip event">' + (S.dunia.cuaca.banjir ? 'Hujan deras, banjir' : 'Hujan') + '</span>' : '') +
+        (function () {
+          var cwHud = DUNIA.infoCuacaSekarang ? DUNIA.infoCuacaSekarang(S) : null;
+          if (!cwHud) return '';
+          if (cwHud.banjirCm >= 20) return '<span class="chip libur">🌊 Banjir ' + cwHud.banjirCm + 'cm · ' + esc(cwHud.nama) + '</span>';
+          if (cwHud.hujan > 0 || cwHud.kode === 'mendung' || cwHud.kode === 'sebagian_mendung' || cwHud.kode === 'petir') return '<span class="chip cuaca-chip">' + cwHud.ikon + ' ' + esc(cwHud.nama) + '</span>';
+          return '';
+        })() +
         (!tanpaToko && S.dunia.kotor >= 40 && S.fase !== 'malam' ? '<span class="chip libur">Kedai kotor, tap kontainer untuk bersih-bersih</span>' : '') +
         (!tanpaToko && S.dunia.maps.status === 'aktif' && S.dunia.ulasan.length ? '<span class="chip">★ ' + DUNIA.rataMaps(S).toFixed(1).replace('.', ',') + ' Maps</span>' : '');
       $('h-chip').innerHTML = chipDunia + (tipis.length ? '<span class="chip libur">Stok menipis: ' + esc(tipis.map(function (id) { return MN.BARANG[id].nama.split(' (')[0].replace('Biji kopi robusta sangrai', 'Kopi').replace('Cup plastik 16 oz + tutup + sedotan', 'Cup plastik').replace('Cup kertas 8 oz + tutup', 'Cup kertas'); }).join(', ')) + '</span>' : '') +
@@ -609,7 +598,7 @@
       app.gameTab || '', app.gameKonsolFilter || '', app.gadgetTab || '', app.merekGadget || '',
       app.apotekTab || '', app.kelTab || '', app.propTab || '', app.hunianKat || '', app.travelTab || '', app.trvFilter || '',
       app.temanTab || '', app.temanDetailId || '', app.tmFilter || '', app.rpsTab || '', app.hadiahKat || '', app.meter || '',
-      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || ''
+      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || ''
     ].join('|');
   }
   function bukaLembar(nama, html) {
@@ -871,6 +860,12 @@
     { id: 'teman', nama: function () { return 'Teman'; }, warna: function () { return '#3f8fd9'; },
       ikon: function () { return svgIkon('<circle cx="8" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M2.5 19c0-3.2 2.4-5.2 5.5-5.2s5.5 2 5.5 5.2M14 14.2c3 0 7 1.4 7 4.8"/>'); },
       badge: function () { return S.popupSelingkuh ? '!' : ''; } },
+    { id: 'sosmed', nama: function () { return 'Sosmed'; }, warna: function () { return '#e1306c'; },
+      ikon: function () { return svgIkon('<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".8" fill="currentColor"/>'); },
+      badge: function () { var sm = S.dunia && S.dunia.sosmed; return (sm && S.hari <= (sm.viralSampai || -1)) ? 'HOT' : ''; } },
+    { id: 'chat', nama: function () { return 'Chat & MiChat'; }, warna: function () { return '#25d366'; },
+      ikon: function () { return svgIkon('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H9l-5 4v-4.5z"/><path d="M8 8.5h8M8 12h5"/>'); },
+      badge: function () { return '4'; } },
     { id: 'bank', nama: function () { return UANG.bankIni(S).app; }, warna: function () { return UANG.bankIni(S).warna; },
       ikon: function () { return svgIkon('<path d="M3 10h18M5 10v8M10 10v8M14 10v8M19 10v8M2 18h20M12 3 2 8v2h20V8z"/>'); } },
     { id: 'merchant', nama: function () { return 'Dompet Digital'; }, warna: function () { return '#00aed6'; },
@@ -992,6 +987,7 @@
     else if (app.nama === 'teman') html = layarTeman();
     else if (app.nama === 'game') html = layarGame();
     else if (app.nama === 'sosmed') html = layarSosmed();
+    else if (app.nama === 'chat') html = layarChat();
     else if (app.nama === 'staf') html = layarStaf();
     else if (app.nama === 'gadget') html = layarGadget();
     else if (app.nama === 'keluarga') html = layarKeluarga();
@@ -1167,21 +1163,62 @@
     HIDUP.siapkan(S);
     var kTab = app.karierTab || 'tetap', did = S.profil.pendidikan || 'sma', jurId = S.profil.jurusan || '', curJob = HIDUP.KARIER_TETAP.filter(function (x) { return x.id === S.karier.id; })[0];
     var nmJur = HIDUP.namaJurusan ? HIDUP.namaJurusan(jurId) : '';
-    var html = kepalaApp('Karier, Kuliah & Bisnis', HIDUP.namaDidik(did) + (nmJur ? ' · ' + nmJur : '')) +
-      segTab('karierTab', [['tetap', '🏢 Karier'], ['kuliah', '🎓 Kuliah'], ['sampingan', '⚡ Sampingan'], ['bisnis', '🏪 Bisnis (' + Object.keys(S.bisnisLain || {}).length + ')']], kTab) + pesanApp();
+    var ka = S.kuliahAktif;
+    var html = kepalaApp('Karier, Kuliah & Kedinasan', HIDUP.namaDidik(did) + (nmJur ? ' · ' + nmJur : '') + (S.profil.spesialisGelar ? ' · ' + S.profil.spesialisGelar : S.profil.dokterTahap === 'sip' ? ' · dr. (SIP)' : '')) +
+      segTab('karierTab', [['tetap', '🏢 Karier'], ['kuliah', '🎓 Kuliah & Dinas'], ['sampingan', '⚡ Sampingan'], ['bisnis', '🏪 Bisnis (' + Object.keys(S.bisnisLain || {}).length + ')']], kTab) + pesanApp();
     if (kTab === 'kuliah') {
+      var modeK = app.kuliahMode || 'univ';
+      var statusKaHtml = '';
+      if (ka) {
+        var jalanH = Math.max(0, S.hari - ka.mulaiHari), sisaH = Math.max(0, ka.lulusPada - S.hari);
+        var pctKa = Math.min(100, Math.round((jalanH / Math.max(1, ka.totalHari)) * 100));
+        var sisaTeks = sisaH >= 365 ? (Math.floor(sisaH / 365) + ' thn ' + Math.round((sisaH % 365) / 30) + ' bln') : (sisaH >= 30 ? Math.round(sisaH / 30) + ' bln (' + sisaH + ' hr)' : sisaH + ' hari');
+        statusKaHtml = '<div class="kartu-hero" style="background:linear-gradient(135deg,#0d47a1,#1976d2);margin-bottom:8px"><small>📚 Sedang Menempuh Studi (Real-Time Kalender · Sem ' + ka.semesterBayar + '/' + ka.semesterTotal + ')</small><b>' + esc(ka.nama) + ' (' + pctKa + '%)</b>' +
+          '<div class="meteran" style="margin:6px 0;background:rgba(255,255,255,.25)"><i style="width:' + pctKa + '%;background:#ffd54f"></i></div>' +
+          '<small>Sisa menuju wisuda/pelantikan: ' + sisaTeks + (ka.ukt > 0 ? ' · UKT ' + rupiahPendek(ka.ukt) + '/sem' : ' · Ikatan Dinas Gratis') + '</small>' +
+          '<div class="chip-baris" style="margin-top:6px"><button type="button" class="chip-tombol bahaya-kecil" data-aksi="berhentiStudi:1">Berhenti Studi</button></div></div>';
+      } else {
+        statusKaHtml = '<div class="kartu-hero" style="background:linear-gradient(135deg,#004d40,#00796b);margin-bottom:8px"><small>Pendidikan & Gelar Saat Ini</small><b>' + esc(HIDUP.namaDidik(did)) + (nmJur ? ' · ' + esc(nmJur) : ' (Belum kuliah)') + '</b></div>';
+      }
+      html += statusKaHtml + segTab('kuliahMode', [['univ', '🎓 Universitas'], ['kedinasan', '🎖️ Kedinasan'], ['dokter', '🩺 Jalur Dokter']], modeK);
+      if (modeK === 'kedinasan') {
+        var kedMap = S.profil.kedinasan || {};
+        return html + '<div class="grid-2">' + (HIDUP.SEKOLAH_KEDINASAN || []).map(function (sk) {
+          var sdh = !!kedMap[sk.id];
+          var biayaA = (sk.daftar || 0) + (sk.ukt || 0);
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + sk.ikon + ' ' + sk.tahun + ' Thn</span>' + (sdh ? '<span class="ki-tag milik">Lulus ✓</span>' : '') + '</div>' +
+            '<b>' + esc(sk.nama) + '</b><small>' + esc(sk.ket) + '</small><div class="ki-harga">' + (sk.ukt > 0 ? 'Awal ' + rupiahPendek(biayaA) : 'Seleksi ' + rupiahPendek(sk.daftar)) + '</div></div>' +
+            '<div class="ki-aksi">' + (sdh ? '<small>' + esc(sk.gelar) + ' ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="daftarKedinasan:' + sk.id + '"' + (ka ? ' disabled' : '') + '>Daftar</button>') + '</div></div>';
+        }).join('') + '</div><p class="catatan">🎖️ Sekolah Kedinasan berjalan sesuai lama pendidikan asli (1–4 tahun). Lulus membuka karier Polisi, TNI, ASN, Pelayaran, hingga Pilot Maskapai!</p>';
+      }
+      if (modeK === 'dokter') {
+        var td = S.profil.dokterTahap || '';
+        var sdhSked = (S.profil.jurusan === 'kedokteran' && HIDUP.levelDidik(did) >= 3);
+        var sdhKoas = td === 'koas_lulus' || td === 'sip' || td === 'spesialis';
+        var sdhSip = td === 'sip' || td === 'spesialis';
+        var sdhSp = td === 'spesialis';
+        return html + '<div class="grid-2">' +
+          '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">Tahap 1 · 4 Thn</span>' + (sdhSked ? '<span class="ki-tag milik">Lulus ✓</span>' : '') + '</div><b>S1 Pendidikan Dokter (S.Ked)</b><small>8 semester · UKT Rp12,5jt/sem · Wajib sebelum Koas</small><div class="ki-harga">Rp12,5jt/sem</div></div><div class="ki-aksi">' + (sdhSked ? '<small>S.Ked ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="kuliahJurusan:s1|kedokteran"' + (ka ? ' disabled' : '') + '>Daftar S1</button>') + '</div></div>' +
+          '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">Tahap 2 · 2 Thn</span>' + (sdhKoas ? '<span class="ki-tag milik">dr. ✓</span>' : '') + '</div><b>Program Profesi Dokter (Koas)</b><small>2 tahun praktik klinik RS (4 sem) → Sumpah Dokter (dr.)</small><div class="ki-harga">Rp11jt/sem</div></div><div class="ki-aksi">' + (sdhKoas ? '<small>Gelar dr. ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="tahapDokter:koas"' + (ka || !sdhSked ? ' disabled' : '') + '>' + (sdhSked ? 'Mulai Koas' : 'Butuh S.Ked') + '</button>') + '</div></div>' +
+          '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">Tahap 3 · 14 Hr</span>' + (sdhSip ? '<span class="ki-tag milik">Aktif ✓</span>' : '') + '</div><b>Urus STR & SIP Dokter Umum</b><small>Izin praktik resmi IDI & Dinkes · Membuka karier Dokter Umum (Rp18,5jt/bln)</small><div class="ki-harga">Rp2,5jt</div></div><div class="ki-aksi">' + (sdhSip ? '<small>STR/SIP ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="tahapDokter:sip"' + (ka || !sdhKoas ? ' disabled' : '') + '>' + (sdhKoas ? 'Urus STR/SIP' : 'Butuh Koas') + '</button>') + '</div></div>' +
+          (HIDUP.SPESIALIS_LIST || []).map(function (sp) {
+            return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">PPDS · ' + sp.tahun + ' Thn</span>' + (sdhSp && S.profil.spesialisGelar === sp.id ? '<span class="ki-tag milik">Lulus ✓</span>' : '') + '</div><b>Dokter Spesialis ' + esc(sp.nama) + '</b><small>PPDS ' + sp.tahun + ' tahun · Membuka karier Dokter Spesialis Rp42jt/bln!</small><div class="ki-harga">Rp18jt/sem</div></div><div class="ki-aksi">' + (sdhSp ? '<small>' + esc(S.profil.spesialisGelar || 'Sp.') + ' ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="tahapDokter:spesialis|' + sp.id + '"' + (ka || !sdhSip ? ' disabled' : '') + '>' + (sdhSip ? 'Daftar PPDS' : 'Butuh SIP') + '</button>') + '</div></div>';
+          }).join('') +
+          '</div><p class="catatan">🩺 Jalur Kedokteran mengikuti aturan asli Indonesia: S1 Kedokteran (4 thn) → Koas (2 thn) → STR & SIP → PPDS Spesialis (5–6 thn).</p>';
+      }
       var jenj = app.kuliahJenjang || 's1', katJ = app.kuliahKat || 'semua';
       var pdObj = HIDUP.PENDIDIKAN.filter(function (x) { return x.id === jenj; })[0] || HIDUP.PENDIDIKAN[2];
       var listJ = (HIDUP.JURUSAN_KULIAH || []).filter(function (j) { return katJ === 'semua' || j.kat === katJ; });
-      return html + '<div class="kartu-hero" style="background:linear-gradient(135deg,#004d40,#00796b)"><small>Pendidikan & Jurusan Saat Ini</small><b>' + esc(HIDUP.namaDidik(did)) + (nmJur ? ' · ' + esc(nmJur) : ' (Belum pilih jurusan)') + '</b></div>' +
-        segTab('kuliahJenjang', [['d3', 'D3 (Rp8,5jt)'], ['s1', 'S1 (Rp16jt)'], ['s2', 'S2 (Rp32jt)']], jenj) +
+      return html +
+        segTab('kuliahJenjang', [['d3', 'D3 · 3 Thn (3,2jt/sem)'], ['s1', 'S1 · 4 Thn (4,5jt/sem)'], ['s2', 'S2 · 2 Thn (9jt/sem)']], jenj) +
         catStrip('kuliahKat', HIDUP.KAT_JURUSAN || [['semua', 'Semua']], katJ) +
         '<div class="grid-2">' + listJ.map(function (j) {
           var sdhJur = jurId === j.id && HIDUP.levelDidik(did) >= pdObj.level;
-          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(j.gelar) + '</span>' + (sdhJur ? '<span class="ki-tag milik">Lulus ✓</span>' : '') + '</div>' +
-            '<b>' + esc(j.nama) + '</b><small>' + esc(j.ket) + '</small><div class="ki-harga">' + rupiahPendek(pdObj.biayaKuliah) + '</div></div>' +
-            '<div class="ki-aksi">' + (sdhJur ? '<small>Jurusan aktif ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="kuliahJurusan:' + jenj + '|' + j.id + '">Daftar ' + jenj.toUpperCase() + '</button>') + '</div></div>';
-        }).join('') + '</div><p class="catatan">🎓 Lulus jurusan yang cocok dengan posisi karier memberi bonus gaji <b>+15% setiap bulan</b>!</p>';
+          var uktJ = (j.id === 'kedokteran' && jenj === 's1') ? 12500000 : pdObj.ukt;
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(j.gelar) + ' · ' + pdObj.tahun + ' thn</span>' + (sdhJur ? '<span class="ki-tag milik">Lulus ✓</span>' : '') + '</div>' +
+            '<b>' + esc(j.nama) + '</b><small>' + esc(j.ket) + '</small><div class="ki-harga">' + rupiahPendek(uktJ) + '/sem</div></div>' +
+            '<div class="ki-aksi">' + (sdhJur ? '<small>Lulus ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="kuliahJurusan:' + jenj + '|' + j.id + '"' + (ka ? ' disabled' : '') + '>Daftar ' + jenj.toUpperCase() + '</button>') + '</div></div>';
+        }).join('') + '</div><p class="catatan">🎓 Kuliah berjalan sesuai kalender nyata (D3 3 thn, S1 4 thn, S2 2 thn) dengan UKT per semester otomatis. Lulus jurusan linear +15% gaji!</p>';
     }
     if (kTab === 'sampingan') {
       var efHpK = DIRI.efekHp ? DIRI.efekHp(S) : { kontenBonus: 0 };
@@ -1199,15 +1236,19 @@
       }).join('') + '</div>';
     }
     var gajiCur = curJob ? HIDUP.gajiEfektif(S, curJob) : 0;
-    html += '<div class="kartu-hero" style="background:linear-gradient(135deg,#1a237e,#3949ab)"><small>' + esc(HIDUP.namaDidik(did)) + (nmJur ? ' · ' + esc(nmJur) : '') + (curJob ? ' · 08.00–17.00 (' + curJob.jarakKm + ' km)' : '') + '</small><b>' + (curJob ? esc(curJob.nama) + ' (' + rupiahPendek(gajiCur) + '/bln)' : 'Belum bekerja tetap (Bebas / Driver)') + '</b></div>' +
+    html += '<div class="kartu-hero" style="background:linear-gradient(135deg,#1a237e,#3949ab)"><small>' + esc(HIDUP.namaDidik(did)) + (nmJur ? ' · ' + esc(nmJur) : '') + (curJob ? ' · ' + (curJob.jamMasuk || 8) + '.00–' + (curJob.jamPulang || 17) + '.00 (' + curJob.jarakKm + ' km)' : '') + '</small><b>' + (curJob ? esc(curJob.nama) + ' (' + rupiahPendek(gajiCur) + '/bln)' : 'Belum bekerja tetap (Bebas / Driver)') + '</b></div>' +
       '<div class="chip-baris" style="margin-bottom:8px">' +
       (curJob ? '<button type="button" class="chip-tombol pilih" data-aksi="masukKerja:1">🏢 Berangkat Kerja (' + esc(curJob.kantorNama) + ')</button><button type="button" class="chip-tombol bahaya-kecil" data-aksi="resignKerja:1">Resign</button>' : '') +
-      '<button type="button" class="chip-tombol pilih" data-aksi="karierTab:kuliah">🎓 Pilih Jurusan Kuliah</button></div>' +
+      '<button type="button" class="chip-tombol pilih" data-aksi="karierTab:kuliah">🎓 Kuliah & Kedinasan</button></div>' +
       '<div class="grid-2">' + HIDUP.KARIER_TETAP.map(function (kj) {
-        var cocok = HIDUP.levelDidik(did) >= kj.minLvl, akt = curJob && curJob.id === kj.id;
+        var kedOk = !kj.syaratKedinasan || kj.syaratKedinasan.some(function (kid) { return S.profil.kedinasan && S.profil.kedinasan[kid]; });
+        var tdCur = S.profil.dokterTahap || '';
+        var dokOk = !kj.syaratDokter || (kj.syaratDokter === 'sip' ? (tdCur === 'sip' || tdCur === 'spesialis') : tdCur === 'spesialis');
+        var cocok = HIDUP.levelDidik(did) >= kj.minLvl && kedOk && dokOk, akt = curJob && curJob.id === kj.id;
         var gjEf = HIDUP.gajiEfektif(S, kj), adaBns = gjEf > kj.gaji;
-        return '<div class="kartu-item' + (!cocok ? ' redup' : '') + '"><div><div class="ki-top"><span class="ki-tag">' + esc(HIDUP.PENDIDIKAN[kj.minLvl - 1].nama) + '</span>' + (akt ? '<span class="ki-tag milik">Aktif</span>' : adaBns ? '<span class="ki-tag milik">+15% Linear</span>' : '') + '</div><b>' + esc(kj.nama) + '</b><small>' + esc(kj.kantorNama) + ' · ' + kj.jarakKm + ' km · 08–17</small><div class="ki-harga">' + rupiahPendek(gjEf) + '/bln</div></div>' +
-          '<div class="ki-aksi">' + (akt ? '<small>Pekerjaan saat ini ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="lamarKerja:' + kj.id + '"' + (!cocok ? ' disabled' : '') + '>' + (cocok ? 'Lamar' : 'Butuh ' + HIDUP.PENDIDIKAN[kj.minLvl - 1].nama) + '</button>') + '</div></div>';
+        var tagSyarat = kj.syaratKedinasan ? 'Kedinasan' : kj.syaratDokter === 'spesialis' ? 'PPDS Sp.' : kj.syaratDokter === 'sip' ? 'dr. + SIP' : HIDUP.PENDIDIKAN[kj.minLvl - 1].nama;
+        return '<div class="kartu-item' + (!cocok ? ' redup' : '') + '"><div><div class="ki-top"><span class="ki-tag">' + esc(tagSyarat) + '</span>' + (akt ? '<span class="ki-tag milik">Aktif</span>' : adaBns ? '<span class="ki-tag milik">+15% Linear</span>' : '') + '</div><b>' + esc(kj.nama) + '</b><small>' + esc(kj.kantorNama) + ' · ' + kj.jarakKm + ' km · ' + (kj.jamMasuk || 8) + '–' + (kj.jamPulang || 17) + '</small><div class="ki-harga">' + rupiahPendek(gjEf) + '/bln</div></div>' +
+          '<div class="ki-aksi">' + (akt ? '<small>Pekerjaan saat ini ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="lamarKerja:' + kj.id + '"' + (!cocok ? ' disabled' : '') + '>' + (cocok ? 'Lamar' : 'Butuh ' + tagSyarat) + '</button>') + '</div></div>';
       }).join('') + '</div>';
     return html;
   }
@@ -1475,28 +1516,34 @@
     return html;
   }
   function layarDealerMotor() {
-    var kls = app.kelasMotor || 'harian', thnM = KAL.tgl(S.hari).y;
-    var listMotor = N.motor.filter(function (x) { return (x.kelas || 'harian') === kls && (x.tahun || 2023) <= thnM; });
+    var kls = app.kelasMotor || 'harian', tM = KAL.tgl(S.hari), thnM = tM.y, blnM = tM.m;
+    var listMotor = N.motor.filter(function (x) {
+      var th = x.tahun || 2023, bl = x.bulanRilis || 1;
+      return (x.kelas || 'harian') === kls && (th < thnM || (th === thnM && bl <= blnM));
+    });
     return kepalaApp('Dealer Motor Baru', 'OTR ' + thnM + ' · ' + listMotor.length + ' model') +
       segTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + pesanApp() +
       '<div class="grid-2">' + listMotor.map(function (x) {
         var spek = x.bbm === 'listrik' ? ('EV ' + x.jarakPenuh + ' km') : (x.kml + ' km/L · ' + N.bbm.nama[x.bbm]);
         var dpMin = Math.round(x.harga * 0.1 / 100000) * 100000;
-        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(spek) + '</span></div>' +
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(spek) + '</span>' + (x.tahun >= 2026 ? '<span class="ki-tag milik">Baru ' + x.tahun + '</span>' : '') + '</div>' +
           '<b>' + esc(x.nama) + '</b><small>' + esc(x.kelebihan) + '</small>' +
           '<div class="ki-harga">' + rupiahPendek(x.harga) + '</div><small>DP mulai ' + rupiahPendek(dpMin) + '</small></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiKk:' + x.id + '">KK</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></div></div>';
       }).join('') + '</div>';
   }
   function layarDealerMobil() {
-    var km2 = app.kelasMobil || 'keluarga', thnC = KAL.tgl(S.hari).y;
-    var listMobil = N.mobil.filter(function (x) { return x.kelas === km2 && (x.tahun || 2023) <= thnC; });
+    var km2 = app.kelasMobil || 'keluarga', tC = KAL.tgl(S.hari), thnC = tC.y, blnC = tC.m;
+    var listMobil = N.mobil.filter(function (x) {
+      var th = x.tahun || 2023, bl = x.bulanRilis || 1;
+      return x.kelas === km2 && (th < thnC || (th === thnC && bl <= blnC));
+    });
     return kepalaApp('Dealer Mobil Baru', 'OTR ' + thnC + ' · ' + listMobil.length + ' model') +
       segTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + pesanApp() +
       '<div class="grid-2">' + listMobil.map(function (x) {
         var pnpM = x.bentuk === 'pikap' ? 0 : Math.max(0, (x.kursi || (N.bisnisMobil && N.bisnisMobil.kapasitas[x.bentuk]) || 5) - 1);
         var tag = x.bbm === 'listrik' ? ('EV ' + x.tangki + ' kWh') : (N.bbm.nama[x.bbm] + ' · ' + x.tangki + 'L');
-        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(tag) + '</span>' + (pnpM ? '<span class="ki-tag milik">' + pnpM + ' pnp</span>' : '') + '</div>' +
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(tag) + '</span>' + (pnpM ? '<span class="ki-tag milik">' + pnpM + ' pnp</span>' : '') + (x.tahun >= 2026 ? '<span class="ki-tag promo">Baru ' + x.tahun + '</span>' : '') + '</div>' +
           '<b>' + esc(x.nama) + '</b><small>' + esc(x.kelebihan) + '</small>' +
           '<div class="ki-harga">' + rupiahPendek(x.harga) + '</div></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol" data-aksi="tunaiMobil:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiMobilKk:' + x.id + '">KK</button><button type="button" class="chip-tombol pilih" data-aksi="kreditMobilPilih:' + x.id + '">Kredit</button></div></div>';
@@ -2124,16 +2171,87 @@
     return html;
   }
   function layarSosmed() {
-    var so = S.dunia.sosmed, tren = MN.MENU.filter(function (m) { return m.id === so.tren; })[0] || MN.MENU[0];
-    return kepalaApp('Media sosial', 'Instagram, Threads, TikTok, WhatsApp Business') + pesanApp() +
-      '<ul class="daftar angka">' + baris('Pengikut Instagram', so.ig.toLocaleString('id-ID')) + baris('Pengikut Threads', (so.threads || 0).toLocaleString('id-ID')) + baris('Pengikut TikTok', so.tiktok.toLocaleString('id-ID')) + baris('Pelanggan langganan', S.dunia.langganan + ' orang') +
-      baris('Tren minggu ini', esc(tren ? tren.nama : 'Kopi gula aren')) + (S.hari <= so.viralSampai ? baris('Status', 'Sedang viral!', 'total') : '') + '</ul>' +
-      '<h3 class="subjudul">Posting (15 menit)</h3><div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="post:ig">Foto menu di Instagram</button><button type="button" class="chip-tombol" data-aksi="post:threads">Cerita kedai di Threads</button><button type="button" class="chip-tombol" data-aksi="post:tiktok">Video racik di TikTok</button></div>' +
-      '<p class="catatan">Posting paling ramai dilihat pukul 19.00–21.00, lalu jam makan siang. Konten tentang menu yang sedang tren lebih mudah ramai.</p>' +
-      '<h3 class="subjudul">WhatsApp Business</h3><div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="siaran:1">Kirim siaran promo ke langganan</button></div>' +
-      '<h3 class="subjudul">Berbayar</h3><div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="iklan:1">Iklan 7 hari ' + rupiah(DUNIA.BIAYA.iklanSeminggu) + '</button>' +
-      DUNIA.BIAYA.endorse.map(function (b, i) { return '<button type="button" class="chip-tombol" data-aksi="endorse:' + i + '">Endorse ' + ['mikro', 'menengah', 'besar'][i] + ' ' + rupiah(b) + '</button>'; }).join('') + '</div>' +
-      '<p class="catatan">Viral itu dua sisi: antrean panjang datang, dan kalau kedai tidak sanggup melayani, bintang ikut jatuh.</p>';
+    var so = S.dunia.sosmed, smTab = app.sosmedTab || 'ig';
+    var efHp = DIRI.efekHp ? DIRI.efekHp(S) : { kontenBonus: 0, prestise: 0, label: 'Standar' };
+    var popW = (window.KK_WILAYAH && window.KK_WILAYAH.pendudukWilayah) ? window.KK_WILAYAH.formatPenduduk(window.KK_WILAYAH.pendudukWilayah(S)) : '685rb';
+    var totFol = (so.ig || 0) + (so.threads || 0) + (so.x || 0) + (so.fb || 0) + (so.tiktok || 0);
+    var warnaPlat = { ig: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', threads: 'linear-gradient(135deg,#111,#334155)', x: 'linear-gradient(135deg,#0f172a,#1e293b)', fb: 'linear-gradient(135deg,#1877f2,#0d47a1)' };
+    var labelPlat = { ig: 'Instagram', threads: 'Threads', x: 'X (Twitter)', fb: 'Facebook' };
+    var folPlat = { ig: so.ig || 0, threads: so.threads || 0, x: so.x || 0, fb: so.fb || 0 };
+    var feed = (S.sosmedFeed || []).slice(0, 12);
+    var html = kepalaApp('Sosial Media', 'IG · Threads · X · Facebook · Populasi ' + popW) +
+      segTab('sosmedTab', [['ig', '📸 IG'], ['threads', '🧵 Threads'], ['x', '𝕏 X'], ['fb', '📘 FB']], smTab) + pesanApp() +
+      '<div class="kartu-hero" style="background:' + (warnaPlat[smTab] || warnaPlat.ig) + '"><small>' + labelPlat[smTab] + ' · Total ' + totFol.toLocaleString('id-ID') + ' pengikut · Efek HP ' + esc(efHp.label) + ' (+' + Math.round((efHp.kontenBonus || 0) * 100) + '% jangkauan)</small>' +
+      '<b>' + (folPlat[smTab] || 0).toLocaleString('id-ID') + ' Pengikut ' + labelPlat[smTab] + (S.hari <= (so.viralSampai || -1) ? ' 🔥 VIRAL!' : '') + '</b></div>' +
+      '<div class="chip-baris" style="margin-bottom:10px">' +
+      '<button type="button" class="chip-tombol pilih" data-aksi="post:' + smTab + '">✍️ Posting di ' + labelPlat[smTab] + ' (15 mnt)</button>' +
+      '<button type="button" class="chip-tombol" data-aksi="klaimEndorse:1">💸 Klaim Endorse & Monetisasi</button>' +
+      '</div>' +
+      '<div class="grid-2" style="margin-bottom:10px">' +
+      '<div class="kartu-item"><div><span class="ki-tag">📸 Instagram</span><b>' + (so.ig || 0).toLocaleString('id-ID') + '</b><small>Foto & Reels · Boost kamera HP</small></div></div>' +
+      '<div class="kartu-item"><div><span class="ki-tag">🧵 Threads</span><b>' + (so.threads || 0).toLocaleString('id-ID') + '</b><small>Utas & diskusi warga kota</small></div></div>' +
+      '<div class="kartu-item"><div><span class="ki-tag">𝕏 X (Twitter)</span><b>' + (so.x || 0).toLocaleString('id-ID') + '</b><small>Trending & info cuaca/lalin</small></div></div>' +
+      '<div class="kartu-item"><div><span class="ki-tag">📘 Facebook</span><b>' + (so.fb || 0).toLocaleString('id-ID') + '</b><small>Grup kota, jual-beli & keluarga</small></div></div></div>' +
+      '<h3 class="subjudul">📡 Beranda & Kabar Terbaru</h3>';
+    if (!feed.length) {
+      html += '<p class="catatan">Belum ada unggahan terbaru. Mulai posting kontenmu atau ikuti kabar warga, pernikahan, kelahiran, dan info cuaca di sini!</p>';
+    } else {
+      html += feed.map(function (f) {
+        var nmP = labelPlat[f.plat] || 'Sosmed';
+        return '<div class="feed-item"><div class="feed-hdr"><span>' + esc(f.penulis || 'Warga') + ' · ' + nmP + '</span><span>❤️ ' + (f.suka || 12) + ' · ' + namaTanggal(f.hari || S.hari) + '</span></div><div>' + esc(f.teks) + '</div></div>';
+      }).join('');
+    }
+    return html + '<p class="catatan">💡 HP flagship meningkatkan kualitas konten & peluang viral secara drastis. Minimal 250 total pengikut untuk mencairkan uang Endorse ke bank tiap 3 hari!</p>';
+  }
+
+  function layarChat() {
+    var cTab = app.chatTab || 'wa';
+    var cw = DUNIA.infoCuacaSekarang ? DUNIA.infoCuacaSekarang(S) : { ikon: '☀️', nama: 'Cerah', banjirCm: 0 };
+    var lok = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : { kecNama: kotaIni().nama };
+    var html = kepalaApp('Platform Chat & MiChat', 'WhatsApp · Telegram · MiChat · Messenger') +
+      segTab('chatTab', [['wa', '💬 WA'], ['tg', '✈️ Telegram'], ['michat', '💚 MiChat'], ['msg', '💙 Messenger']], cTab) + pesanApp();
+    if (cTab === 'michat') {
+      var listMc = HIDUP.daftarMichat ? HIDUP.daftarMichat(S) : [];
+      var stokK = (S.diri && S.diri.stokKb && S.diri.stokKb.kondom) || 0;
+      html += '<div class="kartu-hero" style="background:linear-gradient(135deg,#00897b,#26a69a);margin-bottom:8px"><small>💚 MiChat — Orang di Sekitar ' + esc(lok.kecNama || kotaIni().nama) + ' · Stok Kondom: ' + stokK + '</small><b>' + listMc.length + ' Profil Online di Sekitarmu</b></div>';
+      html += listMc.map(function (p) {
+        var foto = fotoWajah('', 54, null, p.nama, 'cewek', p.usia, null, p.tampilan, p.tampilan.baju);
+        return '<div class="michat-kartu">' + foto + '<div class="michat-info"><b>' + esc(p.nama) + ', ' + p.usia + ' thn · ⭐ ' + p.rating.toFixed(1) + '</b>' +
+          '<small>📍 ' + p.jarak + ' km darimu · <b>' + rupiah(p.tarif) + '</b><br>' + esc(p.bio) + '</small>' +
+          '<div class="chip-baris"><button type="button" class="chip-tombol pilih" data-aksi="bookingMichat:' + p.id + '|1">🛡️ Booking (Kondom)</button>' +
+          '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="bookingMichat:' + p.id + '|0">🔥 Tanpa Kondom</button></div></div></div>';
+      }).join('');
+      return html + '<p class="catatan">⚠️ Booking MiChat menurunkan HB ke 0% & meredakan stres. Booking tanpa kondom berisiko tinggi terkena infeksi kesehatan!</p>';
+    }
+    if (cTab === 'tg') {
+      var popN = (window.KK_WILAYAH && window.KK_WILAYAH.pendudukWilayah) ? window.KK_WILAYAH.pendudukWilayah(S).toLocaleString('id-ID') : '685.000';
+      var emas = HIDUP.hargaInvest ? HIDUP.hargaInvest(S, 'emas_antam') : 860000;
+      var bbca = HIDUP.hargaInvest ? HIDUP.hargaInvest(S, 'bbca') : 980000;
+      var fbMoon = KAL.infoFaseBulan ? KAL.infoFaseBulan(S.hari) : { nama: 'Bulan Sabit' };
+      return html +
+        '<div class="feed-item"><div class="feed-hdr"><span>✈️ Channel BMKG & Cuaca Daerah</span><span>Live</span></div><div>' + cw.ikon + ' Cuaca saat ini: <b>' + esc(cw.nama) + '</b>' + (cw.banjirCm >= 20 ? ' · <b>⚠️ Waspada genangan banjir ' + cw.banjirCm + ' cm!</b>' : '') + ' · Fase bulan malam ini: ' + esc(fbMoon.nama) + '.</div></div>' +
+        '<div class="feed-item"><div class="feed-hdr"><span>✈️ Berita Kota & Populasi BPS</span><span>' + namaTanggal(S.hari) + '</span></div><div>👥 Jumlah penduduk wilayah ini tercatat <b>' + popN + ' jiwa</b>. Kepadatan penduduk langsung memengaruhi ramai tidaknya order ojol & jangkauan sosmed!</div></div>' +
+        '<div class="feed-item"><div class="feed-hdr"><span>✈️ Sinyal Saham IHSG & Emas Antam</span><span>Market</span></div><div>📈 Emas Antam 0,5g: <b>' + rupiah(emas) + '</b> · Saham BBCA (1 lot): <b>' + rupiah(bbca) + '</b>. Cek detail di APK Investasi.</div></div>' +
+        '<div class="feed-item"><div class="feed-hdr"><span>✈️ Info Rekrutmen & Sekolah Kedinasan</span><span>Karier</span></div><div>🎖️ Pendaftaran AKPOL, Bintara Polri, AKMIL TNI, STAN/IPDN, STIP Pelayaran, & Sekolah Pilot buka setiap saat di APK Karier → Kuliah & Dinas.</div></div>';
+    }
+    if (cTab === 'msg') {
+      var temanAkt = (S.teman || []).slice(0, 6);
+      return html + '<div class="feed-item"><div class="feed-hdr"><span>💙 Undangan Acara Warga</span><span>Sosial</span></div><div>💐 Ada kondangan tetangga & arisan komunitas akhir pekan ini. Hadir lewat APK Akhir Pekan atau menu Sosial.</div></div>' +
+        temanAkt.map(function (t) {
+          var stT = t.menikah ? '💍 Menikah dgn ' + t.pacarNama : t.pacarId ? '💑 Pacaran dgn ' + t.pacarNama : 'Lajang';
+          return '<div class="feed-item"><div class="feed-hdr"><span>💙 ' + esc(t.nama) + ' (' + esc(stT) + ')</span><span>HB ' + Math.round(t.hb || 0) + '%</span></div><div>"Halo ' + esc(S.namaPemain || 'bro') + ', gimana kabar di jalan hari ini?" <button type="button" class="chip-tombol" style="margin-left:6px;padding:2px 8px" data-aksi="waHubungi:' + t.id + '">Balas Chat</button></div></div>';
+        }).join('');
+    }
+    /* tab default: WhatsApp */
+    var psg = DIRI.pasanganAktif(S);
+    var gacor = HIDUP.infoSpotGacor ? HIDUP.infoSpotGacor(S.menit) : 'Area pusat kota ramai.';
+    var temanWa = (S.teman || []).slice().sort(function (a, b) { return (b.hubungan || 0) - (a.hubungan || 0); }).slice(0, 5);
+    return html +
+      '<div class="feed-item"><div class="feed-hdr"><span>💬 Grup WA Driver Ojol & Travel</span><span>Online</span></div><div>' + esc(gacor) + '<br>Cuaca sekitar: ' + cw.ikon + ' <b>' + esc(cw.nama) + '</b>' + (cw.banjirCm >= 20 ? ' (⚠️ Banjir ' + cw.banjirCm + ' cm!)' : '') + '</div></div>' +
+      (psg ? '<div class="feed-item"><div class="feed-hdr"><span>❤️ ' + esc(psg.nama) + ' (Pasangan)</span><span>Bahagia ' + Math.round(psg.bahagia || 70) + '%</span></div><div>"Hati-hati di jalan ya sayang, jangan lupa makan & jaga kesehatan."</div></div>' : '') +
+      temanWa.map(function (t) {
+        return '<div class="feed-item"><div class="feed-hdr"><span>💬 ' + esc(t.nama) + ' · ' + esc(t.kerja || 'Teman') + '</span><span>Hub ' + Math.round(t.hubungan || 0) + '%</span></div><div>' + (t.sakitSampai ? '🤒 Lagi kurang enak badan hari ini.' : t.hamil ? '🤰 Lagi hamil, doain lancar ya!' : 'Lagi santai nih, kabari kalau mau nongkrong!') + ' <button type="button" class="chip-tombol pilih" style="margin-left:6px;padding:2px 8px" data-aksi="waHubungi:' + t.id + '">Chat WA</button></div></div>';
+      }).join('');
   }
 
   /* ---------- aplikasi Karyawan ---------- */
@@ -2797,7 +2915,17 @@
     else if (nama === 'kuliahJurusan' && HIDUP) {
       var pkj3 = nilai.split('|'), pd3 = HIDUP.PENDIDIKAN.filter(function (x) { return x.id === pkj3[0]; })[0];
       var jr3 = (HIDUP.JURUSAN_KULIAH || []).filter(function (x) { return x.id === pkj3[1]; })[0];
-      if (pd3 && jr3) return { ket: 'Kuliah ' + pd3.nama + ' — ' + jr3.nama, nominal: pd3.biayaKuliah };
+      if (pd3 && jr3) return { ket: 'Daftar & UKT Sem 1 ' + pd3.nama + ' — ' + jr3.nama, nominal: (jr3.id === 'kedokteran' && pd3.id === 's1') ? 12500000 : pd3.ukt };
+    } else if (nama === 'daftarKedinasan' && HIDUP) {
+      var sk3 = (HIDUP.SEKOLAH_KEDINASAN || []).filter(function (x) { return x.id === nilai; })[0];
+      if (sk3) return { ket: 'Daftar ' + sk3.nama, nominal: (sk3.daftar || 0) + (sk3.ukt || 0) };
+    } else if (nama === 'tahapDokter' && HIDUP) {
+      var ptd3 = nilai.split('|');
+      var nomD = ptd3[0] === 'koas' ? 11000000 : ptd3[0] === 'sip' ? 2500000 : 18000000;
+      return { ket: 'Jalur Dokter: ' + ptd3[0].toUpperCase(), nominal: nomD };
+    } else if (nama === 'bookingMichat' && HIDUP) {
+      var pmc3 = nilai.split('|'), pMc3 = (HIDUP.daftarMichat ? HIDUP.daftarMichat(S) : []).filter(function (x) { return x.id === pmc3[0]; })[0];
+      if (pMc3) return { ket: 'Booking MiChat: ' + pMc3.nama, nominal: pMc3.tarif };
     }
     return null;
   }
@@ -2931,9 +3059,43 @@
     else if (nama === 'topupEwallet') { var pte = nilai.split('|'), rte = UANG.topupEwallet ? UANG.topupEwallet(S, pte[0], +pte[1]) : 'Gagal.'; hasilAksi(rte && rte.ok ? true : rte, rte && rte.ok ? rte.teks : ''); }
     else if (nama === 'kuliahJenjang') { app.kuliahJenjang = nilai; app.pesan = ''; }
     else if (nama === 'kuliahKat') { app.kuliahKat = nilai; app.pesan = ''; }
+    else if (nama === 'kuliahMode') { app.kuliahMode = nilai; app.pesan = ''; }
+    else if (nama === 'sosmedTab') { app.sosmedTab = nilai; app.pesan = ''; }
+    else if (nama === 'chatTab') { app.chatTab = nilai; app.pesan = ''; }
+    else if (nama === 'klaimEndorse') { var rke = HIDUP.klaimEndorse ? HIDUP.klaimEndorse(S) : 'Gagal.'; hasilAksi(rke && rke.ok ? true : rke, rke && rke.ok ? rke.teks : ''); }
+    else if (nama === 'waHubungi') {
+      var ckW = DIRI.pakaiKuota(S, 0.002);
+      if (ckW !== true) hasilAksi(ckW);
+      else {
+        var rwh = TEMAN.interaksi(S, nilai, 'hubungi', function () { return true; });
+        hasilAksi(rwh && rwh.ok ? true : rwh, rwh && rwh.ok ? '💬 ' + rwh.teks : '');
+      }
+    }
+    else if (nama === 'bookingMichat') {
+      var pmc = nilai.split('|'), rmc = HIDUP.bookingMichat ? HIDUP.bookingMichat(S, pmc[0], pmc[1] === '1') : 'Gagal.';
+      if (rmc && rmc.ok) {
+        tutupLembar();
+        if (SUARA) SUARA.bunyi('hb');
+        S.hbRun = { total: 60, sisa: 60, isLong: true, malam: false, bangun: 0, teks: rmc.teks, varian: 'kamar', nama: rmc.profil.nama, nama2: '', gB: 'cewek', gC: 'cewek', mult: 8 };
+        simpan(); perbaruiHUD(true); perbaruiAksi();
+        return;
+      } else hasilAksi(rmc);
+    }
     else if (nama === 'kuliahJurusan') {
       var pkj4 = nilai.split('|'), rkj4 = HIDUP.kuliahJurusan(S, pkj4[0], pkj4[1]);
-      if (rkj4 && rkj4.ok) { lompatWaktu(rkj4.menit || 120); hasilAksi(true, rkj4.teks); } else hasilAksi(rkj4);
+      if (rkj4 && rkj4.ok) { lompatWaktu(rkj4.menit || 60); hasilAksi(true, rkj4.teks); } else hasilAksi(rkj4);
+    }
+    else if (nama === 'daftarKedinasan') {
+      var rkd4 = HIDUP.daftarKedinasan ? HIDUP.daftarKedinasan(S, nilai) : 'Gagal.';
+      if (rkd4 && rkd4.ok) { lompatWaktu(rkd4.menit || 60); hasilAksi(true, rkd4.teks); } else hasilAksi(rkd4);
+    }
+    else if (nama === 'tahapDokter') {
+      var ptd4 = nilai.split('|'), rtd4 = HIDUP.lanjutTahapDokter ? HIDUP.lanjutTahapDokter(S, ptd4[0], ptd4[1]) : 'Gagal.';
+      if (rtd4 && rtd4.ok) { lompatWaktu(rtd4.menit || 60); hasilAksi(true, rtd4.teks); } else hasilAksi(rtd4);
+    }
+    else if (nama === 'berhentiStudi') {
+      var rbs4 = HIDUP.berhentiStudi ? HIDUP.berhentiStudi(S) : 'Gagal.';
+      hasilAksi(rbs4 && rbs4.ok ? true : rbs4, rbs4 && rbs4.ok ? rbs4.teks : '');
     }
     else if (nama === 'beliRokok') { var prk2 = nilai.split('|'), rrk2 = DIRI.beliRokok(S, prk2[0], prk2[1]); hasilAksi(rrk2 && rrk2.ok ? true : rrk2, rrk2 && rrk2.ok ? rrk2.teks : ''); }
     else if (nama === 'merokok') {
@@ -5129,7 +5291,10 @@
     }
     var hb = (main && S.diri) ? (S.diri.hb || 0) : 0;
     var capekP = !!(main && S.diri && (S.diri.stamina < 25));
-    ADEGAN.gambar(main ? { kota: S.kota, tierWilayah: HIDUP ? HIDUP.tierWilayah(S) : 'kota', warnaBaju: HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13', ramadan: KAL.apakahRamadan(S.hari) > 0, lebaran: KAL.statusLebaran ? KAL.statusLebaran(S.hari) : 0, natal: KAL.apakahNatal ? KAL.apakahNatal(S.hari, S.menit) : false, tahunBaru: KAL.apakahMalamTahunBaru ? KAL.apakahMalamTahunBaru(S.hari, S.menit) : false, namaToko: S.namaToko || 'Kopi Kontainer', namaPemain: S.namaPemain || 'Kamu', gender: (S.profil && S.profil.gender) || 'cewek', tampilan: warnaTampilanHex(S.profil && S.profil.tampilan, (S.profil && S.profil.gender) || 'cewek'), berhentiSewa: !!(S.usaha && S.usaha.berhentiSewa), sakitPemain: !!S.diri.sakit, capekPemain: capekP, hbTinggi: hb >= 75, hamilPemain: !!(S.diri.hamil && S.diri.hamil.terdeteksi), keluargaRumah: kelDiRumah, hbAnim: S.hbRun ? { u: Math.min(1, 1 - S.hbRun.sisa / S.hbRun.total), isLong: !!S.hbRun.isLong, varian: S.hbRun.varian, nama: S.hbRun.nama, nama2: S.hbRun.nama2 || '', gB: S.hbRun.gB, gC: S.hbRun.gC || S.hbRun.gB } : null, kerjaAnim: S.kerjaRun ? { u: Math.min(1, 1 - S.kerjaRun.sisa / S.kerjaRun.total), kantor: S.kerjaRun.kantor, peran: S.kerjaRun.peran, pulang: S.kerjaRun.pulang } : null, posisi: S.diri.posisi, transit: S.transit ? { ke: S.transit.ke, u: 1 - S.transit.sisa / S.transit.total, km: S.transit.km, kend: S.transit.kend, mult: S.transit.mult, bawaDus: !!S.transit.bawaDus, pindahWilayah: !!S.transit.pindahWilayah, tujuanNama: S.transit.tujuanNama || '', kantorNama: S.transit.kantorNama || '' } : null, ojek: OJEK.fase(S), travel: TRAVEL.fase(S), motorId: S.motor ? S.motor.id : null, mobil: S.mobil ? { id: S.mobil.id, bentuk: S.mobil.bentuk } : null, rumah: S.rumah.jenis === 'rumah' ? S.rumah.tipe : null, hunianId: (S.rumah && S.rumah.hunianId) || 'kos_ac',
+    var cwNow = main && DUNIA.infoCuacaSekarang ? DUNIA.infoCuacaSekarang(S) : null;
+    var moonNow = main && KAL.infoFaseBulan ? KAL.infoFaseBulan(S.hari) : null;
+    if (main && cwNow && cwNow.petir && !lembar && S.kec > 0 && Math.random() < 0.0025 && SUARA) SUARA.bunyi('petir');
+    ADEGAN.gambar(main ? { kota: S.kota, tierWilayah: HIDUP ? HIDUP.tierWilayah(S) : 'kota', warnaBaju: HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13', cuacaInfo: cwNow, faseBulan: moonNow, ramadan: KAL.apakahRamadan(S.hari) > 0, lebaran: KAL.statusLebaran ? KAL.statusLebaran(S.hari) : 0, natal: KAL.apakahNatal ? KAL.apakahNatal(S.hari, S.menit) : false, tahunBaru: KAL.apakahMalamTahunBaru ? KAL.apakahMalamTahunBaru(S.hari, S.menit) : false, namaToko: S.namaToko || 'Kopi Kontainer', namaPemain: S.namaPemain || 'Kamu', gender: (S.profil && S.profil.gender) || 'cewek', tampilan: warnaTampilanHex(S.profil && S.profil.tampilan, (S.profil && S.profil.gender) || 'cewek'), berhentiSewa: !!(S.usaha && S.usaha.berhentiSewa), sakitPemain: !!S.diri.sakit, capekPemain: capekP, hbTinggi: hb >= 75, hamilPemain: !!(S.diri.hamil && S.diri.hamil.terdeteksi), keluargaRumah: kelDiRumah, hbAnim: S.hbRun ? { u: Math.min(1, 1 - S.hbRun.sisa / S.hbRun.total), isLong: !!S.hbRun.isLong, varian: S.hbRun.varian, nama: S.hbRun.nama, nama2: S.hbRun.nama2 || '', gB: S.hbRun.gB, gC: S.hbRun.gC || S.hbRun.gB } : null, kerjaAnim: S.kerjaRun ? { u: Math.min(1, 1 - S.kerjaRun.sisa / S.kerjaRun.total), kantor: S.kerjaRun.kantor, peran: S.kerjaRun.peran, pulang: S.kerjaRun.pulang } : null, posisi: S.diri.posisi, transit: S.transit ? { ke: S.transit.ke, u: 1 - S.transit.sisa / S.transit.total, km: S.transit.km, kend: S.transit.kend, mult: S.transit.mult, bawaDus: !!S.transit.bawaDus, pindahWilayah: !!S.transit.pindahWilayah, tujuanNama: S.transit.tujuanNama || '', kantorNama: S.transit.kantorNama || '' } : null, ojek: OJEK.fase(S), travel: TRAVEL.fase(S), motorId: S.motor ? S.motor.id : null, mobil: S.mobil ? { id: S.mobil.id, bentuk: S.mobil.bentuk } : null, rumah: S.rumah.jenis === 'rumah' ? S.rumah.tipe : null, hunianId: (S.rumah && S.rumah.hunianId) || 'kos_ac',
       pindah: pindahAnim ? { u: (t - pindahAnim.mulai) / 3800, pikap: pindahAnim.pikap, warna: pindahAnim.warna } : null, barang: S.rumah.barang, tidur: !!S.tidurAnim, acNyala: !S.rumah.padam && DIRI.adaAc(S), menit: S.menit, buka: S.fase === 'buka' && !S.tutupSementara, kecepatan: S.kec, jalan: !lembar && S.kec > 0, pembeli: JUAL.semua(), dMenit: dMenit, ruangBawah: ruang, motorParkir: S.motor && ANTAR.waktu(S) >= (S.motorSibukSampai || 0) ? S.motor.id : null, staf: stafHadir.length, stafGender: stafHadir.map(function (k) { return k.gender || 'cewek'; }), anakBantu: anakDiKedai, hujan: DUNIA.hujanSekarang(S) ? (S.dunia.cuaca.banjir ? 2 : 1) : 0, kotor: S.dunia.kotor, tier: S.usaha.tier, kayu: USAHA.punya(S, 'kursiKayu'), padam: !USAHA.listrikNyala(S) }
       : { latarAwal: true, namaToko: 'The Driver', menit: 1050, buka: false, kecepatan: 1, jalan: true, pembeli: [], dMenit: 0 }, t);
     requestAnimationFrame(putar);
