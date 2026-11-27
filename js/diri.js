@@ -418,6 +418,10 @@
     var pbOkQ = !!(S.hp.pbPasang && pbInfoQ && pbInfoQ.state.sisaMah > 0);
     if ((S.hp.baterai || 0) <= 0 && !pbOkQ) return 'Baterai HP habis (0%)! Cas HP atau sambungkan Power Bank di aplikasi Gadget & Kuota.';
     if (adaWifi(S)) return true;
+    if (g.KK_EKO && g.KK_EKO.infoSinyal) {
+      var sn = g.KK_EKO.infoSinyal(S);
+      if (sn && sn.hilang) return 'Sinyal ' + sn.provider.nama + ' hilang (No Service) di desa pedalaman ini! Ganti kartu Telkomsel atau sambungkan WiFi.';
+    }
     if (S.hp.masaAktif != null && S.hari > S.hp.masaAktif) {
       return 'Masa aktif kartu ' + (S.hp.nomor || '081256000088') + ' sudah habis (masa tenggang)! Isi pulsa dulu untuk memperpanjang masa aktif kartu.';
     }
@@ -719,6 +723,10 @@
           kabar.push('Akun driver ojol otomatis offline: ' + ck);
         }
       }
+      if (g.KK_EKO && g.KK_EKO.cekOverheatHp) {
+        var kbOh = g.KK_EKO.cekOverheatHp(S, dMenit);
+        if (kbOh) kabar.push(kbOh);
+      }
     }
     /* simulasi usaha Rental PS berjalan tiap menit */
     var kbRental = jalanRentalPs(S, dMenit);
@@ -783,7 +791,8 @@
     var kw = (punya(S, 'kulkas') ? 0.05 : 0) + (punya(S, 'kulkas2') ? 0.07 : 0);
     if (S.diri.posisi === 'kos') kw += adaAc(S) ? (tidur ? 0.35 : 0.2) : 0.05; /* AC 1/2 PK; tanpa AC hanya lampu, perkiraan */
     if (alat) kw += alat;
-    r.kwh = Math.max(0, r.kwh - kw * menit / 60);
+    var hemPln = (g.KK_EKO && g.KK_EKO.faktorHematPln) ? g.KK_EKO.faktorHematPln(S) : 1.0;
+    r.kwh = Math.max(0, r.kwh - kw * hemPln * menit / 60);
     if (r.kwh === 0) r.padam = true;
   }
   function beliTokenKos(S, nominal) {
@@ -976,7 +985,9 @@
       }
     }
     var spb = adaSpringbed(S), bnsH = (S.rumah && S.rumah.jenis !== 'rumah') ? (hunianInfo(S.rumah && S.rumah.hunianId).bonusTidur || 1) : 0.92;
-    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * (punya(S, 'airpurifier') ? 1.05 : 1) * (gelisah ? 0.8 : 1);
+    var bonusL2 = (S.eko && S.eko.renovasi && S.eko.renovasi.lantai2) ? 1.12 : 1;
+    var penBurn = (S.eko && S.eko.burnout) ? 0.75 : 1;
+    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * bonusL2 * penBurn * (punya(S, 'airpurifier') ? 1.05 : 1) * (gelisah ? 0.8 : 1);
     d.stamina = batas(d.stamina + jam * 14 * mutu);
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
     return { jam: jam, ac: ac, mutu: mutu, gelisah: gelisah, bangunEf: bangunEf };

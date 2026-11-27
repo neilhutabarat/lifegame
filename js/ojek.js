@@ -113,9 +113,11 @@
     return true;
   }
   function bisaOnline(S, mode) {
+    if (S.eko && S.hari <= (S.eko.suspendOjolSampai || -1)) return 'Akun driver sedang kena suspend sementara karena viral negatif! Buat klarifikasi di APK Sosmed atau tunggu besok.';
     if (mode === 'mobil') {
       var c = S.mobil;
       if (!c) return 'Belum punya mobil untuk GoCar/GrabCar.';
+      if (c.mogokAir) return 'Mobil sedang mogok kena banjir (Water Hammer)! Kuras mesin dulu di Garasi.';
       if (g.KK_MOBIL && g.KK_MOBIL.disewakan && g.KK_MOBIL.disewakan(S)) return 'Mobil utama sedang disewakan di Sewa Aset. Hentikan sewa dulu atau ganti mobil utama di Garasi.';
       if (g.KK_MOBIL && g.KK_MOBIL.pikap(S)) return 'Mobil pikap tidak bisa untuk GoCar/GrabCar.';
       if (!g.KK_MOBIL.cukup(S, 6)) return c.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis. Cas dulu.' : 'Bensin mobil hampir habis. Isi dulu.';
@@ -124,6 +126,7 @@
     }
     var m = S.motor;
     if (!m) return 'Belum punya motor.';
+    if (m.mogokAir) return 'Motor sedang mogok kemasukan air banjir (Water Hammer)! Kuras mesin dulu di Garasi.';
     if (g.KK_MOTOR && g.KK_MOTOR.disewakan && g.KK_MOTOR.disewakan(S)) return 'Motor utama sedang disewakan di Sewa Aset. Hentikan sewa dulu atau ganti motor utama di Garasi.';
     if (!O.platform.some(function (p) { return aktif(S, p.id); })) return 'Akun driver belum aktif.';
     if (!g.KK_MOTOR.cukup(S, 6)) return m.bbm === 'listrik' ? 'Baterai motor hampir habis.' : 'Bensin motor hampir habis. Isi dulu.';
@@ -158,6 +161,7 @@
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
     if (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) r *= g.KK_WILAYAH.faktorPenduduk(S); /* populasi kota/kabupaten memengaruhi volume order */
+    if (g.KK_EKO && g.KK_EKO.infoSinyal) r *= g.KK_EKO.infoSinyal(S).faktorOjol; /* kekuatan sinyal provider SIM di kota vs desa */
     r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
     var mudik = statusMudik(S.hari);
     if (mudik === 'mudik') r *= 2.1;
@@ -303,6 +307,10 @@
 
     var diLok = (o.lokasi && o.lokasi.kecNama) ? (' di ' + o.lokasi.desa + ', ' + o.lokasi.kecNama) : '';
     kabar.unshift(x.layanan + ' selesai (' + x.km.toLocaleString('id-ID') + ' km)' + diLok + ' · ★' + bintangTrip + ' · +' + rp(dapat) + caraTeks + '.');
+    if (g.KK_EKO && g.KK_EKO.cekBanjirMogok) {
+      var kbAir = g.KK_EKO.cekBanjirMogok(S, o.mode);
+      if (kbAir) { kabar.push(kbAir); o.online = false; }
+    }
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
   }

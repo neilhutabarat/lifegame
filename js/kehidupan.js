@@ -127,7 +127,10 @@
     { id: 'pelayaran', nama: 'Perwira Pelayaran / Nahkoda', kantorNama: 'Pelabuhan & Armada Niaga', minLvl: 1, syaratKedinasan: ['stip_pelayaran'], gaji: 19500000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 14.5, cocok: [], ket: 'Syarat lulus STIP Pelayaran · Karier maritim gaji tinggi' },
     { id: 'pilot_maskapai', nama: 'Pilot Maskapai Komersial', kantorNama: 'Bandara Internasional', minLvl: 1, syaratKedinasan: ['pilot_cpl'], gaji: 36000000, jamMasuk: 7, jamPulang: 16, jam: 9, jarakKm: 18.0, cocok: [], ket: 'Syarat Lisensi Sekolah Penerbang CPL-IR · Gaji elit Rp36jt/bln!' },
     { id: 'dokter_umum', nama: 'Dokter Umum (Klinik & RS)', kantorNama: 'RSUD / Klinik Pratama', minLvl: 3, syaratDokter: 'sip', gaji: 18500000, jamMasuk: 8, jamPulang: 16, jam: 8, jarakKm: 8.8, cocok: ['kedokteran'], ket: 'Syarat S1 Kedokteran + Koas (2 thn) + STR & SIP aktif' },
-    { id: 'dokter_spesialis', nama: 'Dokter Spesialis Rumah Sakit', kantorNama: 'RS Tipe A / Spesialis Utama', minLvl: 3, syaratDokter: 'spesialis', gaji: 42000000, jamMasuk: 8, jamPulang: 16, jam: 8, jarakKm: 10.5, cocok: ['kedokteran'], ket: 'Syarat lulus PPDS Spesialis (Sp.PD/Sp.B/Sp.A/Sp.JP) · Gaji Rp42jt/bln!' }
+    { id: 'dokter_spesialis', nama: 'Dokter Spesialis Rumah Sakit', kantorNama: 'RS Tipe A / Spesialis Utama', minLvl: 3, syaratDokter: 'spesialis', gaji: 42000000, jamMasuk: 8, jamPulang: 16, jam: 8, jarakKm: 10.5, cocok: ['kedokteran'], ket: 'Syarat lulus PPDS Spesialis (Sp.PD/Sp.B/Sp.A/Sp.JP) · Gaji Rp42jt/bln!' },
+    /* Karier Internasional Gaji Dolar USD (Remote & Kapal Pesiar) */
+    { id: 'remote_usd', nama: 'Remote Engineer / Designer (Klien US)', kantorNama: 'Remote Global (WFH · USD)', minLvl: 3, gajiUsd: 1800, gaji: 29160000, jamMasuk: 9, jamPulang: 17, jam: 8, jarakKm: 0.5, cocok: ['ti', 'si', 'dkv', 'komunikasi'], ket: 'Syarat S1 IT/DKV · Gaji $1.800 USD/bln mengikuti kurs harian!' },
+    { id: 'kapal_pesiar', nama: 'Kru / Perwira Kapal Pesiar Internasional', kantorNama: 'Cruise Line Internasional (USD)', minLvl: 1, syaratKedinasan: ['stip_pelayaran'], gajiUsd: 2400, gaji: 38880000, jamMasuk: 8, jamPulang: 17, jam: 9, jarakKm: 15.0, cocok: ['perhotelan', 'kelautan'], ket: 'Syarat STIP Pelayaran · Gaji $2.400 USD/bln ikut kurs harian!' }
   ];
   var KERJA_SAMPINGAN = [
     { id: 'spx_borong', nama: 'Kurir Paket Borongan (SPX/J&T)', menit: 180, upah: 115000, stamina: -24, stres: 10, butuhMotor: true, ket: 'Antar 35 paket area sekitar (3 jam) · cair tunai langsung' },
@@ -157,9 +160,12 @@
   }
   function gajiEfektif(S, kj) {
     if (!kj) return 0;
+    var dasar = kj.gajiUsd ? Math.round(kj.gajiUsd * ((S && S.eko && S.eko.kursUsd) || 16200)) : Math.round(kj.gaji * ((S && S.eko && S.eko.umkMult) || 1));
     var jur = S && S.profil && S.profil.jurusan;
     var cocok = jur && kj.cocok && kj.cocok.indexOf(jur) >= 0;
-    return cocok ? Math.round(kj.gaji * 1.15 / 50000) * 50000 : kj.gaji;
+    var ordal = (S && S.eko && S.eko.ordalBonus) || 0;
+    var mult = (cocok ? 1.15 : 1) * (1 + ordal);
+    return Math.round(dasar * mult / 50000) * 50000;
   }
 
   function siapkan(S) {
@@ -793,6 +799,10 @@
         S.bank.mutasi.unshift({ n: nBaru, ket: 'THR Lebaran ' + tB.y + ' (' + kjThr.nama + ')', jml: kjThr.gaji });
         kabar.push('🎁 THR Lebaran 1× gaji (' + rp(kjThr.gaji) + ') dari kantor cair ke rekening!');
       }
+    }
+    if (g.KK_EKO && g.KK_EKO.gantiHari) {
+      var kbEko = g.KK_EKO.gantiHari(S, nLama, nBaru);
+      if (kbEko && kbEko.length) kabar = kabar.concat(kbEko);
     }
     return kabar;
   }
