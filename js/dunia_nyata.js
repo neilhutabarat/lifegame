@@ -157,33 +157,40 @@
     var W = g.KK_WILAYAH;
     var sk = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null;
     if (W && W.kalbar && sk && W.kalbar[sk.kabId]) {
-      var kb = W.kalbar[sk.kabId];
-      kb.kec.slice(0, 6).forEach(function (kc, idx) {
-        if (kc.nama === sk.kecNama) return;
-        var km = W.jarakKm(sk, { lat: kc.lat, lon: kc.lon });
-        list.push({
-          id: 'kec:' + kb.id + ':' + kc.id,
-          nama: '📍 Kec. ' + kc.nama + ' (' + kc.desa[0] + ')',
+      var kabId = sk.kabId, kb = W.kalbar[kabId];
+      var kecList = [];
+      kb.kec.forEach(function (kc) {
+        if (kc.id === sk.kecId || kc.nama === sk.kecNama) return;
+        if (!sk.pulau && kc.pulau) return; /* proteksi darat: tidak rute motor/mobil melintasi lautan ke pulau */
+        var titik = W.titikDesa ? W.titikDesa(kabId, kc, kc.desa[0]) : { kabId: kabId, kabNama: kb.nama, kecId: kc.id, kecNama: kc.nama, medan: kc.medan || 'mulus', pulau: !!kc.pulau, desa: kc.desa[0], lat: kc.lat, lon: kc.lon };
+        var km = W.jarakKm(sk, titik);
+        var md = W.medanJalan ? W.medanJalan(sk, titik) : { ikon: '🛣️', nama: 'Aspal' };
+        kecList.push({
+          id: 'kec:' + kabId + ':' + kc.id,
+          nama: '📍 Kec. ' + kc.nama + ' (' + kc.desa[0] + ') · ' + md.ikon,
           kat: 'wilayah',
           km: Math.max(1.5, km),
-          titik: { kabId: kb.id, kabNama: kb.nama, kecId: kc.id, kecNama: kc.nama, desa: kc.desa[0], lat: kc.lat, lon: kc.lon },
+          titik: titik,
+          medan: md,
           warna: '#0ea5e9',
           aksi: 'wilayah'
         });
       });
+      kecList.sort(function (a, b) { return a.km - b.km; });
+      list = list.concat(kecList);
     }
     return list;
   }
 
   /* Pergi Bebas tanpa ngojol: Jalan Kaki, Motor/Mobil Sendiri, atau Dijemput Teman */
-  function pergiBebas(S, targetId, cara, temanId) {
+  function pergiBebas(S, targetId, cara, temanId, tundaPindah) {
     siapkan(S);
     if (S.ojek && S.ojek.trip) return 'Selesaikan order penumpang dulu sebelum pergi bebas!';
     var daf = daftarTujuanPeta(S);
     var tj = daf.filter(function (x) { return x.id === targetId; })[0];
     if (!tj) return 'Tujuan tidak ditemukan di peta.';
     var km = tj.aksi === 'pulang' ? Math.max(0.5, (g.KK_OJEK && g.KK_OJEK.jarakRumah) ? g.KK_OJEK.jarakRumah(S) : 2) : (tj.km || 2);
-    var menit = 10, ket = '';
+    var menit = 10, ket = '', bbmTarget = null, bbmDipakai = 0;
 
     if (cara === 'jalan') {
       if (km > 12) return 'Jarak ' + km.toFixed(1) + ' km terlalu jauh untuk jalan kaki! Pakai kendaraan sendiri atau minta dijemput teman.';
@@ -204,38 +211,51 @@
       ket = '🤝 Dijemput ' + tm.nama + ' menuju ' + tj.nama + ' (' + km.toFixed(1) + ' km · ' + menit + ' mnt · gratis bensin & makin akrab!).';
     } else {
       /* kendaraan sendiri (motor atau mobil) */
-      var pakaiMbl = cara === 'mobil' && S.mobil;
+      var pakaiMbl = (cara === 'mobil');
       var knd = pakaiMbl ? g.KK_MOBIL : g.KK_MOTOR;
       var kObj = pakaiMbl ? S.mobil : S.motor;
-      if (pakaiMbl && !S.mobil) return 'Belum punya mobil. Pilih Motor atau Jalan Kaki.';
+      if (pakaiMbl && !S.mobil) return 'Belum punya mobil. Pilih Motor, Jalan Kaki, atau Dijemput Teman.';
       if (!pakaiMbl && !S.motor) return 'Belum punya motor! Pilih Jalan Kaki atau Minta Dijemput Teman.';
       if (kObj && kObj.mogokAir) return (pakaiMbl ? 'Mobil' : 'Motor') + ' sedang mogok kena banjir! Kuras mesin dulu di Garasi.';
       if (knd && knd.disewakan && knd.disewakan(S)) return (pakaiMbl ? 'Mobil' : 'Motor') + ' sedang disewakan di Sewa Aset! Hentikan sewa dulu.';
       if (!knd || !knd.cukup(S, km)) return (pakaiMbl ? 'Bensin mobil' : 'Bensin motor') + ' tidak cukup untuk ' + km.toFixed(1) + ' km!';
+      var evM = !pakaiMbl && S.motor && S.motor.bbm === 'listrik';
+      var isi0 = pakaiMbl ? S.mobil.isi : (evM ? S.motor.baterai : S.motor.isi);
       var rJ = knd.jalan(S, km, 1);
       if (!rJ || !rJ.ok) return (rJ && rJ.alasan) || 'Kendaraan tidak siap jalan.';
-      menit = Math.max(4, Math.round(rJ.menit || km * 2));
-      catatAusPerjalanan(S, pakaiMbl ? 'mobil' : 'motor', km);
+      var isi1 = pakaiMbl ? S.mobil.isi : (evM ? S.motor.baterai : S.motor.isi);
+      bbmDipakai = Math.max(0, isi0 - isi1);
+      bbmTarget = pakaiMbl ? 'mobil' : (evM ? 'motorEv' : 'motor');
+      if (tundaPindah && bbmDipakai > 0) {
+        if (pakaiMbl) S.mobil.isi = isi0;
+        else if (evM) S.motor.baterai = isi0;
+        else S.motor.isi = isi0;
+      }
+      var fakKecMd = (tj.medan && tj.medan.kec) || 1;
+      menit = Math.max(4, Math.round((rJ.menit || km * 2) / Math.max(0.45, fakKecMd)));
+      catatAusPerjalanan(S, pakaiMbl ? 'mobil' : 'motor', km, tj.medan);
       ket = (pakaiMbl ? '🚗 Menyetir mobil' : '🏍️ Berkendara motor') + ' ke ' + tj.nama + ' (' + km.toFixed(1) + ' km · ' + menit + ' mnt).';
     }
 
     if (S.ojek && S.ojek.online) g.KK_OJEK.offline(S, true);
-    if (tj.aksi === 'pulang') {
-      S.diri.posisi = 'kos';
-      if (g.KK_OJEK) g.KK_OJEK.resetPos(S, 0, 0);
-    } else {
-      S.diri.posisi = 'kedai';
-      if (tj.titik && S.ojek) S.ojek.lokasi = tj.titik;
+    if (!tundaPindah) {
+      if (tj.aksi === 'pulang') {
+        S.diri.posisi = 'kos';
+        if (g.KK_OJEK) g.KK_OJEK.resetPos(S, 0, 0);
+      } else {
+        S.diri.posisi = 'kedai';
+        if (tj.titik && S.ojek) S.ojek.lokasi = tj.titik;
+      }
+      if (tj.aksi === 'taman') {
+        S.diri.stamina = batas(S.diri.stamina + 12);
+        S.diri.kesehatan = batas((S.diri.kesehatan || 100) + 5);
+        S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - 6);
+      } else if (tj.aksi === 'ibadah' && g.KK_DIRI && g.KK_DIRI.ibadah) {
+        g.KK_DIRI.ibadah(S, 'Ibadah', 'Masjid / Tempat Ibadah Terdekat');
+        ket += ' 🙏 Selesai beribadah, hati tenang & stamina pulih.';
+      }
     }
-    if (tj.aksi === 'taman') {
-      S.diri.stamina = batas(S.diri.stamina + 12);
-      S.diri.kesehatan = batas((S.diri.kesehatan || 100) + 5);
-      S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - 6);
-    } else if (tj.aksi === 'ibadah' && g.KK_DIRI && g.KK_DIRI.ibadah) {
-      g.KK_DIRI.ibadah(S, 'Ibadah', 'Masjid / Tempat Ibadah Terdekat');
-      ket += ' 🙏 Selesai beribadah, hati tenang & stamina pulih.';
-    }
-    return { ok: true, menit: menit, aksi: tj.aksi, teks: ket };
+    return { ok: true, menit: menit, km: km, aksi: tj.aksi, titik: tj.titik || null, bbmTarget: bbmTarget, bbmSisa: bbmDipakai, teks: ket };
   }
 
   function gambarPetaMini(canvas, S) {
@@ -347,20 +367,23 @@
   }
 
   /* ---------- 3 & 24. Jalan Berlubang, Suspensi Aus, Aki, Kampas Rem, Lampu ---------- */
-  function catatAusPerjalanan(S, mode, km) {
+  function catatAusPerjalanan(S, mode, km, medan) {
     siapkan(S);
     var k = mode === 'mobil' ? S.mobil : S.motor;
     if (!k || !km) return null;
-    var diDesa = !!(S.ojek && S.ojek.lokasi && /desa|dusun|kampung|kec/i.test((S.ojek.lokasi.desa || '') + ' ' + (S.ojek.lokasi.kecNama || '')));
-    var faktorLubang = diDesa ? 1.55 : 0.9;
+    var mdObj = medan;
+    if (!mdObj && g.KK_WILAYAH && g.KK_WILAYAH.medanJalan && S.ojek && S.ojek.lokasi) {
+      mdObj = g.KK_WILAYAH.medanJalan(S.ojek.lokasi, S.ojek.lokasi);
+    }
+    var faktorLubang = (mdObj && mdObj.aus) ? mdObj.aus : 1.0;
     var adaShockModif = !!(k.modif && k.modif.shock);
     k.suspensi = Math.max(0, Math.round(((k.suspensi == null ? 100 : k.suspensi) - km * 0.22 * faktorLubang * (adaShockModif ? 0.45 : 1)) * 10) / 10);
     k.aki = Math.max(0, Math.round(((k.aki == null ? 100 : k.aki) - km * 0.12) * 10) / 10);
-    k.rem = Math.max(0, Math.round(((k.rem == null ? 100 : k.rem) - km * 0.18) * 10) / 10);
+    k.rem = Math.max(0, Math.round(((k.rem == null ? 100 : k.rem) - km * 0.18 * Math.min(1.5, faktorLubang)) * 10) / 10);
     k.lampu = Math.max(0, Math.round(((k.lampu == null ? 100 : k.lampu) - km * 0.08) * 10) / 10);
     if (k.suspensi < 25 && Math.random() < 0.35) {
       S.diri.stamina = batas(S.diri.stamina - 4);
-      return '🕳️ Jalan berlubang! Suspensi ' + (mode === 'mobil' ? 'mobil' : 'motor') + ' mulai aus (' + Math.round(k.suspensi) + '%), badan pegal — servis di Garasi!';
+      return '🕳️ ' + ((mdObj && mdObj.nama) || 'Jalan berlubang') + '! Suspensi ' + (mode === 'mobil' ? 'mobil' : 'motor') + ' mulai aus (' + Math.round(k.suspensi) + '%), badan pegal — servis di Garasi!';
     }
     if (k.rem < 20 && Math.random() < 0.35) return '⚠️ Kampas rem menipis (' + Math.round(k.rem) + '%)! Segera ganti di Garasi agar aman.';
     if (k.aki < 18 && Math.random() < 0.35) return '🔋 Aki mulai tekor (' + Math.round(k.aki) + '%)! Starter berat, ganti/cas aki di Garasi.';

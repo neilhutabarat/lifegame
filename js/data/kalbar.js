@@ -1,193 +1,279 @@
-/* kalbar.js — Data wilayah presisi Provinsi Kalimantan Barat (14 Kabupaten/Kota → Kecamatan → Desa/Kelurahan + koordinat GPS nyata & rumus jarak jalan Haversine).
+/* kalbar.js — Data wilayah presisi 100% Provinsi Kalimantan Barat (14 Kabupaten/Kota · 174 Kecamatan resmi Kemendagri/BPS · Desa/Kelurahan asli + GPS + medan jalan + rumus jarak jalan raya nyata).
    Dirancang modular pada window.KK_WILAYAH agar provinsi lain bisa ditambahkan bertahap ke depannya. */
 (function (g) {
   'use strict';
 
+  /* Profil medan jalan Kalimantan Barat: memengaruhi aus suspensi/ban, kecepatan, & konsumsi BBM secara realistis */
+  var MEDAN_INFO = {
+    kota: { kode: 'kota', nama: 'Jalan Kota (Aspal Mulus)', ikon: '🏙️', aus: 0.75, kec: 1.0, bbm: 1.0 },
+    mulus: { kode: 'mulus', nama: 'Jalan Nasional / Aspal Mulus', ikon: '🛣️', aus: 0.9, kec: 1.0, bbm: 1.0 },
+    pesisir: { kode: 'pesisir', nama: 'Jalan Pesisir / Aspal Pantai', ikon: '🌊', aus: 1.05, kec: 0.95, bbm: 1.02 },
+    bergelombang: { kode: 'bergelombang', nama: 'Aspal Bergelombang / Tambalan', ikon: '〰️', aus: 1.45, kec: 0.84, bbm: 1.08 },
+    perbukitan: { kode: 'perbukitan', nama: 'Jalan Perbukitan Berkelok', ikon: '⛰️', aus: 1.55, kec: 0.78, bbm: 1.15 },
+    rusak: { kode: 'rusak', nama: 'Jalan Rusak / Berlubang Pedalaman', ikon: '⚠️', aus: 2.15, kec: 0.65, bbm: 1.22 },
+    tanah: { kode: 'tanah', nama: 'Jalan Tanah / Laterit Pedalaman', ikon: '🪵', aus: 2.75, kec: 0.52, bbm: 1.32 },
+    pulau: { kode: 'pulau', nama: 'Kepulauan / Penyeberangan Kapal', ikon: '⛵', aus: 1.1, kec: 0.6, bbm: 1.0 }
+  };
+  var MEDAN_BERAT = { kota: 0, mulus: 1, pesisir: 2, bergelombang: 3, perbukitan: 4, rusak: 5, tanah: 6, pulau: 7 };
+
+  /* 14 Kabupaten/Kota & SELURUH 174 Kecamatan Resmi Provinsi Kalimantan Barat (BPS/Kemendagri) */
   var KALBAR = {
+    /* 1. KOTA PONTIANAK — 6 Kecamatan */
     pontianak: {
       nama: 'Kota Pontianak', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'ptk_kota', nama: 'Pontianak Kota', lat: -0.0263, lon: 109.3335, desa: ['Darat Sekip', 'Mariana', 'Sungai Bangkong', 'Sungai Jawi', 'Tengah'] },
-        { id: 'ptk_sel', nama: 'Pontianak Selatan', lat: -0.0448, lon: 109.3324, desa: ['Akcaya', 'Benua Melayu Darat', 'Benua Melayu Laut', 'Kota Baru', 'Parit Tokaya'] },
-        { id: 'ptk_tgr', nama: 'Pontianak Tenggara', lat: -0.0628, lon: 109.3548, desa: ['Bangka Belitung Darat', 'Bangka Belitung Laut', 'Bansir Darat', 'Bansir Laut'] },
-        { id: 'ptk_tim', nama: 'Pontianak Timur', lat: -0.0315, lon: 109.3660, desa: ['Banjar Serasan', 'Dalam Bugis', 'Parit Mayor', 'Saigon', 'Tambelan Sampit', 'Tanjung Hilir', 'Tanjung Hulu'] },
-        { id: 'ptk_bar', nama: 'Pontianak Barat', lat: -0.0155, lon: 109.3075, desa: ['Pal Lima', 'Sungai Beliung', 'Sungai Jawi Dalam', 'Sungai Jawi Luar'] },
-        { id: 'ptk_utr', nama: 'Pontianak Utara', lat: 0.0085, lon: 109.3380, desa: ['Batu Layang', 'Siantan Hilir', 'Siantan Hulu', 'Siantan Tengah'] }
+        { id: 'ptk_kota', nama: 'Pontianak Kota', lat: -0.0263, lon: 109.3335, medan: 'kota', desa: ['Darat Sekip', 'Mariana', 'Sungai Bangkong', 'Sungai Jawi', 'Tengah'] },
+        { id: 'ptk_sel', nama: 'Pontianak Selatan', lat: -0.0448, lon: 109.3324, medan: 'kota', desa: ['Akcaya', 'Benua Melayu Darat', 'Benua Melayu Laut', 'Kota Baru', 'Parit Tokaya'] },
+        { id: 'ptk_tgr', nama: 'Pontianak Tenggara', lat: -0.0628, lon: 109.3548, medan: 'kota', desa: ['Bangka Belitung Darat', 'Bangka Belitung Laut', 'Bansir Darat', 'Bansir Laut'] },
+        { id: 'ptk_tim', nama: 'Pontianak Timur', lat: -0.0315, lon: 109.3660, medan: 'kota', desa: ['Banjar Serasan', 'Dalam Bugis', 'Parit Mayor', 'Saigon', 'Tambelan Sampit', 'Tanjung Hilir', 'Tanjung Hulu'] },
+        { id: 'ptk_bar', nama: 'Pontianak Barat', lat: -0.0155, lon: 109.3075, medan: 'kota', desa: ['Pal Lima', 'Sungai Beliung', 'Sungai Jawi Dalam', 'Sungai Jawi Luar'] },
+        { id: 'ptk_utr', nama: 'Pontianak Utara', lat: 0.0085, lon: 109.3380, medan: 'mulus', desa: ['Batu Layang', 'Siantan Hilir', 'Siantan Hulu', 'Siantan Tengah'] }
       ]
     },
+    /* 2. KAB. KUBU RAYA — 9 Kecamatan */
     kuburaya: {
       nama: 'Kab. Kubu Raya', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'kr_sraya', nama: 'Sungai Raya', lat: -0.1180, lon: 109.4030, desa: ['Sungai Raya', 'Sungai Raya Dalam', 'Parit Baru', 'Arang Limbung', 'Kapur', 'Kuala Dua', 'Limbung', 'Mekar Baru', 'Teluk Kapuas', 'Madu Sari', 'Sungai Asam', 'Sungai Bulan'] },
-        { id: 'kr_skakap', nama: 'Sungai Kakap', lat: -0.0650, lon: 109.2450, desa: ['Sungai Kakap', 'Pal IX', 'Sungai Rengas', 'Sungai Itik', 'Jeruju Besar', 'Kalimas', 'Punggur Kecil', 'Punggur Besar', 'Tanjung Saleh', 'Sepuk Laut'] },
-        { id: 'kr_ambawang', nama: 'Sungai Ambawang', lat: -0.0480, lon: 109.4950, desa: ['Sungai Ambawang Kuala', 'Korek', 'Jawa Tengah', 'Lingga', 'Pancaroba', 'Mega Timur', 'Simpang Kanan', 'Sungai Malaya', 'Pasak Piang'] },
-        { id: 'kr_kmandor', nama: 'Kuala Mandor B', lat: 0.0320, lon: 109.5450, desa: ['Kuala Mandor A', 'Kuala Mandor B', 'Kubu Padi', 'Retok', 'Sungai Enau'] },
-        { id: 'kr_rasau', nama: 'Rasau Jaya', lat: -0.2380, lon: 109.3810, desa: ['Rasau Jaya Umum', 'Rasau Jaya Satu', 'Rasau Jaya Dua', 'Rasau Jaya Tiga', 'Bintang Mas', 'Pematang Tujuh'] },
-        { id: 'kr_kubu', nama: 'Kubu', lat: -0.4680, lon: 109.3650, desa: ['Kubu', 'Kampung Baru', 'Olak-Olak Kubu', 'Air Putih', 'Jangkang Satu', 'Teluk Nangka', 'Pinang Luar'] },
-        { id: 'kr_pakedai', nama: 'Teluk Pakedai', lat: -0.3150, lon: 109.2350, desa: ['Teluk Pakedai Hulu', 'Teluk Pakedai Satu', 'Teluk Pakedai Dua', 'Selat Remis', 'Pasir Putih', 'Sungai Deras'] },
-        { id: 'kr_bampar', nama: 'Batu Ampar', lat: -0.7500, lon: 109.4850, desa: ['Padang Tikar Satu', 'Padang Tikar Dua', 'Batu Ampar', 'Sungai Jawi', 'Tasik Malaya', 'Nipah Panjang', 'Teluk Nibung'] },
-        { id: 'kr_terentang', nama: 'Terentang', lat: -0.4120, lon: 109.6150, desa: ['Terentang Hilir', 'Terentang Hulu', 'Permata', 'Radak Baru', 'Sungai Radak Satu', 'Betuah'] }
+        { id: 'kr_sraya', nama: 'Sungai Raya', lat: -0.1180, lon: 109.4030, medan: 'kota', desa: ['Sungai Raya', 'Sungai Raya Dalam', 'Parit Baru', 'Arang Limbung', 'Kapur', 'Kuala Dua', 'Limbung', 'Mekar Baru', 'Teluk Kapuas', 'Madu Sari', 'Sungai Asam', 'Sungai Bulan'] },
+        { id: 'kr_skakap', nama: 'Sungai Kakap', lat: -0.0650, lon: 109.2450, medan: 'mulus', desa: ['Sungai Kakap', 'Pal IX', 'Sungai Rengas', 'Sungai Itik', 'Jeruju Besar', 'Kalimas', 'Punggur Kecil', 'Punggur Besar', 'Tanjung Saleh', 'Sepuk Laut'] },
+        { id: 'kr_ambawang', nama: 'Sungai Ambawang', lat: -0.0480, lon: 109.4950, medan: 'mulus', desa: ['Sungai Ambawang Kuala', 'Korek', 'Jawa Tengah', 'Lingga', 'Pancaroba', 'Mega Timur', 'Simpang Kanan', 'Sungai Malaya', 'Pasak Piang'] },
+        { id: 'kr_kmandor', nama: 'Kuala Mandor B', lat: 0.0320, lon: 109.5450, medan: 'bergelombang', desa: ['Kuala Mandor A', 'Kuala Mandor B', 'Kubu Padi', 'Retok', 'Sungai Enau'] },
+        { id: 'kr_rasau', nama: 'Rasau Jaya', lat: -0.2380, lon: 109.3810, medan: 'mulus', desa: ['Rasau Jaya Umum', 'Rasau Jaya Satu', 'Rasau Jaya Dua', 'Rasau Jaya Tiga', 'Bintang Mas', 'Pematang Tujuh'] },
+        { id: 'kr_kubu', nama: 'Kubu', lat: -0.4680, lon: 109.3650, medan: 'rusak', desa: ['Kubu', 'Kampung Baru', 'Olak-Olak Kubu', 'Air Putih', 'Jangkang Satu', 'Teluk Nangka', 'Pinang Luar'] },
+        { id: 'kr_pakedai', nama: 'Teluk Pakedai', lat: -0.3150, lon: 109.2350, medan: 'rusak', desa: ['Teluk Pakedai Hulu', 'Teluk Pakedai Satu', 'Teluk Pakedai Dua', 'Selat Remis', 'Pasir Putih', 'Sungai Deras'] },
+        { id: 'kr_bampar', nama: 'Batu Ampar', lat: -0.7500, lon: 109.4850, medan: 'pulau', pulau: true, desa: ['Padang Tikar Satu', 'Padang Tikar Dua', 'Batu Ampar', 'Sungai Jawi', 'Tasik Malaya', 'Nipah Panjang', 'Teluk Nibung'] },
+        { id: 'kr_terentang', nama: 'Terentang', lat: -0.4120, lon: 109.6150, medan: 'tanah', desa: ['Terentang Hilir', 'Terentang Hulu', 'Permata', 'Radak Baru', 'Sungai Radak Satu', 'Betuah'] }
       ]
     },
+    /* 3. KAB. KETAPANG — 20 Kecamatan */
     ketapang: {
       nama: 'Kab. Ketapang', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'ktp_dpawan', nama: 'Delta Pawan', lat: -1.8350, lon: 109.9740, desa: ['Sampit', 'Tengah', 'Kantor', 'Mulia Baru', 'Sukaharja', 'Payak Kumang', 'Kali Nilam', 'Suka Bangun', 'Suka Bangun Dalam'] },
-        { id: 'ktp_bkayong', nama: 'Benua Kayong', lat: -1.8620, lon: 109.9850, desa: ['Kauman', 'Mulia Kerta', 'Tuan-Tuan', 'Banjar', 'Negeri Baru', 'Padang', 'Kinjil Pesisir', 'Sungai Kinjil', 'Baru', 'Mekar Sari', 'Suka Baru'] },
-        { id: 'ktp_mpawan', nama: 'Muara Pawan', lat: -1.7680, lon: 109.9550, desa: ['Sungai Awan Kiri', 'Sungai Awan Kanan', 'Tempurukan', 'Ulak Medang', 'Mayak', 'Tanjung Pura', 'Tanjung Pasar', 'Suka Maju'] },
-        { id: 'ktp_mhu', nama: 'Matan Hilir Utara', lat: -1.6080, lon: 110.0350, desa: ['Kuala Tolak', 'Kuala Satong', 'Laman Satong', 'Sungai Putri', 'Tanjung Baik Budi'] },
-        { id: 'ktp_mhs', nama: 'Matan Hilir Selatan', lat: -2.0650, lon: 110.1250, desa: ['Pesaguan Kanan', 'Pesaguan Kiri', 'Sungai Bakau', 'Sungai Besar', 'Sungai Jawi', 'Sungai Nanjung', 'Sungai Pelang', 'Pematang Gadung', 'Harapan Baru'] },
-        { id: 'ktp_kendawangan', nama: 'Kendawangan', lat: -2.5260, lon: 110.2140, desa: ['Kendawangan Kiri', 'Kendawangan Kanan', 'Mekar Utama', 'Pangkalan Batu', 'Air Hitam Besar', 'Bangkal Serai', 'Banjar Sari', 'Selimatan Jaya'] },
-        { id: 'ktp_sandai', nama: 'Sandai', lat: -1.2250, lon: 110.5250, desa: ['Sandai', 'Sandai Kiri', 'Muara Jekak', 'Penjawaan', 'Randau', 'Petai Patah', 'Istana', 'Demit'] },
-        { id: 'ktp_ntayap', nama: 'Nanga Tayap', lat: -1.5250, lon: 110.5850, desa: ['Nanga Tayap', 'Sungai Kelik', 'Pangkalan Teluk', 'Lembah Hijau Satu', 'Lembah Hijau Dua', 'Simpang Tiga Sembelangaan', 'Kayong Hulu'] },
-        { id: 'ktp_ttiti', nama: 'Tumbang Titi', lat: -1.8250, lon: 110.6350, desa: ['Tumbang Titi', 'Batu Tajam', 'Beringin Rayo', 'Kalimas Baru', 'Pengatapan Raya', 'Segar Wangi'] },
-        { id: 'ktp_marau', nama: 'Marau', lat: -2.1250, lon: 110.7150, desa: ['Suka Karya', 'Bantan Sari', 'Batu Payung Dua', 'Karya Baru', 'Randai', 'Riam Batu Gading'] },
-        { id: 'ktp_mmata', nama: 'Manis Mata', lat: -2.4650, lon: 111.0150, desa: ['Manis Mata', 'Air Dekakah', 'Asam Besar', 'Batu Sedau', 'Bukit Gajah', 'Silat'] },
-        { id: 'ktp_slaur', nama: 'Sungai Laur', lat: -0.9650, lon: 110.4250, desa: ['Riam Bunut', 'Bengaras', 'Harapan Baru', 'Kepari', 'Lanjut Mekar Sari', 'Sempurna'] },
-        { id: 'ktp_shulu', nama: 'Simpang Hulu', lat: -0.6150, lon: 110.3350, desa: ['Balai Pinang', 'Botong', 'Kualan Hilir', 'Kualan Hulu', 'Kualan Tengah', 'Labai Hilir', 'Semandang Hulu'] },
-        { id: 'ktp_sdua', nama: 'Simpang Dua', lat: -0.8350, lon: 110.3650, desa: ['Semandang Kanan', 'Batu Daya', 'Gema', 'Kamora', 'Kampar Sebomban', 'Mekar Raya'] },
-        { id: 'ktp_hsungai', nama: 'Hulu Sungai', lat: -1.0850, lon: 110.8950, desa: ['Menyumbung', 'Beginci Darat', 'Benua Krio', 'Cinta Manis', 'Krio Hulu', 'Sunge Bengaras'] },
-        { id: 'ktp_jelai', nama: 'Jelai Hulu', lat: -2.0150, lon: 110.8950, desa: ['Periangan', 'Air Dua', 'Asam Jelai', 'Biku Sarana', 'Karang Dangin', 'Kusik Batu Lapu'] },
-        { id: 'ktp_aupas', nama: 'Air Upas', lat: -2.3150, lon: 110.8450, desa: ['Air Upas', 'Air Durian Jaya', 'Banda Sari', 'Gahang', 'Harapan Baru', 'Mekar Jaya'] },
-        { id: 'ktp_singkup', nama: 'Singkup', lat: -2.2950, lon: 110.6350, desa: ['Sukaraja', 'Muntai', 'Pantai Ketikal', 'Suka Mulya', 'Sukasari', 'Tanah Hitam'] },
-        { id: 'ktp_pemahan', nama: 'Pemahan', lat: -1.7650, lon: 110.4650, desa: ['Pebihingan', 'Lalang Panjang', 'Muara Gerunggang', 'Semayok Baru', 'Usaha Baru'] },
-        { id: 'ktp_smrayak', nama: 'Sungai Melayu Rayak', lat: -1.7850, lon: 110.2850, desa: ['Sungai Melayu', 'Sungai Melayu Baru', 'Beringin Jaya', 'Jairan Jaya', 'Karya Mukti', 'Kepuluk', 'Piansak'] }
+        { id: 'ktp_dpawan', nama: 'Delta Pawan', lat: -1.8350, lon: 109.9740, medan: 'kota', desa: ['Sampit', 'Tengah', 'Kantor', 'Mulia Baru', 'Sukaharja', 'Payak Kumang', 'Kali Nilam', 'Suka Bangun', 'Suka Bangun Dalam'] },
+        { id: 'ktp_bkayong', nama: 'Benua Kayong', lat: -1.8620, lon: 109.9850, medan: 'kota', desa: ['Kauman', 'Mulia Kerta', 'Tuan-Tuan', 'Banjar', 'Negeri Baru', 'Padang', 'Kinjil Pesisir', 'Sungai Kinjil', 'Baru', 'Mekar Sari', 'Suka Baru'] },
+        { id: 'ktp_mpawan', nama: 'Muara Pawan', lat: -1.7680, lon: 109.9550, medan: 'mulus', desa: ['Sungai Awan Kiri', 'Sungai Awan Kanan', 'Tempurukan', 'Ulak Medang', 'Mayak', 'Tanjung Pura', 'Tanjung Pasar', 'Suka Maju'] },
+        { id: 'ktp_mhu', nama: 'Matan Hilir Utara', lat: -1.6080, lon: 110.0350, medan: 'mulus', desa: ['Kuala Tolak', 'Kuala Satong', 'Laman Satong', 'Sungai Putri', 'Tanjung Baik Budi'] },
+        { id: 'ktp_mhs', nama: 'Matan Hilir Selatan', lat: -2.0650, lon: 110.1250, medan: 'bergelombang', desa: ['Pesaguan Kanan', 'Pesaguan Kiri', 'Sungai Bakau', 'Sungai Besar', 'Sungai Jawi', 'Sungai Nanjung', 'Sungai Pelang', 'Pematang Gadung', 'Harapan Baru'] },
+        { id: 'ktp_kendawangan', nama: 'Kendawangan', lat: -2.5260, lon: 110.2140, medan: 'bergelombang', desa: ['Kendawangan Kiri', 'Kendawangan Kanan', 'Mekar Utama', 'Pangkalan Batu', 'Air Hitam Besar', 'Bangkal Serai', 'Banjar Sari', 'Selimatan Jaya'] },
+        { id: 'ktp_sandai', nama: 'Sandai', lat: -1.2250, lon: 110.5250, medan: 'bergelombang', desa: ['Sandai', 'Sandai Kiri', 'Muara Jekak', 'Penjawaan', 'Randau', 'Petai Patah', 'Istana', 'Demit'] },
+        { id: 'ktp_ntayap', nama: 'Nanga Tayap', lat: -1.5250, lon: 110.5850, medan: 'bergelombang', desa: ['Nanga Tayap', 'Sungai Kelik', 'Pangkalan Teluk', 'Lembah Hijau Satu', 'Lembah Hijau Dua', 'Simpang Tiga Sembelangaan', 'Kayong Hulu'] },
+        { id: 'ktp_ttiti', nama: 'Tumbang Titi', lat: -1.8250, lon: 110.6350, medan: 'bergelombang', desa: ['Tumbang Titi', 'Batu Tajam', 'Beringin Rayo', 'Kalimas Baru', 'Pengatapan Raya', 'Segar Wangi'] },
+        { id: 'ktp_marau', nama: 'Marau', lat: -2.1250, lon: 110.7150, medan: 'rusak', desa: ['Suka Karya', 'Bantan Sari', 'Batu Payung Dua', 'Karya Baru', 'Randai', 'Riam Batu Gading'] },
+        { id: 'ktp_mmata', nama: 'Manis Mata', lat: -2.4650, lon: 111.0150, medan: 'rusak', desa: ['Manis Mata', 'Air Dekakah', 'Asam Besar', 'Batu Sedau', 'Bukit Gajah', 'Silat'] },
+        { id: 'ktp_slaur', nama: 'Sungai Laur', lat: -0.9650, lon: 110.4250, medan: 'bergelombang', desa: ['Riam Bunut', 'Bengaras', 'Harapan Baru', 'Kepari', 'Lanjut Mekar Sari', 'Sempurna'] },
+        { id: 'ktp_shulu', nama: 'Simpang Hulu', lat: -0.6150, lon: 110.3350, medan: 'bergelombang', desa: ['Balai Pinang', 'Balai Pinang Hulu', 'Botuh Bosi', 'Kenanga', 'Kualan Hilir', 'Kualan Hulu', 'Kualan Tengah', 'Labai Hilir', 'Semandang Hulu', 'Semandang Kiri'] },
+        { id: 'ktp_sdua', nama: 'Simpang Dua', lat: -0.8350, lon: 110.3650, medan: 'rusak', desa: ['Semandang Kanan', 'Batu Daya', 'Gema', 'Kamora', 'Kampar Sebomban', 'Mekar Raya'] },
+        { id: 'ktp_hsungai', nama: 'Hulu Sungai', lat: -1.0850, lon: 110.8950, medan: 'tanah', desa: ['Menyumbung', 'Beginci Darat', 'Benua Krio', 'Cinta Manis', 'Krio Hulu', 'Sunge Bengaras'] },
+        { id: 'ktp_jelai', nama: 'Jelai Hulu', lat: -2.0150, lon: 110.8950, medan: 'rusak', desa: ['Periangan', 'Air Dua', 'Asam Jelai', 'Biku Sarana', 'Karang Dangin', 'Kusik Batu Lapu'] },
+        { id: 'ktp_aupas', nama: 'Air Upas', lat: -2.3150, lon: 110.8450, medan: 'rusak', desa: ['Air Upas', 'Air Durian Jaya', 'Banda Sari', 'Gahang', 'Harapan Baru', 'Mekar Jaya'] },
+        { id: 'ktp_singkup', nama: 'Singkup', lat: -2.2950, lon: 110.6350, medan: 'rusak', desa: ['Sukaraja', 'Muntai', 'Pantai Ketikal', 'Suka Mulya', 'Sukasari', 'Tanah Hitam'] },
+        { id: 'ktp_pemahan', nama: 'Pemahan', lat: -1.7650, lon: 110.4650, medan: 'bergelombang', desa: ['Pebihingan', 'Lalang Panjang', 'Muara Gerunggang', 'Semayok Baru', 'Usaha Baru'] },
+        { id: 'ktp_smrayak', nama: 'Sungai Melayu Rayak', lat: -1.7850, lon: 110.2850, medan: 'bergelombang', desa: ['Sungai Melayu', 'Sungai Melayu Baru', 'Beringin Jaya', 'Jairan Jaya', 'Karya Mukti', 'Kepuluk', 'Piansak'] }
       ]
     },
+    /* 4. KAB. KAYONG UTARA — 6 Kecamatan */
     kayongutara: {
       nama: 'Kab. Kayong Utara', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'ku_sukadana', nama: 'Sukadana', lat: -1.2420, lon: 109.9510, desa: ['Sutera', 'Pangkalan Buton', 'Pampang Harapan', 'Benawai Agung', 'Harapan Mulia', 'Riam Berasap Jaya', 'Sedahan Jaya', 'Sejahtera'] },
-        { id: 'ku_shilir', nama: 'Simpang Hilir', lat: -1.1150, lon: 109.9850, desa: ['Teluk Melano', 'Nipah Kuning', 'Pemangkat', 'Padu Banjar', 'Rantau Panjang', 'Batu Barat', 'Batu Mas', 'Pulau Kumbang'] },
-        { id: 'ku_tbatang', nama: 'Teluk Batang', lat: -1.0320, lon: 109.8450, desa: ['Teluk Batang', 'Teluk Batang Selatan', 'Teluk Batang Utara', 'Alur Bandung', 'Banyu Abang', 'Mas Bangun', 'Sungai Paduan'] },
-        { id: 'ku_seponti', nama: 'Seponti', lat: -0.9450, lon: 109.8850, desa: ['Seponti Jaya', 'Durian Sebatang', 'Podo Rukun', 'Sungai Sepeti', 'Telaga Arum', 'Wonorejo'] },
-        { id: 'ku_pmaya', nama: 'Pulau Maya', lat: -1.1450, lon: 109.5950, desa: ['Tanjung Satai', 'Dusun Besar', 'Dusun Kecil', 'Kemboja', 'Satai Lestari'] },
-        { id: 'ku_karimata', nama: 'Kepulauan Karimata', lat: -1.6150, lon: 108.9250, desa: ['Pelapis', 'Betok Jaya', 'Padang'] }
+        { id: 'ku_sukadana', nama: 'Sukadana', lat: -1.2420, lon: 109.9510, medan: 'mulus', desa: ['Sutera', 'Pangkalan Buton', 'Pampang Harapan', 'Benawai Agung', 'Harapan Mulia', 'Riam Berasap Jaya', 'Sedahan Jaya', 'Sejahtera'] },
+        { id: 'ku_shilir', nama: 'Simpang Hilir', lat: -1.1150, lon: 109.9850, medan: 'bergelombang', desa: ['Teluk Melano', 'Nipah Kuning', 'Pemangkat', 'Padu Banjar', 'Rantau Panjang', 'Batu Barat', 'Batu Mas', 'Pulau Kumbang'] },
+        { id: 'ku_tbatang', nama: 'Teluk Batang', lat: -1.0320, lon: 109.8450, medan: 'bergelombang', desa: ['Teluk Batang', 'Teluk Batang Selatan', 'Teluk Batang Utara', 'Alur Bandung', 'Banyu Abang', 'Mas Bangun', 'Sungai Paduan'] },
+        { id: 'ku_seponti', nama: 'Seponti', lat: -0.9450, lon: 109.8850, medan: 'bergelombang', desa: ['Seponti Jaya', 'Durian Sebatang', 'Podo Rukun', 'Sungai Sepeti', 'Telaga Arum', 'Wonorejo'] },
+        { id: 'ku_pmaya', nama: 'Pulau Maya', lat: -1.1450, lon: 109.5950, medan: 'pulau', pulau: true, desa: ['Tanjung Satai', 'Dusun Besar', 'Dusun Kecil', 'Kemboja', 'Satai Lestari'] },
+        { id: 'ku_karimata', nama: 'Kepulauan Karimata', lat: -1.6150, lon: 108.9250, medan: 'pulau', pulau: true, desa: ['Pelapis', 'Betok Jaya', 'Padang'] }
       ]
     },
+    /* 5. KAB. MEMPAWAH — 9 Kecamatan */
     mempawah: {
       nama: 'Kab. Mempawah', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'mpw_hilir', nama: 'Mempawah Hilir', lat: 0.3620, lon: 108.9580, desa: ['Tengah', 'Terusan', 'Tanjung', 'Kuala Secapah', 'Malikian', 'Pasir', 'Penibung', 'Sengkubang'] },
-        { id: 'mpw_timur', nama: 'Mempawah Timur', lat: 0.3520, lon: 109.0050, desa: ['Pulau Pedalaman', 'Pasir Palembang', 'Pasir Panjang', 'Antibai', 'Parit Banjar', 'Sejegi', 'Sungai Bakau Kecil'] },
-        { id: 'mpw_pinyuh', nama: 'Sungai Pinyuh', lat: 0.2780, lon: 109.0860, desa: ['Sungai Pinyuh', 'Galang', 'Nusapati', 'Peniraman', 'Sungai Bakau Besar Darat', 'Sungai Bakau Besar Laut', 'Sungai Batang', 'Sungai Purun Kecil', 'Sungai Rasau'] },
-        { id: 'mpw_jongkat', nama: 'Jongkat', lat: 0.0880, lon: 109.2550, desa: ['Jungkat', 'Peniti Luar', 'Sungai Nipah', 'Wajok Hilir', 'Wajok Hulu'] },
-        { id: 'mpw_segedong', nama: 'Segedong', lat: 0.1750, lon: 109.1650, desa: ['Parit Bugis', 'Peniti Besar', 'Peniti Dalam Satu', 'Peniti Dalam Dua', 'Sungai Burung', 'Sungai Purun Besar'] },
-        { id: 'mpw_skunyit', nama: 'Sungai Kunyit', lat: 0.4450, lon: 108.9250, desa: ['Sungai Kunyit Laut', 'Sungai Kunyit Hulu', 'Sungai Kunyit Dalam', 'Bukit Batu', 'Mendalok', 'Semparong Parit Raden', 'Sungai Duri Satu', 'Sungai Limau'] },
-        { id: 'mpw_anjongan', nama: 'Anjongan', lat: 0.3550, lon: 109.1450, desa: ['Anjungan Melancar', 'Anjungan Dalam', 'Dema', 'Kepayang', 'Pak Bulu'] },
-        { id: 'mpw_toho', nama: 'Toho', lat: 0.4150, lon: 109.2350, desa: ['Pak Laheng', 'Pak Utan', 'Benuang', 'Kecurit', 'Sambora', 'Sepang', 'Terap', 'Toho Ilir'] },
-        { id: 'mpw_sadaniang', nama: 'Sadaniang', lat: 0.5150, lon: 109.2550, desa: ['Amawang', 'Ansiap', 'Bumbun', 'Pentek', 'Sekabuk', 'Suak Barangan'] }
+        { id: 'mpw_hilir', nama: 'Mempawah Hilir', lat: 0.3620, lon: 108.9580, medan: 'kota', desa: ['Tengah', 'Terusan', 'Tanjung', 'Kuala Secapah', 'Malikian', 'Pasir', 'Penibung', 'Sengkubang'] },
+        { id: 'mpw_timur', nama: 'Mempawah Timur', lat: 0.3520, lon: 109.0050, medan: 'mulus', desa: ['Pulau Pedalaman', 'Pasir Palembang', 'Pasir Panjang', 'Antibai', 'Parit Banjar', 'Sejegi', 'Sungai Bakau Kecil'] },
+        { id: 'mpw_pinyuh', nama: 'Sungai Pinyuh', lat: 0.2780, lon: 109.0860, medan: 'mulus', desa: ['Sungai Pinyuh', 'Galang', 'Nusapati', 'Peniraman', 'Sungai Bakau Besar Darat', 'Sungai Bakau Besar Laut', 'Sungai Batang', 'Sungai Purun Kecil', 'Sungai Rasau'] },
+        { id: 'mpw_jongkat', nama: 'Jongkat', lat: 0.0880, lon: 109.2550, medan: 'mulus', desa: ['Jungkat', 'Peniti Luar', 'Sungai Nipah', 'Wajok Hilir', 'Wajok Hulu'] },
+        { id: 'mpw_segedong', nama: 'Segedong', lat: 0.1750, lon: 109.1650, medan: 'mulus', desa: ['Parit Bugis', 'Peniti Besar', 'Peniti Dalam Satu', 'Peniti Dalam Dua', 'Sungai Burung', 'Sungai Purun Besar'] },
+        { id: 'mpw_skunyit', nama: 'Sungai Kunyit', lat: 0.4450, lon: 108.9250, medan: 'pesisir', desa: ['Sungai Kunyit Laut', 'Sungai Kunyit Hulu', 'Sungai Kunyit Dalam', 'Bukit Batu', 'Mendalok', 'Semparong Parit Raden', 'Sungai Duri Satu', 'Sungai Limau'] },
+        { id: 'mpw_anjongan', nama: 'Anjongan', lat: 0.3550, lon: 109.1450, medan: 'mulus', desa: ['Anjungan Melancar', 'Anjungan Dalam', 'Dema', 'Kepayang', 'Pak Bulu'] },
+        { id: 'mpw_toho', nama: 'Toho', lat: 0.4150, lon: 109.2350, medan: 'bergelombang', desa: ['Pak Laheng', 'Pak Utan', 'Benuang', 'Kecurit', 'Sambora', 'Sepang', 'Terap', 'Toho Ilir'] },
+        { id: 'mpw_sadaniang', nama: 'Sadaniang', lat: 0.5150, lon: 109.2550, medan: 'perbukitan', desa: ['Amawang', 'Ansiap', 'Bumbun', 'Pentek', 'Sekabuk', 'Suak Barangan'] }
       ]
     },
+    /* 6. KOTA SINGKAWANG — 5 Kecamatan */
     singkawang: {
       nama: 'Kota Singkawang', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'skw_bar', nama: 'Singkawang Barat', lat: 0.9065, lon: 108.9830, desa: ['Pasiran', 'Melayu', 'Kuala', 'Tengah'] },
-        { id: 'skw_tgh', nama: 'Singkawang Tengah', lat: 0.9010, lon: 109.0050, desa: ['Roban', 'Condong', 'Sekip Lama', 'Jawa', 'Bukit Batu', 'Sungai Wie'] },
-        { id: 'skw_sel', nama: 'Singkawang Selatan', lat: 0.8420, lon: 108.9650, desa: ['Sedau', 'Sijangkung', 'Pangmilang', 'Sagatani'] },
-        { id: 'skw_tim', nama: 'Singkawang Timur', lat: 0.9040, lon: 109.0680, desa: ['Nyarumkop', 'Mayasopa', 'Pajintan', 'Bagak Sahwa', 'Sanggau Kulor'] },
-        { id: 'skw_utr', nama: 'Singkawang Utara', lat: 0.9580, lon: 108.9980, desa: ['Sungai Garam Hilir', 'Naram', 'Sungai Bulan', 'Sungai Rasau', 'Setapuk Besar', 'Setapuk Kecil', 'Semelagi Kecil'] }
+        { id: 'skw_bar', nama: 'Singkawang Barat', lat: 0.9065, lon: 108.9830, medan: 'kota', desa: ['Pasiran', 'Melayu', 'Kuala', 'Tengah'] },
+        { id: 'skw_tgh', nama: 'Singkawang Tengah', lat: 0.9010, lon: 109.0050, medan: 'kota', desa: ['Roban', 'Condong', 'Sekip Lama', 'Jawa', 'Bukit Batu', 'Sungai Wie'] },
+        { id: 'skw_sel', nama: 'Singkawang Selatan', lat: 0.8420, lon: 108.9650, medan: 'pesisir', desa: ['Sedau', 'Sijangkung', 'Pangmilang', 'Sagatani'] },
+        { id: 'skw_tim', nama: 'Singkawang Timur', lat: 0.9040, lon: 109.0680, medan: 'perbukitan', desa: ['Nyarumkop', 'Mayasopa', 'Pajintan', 'Bagak Sahwa', 'Sanggau Kulor'] },
+        { id: 'skw_utr', nama: 'Singkawang Utara', lat: 0.9580, lon: 108.9980, medan: 'mulus', desa: ['Sungai Garam Hilir', 'Naram', 'Sungai Bulan', 'Sungai Rasau', 'Setapuk Besar', 'Setapuk Kecil', 'Semelagi Kecil'] }
       ]
     },
+    /* 7. KAB. SAMBAS — 19 Kecamatan (Lengkap 100% BPS) */
     sambas: {
       nama: 'Kab. Sambas', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'sbs_sambas', nama: 'Sambas', lat: 1.3620, lon: 109.3050, desa: ['Dalam Kaum', 'Durian', 'Jagur', 'Lubuk Dagang', 'Lumbang', 'Pasar Melayu', 'Pendawan', 'Saing Rambi', 'Tanjung Bugis', 'Tumuk Manggis'] },
-        { id: 'sbs_pemangkat', nama: 'Pemangkat', lat: 1.1760, lon: 108.9750, desa: ['Pemangkat Kota', 'Harapan', 'Gugah Sejahtera', 'Jelutung', 'Lonam', 'Penjajap', 'Perapakan', 'Sebatuan'] },
-        { id: 'sbs_tebas', nama: 'Tebas', lat: 1.2420, lon: 109.1620, desa: ['Tebas Sungai', 'Tebas Kuala', 'Batu Makjage', 'Bekut', 'Bukit Segoler', 'Dungun Perapakan', 'Makrampai', 'Mensere', 'Pangkalan Kongsi', 'Sejiram'] },
-        { id: 'sbs_tkeramat', nama: 'Teluk Keramat', lat: 1.4650, lon: 109.1950, desa: ['Sekura', 'Berlimang', 'Kuala Pangkalan Keramat', 'Lela', 'Mekar Sekuntum', 'Pedada', 'Pipit Teja', 'Sengawang', 'Sungai Baru'] },
-        { id: 'sbs_selakau', nama: 'Selakau', lat: 1.0720, lon: 108.9780, desa: ['Sungai Nyirih', 'Sungai Rusa', 'Bentunai', 'Kuala', 'Pangkalan Bemban', 'Parit Baru', 'Parit Kongsi', 'Semelagi Besar', 'Twi Mentibar'] },
-        { id: 'sbs_jawai', nama: 'Jawai', lat: 1.3650, lon: 109.0450, desa: ['Sentebang', 'Bakau', 'Dungun Laut', 'Lambau', 'Mutus Darussalam', 'Parit Setia', 'Pelimpaan', 'Sarang Burung Danau', 'Sungai Nilam'] },
-        { id: 'sbs_paloh', nama: 'Paloh', lat: 1.7250, lon: 109.2850, desa: ['Nibung', 'Kalimantan', 'Malek', 'Matang Danau', 'Mentibar', 'Sebubus', 'Tanah Hitam', 'Temajuk'] },
-        { id: 'sbs_sajingan', nama: 'Sajingan Besar', lat: 1.5950, lon: 109.6150, desa: ['Sebunga', 'Kaliau', 'Santaban', 'Senatab', 'Sungai Bening'] },
-        { id: 'sbs_subah', nama: 'Subah', lat: 1.2750, lon: 109.4350, desa: ['Balai Gemuruh', 'Bukit Mulya', 'Madak', 'Mensade', 'Mukti Raharja', 'Sempurna', 'Sungai Deden', 'Sungai Sapak'] },
-        { id: 'sbs_galing', nama: 'Galing', lat: 1.5450, lon: 109.3650, desa: ['Galing', 'Ratu Sepudak', 'Sagu', 'Sijang', 'Sungai Palah', 'Teluk Pandan', 'Tempapan Hulu', 'Tempapan Kuala'] }
+        { id: 'sbs_sambas', nama: 'Sambas', lat: 1.3620, lon: 109.3050, medan: 'kota', desa: ['Dalam Kaum', 'Durian', 'Jagur', 'Lubuk Dagang', 'Lumbang', 'Pasar Melayu', 'Pendawan', 'Saing Rambi', 'Tanjung Bugis', 'Tumuk Manggis'] },
+        { id: 'sbs_pemangkat', nama: 'Pemangkat', lat: 1.1760, lon: 108.9750, medan: 'mulus', desa: ['Pemangkat Kota', 'Harapan', 'Gugah Sejahtera', 'Jelutung', 'Lonam', 'Penjajap', 'Perapakan', 'Sebatuan'] },
+        { id: 'sbs_tebas', nama: 'Tebas', lat: 1.2420, lon: 109.1620, medan: 'mulus', desa: ['Tebas Sungai', 'Tebas Kuala', 'Batu Makjage', 'Bekut', 'Bukit Segoler', 'Dungun Perapakan', 'Makrampai', 'Mensere', 'Pangkalan Kongsi', 'Sejiram'] },
+        { id: 'sbs_tkeramat', nama: 'Teluk Keramat', lat: 1.4650, lon: 109.1950, medan: 'bergelombang', desa: ['Sekura', 'Berlimang', 'Kuala Pangkalan Keramat', 'Lela', 'Mekar Sekuntum', 'Pedada', 'Pipit Teja', 'Sengawang', 'Sungai Baru'] },
+        { id: 'sbs_selakau', nama: 'Selakau', lat: 1.0720, lon: 108.9780, medan: 'mulus', desa: ['Sungai Nyirih', 'Sungai Rusa', 'Bentunai', 'Kuala', 'Pangkalan Bemban', 'Parit Baru', 'Parit Kongsi', 'Semelagi Besar', 'Twi Mentibar'] },
+        { id: 'sbs_jawai', nama: 'Jawai', lat: 1.3650, lon: 109.0450, medan: 'bergelombang', desa: ['Sentebang', 'Bakau', 'Dungun Laut', 'Lambau', 'Mutus Darussalam', 'Parit Setia', 'Pelimpaan', 'Sarang Burung Danau', 'Sungai Nilam'] },
+        { id: 'sbs_paloh', nama: 'Paloh', lat: 1.7250, lon: 109.2850, medan: 'rusak', desa: ['Nibung', 'Kalimantan', 'Malek', 'Matang Danau', 'Mentibar', 'Sebubus', 'Tanah Hitam', 'Temajuk'] },
+        { id: 'sbs_sajingan', nama: 'Sajingan Besar', lat: 1.5950, lon: 109.6150, medan: 'perbukitan', desa: ['Sebunga', 'Kaliau', 'Santaban', 'Senatab', 'Sungai Bening'] },
+        { id: 'sbs_subah', nama: 'Subah', lat: 1.2750, lon: 109.4350, medan: 'bergelombang', desa: ['Balai Gemuruh', 'Bukit Mulya', 'Madak', 'Mensade', 'Mukti Raharja', 'Sempurna', 'Sungai Deden', 'Sungai Sapak'] },
+        { id: 'sbs_galing', nama: 'Galing', lat: 1.5450, lon: 109.3650, medan: 'bergelombang', desa: ['Galing', 'Ratu Sepudak', 'Sagu', 'Sijang', 'Sungai Palah', 'Teluk Pandan', 'Tempapan Hulu', 'Tempapan Kuala'] },
+        { id: 'sbs_sajad', nama: 'Sajad', lat: 1.3850, lon: 109.3880, medan: 'mulus', desa: ['Tengguli', 'Beringin', 'Jirak', 'Mekar Jaya'] },
+        { id: 'sbs_sejangkung', nama: 'Sejangkung', lat: 1.4480, lon: 109.4350, medan: 'bergelombang', desa: ['Parit Raja', 'Penakalan', 'Perigi Landu', 'Perigi Limus', 'Piantus', 'Sekuduk', 'Semanga', 'Sendoyan', 'Senujuh', 'Sepantai', 'Setalik', 'Sulung'] },
+        { id: 'sbs_semparuk', nama: 'Semparuk', lat: 1.2020, lon: 109.0480, medan: 'mulus', desa: ['Semparuk', 'Seburing', 'Sepadu', 'Sepinggan', 'Singaraya'] },
+        { id: 'sbs_jawaisel', nama: 'Jawai Selatan', lat: 1.2750, lon: 109.0250, medan: 'pesisir', desa: ['Matang Terap', 'Jawai Laut', 'Jelu Air', 'Sabaran', 'Sarilaba A', 'Sarilaba B', 'Semperiuk A', 'Semperiuk B', 'Suah Api'] },
+        { id: 'sbs_tekarang', nama: 'Tekarang', lat: 1.3180, lon: 109.1680, medan: 'mulus', desa: ['Tekarang', 'Cepala', 'Matang Segarau', 'Merubung', 'Rambayan', 'Sari Makmur', 'Sempadian'] },
+        { id: 'sbs_tangaran', nama: 'Tangaran', lat: 1.5350, lon: 109.1550, medan: 'bergelombang', desa: ['Simpang Empat', 'Arung Medang', 'Arung Parak', 'Merabuan', 'Merpati', 'Pancur', 'Semata', 'Tangaran'] },
+        { id: 'sbs_selakautim', nama: 'Selakau Timur', lat: 1.0780, lon: 109.0550, medan: 'bergelombang', desa: ['Selakau Tua', 'Buduk Sempadang', 'Gelik', 'Seranggam'] },
+        { id: 'sbs_salatiga', nama: 'Salatiga', lat: 1.1320, lon: 109.0180, medan: 'mulus', desa: ['Salatiga', 'Parit Baru', 'Serumpun', 'Serunai', 'Sungai Toman'] },
+        { id: 'sbs_sebawi', nama: 'Sebawi', lat: 1.3020, lon: 109.2580, medan: 'mulus', desa: ['Sebawi', 'Rantau Panjang', 'Sebangun', 'Sempalai Sebedang', 'Sepuk Tanjung', 'Tebing Batu', 'Tempatan'] }
       ]
     },
+    /* 8. KAB. BENGKAYANG — 17 Kecamatan (Lengkap 100% BPS) */
     bengkayang: {
       nama: 'Kab. Bengkayang', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'bky_kota', nama: 'Bengkayang', lat: 0.8220, lon: 109.4880, desa: ['Bumi Emas', 'Sebalo', 'Bakti Mulya', 'Bani Amas', 'Setia Budi', 'Tirta Kencana'] },
-        { id: 'bky_sraya', nama: 'Sungai Raya', lat: 0.7150, lon: 108.9050, desa: ['Sungai Duri', 'Sungai Jaga A', 'Sungai Jaga B', 'Sungai Pangkalan Satu', 'Sungai Pangkalan Dua'] },
-        { id: 'bky_srkep', nama: 'Sungai Raya Kepulauan', lat: 0.7680, lon: 108.8850, desa: ['Sungai Raya', 'Karimunting', 'Pulau Lemukutan', 'Rukma Jaya', 'Sungai Keran'] },
-        { id: 'bky_monterado', nama: 'Monterado', lat: 0.7420, lon: 109.1250, desa: ['Monterado', 'Beringin Baru', 'Gerantung', 'Goha', 'Jahandung', 'Mekar Baru', 'Nek Ginap', 'Rantau', 'Serindu'] },
-        { id: 'bky_samalantan', nama: 'Samalantan', lat: 0.7980, lon: 109.2180, desa: ['Samalantan', 'Babane', 'Bukit Serayan', 'Marunsu', 'Pasti Jaya', 'Saba\'u', 'Tumiang'] },
-        { id: 'bky_ledo', nama: 'Ledo', lat: 1.0150, lon: 109.6150, desa: ['Lesabela', 'Dayung', 'Jesape', 'Lomba Karya', 'Rodaya', 'Seles', 'Semangat', 'Serangkat', 'Suka Damai', 'Tawang'] },
-        { id: 'bky_sledo', nama: 'Sanggau Ledo', lat: 1.1550, lon: 109.7150, desa: ['Lembang', 'Bange', 'Danti', 'Gua', 'Sango'] },
-        { id: 'bky_jbabang', nama: 'Jagoi Babang', lat: 1.3180, lon: 109.9150, desa: ['Jagoi', 'Gersik', 'Kum ba', 'Sekida', 'Semunying Jaya', 'Sinar Baru'] }
+        { id: 'bky_kota', nama: 'Bengkayang', lat: 0.8220, lon: 109.4880, medan: 'kota', desa: ['Bumi Emas', 'Sebalo', 'Bakti Mulya', 'Bani Amas', 'Setia Budi', 'Tirta Kencana'] },
+        { id: 'bky_sraya', nama: 'Sungai Raya', lat: 0.7150, lon: 108.9050, medan: 'pesisir', desa: ['Sungai Duri', 'Sungai Jaga A', 'Sungai Jaga B', 'Sungai Pangkalan Satu', 'Sungai Pangkalan Dua'] },
+        { id: 'bky_srkep', nama: 'Sungai Raya Kepulauan', lat: 0.7680, lon: 108.8850, medan: 'pesisir', desa: ['Karimunting', 'Sungai Raya', 'Rukma Jaya', 'Sungai Keran'] },
+        { id: 'bky_monterado', nama: 'Monterado', lat: 0.7420, lon: 109.1250, medan: 'bergelombang', desa: ['Monterado', 'Beringin Baru', 'Gerantung', 'Goha', 'Jahandung', 'Mekar Baru', 'Nek Ginap', 'Rantau', 'Serindu'] },
+        { id: 'bky_samalantan', nama: 'Samalantan', lat: 0.7980, lon: 109.2180, medan: 'bergelombang', desa: ['Samalantan', 'Babane', 'Bukit Serayan', 'Marunsu', 'Pasti Jaya', 'Saba\'u', 'Tumiang'] },
+        { id: 'bky_ledo', nama: 'Ledo', lat: 1.0150, lon: 109.6150, medan: 'perbukitan', desa: ['Lesabela', 'Dayung', 'Jesape', 'Lomba Karya', 'Rodaya', 'Seles', 'Semangat', 'Serangkat', 'Suka Damai', 'Tawang'] },
+        { id: 'bky_sledo', nama: 'Sanggau Ledo', lat: 1.1550, lon: 109.7150, medan: 'perbukitan', desa: ['Lembang', 'Bange', 'Danti', 'Gua', 'Sango'] },
+        { id: 'bky_jbabang', nama: 'Jagoi Babang', lat: 1.3180, lon: 109.9150, medan: 'perbukitan', desa: ['Jagoi', 'Gersik', 'Kumba', 'Sekida', 'Semunying Jaya', 'Sinar Baru'] },
+        { id: 'bky_capkala', nama: 'Capkala', lat: 0.6750, lon: 108.9950, medan: 'mulus', desa: ['Capkala', 'Aris', 'Mandor', 'Pawangi', 'Sebandut', 'Setanduk'] },
+        { id: 'bky_lbawang', nama: 'Lembah Bawang', lat: 0.9050, lon: 109.2950, medan: 'perbukitan', desa: ['Lembah Bawang', 'Godang Damar', 'Janyat', 'Kinande', 'Papan Tembawang', 'Papan Uduk', 'Saka Taru', 'Tempapan'] },
+        { id: 'bky_lumar', nama: 'Lumar', lat: 0.9280, lon: 109.4950, medan: 'perbukitan', desa: ['Tiga Berkat', 'Belimbing', 'Lamolda', 'Magmagan Karya', 'Seren Selimbau'] },
+        { id: 'bky_seluas', nama: 'Seluas', lat: 1.2450, lon: 109.8450, medan: 'perbukitan', desa: ['Seluas', 'Bengkawan', 'Kalon', 'Mayak', 'Sahan', 'Sentangau Jaya'] },
+        { id: 'bky_siding', nama: 'Siding', lat: 1.2850, lon: 110.0850, medan: 'tanah', desa: ['Siding', 'Hli Buie', 'Sungkung I', 'Sungkung II', 'Sungkung III', 'Tamong', 'Tangguh', 'Tawang'] },
+        { id: 'bky_sbetung', nama: 'Sungai Betung', lat: 0.8580, lon: 109.4350, medan: 'mulus', desa: ['Cipta Karya', 'Karya Bhakti', 'Suka Bangun', 'Suka Maju'] },
+        { id: 'bky_ssemarang', nama: 'Suti Semarang', lat: 0.9650, lon: 109.8550, medan: 'tanah', desa: ['Suti Semarang', 'Cempaka Putih', 'Kelayu', 'Kiung', 'Muhi Bersatu', 'Nangka', 'Suka Maju', 'Tapen'] },
+        { id: 'bky_teriak', nama: 'Teriak', lat: 0.7750, lon: 109.5250, medan: 'bergelombang', desa: ['Teriak', 'Ampar Benteng', 'Bana', 'Bangun Sari', 'Benteng', 'Dharma Bhakti', 'Lulang', 'Malo Jelayan', 'Sebente', 'Sekaruh', 'Setia Jaya', 'Sumber Karya', 'Tanjung'] },
+        { id: 'bky_tbelas', nama: 'Tujuh Belas', lat: 1.0780, lon: 109.5150, medan: 'perbukitan', desa: ['Kamuh', 'Bengkilu', 'Pisak', 'Sinar Tebudak'] }
       ]
     },
+    /* 9. KAB. LANDAK — 13 Kecamatan (Lengkap 100% BPS) */
     landak: {
       nama: 'Kab. Landak', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'ldk_ngabang', nama: 'Ngabang', lat: 0.3780, lon: 109.9520, desa: ['Hilir Kantor', 'Hilir Tengah', 'Raja', 'Amboyo Inti', 'Amboyo Selatan', 'Munggu', 'Muun', 'Pak Kasih', 'Tebedak', 'Tubo'] },
-        { id: 'ldk_mandor', nama: 'Mandor', lat: 0.3150, lon: 109.3380, desa: ['Mandor', 'Bebatung', 'Kayu Ara', 'Kayu Tanam', 'Keramas', 'Kerohok', 'Manggang', 'Ngarak', 'Pongok', 'Salatiga', 'Sebadu', 'Simpang Kasturi'] },
-        { id: 'ldk_stemila', nama: 'Sengah Temila', lat: 0.3350, lon: 109.6450, desa: ['Pahauman', 'Sidas', 'Aur Sampuk', 'Banying', 'Gombang', 'Keranji Mancal', 'Paloan', 'Saham', 'Senakin', 'Sebatih'] },
-        { id: 'ldk_menjalin', nama: 'Menjalin', lat: 0.4550, lon: 109.3550, desa: ['Menjalin', 'Bengkawe', 'Lamoanak', 'Nangka', 'Raba', 'Re\'es', 'Sepahat', 'Tempoak'] },
-        { id: 'ldk_mhulu', nama: 'Mempawah Hulu', lat: 0.5680, lon: 109.4250, desa: ['Karangan', 'Babatn', 'Bilayuk', 'Caokng', 'Garuk', 'Mentonyek', 'Pahokng', 'Sala\'as', 'Sampuro', 'Tiang Tanjung'] },
-        { id: 'ldk_menyuke', nama: 'Menyuke', lat: 0.5850, lon: 109.7650, desa: ['Darit', 'Angkaras', 'Anik Dingir', 'Ansang', 'Bagak', 'Berinang Mayun', 'Lintah Betung', 'Mamek', 'Songga', 'Untang'] },
-        { id: 'ldk_abesar', nama: 'Air Besar', lat: 0.6550, lon: 110.1250, desa: ['Serimbu', 'Bentiang', 'Dange Aji', 'Engkangin', 'Jambu Tembawang', 'Merayuh', 'Nyari', 'Pare', 'Sekendal', 'Sempatung Lawek'] }
+        { id: 'ldk_ngabang', nama: 'Ngabang', lat: 0.3780, lon: 109.9520, medan: 'kota', desa: ['Hilir Kantor', 'Hilir Tengah', 'Raja', 'Amboyo Inti', 'Amboyo Selatan', 'Munggu', 'Muun', 'Pak Kasih', 'Tebedak', 'Tubo'] },
+        { id: 'ldk_mandor', nama: 'Mandor', lat: 0.3150, lon: 109.3380, medan: 'mulus', desa: ['Mandor', 'Bebatung', 'Kayu Ara', 'Kayu Tanam', 'Keramas', 'Kerohok', 'Manggang', 'Ngarak', 'Pongok', 'Salatiga', 'Sebadu', 'Simpang Kasturi'] },
+        { id: 'ldk_stemila', nama: 'Sengah Temila', lat: 0.3350, lon: 109.6450, medan: 'mulus', desa: ['Pahauman', 'Sidas', 'Aur Sampuk', 'Banying', 'Gombang', 'Keranji Mancal', 'Paloan', 'Saham', 'Senakin', 'Sebatih'] },
+        { id: 'ldk_menjalin', nama: 'Menjalin', lat: 0.4550, lon: 109.3550, medan: 'bergelombang', desa: ['Menjalin', 'Bengkawe', 'Lamoanak', 'Nangka', 'Raba', 'Re\'es', 'Sepahat', 'Tempoak'] },
+        { id: 'ldk_mhulu', nama: 'Mempawah Hulu', lat: 0.5680, lon: 109.4250, medan: 'bergelombang', desa: ['Karangan', 'Babatn', 'Bilayuk', 'Caokng', 'Garuk', 'Mentonyek', 'Pahokng', 'Sala\'as', 'Sampuro', 'Tiang Tanjung'] },
+        { id: 'ldk_menyuke', nama: 'Menyuke', lat: 0.5850, lon: 109.7650, medan: 'bergelombang', desa: ['Darit', 'Angkaras', 'Anik Dingir', 'Ansang', 'Bagak', 'Berinang Mayun', 'Lintah Betung', 'Mamek', 'Songga', 'Tolok'] },
+        { id: 'ldk_abesar', nama: 'Air Besar', lat: 0.6550, lon: 110.1250, medan: 'rusak', desa: ['Serimbu', 'Bentiang', 'Dange Aji', 'Engkangin', 'Jambu Tembawang', 'Merayuh', 'Nyari', 'Pare', 'Sekendal', 'Sempatung Lawek'] },
+        { id: 'ldk_bhulu', nama: 'Banyuke Hulu', lat: 0.6350, lon: 109.6550, medan: 'bergelombang', desa: ['Untang', 'Gamang', 'Kampet', 'Padang Pio', 'Ringo Lojok', 'Semade', 'Tembawang Bale'] },
+        { id: 'ldk_jelimpo', nama: 'Jelimpo', lat: 0.3650, lon: 110.0850, medan: 'bergelombang', desa: ['Jelimpo', 'Angan Tembawang', 'Balai Peluntan', 'Dara Itam I', 'Kayu Ara', 'Kersik Belantian', 'Mandor Kiru', 'Nyiin', 'Papung', 'Pawis Hilir', 'Sekais', 'Temahar', 'Tubang Raeng'] },
+        { id: 'ldk_kbehe', nama: 'Kuala Behe', lat: 0.4950, lon: 109.8950, medan: 'rusak', desa: ['Kuala Behe', 'Angkanyar', 'Bengawan Ampar', 'Kedama', 'Nyayum', 'Paku Raya', 'Permiit', 'Sehe Lusur', 'Sejowet', 'Semedang', 'Tanjung Balai'] },
+        { id: 'ldk_meranti', nama: 'Meranti', lat: 0.6950, lon: 109.8650, medan: 'rusak', desa: ['Meranti', 'Ampadi', 'Kelampai Setolo', 'Moro Betung', 'Selange', 'Tahu'] },
+        { id: 'ldk_sebangki', nama: 'Sebangki', lat: 0.1450, lon: 109.7650, medan: 'rusak', desa: ['Agak', 'Kumpang Tengah', 'Rantau Panjang', 'Sebangki', 'Sungai Segak'] },
+        { id: 'ldk_sompak', nama: 'Sompak', lat: 0.4950, lon: 109.5150, medan: 'bergelombang', desa: ['Sompak', 'Amawakng', 'Galar', 'Lingkonong', 'Pakumbang', 'Pauh', 'Tapakng'] }
       ]
     },
+    /* 10. KAB. SANGGAU — 15 Kecamatan (Lengkap 100% BPS) */
     sanggau: {
       nama: 'Kab. Sanggau', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'sgu_kapuas', nama: 'Kapuas', lat: 0.1280, lon: 110.5880, desa: ['Beringin', 'Bunut', 'Ilir Kota', 'Tanjung Kapuas', 'Tanjung Sekayam', 'Sungai Sengkuang', 'Kambong', 'Lape', 'Mengkiang', 'Penyeladi'] },
-        { id: 'sgu_thilir', nama: 'Tayan Hilir', lat: -0.0280, lon: 110.1120, desa: ['Pedalaman', 'Kawat', 'Pulau Tayan Utara', 'Balai Ingin', 'Beginjan', 'Cempedak', 'Emberas', 'Lalang', 'Melugai', 'Sebemban', 'Subah', 'Tanjung Bunut'] },
-        { id: 'sgu_thulu', nama: 'Tayan Hulu', lat: 0.3050, lon: 110.2280, desa: ['Sosok', 'Berakak', 'Binjai', 'Engkasan', 'Janang Ran', 'Mandong', 'Menyabo', 'Pandan Sembuat', 'Peruan Dalam', 'Riyai'] },
-        { id: 'sgu_balai', nama: 'Balai', lat: 0.1350, lon: 110.1050, desa: ['Hilir', 'Batang Tarang', 'Bulu Bala', 'Cempedak', 'Empirang Ujung', 'Kebadu', 'Mak Kawing', 'Padu', 'Senyabang', 'Temiang Mali'] },
-        { id: 'sgu_parindu', nama: 'Parindu', lat: 0.2580, lon: 110.4250, desa: ['Pusat Damai', 'Dosan', 'Embala', 'Gunam', 'Hibun', 'Maju Karya', 'Maringin Jaya', 'Palem Jaya', 'Rahayu', 'Sebara', 'Suka Gerundi'] },
-        { id: 'sgu_kembayan', nama: 'Kembayan', lat: 0.5620, lon: 110.4050, desa: ['Tanjung Merpati', 'Kelompu', 'Kuala Dua', 'Mobui', 'Sebongkuh', 'Sebuduh', 'Sejuah', 'Semayang', 'Tanjung Bunga', 'Tanap'] },
-        { id: 'sgu_sekayam', nama: 'Sekayam', lat: 0.8050, lon: 110.4550, desa: ['Balai Karangan', 'Bungkang', 'Engkahan', 'Kenaman', 'Lubuk Sabuk', 'Malenggang', 'Pengadang', 'Raut Muara', 'Sangai', 'Sotok'] },
-        { id: 'sgu_entikong', nama: 'Entikong', lat: 0.9620, lon: 110.3520, desa: ['Entikong', 'Nekan', 'Pala Pasang', 'Semanget', 'Suruh Tembawang'] },
-        { id: 'sgu_meliau', nama: 'Meliau', lat: -0.1250, lon: 110.2950, desa: ['Meliau Hilir', 'Meliau Hulu', 'Balai Tinggi', 'Baru Lombak', 'Cupang', 'Enggadai', 'Harapan Makmur', 'Kuala Buayan', 'Sungai Kembayau'] },
-        { id: 'sgu_toba', nama: 'Toba', lat: -0.2680, lon: 110.1150, desa: ['Teraju', 'Bagai', 'Balai Belungai', 'Belungai Dalam', 'Kampung Baru', 'Lumut', 'Sansat'] }
+        { id: 'sgu_kapuas', nama: 'Kapuas', lat: 0.1280, lon: 110.5880, medan: 'kota', desa: ['Beringin', 'Bunut', 'Ilir Kota', 'Tanjung Kapuas', 'Tanjung Sekayam', 'Sungai Sengkuang', 'Kambong', 'Lape', 'Mengkiang', 'Penyeladi'] },
+        { id: 'sgu_thilir', nama: 'Tayan Hilir', lat: -0.0280, lon: 110.1120, medan: 'mulus', desa: ['Pedalaman', 'Kawat', 'Pulau Tayan Utara', 'Balai Ingin', 'Beginjan', 'Cempedak', 'Emberas', 'Lalang', 'Melugai', 'Sebemban', 'Subah', 'Tanjung Bunut'] },
+        { id: 'sgu_thulu', nama: 'Tayan Hulu', lat: 0.3050, lon: 110.2280, medan: 'mulus', desa: ['Sosok', 'Berakak', 'Binjai', 'Engkasan', 'Janang Ran', 'Mandong', 'Menyabo', 'Pandan Sembuat', 'Peruan Dalam', 'Riyai'] },
+        { id: 'sgu_balai', nama: 'Balai', lat: 0.1350, lon: 110.1050, medan: 'mulus', desa: ['Hilir', 'Batang Tarang', 'Bulu Bala', 'Cempedak', 'Empirang Ujung', 'Kebadu', 'Mak Kawing', 'Padu', 'Senyabang', 'Temiang Mali'] },
+        { id: 'sgu_parindu', nama: 'Parindu', lat: 0.2580, lon: 110.4250, medan: 'mulus', desa: ['Pusat Damai', 'Dosan', 'Embala', 'Gunam', 'Hibun', 'Maju Karya', 'Maringin Jaya', 'Palem Jaya', 'Rahayu', 'Sebara', 'Suka Gerundi'] },
+        { id: 'sgu_kembayan', nama: 'Kembayan', lat: 0.5620, lon: 110.4050, medan: 'mulus', desa: ['Tanjung Merpati', 'Kelompu', 'Kuala Dua', 'Mobui', 'Sebongkuh', 'Sebuduh', 'Sejuah', 'Semayang', 'Tanjung Bunga', 'Tanap'] },
+        { id: 'sgu_sekayam', nama: 'Sekayam', lat: 0.8050, lon: 110.4550, medan: 'bergelombang', desa: ['Balai Karangan', 'Bungkang', 'Engkahan', 'Kenaman', 'Lubuk Sabuk', 'Malenggang', 'Pengadang', 'Raut Muara', 'Sangai', 'Sotok'] },
+        { id: 'sgu_entikong', nama: 'Entikong', lat: 0.9620, lon: 110.3520, medan: 'mulus', desa: ['Entikong', 'Nekan', 'Pala Pasang', 'Semanget', 'Suruh Tembawang'] },
+        { id: 'sgu_meliau', nama: 'Meliau', lat: -0.1250, lon: 110.2950, medan: 'rusak', desa: ['Meliau Hilir', 'Meliau Hulu', 'Balai Tinggi', 'Baru Lombak', 'Cupang', 'Enggadai', 'Harapan Makmur', 'Kuala Buayan', 'Sungai Kembayau'] },
+        { id: 'sgu_toba', nama: 'Toba', lat: -0.2680, lon: 110.1150, medan: 'bergelombang', desa: ['Teraju', 'Bagai', 'Balai Belungai', 'Belungai Dalam', 'Kampung Baru', 'Lumut', 'Sansat'] },
+        { id: 'sgu_beduai', nama: 'Beduai', lat: 0.6750, lon: 110.3750, medan: 'mulus', desa: ['Kasro Mego', 'Bereng Berkawat', 'Mawang Muda', 'Sungai Ilai', 'Thang Raya'] },
+        { id: 'sgu_bonti', nama: 'Bonti', lat: 0.3780, lon: 110.5050, medan: 'bergelombang', desa: ['Bonti', 'Bahta', 'Bantai', 'Empodis', 'Kampuh', 'Majel', 'Sami', 'Tunggul Boyok', 'Upe'] },
+        { id: 'sgu_jangkang', nama: 'Jangkang', lat: 0.3450, lon: 110.7150, medan: 'rusak', desa: ['Balai Sebut', 'Empiyang', 'Jangkang Benua', 'Ketori', 'Pisang', 'Sape', 'Selampung', 'Semirau', 'Semombat', 'Tanggung', 'Terati'] },
+        { id: 'sgu_mukok', nama: 'Mukok', lat: 0.0850, lon: 110.7650, medan: 'bergelombang', desa: ['Kedukul', 'Engkode', 'Inggis', 'Layak Omang', 'Semanggis Raya', 'Semuntai', 'Serambai Jaya', 'Sungai Mawang', 'Tri Mulya'] },
+        { id: 'sgu_noyan', nama: 'Noyan', lat: 0.6950, lon: 110.6650, medan: 'tanah', desa: ['Noyan', 'Empoto', 'Idas', 'Semongan', 'Sungai Dangin'] }
       ]
     },
+    /* 11. KAB. SEKADAU — 7 Kecamatan */
     sekadau: {
       nama: 'Kab. Sekadau', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'skd_hilir', nama: 'Sekadau Hilir', lat: 0.0120, lon: 110.9050, desa: ['Sungai Ringin', 'Mungguk', 'Bokak Sebumbun', 'Engkersik', 'Ensalang', 'Gonis Tekam', 'Landau Kodah', 'Merapi', 'Peniti', 'Seberang Kapuas', 'Semabi', 'Seraras', 'Tanjung'] },
-        { id: 'skd_hulu', nama: 'Sekadau Hulu', lat: -0.1450, lon: 110.9350, desa: ['Rawak Hilir', 'Rawak Hulu', 'Boti', 'Cupang Gading', 'Mondi', 'Nanga Menterap', 'Perongkan', 'Sekonau', 'Setawar', 'Sungai Sambang', 'Tapang Perodah', 'Tinting Boyok'] },
-        { id: 'skd_ntaman', nama: 'Nanga Taman', lat: -0.3450, lon: 110.9550, desa: ['Nanga Taman', 'Nanga Engkulun', 'Nanga Kiungkang', 'Nanga Koman', 'Nanga Mongko', 'Pantok', 'Rirang Jati', 'Senangak', 'Sungai Lawak', 'Tapang Tingang'] },
-        { id: 'skd_nmahap', nama: 'Nanga Mahap', lat: -0.5250, lon: 110.9250, desa: ['Nanga Mahap', 'Batu Pahat', 'Cenayan', 'Karang Betung', 'Landau Apin', 'Lembah Beringin', 'Nanga Suri', 'Sebabas', 'Tembaga', 'Tembesuk'] },
-        { id: 'skd_bhilir', nama: 'Belitang Hilir', lat: 0.1450, lon: 111.0850, desa: ['Sungai Ayak Dua', 'Sungai Ayak Satu', 'Empajak', 'Entabuk', 'Kumpang Bis', 'Menawai Tekam', 'Merbang', 'Semadu', 'Tapang Pulau'] },
-        { id: 'skd_belitang', nama: 'Belitang', lat: 0.3050, lon: 111.1250, desa: ['Belitang Dua', 'Belitang Satu', 'Maboh Permai', 'Menua Prama', 'Nanga Ansar', 'Padak', 'Setuntung'] },
-        { id: 'skd_bhulu', nama: 'Belitang Hulu', lat: 0.4550, lon: 111.1450, desa: ['Balai Sepuak', 'Batuk Mulau', 'Bukit Rambat', 'Ijuk', 'Kumpang Ilong', 'Mengaret', 'Pakit Mulau', 'Sebetung', 'Seburuk Satu', 'Tabuk Hulu'] }
+        { id: 'skd_hilir', nama: 'Sekadau Hilir', lat: 0.0120, lon: 110.9050, medan: 'kota', desa: ['Sungai Ringin', 'Mungguk', 'Bokak Sebumbun', 'Engkersik', 'Ensalang', 'Gonis Tekam', 'Landau Kodah', 'Merapi', 'Peniti', 'Seberang Kapuas', 'Semabi', 'Seraras', 'Tanjung'] },
+        { id: 'skd_hulu', nama: 'Sekadau Hulu', lat: -0.1450, lon: 110.9350, medan: 'bergelombang', desa: ['Rawak Hilir', 'Rawak Hulu', 'Boti', 'Cupang Gading', 'Mondi', 'Nanga Menterap', 'Perongkan', 'Sekonau', 'Setawar', 'Sungai Sambang', 'Tapang Perodah', 'Tinting Boyok'] },
+        { id: 'skd_ntaman', nama: 'Nanga Taman', lat: -0.3450, lon: 110.9550, medan: 'bergelombang', desa: ['Nanga Taman', 'Nanga Engkulun', 'Nanga Kiungkang', 'Nanga Koman', 'Nanga Mongko', 'Pantok', 'Rirang Jati', 'Senangak', 'Sungai Lawak', 'Tapang Tingang'] },
+        { id: 'skd_nmahap', nama: 'Nanga Mahap', lat: -0.5250, lon: 110.9250, medan: 'rusak', desa: ['Nanga Mahap', 'Batu Pahat', 'Cenayan', 'Karang Betung', 'Landau Apin', 'Lembah Beringin', 'Nanga Suri', 'Sebabas', 'Tembaga', 'Tembesuk'] },
+        { id: 'skd_bhilir', nama: 'Belitang Hilir', lat: 0.1450, lon: 111.0850, medan: 'bergelombang', desa: ['Sungai Ayak Dua', 'Sungai Ayak Satu', 'Empajak', 'Entabuk', 'Kumpang Bis', 'Menawai Tekam', 'Merbang', 'Semadu', 'Tapang Pulau'] },
+        { id: 'skd_belitang', nama: 'Belitang', lat: 0.3050, lon: 111.1250, medan: 'rusak', desa: ['Belitang Dua', 'Belitang Satu', 'Maboh Permai', 'Menua Prama', 'Nanga Ansar', 'Padak', 'Setuntung'] },
+        { id: 'skd_bhulu', nama: 'Belitang Hulu', lat: 0.4550, lon: 111.1450, medan: 'tanah', desa: ['Balai Sepuak', 'Batuk Mulau', 'Bukit Rambat', 'Ijuk', 'Kumpang Ilong', 'Mengaret', 'Pakit Mulau', 'Sebetung', 'Seburuk Satu', 'Tabuk Hulu'] }
       ]
     },
+    /* 12. KAB. SINTANG — 14 Kecamatan (Lengkap 100% BPS) */
     sintang: {
       nama: 'Kab. Sintang', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'stg_kota', nama: 'Sintang', lat: 0.0680, lon: 111.4980, desa: ['Tanjung Puri', 'Kapuas Kanan Hulu', 'Kapuas Kanan Hilir', 'Kapuas Kiri Hulu', 'Kapuas Kiri Hilir', 'Alai', 'Baning Kota', 'Ladang', 'Mekar Jaya', 'Mengkurai', 'Sengkuang', 'Ulak Jaya'] },
-        { id: 'stg_stebelian', nama: 'Sungai Tebelian', lat: 0.0150, lon: 111.4250, desa: ['Sungai Ukoi', 'Balai Agung', 'Baya Betung', 'Bonet Engkabang', 'Gurung Kempadik', 'Kajang Baru', 'Lebak Ubah', 'Manter', 'Merarai Satu', 'Merarai Dua', 'Nobal', 'Rarai'] },
-        { id: 'stg_kelam', nama: 'Kelam Permai', lat: 0.0780, lon: 111.6550, desa: ['Kebong', 'Baning Panjang', 'Bengkuang', 'Ensaid Panjang', 'Gemba Raya', 'Karya Jaya Bhakti', 'Kelam Sejahtera', 'Landau Kodam', 'Merpak', 'Nanga Lebang', 'Pelimping', 'Sepan Lebang'] },
-        { id: 'stg_dedai', nama: 'Dedai', lat: -0.0680, lon: 111.6950, desa: ['Nanga Dedai', 'Apin Baru', 'Baras', 'Batu Landung', 'Empaci', 'Gandis', 'Jangkang', 'Kumpang', 'Lundung', 'Menaong Baru', 'Pengkadan Baru', 'Tanjung'] },
-        { id: 'stg_sepauk', nama: 'Sepauk', lat: 0.0320, lon: 111.1850, desa: ['Tanjung Ria', 'Bangun', 'Bedayan', 'Bernayau', 'Buluh Kuning', 'Ensabang', 'Gernis Jaya', 'Kenyauk', 'Lengkenat', 'Manis Raya', 'Nanga Pari', 'Nanga Sepauk', 'Sekubang', 'Sirang Setambang'] },
-        { id: 'stg_tempunak', nama: 'Tempunak', lat: -0.0180, lon: 111.3150, desa: ['Nanga Tempunak', 'Balai Harapan', 'Benua Baru', 'Benua Kencana', 'Gurung Mali', 'Jaya Mentari', 'Kenyabur Baru', 'Kuala Tiga', 'Mensiap Baru', 'Pagal Baru', 'Paribang Baru', 'Repak Sari'] },
-        { id: 'stg_binjai', nama: 'Binjai Hulu', lat: 0.1650, lon: 111.4650, desa: ['Binjai Hulu', 'Binjai Hilir', 'Ampar Bedang', 'Dak Jaya', 'Empaka Kabiau Raya', 'Mensiku', 'Simba Raya', 'Sungai Risap', 'Telaga Satu', 'Telaga Dua'] }
+        { id: 'stg_kota', nama: 'Sintang', lat: 0.0680, lon: 111.4980, medan: 'kota', desa: ['Tanjung Puri', 'Kapuas Kanan Hulu', 'Kapuas Kanan Hilir', 'Kapuas Kiri Hulu', 'Kapuas Kiri Hilir', 'Alai', 'Baning Kota', 'Ladang', 'Mekar Jaya', 'Mengkurai', 'Sengkuang', 'Ulak Jaya'] },
+        { id: 'stg_stebelian', nama: 'Sungai Tebelian', lat: 0.0150, lon: 111.4250, medan: 'mulus', desa: ['Sungai Ukoi', 'Balai Agung', 'Baya Betung', 'Bonet Engkabang', 'Gurung Kempadik', 'Kajang Baru', 'Lebak Ubah', 'Manter', 'Merarai Satu', 'Merarai Dua', 'Nobal', 'Rarai'] },
+        { id: 'stg_kelam', nama: 'Kelam Permai', lat: 0.0780, lon: 111.6550, medan: 'mulus', desa: ['Kebong', 'Baning Panjang', 'Bengkuang', 'Ensaid Panjang', 'Gemba Raya', 'Karya Jaya Bhakti', 'Kelam Sejahtera', 'Landau Kodam', 'Merpak', 'Nanga Lebang', 'Pelimping', 'Sepan Lebang'] },
+        { id: 'stg_dedai', nama: 'Dedai', lat: -0.0680, lon: 111.6950, medan: 'bergelombang', desa: ['Nanga Dedai', 'Apin Baru', 'Baras', 'Batu Landung', 'Empaci', 'Gandis', 'Jangkang', 'Kumpang', 'Lundung', 'Menaong Baru', 'Pengkadan Baru', 'Tanjung'] },
+        { id: 'stg_sepauk', nama: 'Sepauk', lat: 0.0320, lon: 111.1850, medan: 'bergelombang', desa: ['Tanjung Ria', 'Bangun', 'Bedayan', 'Bernayau', 'Buluh Kuning', 'Ensabang', 'Gernis Jaya', 'Kenyauk', 'Lengkenat', 'Manis Raya', 'Nanga Pari', 'Nanga Sepauk', 'Sekubang', 'Sirang Setambang'] },
+        { id: 'stg_tempunak', nama: 'Tempunak', lat: -0.0180, lon: 111.3150, medan: 'bergelombang', desa: ['Nanga Tempunak', 'Balai Harapan', 'Benua Baru', 'Benua Kencana', 'Gurung Mali', 'Jaya Mentari', 'Kenyabur Baru', 'Kuala Tiga', 'Mensiap Baru', 'Pagal Baru', 'Paribang Baru', 'Repak Sari'] },
+        { id: 'stg_binjai', nama: 'Binjai Hulu', lat: 0.1650, lon: 111.4650, medan: 'bergelombang', desa: ['Binjai Hulu', 'Binjai Hilir', 'Ampar Bedang', 'Dak Jaya', 'Empaka Kabiau Raya', 'Mensiku', 'Simba Raya', 'Sungai Risap', 'Telaga Satu', 'Telaga Dua'] },
+        { id: 'stg_ambalau', nama: 'Ambalau', lat: -0.5850, lon: 112.9150, medan: 'tanah', desa: ['Nanga Kemangai', 'Nanga Ambalau', 'Bukai Tukun', 'Bukit Tinggi', 'Buntut Pimpin', 'Buntut Purun', 'Deme', 'Jengkarang', 'Mensuang', 'Nanga Sakai', 'Patih Jepara', 'Riam Sabon', 'Sungai Tambun'] },
+        { id: 'stg_kayanhilir', nama: 'Kayan Hilir', lat: -0.1550, lon: 111.8450, medan: 'rusak', desa: ['Nanga Mau', 'Batu Netak', 'Bukit Segaloh', 'Jambu', 'Jaya Sakti', 'Karya Baru', 'Kempas Raya', 'Landau Beringin', 'Linggam Permai', 'Mekar Mandiri', 'Mengkirai', 'Nanga Lidau', 'Pelaik', 'Sungai Buaya', 'Tanjung Keliling'] },
+        { id: 'stg_kayanhulu', nama: 'Kayan Hulu', lat: -0.2850, lon: 112.1650, medan: 'tanah', desa: ['Nanga Tebidah', 'Buluh Merindu', 'Empakan', 'Entogong', 'Kerapuk Jaya', 'Landau Bara', 'Mapan Jaya', 'Merah Arai', 'Nanga Abai', 'Nanga Masau', 'Nanga Oran', 'Nanga Payak', 'Riam Panjang', 'Tanah Merah', 'Tanjung Bunga'] },
+        { id: 'stg_kethilir', nama: 'Ketungau Hilir', lat: 0.2550, lon: 111.5550, medan: 'rusak', desa: ['Nanga Ketungau', 'Setungkup', 'Air Nyuruk', 'Batu Ampar', 'Batu Nyadi', 'Betung Permai', 'Bukit Sidin Permai', 'Jentawang Hilir', 'Lepung Pantak', 'Maung', 'Nanga Sejirak', 'Ratu Damai', 'Semuntai', 'Senibung', 'Sungai Deras'] },
+        { id: 'stg_kettengah', nama: 'Ketungau Tengah', lat: 0.4950, lon: 111.4650, medan: 'rusak', desa: ['Nanga Kelapan', 'Argo Mulyo', 'Bagelang Jaya', 'Bakti Senabung', 'Kerta Sari', 'Landau Buaya', 'Margahayu', 'Mungguk Lawang', 'Padung Kumang', 'Panding Jaya', 'Panggi Agung', 'Senangan Jaya', 'Sumber Sari', 'Sungai Areh', 'Swadaya', 'Tanjung Sari', 'Wana Bhakti', 'Wirayuda'] },
+        { id: 'stg_kethulu', nama: 'Ketungau Hulu', lat: 0.8150, lon: 111.4250, medan: 'tanah', desa: ['Senaning', 'Jasa', 'Bekuan Luyang', 'Embaleh', 'Empura', 'Engkeruh', 'Idai', 'Nanga Bayan', 'Nanga Bugau', 'Nanga Sebawang', 'Neraci Jaya', 'Rasau', 'Riam Sejawak', 'Sebadak', 'Sebuluh', 'Sejawak', 'Sepiluk', 'Sungai Kelik', 'Sungai Mawang'] },
+        { id: 'stg_serawai', nama: 'Serawai', lat: -0.4650, lon: 112.4850, medan: 'tanah', desa: ['Nanga Serawai', 'Baras Nabun', 'Batu Ketebung', 'Bedaha', 'Begori', 'Buntut Ponte', 'Karya Jaya', 'Mekar Sari', 'Mentajoi', 'Merako Jaya', 'Muara Kota', 'Nanga Bihe', 'Nanga Jelundung', 'Nanga Mentatai', 'Nanga Riyoi', 'Nanga Segulang', 'Rantau Malam', 'Tanjung Baru', 'Tunas Harapan'] }
       ]
     },
+    /* 13. KAB. MELAWI — 11 Kecamatan (Lengkap 100% BPS) */
     melawi: {
       nama: 'Kab. Melawi', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'mlw_npinoh', nama: 'Nanga Pinoh', lat: -0.3350, lon: 111.7450, desa: ['Paal', 'Sidomulyo', 'Tanjung Niaga', 'Tanjung Tengang', 'Baru', 'Kelakik', 'Kenual', 'Labai Mandiri', 'Nanga Kayan', 'Nanga Kebebu', 'Nusa Pandau', 'Poring', 'Semadin Lengkong', 'Tembawang Panjang'] },
-        { id: 'mlw_belimbing', nama: 'Belimbing', lat: -0.3550, lon: 111.5850, desa: ['Pemuar', 'Batu Ampar', 'Batu Buil', 'Batu Nanta', 'Balai Lagas', 'Guhung', 'Labang', 'Laman Bukit', 'Langan', 'Nanga Entebah', 'Nanga Menunuk', 'Nanga Pau', 'Upit'] },
-        { id: 'mlw_ehilir', nama: 'Ella Hilir', lat: -0.4050, lon: 112.0150, desa: ['Nanga Ella Hilir', 'Bemban Permai', 'Domet Permai', 'Jabai', 'Kahiya', 'Kerangan Kora', 'Lengkong Nyadom', 'Nanga Kalan', 'Nanga Kempangai', 'Nanga Nyuruh', 'Nusa Kenyikap', 'Pelempai Jaya', 'Perembang Nyuruh'] },
-        { id: 'mlw_sayan', nama: 'Sayan', lat: -0.6250, lon: 111.8250, desa: ['Nanga Sayan', 'Berobai Permai', 'Bora', 'Karangan Purun', 'Landau Sandak', 'Lingkar Indah', 'Madya Raya', 'Mekar Pelita', 'Meta Bersatu', 'Nanga Kasai', 'Nanga Kompi', 'Nanga Mancur', 'Nanga Raku', 'Sayan Jaya'] },
-        { id: 'mlw_tpinoh', nama: 'Tanah Pinoh', lat: -0.6850, lon: 111.4650, desa: ['Suka Maju', 'Bata Luar', 'Batu Begigi', 'Bina Jaya', 'Bina Karya', 'Harapan Jaya', 'Keranjik', 'Loka Jaya', 'Madong Jaya', 'Maris Permai', 'Pelita Kenaya', 'Tanjung Gunung'] }
+        { id: 'mlw_npinoh', nama: 'Nanga Pinoh', lat: -0.3350, lon: 111.7450, medan: 'kota', desa: ['Paal', 'Sidomulyo', 'Tanjung Niaga', 'Tanjung Tengang', 'Baru', 'Kelakik', 'Kenual', 'Labai Mandiri', 'Nanga Kayan', 'Nanga Kebebu', 'Nusa Pandau', 'Poring', 'Semadin Lengkong', 'Tembawang Panjang'] },
+        { id: 'mlw_belimbing', nama: 'Belimbing', lat: -0.3550, lon: 111.5850, medan: 'mulus', desa: ['Pemuar', 'Batu Ampar', 'Batu Buil', 'Batu Nanta', 'Balai Lagas', 'Guhung', 'Labang', 'Laman Bukit', 'Langan', 'Nanga Entebah', 'Nanga Menunuk', 'Nanga Pau', 'Upit'] },
+        { id: 'mlw_ehilir', nama: 'Ella Hilir', lat: -0.4050, lon: 112.0150, medan: 'bergelombang', desa: ['Nanga Ella Hilir', 'Bemban Permai', 'Domet Permai', 'Jabai', 'Kahiya', 'Kerangan Kora', 'Lengkong Nyadom', 'Nanga Kalan', 'Nanga Kempangai', 'Nanga Nyuruh', 'Nusa Kenyikap', 'Pelempai Jaya', 'Perembang Nyuruh'] },
+        { id: 'mlw_sayan', nama: 'Sayan', lat: -0.6250, lon: 111.8250, medan: 'bergelombang', desa: ['Nanga Sayan', 'Berobai Permai', 'Bora', 'Karangan Purun', 'Landau Sandak', 'Lingkar Indah', 'Madya Raya', 'Mekar Pelita', 'Meta Bersatu', 'Nanga Kasai', 'Nanga Kompi', 'Nanga Mancur', 'Nanga Raku', 'Sayan Jaya'] },
+        { id: 'mlw_tpinoh', nama: 'Tanah Pinoh', lat: -0.6850, lon: 111.4650, medan: 'rusak', desa: ['Suka Maju', 'Bata Luar', 'Batu Begigi', 'Bina Jaya', 'Bina Karya', 'Harapan Jaya', 'Keranjik', 'Loka Jaya', 'Madong Jaya', 'Maris Permai', 'Pelita Kenaya', 'Tanjung Gunung'] },
+        { id: 'mlw_bhulu', nama: 'Belimbing Hulu', lat: -0.5150, lon: 111.4950, medan: 'rusak', desa: ['Tiong Keranji', 'Beloyang', 'Junjung Permai', 'Kayu Bunga', 'Nanga Keberak', 'Nanga Raya', 'Nanga Tikan', 'Piawas'] },
+        { id: 'mlw_menukung', nama: 'Menukung', lat: -0.5750, lon: 112.1850, medan: 'rusak', desa: ['Menukung Kota', 'Batas Nangka', 'Batu Badak', 'Batu Onap', 'Belaban Ella', 'Laman Mumbung', 'Landau Leban', 'Nanga Ella Hulu', 'Nanga Keruap', 'Nanga Siyai', 'Nusa Poring', 'Oyah', 'Pelaik Keruap', 'Sungai Sampuk', 'Tanjung Beringin'] },
+        { id: 'mlw_psel', nama: 'Pinoh Selatan', lat: -0.4850, lon: 111.7550, medan: 'bergelombang', desa: ['Manggala', 'Bayur Raya', 'Bina Jaya', 'Landau Garong', 'Landau Tabun', 'Mandau Baru', 'Nanga Kelawai', 'Nanga Pintas', 'Nyanggai', 'Pelinggang', 'Sungai Bakah', 'Senempak'] },
+        { id: 'mlw_putr', nama: 'Pinoh Utara', lat: -0.2350, lon: 111.6850, medan: 'bergelombang', desa: ['Tekelak', 'Engkurai', 'Kayan Semapau', 'Kompas Raya', 'Manding', 'Melamut Bersatu', 'Melawi Kiri Hilir', 'Merah Arai', 'Merpak', 'Nanga Belimbing', 'Nanga Man', 'Natai Panjang', 'Sungai Pinang', 'Sungai Raya', 'Senibung', 'Suka Damai', 'Tanjung Arak', 'Tanjung Paoh', 'Tengkajau'] },
+        { id: 'mlw_sokan', nama: 'Sokan', lat: -0.8250, lon: 111.6250, medan: 'tanah', desa: ['Nanga Sokan', 'Gelata', 'Keluing Taja', 'Landau Kabu', 'Melana', 'Muara Tanjung', 'Nanga Betangai', 'Nanga Libas', 'Nanga Ora', 'Nanga Potai', 'Nanga Tangkit', 'Penyengkuang', 'Sepakat', 'Sijau', 'Tanjung Mahung', 'Tanjung Sokan', 'Telaga Raya', 'Teluk Pongkal'] },
+        { id: 'mlw_tpbarat', nama: 'Tanah Pinoh Barat', lat: -0.7150, lon: 111.2850, medan: 'rusak', desa: ['Ulak Muid', 'Bukit Raya', 'Durian Jaya', 'Ganjang', 'Harapan Jaya', 'Keluas Hulu', 'Laja', 'Lintah Taum', 'Pelita Jaya', 'Togan Baru'] }
       ]
     },
+    /* 14. KAB. KAPUAS HULU — 23 Kecamatan (Lengkap 100% BPS) */
     kapuashulu: {
       nama: 'Kab. Kapuas Hulu', prov: 'Kalimantan Barat',
       kec: [
-        { id: 'kh_pututr', nama: 'Putussibau Utara', lat: 0.8720, lon: 112.9280, desa: ['Putussibau Kota', 'Hilir Kantor', 'Ariung Mendalam', 'Datah Diaan', 'Jangkang', 'Lauk', 'Nanga Awin', 'Nanga Nyabau', 'Nanga Sambus', 'Padua Mendalam', 'Pala Pulau', 'Seluan', 'Sibau Hilir', 'Sibau Hulu', 'Tanjung Karang'] },
-        { id: 'kh_putsel', nama: 'Putussibau Selatan', lat: 0.8480, lon: 112.9350, desa: ['Kedamin Hilir', 'Kedamin Hulu', 'Beringin Jaya', 'Bungan Jaya', 'Cempaka Baru', 'Ingko\' Tambe', 'Jaras', 'Kereho', 'Melapi', 'Sayut', 'Suka Maju', 'Sungai Uluk', 'Tanjung Jati', 'Tanjung Lokang', 'Urang Unsa'] },
-        { id: 'kh_kalis', nama: 'Kalis', lat: 0.7250, lon: 112.7950, desa: ['Nanga Kalis', 'Bahenap', 'Kalis Raya', 'Kensuray', 'Nanga Danau', 'Nanga Lebangan', 'Nanga Raun', 'Nanga Sebintang', 'Nanga Tubuk', 'Peniaman', 'Rantau Bumbun', 'Rantau Kalis', 'Ribang Kadeng', 'Segiam', 'Sempang', 'Tapang Da\'an'] },
-        { id: 'kh_silhilir', nama: 'Silat Hilir', lat: 0.3050, lon: 111.8650, desa: ['Perigi', 'Baru', 'Bongkong', 'Bukit Penai', 'Miau Merah', 'Nanga Nuar', 'Pangeran', 'Penai', 'Rumbih', 'Seberu', 'Sena', 'Sentabai', 'Setunggul'] },
-        { id: 'kh_semitau', nama: 'Semitau', lat: 0.5450, lon: 111.9750, desa: ['Semitau Hulu', 'Semitau Hilir', 'Entipan', 'Kenepai Komplek', 'Kenerak', 'Marsedan Raya', 'Nanga Kenepai', 'Nanga Lemedak', 'Nanga Seberuang', 'Padung Kumang', 'Sekedau', 'Tua\' Abang'] },
-        { id: 'kh_badau', nama: 'Badau', lat: 1.0320, lon: 111.8780, desa: ['Badau', 'Janting', 'Kekurak', 'Pulau Majang', 'Sebindang', 'Semuntik', 'Seriang', 'Tajum', 'Tinting Seligi'] },
-        { id: 'kh_bunhulu', nama: 'Bunut Hulu', lat: 0.5050, lon: 112.5650, desa: ['Nanga Suruk', 'Bakong Permai', 'Batu Tiga', 'Beringin', 'Nanga Dua', 'Nanga Kelibang', 'Nanga Payang', 'Nanga Semangut', 'Pantas Bersatu', 'Riam Piyang', 'Segitak', 'Selaup', 'Semangut Utara', 'Temuyuk'] }
+        { id: 'kh_pututr', nama: 'Putussibau Utara', lat: 0.8720, lon: 112.9280, medan: 'kota', desa: ['Putussibau Kota', 'Hilir Kantor', 'Ariung Mendalam', 'Datah Diaan', 'Jangkang', 'Lauk', 'Nanga Awin', 'Nanga Nyabau', 'Nanga Sambus', 'Padua Mendalam', 'Pala Pulau', 'Seluan', 'Sibau Hilir', 'Sibau Hulu', 'Tanjung Karang'] },
+        { id: 'kh_putsel', nama: 'Putussibau Selatan', lat: 0.8480, lon: 112.9350, medan: 'mulus', desa: ['Kedamin Hilir', 'Kedamin Hulu', 'Beringin Jaya', 'Bungan Jaya', 'Cempaka Baru', 'Ingko\' Tambe', 'Jaras', 'Kereho', 'Melapi', 'Sayut', 'Suka Maju', 'Sungai Uluk', 'Tanjung Jati', 'Tanjung Lokang', 'Urang Unsa'] },
+        { id: 'kh_kalis', nama: 'Kalis', lat: 0.7250, lon: 112.7950, medan: 'bergelombang', desa: ['Nanga Kalis', 'Bahenap', 'Kalis Raya', 'Kensuray', 'Nanga Danau', 'Nanga Lebangan', 'Nanga Raun', 'Nanga Sebintang', 'Nanga Tubuk', 'Peniaman', 'Rantau Bumbun', 'Rantau Kalis', 'Ribang Kadeng', 'Segiam', 'Sempang', 'Tapang Da\'an'] },
+        { id: 'kh_silhilir', nama: 'Silat Hilir', lat: 0.3050, lon: 111.8650, medan: 'bergelombang', desa: ['Perigi', 'Baru', 'Bongkong', 'Bukit Penai', 'Miau Merah', 'Nanga Nuar', 'Pangeran', 'Penai', 'Rumbih', 'Seberu', 'Sena', 'Sentabai', 'Setunggul'] },
+        { id: 'kh_semitau', nama: 'Semitau', lat: 0.5450, lon: 111.9750, medan: 'bergelombang', desa: ['Semitau Hulu', 'Semitau Hilir', 'Entipan', 'Kenepai Komplek', 'Kenerak', 'Marsedan Raya', 'Nanga Kenepai', 'Nanga Lemedak', 'Nanga Seberuang', 'Padung Kumang', 'Sekedau', 'Tua\' Abang'] },
+        { id: 'kh_badau', nama: 'Badau', lat: 1.0320, lon: 111.8780, medan: 'mulus', desa: ['Badau', 'Janting', 'Kekurak', 'Pulau Majang', 'Sebindang', 'Semuntik', 'Seriang', 'Tajum', 'Tinting Seligi'] },
+        { id: 'kh_bunhulu', nama: 'Bunut Hulu', lat: 0.5050, lon: 112.5650, medan: 'bergelombang', desa: ['Nanga Suruk', 'Bakong Permai', 'Batu Tiga', 'Beringin', 'Nanga Dua', 'Nanga Kelibang', 'Nanga Payang', 'Nanga Semangut', 'Pantas Bersatu', 'Riam Piyang', 'Segitak', 'Selaup', 'Semangut Utara', 'Temuyuk'] },
+        { id: 'kh_blupar', nama: 'Batang Lupar', lat: 0.9950, lon: 112.1550, medan: 'bergelombang', desa: ['Lanjak Deras', 'Labian', 'Labian Ira\'ang', 'Melemba', 'Mensiau', 'Sepandan', 'Setulang', 'Sungai Abau', 'Sungai Ajung', 'Sungai Senunuk'] },
+        { id: 'kh_bika', nama: 'Bika', lat: 0.7850, lon: 112.7950, medan: 'bergelombang', desa: ['Bika', 'Bika Hulu', 'Jelemuk', 'Jongkong Manday', 'Melapi Manday', 'Nanga Manday', 'Penyeluang', 'Teluk Sindur'] },
+        { id: 'kh_btanjung', nama: 'Boyan Tanjung', lat: 0.5250, lon: 112.4350, medan: 'bergelombang', desa: ['Boyan Tanjung', 'Delintas Karya', 'Karya Maju', 'Landau Mentail', 'Mujan', 'Nanga Betung', 'Nanga Boyan', 'Nanga Danau', 'Nanga Jemah', 'Nanga Ret', 'Nanga Sangan', 'Pemawan', 'Riam Mengelai', 'Sri Wangi', 'Teluk Geruguk', 'Tubang Jaya'] },
+        { id: 'kh_bunhilir', nama: 'Bunut Hilir', lat: 0.7050, lon: 112.4850, medan: 'rusak', desa: ['Bunut Hilir', 'Bunut Hulu', 'Bunut Tengah', 'Empangau', 'Empangau Hilir', 'Entibab', 'Kapuas Raya', 'Nanga Tuan', 'Teluk Aur', 'Tembang', 'Ujung Pandang'] },
+        { id: 'kh_ehilir', nama: 'Embaloh Hilir', lat: 0.7950, lon: 112.5850, medan: 'rusak', desa: ['Nanga Embaloh', 'Belatung', 'Keliling Semulung', 'Kirin Nangka', 'Lawik', 'Nanga Lauk', 'Nanga Palin', 'Pala Pintas', 'Ujung Bayur'] },
+        { id: 'kh_ehulu', nama: 'Embaloh Hulu', lat: 1.0750, lon: 112.4650, medan: 'perbukitan', desa: ['Banua Martinus', 'Banua Ujung', 'Batu Lintang', 'Langan Baru', 'Menua Sadap', 'Pulau Manak', 'Rantau Prapat', 'Saujung Giling Manik', 'Tamao', 'Ulak Pauk'] },
+        { id: 'kh_empanang', nama: 'Empanang', lat: 0.9650, lon: 111.7350, medan: 'bergelombang', desa: ['Nanga Kantuk', 'Bajau Andai', 'Keling Panggau', 'Kumang Jaya', 'Laja Sandang', 'Tintin Peninjau'] },
+        { id: 'kh_hgurung', nama: 'Hulu Gurung', lat: 0.3950, lon: 112.1650, medan: 'bergelombang', desa: ['Nanga Tepuai', 'Beringin', 'Bugang', 'Karya Mandiri', 'Kelakar', 'Landau Kumpang', 'Lubuk Antuk', 'Mentawit', 'Mubung', 'Nanga Yen', 'Parang', 'Sejahtera Mandiri', 'Simpang Senara', 'Tani Makmur', 'Tunas Muda'] },
+        { id: 'kh_jongkong', nama: 'Jongkong', lat: 0.6550, lon: 112.3150, medan: 'rusak', desa: ['Jongkong Pasar', 'Bontai', 'Jongkong Kanan', 'Jongkong Kiri Hilir', 'Jongkong Kiri Hulu', 'Jongkong Kiri Tengah', 'Jongkong Tanjung', 'Kandung Suli', 'Karya Baru', 'Nanga Serian'] },
+        { id: 'kh_mentebah', nama: 'Mentebah', lat: 0.6150, lon: 112.6950, medan: 'bergelombang', desa: ['Nanga Mentebah', 'Kepala Gurung', 'Menaren', 'Suka Maju', 'Tangai Jaya', 'Tanjung', 'Tanjung Intan', 'Tekalong'] },
+        { id: 'kh_pengkadan', nama: 'Pengkadan', lat: 0.4450, lon: 112.3150, medan: 'bergelombang', desa: ['Pengkadan Hilir', 'Buak Limbang', 'Hulu Pengkadan', 'Kerangan Panjang', 'Marta Dana', 'Mawan', 'Permata', 'Pinang Laka', 'Riam Panjang', 'Sasan', 'Sira Jaya'] },
+        { id: 'kh_pkencana', nama: 'Puring Kencana', lat: 1.0650, lon: 111.6150, medan: 'tanah', desa: ['Sungai Antu', 'Kantuk Asam', 'Kantuk Bunut', 'Langau', 'Merakai Panjang', 'Sungai Mawang'] },
+        { id: 'kh_seberuang', nama: 'Seberuang', lat: 0.4150, lon: 111.9850, medan: 'bergelombang', desa: ['Sejiram', 'Bati', 'Bekuan', 'Belikai', 'Beluis Harum', 'Emperiang', 'Gurung', 'Jerenjang', 'Nanga Lot', 'Nanga Pala', 'Pala Kota', 'Ranyai', 'Seneban', 'Tajau Mada', 'Tanjung Keliling'] },
+        { id: 'kh_selimbau', nama: 'Selimbau', lat: 0.6050, lon: 112.1450, medan: 'rusak', desa: ['Dalam', 'Benuis', 'Engkerengas', 'Gerayau', 'Gudang Hilir', 'Gudang Hulu', 'Mawan', 'Nanga Leboyan', 'Nibung', 'Piasak Hilir', 'Piasak Hulu', 'Pega', 'Sekubah', 'Sekulat', 'Semalah', 'Tempurau', 'Titian Kuala'] },
+        { id: 'kh_silhulu', nama: 'Silat Hulu', lat: 0.1650, lon: 112.0650, medan: 'tanah', desa: ['Nanga Dangkan', 'Belimbing', 'Dangkan Kota', 'Entebi', 'Landau Badai', 'Landau Rantau', 'Lebak Najah', 'Nanga Luan', 'Nanga Lungu', 'Nanga Ngeri', 'Perjuk', 'Riam Tapang', 'Selangkai', 'Selimu'] },
+        { id: 'kh_suhaid', nama: 'Suhaid', lat: 0.5650, lon: 112.0650, medan: 'rusak', desa: ['Nanga Suhaid', 'Jongkong Hulu', 'Kerengas', 'Laut Tawang', 'Lubuk Pengail', 'Madang Permai', 'Mantan', 'Menapar', 'Mensusai', 'Tanjung', 'Tanjung Harapan'] }
       ]
     }
   };
@@ -233,16 +319,66 @@
     merauke: ['Merauke', 'Semangga', 'Tanah Miring']
   };
 
-  /* Jarak jalan nyata presisi (Haversine GPS × faktor kelokan jalan 1,28 di Kalimantan Barat) */
-  function jarakKm(a, b) {
-    if (!a || !b || a.lat == null || b.lat == null) return 0;
+  /* Jarak Haversine garis lurus (km) */
+  function haversineKm(a, b) {
     var R = 6371, rad = Math.PI / 180;
     var dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
     var s1 = Math.sin(dLat / 2), s2 = Math.sin(dLon / 2);
-    var c = 2 * Math.atan2(Math.sqrt(s1 * s1 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * s2 * s2),
-      Math.sqrt(Math.max(0, 1 - (s1 * s1 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * s2 * s2))));
-    var lurus = R * c;
-    return Math.round(lurus * 1.28 * 10) / 10;
+    var h = s1 * s1 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * s2 * s2;
+    return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(Math.max(0, 1 - h)));
+  }
+
+  /* Simpul koridor darat nyata Kalbar untuk menghindari garis lurus menyeberangi rawa & muara Sungai Kapuas selatan serta TN Gunung Palung */
+  var SIMPUL_TAYAN = { lat: -0.0280, lon: 110.1120 };
+  var SIMPUL_SHULU = { lat: -0.6150, lon: 110.3350 };
+  var SIMPUL_SANDAI = { lat: -1.2250, lon: 110.5250 };
+  var SIMPUL_SINTANG = { lat: 0.0680, lon: 111.4980 };
+  var ZONA_SELATAN = { ketapang: true, kayongutara: true };
+  var ZONA_BARAT_UTARA = { pontianak: true, kuburaya: true, mempawah: true, singkawang: true, sambas: true, bengkayang: true, landak: true };
+
+  /* Jarak jalan raya nyata presisi di Kalimantan Barat (memperhitungkan Jembatan Tayan–Balai Berkuak–Sandai–Nanga Tayap untuk lintas selatan, serta kelokan jalan perbukitan/pedalaman) */
+  function jarakKm(a, b) {
+    if (!a || !b || a.lat == null || b.lat == null) return 0;
+    var ka = a.kabId || '', kb = b.kabId || '';
+    var lurus = haversineKm(a, b);
+    if (lurus < 0.05) return 0;
+    /* Lintas darat Zona Barat/Utara ↔ Zona Selatan (Ketapang/Kayong Utara) wajib lewat Jembatan Tayan → Simpang Hulu → Sandai (bukan lurus menembus rawa Kapuas & TN Gunung Palung!) */
+    var lintasSelatan = (ZONA_BARAT_UTARA[ka] && ZONA_SELATAN[kb]) || (ZONA_SELATAN[ka] && ZONA_BARAT_UTARA[kb]);
+    if (lintasSelatan && !a.pulau && !b.pulau) {
+      var drUtara = ZONA_BARAT_UTARA[ka] ? a : b;
+      var keSel = ZONA_SELATAN[ka] ? a : b;
+      var seg1 = haversineKm(drUtara, SIMPUL_TAYAN) * 1.24;
+      var seg2 = haversineKm(SIMPUL_TAYAN, SIMPUL_SHULU) * 1.28;
+      if (keSel.kabId === 'ketapang' && keSel.lat < -1.1) {
+        var seg3a = haversineKm(SIMPUL_SHULU, SIMPUL_SANDAI) * 1.28;
+        var seg3b = haversineKm(SIMPUL_SANDAI, keSel) * 1.38;
+        return Math.round((seg1 + seg2 + seg3a + seg3b) * 10) / 10;
+      }
+      var seg3 = haversineKm(SIMPUL_SHULU, keSel) * 1.36;
+      return Math.round((seg1 + seg2 + seg3) * 10) / 10;
+    }
+    /* Lintas Poros Tengah jauh menuju Kapuas Hulu / Sintang / Melawi dari Pontianak/Kubu Raya mengikuti lekuk Sungai Kapuas (Tayan–Sanggau–Sekadau–Sintang) */
+    var lintasTimur = (ZONA_BARAT_UTARA[ka] && (kb === 'kapuashulu' || kb === 'sintang' || kb === 'melawi')) ||
+      (ZONA_BARAT_UTARA[kb] && (ka === 'kapuashulu' || ka === 'sintang' || ka === 'melawi'));
+    if (lintasTimur && lurus > 180) {
+      var drBarat = ZONA_BARAT_UTARA[ka] ? a : b;
+      var keTimur = ZONA_BARAT_UTARA[ka] ? b : a;
+      var sT = (haversineKm(drBarat, SIMPUL_TAYAN) + haversineKm(SIMPUL_TAYAN, SIMPUL_SINTANG) + haversineKm(SIMPUL_SINTANG, keTimur)) * 1.48;
+      return Math.round(Math.max(lurus * 1.45, sT) * 10) / 10;
+    }
+    /* Faktor kelokan realistis sesuai medan (kota/mulus 1.25, pesisir/bergelombang 1.30, perbukitan/rusak/tanah 1.38) */
+    var md = medanJalan(a, b);
+    var faktor = (md.kode === 'kota' || md.kode === 'mulus') ? 1.26 : (md.kode === 'rusak' || md.kode === 'tanah' || md.kode === 'perbukitan') ? 1.38 : 1.30;
+    return Math.round(lurus * faktor * 10) / 10;
+  }
+
+  /* Info medan jalan antara 2 titik (mengambil kondisi jalan terberat di jalur) */
+  function medanJalan(a, b) {
+    var ma = (a && a.medan) || 'mulus';
+    var mb = (b && b.medan) || ma;
+    if ((a && a.pulau) || (b && b.pulau)) return MEDAN_INFO.pulau;
+    var pilih = (MEDAN_BERAT[mb] || 1) >= (MEDAN_BERAT[ma] || 1) ? mb : ma;
+    return MEDAN_INFO[pilih] || MEDAN_INFO.mulus;
   }
 
   /* Koordinat presisi tiap desa di dalam kecamatan (offset deterministik ±0,008° ≈ 0,5–1,4 km agar jarak antar desa presisi) */
@@ -257,6 +393,8 @@
       prov: 'Kalimantan Barat',
       kecId: kecObj.id,
       kecNama: kecObj.nama,
+      medan: kecObj.medan || 'mulus',
+      pulau: !!kecObj.pulau,
       desa: namaDesa || (kecObj.desa && kecObj.desa[0]) || kecObj.nama,
       lat: Math.round((kecObj.lat + Math.cos(sudut) * radOff) * 10000) / 10000,
       lon: Math.round((kecObj.lon + Math.sin(sudut) * radOff) * 10000) / 10000
@@ -293,63 +431,69 @@
       return titikDesa(kotaId, kc, kc.desa[0]);
     }
     var daf = KEC_UMUM[kotaId] || ['Pusat Kota', 'Kecamatan Utara', 'Kecamatan Selatan', 'Kecamatan Timur', 'Kecamatan Barat'];
-    return { kabId: kotaId || 'jakarta', kabNama: kotaId || 'Kota', prov: 'Indonesia', kecId: (kotaId || 'kota') + '_0', kecNama: daf[0], desa: daf[0], lat: null, lon: null };
+    return { kabId: kotaId || 'jakarta', kabNama: kotaId || 'Kota', prov: 'Indonesia', kecId: (kotaId || 'kota') + '_0', kecNama: daf[0], medan: 'kota', pulau: false, desa: daf[0], lat: null, lon: null };
   }
 
-  /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang — bebas acak ke segala arah (antardesa, antarkecamatan, hingga antarkabupaten seperti Satong → Sukadana / Sandai / Tayap / Kendawangan / Sungai Melayu tanpa terjebak bolak-balik!) */
+  /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang — bebas acak ke segala arah daratan (antardesa, antarkecamatan, hingga antarkabupaten seperti Satong → Sukadana / Sandai / Tayap / Kendawangan / Sungai Melayu tanpa terjebak bolak-balik, dan TIDAK pernah mengarahkan motor/mobil menyeberang laut ke pulau!) */
   function pilihTujuan(asal, minKm, maxKm, riwayatDesa) {
     if (!asal || asal.lat == null) {
       var listK = KEC_UMUM[asal && asal.kabId] || ['Pusat Kota', 'Kecamatan Timur', 'Kecamatan Barat', 'Kecamatan Selatan', 'Kecamatan Utara'];
       var pilihK = listK[Math.floor(Math.random() * listK.length)];
       var kmAcak = Math.round((minKm + Math.random() * Math.max(0.5, maxKm - minKm)) * 10) / 10;
-      return { titik: { kabId: (asal && asal.kabId) || 'kota', kabNama: (asal && asal.kabNama) || 'Kota', prov: 'Indonesia', kecId: pilihK, kecNama: pilihK, desa: pilihK, lat: null, lon: null }, km: kmAcak };
+      return { titik: { kabId: (asal && asal.kabId) || 'kota', kabNama: (asal && asal.kabNama) || 'Kota', prov: 'Indonesia', kecId: pilihK, kecNama: pilihK, medan: 'kota', pulau: false, desa: pilihK, lat: null, lon: null }, km: kmAcak, medan: MEDAN_INFO.kota };
     }
     var semua = daftarTitikKalbar();
     var hindari = Array.isArray(riwayatDesa) ? riwayatDesa : [];
+    var asalPulau = !!asal.pulau;
     function cariDalam(lo, hi, skipRiwayat) {
-      var res = [];
+      var res = [], maxDeg = hi / 80 + 0.15;
       for (var i = 0; i < semua.length; i++) {
         var t = semua[i];
+        if (Math.abs(t.lat - asal.lat) > maxDeg || Math.abs(t.lon - asal.lon) > maxDeg) continue;
         if (t.desa === asal.desa && t.kecId === asal.kecId) continue;
+        /* Proteksi realistis: kendaraan darat di daratan tidak bisa dapat order menyeberang laut ke pulau (Karimata / Pulau Maya / Batu Ampar); jika di pulau hanya keliling di kecamatan pulau yang sama */
+        if (!asalPulau && t.pulau) continue;
+        if (asalPulau && t.kecId !== asal.kecId) continue;
         if (skipRiwayat && (hindari.indexOf(t.desa) >= 0 || hindari.indexOf(t.kecId + ':' + t.desa) >= 0)) continue;
         var d = jarakKm(asal, t);
-        if (d >= lo && d <= hi) res.push({ titik: t, km: Math.max(0.8, d) });
+        if (d >= lo && d <= hi) res.push({ titik: t, km: Math.max(0.8, d), medan: medanJalan(asal, t) });
       }
       return res;
     }
     var cocok = cariDalam(minKm, maxKm, true);
-    /* Jika di daerah kabupaten/pedalaman pilihan dalam radius sempit sedikit (< 8 titik atau hanya 1 kecamatan), perluas bertahap hingga 75–95 km agar bisa bebas menuju kecamatan & kabupaten tetangga (mis. Satong ↔ Sukadana ↔ Sandai ↔ Tayap ↔ Kendawangan ↔ Sungai Melayu) */
     function hitungKec(arr) {
       var u = {};
       for (var i = 0; i < arr.length; i++) u[arr[i].titik.kecId] = true;
       return Object.keys(u).length;
     }
-    if (cocok.length < 8 || hitungKec(cocok) < 2) {
+    if (!asalPulau && (cocok.length < 8 || hitungKec(cocok) < 2)) {
       var maksLuas = Math.max(maxKm, maxKm <= 15 ? 42 : Math.min(180, maxKm * 1.45));
       var perluas = cariDalam(Math.max(1, minKm * 0.7), maksLuas, true);
       if (hitungKec(perluas) < 2) perluas = cariDalam(Math.max(1, minKm * 0.7), Math.max(85, maksLuas * 1.6), true);
       if (perluas.length) cocok = perluas;
     }
-    if (!cocok.length) cocok = cariDalam(Math.max(0.5, minKm * 0.5), Math.max(48, maxKm * 1.6), false);
+    if (!cocok.length) cocok = cariDalam(Math.max(0.5, minKm * 0.4), Math.max(48, maxKm * 1.6), false);
     if (cocok.length) {
-      /* Beri peluang tinggi (65%) menuju kecamatan berbeda agar tidak bolak-balik di desa/kecamatan yang sama terus */
       var bedaKec = cocok.filter(function (x) { return x.titik.kecId !== asal.kecId; });
       if (bedaKec.length && Math.random() < 0.65) return bedaKec[Math.floor(Math.random() * bedaKec.length)];
       return cocok[Math.floor(Math.random() * cocok.length)];
     }
-    var terdekat = semua[0], minD = 9999;
+    var terdekat = null, minD = 99999;
     for (var k = 0; k < semua.length; k++) {
       var t3 = semua[k];
       if (t3.desa === asal.desa && t3.kecId === asal.kecId) continue;
+      if (!asalPulau && t3.pulau) continue;
+      if (asalPulau && t3.kecId !== asal.kecId) continue;
       var d3 = jarakKm(asal, t3);
       if (d3 < minD) { minD = d3; terdekat = t3; }
     }
-    return { titik: terdekat, km: Math.max(1, minD) };
+    if (!terdekat) terdekat = semua[0];
+    return { titik: terdekat, km: Math.max(1, minD), medan: medanJalan(asal, terdekat) };
   }
 
   function daftarKecamatan(kotaId) {
     if (KALBAR[kotaId]) return KALBAR[kotaId].kec;
-    return (KEC_UMUM[kotaId] || ['Pusat Kota']).map(function (nm, i) { return { id: kotaId + '_' + i, nama: nm, desa: [nm], lat: null, lon: null }; });
+    return (KEC_UMUM[kotaId] || ['Pusat Kota']).map(function (nm, i) { return { id: kotaId + '_' + i, nama: nm, medan: 'kota', pulau: false, desa: [nm], lat: null, lon: null }; });
   }
 
   /* Tempat ibadah terdekat yang berbeda-beda sesuai kecamatan/desa tempat karakter berada */
@@ -369,8 +513,13 @@
     mpw_hilir: ['Masjid Agung Al-Falah Mempawah', 'Masjid Jami Keraton Amantubillah'],
     sbs_sambas: ['Masjid Jami Sultan Muhammad Syafiuddin II', 'Masjid Agung Babul Jannah'],
     sgu_kapuas: ['Masjid Agung Al-Mu\'awwanah Sanggau'],
+    skd_hilir: ['Masjid Agung Al-Falah Sekadau'],
     stg_kota: ['Masjid Agung Al-Amin Sintang'],
-    kh_pututr: ['Masjid Agung Darunnajah Putussibau']
+    mlw_npinoh: ['Masjid Agung Ibnu Taymiyah Nanga Pinoh'],
+    kh_pututr: ['Masjid Agung Darunnajah Putussibau'],
+    ku_sukadana: ['Masjid Agung Oesman Al-Khair Sukadana'],
+    ldk_ngabang: ['Masjid Jami Keraton Ismahayana Landak'],
+    bky_kota: ['Masjid Agung Syuhada Bengkayang']
   };
   var NAMA_MASJID_LOKAL = ['Masjid Nurul Iman', 'Masjid Al-Hidayah', 'Masjid Baiturrahman', 'Masjid Al-Ikhlas', 'Masjid Al-Muttaqin', 'Masjid Darussalam'];
   function tempatIbadahTerdekat(lokasi, agama) {
@@ -411,7 +560,6 @@
   function pendudukWilayah(S) {
     var kabId = (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId) || (S && S.rumah && S.rumah.wilayah && S.rumah.wilayah.kabId) || (S && S.kota) || 'pontianak';
     var dasar = PENDUDUK_WILAYAH[kabId] || 450000;
-    /* pertumbuhan penduduk alami ~1,1%/tahun + delta kelahiran/kematian NPC */
     var thnJalan = Math.max(0, ((S && S.hari) || 0) / 365);
     var delta = (S && S.popDelta) || 0;
     return Math.max(10000, Math.round(dasar * (1 + thnJalan * 0.011) + delta));
@@ -424,19 +572,20 @@
   }
   function faktorPenduduk(S) {
     var p = pendudukWilayah(S);
-    /* 130rb → 0.84, 685rb (Pontianak) → 1.00, 2.5jt → 1.18, 10.7jt (Jakarta) → 1.38 */
     var f = 0.72 + Math.log10(Math.max(50000, p) / 50000) * 0.285;
     return Math.max(0.8, Math.min(1.42, Math.round(f * 100) / 100));
   }
 
   g.KK_WILAYAH = {
     kalbar: KALBAR,
+    MEDAN_INFO: MEDAN_INFO,
     PENDUDUK_WILAYAH: PENDUDUK_WILAYAH,
     pendudukWilayah: pendudukWilayah,
     formatPenduduk: formatPenduduk,
     faktorPenduduk: faktorPenduduk,
     apakahKalbar: apakahKalbar,
     jarakKm: jarakKm,
+    medanJalan: medanJalan,
     titikAwal: titikAwal,
     titikDesa: titikDesa,
     pilihTujuan: pilihTujuan,

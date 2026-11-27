@@ -601,7 +601,7 @@
     var lok = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null;
     if (!lok) return 'kota';
     if (lok.kabId === 'pontianak' || lok.kabId === 'singkawang') {
-      if (lok.kecId === 'ptk_uta' || lok.kecId === 'skw_ut' || lok.kecId === 'skw_tim') return 'kabupaten';
+      if (lok.kecId === 'ptk_utr' || lok.kecId === 'skw_utr' || lok.kecId === 'skw_tim') return 'kabupaten';
       return 'kota';
     }
     /* ibu kota kabupaten (kecamatan pertama di daftar kab) = kabupaten, kecamatan pedalaman lainnya = desa */

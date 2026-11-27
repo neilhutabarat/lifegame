@@ -162,24 +162,27 @@
     { a: 'surabaya', b: 'kotawaringintimur', km: 470, tol: 0, laut: true, jam: 17, kapalMobil: 1200000, kapalOrang: 250000, jalan: 'Kapal Ro-Ro Surabaya–Sampit', kondisi: 'mulus' },
     { a: 'balikpapan', b: 'parepare', km: 350, tol: 0, laut: true, jam: 12, kapalMobil: 1100000, kapalOrang: 220000, jalan: 'Feri Selat Makassar (Balikpapan–Parepare)', kondisi: 'mulus' },
 
-    /* === JARINGAN JALAN ASLI KALIMANTAN BARAT (Trans-Kalimantan & Pesisir) === */
+    /* === JARINGAN JALAN ASLI KALIMANTAN BARAT (Trans-Kalimantan, Pesisir & Feri ASDP) === */
     { a: 'pontianak', b: 'kuburaya', km: 14, tol: 0, jalan: 'Jl. Ahmad Yani II (Pontianak–Sungai Raya)', kondisi: 'mulus' },
     { a: 'pontianak', b: 'mempawah', km: 68, tol: 0, jalan: 'Jl. Raya Pontianak–Mempawah (Pesisir)', kondisi: 'mulus' },
     { a: 'mempawah', b: 'singkawang', km: 77, tol: 0, jalan: 'Jl. Raya Mempawah–Singkawang', kondisi: 'mulus' },
     { a: 'singkawang', b: 'sambas', km: 76, tol: 0, jalan: 'Jl. Nasional Singkawang–Pemangkat–Sambas', kondisi: 'mulus' },
     { a: 'singkawang', b: 'bengkayang', km: 68, tol: 0, jalan: 'Jl. Raya Singkawang–Bengkayang (Perbukitan)', kondisi: 'bergelombang' },
-    { a: 'mempawah', b: 'bengkayang', km: 112, tol: 0, jalan: 'Jl. Karangan–Bengkayang', kondisi: 'bergelombang' },
+    { a: 'sambas', b: 'bengkayang', km: 96, tol: 0, jalan: 'Jl. Subah–Sanggau Ledo–Bengkayang (Perbukitan)', kondisi: 'bergelombang' },
+    { a: 'mempawah', b: 'bengkayang', km: 112, tol: 0, jalan: 'Jl. Anjongan–Karangan–Bengkayang', kondisi: 'bergelombang' },
     { a: 'kuburaya', b: 'landak', km: 155, tol: 0, jalan: 'Trans-Kalimantan Poros Utara (Ambawang–Ngabang)', kondisi: 'mulus' },
-    { a: 'bengkayang', b: 'landak', km: 88, tol: 0, jalan: 'Jl. Sanggau Ledo–Ngabang', kondisi: 'bergelombang' },
+    { a: 'bengkayang', b: 'landak', km: 88, tol: 0, jalan: 'Jl. Bengkayang–Darit–Ngabang', kondisi: 'bergelombang' },
     { a: 'landak', b: 'sanggau', km: 95, tol: 0, jalan: 'Trans-Kalimantan (Ngabang–Sosok–Sanggau)', kondisi: 'mulus' },
-    { a: 'kuburaya', b: 'sanggau', km: 185, tol: 0, jalan: 'Trans-Kalimantan via Tayan Hilir', kondisi: 'mulus' },
+    { a: 'kuburaya', b: 'sanggau', km: 238, tol: 0, jalan: 'Trans-Kalimantan via Tayan Hilir–Sosok–Sanggau', kondisi: 'mulus' },
     { a: 'sanggau', b: 'sekadau', km: 48, tol: 0, jalan: 'Trans-Kalimantan (Sanggau–Sekadau)', kondisi: 'mulus' },
     { a: 'sekadau', b: 'sintang', km: 82, tol: 0, jalan: 'Trans-Kalimantan (Sekadau–Sintang)', kondisi: 'bergelombang' },
     { a: 'sintang', b: 'melawi', km: 46, tol: 0, jalan: 'Jl. Nasional Sintang–Nanga Pinoh', kondisi: 'mulus' },
-    { a: 'sintang', b: 'kapuashulu', km: 282, tol: 0, jalan: 'Jl. Lintas Selatan Kalbar (Sintang–Putussibau)', kondisi: 'bergelombang' },
-    { a: 'sanggau', b: 'ketapang', km: 295, tol: 0, jalan: 'Trans-Kalimantan via Jembatan Tayan–Sandai–Ketapang', kondisi: 'bergelombang' },
-    { a: 'ketapang', b: 'kayongutara', km: 82, tol: 0, jalan: 'Jl. Provinsi Ketapang–Sukadana (Siduk)', kondisi: 'bergelombang' },
-    { a: 'ketapang', b: 'melawi', km: 235, tol: 0, jalan: 'Jalur Pedalaman Sandai–Nanga Tayap–Nanga Pinoh', kondisi: 'rusak' },
+    { a: 'sintang', b: 'kapuashulu', km: 274, tol: 0, jalan: 'Jl. Lintas Selatan Kalbar (Sintang–Silat–Putussibau)', kondisi: 'bergelombang' },
+    { a: 'kuburaya', b: 'ketapang', km: 422, tol: 0, jalan: 'Trans-Kalimantan via Jembatan Tayan–Balai Berkuak–Sandai–Ketapang', kondisi: 'bergelombang' },
+    { a: 'sanggau', b: 'ketapang', km: 348, tol: 0, jalan: 'Trans-Kalimantan via Tayan–Balai Berkuak–Sandai–Ketapang', kondisi: 'bergelombang' },
+    { a: 'kuburaya', b: 'kayongutara', km: 155, tol: 0, laut: true, jam: 10.5, kapalMobil: 285000, kapalOrang: 65000, jalan: 'Feri ASDP Rasau Jaya–Teluk Batang–Sukadana', kondisi: 'mulus' },
+    { a: 'ketapang', b: 'kayongutara', km: 84, tol: 0, jalan: 'Jl. Provinsi Ketapang–Siduk–Sukadana', kondisi: 'bergelombang' },
+    { a: 'ketapang', b: 'melawi', km: 245, tol: 0, jalan: 'Jalur Pedalaman Sandai–Nanga Tayap–Nanga Pinoh', kondisi: 'rusak' },
 
     /* === PENGHUBUNG KALBAR ↔ KALTENG === */
     { a: 'ketapang', b: 'sukamara', km: 145, tol: 0, jalan: 'Jalur Pesisir Selatan (Kendawangan–Jelai–Sukamara)', kondisi: 'rusak' },
@@ -377,7 +380,7 @@
     for (var n = 0; n < ids.length; n++) {
       var u = null; ids.forEach(function (k) { if (!sel[k] && (u === null || dist[k] < dist[u])) u = k; });
       if (u === null || dist[u] === Infinity) break; sel[u] = true; if (u === b) break;
-      tetangga(u).forEach(function (t) { var d = dist[u] + t.r.km; if (d < dist[t.ke]) { dist[t.ke] = d; dari[t.ke] = u; } });
+      tetangga(u).forEach(function (t) { var bobot = t.r.km + (t.r.laut ? 220 : 0); var d = dist[u] + bobot; if (d < dist[t.ke]) { dist[t.ke] = d; dari[t.ke] = u; } });
     }
     if (dist[b] === Infinity) return null;
     var simpul = [b]; while (simpul[0] !== a) simpul.unshift(dari[simpul[0]]);

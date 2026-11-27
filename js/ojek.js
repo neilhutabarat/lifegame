@@ -197,6 +197,7 @@
     var tj = (g.KK_WILAYAH && g.KK_WILAYAH.pilihTujuan) ? g.KK_WILAYAH.pilihTujuan(asalT, minKm, maxKm, S.ojek.riwayatDesa) : null;
     var km = tj ? tj.km : Math.round((minKm + Math.random() * (maxKm - minKm)) * 10) / 10;
     var tujuanTitik = tj ? tj.titik : null;
+    var medan = (tj && tj.medan) || (g.KK_WILAYAH && g.KK_WILAYAH.medanJalan ? g.KK_WILAYAH.medanJalan(asalT, tujuanTitik) : null);
     var tujuanLabel = tujuanTitik ? (tujuanTitik.desa + (tujuanTitik.kecNama && tujuanTitik.kecNama !== tujuanTitik.desa ? ', ' + tujuanTitik.kecNama : '')) : '';
     var jemput = Math.round((0.3 + Math.random() * 1.6) * 10) / 10;
     var arah = Math.random() * Math.PI * 2;
@@ -215,7 +216,7 @@
     var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : (p.layanan[jenis] + sufLayanan);
     var tipJauh = isCar && bisaJauh ? (Math.random() < (0.45 + gpsB * 0.35) ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
       : (Math.random() < ((prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) + gpsB * 0.25) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
-    return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
+    return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, medan: medan, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: tipJauh };
   }
@@ -239,7 +240,9 @@
     else if (bbmTarget === 'motor' && S.motor) { bbmDipakai = Math.max(0, bbmSebelum - S.motor.isi); S.motor.isi = bbmSebelum; }
     if (S.hp && S.hp.cas) S.hp.cas = false; /* berhenti cas stopkontak toko saat berangkat antar penumpang */
     var tunggu = x.jenis === 'makanan' ? 8 + Math.floor(Math.random() * 10) : x.jenis === 'barang' ? 4 : 2;
-    var menitJemput = Math.round(r.menit * x.jemput / km) + tunggu, total = r.menit + tunggu;
+    var fakMedan = (x.medan && x.medan.kec) ? Math.max(0.5, x.medan.kec) : 1;
+    var mntJalan = Math.max(3, Math.round(r.menit / fakMedan));
+    var menitJemput = Math.round(mntJalan * x.jemput / km) + tunggu, total = mntJalan + tunggu;
     o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kabar: r.kabar, bbmTarget: bbmTarget, bbmSisa: bbmDipakai };
     o.tawaran = null;
     return true;
@@ -321,7 +324,7 @@
       if (kbAir) { kabar.push(kbAir); o.online = false; }
     }
     if (g.KK_REAL && g.KK_REAL.catatAusPerjalanan) {
-      var kbAus = g.KK_REAL.catatAusPerjalanan(S, o.mode, x.km);
+      var kbAus = g.KK_REAL.catatAusPerjalanan(S, o.mode, x.km, x.medan);
       if (kbAus) kabar.push(kbAus);
     }
     o.trip = null; o.berikut = waktu(S) + jeda(S);

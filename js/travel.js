@@ -33,7 +33,7 @@
     sinkronMobilSupir(S);
     return S.travel;
   }
-  /* ---------- Kas Travel (khusus bensin, perawatan, tol, kapal, gaji supir; auto top-up dari bank jika < 50 juta) ---------- */
+  /* ---------- Kas Travel (khusus bensin, perawatan, tol, kapal, gaji supir; auto top-up dari bank jika < 5 juta) ---------- */
   function catatKas(S, ket, jml, n) {
     var T = siapkan(S);
     T.kasMutasi.unshift({ n: n != null ? n : (S.hari || 0), ket: ket, jml: Math.round(jml) });
@@ -78,7 +78,7 @@
       var d = Math.min(Math.max(0, S.uang.dompet || 0), sisa);
       S.uang.dompet -= d; sisa -= d;
     }
-    /* setelah dipotong, jika saldo Kas Travel turun di bawah Rp50jt, otomatis transfer lagi dari bank */
+    /* setelah dipotong, jika saldo Kas Travel turun di bawah batas minimum (Rp5jt), otomatis transfer lagi dari bank */
     pastikanKasTravel(S, 0, n);
     return jml - sisa;
   }
@@ -182,8 +182,12 @@
     return hasil;
   }
   function umkKota(S) {
+    if (g.KK_DIRI && g.KK_DIRI.kota) {
+      var kD = g.KK_DIRI.kota(S);
+      if (kD && kD.umk) return kD.umk;
+    }
     var k = N.kota.filter(function (x) { return x.id === S.kota; })[0];
-    return (k && k.umk) || 4000000;
+    return (k && k.umk) || 3500000;
   }
   /* hitung persenan kepuasan supir travel (0-100%) berdasarkan gaji pokok, uang makan, insentif, periode, & BPJS */
   function kepuasanSupir(S, sp) {
@@ -362,7 +366,7 @@
             var pnp = Math.max(1, Math.round(krs * (0.55 + Math.random() * 0.45)));
             var tf = Math.round(R.tarifStandar(j, m) * (T.mult || 1) / 1000) * 1000;
             var kotor = pnp * tf * tripHari;
-            var bbmRp = Math.round((j.km / (m.kml || 12)) * M().hargaBbm(S, m.bbm) * tripHari);
+            var bbmRp = Math.round((j.km / Math.max(1, m.kml || 12)) * (M().hargaBbm(S, m.bbm || 'pertalite') || 10000) * tripHari);
             var tolRp = (j.tol || 0) * tripHari;
             var opsKas = bbmRp + tolRp;
             if (opsKas > 0) {

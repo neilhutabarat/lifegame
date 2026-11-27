@@ -12,7 +12,6 @@
   function komplain(S, teks) { S.komplain++; if (g.KK_DUNIA) g.KK_DUNIA.catatKomplain(S, teks); }
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function acak(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function menuDari(id) { return M.MENU.filter(function (m) { return m.id === id; })[0]; }
   function waktu(S) { return S.hari * 1440 + S.menit; }
 
   function siapkan(S) {
