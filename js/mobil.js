@@ -177,7 +177,7 @@
     if (kap < 2) return 'Mobil ini tidak cocok untuk travel penumpang. Pakai MPV, SUV, hatchback, atau sedan.';
     var rt = ruteTravel(S).filter(function (x) { return x.id === ruteId; })[0];
     if (!rt) return 'Rute travel tidak ditemukan.';
-    var literButuh = rt.km / m.kml;
+    var literButuh = rt.km / Math.max(1, m.kml || 12);
     var biayaBbm = Math.round(literButuh * M().hargaBbm(S, m.bbm) / 1000) * 1000;
     if (S.bank.saldo < biayaBbm && (S.uang.dompet || 0) < biayaBbm) return 'Dana tidak cukup untuk isi bensin perjalanan ' + rt.km + ' km (' + rp(biayaBbm) + ').';
     if (S.bank.saldo >= biayaBbm) { S.bank.saldo -= biayaBbm; M().catatBank(S, 'Bensin travel ke ' + rt.tujuan, -biayaBbm); }
@@ -350,7 +350,7 @@
     var biaya = Math.round(liter * M().hargaBbm(S, jenis) / 100) * 100;
     if (danaRawat(S) < biaya) return 'Saldo Kas Travel & rekening tidak cukup untuk ' + (listrik ? 'cas listrik ' : 'bensin ') + rp(biaya) + '.';
     bayarRawat(S, biaya, (listrik ? ('Cas SPKLU ' + liter.toLocaleString('id-ID') + ' kWh') : ('Isi ' + N.bbm.nama[jenis] + ' ' + liter.toLocaleString('id-ID') + ' L')) + ' · ' + m.nama);
-    m.isi = Math.min(1, m.isi + liter / m.tangki);
+    m.isi = Math.min(1, m.isi + liter / Math.max(1, m.tangki || 40));
     S.hariIni.bensin = (S.hariIni.bensin || 0) + biaya;
     m.ngelitik = !listrik && jenis !== 'solar' && RON[jenis] < RON[m.bbm];
     return { ok: true, liter: liter, biaya: biaya, jenis: jenis };
@@ -416,7 +416,7 @@
     if (disewakan(S)) return { ok: false, alasan: 'Mobil ini sedang disewakan di Sewa Aset. Hentikan sewa atau ganti mobil utama dulu.' };
     if (!cukup(S, km)) return { ok: false, alasan: m && m.bbm === 'listrik' ? 'Daya baterai mobil listrik tidak cukup. Cas dulu di SPKLU.' : 'Bensin mobil tidak cukup. Isi dulu di aplikasi Kendaraan.' };
     var menit = Math.round(km / kmhGigi(S, km) * 60) + 5 * (stop || 1), kabar = [];
-    m.isi = Math.max(0, m.isi - km / m.kml * gigi(S).boros / m.tangki); m.km += km;
+    m.isi = Math.max(0, m.isi - km / Math.max(1, m.kml || 12) * gigi(S).boros / Math.max(1, m.tangki || 40)); m.km += km;
     if (Math.random() < 0.0008 + (m.ngelitik ? 0.008 : 0) + (telatServis(S) + telatBan(S) * 0.4) / 2500 * 0.01) {
       var bengkel = 300000 + Math.floor(Math.random() * 4) * 100000; menit += 90;
       var dibayarB = (g.KK_TRAVEL && g.KK_TRAVEL.bayarKasTravel) ? g.KK_TRAVEL.bayarKasTravel(S, bengkel, 'Derek dan bengkel ' + m.nama, S.hari, true) : bayarRawat(S, bengkel, 'Derek dan bengkel ' + m.nama);

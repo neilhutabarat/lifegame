@@ -156,21 +156,12 @@
     return null;
   }
   function buatPelamarSupir(S) {
-    var namaCalon = [
-      'Rudi Hartono', 'Slamet Riyadi', 'Hendra Wijaya', 'Agus Supriyanto', 'Bambang Kusuma',
-      'Dedi Setiawan', 'Wahyu Pratama', 'Joko Susilo', 'Arif Budiman', 'Yusuf Maulana',
-      'Taufik Hidayat', 'Eko Prasetyo', 'Fajar Nugroho', 'Surya Saputra', 'Irfan Hakim',
-      'Teguh Santoso', 'Andri Kurniawan', 'Rizky Ramadhan'
-    ];
-    var sudah = {};
-    ((S && S.travel && S.travel.supir) || []).forEach(function (sp) { sudah[sp.nama] = true; });
-    var tersedia = namaCalon.filter(function (nm) { return !sudah[nm]; });
-    if (!tersedia.length) tersedia = namaCalon.slice();
+    var sudah = [];
+    ((S && S.travel && S.travel.supir) || []).forEach(function (sp) { sudah.push(sp.nama); });
     var hasil = [];
-    var jml = Math.min(4, tersedia.length);
-    for (var i = 0; i < jml; i++) {
-      var nm = tersedia[((S.hari || 0) + i * 2) % tersedia.length];
-      if (hasil.some(function (x) { return x.nama === nm; })) nm = tersedia[(i + 1) % tersedia.length];
+    for (var i = 0; i < 4; i++) {
+      var nm = (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S, { gender: 'cowok', hindari: sudah }) : ('Supir ' + ((S.hari || 0) + i + 1));
+      sudah.push(nm);
       hasil.push({
         id: 'sp-' + ((S.hari || 0) + 1) + '-' + i + '-' + Math.floor(Math.random() * 999),
         nama: nm,
@@ -475,7 +466,7 @@
   }
   function bolehKhusus(S) { return !!S.mobil && vvipAktif(S); }
 
-  /* ---------- uang (semua operasional Travel lewat Kas Travel, auto top-up dari bank < 50 juta) ---------- */
+  /* ---------- uang (semua operasional Travel lewat Kas Travel, auto top-up dari bank < 5 juta) ---------- */
   function dana(S) { return danaKas(S) + Math.max(0, (S.uang && S.uang.dompet) || 0); }
   function bayar(S, jml, ket) { return bayarKasTravel(S, jml, ket, S.hari, true); }
 
@@ -515,35 +506,82 @@
     return { kmh: Math.max(6, v), gigi: n, ket: ket, batasJalan: batasJalan, vmax: vmax };
   }
 
-  /* ---------- rencana perjalanan ---------- */
-  function rencana(S, tujuan) {
-    var T = siapkan(S), j = R.jalur(T.di || S.kota, tujuan); if (!j) return null;
+  /* ---------- rencana perjalanan (mendukung jalur alternatif pilihan pemain & tujuan spesifik kecamatan/desa Kalbar) ---------- */
+  function tambahSegmenDesa(jDasar, tujuan, detail) {
+    if (!jDasar || !detail || !detail.kecId || !g.KK_WILAYAH || !g.KK_WILAYAH.kalbar || !g.KK_WILAYAH.kalbar[tujuan]) return jDasar;
+    var W = g.KK_WILAYAH;
+    var ibu = W.titikAwal(tujuan);
+    var tDesa = W.cariTitik ? W.cariTitik(tujuan, detail.kecId, detail.desa) : ibu;
+    var extraKm = Math.round(W.jarakKm(ibu, tDesa) * 10) / 10;
+    if (extraKm < 1) return jDasar;
+    var mdKode = (tDesa.medan === 'kota' || tDesa.medan === 'mulus' || tDesa.medan === 'pesisir') ? 'mulus'
+      : (tDesa.medan === 'rusak' ? 'rusak' : tDesa.medan === 'tanah' ? 'tanah' : 'bergelombang');
+    var ruasBaru = jDasar.ruas.slice();
+    var simpulBaru = jDasar.simpul.slice();
+    ruasBaru.push({
+      a: tujuan, b: tujuan, km: extraKm, tol: 0,
+      laut: !!tDesa.pulau, jam: tDesa.pulau ? Math.max(1.2, Math.round((extraKm / 24) * 10) / 10) : 0,
+      kapalMobil: tDesa.pulau ? 180000 : 0, kapalOrang: tDesa.pulau ? 35000 : 0,
+      jalan: 'Akses Kec. ' + tDesa.kecNama + ' (' + tDesa.desa + ')',
+      kondisi: mdKode, lokalDesa: tDesa
+    });
+    simpulBaru.push(tujuan);
+    return {
+      simpul: simpulBaru, ruas: ruasBaru, km: Math.round((jDasar.km + extraKm) * 10) / 10,
+      tol: jDasar.tol || 0, laut: !!(jDasar.laut || tDesa.pulau),
+      viaTeks: jDasar.viaTeks, label: jDasar.label, extraKm: extraKm, desaTujuan: tDesa
+    };
+  }
+  function rencana(S, tujuan, jalurKustom, detailTujuan) {
+    var T = siapkan(S);
+    var asal = T.di || S.kota;
+    var det = detailTujuan !== undefined ? detailTujuan : (tujuan === T.tujuan ? T.tujuanDetail : null);
+    var jBase = jalurKustom || (tujuan === T.tujuan && T.jalurPilihan && T.jalurPilihan.simpul && T.jalurPilihan.simpul[0] === asal && T.jalurPilihan.simpul[T.jalurPilihan.simpul.length - 1] === tujuan ? T.jalurPilihan : null);
+    if (!jBase) {
+      if (asal === tujuan && det && det.kecId && g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]) {
+        /* Travel dalam kabupaten menuju kecamatan/desa ujung (mis. Pontianak/Ketapang kota ke Kendawangan/Manis Mata/Paloh/Badau) */
+        jBase = { simpul: [asal], ruas: [], km: 0, tol: 0, laut: false, viaTeks: 'Jalan Kabupaten/Kecamatan', label: '🛣️ Jalur Lokal Kabupaten' };
+      } else {
+        jBase = R.jalur(asal, tujuan);
+      }
+    }
+    if (!jBase) return null;
+    var j = tambahSegmenDesa(jBase, tujuan, det);
+    if (!j.ruas.length) return null;
     var m = S.mobil, gi = gigiObj(T.gigi, S), std = R.tarifStandar(j, m), pnp = Math.max(1, T.antri.length);
     var laut = 0, jamLaut = 0, kondisiTerburuk = 'mulus', bobotKond = { tol: 0, mulus: 1, bergelombang: 2, rusak: 3, tanah: 4 };
     var jamDarat = 0, liter = 0;
+    var kmlM = Math.max(1, (m && m.kml) || 12);
     j.ruas.forEach(function (r, idxR) {
-      if (r.laut) { laut += r.kapalMobil + r.kapalOrang * pnp; jamLaut += r.jam + 1; return; }
+      if (r.laut) { laut += (r.kapalMobil || 0) + (r.kapalOrang || 0) * pnp; jamLaut += (r.jam || 2) + 1; return; }
       var kd = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 0.76, vMaxJalan: 92, boros: 1 };
       var kId = r.kondisi || (r.tol > 0 ? 'tol' : 'mulus');
       if ((bobotKond[kId] || 1) > (bobotKond[kondisiTerburuk] || 1)) kondisiTerburuk = kId;
       var vr = kecepatanRuas(S, r, T.gigi, false, false);
-      /* perhitungkan perlambatan keluar/masuk kota ramai (~14 km di ujung ruas jika kota ramai) */
       var kA = R.kota[j.simpul[idxR]], kB = R.kota[j.simpul[idxR + 1]];
       var kmPadat = Math.min(r.km, ((kA && kA.ramai >= 1.1) ? Math.min(14, r.km / 2) : 0) + ((kB && kB.ramai >= 1.1) ? Math.min(14, r.km / 2) : 0));
       var kmLancar = Math.max(0, r.km - kmPadat);
       jamDarat += kmLancar / vr.kmh + kmPadat / Math.max(6, vr.kmh * 0.72);
-      if (m) liter += (r.km / m.kml) * gi.boros * kd.boros;
+      if (m) liter += (r.km / kmlM) * gi.boros * kd.boros;
     });
     var jamJalan = jamDarat + jamLaut;
-    var bbm = m ? M().hargaBbm(S, m.bbm) : 0;
+    var bbm = m ? (M().hargaBbm(S, m.bbm || 'pertalite') || 10000) : 0;
+    var biayaBbm = Math.round(liter * bbm);
     var namaJalanUtama = j.ruas[0] && j.ruas[0].jalan ? j.ruas[0].jalan : '';
-    return { jalur: j, km: j.km, tol: j.tol, laut: laut, tarifStd: std, tarif: Math.round(std * T.mult / 1000) * 1000, jam: jamJalan, liter: liter, biayaBbm: Math.round(liter * bbm), nama: R.nama(tujuan), kondisi: kondisiTerburuk, namaJalan: namaJalanUtama };
+    var namaTuj = (det && det.desa) ? (det.desa + ', Kec. ' + det.kecNama + ' (' + R.nama(tujuan).replace(/^Kab\. |^Kota /, '') + ')') : R.nama(tujuan);
+    return {
+      jalur: j, km: j.km, tol: j.tol, laut: laut, biayaBbm: biayaBbm, totalBiayaOps: biayaBbm + (j.tol || 0) + laut,
+      tarifStd: std, tarif: Math.round(std * T.mult / 1000) * 1000, jam: jamJalan, liter: liter,
+      nama: namaTuj, kondisi: kondisiTerburuk, namaJalan: namaJalanUtama, viaTeks: j.viaTeks || namaJalanUtama, label: j.label || ''
+    };
   }
 
   /* ---------- penumpang datang ---------- */
   function laju(S, tujuan) {
-    var T = S.travel, j = R.jalur(T.di, tujuan); if (!j) return 0;
-    var jam = Math.floor(S.menit / 60) % 24, pop = (R.kota[T.di].ramai + R.kota[tujuan].ramai) / 2;
+    var T = S.travel, rc = rencana(S, tujuan); if (!rc || !rc.jalur) return 0;
+    var j = rc.jalur;
+    var rA = (R.kota[T.di] && R.kota[T.di].ramai) || 1, rB = (R.kota[tujuan] && R.kota[tujuan].ramai) || 1;
+    var jam = Math.floor(S.menit / 60) % 24, pop = (rA + rB) / 2;
     var jarak = j.km < 150 ? 1.2 : j.km < 400 ? 1 : j.km < 900 ? 0.7 : 0.4;
     var nyaman = R.nyaman ? R.nyaman(S.mobil, 'mobil') : 1;
     var harga = Math.pow(nyaman / T.mult, 1.6), mutu = 0.6 + T.rating * 0.1;
@@ -551,8 +589,16 @@
   }
   function jeda(S, tujuan) { var l = Math.max(0.05, laju(S, tujuan)); return Math.max(2, -Math.log(1 - Math.random()) * 60 / l); }
   function penumpangBaru(S) {
+    var T = S && S.travel;
     var r = Math.random(), tipe = r < 0.25 ? 'cepat' : r < 0.5 ? 'santai' : 'biasa';
-    return { nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)], tipe: tipe, naik: waktu(S) };
+    var hindari = ((T && T.antri) || []).map(function (x) { return x.nama; });
+    var nm = (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S, { kotaId: (T && T.di) || S.kota, hindari: hindari }) : N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)];
+    var turun = '';
+    if (T && T.tujuan && g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[T.tujuan]) {
+      var td = (T.tujuanDetail && T.tujuanDetail.kecId) ? g.KK_WILAYAH.desaAcak(T.tujuan, T.tujuanDetail.kecId) : g.KK_WILAYAH.desaAcak(T.tujuan);
+      if (td) turun = td.desa + ', Kec. ' + td.kecNama;
+    }
+    return { nama: nm, tipe: tipe, naik: waktu(S), turun: turun };
   }
   function bisaMulai(S) {
     if (!S.mobil) return 'Travel butuh mobil. Beli mobil keluarga atau MPV dulu di aplikasi Kendaraan.';
@@ -575,10 +621,14 @@
     if (!paksa && T.di !== S.kota && !punyaRumahDiSini) return 'Kamu masih di ' + R.nama(T.di) + '. Pulang dulu ke ' + R.nama(S.kota) + ' atau tekan Pulang ke Kota Asal.';
     T.aktif = false; T.di = S.kota; T.antri = []; T.tujuan = null; return true;
   }
-  function pilihTujuan(S, id) {
+  function pilihTujuan(S, id, jalurKustom, detailTujuan) {
     var T = siapkan(S); if (T.status !== 'tunggu') return 'Mobil sedang di jalan.';
-    if (!R.kota[id] || id === T.di) return 'Tujuan tidak valid.';
-    if (T.tujuan !== id) { T.tujuan = id; T.antri = []; T.jemput = 0; T.berikut = waktu(S) + jeda(S, id); }
+    var samaKab = id === T.di;
+    if (!R.kota[id] || (samaKab && !(detailTujuan && detailTujuan.kecId))) return 'Tujuan tidak valid.';
+    var dL = T.tujuanDetail, dB = detailTujuan;
+    var detSama = (!dL && !dB) || !!(dL && dB && dL.kecId === dB.kecId && dL.desa === dB.desa);
+    if (T.tujuan !== id || !detSama) { T.tujuan = id; T.tujuanDetail = detailTujuan || null; T.antri = []; T.jemput = 0; T.berikut = waktu(S) + jeda(S, id); }
+    T.jalurPilihan = jalurKustom || null;
     return true;
   }
   function ubahTarif(S, delta) {
@@ -595,7 +645,8 @@
     var biaya = Math.round(literBisa * h / 100) * 100;
     if (biaya > uangAda) biaya = uangAda;
     var dibayar = bayar(S, biaya, (evM ? 'Auto cas SPKLU Travel ' : 'Auto isi ' + (N.bbm.nama[jenis] || jenis) + ' Travel ') + m.nama);
-    m.isi = Math.min(1, m.isi + literBisa / m.tangki);
+    var tangkiM = Math.max(1, m.tangki || 40);
+    m.isi = Math.min(1, m.isi + literBisa / tangkiM);
     m.ngelitik = false;
     S.hariIni.bensin = (S.hariIni.bensin || 0) + dibayar;
     return { liter: literBisa, biaya: dibayar, ev: evM, namaBbm: N.bbm.nama[jenis] || jenis };
@@ -611,7 +662,7 @@
       if (!aiJ) return 'Dana & BBM tidak cukup untuk menjemput.';
       autoKet = ' (⛽ Auto isi ' + aiJ.namaBbm + ' ' + aiJ.liter + (aiJ.ev ? ' kWh' : ' L') + ' · ' + rp(aiJ.biaya) + ')';
     }
-    m.isi = Math.max(0, m.isi - 4 / m.kml / m.tangki); m.km += 4; T.jemput++;
+    m.isi = Math.max(0, m.isi - 4 / Math.max(1, m.kml || 12) / Math.max(1, m.tangki || 40)); m.km += 4; T.jemput++;
     T.antri.push(penumpangBaru(S));
     return { ok: true, menit: 25, teks: 'Menjemput ' + T.antri[T.antri.length - 1].nama + ' di rumahnya. Kursi terisi ' + T.antri.length + '/' + kursi(S) + '.' + autoKet };
   }
@@ -633,8 +684,8 @@
     if (m.isi * m.tangki < 2) return m.bbm === 'listrik' ? 'Baterai mobil listrik hampir habis & saldo kurang untuk auto cas.' : 'Bensin hampir habis & saldo kurang untuk auto isi BBM.';
     var pnp = T.antri.length;
     S.hiburan = null;
-    T.trip = { dari: T.di, ke: T.tujuan, simpul: rc.jalur.simpul, ruas: rc.jalur.ruas, km: rc.km, idx: 0, kmRuas: 0, kmSelesai: 0, mulai: waktu(S), menitGerak: 0, menitHenti: 0, sisaKapal: 0,
-      gigiMenit: [0, 0, 0, 0, 0, 0, 0], tarifKursi: rc.tarif, tol: 0, kapal: 0, penalti: 0, penaltiTipe: { cepat: 0, santai: 0, biasa: 0 }, kejadian: [], bensin0: m.isi * m.tangki, bensinTerpakai: 0, peringatan: false, tolAsal: rc.tol };
+    T.trip = { dari: T.di, ke: T.tujuan, tujuanDetail: T.tujuanDetail || null, tujuanNama: rc.nama, simpul: rc.jalur.simpul, ruas: rc.jalur.ruas, km: rc.km, idx: 0, kmRuas: 0, kmSelesai: 0, mulai: waktu(S), menitGerak: 0, menitHenti: 0, sisaKapal: 0,
+      gigiMenit: [0, 0, 0, 0, 0, 0, 0], tarifKursi: rc.tarif, tol: 0, kapal: 0, penalti: 0, penaltiTipe: { cepat: 0, santai: 0, biasa: 0 }, kejadian: [], bensin0: m.isi * Math.max(1, m.tangki || 40), bensinTerpakai: 0, peringatan: false, tolAsal: rc.tol };
     T.status = 'jalan';
     var kabar = kabarAuto.concat(masukRuas(S));
     return { ok: true, kabar: kabar, teks: pnp ? 'Berangkat ke ' + rc.nama + ' bersama ' + pnp + ' penumpang.' : 'Berangkat ke ' + rc.nama + ' tanpa penumpang.' };
@@ -657,7 +708,8 @@
   function macet(S) {
     var T = S.travel, tr = T.trip; if (!tr) return 1;
     var r = tr.ruas[tr.idx], sisa = r.km - tr.kmRuas, dekat = Math.min(tr.kmRuas, sisa);
-    var kotaDekat = tr.kmRuas < sisa ? tr.simpul[tr.idx] : tr.simpul[tr.idx + 1], ramai = R.kota[kotaDekat].ramai;
+    var kotaDekat = tr.kmRuas < sisa ? tr.simpul[tr.idx] : tr.simpul[tr.idx + 1];
+    var ramai = (R.kota[kotaDekat] && R.kota[kotaDekat].ramai) || 1;
     if (dekat > 14 || ramai < 1.1) return 1;
     var jam = (S.menit % 1440) / 60, sibuk = (jam >= 6 && jam < 9.5) || (jam >= 16 && jam < 19.5);
     return sibuk ? 0.45 : 0.75;
@@ -684,10 +736,11 @@
     var T = S.travel, tr = T.trip, m = S.mobil, kabar = [];
     if (!m) { T.status = 'tunggu'; T.trip = null; return ['Mobil tidak ada, perjalanan dibatalkan.']; }
     var r = tr.ruas[tr.idx], kdR = R.infoKondisi ? R.infoKondisi(r) : { boros: 1, risikoBan: 1 }, v = kecepatan(S), gi = gigiObj(v.gigi, S), km = Math.min(v.kmh * dMenit / 60, r.km - tr.kmRuas);
-    var liter = km / m.kml * gi.boros * (kdR.boros || 1) * (m.ngelitik ? 1.08 : 1);
+    var kmlL = Math.max(1, m.kml || 12), tangkiL = Math.max(1, m.tangki || 40);
+    var liter = km / kmlL * gi.boros * (kdR.boros || 1) * (m.ngelitik ? 1.08 : 1);
     var evM = m.bbm === 'listrik';
     /* mode Travel: otomatis isi BBM di SPBU / cas di SPKLU saat tangki < 18% (GoCar/Ojol tetap manual) */
-    if (m.isi < 0.18 || m.isi * m.tangki < liter + 0.8) {
+    if (m.isi < 0.18 || m.isi * tangkiL < liter + 0.8) {
       var aiJln = autoIsiBbmTravel(S, m);
       if (aiJln) {
         tr.menitHenti += 8; T.lompat += 8;
@@ -696,12 +749,12 @@
         kabar.push(msgAi);
       }
     }
-    if (m.isi * m.tangki < liter + 0.2) {
+    if (m.isi * tangkiL < liter + 0.2) {
       var derek = Math.min(750000, dana(S)); var bayarDerek = bayar(S, derek, evM ? 'Derek dan cas darurat' : 'Derek dan bensin darurat');
-      m.isi = Math.min(1, m.isi + 8 / m.tangki); tambahKejadian(T, (evM ? 'Baterai habis di jalan (saldo kurang untuk auto cas). Derek ' : 'Bensin habis di jalan (saldo kurang untuk auto isi BBM). Derek ') + rp(bayarDerek) + '.', bayarDerek, 90, 0.7);
+      m.isi = Math.min(1, m.isi + 8 / tangkiL); tambahKejadian(T, (evM ? 'Baterai habis di jalan (saldo kurang untuk auto cas). Derek ' : 'Bensin habis di jalan (saldo kurang untuk auto isi BBM). Derek ') + rp(bayarDerek) + '.', bayarDerek, 90, 0.7);
       kabar.push((evM ? 'Baterai mobil listrik habis di jalan. Derek dan cas darurat ' : 'Bensin habis di jalan. Derek dan beli bensin darurat ') + rp(bayarDerek) + ', telat sekitar 1,5 jam.'); return kabar;
     }
-    m.isi = Math.max(0, m.isi - liter / m.tangki); tr.bensinTerpakai = (tr.bensinTerpakai || 0) + liter; m.km += km; tr.kmRuas += km; tr.kmSelesai += km; tr.menitGerak += dMenit; tr.gigiMenit[v.gigi] += dMenit;
+    m.isi = Math.max(0, m.isi - liter / tangkiL); tr.bensinTerpakai = (tr.bensinTerpakai || 0) + liter; m.km += km; tr.kmRuas += km; tr.kmSelesai += km; tr.menitGerak += dMenit; tr.gigiMenit[v.gigi] += dMenit;
     var jamFrac = dMenit / 60, r2 = Math.random();
     var ngebutBatas = v.gigi === 5 && v.kmh > 135;
     if (ngebutBatas && r2 < 0.008 * jamFrac) {
@@ -832,24 +885,31 @@
     }
     T.total.km += tr.km;
     S.hariIni.travel = (S.hariIni.travel || 0) + (pnp ? total + tip - biayaPerjalanan : -biayaPerjalanan);
-    T.laporan = { dari: dari, ke: tujuan, km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10, ev: !!(S.mobil && S.mobil.bbm === 'listrik'),
+    T.laporan = { dari: dari, ke: tujuan, tujuanNama: tr.tujuanNama || R.nama(tujuan), km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10, ev: !!(S.mobil && S.mobil.bbm === 'listrik'),
       kejadian: tr.kejadian.slice(), rating: T.rating, hari: S.hari };
-    kabar.push('Tiba di ' + R.nama(tujuan) + (pnp ? '. Pendapatan ' + rp(total + tip) + ' (Tunai ' + rp(bayarTunai || 0) + ', QRIS ' + rp(bayarQris || 0) + ' cair besok).' : '.'));
-    T.di = tujuan; T.status = 'tunggu'; T.trip = null; T.antri = []; T.tujuan = null; T.jemput = 0; T.berikut = 0;
+    /* Sinkronkan lokasi karakter ke desa/kecamatan tujuan Travel di Kalimantan Barat */
+    if (S.ojek && g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]) {
+      S.ojek.lokasi = (tr.tujuanDetail && tr.tujuanDetail.kecId && g.KK_WILAYAH.cariTitik)
+        ? g.KK_WILAYAH.cariTitik(tujuan, tr.tujuanDetail.kecId, tr.tujuanDetail.desa)
+        : g.KK_WILAYAH.titikAwal(tujuan);
+    }
+    kabar.push('Tiba di ' + (tr.tujuanNama || R.nama(tujuan)) + (pnp ? '. Pendapatan ' + rp(total + tip) + ' (Tunai ' + rp(bayarTunai || 0) + ', QRIS ' + rp(bayarQris || 0) + ' cair besok).' : '.'));
+    T.di = tujuan; T.status = 'tunggu'; T.trip = null; T.antri = []; T.tujuan = null; T.tujuanDetail = null; T.jalurPilihan = null; T.jemput = 0; T.berikut = 0;
     return kabar;
   }
 
   /* ---------- untuk adegan dan HUD ---------- */
   function fase(S) {
     var T = S.travel; if (!T || !T.aktif) return null;
-    var di = R.kota[T.di] || R.kota[S.kota];
+    var di = R.kota[T.di] || R.kota[S.kota] || { tema: 'kota', nama: T.di || S.kota };
     if (T.status === 'tunggu') return { mode: 'kota', kota: T.di, tema: di.tema, penumpang: T.antri.length, kursi: kursi(S), tujuan: T.tujuan };
     var tr = T.trip; if (!tr) return { mode: 'kota', kota: T.di, tema: di.tema, penumpang: 0, kursi: kursi(S) };
-    var r = tr.ruas[tr.idx], a = tr.simpul[tr.idx], b = tr.simpul[tr.idx + 1], u = T.status === 'kapal' ? 1 - Math.max(0, tr.sisaKapal) / ((r.jam + 1) * 60) : Math.min(1, tr.kmRuas / r.km);
+    var r = tr.ruas[tr.idx], a = tr.simpul[tr.idx], b = tr.simpul[tr.idx + 1], u = T.status === 'kapal' ? 1 - Math.max(0, tr.sisaKapal) / (((r.jam || 2) + 1) * 60) : Math.min(1, tr.kmRuas / Math.max(0.1, r.km));
     var v = T.status === 'kapal' ? { kmh: 0, gigi: 0 } : kecepatan(S);
     var kdF = R.infoKondisi ? R.infoKondisi(r) : { nama: 'Aspal Mulus' };
-    return { mode: T.status === 'kapal' ? 'kapal' : 'jalan', dari: a, ke: b, u: u, temaA: R.kota[a].tema, temaB: R.kota[b].tema, penumpang: T.antri.length, kursi: kursi(S), kmh: v.kmh, gigi: v.gigi, tol: r.tol > 0, kondisi: r.kondisi || (r.tol > 0 ? 'tol' : 'mulus'), namaKondisi: kdF.nama, namaJalan: r.jalan || '',
-      kemajuan: Math.min(1, tr.kmSelesai / tr.km), sisaKm: Math.max(0, tr.km - tr.kmSelesai) };
+    var lokKoridor = r && r.lokalDesa ? r.lokalDesa : ((g.KK_WILAYAH && g.KK_WILAYAH.titikKoridorRuas) ? g.KK_WILAYAH.titikKoridorRuas(a, b, u) : null);
+    return { mode: T.status === 'kapal' ? 'kapal' : 'jalan', dari: a, ke: b, u: u, temaA: (R.kota[a] && R.kota[a].tema) || 'kota', temaB: (R.kota[b] && R.kota[b].tema) || 'kota', penumpang: T.antri.length, kursi: kursi(S), kmh: v.kmh, gigi: v.gigi, tol: (r.tol || 0) > 0, kondisi: r.kondisi || (r.tol > 0 ? 'tol' : 'mulus'), namaKondisi: kdF.nama, namaJalan: r.jalan || '', lokSekarang: lokKoridor, tujuanNama: tr.tujuanNama || R.nama(tr.ke),
+      kemajuan: Math.min(1, tr.kmSelesai / Math.max(0.1, tr.km)), sisaKm: Math.max(0, tr.km - tr.kmSelesai) };
   }
   function cepatWaktu(S) {
     var T = S.travel; if (!T || !T.aktif) return 1;

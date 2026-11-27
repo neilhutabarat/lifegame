@@ -496,6 +496,66 @@
     return (KEC_UMUM[kotaId] || ['Pusat Kota']).map(function (nm, i) { return { id: kotaId + '_' + i, nama: nm, medan: 'kota', pulau: false, desa: [nm], lat: null, lon: null }; });
   }
 
+  /* Cari titik desa/kecamatan spesifik dari 14 Kab/Kota · 174 Kecamatan · 1.562 Desa Kalbar */
+  function cariTitik(kabId, kecId, namaDesa) {
+    var kb = KALBAR[kabId];
+    if (!kb) return titikAwal(kabId, kecId);
+    var kc = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[0];
+    var ds = (namaDesa && kc.desa.indexOf(namaDesa) >= 0) ? namaDesa : kc.desa[0];
+    return titikDesa(kabId, kc, ds);
+  }
+  function desaAcak(kabId, kecId) {
+    var kb = KALBAR[kabId];
+    if (!kb) return titikAwal(kabId, kecId);
+    var kc = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[Math.floor(Math.random() * kb.kec.length)];
+    var ds = kc.desa[Math.floor(Math.random() * kc.desa.length)];
+    return titikDesa(kabId, kc, ds);
+  }
+
+  /* Koridor kecamatan asli sepanjang ruas jalan antarkabupaten Kalbar agar Travel melintasi seluruh kecamatan & desa nyata */
+  var KORIDOR_KALBAR = {
+    'pontianak|kuburaya': [['pontianak', 'ptk_sel'], ['pontianak', 'ptk_tgr'], ['kuburaya', 'kr_sraya']],
+    'pontianak|mempawah': [['pontianak', 'ptk_utr'], ['mempawah', 'mpw_jongkat'], ['mempawah', 'mpw_segedong'], ['mempawah', 'mpw_pinyuh'], ['mempawah', 'mpw_timur'], ['mempawah', 'mpw_hilir']],
+    'mempawah|singkawang': [['mempawah', 'mpw_hilir'], ['mempawah', 'mpw_skunyit'], ['bengkayang', 'bky_sraya'], ['bengkayang', 'bky_srkep'], ['singkawang', 'skw_sel'], ['singkawang', 'skw_bar']],
+    'singkawang|sambas': [['singkawang', 'skw_utr'], ['sambas', 'sbs_selakau'], ['sambas', 'sbs_salatiga'], ['sambas', 'sbs_pemangkat'], ['sambas', 'sbs_semparuk'], ['sambas', 'sbs_tebas'], ['sambas', 'sbs_sebawi'], ['sambas', 'sbs_sambas']],
+    'singkawang|bengkayang': [['singkawang', 'skw_tim'], ['bengkayang', 'bky_monterado'], ['bengkayang', 'bky_samalantan'], ['bengkayang', 'bky_sbetung'], ['bengkayang', 'bky_kota']],
+    'sambas|bengkayang': [['sambas', 'sbs_sambas'], ['sambas', 'sbs_sajad'], ['sambas', 'sbs_subah'], ['bengkayang', 'bky_tbelas'], ['bengkayang', 'bky_ledo'], ['bengkayang', 'bky_lumar'], ['bengkayang', 'bky_kota']],
+    'mempawah|bengkayang': [['mempawah', 'mpw_hilir'], ['mempawah', 'mpw_pinyuh'], ['mempawah', 'mpw_anjongan'], ['mempawah', 'mpw_toho'], ['landak', 'ldk_menjalin'], ['landak', 'ldk_mhulu'], ['bengkayang', 'bky_teriak'], ['bengkayang', 'bky_kota']],
+    'kuburaya|landak': [['kuburaya', 'kr_sraya'], ['kuburaya', 'kr_ambawang'], ['kuburaya', 'kr_kmandor'], ['landak', 'ldk_mandor'], ['landak', 'ldk_stemila'], ['landak', 'ldk_ngabang']],
+    'bengkayang|landak': [['bengkayang', 'bky_kota'], ['bengkayang', 'bky_teriak'], ['landak', 'ldk_sompak'], ['landak', 'ldk_bhulu'], ['landak', 'ldk_menyuke'], ['landak', 'ldk_kbehe'], ['landak', 'ldk_ngabang']],
+    'landak|sanggau': [['landak', 'ldk_ngabang'], ['landak', 'ldk_jelimpo'], ['sanggau', 'sgu_thulu'], ['sanggau', 'sgu_parindu'], ['sanggau', 'sgu_bonti'], ['sanggau', 'sgu_kapuas']],
+    'kuburaya|sanggau': [['kuburaya', 'kr_sraya'], ['kuburaya', 'kr_ambawang'], ['sanggau', 'sgu_thilir'], ['sanggau', 'sgu_balai'], ['sanggau', 'sgu_thulu'], ['sanggau', 'sgu_parindu'], ['sanggau', 'sgu_kapuas']],
+    'sanggau|sekadau': [['sanggau', 'sgu_kapuas'], ['sanggau', 'sgu_mukok'], ['sekadau', 'skd_hilir']],
+    'sekadau|sintang': [['sekadau', 'skd_hilir'], ['sintang', 'stg_sepauk'], ['sintang', 'stg_tempunak'], ['sintang', 'stg_stebelian'], ['sintang', 'stg_kota']],
+    'sintang|melawi': [['sintang', 'stg_kota'], ['sintang', 'stg_stebelian'], ['melawi', 'mlw_putr'], ['melawi', 'mlw_npinoh']],
+    'sintang|kapuashulu': [['sintang', 'stg_kota'], ['sintang', 'stg_kelam'], ['sintang', 'stg_dedai'], ['kapuashulu', 'kh_silhilir'], ['kapuashulu', 'kh_seberuang'], ['kapuashulu', 'kh_semitau'], ['kapuashulu', 'kh_hgurung'], ['kapuashulu', 'kh_pengkadan'], ['kapuashulu', 'kh_btanjung'], ['kapuashulu', 'kh_bunhulu'], ['kapuashulu', 'kh_mentebah'], ['kapuashulu', 'kh_kalis'], ['kapuashulu', 'kh_putsel'], ['kapuashulu', 'kh_pututr']],
+    'kuburaya|ketapang': [['kuburaya', 'kr_sraya'], ['kuburaya', 'kr_ambawang'], ['sanggau', 'sgu_thilir'], ['sanggau', 'sgu_toba'], ['ketapang', 'ktp_shulu'], ['ketapang', 'ktp_sdua'], ['ketapang', 'ktp_slaur'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_pemahan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_dpawan']],
+    'sanggau|ketapang': [['sanggau', 'sgu_kapuas'], ['sanggau', 'sgu_parindu'], ['sanggau', 'sgu_thilir'], ['sanggau', 'sgu_toba'], ['ketapang', 'ktp_shulu'], ['ketapang', 'ktp_slaur'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_dpawan']],
+    'kuburaya|kayongutara': [['kuburaya', 'kr_sraya'], ['kuburaya', 'kr_rasau'], ['kuburaya', 'kr_bampar'], ['kayongutara', 'ku_tbatang'], ['kayongutara', 'ku_seponti'], ['kayongutara', 'ku_shilir'], ['kayongutara', 'ku_sukadana']],
+    'ketapang|kayongutara': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_mhu'], ['kayongutara', 'ku_shilir'], ['kayongutara', 'ku_sukadana']],
+    'ketapang|melawi': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_hsungai'], ['melawi', 'mlw_tpbarat'], ['melawi', 'mlw_tpinoh'], ['melawi', 'mlw_bhulu'], ['melawi', 'mlw_belimbing'], ['melawi', 'mlw_npinoh']]
+  };
+
+  function titikKoridorRuas(kabA, kabB, u) {
+    if (!KALBAR[kabA] && !KALBAR[kabB]) return null;
+    u = Math.max(0, Math.min(1, Number(u) || 0));
+    var list = KORIDOR_KALBAR[kabA + '|' + kabB];
+    if (!list && KORIDOR_KALBAR[kabB + '|' + kabA]) list = KORIDOR_KALBAR[kabB + '|' + kabA].slice().reverse();
+    if (!list || !list.length) {
+      var kTarget = u < 0.5 ? (KALBAR[kabA] ? kabA : kabB) : (KALBAR[kabB] ? kabB : kabA);
+      return titikAwal(kTarget);
+    }
+    var pos = u * (list.length - 1);
+    var idx = Math.max(0, Math.min(list.length - 1, Math.floor(pos)));
+    var subU = pos - idx;
+    var pair = list[idx];
+    var kb = KALBAR[pair[0]];
+    if (!kb) return titikAwal(kabA);
+    var kc = kb.kec.filter(function (x) { return x.id === pair[1]; })[0] || kb.kec[0];
+    var dIdx = Math.max(0, Math.min(kc.desa.length - 1, Math.floor(subU * Math.min(4, kc.desa.length))));
+    return titikDesa(pair[0], kc, kc.desa[dIdx]);
+  }
+
   /* Tempat ibadah terdekat yang berbeda-beda sesuai kecamatan/desa tempat karakter berada */
   var MASJID_KHAS = {
     ptk_kota: ['Masjid Raya Mujahidin Pontianak', 'Masjid Al-Falah Darat Sekip'],
@@ -588,6 +648,9 @@
     medanJalan: medanJalan,
     titikAwal: titikAwal,
     titikDesa: titikDesa,
+    cariTitik: cariTitik,
+    desaAcak: desaAcak,
+    titikKoridorRuas: titikKoridorRuas,
     pilihTujuan: pilihTujuan,
     daftarKecamatan: daftarKecamatan,
     tempatIbadahTerdekat: tempatIbadahTerdekat,

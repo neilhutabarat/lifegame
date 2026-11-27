@@ -182,14 +182,29 @@
     return list;
   }
 
-  /* Pergi Bebas tanpa ngojol: Jalan Kaki, Motor/Mobil Sendiri, atau Dijemput Teman */
-  function pergiBebas(S, targetId, cara, temanId, tundaPindah) {
+  /* Pergi Bebas tanpa ngojol: Jalan Kaki, Motor/Mobil Sendiri, atau Dijemput Teman — mendukung POI lokal + SELURUH 174 Kecamatan & 1.562 Desa Kalbar */
+  function pergiBebas(S, targetId, cara, temanId, tundaPindah, jalurOpsi) {
     siapkan(S);
     if (S.ojek && S.ojek.trip) return 'Selesaikan order penumpang dulu sebelum pergi bebas!';
     var daf = daftarTujuanPeta(S);
     var tj = daf.filter(function (x) { return x.id === targetId; })[0];
+    if (!tj && String(targetId || '').indexOf('desa:') === 0 && g.KK_WILAYAH && g.KK_WILAYAH.cariTitik) {
+      var pd = String(targetId).split(':');
+      var tDesa = g.KK_WILAYAH.cariTitik(pd[1], pd[2], pd.slice(3).join(':'));
+      var sk0 = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : g.KK_WILAYAH.titikAwal(S.kota);
+      if (tDesa) {
+        var md0 = g.KK_WILAYAH.medanJalan ? g.KK_WILAYAH.medanJalan(sk0, tDesa) : { ikon: '🛣️', nama: 'Aspal', kec: 1, aus: 1 };
+        var km0 = (jalurOpsi && jalurOpsi.km) ? jalurOpsi.km : Math.max(1.2, g.KK_WILAYAH.jarakKm(sk0, tDesa));
+        tj = { id: targetId, nama: '📍 ' + tDesa.desa + ', Kec. ' + tDesa.kecNama + ' (' + tDesa.kabNama.replace(/^Kab\. |^Kota /, '') + ')', kat: 'wilayah', km: km0, titik: tDesa, medan: md0, aksi: 'wilayah' };
+      }
+    }
     if (!tj) return 'Tujuan tidak ditemukan di peta.';
-    var km = tj.aksi === 'pulang' ? Math.max(0.5, (g.KK_OJEK && g.KK_OJEK.jarakRumah) ? g.KK_OJEK.jarakRumah(S) : 2) : (tj.km || 2);
+    var km = (jalurOpsi && jalurOpsi.km) ? jalurOpsi.km : (tj.aksi === 'pulang' ? Math.max(0.5, (g.KK_OJEK && g.KK_OJEK.jarakRumah) ? g.KK_OJEK.jarakRumah(S) : 2) : (tj.km || 2));
+    var biayaFeri = (jalurOpsi && jalurOpsi.biayaFeri) ? Math.round(jalurOpsi.biayaFeri) : 0;
+    if (biayaFeri > 0) {
+      var byF = g.KK_UANG.bayarPilihan(S, biayaFeri, 'Tiket Feri Penyeberangan (' + tj.nama + ')', S._metodeBayar || 'bank');
+      if (byF !== true) return byF;
+    }
     var menit = 10, ket = '', bbmTarget = null, bbmDipakai = 0;
 
     if (cara === 'jalan') {
@@ -748,12 +763,10 @@
     if (R.dating.hariAcak !== S.hari || !R.dating.kandidat.length) {
       R.dating.hariAcak = S.hari;
       var lawan = ((S.profil && S.profil.gender) === 'cewek') ? 'cowok' : 'cewek';
-      var namaPool = lawan === 'cewek'
-        ? ['Nadia', 'Aurel', 'Salsa', 'Bella', 'Intan', 'Tasya', 'Celine', 'Kezia', 'Putri', 'Dinda']
-        : ['Raka', 'Dimas', 'Kevin', 'Bagas', 'Fajar', 'Aldi', 'Reza', 'Farhan', 'Dito', 'Yoga'];
-      var list = [];
+      var list = [], sudahNm = [];
       for (var i = 0; i < 5; i++) {
-        var nm = namaPool[(S.hari * 3 + i * 2) % namaPool.length];
+        var nm = (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S, { gender: lawan, hindari: sudahNm }) : ((lawan === 'cewek' ? 'Nadia' : 'Raka') + ' ' + (i + 1));
+        sudahNm.push(nm);
         list.push({
           id: 'dt_' + S.hari + '_' + i,
           nama: nm,

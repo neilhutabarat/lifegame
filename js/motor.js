@@ -301,7 +301,8 @@
   }
   function cukup(S, km) {
     var m = S.motor; if (!m) return false;
-    return m.bbm === 'listrik' ? m.baterai >= km : m.isi >= km / m.kml * borosGigi(S);
+    var kml = Math.max(1, m.kml || 45);
+    return m.bbm === 'listrik' ? m.baterai >= km : m.isi >= km / kml * borosGigi(S);
   }
   /* gigi (percepatan) mempengaruhi kecepatan dan pemakaian bensin */
   function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'motor') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
@@ -322,9 +323,10 @@
     if (disewakan(S)) return { ok: false, alasan: 'Motor ini sedang disewakan di Sewa Aset. Hentikan sewa atau ganti motor utama dulu.' };
     if (!cukup(S, km)) return { ok: false, alasan: m.bbm === 'listrik' ? 'Baterai motor tidak cukup.' : 'Bensin tidak cukup. Isi bensin dulu di aplikasi Motor.' };
     var menit = Math.round(km / kmhGigi(S, km) * 60) + 3 * (stop || 1), kabar = [];
-    if (m.bbm === 'listrik') m.baterai -= km; else m.isi = Math.max(0, m.isi - km / m.kml * borosGigi(S));
+    var kmlM = Math.max(1, m.kml || 45);
+    if (m.bbm === 'listrik') m.baterai = Math.max(0, m.baterai - km); else m.isi = Math.max(0, m.isi - km / kmlM * borosGigi(S));
     if (m.olisamping) {
-      var biayaOli2t = Math.round(km / m.kml * 3000 / 100) * 100;
+      var biayaOli2t = Math.round(km / kmlM * 3000 / 100) * 100;
       if (biayaOli2t > 0 && bayarTunaiMotor(S, biayaOli2t, 'Oli samping 2-tak ' + m.nama)) S.hariIni.bensin = (S.hariIni.bensin || 0) + biayaOli2t;
     }
     m.km += km;

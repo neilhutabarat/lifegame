@@ -1192,4 +1192,104 @@
     namaCowok: ['Budi', 'Andi', 'Fajar', 'Rizky', 'Yoga', 'Bayu', 'Hendra', 'Tono', 'Dimas', 'Agus', 'Ucok', 'Rudi', 'Arif', 'Bagus', 'Reza', 'Wahyu', 'Ilham', 'Dedi'],
     kantor: ['Kantor notaris', 'Kantor kelurahan', 'Bengkel resmi', 'Kantor asuransi', 'Panitia arisan RT', 'Kantor cabang bank', 'Klinik pratama', 'Sekolah swasta']
   };
+
+  /* ---------- Generator 10.000+ Nama NPC Indonesia Realistis Sesuai Wilayah (Anti-Berulang) ---------- */
+  var BANK_NAMA = {
+    kalbar_melayu: {
+      cowok: ['Syarif', 'Abang', 'Wan', 'Gusti', 'Uti', 'Rizky', 'Fajar', 'Hendra', 'Zulkarnain', 'Syahrial', 'Khairul', 'Muzakir', 'Rasyid', 'Irfan', 'Fikri', 'Taufik', 'Hafiz', 'Arifin', 'Ridwan', 'Hamzah', 'Fahmi', 'Nazar', 'Zaki', 'Haris', 'Iqbal', 'Bambang', 'Rendra', 'Faisal', 'Ilham', 'Rahmat', 'Yusuf', 'Saiful', 'Ismail', 'Mahmud', 'Kamarudin', 'Junaidi', 'Rusli', 'Ramli', 'Hasbi', 'Farhan', 'Hidayat', 'Lukman', 'Darmawan', 'Rizal', 'Salman', 'Azhar', 'Bahrudin', 'Fauzi', 'Imran', 'Nasir'],
+      cewek: ['Syarifah', 'Dayang', 'Utin', 'Nadia', 'Fitri', 'Nurlaila', 'Rahmawati', 'Siti', 'Aisyah', 'Khadijah', 'Salma', 'Zahra', 'Putri', 'Rina', 'Dewi', 'Wulan', 'Kartika', 'Amelia', 'Salsa', 'Intan', 'Yuliana', 'Maisarah', 'Halimah', 'Farida', 'Mariana', 'Ramlah', 'Murni', 'Rosidah', 'Nabila', 'Aulia', 'Safira', 'Tiara', 'Nisa', 'Citra', 'Mawar', 'Melati', 'Rini', 'Lestari', 'Ratna', 'Sari', 'Indah', 'Mutiara', 'Hafizah', 'Hasanah', 'Khairunnisa', 'Latifah', 'Mawaddah', 'Syifa', 'Uswatun', 'Wardah'],
+      belakang: ['Alqadrie', 'Al-Muthahar', 'Alkaff', 'Al-Habsyi', 'Assagaf', 'Hidayat', 'Pratama', 'Saputra', 'Ramadhan', 'Nugroho', 'Maulana', 'Fauzan', 'Akbar', 'Hakim', 'Santoso', 'Kurniawan', 'Wibowo', 'Setiawan', 'Rahman', 'Mansyur', 'Ibrahim', 'Zaini', 'Basri', 'Sani', 'Syafiuddin', 'Mahmud', 'Yacob', 'Usman', 'Kasim', 'Daud', 'Ismail', 'Bakri', 'Jafar', 'Tahir', 'Arsyad', 'Latif', 'Hamid', 'Gani', 'Karim', 'Rasyid', 'Aziz', 'Syahputra', 'Firdaus', 'Ansori', 'Bachtiar', 'Darwis', 'Effendi', 'Ghazali', 'Harahap', 'Ilhami', 'Jamil', 'Kamal', 'Lubis', 'Marzuki', 'Noor', 'Purnama', 'Qodir', 'Rifai', 'Salim', 'Tarmizi', 'Umar', 'Wahyudi', 'Yasin', 'Zulkifli', 'Azzahra', 'Salsabila', 'Humaira', 'Ramadhani', 'Puspita', 'Anggraini', 'Permata', 'Cahyani', 'Maharani', 'Oktaviani', 'Fitriani', 'Wulandari', 'Safitri', 'Ningsih', 'Handayani', 'Kusuma']
+    },
+    kalbar_dayak: {
+      cowok: ['Yohanes', 'Fransiskus', 'Petrus', 'Kornelius', 'Stepanus', 'Markus', 'Bernadus', 'Ignasius', 'Laurentius', 'Darius', 'Agustinus', 'Bonifasius', 'Marselus', 'Antonius', 'Paulus', 'Lukas', 'Matius', 'Tomas', 'Andreas', 'Filipus', 'Yakobus', 'Simon', 'Gregorius', 'Benediktus', 'Kristianus', 'Rafael', 'Gabriel', 'Mikhael', 'Emanuel', 'Dominikus', 'Vinsensius', 'Albertus', 'Aloysius', 'Ambrosius', 'Bastian', 'Candra', 'Damianus', 'Eduardus', 'Ferdinandus', 'Hendrikus', 'Jefri', 'Karolus', 'Leonardus', 'Martinus', 'Nikolaus', 'Oktavianus', 'Paskalis', 'Rikardus', 'Sebastianus', 'Yulius'],
+      cewek: ['Natalia', 'Veronika', 'Kristina', 'Theresia', 'Yuliana', 'Maria', 'Margareta', 'Elisabet', 'Yosefa', 'Agnes', 'Katarina', 'Monika', 'Sisilia', 'Helena', 'Klauida', 'Lusia', 'Marta', 'Magdalena', 'Oktavia', 'Paskalia', 'Rosalia', 'Susana', 'Ursula', 'Valentina', 'Yohana', 'Adelina', 'Bernadeta', 'Dorotea', 'Ester', 'Felisia', 'Grasia', 'Imelda', 'Juliana', 'Klara', 'Lidya', 'Melania', 'Novita', 'Olivia', 'Priska', 'Regina', 'Selvia', 'Tania', 'Vina', 'Wina', 'Yanti', 'Yessi', 'Anastasia', 'Brigita', 'Fransiska', 'Kornelia'],
+      belakang: ['Sanggau', 'Landak', 'Kapuas', 'Melawi', 'Kayan', 'Ketungau', 'Tayan', 'Sekayam', 'Bengkayang', 'Sintang', 'Ledo', 'Ngabang', 'Darit', 'Serimbu', 'Sandai', 'Tayap', 'Laur', 'Krio', 'Jelai', 'Putussibau', 'Embaloh', 'Mendalam', 'Bidayuh', 'Iban', 'Kanayatn', 'Kantu', 'Taman', 'Mualang', 'Desa', 'Ribun', 'Pangkalan', 'Riam', 'Nanga', 'Batu', 'Sungai', 'Bukit', 'Tanjung', 'Raya', 'Jaya', 'Putra', 'Putri', 'Sari', 'Wati', 'Lestari', 'Pratiwi', 'Ningsih', 'Kurnia', 'Budi', 'Santoso', 'Wijaya', 'Saputra', 'Haryanto', 'Gunawan', 'Surya', 'Cahyadi', 'Darma', 'Prasetyo', 'Nugraha', 'Setiadi', 'Wibisono', 'Ardiansyah', 'Firmansyah', 'Mahendra', 'Perdana', 'Triyono', 'Suharto', 'Mulyadi', 'Suyono', 'Hadi', 'Karsa', 'Muda', 'Tua', 'Baru', 'Lama', 'Mulia', 'Sejati', 'Abadi', 'Damai', 'Sentosa', 'Makmur']
+    },
+    kalbar_tionghoa: {
+      cowok: ['Budianto', 'Susanto', 'Hendra', 'Kevin', 'Ferry', 'Suryadi', 'Steven', 'Haryanto', 'Andri', 'Dedi', 'Edi', 'Fendi', 'Gerry', 'Herry', 'Ivan', 'Jimmy', 'Kenny', 'Lukas', 'Michael', 'Nico', 'Oscar', 'Peter', 'Raymond', 'Ricky', 'Robby', 'Rudy', 'Sammy', 'Sandi', 'Sonny', 'Stanley', 'Teddy', 'Tommy', 'Tony', 'Victor', 'Vincent', 'Willy', 'Yanto', 'Yudi', 'Agus', 'Aheng', 'Aliong', 'Aseng', 'Atong', 'Benni', 'Bobby', 'Calvin', 'Daniel', 'David', 'Denny', 'Eric'],
+      cewek: ['Celine', 'Vanesa', 'Evelyn', 'Jessica', 'Michelle', 'Tiffany', 'Jennifer', 'Catherine', 'Felicia', 'Grace', 'Irene', 'Jocelyn', 'Karen', 'Kelly', 'Lina', 'Linda', 'Lydia', 'Meilani', 'Melisa', 'Monica', 'Natasha', 'Olivia', 'Patricia', 'Priscilla', 'Rachel', 'Sherly', 'Siska', 'Steffi', 'Stefani', 'Susan', 'Sylvia', 'Veronica', 'Vivi', 'Winda', 'Yenni', 'Yuliana', 'Agnes', 'Ailin', 'Aling', 'Amoy', 'Angel', 'Bella', 'Cindy', 'Clara', 'Clarissa', 'Devi', 'Elaine', 'Erica', 'Fanny', 'Fiona'],
+      belakang: ['Wijaya', 'Chandra', 'Kurniawan', 'Hartono', 'Gunawan', 'Halim', 'Salim', 'Santoso', 'Tanjaya', 'Tanoto', 'Tanuwidjaja', 'Limantara', 'Liem', 'Tan', 'Oei', 'Goh', 'Ong', 'Liauw', 'Bong', 'Tjong', 'Tjhin', 'Ng', 'Kwee', 'Ang', 'Lie', 'Lauw', 'Kho', 'Pouw', 'Yap', 'Loo', 'Hoo', 'Sie', 'Tjoa', 'Tjandra', 'Kusuma', 'Widjaja', 'Setiawan', 'Susilo', 'Purnomo', 'Sudirman', 'Cahyadi', 'Budiman', 'Darmawan', 'Hardianto', 'Irawan', 'Jaya', 'Lesmana', 'Mulyono', 'Nugroho', 'Pranata', 'Rahardjo', 'Setyawan', 'Suharto', 'Sujono', 'Sulistyo', 'Supardi', 'Surya', 'Sutanto', 'Tjahjadi', 'Utomo', 'Wibowo', 'Winata', 'Yuwono', 'Atmaja', 'Baskoro', 'Cipto', 'Dinata', 'Effendi', 'Ginting', 'Hadinata', 'Indra', 'Kartono', 'Lukito', 'Manggala', 'Nata', 'Prawira', 'Riyanto', 'Saputra', 'Sugiarto', 'Tirtayasa']
+    },
+    jawa: {
+      cowok: ['Budi', 'Andi', 'Fajar', 'Yoga', 'Bayu', 'Dimas', 'Agus', 'Rudi', 'Arif', 'Bagus', 'Reza', 'Wahyu', 'Eko', 'Dwi', 'Tri', 'Joko', 'Slamet', 'Bambang', 'Teguh', 'Arief', 'Galih', 'Gilang', 'Aditya', 'Raka', 'Dito', 'Ferry', 'Gatot', 'Hadi', 'Indra', 'Kurnia', 'Lutfi', 'Nugroho', 'Panji', 'Prasetyo', 'Putra', 'Rama', 'Rangga', 'Satria', 'Sigit', 'Surya', 'Taufik', 'Ujang', 'Asep', 'Dadan', 'Cecep', 'Yudha', 'Zainal', 'Hendra', 'Tono', 'Danang'],
+      cewek: ['Siti', 'Rina', 'Dewi', 'Putri', 'Intan', 'Lestari', 'Maya', 'Sari', 'Wulan', 'Ayu', 'Citra', 'Nisa', 'Tiara', 'Dinda', 'Ratna', 'Endah', 'Fitri', 'Gita', 'Hani', 'Indah', 'Kartika', 'Laras', 'Mega', 'Nadia', 'Oktavia', 'Puspita', 'Rahayu', 'Rini', 'Siska', 'Tari', 'Utami', 'Vina', 'Widya', 'Yuni', 'Zahra', 'Anisa', 'Bella', 'Dian', 'Eka', 'Febri', 'Neng', 'Teti', 'Ai', 'Cucu', 'Lilis', 'Yeti', 'Novi', 'Riska', 'Santi', 'Tika'],
+      belakang: ['Santoso', 'Wibowo', 'Saputra', 'Pratama', 'Nugroho', 'Setiawan', 'Kurniawan', 'Hidayat', 'Wijaya', 'Kusuma', 'Prasetyo', 'Susanto', 'Raharjo', 'Utomo', 'Purnomo', 'Suryadi', 'Mulyono', 'Hartono', 'Gunawan', 'Budiman', 'Cahyono', 'Darmawan', 'Firmansyah', 'Hakim', 'Irawan', 'Jatmiko', 'Kurnia', 'Laksana', 'Mahendra', 'Nugraha', 'Pamungkas', 'Permana', 'Putranto', 'Ramadhan', 'Sadewa', 'Setyawan', 'Subagyo', 'Sudarsono', 'Sugiyanto', 'Suherman', 'Sujatmiko', 'Sukarno', 'Sulistyo', 'Sumarno', 'Supriyadi', 'Suryanto', 'Susilo', 'Sutrisno', 'Suwandi', 'Suyanto', 'Triyono', 'Wahyudi', 'Waskito', 'Widodo', 'Winarno', 'Yulianto', 'Anggraini', 'Puspitasari', 'Wulandari', 'Rahmawati', 'Handayani', 'Lestari', 'Permatasari', 'Safitri', 'Ningsih', 'Cahyaningrum', 'Kusumawati', 'Mulyani', 'Oktaviani', 'Pratiwi', 'Purwanti', 'Ratnasari', 'Setyowati', 'Sulistyowati', 'Susanti', 'Utami', 'Wahyuni', 'Widyaningsih', 'Yuliani', 'Zulaikha']
+    },
+    sumatra: {
+      cowok: ['Ucok', 'Tigor', 'Poltak', 'Binsar', 'Hotman', 'Parlindungan', 'Saut', 'Maruli', 'Mangara', 'Raja', 'Bonggas', 'Tumpak', 'Jhon', 'Ronal', 'Rizal', 'Fadli', 'Ilham', 'Zaki', 'Refki', 'Nando', 'Tengku', 'Teuku', 'Cut', 'Rivaldi', 'Hafiz', 'Syahrul', 'Zulfikar', 'Mardiansyah', 'Randi', 'Yogi', 'Dedi', 'Edo', 'Feri', 'Guntur', 'Hendri', 'Iwan', 'Jefri', 'Kiki', 'Luki', 'Miko', 'Niko', 'Oki', 'Pandi', 'Riki', 'Sandi', 'Tomi', 'Viki', 'Wandi', 'Yudi', 'Zul'],
+      cewek: ['Butet', 'Tiur', 'Sondang', 'Risma', 'Lamria', 'Rotua', 'Bintang', 'Mawar', 'Bunga', 'Melati', 'Rina', 'Lia', 'Nita', 'Sari', 'Yuni', 'Wati', 'Cut', 'Pocut', 'Tengku', 'Fitri', 'Rahmi', 'Nadia', 'Aulia', 'Dina', 'Eka', 'Fani', 'Gina', 'Hana', 'Ira', 'Jihan', 'Kiki', 'Laila', 'Mona', 'Nana', 'Olin', 'Putri', 'Qori', 'Rani', 'Sinta', 'Tia', 'Ulfa', 'Vivi', 'Winda', 'Yola', 'Zara', 'Desi', 'Elsa', 'Fera', 'Gita', 'Hesti'],
+      belakang: ['Siregar', 'Nasution', 'Harahap', 'Lubis', 'Hasibuan', 'Hutabarat', 'Simanjuntak', 'Sitompul', 'Panjaitan', 'Siahaan', 'Manurung', 'Silitonga', 'Tampubolon', 'Nainggolan', 'Sinaga', 'Sitorus', 'Pardede', 'Hutapea', 'Marpaung', 'Napitupulu', 'Ginting', 'Sembiring', 'Tarigan', 'Karo-Karo', 'Perangin-angin', 'Saragih', 'Purba', 'Damanik', 'Chaniago', 'Piliang', 'Koto', 'Sikumbang', 'Tanjung', 'Jambak', 'Guci', 'Can', 'Pramana', 'Syahputra', 'Pratama', 'Saputra', 'Hidayat', 'Maulana', 'Ramadhan', 'Akbar', 'Fauzi', 'Hakim', 'Ibrahim', 'Kamil', 'Malik', 'Nazar', 'Pasha', 'Qadri', 'Rahman', 'Salim', 'Taufik', 'Usman', 'Wahid', 'Yusuf', 'Zaini', 'Aulia', 'Fadillah', 'Hasanah', 'Khairani', 'Lestari', 'Maharani', 'Nabila', 'Oktavia', 'Putri', 'Rahmadani', 'Salsabila', 'Tanjung', 'Utari', 'Wahyuni', 'Yuliani', 'Zahra', 'Batubara', 'Daulay', 'Matondang', 'Rangkuti', 'Pulungan']
+    },
+    kalimantan_lain: {
+      cowok: ['Muhammad', 'Ahmad', 'Abdul', 'Gusti', 'Antung', 'Awang', 'Aji', 'Haji', 'Nor', 'Arif', 'Rizki', 'Faisal', 'Hendra', 'Irwan', 'Junaidi', 'Khairul', 'Lukman', 'Mahdi', 'Noor', 'Rahmad', 'Syahdan', 'Taufik', 'Wahyu', 'Yusuf', 'Zaini', 'Bambang', 'Dedi', 'Eko', 'Fajar', 'Hadi', 'Ilham', 'Joko', 'Kamil', 'Lutfi', 'Mulyadi', 'Nizar', 'Oki', 'Putra', 'Rama', 'Rendi', 'Rian', 'Rizal', 'Sandi', 'Surya', 'Tedy', 'Udin', 'Vino', 'Wawan', 'Yandi', 'Zaki'],
+      cewek: ['Nor', 'Siti', 'Aisyah', 'Rahmah', 'Halimah', 'Jamilah', 'Maimunah', 'Nurlaila', 'Rusidah', 'Salmah', 'Dayang', 'Aji', 'Gusti', 'Putri', 'Dewi', 'Fitri', 'Indah', 'Kartika', 'Laila', 'Maya', 'Nadia', 'Oktavia', 'Ratna', 'Sari', 'Tiara', 'Ulfah', 'Vina', 'Wulan', 'Yanti', 'Zahra', 'Amalia', 'Bela', 'Citra', 'Dina', 'Eka', 'Fina', 'Gita', 'Hana', 'Intan', 'Jihan', 'Kiki', 'Lina', 'Mona', 'Nisa', 'Olin', 'Rina', 'Sinta', 'Tika', 'Winda', 'Yuni'],
+      belakang: ['Anshari', 'Arsyad', 'Banjari', 'Basri', 'Darmawan', 'Effendi', 'Fadli', 'Ghani', 'Hakim', 'Ibrahim', 'Jafar', 'Kaderi', 'Latif', 'Mahmud', 'Noor', 'Qadri', 'Rahman', 'Sani', 'Tahir', 'Usman', 'Wahab', 'Yacob', 'Zaini', 'Al-Banjari', 'Hidayat', 'Pratama', 'Saputra', 'Ramadhan', 'Maulana', 'Akbar', 'Fauzan', 'Kurniawan', 'Nugroho', 'Santoso', 'Setiawan', 'Wibowo', 'Wijaya', 'Kusuma', 'Putra', 'Putri', 'Sari', 'Lestari', 'Wulandari', 'Rahmawati', 'Safitri', 'Ningsih', 'Handayani', 'Anggraini', 'Puspita', 'Permata', 'Maharani', 'Oktaviani', 'Fitriani', 'Cahyani', 'Azzahra', 'Salsabila', 'Humaira', 'Syifa', 'Hasanah', 'Khairunnisa']
+    },
+    sulawesi: {
+      cowok: ['Andi', 'Daeng', 'La', 'Wa', 'Muhammad', 'Muh', 'Asrul', 'Basri', 'Chairul', 'Darma', 'Erwin', 'Fadli', 'Guntur', 'Hasrul', 'Ikhsan', 'Jufri', 'Kadir', 'Lukman', 'Mansur', 'Nasrul', 'Oktavianus', 'Piter', 'Qadri', 'Rusdi', 'Syamsul', 'Taufik', 'Usman', 'Vicky', 'Wahyudi', 'Yusuf', 'Zul', 'Steven', 'Kevin', 'Billy', 'Jefry', 'Rico', 'Rendy', 'Reza', 'Rian', 'Rizal', 'Ardi', 'Arman', 'Budi', 'Dedi', 'Fajar', 'Hendra', 'Ilham', 'Irwan', 'Rizky', 'Surya'],
+      cewek: ['Andi', 'Bes', 'St', 'Sitti', 'Nurul', 'Fitriani', 'Hasnah', 'Indah', 'Jumriati', 'Kartini', 'Lestari', 'Mardiana', 'Nadia', 'Oktavia', 'Putri', 'Rahma', 'Sari', 'Tika', 'Ulfa', 'Vivi', 'Wahyuni', 'Yanti', 'Zahra', 'Grace', 'Priscilla', 'Jessica', 'angel', 'Bella', 'Cindy', 'Dian', 'Eka', 'Fani', 'Gita', 'Hana', 'Intan', 'Jihan', 'Kiki', 'Lia', 'Maya', 'Nisa', 'Olin', 'Rina', 'Sinta', 'Tari', 'Umi', 'Vina', 'Wulan', 'Yuni', 'Ayu', 'Citra'],
+      belakang: ['Mattalatta', 'Pattiroi', 'Pangerang', 'Mappanyukki', 'Kalla', 'Tanjung', 'Syahrul', 'Yasin', 'Limpo', 'Latuconsina', 'Mangindaan', 'Sondakh', 'Runtuwene', 'Worang', 'Kandouw', 'Lumentut', 'Tangkere', 'Rorong', 'Mamuaya', 'Kawilarang', 'Lasut', 'Pangemanan', 'Polii', 'Rattu', 'Sangkoy', 'Tumbelaka', 'Wowor', 'Baso', 'Baco', 'Sikki', 'Tiro', 'Gowa', 'Bone', 'Wajo', 'Soppeng', 'Luwu', 'Toraja', 'Pratama', 'Saputra', 'Hidayat', 'Ramadhan', 'Maulana', 'Akbar', 'Hakim', 'Rahman', 'Salim', 'Nugroho', 'Santoso', 'Setiawan', 'Wijaya', 'Kusuma', 'Putra', 'Putri', 'Sari', 'Lestari', 'Wulandari', 'Rahmawati', 'Safitri', 'Ningsih', 'Handayani']
+    },
+    timur: {
+      cowok: ['I Putu', 'I Made', 'I Nyoman', 'I Ketut', 'I Gede', 'I Wayan', 'Anak Agung', 'Ida Bagus', 'Lalu', 'Baiq', 'Yohanes', 'Petrus', 'Frans', 'Marius', 'Yosef', 'Lukas', 'Markus', 'Mateus', 'Karel', 'Melkior', 'Obed', 'Yance', 'Beni', 'Darius', 'Edison', 'Ferry', 'Gerson', 'Hengki', 'Isak', 'Jhon', 'Kornelis', 'Lazarus', 'Marten', 'Niko', 'Oskar', 'Paskalis', 'Riki', 'Sam', 'Titus', 'Urbanus', 'Viktor', 'Willem', 'Yulius', 'Zakeus', 'Budi', 'Andi', 'Rizky', 'Fajar', 'Hendra', 'Surya'],
+      cewek: ['Ni Putu', 'Ni Made', 'Ni Nyoman', 'Ni Ketut', 'Ni Luh', 'Ni Wayan', 'Desak', 'Gusti Ayu', 'Baiq', 'Maria', 'Yohana', 'Marta', 'Magdalena', 'Elisabet', 'Theresia', 'Veronika', 'Kristina', 'Agnes', 'Lusia', 'Rina', 'Dewi', 'Sari', 'Putri', 'Intan', 'Maya', 'Wulan', 'Ayu', 'Citra', 'Nadia', 'Fitri', 'Lestari', 'Indah', 'Ratna', 'Siska', 'Tari', 'Vina', 'Yanti', 'Yuliana', 'Anastasia', 'Brigita', 'Dina', 'Eka', 'Fani', 'Gita', 'Hana', 'Irene', 'Jessica', 'Klara', 'Lina', 'Mona'],
+      belakang: ['Mahendra', 'Wijaya', 'Kusuma', 'Pratama', 'Saputra', 'Darmawan', 'Surya', 'Putra', 'Putri', 'Sari', 'Lestari', 'Ayu', 'Dewi', 'Candra', 'Budiarta', 'Gunawan', 'Hartawan', 'Indrawan', 'Jaya', 'Kartika', 'Laksmana', 'Merta', 'Nugraha', 'Pramana', 'Raharja', 'Santika', 'Suardana', 'Sudarsana', 'Sujana', 'Sukarta', 'Sutama', 'Suweta', 'Wardana', 'Wibawa', 'Yasa', 'Pattimura', 'Latuconsina', 'Pattinama', 'Tuhuteru', 'Soumokil', 'Wattimena', 'Leimena', 'Rumaropen', 'Wenda', 'Kogoya', 'Tabuni', 'Yikwa', 'Pigai', 'Wanggai', 'Mandowen', 'Numberi', 'Suebu', 'Kambu', 'Faidiban', 'Aibekob', 'Rumkorem', 'Sroyer', 'Yoku', 'Bonay', 'Rumbewas']
+    }
+  };
+
+  var RIWAYAT_NAMA = [];
+  var MAKS_RIWAYAT = 320;
+  var KALBAR_DAYAK_DOM = { landak: 1, sanggau: 1, sekadau: 1, sintang: 1, melawi: 1, kapuashulu: 1, bengkayang: 1 };
+  var KALBAR_MELAYU_DOM = { pontianak: 1, kuburaya: 1, mempawah: 1, sambas: 1, ketapang: 1, kayongutara: 1 };
+
+  function pilihProfilWilayah(kotaId) {
+    var k = String(kotaId || 'pontianak').toLowerCase(), r = Math.random();
+    if (k === 'singkawang') return r < 0.40 ? 'kalbar_tionghoa' : r < 0.76 ? 'kalbar_melayu' : 'kalbar_dayak';
+    if (KALBAR_DAYAK_DOM[k]) return r < 0.56 ? 'kalbar_dayak' : r < 0.88 ? 'kalbar_melayu' : 'kalbar_tionghoa';
+    if (KALBAR_MELAYU_DOM[k]) return r < 0.58 ? 'kalbar_melayu' : r < 0.80 ? 'kalbar_dayak' : (r < 0.94 ? 'kalbar_tionghoa' : 'jawa');
+    if (/jakarta|bandung|semarang|yogyakarta|surabaya|serang|solo|malang|cirebon|merak|banyuwangi/.test(k)) return 'jawa';
+    if (/medan|padang|pekanbaru|palembang|jambi|bengkulu|lampung|bandaaceh|tanjungpinang|pangkalpinang|binjai|berastagi|siantar|parapat|bukittinggi|bakauheni/.test(k)) return 'sumatra';
+    if (/makassar|manado|palu|gorontalo|mamuju|kendari|parepare/.test(k)) return 'sulawesi';
+    if (/denpasar|mataram|kupang|ambon|sofifi|jayapura|sorong|manokwari|nabire|wamena|merauke/.test(k)) return 'timur';
+    if (/banjar|samarinda|balikpapan|palangkaraya|tanjungselor|tarakan|bontang|ikn|kukar|kubar|kutim|berau|paser|ppu|kotawaringin|kapuas|barito|tabalong|tanah|malinau|nunukan|sukamara|lamandau|seruyan|katingan|pulangpisau|gunungmas|murungraya|mahakamulu|tanatidung|tapin|hss|hst|hsu|balangan|kotabaru/.test(k)) return 'kalimantan_lain';
+    return 'jawa';
+  }
+
+  function buatNamaAcak(S, opts) {
+    opts = opts || {};
+    var kotaId = opts.kotaId || (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId) || (S && S.travel && S.travel.aktif && S.travel.di) || (S && S.kota) || 'pontianak';
+    var hindari = opts.hindari || [];
+    var gender = opts.gender || (Math.random() < 0.5 ? 'cowok' : 'cewek');
+    var hasil = '';
+    for (var coba = 0; coba < 28; coba++) {
+      var pk = pilihProfilWilayah(kotaId);
+      var bank = BANK_NAMA[pk] || BANK_NAMA.kalbar_melayu;
+      var dList = gender === 'cewek' ? bank.cewek : bank.cowok;
+      var dpn = dList[Math.floor(Math.random() * dList.length)];
+      var blk = bank.belakang[Math.floor(Math.random() * bank.belakang.length)];
+      if (dpn === blk) blk = bank.belakang[(Math.floor(Math.random() * bank.belakang.length) + 7) % bank.belakang.length];
+      var kandidat = dpn + ' ' + blk;
+      if (RIWAYAT_NAMA.indexOf(kandidat) < 0 && hindari.indexOf(kandidat) < 0) { hasil = kandidat; break; }
+      hasil = kandidat;
+    }
+    RIWAYAT_NAMA.push(hasil);
+    if (RIWAYAT_NAMA.length > MAKS_RIWAYAT) RIWAYAT_NAMA.shift();
+    return hasil;
+  }
+
+  function totalKombinasi() {
+    var tot = 0, ks = Object.keys(BANK_NAMA);
+    for (var i = 0; i < ks.length; i++) {
+      var b = BANK_NAMA[ks[i]];
+      tot += (b.cowok.length + b.cewek.length) * b.belakang.length;
+    }
+    return tot;
+  }
+
+  g.KK_NAMA = {
+    acak: buatNamaAcak,
+    profilWilayah: pilihProfilWilayah,
+    totalKombinasi: totalKombinasi,
+    resetRiwayat: function () { RIWAYAT_NAMA.length = 0; }
+  };
 })(typeof window !== 'undefined' ? window : this);

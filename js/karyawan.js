@@ -64,12 +64,12 @@
     var bintang = function () { return 1 + Math.floor(Math.random() * 4); };
     var racik = bintang(), cepat = bintang();
     var gender = Math.random() < 0.5 ? 'cewek' : 'cowok';
-    var daftarNama = gender === 'cewek' ? (N.namaCewek || N.namaOrang) : (N.namaCowok || N.namaOrang);
+    var namaPel = (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S, { gender: gender }) : acak(gender === 'cewek' ? (N.namaCewek || N.namaOrang) : (N.namaCowok || N.namaOrang));
     var usia = 18 + Math.floor(Math.random() * 16);
     var tahunLahir = KAL.tgl(S.hari).y - usia;
     /* gaji wajar UMKM rendah: mulai Rp1,2 juta sampai Rp2,2 juta sesuai skill */
     var minta = paruh ? 0 : Math.round((PATOKAN_UMKM + (racik + cepat - 2) * 120000 + Math.random() * 200000) / 50000) * 50000;
-    return { id: 'p' + (++nomor) + '-' + S.hari, nama: acak(daftarNama), gender: gender, tahunLahir: tahunLahir, agama: agama[0], hariRaya: agama[2], paruh: !!paruh,
+    return { id: 'p' + (++nomor) + '-' + S.hari, nama: namaPel, gender: gender, tahunLahir: tahunLahir, agama: agama[0], hariRaya: agama[2], paruh: !!paruh,
       punyaMotorPribadi: Math.random() < 0.8,
       cepat: cepat, ramah: bintang(), racik: racik, jujur: 2 + Math.floor(Math.random() * 4), minta: minta, sampai: S.hari + 3 };
   }

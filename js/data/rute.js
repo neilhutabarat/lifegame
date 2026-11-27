@@ -372,21 +372,78 @@
     RUAS.forEach(function (r) { if (r.a === id) h.push({ ke: r.b, r: r }); else if (r.b === id) h.push({ ke: r.a, r: r }); });
     return h;
   }
-  /* jalur terpendek (km) dengan Dijkstra */
-  function jalur(a, b) {
-    if (a === b) return null;
+  /* jalur terpendek dengan Dijkstra fleksibel (bisa hindari laut, paksa prioritaskan laut, atau blokir ruas tertentu untuk jalur alternatif) */
+  function jalurOpsi(a, b, opsi) {
+    if (a === b || !KOTA[a] || !KOTA[b]) return null;
+    opsi = opsi || {};
     var dist = {}, dari = {}, sel = {}, ids = Object.keys(KOTA);
+    var blokir = opsi.blokir || {};
     ids.forEach(function (k) { dist[k] = Infinity; }); dist[a] = 0;
     for (var n = 0; n < ids.length; n++) {
       var u = null; ids.forEach(function (k) { if (!sel[k] && (u === null || dist[k] < dist[u])) u = k; });
       if (u === null || dist[u] === Infinity) break; sel[u] = true; if (u === b) break;
-      tetangga(u).forEach(function (t) { var bobot = t.r.km + (t.r.laut ? 220 : 0); var d = dist[u] + bobot; if (d < dist[t.ke]) { dist[t.ke] = d; dari[t.ke] = u; } });
+      tetangga(u).forEach(function (t) {
+        if (opsi.hindariLaut && t.r.laut) return;
+        var k1 = u + '|' + t.ke, k2 = t.ke + '|' + u;
+        if (blokir[k1] || blokir[k2]) return;
+        var penLaut = opsi.preferLaut ? 0 : (t.r.laut ? 220 : 0);
+        var bobot = t.r.km + penLaut;
+        var d = dist[u] + bobot;
+        if (d < dist[t.ke]) { dist[t.ke] = d; dari[t.ke] = u; }
+      });
     }
     if (dist[b] === Infinity) return null;
     var simpul = [b]; while (simpul[0] !== a) simpul.unshift(dari[simpul[0]]);
-    var ruas = [], km = 0, tol = 0, laut = false;
-    for (var i = 0; i < simpul.length - 1; i++) { var r = ruasAntara(simpul[i], simpul[i + 1]); ruas.push(r); km += r.km; tol += r.tol || 0; if (r.laut) laut = true; }
-    return { simpul: simpul, ruas: ruas, km: km, tol: tol, laut: laut };
+    var ruas = [], km = 0, tol = 0, laut = false, kapalMobil = 0, kapalOrang = 0;
+    for (var i = 0; i < simpul.length - 1; i++) {
+      var r = ruasAntara(simpul[i], simpul[i + 1]);
+      if (!r) return null;
+      ruas.push(r); km += r.km; tol += r.tol || 0;
+      if (r.laut) { laut = true; kapalMobil += r.kapalMobil || 0; kapalOrang += r.kapalOrang || 0; }
+    }
+    return { simpul: simpul, ruas: ruas, km: km, tol: tol, laut: laut, kapalMobil: kapalMobil, kapalOrang: kapalOrang };
+  }
+  function jalur(a, b) { return jalurOpsi(a, b, null); }
+
+  /* Cari hingga 3 jalur alternatif berbeda antara a dan b (contoh: Jalur Feri vs Jalur Darat Memutar lebih hemat biaya kapal, atau jalur Trans-Kalimantan Utara vs Tengah) */
+  function semuaJalur(a, b, maks) {
+    maks = maks || 3;
+    var utama = jalurOpsi(a, b, null);
+    if (!utama) return [];
+    var hasil = [], kunciAda = {};
+    function tambah(j, tag) {
+      if (!j || !j.simpul || j.simpul.length < 2) return;
+      var k = j.simpul.join('>');
+      if (kunciAda[k]) return;
+      /* saring jalur memutar yang terlalu ekstrem (> 3,5x jalur utama, kecuali menghindari feri laut) */
+      if (tag !== 'darat' && j.km > utama.km * 2.35 + 140) return;
+      if (tag === 'darat' && j.km > utama.km * 3.8 + 150) return;
+      kunciAda[k] = true;
+      var via = j.simpul.slice(1, -1).map(function (id) { return nama(id).replace(/^Kab\. |^Kota /, '').split(' (')[0]; });
+      j.viaTeks = via.length ? ('via ' + via.join(' → ')) : ((j.ruas[0] && j.ruas[0].jalan) || 'Jalur Langsung');
+      j.tag = tag || (j.laut ? 'feri' : 'darat');
+      j.label = j.laut ? ('⛴️ Jalur Feri ' + (via.length ? 'via ' + via.join('–') : 'Langsung'))
+        : (tag === 'darat' && utama.laut ? ('🛣️ Jalur Darat Memutar (Hemat Feri)') : (hasil.length === 0 ? '🛣️ Jalur Darat Utama' : ('🛣️ Jalur Alternatif ' + j.viaTeks)));
+      hasil.push(j);
+    }
+    tambah(utama, utama.laut ? 'feri' : 'utama');
+    /* 1. Jika jalur utama lewat Feri Laut, cari jalur 100% Darat (meski memutar lebih jauh tapi bebas biaya tiket feri!) */
+    if (utama.laut) {
+      var jDarat = jalurOpsi(a, b, { hindariLaut: true });
+      if (jDarat) tambah(jDarat, 'darat');
+    } else {
+      /* 2. Jika jalur utama 100% Darat, cek apakah ada jalur via Feri yang lebih dekat jarak km (mis. Pontianak → Ketapang via Feri Rasau Jaya–Teluk Batang!) */
+      var jFeri = jalurOpsi(a, b, { preferLaut: true });
+      if (jFeri && jFeri.laut) tambah(jFeri, 'feri');
+    }
+    /* 3. Cari jalur darat alternatif dengan memblokir masing-masing ruas jalur utama */
+    for (var i = 0; i < utama.simpul.length - 1 && hasil.length < maks; i++) {
+      var blk = {};
+      blk[utama.simpul[i] + '|' + utama.simpul[i + 1]] = true;
+      var alt = jalurOpsi(a, b, { blokir: blk, hindariLaut: !utama.laut });
+      if (alt) tambah(alt, alt.laut ? 'feri' : 'alt');
+    }
+    return hasil.slice(0, maks);
   }
   function bulat5k(n) { return Math.round(n / 5000) * 5000; }
   /* tarif standar per kursi. Jakarta–Bandung ±Rp105.000, Jakarta–Semarang ±Rp265.000 */
@@ -422,5 +479,5 @@
     var k = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
     return KONDISI_JALAN[k] || KONDISI_JALAN.mulus;
   }
-  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, pengaliKelasMobil: pengaliKelasMobil, labelKelasLayanan: labelKelasLayanan, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, tarifStandar: tarifStandar };
+  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, pengaliKelasMobil: pengaliKelasMobil, labelKelasLayanan: labelKelasLayanan, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, jalurOpsi: jalurOpsi, semuaJalur: semuaJalur, tarifStandar: tarifStandar };
 })(window);

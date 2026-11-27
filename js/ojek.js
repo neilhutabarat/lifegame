@@ -217,7 +217,7 @@
     var tipJauh = isCar && bisaJauh ? (Math.random() < (0.45 + gpsB * 0.35) ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
       : (Math.random() < ((prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) + gpsB * 0.25) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
     return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, medan: medan, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
-      tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
+      tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S) : N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: tipJauh };
   }
   function ambil(S) {
