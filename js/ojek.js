@@ -25,7 +25,25 @@
     if (S.ojek.jauhCarHariIni == null) S.ojek.jauhCarHariIni = 0;
     if (S.ojek.jatahJauhCar == null) S.ojek.jatahJauhCar = 1 + Math.floor(Math.random() * 5);
     if (!S.ojek.pos) S.ojek.pos = { x: 0, y: 0 };
+    if (typeof S.ojek.rating !== 'number' || isNaN(S.ojek.rating)) S.ojek.rating = 4.85;
+    if (typeof S.ojek.ratingCount !== 'number') S.ojek.ratingCount = 0;
+    if (!S.ojek.ulasan) S.ojek.ulasan = [];
     return S;
+  }
+  /* Status arus mudik / arus balik Lebaran: 'mudik' (H-7..H-1), 'balik' (H+2..H+7), atau '' */
+  function statusMudik(n) {
+    if (!KAL || !KAL.liburTahun) return '';
+    var y = KAL.tgl(n).y, peta = KAL.liburTahun(y), leb = null, ks = Object.keys(peta);
+    for (var i = 0; i < ks.length; i++) {
+      if (peta[ks[i]].some(function (x) { return x.nama === 'Idulfitri' && x.jenis === 'libur'; })) {
+        var dnL = +ks[i];
+        if (leb === null || dnL < leb) leb = dnL;
+      }
+    }
+    if (leb === null) return '';
+    if (n >= leb - 7 && n <= leb - 1) return 'mudik';
+    if (n >= leb + 2 && n <= leb + 7) return 'balik';
+    return '';
   }
   function lokasiRumah(S) {
     if (!S) return null;
@@ -138,6 +156,10 @@
     if (KAL.apakahLibur(S.hari) || KAL.tgl(S.hari).dow === 0) r *= 0.85;
     if ((kota(S).zona || 1) === 2) r *= 1.2;
     r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
+    var mudik = statusMudik(S.hari);
+    if (mudik === 'mudik') r *= 2.1;
+    else if (mudik === 'balik') r *= 1.85;
+    if ((S.ojek.rating || 4.85) >= 4.75) r *= 1.18; /* rating tinggi buka order prioritas */
     var mult = (S.ojek && S.ojek.mult) || 1, isCar = S.ojek && S.ojek.mode === 'mobil';
     var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(isCar ? S.mobil : S.motor, isCar ? 'mobil' : 'motor') : 1;
     r *= Math.max(0.25, Math.min(1.6, Math.pow(nyaman / mult, 1.5)));
@@ -173,11 +195,13 @@
     var pengaliMbl = (isCar && g.KK_RUTE && g.KK_RUTE.pengaliKelasMobil) ? g.KK_RUTE.pengaliKelasMobil(S.mobil) : 1;
     var kaliCar = isCar ? (((N.bisnisMobil && N.bisnisMobil.kaliTarifCar) || 2.3) * pengaliMbl) : 1;
     var pot = isCar ? ((N.bisnisMobil && N.bisnisMobil.potonganCar) || 0.1) : O.potongan;
-    var t = Math.round(tarif(S, km) * kaliCar / 500) * 500;
-    var sufLayanan = (isCar && S.mobil) ? (S.mobil.kelas === 'sultan' ? ' VIP Sultan' : S.mobil.kelas === 'mewah' ? ' Luxe' : S.mobil.harga >= 300e6 ? ' Comfort' : '') : '';
-    var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : p.layanan[jenis];
+    var tuslah = statusMudik(S.hari) ? 1.3 : 1; /* tuslah Lebaran / Mudik +30% */
+    var prioritas = (S.ojek.rating || 4.85) >= 4.75 && Math.random() < 0.35;
+    var t = Math.round(tarif(S, km) * kaliCar * tuslah * (prioritas ? 1.15 : 1) / 500) * 500;
+    var sufLayanan = (isCar && S.mobil) ? (S.mobil.kelas === 'sultan' ? ' VIP Sultan' : S.mobil.kelas === 'mewah' ? ' Luxe' : S.mobil.harga >= 300e6 ? ' Comfort' : '') : (prioritas ? ' Prioritas' : '');
+    var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : (p.layanan[jenis] + sufLayanan);
     var tipJauh = isCar && bisaJauh ? (Math.random() < 0.45 ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
-      : (Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0);
+      : (Math.random() < (prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
     return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: tipJauh };
@@ -248,8 +272,30 @@
       S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
     }
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + dapat;
+    /* evaluasi rating & komentar penumpang nyata berdasarkan kondisi kendaraan, stamina, & kebersihan */
+    var skor = 4.85;
+    var isCarS = o.mode === 'mobil';
+    var knd = isCarS ? S.mobil : S.motor;
+    if (knd) {
+      if ((knd.servisKm || 0) > (isCarS ? 10000 : 4000)) skor -= 0.55;
+      if (!isCarS && (knd.oliKm || 0) > 2500) skor -= 0.4;
+      if ((knd.banKm || 0) > (isCarS ? 40000 : 15000)) skor -= 0.35;
+    }
+    if (S.diri && S.diri.stamina < 25) skor -= 0.35;
+    if (S.ojek.cuciSampai && S.hari <= S.ojek.cuciSampai) skor += 0.2;
+    var bintangTrip = Math.max(2, Math.min(5, Math.round(skor + (Math.random() - 0.35) * 0.7)));
+    var nRat = Math.min(50, (o.ratingCount || 0));
+    o.rating = Math.round((((o.rating || 4.85) * (nRat + 10) + bintangTrip) / (nRat + 11)) * 100) / 100;
+    o.ratingCount = (o.ratingCount || 0) + 1;
+    var komPos = ['Driver ramah, kendaraan bersih & nyaman!', 'Mantap, cepat sampai & sopan.', 'Kendaraan wangi terawat, jempol 5!', 'Pelayanan bintang 5, recommended!'];
+    var komNeg = ['Kendaraan agak bergetar, perlu servis.', 'Driver terlihat capek, hati-hati di jalan.', 'Lumayan, tapi mesin agak kasar.'];
+    var kom = bintangTrip >= 5 ? komPos[o.ratingCount % komPos.length] : (bintangTrip >= 4 ? 'Perjalanan aman dan lancar.' : komNeg[o.ratingCount % komNeg.length]);
+    o.ulasan = o.ulasan || [];
+    o.ulasan.unshift({ nama: x.nama, bintang: bintangTrip, teks: kom, hari: S.hari });
+    if (o.ulasan.length > 15) o.ulasan.length = 15;
+
     var diLok = (o.lokasi && o.lokasi.kecNama) ? (' di ' + o.lokasi.desa + ', ' + o.lokasi.kecNama) : '';
-    kabar.unshift(x.layanan + ' selesai (' + x.km.toLocaleString('id-ID') + ' km)' + diLok + ' · 🏠 +' + jarakRumah(S).toLocaleString('id-ID') + ' km · +' + rp(dapat) + caraTeks + '.');
+    kabar.unshift(x.layanan + ' selesai (' + x.km.toLocaleString('id-ID') + ' km)' + diLok + ' · ★' + bintangTrip + ' · +' + rp(dapat) + caraTeks + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
   }
@@ -306,5 +352,5 @@
   }
 
   g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, tarifStandar: tarifStandar, ubahTarif: ubahTarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
-    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, lokasiRumah: lokasiRumah, lokasiSekarang: lokasiSekarang, jarakRumah: jarakRumah, resetPos: resetPos, CEPAT_TRIP: CEPAT_TRIP };
+    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, lokasiRumah: lokasiRumah, lokasiSekarang: lokasiSekarang, jarakRumah: jarakRumah, resetPos: resetPos, statusMudik: statusMudik, CEPAT_TRIP: CEPAT_TRIP };
 })(window);

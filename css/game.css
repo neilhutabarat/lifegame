@@ -457,6 +457,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .popup-pb-grid .chip-tombol { width: 100%; padding: 9px 6px; font-size: 12px; border-radius: 10px; text-align: center; }
 .bensin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
 .bensin-grid .chip-tombol { width: 100%; padding: 9px 8px; font-size: 12px; border-radius: 10px; text-align: center; }
+.bayar-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+.bayar-grid-2 .aksi { padding: 10px 8px; font-size: 13px; border-radius: 12px; line-height: 1.25; }
+.bayar-grid-2 .aksi small { display: block; font-size: 10.5px; font-weight: 700; opacity: .88; margin-top: 2px; }
 .kartu-item .ki-aksi { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
 .kartu-item .ki-aksi .chip-tombol { flex: 1; min-width: 0; padding: 5px 4px; font-size: 10.5px; border-radius: 8px; text-align: center; white-space: nowrap; }
 .stat-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }

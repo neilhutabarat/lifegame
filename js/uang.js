@@ -21,6 +21,78 @@
   function siapkanKk(S) {
     if (!S.kk) S.kk = { status: 'tidak', limit: 0, pakai: 0, tagihan: 0, minBayar: 0, dibayarBulanIni: 0, denda: 0, sejak: 0, iuranTempo: 0, mutasi: [] };
     S.kk.mutasi = S.kk.mutasi || [];
+    siapkanPaylater(S);
+  }
+  function siapkanPaylater(S) {
+    var PL = N.paylater || { limitAwal: 3000000, limitMaks: 50000000, bungaBulan: 0.0295, jatuhTempo: 5, dendaPersen: 0.05 };
+    if (!S.paylater) {
+      S.paylater = { status: 'aktif', limit: PL.limitAwal, tagihan: 0, denda: 0, cicilan: [], mutasi: [], sejak: S.hari || 0 };
+    }
+    S.paylater.cicilan = S.paylater.cicilan || [];
+    S.paylater.mutasi = S.paylater.mutasi || [];
+    if (typeof S.paylater.limit !== 'number' || S.paylater.limit < PL.limitAwal) S.paylater.limit = PL.limitAwal;
+    return S.paylater;
+  }
+  function terpakaiPaylater(S) {
+    var p = siapkanPaylater(S);
+    var cc = (p.cicilan || []).reduce(function (t, c) { return t + Math.round((c.pokok || 0) * (c.sisa || 0) / Math.max(1, c.n || 1)); }, 0);
+    return Math.max(0, (p.tagihan || 0) + (p.denda || 0) + cc);
+  }
+  function sisaLimitPaylater(S) {
+    var p = siapkanPaylater(S);
+    if (p.status !== 'aktif') return 0;
+    return Math.max(0, p.limit - terpakaiPaylater(S));
+  }
+  function cicilanPaylater(pokok, tenor) {
+    var PL = N.paylater || { bungaBulan: 0.0295 };
+    tenor = Math.max(1, +tenor || 1);
+    if (tenor === 1) return Math.ceil(pokok * (1 + PL.bungaBulan) / 100) * 100;
+    var r = PL.bungaBulan;
+    return Math.ceil((pokok * r / (1 - Math.pow(1 + r, -tenor))) / 100) * 100;
+  }
+  function catatPaylater(S, ket, jml, n) {
+    var p = siapkanPaylater(S);
+    p.mutasi.unshift({ n: n == null ? S.hari : n, ket: ket, jml: jml });
+    if (p.mutasi.length > 30) p.mutasi.length = 30;
+  }
+  function pakaiPaylater(S, jml, ket, tenor) {
+    var p = siapkanPaylater(S);
+    if (p.status === 'beku') return 'Akun PayLater sedang dibekukan karena telat bayar. Lunasi tagihan di menu Bank → PayLater.';
+    var sisa = sisaLimitPaylater(S);
+    if (jml > sisa) return 'Limit PayLater tidak cukup (butuh ' + rp(jml) + ', sisa limit ' + rp(sisa) + ').';
+    tenor = Math.max(1, +tenor || 3);
+    var per = cicilanPaylater(jml, tenor);
+    p.cicilan.push({ ket: ket || 'Belanja PayLater', pokok: jml, n: tenor, sisa: tenor, per: per, mulai: S.hari });
+    catatPaylater(S, (ket || 'Belanja PayLater') + ' (' + tenor + 'x ' + rp(per) + ')', -jml);
+    return true;
+  }
+  function bayarPaylater(S, mode) {
+    var p = siapkanPaylater(S);
+    var totTagih = (p.tagihan || 0) + (p.denda || 0);
+    var sisaPokokCc = (p.cicilan || []).reduce(function (t, c) { return t + Math.round((c.pokok || 0) * (c.sisa || 0) / Math.max(1, c.n || 1)); }, 0);
+    var jml = mode === 'semua' ? (totTagih + sisaPokokCc) : totTagih;
+    if (jml <= 0) return 'Belum ada tagihan PayLater yang perlu dibayar.';
+    if (S.bank.saldo < jml) return 'Saldo rekening tidak cukup untuk bayar PayLater (' + rp(jml) + ').';
+    S.bank.saldo -= jml;
+    catat(S, 'Bayar tagihan PayLater', -jml);
+    catatPaylater(S, mode === 'semua' ? 'Pelunasan penuh PayLater' : 'Bayar tagihan bulan ini', jml);
+    p.tagihan = 0; p.denda = 0;
+    if (mode === 'semua') p.cicilan = [];
+    if (p.status === 'beku') p.status = 'aktif';
+    /* naikkan limit otomatis jika rajin bayar */
+    var PL = N.paylater || { limitMaks: 50000000 };
+    var targetLim = Math.min(PL.limitMaks, Math.max(p.limit, Math.round(Math.max(penghasilanKk(S) * 1.8, p.limit + 1000000) / 500000) * 500000));
+    if (targetLim > p.limit) p.limit = targetLim;
+    return { ok: true, jml: jml, limit: p.limit };
+  }
+  function naikLimitPaylater(S) {
+    var p = siapkanPaylater(S), PL = N.paylater || { limitMaks: 50000000 };
+    if (p.status !== 'aktif' || p.denda > 0) return 'Lunasi dulu tagihan & denda PayLater sebelum menaikkan limit.';
+    var gj = penghasilanKk(S);
+    var baru = Math.min(PL.limitMaks, Math.max(p.limit, Math.round(gj * 2.2 / 500000) * 500000));
+    if (baru <= p.limit) return 'Penghasilan bulanan saat ini belum cukup untuk naikkan limit di atas ' + rp(p.limit) + '.';
+    p.limit = baru;
+    return { ok: true, limit: baru };
   }
   function qrisAktif(S) { if (!S.merchants) return []; return Object.keys(S.merchants).filter(function (id) { var m = S.merchants[id]; return !m.aktifPada || S.hari >= m.aktifPada; }); }
   function tersedia(S) { if (!S.merchants) return 0; var t = 0; for (var id in S.merchants) t += (S.merchants[id].tersedia || 0); return t; }
@@ -117,14 +189,18 @@
     S.uang.dompet -= jml;
     return true;
   }
-  /* Pembayaran sesuai pilihan konfirmasi pemain: 'dompet' (Cash) | 'bank' (Transfer Bank) | 'kk' (Kartu Kredit). Tidak pernah memotong bank diam-diam jika Cash dipilih. */
+  /* Pembayaran sesuai pilihan konfirmasi pemain: 'dompet' (Cash) | 'bank' (Transfer Bank) | 'kk' (Kartu Kredit) | 'paylater' (PayLater 1/3/6/12 bln). */
   function bayarPilihan(S, jml, ket, metode) {
     var m = metode || (S && S._metodeBayar) || 'bank';
     jml = Math.max(0, Math.round(+jml || 0));
     if (jml <= 0) return true;
     if (m === 'kk') return pakaiKk(S, jml, ket || 'Transaksi');
+    if (String(m).indexOf('paylater') === 0) {
+      var tn = +(String(m).split(':')[1] || 3);
+      return pakaiPaylater(S, jml, ket || 'Belanja PayLater', tn);
+    }
     if (m === 'dompet' || m === 'cash') {
-      if (!bayarDompet(S, jml)) return 'Uang tunai (Cash) di dompet tidak cukup (' + rp(dompet(S)) + ', butuh ' + rp(jml) + '). Tarik tunai dulu atau pilih bayar lewat Bank.';
+      if (!bayarDompet(S, jml)) return 'Uang tunai (Cash) di dompet tidak cukup (' + rp(dompet(S)) + ', butuh ' + rp(jml) + '). Tarik tunai dulu atau pilih Bank / KK / PayLater.';
       return true;
     }
     if (!S.bank || S.bank.saldo < jml) return 'Saldo rekening ' + bankIni(S).nama + ' tidak cukup (' + rp((S.bank && S.bank.saldo) || 0) + ', butuh ' + rp(jml) + ').';
@@ -479,6 +555,34 @@
         kabar.push('Iuran tahunan kartu kredit ' + rp(KK.iuranTahunan) + ' masuk ke pemakaian bulan ini.');
       }
     }
+    /* PayLater: cetak cicilan bulanan tiap ganti bulan, jatuh tempo tgl 5 */
+    var pl = siapkanPaylater(S), PL = N.paylater || { jatuhTempo: 5, dendaPersen: 0.05 };
+    if (tB.m !== tL.m && pl.cicilan.length) {
+      var totBlnPl = 0;
+      pl.cicilan = pl.cicilan.filter(function (c) {
+        if (c.sisa > 0) {
+          totBlnPl += c.per;
+          c.sisa--;
+          catatPaylater(S, 'Tagihan ' + c.ket + ' (sisa ' + c.sisa + ' bln)', -c.per, nBaru);
+        }
+        return c.sisa > 0;
+      });
+      if (totBlnPl > 0) {
+        pl.tagihan = (pl.tagihan || 0) + totBlnPl;
+        kabar.push('🧾 Tagihan PayLater bulan ini tercetak ' + rp(pl.tagihan) + '. Jatuh tempo tanggal ' + PL.jatuhTempo + '.');
+      }
+    }
+    if (tB.d === PL.jatuhTempo && (pl.tagihan + pl.denda) > 0 && S.bank.saldo >= (pl.tagihan + pl.denda)) {
+      var rPlAuto = bayarPaylater(S, 'tagihan');
+      if (rPlAuto && rPlAuto.ok) kabar.push('🧾 Autodebit PayLater ' + rp(rPlAuto.jml) + ' lunas tepat waktu.');
+    } else if (tB.d === PL.jatuhTempo + 1 && pl.tagihan > 0) {
+      var dndPl = Math.max(10000, Math.round(pl.tagihan * PL.dendaPersen));
+      pl.denda = (pl.denda || 0) + dndPl;
+      pl.status = 'beku';
+      S.kreditBuruk = true;
+      catatPaylater(S, 'Denda telat bayar PayLater 5%', -dndPl, nBaru);
+      kabar.push('⚠️ PayLater lewat jatuh tempo tanggal ' + PL.jatuhTempo + '! Kena denda ' + rp(dndPl) + ' dan akun dibekukan sementara.');
+    }
     return kabar;
   }
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
@@ -488,6 +592,7 @@
     bolehKeAtm: bolehKeAtm, setor: setor, tarik: tarik, tukarReceh: tukarReceh, tarikMerchant: tarikMerchant, bayarPajak: bayarPajak, daftarNib: daftarNib,
     angsuran: angsuran, syaratKur: syaratKur, ajukanKur: ajukanKur,
     penghasilanKk: penghasilanKk, cicilKk: cicilKk, lunasiCicilanKk: lunasiCicilanKk, cicilanKk: cicilanKk, TENOR_KK: TENOR_KK, hitungLimitKk: hitungLimitKk, syaratKk: syaratKk, ajukanKk: ajukanKk, naikLimitKk: naikLimitKk, sisaLimitKk: sisaLimitKk, pakaiKk: pakaiKk, bayarKk: bayarKk,
+    siapkanPaylater: siapkanPaylater, terpakaiPaylater: terpakaiPaylater, sisaLimitPaylater: sisaLimitPaylater, cicilanPaylater: cicilanPaylater, pakaiPaylater: pakaiPaylater, bayarPaylater: bayarPaylater, naikLimitPaylater: naikLimitPaylater,
     gantiHari: gantiHari, bankIni: bankIni, qrisIni: qrisIni,
     hariKerja: hariKerja, BATAS_TUKAR_RECEH: BATAS_TUKAR_RECEH };
 })(window);

@@ -32,8 +32,33 @@
     S.hargaMenu[id] = Math.max(2000, Math.min(60000, m.harga + d * 500)); terapkanHarga(S); return true;
   }
 
-  /* ---------- cuaca ---------- */
-  function hujanSekarang(S) { var c = S.dunia.cuaca; return !!(c && c.hari === S.hari && S.menit >= c.mulai && S.menit < c.selesai); }
+  /* ---------- cuaca & suhu realistis daerah Indonesia (°C per jam & musim) ---------- */
+  var SUHU_DASAR = {
+    pontianak: 29.8, banjarmasin: 29.5, palangkaraya: 29.3, samarinda: 29.2, tanjungselor: 29.0,
+    jakarta: 29.5, surabaya: 30.2, semarang: 29.4, serang: 29.0, yogyakarta: 28.4, bandung: 23.2,
+    medan: 29.0, pekanbaru: 29.8, palembang: 29.6, padang: 28.5, bandaaceh: 28.8, jambi: 29.4, bengkulu: 28.2, bandarlampung: 28.8, pangkalpinang: 28.9, tanjungpinang: 29.2,
+    denpasar: 28.8, mataram: 28.6, kupang: 30.4, makassar: 29.4, manado: 28.4, palu: 30.0, kendari: 29.0, gorontalo: 29.2, mamuju: 28.8,
+    ambon: 28.0, sofifi: 28.4, jayapura: 28.6, manokwari: 28.4, sorong: 28.6, nabire: 28.0, merauke: 28.5, jayawijaya: 19.5
+  };
+  function suhuSekarang(S) {
+    if (!S) return { c: 29, ikon: '☀️', ket: 'Cerah', kulminasi: false };
+    var t = KAL.tgl(S.hari), jam = ((S.menit || 480) % 1440) / 60;
+    var base = SUHU_DASAR[S.kota] != null ? SUHU_DASAR[S.kota] : 29.0;
+    /* kurva suhu harian: paling sejuk ~05.00, paling panas ~14.00 */
+    var diurnal = -Math.cos(((jam - 5) / 24) * Math.PI * 2) * 4.4;
+    var kemarau = (t.m >= 6 && t.m <= 9) ? 1.2 : (t.m >= 11 || t.m <= 2) ? -0.8 : 0.3;
+    var hujan = hujanSekarang(S);
+    var deras = hujan && S.dunia && S.dunia.cuaca && S.dunia.cuaca.banjir;
+    var kulminasi = S.kota === 'pontianak' && ((t.m === 3 || t.m === 9) && t.d >= 21 && t.d <= 23);
+    var koreksiHujan = deras ? -5.2 : hujan ? -3.8 : 0;
+    var variasi = Math.sin(S.hari * 0.73) * 0.9;
+    var c = Math.round(base + diurnal + kemarau + koreksiHujan + (kulminasi && jam >= 10 && jam <= 15 ? 2.2 : 0) + variasi);
+    var malam = jam >= 18.2 || jam < 5.5;
+    var ikon = deras ? '⛈️' : hujan ? '🌧️' : malam ? '🌙' : (kulminasi && jam >= 11 && jam <= 14 ? '☀️' : c >= 33 ? '🥵' : jam >= 6 && jam < 17 ? '☀️' : '⛅');
+    var ket = deras ? 'Hujan Deras' : hujan ? 'Hujan' : (kulminasi && jam >= 11 && jam <= 14 ? 'Kulminasi Khatulistiwa' : c >= 34 ? 'Terik Panas' : malam ? 'Malam Cerah' : c <= 23 ? 'Sejuk' : 'Cerah Berawan');
+    return { c: c, ikon: ikon, ket: ket, kulminasi: kulminasi };
+  }
+  function hujanSekarang(S) { var c = S.dunia && S.dunia.cuaca; return !!(c && c.hari === S.hari && S.menit >= c.mulai && S.menit < c.selesai); }
   function aturCuaca(S, n) {
     var t = KAL.tgl(n), hujanMusim = t.m >= 11 || t.m <= 3, peluang = hujanMusim ? 0.5 : (t.m >= 6 && t.m <= 9) ? 0.1 : 0.3;
     if (Math.random() < peluang) {
@@ -234,7 +259,7 @@
     return kabar;
   }
 
-  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang,
+  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang, suhuSekarang: suhuSekarang,
     catatPembeli: catatPembeli, catatPergi: catatPergi, catatKomplain: catatKomplain, rataMaps: rataMaps, daftarMaps: daftarMaps, tambahFoto: tambahFoto, balas: balas,
     beliUlasan: beliUlasan, posting: posting, siaran: siaran, iklan: iklan, endorse: endorse, beliCekUang: beliCekUang, bersihkan: bersihkan, jalan: jalan, gantiHari: gantiHari };
 })(window);

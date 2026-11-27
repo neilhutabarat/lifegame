@@ -40,6 +40,8 @@
     if (typeof S.rumah.kwh !== 'number' || isNaN(S.rumah.kwh)) { S.rumah.kwh = 10; S.rumah.padam = false; }
     if (S.rumah.jarak == null) S.rumah.jarak = N.jarakKos;
     S.rumah.infoBarang = S.rumah.infoBarang || {};
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0 };
+    S.rokok.stok = S.rokok.stok || {};
     S.game = S.game || { konsol: {}, kaset: {}, pasar: null };
     S.game.konsol = S.game.konsol || {};
     S.game.kaset = S.game.kaset || {};
@@ -366,7 +368,9 @@
   /* ---------- waktu berjalan ---------- */
   function jalan(S, dMenit, kerja) {
     var d = S.diri, j = dMenit / 60, kabar = [];
-    d.kenyang = batas(d.kenyang - TURUN.kenyang * j);
+    var tSkrgR = S.hari * 1440 + S.menit;
+    var efekRokok = !!(S.rokok && (S.rokok.efekSampai || 0) > tSkrgR);
+    d.kenyang = batas(d.kenyang - TURUN.kenyang * j * (efekRokok ? 0.6 : 1));
     d.minum = batas(d.minum - TURUN.minum * j);
     /* HB bar (gairah/kedekatan pasangan) perlahan meningkat sepanjang hari */
     var lajuHb = 2.2 * (d.stamina > 45 && !d.sakit ? 1.15 : 0.65);
@@ -405,7 +409,7 @@
         kabar.push((viaTelp ? '📞 Telepon dari ' : '💬 WhatsApp dari ') + pUtama.nama + ': "' + teksPesan + '"');
       }
     }
-    var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) + (kerja && (d.hb || 0) >= 95 ? 2.2 : 0) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0) + (d.sakit ? (d.sakit.berat ? 5 : 2.5) : 0) + (d.kesehatan < 50 ? 2 : 0);
+    var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) * (efekRokok ? 0.65 : 1) + (kerja && (d.hb || 0) >= 95 ? 2.2 : 0) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0) + (d.sakit ? (d.sakit.berat ? 5 : 2.5) : 0) + (d.kesehatan < 50 ? 2 : 0);
     if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'kursipijat') ? 18 : punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
     d.stamina = batas(d.stamina - turunStamina * j);
     /* peluang sakit akibat aktivitas berlebihan, telat makan, atau cuaca hujan */
@@ -2776,6 +2780,150 @@
     }
     return 'Aksi tidak dikenal.';
   }
+  /* ---------- Rokok Legal & Rokok Ilegal per Daerah Indonesia ---------- */
+  function daftarRokok(S) {
+    var k = kota(S), pulau = (k && k.pulau) || 'Kalimantan';
+    var ilMap = N.rokokIlegal || {};
+    var il = ilMap[pulau] || ilMap.Kalimantan || [];
+    return { legal: N.rokokLegal || [], ilegal: il, pulau: pulau };
+  }
+  function cariRokok(S, id) {
+    var dr = daftarRokok(S);
+    var fL = dr.legal.filter(function (x) { return x.id === id; })[0];
+    if (fL) return { item: fL, ilegal: false };
+    var fI = dr.ilegal.filter(function (x) { return x.id === id; })[0];
+    if (fI) return { item: fI, ilegal: true };
+    /* cek semua wilayah bila sudah punya stok dari kota sebelumnya */
+    var ilMap = N.rokokIlegal || {}, ks = Object.keys(ilMap);
+    for (var i = 0; i < ks.length; i++) {
+      var fi2 = (ilMap[ks[i]] || []).filter(function (x) { return x.id === id; })[0];
+      if (fi2) return { item: fi2, ilegal: true };
+    }
+    return null;
+  }
+  function totalBatangRokok(S) {
+    var st = (S && S.rokok && S.rokok.stok) || {}, tot = 0;
+    Object.keys(st).forEach(function (k) { tot += Math.max(0, +st[k] || 0); });
+    return tot;
+  }
+  function beliRokok(S, id, mode) {
+    var rk = cariRokok(S, id);
+    if (!rk) return 'Merek rokok tidak ditemukan.';
+    var isEcer = mode === 'ecer';
+    var qty = isEcer ? 1 : (rk.item.isi || 16);
+    var harga = isEcer ? (rk.item.eceran || 2500) : rk.item.harga;
+    var by = g.KK_UANG.bayarPilihan(S, harga, 'Beli ' + rk.item.nama + (isEcer ? ' (1 btg)' : ' (1 bks)'), S._metodeBayar || 'dompet');
+    if (by !== true) return by;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + harga;
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0 };
+    S.rokok.stok[id] = (S.rokok.stok[id] || 0) + qty;
+    return { ok: true, teks: '🚬 Membeli ' + rk.item.nama + ' (+' + qty + ' batang, ' + rp(harga) + '). Total stok: ' + totalBatangRokok(S) + ' batang.' };
+  }
+  function merokok(S, id) {
+    S.rokok = S.rokok || { stok: {}, hariIni: 0, efekSampai: 0 };
+    if (S.rokok.hariTercatat !== S.hari) { S.rokok.hariTercatat = S.hari; S.rokok.hariIni = 0; }
+    var targetId = id;
+    if (!targetId || !(S.rokok.stok[targetId] > 0)) {
+      targetId = Object.keys(S.rokok.stok).filter(function (k) { return S.rokok.stok[k] > 0; })[0];
+    }
+    if (!targetId) return 'Stok rokok kosong! Beli dulu di menu Makan & Warung → tab 🚬 Rokok.';
+    var rk = cariRokok(S, targetId);
+    if (!rk) return 'Rokok tidak dikenal.';
+    S.rokok.stok[targetId]--;
+    if (S.rokok.stok[targetId] <= 0) delete S.rokok.stok[targetId];
+    S.rokok.hariIni = (S.rokok.hariIni || 0) + 1;
+    S.rokok.efekSampai = S.hari * 1440 + S.menit + 120; /* 2 jam efek tahan lapar & lambatkan turun stamina */
+    var d = S.diri;
+    d.kenyang = batas((d.kenyang || 0) + 6);
+    d.rasaBersalah = Math.max(0, (d.rasaBersalah || 0) - 8);
+    d.hb = batas((d.hb || 0) - 5);
+    var bebanSehat = (rk.ilegal ? 1.4 : 0.6) + (S.rokok.hariIni > 6 ? 2.5 : 0);
+    d.kesehatan = Math.max(10, (d.kesehatan == null ? 100 : d.kesehatan) - bebanSehat);
+    var warnBatuk = '';
+    if (S.rokok.hariIni > 8 && !d.sakit && Math.random() < 0.22) {
+      d.sakit = { id: 'flu', nama: 'Batuk & Sesak Napas (ISPA)', berat: false, sampai: S.hari + 3 };
+      warnBatuk = ' ⚠️ Kebanyakan merokok hari ini membuatmu batuk/ISPA!';
+    }
+    return {
+      ok: true, menit: 5,
+      teks: '🚬 Menikmati 1 batang ' + rk.item.nama + (rk.ilegal ? ' (tanpa cukai)' : '') + ' · lapar tertahan & stamina lebih awet 2 jam, stres reda! (Hari ini: ' + S.rokok.hariIni + ' btg)' + warnBatuk
+    };
+  }
+
+  /* ---------- Aktivitas Akhir Pekan & Hobi (biar tidak monoton ngojek/HB terus) ---------- */
+  function jalankanHobi(S, id) {
+    var list = N.aktivitasAkhirPekan || [];
+    var act = list.filter(function (x) { return x.id === id; })[0];
+    if (!act) return 'Aktivitas tidak ditemukan.';
+    if (S.diri.sakit) return 'Sedang sakit (' + S.diri.sakit.nama + '). Istirahat atau berobat dulu.';
+    if (act.stamina < 0 && S.diri.stamina < 18) return 'Stamina terlalu rendah untuk aktivitas ini. Istirahat dulu.';
+    if (act.biaya > 0) {
+      var by = g.KK_UANG.bayarPilihan(S, act.biaya, 'Akhir Pekan: ' + act.nama, S._metodeBayar || 'dompet');
+      if (by !== true) return by;
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + act.biaya;
+    }
+    var d = S.diri;
+    d.stamina = batas((d.stamina || 50) + (act.stamina || 0));
+    d.kesehatan = batas((d.kesehatan == null ? 100 : d.kesehatan) + (act.sehat || 0));
+    d.hb = batas((d.hb || 0) + (act.hb || 0));
+    d.rasaBersalah = Math.max(0, (d.rasaBersalah || 0) + (act.bersalah || 0));
+    var ekstra = [];
+    if (act.hasilUang) {
+      var dapatIkan = Math.round((act.hasilUang[0] + Math.random() * (act.hasilUang[1] - act.hasilUang[0])) / 5000) * 5000;
+      S.uang.dompet = (S.uang.dompet || 0) + dapatIkan;
+      ekstra.push('dapat ikan segar laku ' + rp(dapatIkan) + ' (tunai)');
+    }
+    if (act.menangUang) {
+      if (Math.random() < 0.45) {
+        var hadiah = Math.round((act.menangUang[0] + Math.random() * (act.menangUang[1] - act.menangUang[0])) / 10000) * 10000;
+        S.uang.dompet = (S.uang.dompet || 0) + hadiah;
+        ekstra.push('🏆 JUARA turnamen, menang ' + rp(hadiah) + '!');
+      } else {
+        ekstra.push('seru banget mabar bareng komunitas lokal');
+      }
+    }
+    if (act.sosmed && S.dunia && S.dunia.sosmed) {
+      var fol = Math.round(act.sosmed * (0.7 + Math.random() * 0.8));
+      S.dunia.sosmed.ig = (S.dunia.sosmed.ig || 0) + fol;
+      S.dunia.sosmed.tiktok = (S.dunia.sosmed.tiktok || 0) + Math.round(fol * 1.2);
+      ekstra.push('konten wisata viral (+' + fol + ' IG, +' + Math.round(fol * 1.2) + ' TikTok)');
+    }
+    if (act.ratingBonus && S.ojek) {
+      S.ojek.cuciSampai = S.hari + 3;
+      S.ojek.rating = Math.min(5, Math.round(((S.ojek.rating || 4.85) + act.ratingBonus) * 100) / 100);
+      ekstra.push('kendaraan kinclong 3 hari (Rating ★' + S.ojek.rating.toFixed(2) + ')');
+    }
+    if (act.hubTeman && S.teman && S.teman.length) {
+      var tm = S.teman[Math.floor(Math.random() * S.teman.length)];
+      if (tm) { tm.hubungan = Math.min(100, (tm.hubungan || 40) + act.hubTeman); ekstra.push('hubungan dgn ' + tm.nama + ' +' + act.hubTeman + '%'); }
+    }
+    if (act.hubPasangan) {
+      var ps = pasanganAktif(S);
+      if (ps) { ps.bahagia = Math.min(100, (ps.bahagia || 80) + act.hubPasangan); ps.perasaan = Math.min(100, (ps.perasaan || 75) + Math.round(act.hubPasangan * 0.7)); ekstra.push(ps.nama + ' makin bahagia'); }
+    }
+    return {
+      ok: true, menit: act.menit || 90,
+      teks: act.ikon + ' ' + act.nama + ' selesai (' + (act.menit || 90) + ' mnt)' + (ekstra.length ? ' · ' + ekstra.join(', ') : '') + '!'
+    };
+  }
+
+  /* ---------- Rincian Pemakaian Listrik Harian Rumah (kWh/hari & estimasi sisa hari) ---------- */
+  function rincianListrikRumah(S) {
+    var items = [];
+    if (adaAc(S)) items.push({ nama: '❄️ AC Kamar (1/2 PK · ~9 jam/hr)', kwh: 2.7 });
+    if (punya(S, 'kulkas')) items.push({ nama: '🧊 Kulkas 1 Pintu (24 jam)', kwh: 1.2 });
+    if (punya(S, 'kulkas2')) items.push({ nama: '🧊 Kulkas 2 Pintu (24 jam)', kwh: 1.7 });
+    if (punya(S, 'tv') || punya(S, 'tv55')) items.push({ nama: '📺 TV & Hiburan (~3 jam/hr)', kwh: 0.45 });
+    if (adaKonsol(S)) items.push({ nama: '🎮 Konsol PlayStation (~2 jam/hr)', kwh: 0.35 });
+    if (S.hp && S.hp.pbAutoCas && Object.keys(S.hp.pbMilik || {}).length) items.push({ nama: '🔋 Auto Cas Power Bank', kwh: 0.25 });
+    items.push({ nama: '💡 Lampu, Charger HP & Kipas', kwh: 0.55 });
+    var totalKwh = Math.round(items.reduce(function (t, x) { return t + x.kwh; }, 0) * 100) / 100;
+    var sisaKwh = (S.rumah && S.rumah.kwh) || 0;
+    var estimasiHari = totalKwh > 0 ? Math.max(0, Math.floor(sisaKwh / totalKwh)) : 99;
+    var biayaHari = Math.round(totalKwh * ((N.pln && N.pln.tarif) || 1445));
+    return { items: items, totalKwh: totalKwh, estimasiHari: estimasiHari, biayaHari: biayaHari };
+  }
+
   /* ibadah harian / hari besar sesuai agama di tempat ibadah terdekat */
   function ibadah(S, namaIbadah, namaTempat) {
     var d = S.diri;
@@ -2793,7 +2941,7 @@
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
 
-  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,

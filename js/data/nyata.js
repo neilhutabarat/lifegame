@@ -885,6 +885,76 @@
       { id: 'kuliah_anak', nama: 'Kuliah S1 Universitas', minUsia: 18, maksUsia: 24, pangkal: 4500000, spp: 750000, ket: 'Usia 18+ tahun · UKT kuliah perguruan tinggi' }
     ],
 
+    /* PayLater Indonesia (SPayLater / GoPay Later / Kredivo) — bunga 2,95%/bln, jatuh tempo tgl 5 */
+    paylater: { limitAwal: 3000000, limitMaks: 50000000, bungaBulan: 0.0295, jatuhTempo: 5, dendaPersen: 0.05, tenor: [1, 3, 6, 12] },
+
+    /* Rokok legal bercukai resmi Indonesia (harga eceran 2025–2026) */
+    rokokLegal: [
+      { id: 'sampoerna_mild16', nama: 'Sampoerna A Mild 16', merek: 'HM Sampoerna', isi: 16, harga: 37000, eceran: 3000, tar: '14 mg', ket: 'SKM Mild ringan, tahan lapar & fokus di jalan' },
+      { id: 'surya16', nama: 'Gudang Garam Surya 16', merek: 'Gudang Garam', isi: 16, harga: 36000, eceran: 2500, tar: '31 mg', ket: 'Kretek filter legendaris favorit driver' },
+      { id: 'surya12', nama: 'Gudang Garam Surya 12', merek: 'Gudang Garam', isi: 12, harga: 26000, eceran: 2500, tar: '31 mg', ket: 'Surya 12 batang ringkas & hemat' },
+      { id: 'djarum_super16', nama: 'Djarum Super 16', merek: 'Djarum', isi: 16, harga: 35000, eceran: 2500, tar: '32 mg', ket: 'Kretek klasik aroma cengkeh mantap' },
+      { id: 'djarum_mld', nama: 'Djarum Super MLD 12', merek: 'Djarum', isi: 12, harga: 24000, eceran: 2500, tar: '14 mg', ket: 'Mild ekonomis halus di tenggorokan' },
+      { id: 'marlboro_merah', nama: 'Marlboro Merah 20', merek: 'Philip Morris', isi: 20, harga: 56000, eceran: 3500, tar: '13 mg', ket: 'Rokok putih premium internasional (20 btg)' },
+      { id: 'marlboro_ice', nama: 'Marlboro Ice Burst 20', merek: 'Philip Morris', isi: 20, harga: 57000, eceran: 3500, tar: '8 mg', ket: 'Kapsul menthol dingin menyegarkan saat macet' },
+      { id: 'la_bold', nama: 'L.A. Bold 20', merek: 'Djarum', isi: 20, harga: 38000, eceran: 2500, tar: '18 mg', ket: 'SKM Bold 20 batang awet seharian' },
+      { id: 'esse_change', nama: 'Esse Change Double 20', merek: 'KT&G', isi: 20, harga: 45000, eceran: 3000, tar: '4 mg', ket: 'Slim menthol kapsul ganda, rendah tar' },
+      { id: 'camel_yellow', nama: 'Camel Yellow 20', merek: 'JTI', isi: 20, harga: 34000, eceran: 2500, tar: '15 mg', ket: 'Rokok putih lembut harga bersahabat' },
+      { id: 'juara_kretek', nama: 'Juara Kretek Filter 12', merek: 'KT&G', isi: 12, harga: 19000, eceran: 2000, tar: '26 mg', ket: 'Kretek teh manis ekonomis bercukai resmi' }
+    ],
+
+    /* Rokok ilegal (tanpa pita cukai / polos) per wilayah Indonesia — jauh lebih murah, risiko tar & kesehatan lebih tinggi */
+    rokokIlegal: {
+      Kalimantan: [
+        { id: 'il_era_biru', nama: 'Era Biru 20 (Tanpa Cukai)', merek: 'Jalur Kalbar', isi: 20, harga: 13000, eceran: 1000, ket: 'Populer di warung pinggiran Kalbar/Pontianak · tanpa pita cukai' },
+        { id: 'il_luffman_m', nama: 'Luffman Merah 20 (Polos)', merek: 'Jalur Borneo', isi: 20, harga: 12000, eceran: 1000, ket: 'Rokok putih tanpa cukai legendaris di Kalimantan' },
+        { id: 'il_manchester', nama: 'Manchester Royal 20 (Polos)', merek: 'Impor Gelap', isi: 20, harga: 16000, eceran: 1200, ket: 'Kemasan eksklusif tanpa pita cukai resmi' },
+        { id: 'il_hd_klb', nama: 'H&D Classic 20 (Polos)', merek: 'Jalur Pelabuhan', isi: 20, harga: 11000, eceran: 1000, ket: 'Ekonomis khas warung pelabuhan & pinggiran' },
+        { id: 'il_oris', nama: 'Oris Pulse 20 (Polos)', merek: 'Perbatasan', isi: 20, harga: 15000, eceran: 1200, ket: 'Menthol slim jalur perbatasan tanpa cukai' }
+      ],
+      Sumatera: [
+        { id: 'il_luffman_s', nama: 'Luffman Silver 20 (Polos)', merek: 'Jalur Batam', isi: 20, harga: 11000, eceran: 1000, ket: 'Paling banyak beredar di Sumatera & Kepri' },
+        { id: 'il_manch_sum', nama: 'Manchester Blue 20 (Polos)', merek: 'Jalur Batam', isi: 20, harga: 14000, eceran: 1000, ket: 'Rokok putih impor gelap asal kawasan bebas' },
+        { id: 'il_hmind', nama: 'H-Mind Bold 20 (Polos)', merek: 'Jalur Lintas', isi: 20, harga: 12000, eceran: 1000, ket: 'Populer di sepanjang Jalinsum tanpa cukai' },
+        { id: 'il_ofo', nama: 'OFO Bold 20 (Polos)', merek: 'Jalur Lintas', isi: 20, harga: 11500, eceran: 1000, ket: 'SKM polos ekonomis favorit sopir lintas' },
+        { id: 'il_hd_sum', nama: 'HD Merah 20 (Polos)', merek: 'Jalur Batam', isi: 20, harga: 10500, eceran: 1000, ket: 'Harga termurah tanpa pita cukai di Sumatera' }
+      ],
+      Jawa: [
+        { id: 'il_geboy', nama: 'Geboy Bold 20 (Polos)', merek: 'Jalur Jatim', isi: 20, harga: 10000, eceran: 1000, ket: 'Rokok polos populer di Jawa Timur & Madura' },
+        { id: 'il_dalill', nama: 'Dalill Fine 20 (Polos)', merek: 'Jalur Madura', isi: 20, harga: 12000, eceran: 1000, ket: 'SKM tanpa pita cukai khas jalur pantura/Jawa' },
+        { id: 'il_bossini', nama: 'Bossini Black 20 (Polos)', merek: 'Jalur Jawa', isi: 20, harga: 11000, eceran: 1000, ket: 'Bold murah tanpa cukai resmi' },
+        { id: 'il_smith', nama: 'Smith Bold 20 (Polos)', merek: 'Jalur Jateng', isi: 20, harga: 11500, eceran: 1000, ket: 'Sering ditemukan di warung pinggiran Jawa' },
+        { id: 'il_lois', nama: 'Lois Mild 20 (Polos)', merek: 'Jalur Jatim', isi: 20, harga: 12500, eceran: 1000, ket: 'Varian mild polos tanpa cukai' }
+      ],
+      Sulawesi: [
+        { id: 'il_kinggaret', nama: 'King Garet 20 (Polos)', merek: 'Jalur Sulawesi', isi: 20, harga: 12000, eceran: 1000, ket: 'Populer di warung Sulawesi tanpa pita cukai' },
+        { id: 'il_cappucino', nama: 'Cappucino Bold 20 (Polos)', merek: 'Jalur Makassar', isi: 20, harga: 13000, eceran: 1000, ket: 'Kretek manis polos beredar luas di Sulawesi' },
+        { id: 'il_luff_sul', nama: 'Luffman Merah 20 (Polos)', merek: 'Jalur Laut', isi: 20, harga: 13000, eceran: 1000, ket: 'Rokok putih tanpa cukai jalur pelabuhan' },
+        { id: 'il_boss_sul', nama: 'Bossini 20 (Polos)', merek: 'Jalur Sulawesi', isi: 20, harga: 12500, eceran: 1000, ket: 'SKM ekonomis tanpa cukai resmi' }
+      ],
+      'Bali & Nusa Tenggara': [
+        { id: 'il_ray', nama: 'Ray Bold 20 (Polos)', merek: 'Jalur Nusra', isi: 20, harga: 11500, eceran: 1000, ket: 'Rokok polos tanpa cukai di Lombok & NTT' },
+        { id: 'il_luxuries', nama: 'Luxuries 20 (Polos)', merek: 'Jalur Bali-NTB', isi: 20, harga: 12000, eceran: 1000, ket: 'SKM polos harga miring' },
+        { id: 'il_okbold', nama: 'OK Bold 20 (Polos)', merek: 'Jalur Timur', isi: 20, harga: 11000, eceran: 1000, ket: 'Ekonomis tanpa pita cukai' }
+      ],
+      'Maluku & Papua': [
+        { id: 'il_luff_pap', nama: 'Luffman Merah 20 (Polos)', merek: 'Jalur Timur', isi: 20, harga: 15000, eceran: 1200, ket: 'Beredar lewat kapal perintis tanpa cukai' },
+        { id: 'il_rajo', nama: 'Rajo Bold 20 (Polos)', merek: 'Jalur Maluku', isi: 20, harga: 14000, eceran: 1200, ket: 'Kretek bold tanpa pita cukai' },
+        { id: 'il_manch_pap', nama: 'Manchester 20 (Polos)', merek: 'Jalur Timur', isi: 20, harga: 18000, eceran: 1500, ket: 'Rokok putih polos jalur pelabuhan timur' }
+      ]
+    },
+
+    /* Aktivitas Akhir Pekan & Hobi (biar tidak monoton ngojek/HB terus saat Sabtu-Minggu atau libur) */
+    aktivitasAkhirPekan: [
+      { id: 'warkop', nama: 'Nongkrong di Warkop / Cafe', ikon: '☕', biaya: 25000, menit: 90, stamina: 16, sehat: 2, hb: -10, bersalah: -10, hubTeman: 10, ket: 'Ngopi santai & ngobrol bareng teman/warga, tingkatkan relasi & mood' },
+      { id: 'mancing', nama: 'Mancing di Sungai / Kolam', ikon: '🎣', biaya: 35000, menit: 120, stamina: 12, sehat: 5, hb: -18, bersalah: -15, hasilUang: [45000, 140000], ket: 'Santai 2 jam — dapat ikan segar bisa dijual langsung jadi uang tunai!' },
+      { id: 'futsal', nama: 'Futsal / Badminton Bareng', ikon: '⚽', biaya: 45000, menit: 90, stamina: -12, sehat: 14, hb: -32, bersalah: -18, hubTeman: 14, ket: 'Olahraga seru bareng teman, bakar stres, HB turun drastis & badan bugar' },
+      { id: 'bioskop', nama: 'Nonton Bioskop XXI & Mall', ikon: '🎬', biaya: 95000, menit: 150, stamina: 20, sehat: 4, hb: -12, bersalah: -14, hubPasangan: 18, hubTeman: 12, ket: 'Refresh pikiran nonton film baru (bisa bikin pasangan & teman makin sayang)' },
+      { id: 'wisata', nama: 'Wisata Akhir Pekan & Foto Konten', ikon: '🏖️', biaya: 120000, menit: 180, stamina: 18, sehat: 10, hb: -20, bersalah: -20, sosmed: 180, hubPasangan: 20, ket: 'Jalan-jalan ke ikon kota/pantai + upload konten sosmed (+followers!)' },
+      { id: 'sunmori', nama: 'Sunmori & Cuci Kinclong Kendaraan', ikon: '🏍️', biaya: 40000, menit: 90, stamina: 10, sehat: 4, hb: -15, bersalah: -10, ratingBonus: 0.08, ket: 'Sunday Morning Ride + cuci wax motor/mobil — naikkan rating driver ★!' },
+      { id: 'turnamen', nama: 'Mabar & Turnamen Game Lokal', ikon: '🎮', biaya: 30000, menit: 120, stamina: -5, sehat: 0, hb: -16, bersalah: -12, menangUang: [100000, 350000], ket: 'Ikut turnamen e-sport/PS warnet — ada peluang menang hadiah uang tunai!' }
+    ],
+
     namaOrang: ['Budi', 'Siti', 'Rina', 'Andi', 'Dewi', 'Fajar', 'Putri', 'Rizky', 'Nadia', 'Yoga', 'Intan', 'Bayu', 'Lestari', 'Hendra', 'Maya', 'Tono', 'Sari', 'Dimas', 'Wulan', 'Agus', 'Ucok', 'Butet', 'Rudi', 'Fitri'],
     namaCewek: ['Siti', 'Rina', 'Dewi', 'Putri', 'Nadia', 'Intan', 'Lestari', 'Maya', 'Sari', 'Wulan', 'Butet', 'Fitri', 'Ayu', 'Citra', 'Nisa', 'Tiara', 'Amelia', 'Dinda'],
     namaCowok: ['Budi', 'Andi', 'Fajar', 'Rizky', 'Yoga', 'Bayu', 'Hendra', 'Tono', 'Dimas', 'Agus', 'Ucok', 'Rudi', 'Arif', 'Bagus', 'Reza', 'Wahyu', 'Ilham', 'Dedi'],

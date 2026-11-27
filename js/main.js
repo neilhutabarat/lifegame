@@ -353,10 +353,11 @@
     var bbmCar = S.mobil ? Math.round((S.mobil.isi || 0) * 100) : 0;
     var lokHud = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
     var jrHud = (S.travel && S.travel.aktif) ? ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km) : (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0);
-    var kunciHUD = S.hari + ':' + Math.floor(S.menit) + ':' + S.fase + ':' + bbmHud + ':' + bbmCar + ':' + (lokHud ? lokHud.kecNama : '') + ':' + Math.round((jrHud || 0) * 10);
+    var shHud = (DUNIA && DUNIA.suhuSekarang) ? DUNIA.suhuSekarang(S) : { c: 30, ikon: '☀️', ket: 'Cerah' };
+    var kunciHUD = S.hari + ':' + Math.floor(S.menit) + ':' + S.fase + ':' + bbmHud + ':' + bbmCar + ':' + (lokHud ? lokHud.kecNama : '') + ':' + Math.round((jrHud || 0) * 10) + ':' + shHud.c;
     if (!paksa && kunciHUD === hudTerakhir) return; hudTerakhir = kunciHUD;
     $('h-jam').textContent = jam(S.menit);
-    if ($('h-kec')) $('h-kec').textContent = '📍 ' + ((lokHud && lokHud.kecNama) || kotaIni().nama);
+    if ($('h-kec')) $('h-kec').textContent = shHud.ikon + ' ' + shHud.c + '°C · 📍 ' + ((lokHud && lokHud.kecNama) || kotaIni().nama);
     if ($('h-jarak')) {
       var jrN = Math.max(0, Number(jrHud) || 0);
       $('h-jarak').hidden = false;
@@ -907,6 +908,12 @@
     { id: 'rental', nama: function () { return 'Sewa Aset'; }, warna: function () { return '#6d4c41'; },
       ikon: function () { return svgIkon('<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 4h3v3M14 7l2.5 2.5"/>'); },
       badge: function () { var n = Object.keys(S.sewaBarang || {}).length; return n ? String(n) : ''; } },
+    { id: 'hobi', nama: function () { return 'Akhir Pekan'; }, warna: function () { return '#ff7043'; },
+      ikon: function () { return svgIkon('<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'); },
+      badge: function () { var dow = KAL.tgl(S.hari).dow; return (dow === 0 || dow === 6) ? 'OFF' : ''; } },
+    { id: 'paylater', nama: function () { return 'PayLater'; }, warna: function () { return '#7b1fa2'; },
+      ikon: function () { return svgIkon('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/>'); },
+      badge: function () { return (S.paylater && (S.paylater.tagihan || 0) > 0) ? '!' : ''; } },
     { id: 'kalender', nama: function () { return 'Kalender'; }, warna: function () { return '#d9443a'; },
       ikon: function () { return '<span style="font-size:20px;line-height:1">' + KAL.tgl(S.hari).d + '</span>'; } }
   ];
@@ -937,6 +944,8 @@
     } else if (app.nama === 'bank') html = layarBank();
     else if (app.nama === 'kur') html = layarKur();
     else if (app.nama === 'kk') html = layarKartuKredit();
+    else if (app.nama === 'paylater') html = layarPaylater();
+    else if (app.nama === 'hobi') html = layarHobi();
     else if (app.nama === 'merchant') html = layarMerchant();
     else if (app.nama === 'qriskaryawan') { app.qrisTab = 'supir'; app.nama = 'merchant'; html = layarMerchant(); }
     else if (app.nama === 'laci') { app.nama = 'bank'; html = layarBank(); }
@@ -996,7 +1005,11 @@
         tombolNominalGrid('tarikTabGaji', NOMINAL_SEMUA) +
         '<p class="catatan">Dana di Tabungan Khusus aman dan tidak akan pernah terpotong otomatis oleh sistem, cicilan, gaji, maupun belanja kecuali kamu tarik sendiri.</p>';
     } else if (tabB === 'kredit') {
+      var pl = UANG.siapkanPaylater ? UANG.siapkanPaylater(S) : { limit: 3000000, tagihan: 0, denda: 0, status: 'aktif' };
+      var sisaPl = UANG.sisaLimitPaylater ? UANG.sisaLimitPaylater(S) : pl.limit;
+      var infoPl = (pl.status === 'beku' ? 'Dibekukan · ' : 'Aktif · ') + 'Limit ' + rupiahPendek(pl.limit) + ' · sisa ' + rupiahPendek(sisaPl) + ((pl.tagihan + pl.denda) > 0 ? ' · tagih ' + rupiahPendek(pl.tagihan + pl.denda) : '');
       html += '<button type="button" class="baris-tombol" data-app="kk"><span><b>💳 Kartu Kredit ' + esc(b.nama) + '</b><small>' + esc(infoKk) + '</small></span><span>›</span></button>' +
+        '<button type="button" class="baris-tombol" data-app="paylater"><span><b>🧾 PayLater (SPayLater / GoPay Later)</b><small>' + esc(infoPl) + '</small></span><span>›</span></button>' +
         '<button type="button" class="baris-tombol" data-app="kur"><span><b>🏦 KUR Mikro</b><small>' + esc(kur) + '</small></span><span>›</span></button>' +
         '<button type="button" class="baris-tombol" data-app="kastravel"><span><b>💼 Kas Travel</b><small>Saldo: ' + rupiah((S.travel && S.travel.kas) || 0) + ' (Auto top-up &lt; 50jt)</small></span><span>›</span></button>' +
         '<ul class="daftar angka" style="margin-top:10px">' +
@@ -1059,6 +1072,47 @@
         return baris(esc(m.ket) + '<small>' + namaTanggal(m.n) + '</small>', (m.jml < 0 ? '−' : '+') + rupiah(Math.abs(m.jml)), m.jml < 0 ? 'keluar' : 'masuk');
       }).join('') : '<li><span>Belum ada transaksi kartu kredit</span></li>') + '</ul>' +
       '<p class="catatan">Sesuai aturan Bank Indonesia: bayar penuh sebelum tanggal ' + K.jatuhTempo + ' bebas bunga. Bila bayar minimal 5%, sisa tagihan dikenakan bunga 1,75% pada cetak tagihan bulan depan. Bila lewat tanggal ' + K.jatuhTempo + ' belum bayar minimal 5%, kena denda 1% (maks Rp100.000) dan kartu diblokir sementara.</p>';
+    return html;
+  }
+  function layarPaylater() {
+    var pl = UANG.siapkanPaylater(S), PL = N.paylater || { jatuhTempo: 5, bungaBulan: 0.0295 };
+    var sisa = UANG.sisaLimitPaylater(S), terpakai = UANG.terpakaiPaylater(S), totTagih = (pl.tagihan || 0) + (pl.denda || 0);
+    var html = kepalaApp('PayLater', 'Bunga 2,95%/bln · Jatuh tempo tgl ' + PL.jatuhTempo) + pesanApp() +
+      '<div class="saldo-besar" style="background:linear-gradient(135deg,#6a1b9a,#8e24aa)"><small>Sisa Limit PayLater' + (pl.status === 'beku' ? ' · ⚠️ DIBEKUKAN' : ' · Siap Pakai 1–12 Bln') + '</small><b>' + rupiah(sisa) + '</b>' + persenBar(pl.limit ? sisa / pl.limit * 100 : 0) + '</div>' +
+      '<div class="stat-grid-2"><div class="stat-box"><small>Total Limit</small><b>' + rupiahPendek(pl.limit) + '</b></div>' +
+      '<div class="stat-box"><small>Limit Terpakai</small><b>' + rupiahPendek(terpakai) + '</b></div>' +
+      '<div class="stat-box"><small>Tagihan Bulan Ini</small><b>' + rupiah(totTagih) + '</b></div>' +
+      '<div class="stat-box"><small>Cicilan Berjalan</small><b>' + (pl.cicilan || []).length + ' transaksi</b></div></div>' +
+      '<div class="chip-baris" style="margin-top:8px">' +
+      (totTagih > 0 ? '<button type="button" class="chip-tombol pilih" data-aksi="bayarPl:tagihan">Bayar Tagihan ' + rupiahPendek(totTagih) + '</button>' : '') +
+      (terpakai > 0 ? '<button type="button" class="chip-tombol" data-aksi="bayarPl:semua">Lunasi Semua ' + rupiahPendek(terpakai) + '</button>' : '') +
+      '<button type="button" class="chip-tombol" data-aksi="naikLimitPl:1">Ajukan Naik Limit</button></div>';
+    if (pl.cicilan && pl.cicilan.length) {
+      html += '<h3 class="subjudul">Daftar Cicilan Aktif</h3><ul class="daftar angka">' + pl.cicilan.map(function (c) {
+        return baris(esc(c.ket) + '<small>Sisa ' + c.sisa + ' dari ' + c.n + ' bulan</small>', rupiah(c.per) + '/bln');
+      }).join('') + '</ul>';
+    }
+    if (pl.mutasi && pl.mutasi.length) {
+      html += '<h3 class="subjudul">Riwayat PayLater</h3><ul class="daftar angka">' + pl.mutasi.slice(0, 12).map(function (m) {
+        return baris(esc(m.ket) + '<small>' + namaTanggal(m.n) + '</small>', (m.jml < 0 ? '−' : '+') + rupiah(Math.abs(m.jml)), m.jml < 0 ? 'keluar' : 'masuk');
+      }).join('') + '</ul>';
+    }
+    return html + '<p class="catatan">PayLater langsung aktif sejak hari pertama dan bisa dipilih pada jendela Konfirmasi Pembayaran (tenor 1, 3, 6, atau 12 bulan) di Toko HP, Toko Online, Makan, Apotek, hingga Toko Game.</p>';
+  }
+  function layarHobi() {
+    var dow = KAL.tgl(S.hari).dow, akhirPekan = dow === 0 || dow === 6;
+    var sh = (DUNIA && DUNIA.suhuSekarang) ? DUNIA.suhuSekarang(S) : { c: 30, ikon: '☀️', ket: 'Cerah' };
+    var list = N.aktivitasAkhirPekan || [];
+    var html = kepalaApp('Akhir Pekan & Hobi', (akhirPekan ? '🎉 Hari Libur / Akhir Pekan' : 'Hari Kerja · Tetap bisa refreshing') + ' · ' + sh.ikon + ' ' + sh.c + '°C') + pesanApp() +
+      '<div class="kartu-hero" style="background:linear-gradient(135deg,#e65100,#ff7043)"><small>' + (akhirPekan ? 'Sabtu/Minggu — Waktunya istirahat dari rutinitas ngojek!' : 'Atur keseimbangan kerja & hidup (Work-Life Balance)') + '</small>' +
+      '<b>' + (S.liburAkhirPekan ? '📅 Jadwal Kerja: Senin–Jumat (Sab–Min Libur)' : '📅 Jadwal Kerja: Bebas Setiap Hari') + '</b></div>' +
+      '<div class="cat-strip"><button type="button" class="' + (S.liburAkhirPekan ? 'pilih' : '') + '" data-aksi="toggleLiburAkhirPekan:1">' + (S.liburAkhirPekan ? '✓ Mode Libur Sab–Min ON' : 'Aktifkan Libur Sab–Min') + '</button>' +
+      '<button type="button" data-app="teman">👥 Ajak Teman</button><button type="button" data-app="keluarga">❤️ Keluarga</button></div>' +
+      '<div class="grid-2">' + list.map(function (a) {
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + a.ikon + ' ' + a.menit + ' mnt</span>' + (a.hasilUang || a.menangUang ? '<span class="ki-tag milik">💰 Cuan</span>' : '') + '</div>' +
+          '<b>' + esc(a.nama) + '</b><small>' + esc(a.ket) + '</small><div class="ki-harga">' + rupiah(a.biaya) + '</div></div>' +
+          '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-aksi="hobi:' + a.id + '">Berangkat</button></div></div>';
+      }).join('') + '</div>';
     return html;
   }
   function layarKur() {
@@ -1356,14 +1410,35 @@
       '<ul class="daftar angka" style="margin-top:8px">' + baris('Uang muka', rupiah(k.dp)) + baris('<b>Angsuran</b>', '<b>' + rupiah(k.angsuran) + '/bln</b>', 'total') + baris('Total dibayar', rupiah(k.total)) + '</ul>' +
       '<div class="bayar-baris" style="margin-top:10px"><button type="button" class="aksi" data-aksi="kreditMobil:bank">Ajukan Kredit Leasing (DP ' + rupiahPendek(k.dp) + ')</button></div>';
   }
-  /* ---------- aplikasi Makan & minum (Grid 2 kolom utuh tanpa harga kepotong) ---------- */
+  /* ---------- aplikasi Makan, Minum & Warung Rokok (Grid 2 kolom utuh tanpa harga kepotong) ---------- */
   function layarMakan() {
     var d = S.diri, mTab = app.makanTab || 'makanan', caraM = app.makanCara || (d.posisi === 'kos' ? 'gofood' : 'warung');
     var rtAktif = S.rumahTangga && (S.rumahTangga.aktifSampai || -1) >= S.hari;
+    var totRkk = DIRI.totalBatangRokok ? DIRI.totalBatangRokok(S) : 0;
+    var html = kepalaApp('Makan, Minum & Rokok', 'Kenyang ' + Math.round(d.kenyang) + '% · Minum ' + Math.round(d.minum) + '% · Stamina ' + Math.round(d.stamina) + '%') +
+      segTab('makanTab', [['makanan', '🍽️ Makan (' + N.makanan.length + ')'], ['minuman', '🥤 Minum (' + N.minuman.length + ')'], ['rokok', '🚬 Rokok (' + totRkk + ')']], mTab) + pesanApp();
+    if (mTab === 'rokok') {
+      var dr = DIRI.daftarRokok ? DIRI.daftarRokok(S) : { legal: [], ilegal: [], pulau: 'Kalimantan' };
+      var rKat = app.rokokKat || 'legal';
+      var listR = rKat === 'ilegal' ? dr.ilegal : dr.legal;
+      var efekAktif = S.rokok && (S.rokok.efekSampai || 0) > (S.hari * 1440 + S.menit);
+      html += '<div class="stat-grid-2"><div class="stat-box"><small>Stok Rokok di Kantong</small><b>🚬 ' + totRkk + ' batang</b></div>' +
+        '<div class="stat-box"><small>Efek Nikotin · Hari Ini</small><b>' + (efekAktif ? '✓ Aktif (Tahan Lapar)' : 'Belum') + ' · ' + ((S.rokok && S.rokok.hariTercatat === S.hari ? S.rokok.hariIni : 0)) + ' btg</b></div></div>' +
+        (totRkk > 0 ? '<div style="margin:6px 0 8px"><button type="button" class="aksi kecil" data-aksi="merokok:auto">🚬 Hisap 1 Batang Sekarang (5 mnt · Tahan Lapar & Stamina)</button></div>' : '') +
+        segTab('rokokKat', [['legal', '✅ Bercukai Resmi (' + dr.legal.length + ')'], ['ilegal', '⚠️ Tanpa Cukai · ' + dr.pulau + ' (' + dr.ilegal.length + ')']], rKat) +
+        '<div class="grid-2">' + listR.map(function (r) {
+          var punyaSt = (S.rokok && S.rokok.stok && S.rokok.stok[r.id]) || 0;
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag' + (rKat === 'ilegal' ? ' promo' : '') + '">' + esc(r.merek) + ' · ' + r.isi + ' btg</span>' + (punyaSt > 0 ? '<span class="ki-tag milik">' + punyaSt + ' btg</span>' : '') + '</div>' +
+            '<b>' + esc(r.nama) + '</b><small>' + esc(r.ket) + '</small><div class="ki-harga">' + rupiah(r.harga) + ' <small style="display:inline;font-weight:700">(' + rupiahPendek(r.eceran) + '/btg)</small></div></div>' +
+            '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-aksi="beliRokok:' + r.id + '|bungkus">1 Bks</button><button type="button" class="chip-tombol" data-aksi="beliRokok:' + r.id + '|ecer">1 Btg</button>' +
+            (punyaSt > 0 ? '<button type="button" class="chip-tombol" data-aksi="merokok:' + r.id + '">🚬</button>' : '') + '</div></div>';
+        }).join('') + '</div>' +
+        '<p class="catatan">🚬 Merokok menahan rasa lapar (-40% laju lapar), memperlambat turun stamina (-35%), dan meredakan stres selama 2 jam. Rokok ilegal tanpa cukai jauh lebih murah namun lebih membebani kesehatan paru (&gt;6 btg/hari berisiko batuk/ISPA).</p>';
+      return html;
+    }
     var list = mTab === 'minuman' ? N.minuman : N.makanan;
-    return kepalaApp('Makan & Minum', 'Kenyang ' + Math.round(d.kenyang) + '% · Minum ' + Math.round(d.minum) + '% · Stamina ' + Math.round(d.stamina) + '%') +
-      segTab('makanTab', [['makanan', '🍽️ Makanan (' + N.makanan.length + ')'], ['minuman', '🥤 Minuman (' + N.minuman.length + ')']], mTab) +
-      segTab('makanCara', [['warung', '🏪 Makan di Warung (Tunai)'], ['gofood', '🛵 Pesan GoFood (+Ongkir)']], caraM) + pesanApp() +
+    return html +
+      segTab('makanCara', [['warung', '🏪 Makan di Warung (Tunai)'], ['gofood', '🛵 Pesan GoFood (+Ongkir)']], caraM) +
       '<div class="cat-strip">' +
       '<button type="button" class="' + (S.autoMakanMinum ? 'pilih' : '') + '" data-aksi="autoMakan:1">' + (S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan') + '</button>' +
       (d.posisi === 'kos' && rtAktif ? '<button type="button" class="pilih" data-aksi="makanRumah:1">🏠 Makan Rumah (Gratis)</button>' : '') +
@@ -1383,8 +1458,10 @@
   function layarDriver() {
     var o = S.ojek, z = N.ojol.zona[kotaIni().zona || 1];
     var nmOnDrv = o.mode === 'mobil' ? (o.platform === 'grab' ? 'GrabCar' : 'GoCar') : (o.platform ? OJEK.platform(o.platform).nama : 'Ojol');
-    var html = kepalaApp('Driver Ojol & Car', o.online ? 'ONLINE · ' + nmOnDrv : 'Offline') + pesanApp() +
-      '<div class="saldo-besar"><small>Saldo Driver (Siap Tarik)</small><b>' + rupiah(o.dompet) + '</b></div>' +
+    var rtDrv = (o.rating != null ? o.rating : 4.85), mudikSt = OJEK.statusMudik ? OJEK.statusMudik(S.hari) : '';
+    var html = kepalaApp('Driver Ojol & Car', (o.online ? 'ONLINE · ' + nmOnDrv : 'Offline') + ' · ★' + rtDrv.toFixed(2)) + pesanApp() +
+      '<div class="saldo-besar"><small>Saldo Driver (Siap Tarik) · ⭐ Rating ' + rtDrv.toFixed(2) + (rtDrv >= 4.75 ? ' (Prioritas ✓)' : '') + '</small><b>' + rupiah(o.dompet) + '</b></div>' +
+      (mudikSt ? '<div class="isbat" style="margin:6px 0">🌙 <b>' + (mudikSt === 'mudik' ? 'Arus Mudik Lebaran!' : 'Arus Balik Lebaran!') + '</b> Permintaan order melonjak 2× lipat + Tuslah tarif +30%!</div>' : '') +
       '<div class="stat-grid-2"><div class="stat-box"><small>Hari Ini</small><b>' + o.hariIni.trip + ' order · ' + rupiahPendek(o.hariIni.bersih) + '</b></div>' +
       '<div class="stat-box"><small>Total Narik</small><b>' + o.total.trip + ' order · ' + rupiahPendek(o.total.bersih) + '</b></div></div>';
     if (!S.motor && !S.mobil) {
@@ -1421,7 +1498,8 @@
           '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="putusDriver:' + pl.id + '">Putus</button>') + '</div></div>';
     }).join('') + '</div>' +
       (o.online ? '<div style="margin-top:10px"><button type="button" class="aksi" data-aksi="offlineDriver:1">Berhenti Narik</button></div>' : '') +
-      '<p class="catatan">Tarif Zona ' + (kotaIni().zona || 1) + ': ' + rupiah(z.minimal) + ' (' + z.kmMinimal + ' km) + ' + rupiah(z.perKm) + '/km · Potongan ' + Math.round(N.ojol.potongan * 100) + '%.</p>';
+      (o.ulasan && o.ulasan.length ? '<details class="kartu-lipat" style="margin-top:8px"><summary>⭐ Ulasan Penumpang Terakhir (' + o.ulasan.length + ')</summary><ul class="daftar">' + o.ulasan.slice(0, 5).map(function (u) { return '<li><span><b>' + esc(u.nama) + '</b> · ' + '★'.repeat(u.bintang) + '<small>' + esc(u.teks) + '</small></span></li>'; }).join('') + '</ul></details>' : '') +
+      '<p class="catatan">Tarif Zona ' + (kotaIni().zona || 1) + ': ' + rupiah(z.minimal) + ' (' + z.kmMinimal + ' km) + ' + rupiah(z.perKm) + '/km · Potongan ' + Math.round(N.ojol.potongan * 100) + '% · Rating ≥4,75★ membuka order Prioritas & tip lebih besar.</p>';
     return html;
   }
   /* ---------- aplikasi Properti (Sewa Kos/Kontrakan/Apartemen, Rumah Milik, KPR & Kavling) ---------- */
@@ -1633,6 +1711,11 @@
         return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">+' + tk.kwh.toFixed(1).replace('.', ',') + ' kWh</span></div><b>Token ' + labelNominal(n) + '</b><div class="ki-harga">' + rupiah(tk.bayar) + '</div><small>PPJ ' + (DIRI.kota(S).ppj * 100).toFixed(1).replace('.', ',') + '% + admin ' + rupiahPendek(N.pln.admin) + '</small></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-aksi="token:' + n + '">⚡ Beli Token</button></div></div>';
       }).join('') + '</div>';
+    if (meter === 'kos' && DIRI.rincianListrikRumah) {
+      var rl = DIRI.rincianListrikRumah(S);
+      html += '<h3 class="subjudul">📊 Rincian Pemakaian Harian (' + rl.totalKwh.toFixed(2).replace('.', ',') + ' kWh/hr · ~' + rupiah(rl.biayaHari) + '/hr · Cukup ±' + rl.estimasiHari + ' hr)</h3>' +
+        '<ul class="daftar angka">' + rl.items.map(function (it) { return baris(it.nama, it.kwh.toFixed(2).replace('.', ',') + ' kWh'); }).join('') + '</ul>';
+    }
     return html;
   }
   function bayarPribadi(jml, ket) {
@@ -2467,19 +2550,33 @@
   var konfirmBayarTmp = null;
   function mintaKonfirmBayar(ket, nominal, onBayar) {
     var nom = Math.max(0, Math.round(+nominal || 0));
+    if (nom <= 0) return onBayar('dompet');
     var cash = UANG.dompet(S), bank = (S.bank && S.bank.saldo) || 0, nmBank = UANG.bankIni(S).nama;
+    var kkAktif = !!(S.kk && S.kk.status === 'aktif'), sisaKk = kkAktif ? UANG.sisaLimitKk(S) : 0;
+    var pl = UANG.siapkanPaylater ? UANG.siapkanPaylater(S) : { status: 'aktif', limit: 3000000 };
+    var plAktif = pl.status === 'aktif', sisaPl = plAktif && UANG.sisaLimitPaylater ? UANG.sisaLimitPaylater(S) : 0;
+    var tnPl = app.plTenorPilih || 3;
+    var cicPl = UANG.cicilanPaylater ? UANG.cicilanPaylater(nom, tnPl) : Math.ceil(nom / tnPl);
     konfirmBayarTmp = { ket: ket, nominal: nom, onBayar: onBayar, lembarAsal: lembar, appAsal: app.nama };
     bukaLembar('konfirmBayar',
-      kepala('Konfirmasi Pembayaran', 'Pilih metode bayar agar saldo tidak terpotong otomatis') +
+      kepala('Konfirmasi Pembayaran', 'Pilih metode bayar: Cash, Bank, Kartu Kredit, atau PayLater') +
       '<div class="saldo-besar"><small>' + esc(ket) + '</small><b>' + rupiah(nom) + '</b></div>' +
       '<div class="stat-grid-2">' +
-      '<div class="stat-box"><small>💵 Tunai (Dompet)</small><b>' + rupiah(cash) + '</b></div>' +
-      '<div class="stat-box"><small>🏦 ' + esc(nmBank) + '</small><b>' + rupiah(bank) + '</b></div></div>' +
-      '<div class="bayar-baris" style="margin-top:12px">' +
-      '<button type="button" class="aksi kecil" data-bayar="dompet"' + (cash < nom ? ' disabled' : '') + '>💵 Bayar Cash / Tunai (' + rupiahPendek(cash) + ')</button>' +
-      '<button type="button" class="aksi kecil" style="background:var(--kontainer);color:#fff;box-shadow:0 3px 0 var(--kontainer-tua)" data-bayar="bank"' + (bank < nom ? ' disabled' : '') + '>🏦 Bayar via ' + esc(nmBank) + ' (' + rupiahPendek(bank) + ')</button>' +
-      '<button type="button" class="tombol-lain gelap" data-bayar="batal">Batal</button></div>' +
-      (cash < nom && bank < nom ? '<p class="racik-pesan salah" style="margin-top:8px">Baik uang tunai maupun saldo rekening belum cukup untuk transaksi ini.</p>' : ''));
+      '<div class="stat-box"><small>💵 Cash (Dompet)</small><b>' + rupiahPendek(cash) + '</b></div>' +
+      '<div class="stat-box"><small>🏦 ' + esc(nmBank) + '</small><b>' + rupiahPendek(bank) + '</b></div>' +
+      '<div class="stat-box"><small>💳 Kartu Kredit</small><b>' + (kkAktif ? rupiahPendek(sisaKk) : 'Belum aktif') + '</b></div>' +
+      '<div class="stat-box"><small>🧾 PayLater (' + tnPl + ' bln)</small><b>' + (plAktif ? rupiahPendek(sisaPl) : 'Dibekukan') + '</b></div></div>' +
+      '<div class="bayar-grid-2">' +
+      '<button type="button" class="aksi kecil" data-bayar="dompet"' + (cash < nom ? ' disabled' : '') + '>💵 Cash / Tunai<small>' + rupiahPendek(cash) + '</small></button>' +
+      '<button type="button" class="aksi kecil" style="background:var(--kontainer);color:#fff;box-shadow:0 3px 0 var(--kontainer-tua)" data-bayar="bank"' + (bank < nom ? ' disabled' : '') + '>🏦 ' + esc(nmBank) + '<small>' + rupiahPendek(bank) + '</small></button>' +
+      '<button type="button" class="aksi kecil" style="background:#1565c0;color:#fff;box-shadow:0 3px 0 #0d47a1" data-bayar="kk"' + (!kkAktif || sisaKk < nom ? ' disabled' : '') + '>💳 Kartu Kredit<small>' + (kkAktif ? 'Limit ' + rupiahPendek(sisaKk) : 'Ajukan di Bank') + '</small></button>' +
+      '<button type="button" class="aksi kecil" style="background:#7b1fa2;color:#fff;box-shadow:0 3px 0 #4a148c" data-bayar="paylater:' + tnPl + '"' + (!plAktif || sisaPl < nom ? ' disabled' : '') + '>🧾 PayLater ' + tnPl + '×<small>' + rupiahPendek(cicPl) + '/bln</small></button></div>' +
+      '<div class="cat-strip" style="margin-top:8px">' + [1, 3, 6, 12].map(function (t) {
+        var cT = UANG.cicilanPaylater ? UANG.cicilanPaylater(nom, t) : Math.ceil(nom / t);
+        return '<button type="button" class="' + (t === tnPl ? 'pilih' : '') + '" data-pltenor="' + t + '">PayLater ' + t + ' bln (' + rupiahPendek(cT) + ')</button>';
+      }).join('') + '</div>' +
+      '<div style="margin-top:8px"><button type="button" class="tombol-lain gelap" style="width:100%" data-bayar="batal">Batal</button></div>' +
+      (cash < nom && bank < nom && (!kkAktif || sisaKk < nom) && (!plAktif || sisaPl < nom) ? '<p class="racik-pesan salah" style="margin-top:8px">Semua metode pembayaran belum mencukupi untuk transaksi ini.</p>' : ''));
   }
   function infoBayarAksi(nama, nilai) {
     if (nama === 'beliMakan') {
@@ -2520,6 +2617,14 @@
       if (String(nilai).indexOf('pasar:') === 0) { var uk = S.game && S.game.pasar && S.game.pasar.unit[+nilai.split(':')[1]]; if (uk) return { ket: 'Beli ' + uk.nama, nominal: uk.harga }; }
       else { var km = DIRI.konsolModel(nilai); if (km) return { ket: 'Beli ' + km.nama, nominal: km.harga }; }
     } else if (nama === 'beliGame') { var gm3 = DIRI.gameModel(nilai); if (gm3) return { ket: 'Beli Game ' + gm3.nama, nominal: gm3.harga }; }
+    else if (nama === 'beliRokok') {
+      var prk = nilai.split('|'), drk = DIRI.daftarRokok ? DIRI.daftarRokok(S) : { legal: [], ilegal: [] };
+      var rkM = drk.legal.concat(drk.ilegal).filter(function (x) { return x.id === prk[0]; })[0];
+      if (rkM) return { ket: 'Beli ' + rkM.nama + (prk[1] === 'ecer' ? ' (1 batang)' : ' (1 bungkus)'), nominal: prk[1] === 'ecer' ? rkM.eceran : rkM.harga };
+    } else if (nama === 'hobi') {
+      var hbA = (N.aktivitasAkhirPekan || []).filter(function (x) { return x.id === nilai; })[0];
+      if (hbA && hbA.biaya > 0) return { ket: 'Akhir Pekan: ' + hbA.nama, nominal: hbA.biaya };
+    }
     return null;
   }
   function aksiHP(nama, nilai, _sudahKonfirm) {
@@ -2644,6 +2749,20 @@
     else if (nama === 'qrisTab') { app.qrisTab = nilai; app.pesan = ''; }
     else if (nama === 'tokoMenu') { app.tokoMenu = nilai; app.pesan = ''; }
     else if (nama === 'tahunHp') { app.tahunHp = nilai; app.pesan = ''; }
+    else if (nama === 'rokokKat') { app.rokokKat = nilai; app.pesan = ''; }
+    else if (nama === 'beliRokok') { var prk2 = nilai.split('|'), rrk2 = DIRI.beliRokok(S, prk2[0], prk2[1]); hasilAksi(rrk2 && rrk2.ok ? true : rrk2, rrk2 && rrk2.ok ? rrk2.teks : ''); }
+    else if (nama === 'merokok') {
+      var rmk = DIRI.merokok(S, nilai === 'auto' ? null : nilai);
+      if (rmk && rmk.ok) { lompatWaktu(rmk.menit || 5); hasilAksi(true, rmk.teks); } else hasilAksi(rmk);
+    }
+    else if (nama === 'hobi') {
+      var rhb = DIRI.jalankanHobi(S, nilai);
+      if (rhb && rhb.ok) { tutupLembar(); gelapSebentar(); lompatWaktu(rhb.menit || 90); cekGantiHari(); simpan(); perbaruiHUD(true); perbaruiAksi(); toast(rhb.teks, 3800); return; }
+      else hasilAksi(rhb);
+    }
+    else if (nama === 'toggleLiburAkhirPekan') { S.liburAkhirPekan = !S.liburAkhirPekan; hasilAksi(true, S.liburAkhirPekan ? 'Jadwal kerja Senin–Jumat aktif! Sabtu–Minggu fokus istirahat, hobi, & keluarga.' : 'Jadwal kerja kembali bebas setiap hari.'); }
+    else if (nama === 'bayarPl') { var rplb = UANG.bayarPaylater(S, nilai); hasilAksi(rplb && rplb.ok ? true : rplb, rplb && rplb.ok ? 'Tagihan PayLater ' + rupiah(rplb.jml) + ' lunas! Limit kini ' + rupiahPendek(rplb.limit) + '.' : ''); }
+    else if (nama === 'naikLimitPl') { var rnpl = UANG.naikLimitPaylater(S); hasilAksi(rnpl && rnpl.ok ? true : rnpl, rnpl && rnpl.ok ? 'Limit PayLater naik menjadi ' + rupiah(rnpl.limit) + '!' : ''); }
     else if (nama === 'bukaTokoMenu') { app.nama = 'toko'; app.tokoMenu = nilai; app.pesan = ''; }
     else if (nama === 'kelasMotor') { app.kelasMotor = nilai; app.pesan = ''; }
     else if (nama === 'kelasMobil') { app.kelasMobil = nilai; app.pesan = ''; }
@@ -3974,7 +4093,8 @@
         tombol.push(['pulang:1', '🏠 Pulang']);
       }
       tombol.push(['app:makan', '🍽️ Makan'], ['bensinHud:1', '⛽ Isi BBM']);
-      tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
+      if (DIRI.totalBatangRokok && DIRI.totalBatangRokok(S) > 0) tombol.push(['merokok:1', '🚬 Rokok (' + DIRI.totalBatangRokok(S) + ')']);
+      tombol.push(['app:hobi', '🎯 Hobi'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
       if (sedangTunggu) {
         tombol.push(['hiburan:youtube', S.hiburan ? '✓ Lagi nonton YouTube' : '🎬 Santai']);
       }
@@ -3996,7 +4116,8 @@
       lain.push(['ciuman:' + pas.id, '💋 Ciuman'], ['foreplay:' + pas.id, '🔥 Foreplay']);
     }
     tombol.push(['tidurMalam:1', '😴 Tidur']);
-    tombol.push(['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
+    if (DIRI.totalBatangRokok && DIRI.totalBatangRokok(S) > 0) tombol.push(['merokok:1', '🚬 Rokok (' + DIRI.totalBatangRokok(S) + ')']);
+    tombol.push(['app:hobi', '🎯 Akhir Pekan'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
     lain.push(['istirahat:olahraga', '🏃 Olahraga']);
     if ((S.diri.hb || 0) >= 15) lain.push(['meTime:1', 'Me time']);
     if (rtAktif) lain.push(['makanRumah:1', 'Makan Rumah']);
@@ -4024,6 +4145,7 @@
     if (nama === 'bensinHud') { tutupLembar(); return popupBensin(); }
     if (nama === 'promoKedai') { S.promoAktif = !S.promoAktif; simpan(); perbaruiHUD(true); perbaruiAksi(); toast(S.promoAktif ? 'Promo aktif!' : 'Promo dimatikan.'); return; }
     if (nama === 'makan') r = DIRI.makan(S, nilai);
+    else if (nama === 'merokok') r = DIRI.merokok ? DIRI.merokok(S) : null;
     else if (nama === 'makanRumah') r = DIRI.makanDiRumah(S);
     else if (nama === 'meTime') { var rm2 = mulaiMeTime(); if (rm2 !== true) toast(rm2, 2400); return; }
     else if (nama === 'tolakHb') { TEMAN.tolakHb(S, nilai); tutupLembar(); simpan(); toast('Kamu menolak ajakan. Dia terlihat kecewa.', 2200); return; }
@@ -4941,6 +5063,11 @@
     $('lembar').onclick = function (e) {
       if (e.target === $('lembar') || e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
+      if ((b = e.target.closest('[data-pltenor]'))) {
+        app.plTenorPilih = +b.dataset.pltenor || 3;
+        if (konfirmBayarTmp) return mintaKonfirmBayar(konfirmBayarTmp.ket, konfirmBayarTmp.nominal, konfirmBayarTmp.onBayar);
+        return;
+      }
       if ((b = e.target.closest('[data-bayar]'))) {
         var pilB = b.dataset.bayar, kb = konfirmBayarTmp;
         konfirmBayarTmp = null;
