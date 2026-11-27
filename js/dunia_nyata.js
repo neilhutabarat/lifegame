@@ -190,7 +190,7 @@
     return list;
   }
 
-  /* Pergi Bebas tanpa ngojol: Jalan Kaki, Motor/Mobil Sendiri, atau Dijemput Teman — mendukung POI lokal + SELURUH 174 Kecamatan & 1.562 Desa Kalbar */
+  /* Pergi Bebas tanpa ngojol: Jalan Kaki, Motor/Mobil Sendiri, atau Dijemput Teman — mendukung POI lokal + seluruh provinsi terpetakan (Kalbar 2.145 & Kalteng 1.571 Desa/Kel) */
   function pergiBebas(S, targetId, cara, temanId, tundaPindah, jalurOpsi) {
     siapkan(S);
     if (S.ojek && S.ojek.trip) return 'Selesaikan order penumpang dulu sebelum pergi bebas!';
