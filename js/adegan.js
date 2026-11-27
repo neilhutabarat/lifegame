@@ -1974,15 +1974,81 @@
     var g3 = (t * 0.1) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.35).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
   }
+  /* latar wilayah realistis: KOTA (ruko/gedung), KABUPATEN (pertokoan rendah & tugu/pepohonan), DESA (sawah, rumah kampung kayu & pohon kelapa/pisang) */
+  function gambarLatarWilayah(tier, m, dasar) {
+    var gp = gelap(m);
+    if (tier === 'desa') {
+      /* perbukitan hijau & sawah berundak khas desa Indonesia */
+      bukitLatar(dasar - 28, 72, gp > 0.4 ? '#2b4735' : '#6ea870', 18, 95, 2);
+      kotak(0, dasar - 28, W + 60, 30, gp > 0.4 ? '#2a4a2a' : '#7cb342');
+      cx.fillStyle = gp > 0.4 ? 'rgba(180,220,140,.08)' : 'rgba(255,245,157,.28)';
+      for (var sw = 0; sw < W + 60; sw += 22) cx.fillRect(sw, dasar - 26, 2, 26);
+      /* rumah kampung kayu beratap seng/genteng & pohon kelapa */
+      for (var d = 0; d < 4; d++) {
+        var rx = 18 + d * 96, rh = 38 + (d % 2) * 8;
+        kotak(rx, dasar - rh, 56, rh, d % 2 ? '#b88b5a' : '#d7ccc8');
+        poli([rx - 7, dasar - rh, rx + 28, dasar - rh - 24, rx + 63, dasar - rh], d % 2 ? '#8d4e32' : '#546e7a');
+        kotak(rx + 20, dasar - 24, 14, 24, '#5d4037');
+        kotak(rx + 6, dasar - 26, 10, 10, gp > 0.3 ? '#ffe082' : '#455a64');
+        pohonSawit(rx + 74, dasar, 0.85);
+      }
+      return;
+    }
+    if (tier === 'kabupaten') {
+      /* kota kabupaten: ruko 1-2 lantai, pohon peneduh pinggir jalan & tugu kabupaten */
+      bukitLatar(dasar - 12, 42, gp > 0.4 ? '#2d3f4d' : '#8aa8a0', 0, 120, 4);
+      for (var kb = 0; kb < 5; kb++) {
+        var kx = 6 + kb * 78, kh = 54 + (kb % 2) * 28;
+        kotak(kx, dasar - kh, 62, kh, ['#e0d5c1', '#d6dfe6', '#e6d8cc', '#d4e2d4', '#dfd7cb'][kb]);
+        poli([kx - 4, dasar - kh, kx + 31, dasar - kh - 14, kx + 66, dasar - kh], '#8d4e3a');
+        kotak(kx + 8, dasar - 34, 46, 34, '#7d8a92');
+        kotak(kx + 8, dasar - 46, 46, 10, ['#1f8a80', '#d97706', '#2563eb', '#059669', '#b91c1c'][kb]);
+        if (kb % 2 === 0) pohonBulat(kx + 68, dasar, 0.95, '#3b8244');
+      }
+      return;
+    }
+    gambarRuko(m, dasar);
+  }
+  /* stand tenda penjual takjil Ramadan di pinggir jalan (muncul sore 14.00–19.30 saat bulan puasa) */
+  function gambarStandTakjil(dasar, m, t) {
+    var jam = (m % 1440) / 60;
+    if (jam < 13.5 || jam > 19.8) return;
+    var tenda = [
+      { x: 24, w: 68, c: '#00897b', lbl: 'TAKJIL' },
+      { x: 146, w: 68, c: '#e65100', lbl: 'ES BUAH' },
+      { x: 268, w: 68, c: '#1565c0', lbl: 'KOLAK' }
+    ];
+    tenda.forEach(function (td, i) {
+      /* tiang tenda */
+      kotak(td.x + 3, dasar - 44, 3, 44, '#cfd8dc');
+      kotak(td.x + td.w - 6, dasar - 44, 3, 44, '#cfd8dc');
+      /* atap tenda piramid */
+      poli([td.x - 4, dasar - 38, td.x + td.w / 2, dasar - 56, td.x + td.w + 4, dasar - 38], td.c);
+      kotak(td.x, dasar - 38, td.w, 10, '#fff8e1');
+      cx.font = '800 7.5px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillStyle = td.c; cx.fillText(td.lbl, td.x + td.w / 2, dasar - 33);
+      /* meja & toples es buah / gorengan */
+      kotak(td.x + 4, dasar - 18, td.w - 8, 18, '#8d5524');
+      kotak(td.x + 2, dasar - 20, td.w - 4, 4, '#f5deb3');
+      bulat(td.x + 16, dasar - 24, 5, '#ff7043');
+      bulat(td.x + 32, dasar - 24, 5, '#66bb6a');
+      bulat(td.x + 48, dasar - 24, 5, '#ffd54f');
+      if (jam >= 17.5) {
+        var grT = cx.createRadialGradient(td.x + td.w / 2, dasar - 34, 1, td.x + td.w / 2, dasar - 34, 24);
+        grT.addColorStop(0, 'rgba(255,235,150,.42)'); grT.addColorStop(1, 'rgba(255,235,150,0)');
+        cx.fillStyle = grT; cx.fillRect(td.x, dasar - 56, td.w, 46);
+      }
+    });
+  }
   function gambarJalanRaya(s, t) {
     var m = s.menit % 1440, f = s.ojek, jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, geser = (t * 0.06) % lebar;
-    var gp = gelap(m);
+    var gp = gelap(m), tierW = s.tierWilayah || 'kota';
     gambarLangit(m, t);
-    cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
+    cx.save(); cx.translate(-geser, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.translate(lebar, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.restore();
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
-    kotak(0, dasarRuko, W, jalan - dasarRuko, 'rgba(185,178,166,.55)');
-    var g2 = (t * 0.25) % 20; for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b');
-    kotak(0, jalan, W, H - jalan, s.hujan ? 'rgba(38,44,54,.72)' : 'rgba(68,72,78,.72)');
+    kotak(0, dasarRuko, W, jalan - dasarRuko, tierW === 'desa' ? 'rgba(122,158,84,.72)' : 'rgba(185,178,166,.55)');
+    var g2 = (t * 0.25) % 20; if (tierW !== 'desa') { for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b'); }
+    kotak(0, jalan, W, H - jalan, tierW === 'desa' ? (s.hujan ? 'rgba(65,58,50,.85)' : 'rgba(98,92,84,.85)') : (s.hujan ? 'rgba(38,44,54,.72)' : 'rgba(68,72,78,.72)'));
     var g3 = (t * 0.32) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
     /* kendaraan lain menyalip pelan */
@@ -2153,17 +2219,17 @@
     teksTengah('Kapal ' + RUTE_NAMA(f.dari) + ' → ' + RUTE_NAMA(f.ke), 182, 16);
   }
 
-  /* perjalanan pulang atau berangkat antar tempat: jalan kota bergulir, jarak sisa terlihat */
+  /* perjalanan pulang atau berangkat antar tempat: latar wilayah (desa/kabupaten/kota) bergulir, jarak sisa terlihat */
   function gambarPerjalanan(s, t, dt) {
-    var f = s.transit, m = s.menit % 1440, gp = gelap(m), jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44;
+    var f = s.transit, m = s.menit % 1440, gp = gelap(m), jalan = H * 0.62, dasarRuko = jalan - 60, lebar = W + 44, tierW = s.tierWilayah || 'kota';
     var kaki = f.kend === 'kaki';
     tJarak += dt * (kaki ? 0.1 : 0.34); var geser = tJarak % lebar;
     gambarLangit(m, t);
-    cx.save(); cx.translate(-geser, 0); gambarRuko(m, dasarRuko); cx.translate(lebar, 0); gambarRuko(m, dasarRuko); cx.restore();
+    cx.save(); cx.translate(-geser, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.translate(lebar, 0); gambarLatarWilayah(tierW, m, dasarRuko); if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t); cx.restore();
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
-    kotak(0, dasarRuko, W, jalan - dasarRuko, 'rgba(185,178,166,.9)');
-    var g2 = (geser * 3.2) % 20; for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b');
-    kotak(0, jalan, W, H - jalan, s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)');
+    kotak(0, dasarRuko, W, jalan - dasarRuko, tierW === 'desa' ? 'rgba(122,158,84,.9)' : 'rgba(185,178,166,.9)');
+    var g2 = (geser * 3.2) % 20; if (tierW !== 'desa') { for (var x0 = -20; x0 < W + 20; x0 += 20) kotak(x0 - g2, jalan - 7, 10, 7, (Math.round((x0 + 20) / 20)) % 2 ? '#f3f1ea' : '#2b2b2b'); }
+    kotak(0, jalan, W, H - jalan, tierW === 'desa' ? (s.hujan ? 'rgba(65,58,50,.95)' : 'rgba(98,92,84,.95)') : (s.hujan ? 'rgba(38,44,54,.95)' : 'rgba(68,72,78,.95)'));
     var g3 = (geser * 3.4) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
     if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp); }
@@ -2322,18 +2388,20 @@
     anim.angkat += (targetAngkat - anim.angkat) * Math.min(1, dt / 160);
     var f = cv.width / W;
     cx.setTransform(f, 0, 0, f, 0, -anim.angkat * f);
-    var gp = gelap(m);
+    var gp = gelap(m), tierW = s.tierWilayah || 'kota';
     gambarLangit(m, t);
-    gambarRuko(m, dasarRuko);
+    gambarLatarWilayah(tierW, m, dasarRuko);
+    if (s.ramadan) gambarStandTakjil(dasarRuko + 14, m, t);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.38).toFixed(3) + ')'; cx.fillRect(0, 0, W, dasarRuko); }
     gambarJalan(trotoar, jalan);
+    if (tierW === 'desa') kotak(0, trotoar, W, jalan - trotoar, '#7da356');
     gambarTiang(dasarKedai, dasarRuko - 270);
     var motorStandby = !!(s.ojek && s.ojek.status === 'standby' && s.ojek.mode !== 'mobil' && s.motorId);
     if (s.berhentiSewa) {
       /* mode driver: saat standby motor, 1 karakter duduk di atas motornya sendiri (bukan 2 karakter dobel!) */
       kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
       if (!motorStandby) {
-        gambarKarakterRumah(196, dasarKedai + 6, s.gender || 'cewek', t, { skala: 0.88, baju: '#00aa13', tampilan: s.tampilan, label: s.namaPemain || 'Driver' });
+        gambarKarakterRumah(196, dasarKedai + 6, s.gender || 'cewek', t, { skala: 0.88, baju: s.warnaBaju || '#00aa13', tampilan: s.tampilan, label: s.namaPemain || 'Driver' });
       }
     } else {
       gambarPisang(132, dasarKedai, t);

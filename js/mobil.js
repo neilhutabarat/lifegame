@@ -322,6 +322,9 @@
   /* bensin / cas listrik SPKLU, servis, ban, dan pajak dibayar melalui Kas Travel (auto top-up dari bank < 50 jt) */
   function danaRawat(S) {
     if (S._metodeBayar === 'dompet') return (S.uang && S.uang.dompet) || 0;
+    if (S._metodeBayar === 'ewallet' || S._metodeBayar === 'qris') return g.KK_UANG.tersedia ? g.KK_UANG.tersedia(S) : 0;
+    if (S._metodeBayar === 'kk') return g.KK_UANG.sisaLimitKk ? g.KK_UANG.sisaLimitKk(S) : 0;
+    if (String(S._metodeBayar || '').indexOf('paylater') === 0) return g.KK_UANG.sisaLimitPaylater ? g.KK_UANG.sisaLimitPaylater(S) : 0;
     if (S._metodeBayar === 'bank') return Math.max(0, (S.bank && S.bank.saldo) || 0);
     if (g.KK_TRAVEL && g.KK_TRAVEL.danaKas) return g.KK_TRAVEL.danaKas(S);
     return Math.max(0, (S.bank && S.bank.saldo) || 0);

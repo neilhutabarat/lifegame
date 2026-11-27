@@ -189,7 +189,7 @@
     S.uang.dompet -= jml;
     return true;
   }
-  /* Pembayaran sesuai pilihan konfirmasi pemain: 'dompet' (Cash) | 'bank' (Transfer Bank) | 'kk' (Kartu Kredit) | 'paylater' (PayLater 1/3/6/12 bln). */
+  /* Pembayaran sesuai pilihan konfirmasi pemain: 'dompet' (Cash) | 'ewallet' (Dompet Digital/QRIS) | 'bank' (Transfer Bank) | 'kk' (Kartu Kredit) | 'paylater' (PayLater 1/3/6/12 bln). */
   function bayarPilihan(S, jml, ket, metode) {
     var m = metode || (S && S._metodeBayar) || 'bank';
     jml = Math.max(0, Math.round(+jml || 0));
@@ -199,8 +199,13 @@
       var tn = +(String(m).split(':')[1] || 3);
       return pakaiPaylater(S, jml, ket || 'Belanja PayLater', tn);
     }
+    if (m === 'ewallet' || m === 'qris') {
+      var q = bayarQris(S, jml);
+      if (!q) return 'Saldo Dompet Digital / QRIS tidak cukup (' + rp(tersedia(S)) + ', butuh ' + rp(jml) + ').';
+      return true;
+    }
     if (m === 'dompet' || m === 'cash') {
-      if (!bayarDompet(S, jml)) return 'Uang tunai (Cash) di dompet tidak cukup (' + rp(dompet(S)) + ', butuh ' + rp(jml) + '). Tarik tunai dulu atau pilih Bank / KK / PayLater.';
+      if (!bayarDompet(S, jml)) return 'Uang tunai (Cash) di dompet tidak cukup (' + rp(dompet(S)) + ', butuh ' + rp(jml) + '). Tarik tunai dulu atau pilih Dompet Digital / Bank / KK / PayLater.';
       return true;
     }
     if (!S.bank || S.bank.saldo < jml) return 'Saldo rekening ' + bankIni(S).nama + ' tidak cukup (' + rp((S.bank && S.bank.saldo) || 0) + ', butuh ' + rp(jml) + ').';
