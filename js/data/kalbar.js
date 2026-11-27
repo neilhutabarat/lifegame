@@ -423,15 +423,28 @@
     return !!KALBAR[kotaId];
   }
 
-  /* Titik awal rumah / pangkalan berdasarkan kota */
+  /* Titik awal rumah / pangkalan berdasarkan kota (mendukung 14 Kab/Kota Kalbar & seluruh 105 kota/kabupaten Indonesia) */
+  function namaKotaRute(kotaId) {
+    if (KALBAR[kotaId]) return KALBAR[kotaId].nama;
+    if (g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[kotaId]) return g.KK_RUTE.kota[kotaId].nama;
+    return kotaId || 'Kota';
+  }
+  function titikKotaUmum(kotaId) {
+    var id = kotaId || 'jakarta';
+    var nm = namaKotaRute(id);
+    var daf = KEC_UMUM[id];
+    var ds = daf && daf[0] ? daf[0] : nm;
+    var rk = g.KK_RUTE && g.KK_RUTE.kota && g.KK_RUTE.kota[id];
+    var prov = (rk && rk.prov) || (rk && rk.pulau) || 'Indonesia';
+    return { kabId: id, kabNama: nm, prov: prov, kecId: id + '_0', kecNama: nm, medan: 'mulus', pulau: false, desa: ds, lat: null, lon: null };
+  }
   function titikAwal(kotaId, kecId) {
     if (KALBAR[kotaId]) {
       var kb = KALBAR[kotaId];
       var kc = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[0];
       return titikDesa(kotaId, kc, kc.desa[0]);
     }
-    var daf = KEC_UMUM[kotaId] || ['Pusat Kota', 'Kecamatan Utara', 'Kecamatan Selatan', 'Kecamatan Timur', 'Kecamatan Barat'];
-    return { kabId: kotaId || 'jakarta', kabNama: kotaId || 'Kota', prov: 'Indonesia', kecId: (kotaId || 'kota') + '_0', kecNama: daf[0], medan: 'kota', pulau: false, desa: daf[0], lat: null, lon: null };
+    return titikKotaUmum(kotaId);
   }
 
   /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang — bebas acak ke segala arah daratan (antardesa, antarkecamatan, hingga antarkabupaten seperti Satong → Sukadana / Sandai / Tayap / Kendawangan / Sungai Melayu tanpa terjebak bolak-balik, dan TIDAK pernah mengarahkan motor/mobil menyeberang laut ke pulau!) */
@@ -533,16 +546,30 @@
     'sanggau|ketapang': [['sanggau', 'sgu_kapuas'], ['sanggau', 'sgu_parindu'], ['sanggau', 'sgu_thilir'], ['sanggau', 'sgu_toba'], ['ketapang', 'ktp_shulu'], ['ketapang', 'ktp_slaur'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_dpawan']],
     'kuburaya|kayongutara': [['kuburaya', 'kr_sraya'], ['kuburaya', 'kr_rasau'], ['kuburaya', 'kr_bampar'], ['kayongutara', 'ku_tbatang'], ['kayongutara', 'ku_seponti'], ['kayongutara', 'ku_shilir'], ['kayongutara', 'ku_sukadana']],
     'ketapang|kayongutara': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_mhu'], ['kayongutara', 'ku_shilir'], ['kayongutara', 'ku_sukadana']],
-    'ketapang|melawi': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_hsungai'], ['melawi', 'mlw_tpbarat'], ['melawi', 'mlw_tpinoh'], ['melawi', 'mlw_bhulu'], ['melawi', 'mlw_belimbing'], ['melawi', 'mlw_npinoh']]
+    'ketapang|melawi': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_hsungai'], ['melawi', 'mlw_tpbarat'], ['melawi', 'mlw_tpinoh'], ['melawi', 'mlw_bhulu'], ['melawi', 'mlw_belimbing'], ['melawi', 'mlw_npinoh']],
+    'ketapang|sukamara': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_bkayong'], ['ketapang', 'ktp_mhs'], ['ketapang', 'ktp_kendawangan']],
+    'ketapang|lamandau': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ttiti'], ['ketapang', 'ktp_pemahan'], ['ketapang', 'ktp_jhulu'], ['ketapang', 'ktp_marau'], ['ketapang', 'ktp_aupas'], ['ketapang', 'ktp_mmata']]
   };
 
   function titikKoridorRuas(kabA, kabB, u) {
-    if (!KALBAR[kabA] && !KALBAR[kabB]) return null;
     u = Math.max(0, Math.min(1, Number(u) || 0));
+    var aKalbar = !!KALBAR[kabA], bKalbar = !!KALBAR[kabB];
+    /* Ruas di luar Kalbar (Kalteng, Kalsel, Kaltim, Kaltara, Jawa, Sumatra, dll): selalu kembalikan kota/kabupaten aktual di ruas agar HUD tidak mental ke kota asal */
+    if (!aKalbar && !bKalbar) {
+      return titikKotaUmum(u < 0.5 ? kabA : kabB);
+    }
     var list = KORIDOR_KALBAR[kabA + '|' + kabB];
     if (!list && KORIDOR_KALBAR[kabB + '|' + kabA]) list = KORIDOR_KALBAR[kabB + '|' + kabA].slice().reverse();
+    /* Ruas perbatasan Kalbar ↔ Luar Kalbar: lalui kecamatan/desa Kalbar sampai perbatasan lalu masuk ke kabupaten tujuan luar Kalbar */
+    if (aKalbar && !bKalbar) {
+      if (u >= 0.78) return titikKotaUmum(kabB);
+      u = u / 0.78;
+    } else if (!aKalbar && bKalbar) {
+      if (u < 0.22) return titikKotaUmum(kabA);
+      u = (u - 0.22) / 0.78;
+    }
     if (!list || !list.length) {
-      var kTarget = u < 0.5 ? (KALBAR[kabA] ? kabA : kabB) : (KALBAR[kabB] ? kabB : kabA);
+      var kTarget = u < 0.5 ? kabA : kabB;
       return titikAwal(kTarget);
     }
     var pos = u * (list.length - 1);
@@ -601,26 +628,42 @@
     return 'Rumah Ibadah ' + kec;
   }
 
-  /* Populasi nyata 2026 (BPS) untuk 14 Kab/Kota Kalbar & 38 Ibu Kota Provinsi Indonesia */
+  /* Populasi nyata 2026 (BPS) untuk 14 Kab/Kota Kalbar, seluruh Kalimantan, & ibu kota provinsi Indonesia */
   var PENDUDUK_WILAYAH = {
     pontianak: 685000, kuburaya: 635000, ketapang: 595000, kayongutara: 132000,
     mempawah: 315000, singkawang: 245000, sambas: 648000, bengkayang: 298000,
     landak: 412000, sanggau: 496000, sekadau: 222000, sintang: 438000,
     melawi: 236000, kapuashulu: 266000,
+    /* Kalimantan Tengah */
+    palangkaraya: 312000, kotawaringinbarat: 282000, sukamara: 68000, lamandau: 108000,
+    seruyan: 170000, kotawaringintimur: 446000, katingan: 174000, pulangpisau: 141000,
+    kapuas: 424000, gunungmas: 142000, baritoselatan: 137000, baritotimur: 119000,
+    baritoutara: 162000, murungraya: 118000,
+    /* Kalimantan Selatan */
+    banjarmasin: 682000, banjarbaru: 285000, banjar: 584000, baritokuala: 326000,
+    tanahlaut: 368000, tapin: 198000, hss: 238000, hst: 268000,
+    hsu: 236000, balangan: 138000, tabalong: 264000, tanahbumbu: 348000, kotabaru: 336000,
+    /* Kalimantan Timur & Utara */
+    balikpapan: 742000, samarinda: 870000, bontang: 192000, ikn: 185000,
+    ppu: 198000, paser: 298000, kukar: 792000, kubar: 182000,
+    mahakamulu: 38000, kutim: 452000, berau: 276000,
+    tanjungselor: 168000, tarakan: 254000, tanatidung: 29000, malinau: 88000, nunukan: 218000,
+    /* Provinsi lain */
     jakarta: 10720000, surabaya: 3010000, bandung: 2540000, medan: 2510000,
     semarang: 1710000, palembang: 1780000, makassar: 1480000, pekanbaru: 1140000,
-    bandarlampung: 1230000, padang: 945000, denpasar: 745000, samarinda: 870000,
-    serang: 740000, jambi: 645000, banjarbaru: 285000, palangkaraya: 312000,
-    yogyakarta: 418000, mataram: 465000, kupang: 472000, manado: 468000,
-    palu: 392000, bengkulu: 398000, kendari: 368000, ambon: 358000,
-    jayapura: 418000, sorong: 298000, bandaaceh: 268000, pangkalpinang: 236000,
-    tanjungpinang: 238000, gorontalo: 206000, manokwari: 205000, mamuju: 286000,
-    merauke: 242000, nabire: 178000, wamena: 122000, tanjungselor: 64000, sofifi: 42000
+    bandarlampung: 1230000, lampung: 1230000, padang: 945000, denpasar: 745000,
+    serang: 740000, jambi: 645000, yogyakarta: 418000, mataram: 465000,
+    kupang: 472000, manado: 468000, palu: 392000, bengkulu: 398000,
+    kendari: 368000, ambon: 358000, jayapura: 418000, sorong: 298000,
+    bandaaceh: 268000, pangkalpinang: 236000, tanjungpinang: 238000, gorontalo: 206000,
+    manokwari: 205000, mamuju: 286000, merauke: 242000, nabire: 178000,
+    wamena: 122000, sofifi: 42000
   };
   function pendudukWilayah(S) {
-    var kabId = (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId) || (S && S.rumah && S.rumah.wilayah && S.rumah.wilayah.kabId) || (S && S.kota) || 'pontianak';
-    var dasar = PENDUDUK_WILAYAH[kabId] || 450000;
-    var thnJalan = Math.max(0, ((S && S.hari) || 0) / 365);
+    var fTrvP = (S && S.travel && S.travel.aktif && g.KK_TRAVEL && g.KK_TRAVEL.fase) ? g.KK_TRAVEL.fase(S) : null;
+    var kabId = (fTrvP && fTrvP.lokSekarang && fTrvP.lokSekarang.kabId) || (S && S.travel && S.travel.aktif && S.travel.di) || (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId) || (S && S.rumah && S.rumah.wilayah && S.rumah.wilayah.kabId) || (S && S.kota) || 'pontianak';
+    var dasar = PENDUDUK_WILAYAH[kabId] || 280000;
+    var thnJalan = Math.max(0, (((S && S.hariKe) || 1) - 1) / 365);
     var delta = (S && S.popDelta) || 0;
     return Math.max(10000, Math.round(dasar * (1 + thnJalan * 0.011) + delta));
   }

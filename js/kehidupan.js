@@ -598,7 +598,8 @@
 
   /* ---------- Domisili Nomaden & Tier Wilayah (Kota / Kabupaten / Desa) ---------- */
   function tierWilayah(S) {
-    var lok = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null;
+    var fTrv = (S && S.travel && S.travel.aktif && g.KK_TRAVEL && g.KK_TRAVEL.fase) ? g.KK_TRAVEL.fase(S) : null;
+    var lok = (fTrv && fTrv.lokSekarang) ? fTrv.lokSekarang : ((g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null);
     if (!lok) return 'kota';
     if (lok.kabId === 'pontianak' || lok.kabId === 'singkawang') {
       if (lok.kecId === 'ptk_utr' || lok.kecId === 'skw_utr' || lok.kecId === 'skw_tim') return 'kabupaten';
@@ -610,6 +611,7 @@
       if (kb.kec[0].id === lok.kecId) return 'kabupaten';
       return 'desa';
     }
+    if (lok.kabNama && /^Kab\./i.test(lok.kabNama)) return 'kabupaten';
     return 'kota';
   }
   function pindahDomisili(S, kabId, kecId) {

@@ -357,9 +357,22 @@
     var bbmCar = S.mobil ? Math.round((S.mobil.isi || 0) * 100) : 0;
     var fTrvHud = (S.travel && S.travel.aktif && TRAVEL && TRAVEL.fase) ? TRAVEL.fase(S) : null;
     var lokHud = (fTrvHud && fTrvHud.lokSekarang) ? fTrvHud.lokSekarang : ((OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null);
-    var jrHud = (S.travel && S.travel.aktif)
-      ? (S.travel.di === S.kota ? (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0) : ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km))
-      : (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0);
+    var jrHud = 0;
+    if (S.travel && S.travel.aktif) {
+      if (S.travel.trip && fTrvHud && fTrvHud.mode !== 'kota') {
+        var trH = S.travel.trip;
+        if (trH.dari === S.kota) jrHud = Math.max(0, trH.kmSelesai || 0);
+        else {
+          var jD0 = (RUTE.jalur(S.kota, trH.dari) || { km: 0 }).km;
+          var jD1 = trH.ke === S.kota ? 0 : ((RUTE.jalur(S.kota, trH.ke) || { km: jD0 }).km);
+          jrHud = Math.max(0, jD0 + (jD1 - jD0) * (fTrvHud.kemajuan || 0));
+        }
+      } else {
+        jrHud = S.travel.di === S.kota ? (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0) : ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km);
+      }
+    } else {
+      jrHud = OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0;
+    }
     var shHud = (DUNIA && DUNIA.suhuSekarang) ? DUNIA.suhuSekarang(S) : { c: 30, ikon: '☀️', ket: 'Cerah' };
     var popHud = (window.KK_WILAYAH && window.KK_WILAYAH.pendudukWilayah) ? window.KK_WILAYAH.formatPenduduk(window.KK_WILAYAH.pendudukWilayah(S)) : '685rb';
     var warnaBajuHud = HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13';
@@ -5082,7 +5095,9 @@
     if (!T.trip || !mj) return;
     mj.style.width = ((f.mode === 'kapal' ? f.u : f.kemajuan) * 100).toFixed(1) + '%';
     var est = TRAVEL.estimasi(S), v = TRAVEL.kecepatan(S);
-    var lokT = (f.lokSekarang && f.lokSekarang.kecNama) ? ('📍 ' + f.lokSekarang.desa + ', ' + f.lokSekarang.kecNama + ' · ') : '';
+    var lokT = (f.lokSekarang && f.lokSekarang.kecNama)
+      ? ('📍 ' + (f.lokSekarang.desa && f.lokSekarang.desa !== f.lokSekarang.kecNama ? (f.lokSekarang.desa + ', ' + f.lokSekarang.kecNama) : f.lokSekarang.kecNama) + ' · ')
+      : '';
     if (kh) kh.textContent = f.mode === 'kapal' ? '⛴️ di kapal' : Math.round(f.kmh) + ' km/j';
     if (ki) ki.textContent = lokT + (f.mode === 'kapal' ? 'Sisa penyeberangan ±' + jamTeks(Math.max(0, T.trip.sisaKapal) / 60) : 'Sisa ' + Math.round(f.sisaKm).toLocaleString('id-ID') + ' km · tiba ±' + jamTeks(est) + (f.namaKondisi ? ' · ' + f.namaKondisi : '')) +
       ' · ' + (m && m.bbm === 'listrik' ? 'EV ' : 'BBM ') + Math.round((m ? m.isi : 0) * 100) + '%' + (v.ket && f.mode !== 'kapal' ? ' · ' + v.ket : '');

@@ -636,7 +636,11 @@
     if (T.status === 'jalan' || T.status === 'kapal') return 'Mobil sedang di jalan.';
     var punyaRumahDiSini = !!(S.properti && S.properti.daftarRumah && S.properti.daftarRumah.some(function (r) { return r.status === 'siap' && r.kota === T.di; }));
     if (!paksa && T.di !== S.kota && !punyaRumahDiSini) return 'Kamu masih di ' + R.nama(T.di) + '. Pulang dulu ke ' + R.nama(S.kota) + ' atau tekan Pulang ke Kota Asal.';
-    T.aktif = false; T.di = S.kota; T.antri = []; T.tujuan = null; return true;
+    T.aktif = false; T.di = S.kota; T.antri = []; T.tujuan = null; T.tujuanDetail = null; T.jalurPilihan = null;
+    if (S.ojek && g.KK_OJEK && g.KK_OJEK.lokasiRumah) {
+      if (paksa || !S.ojek.lokasi || S.ojek.lokasi.kabId !== S.kota) S.ojek.lokasi = g.KK_OJEK.lokasiRumah(S);
+    }
+    return true;
   }
   function pilihTujuan(S, id, jalurKustom, detailTujuan) {
     var T = siapkan(S); if (T.status !== 'tunggu') return 'Mobil sedang di jalan.';
@@ -904,11 +908,15 @@
     S.hariIni.travel = (S.hariIni.travel || 0) + (pnp ? total + tip - biayaPerjalanan : -biayaPerjalanan);
     T.laporan = { dari: dari, ke: tujuan, tujuanNama: tr.tujuanNama || R.nama(tujuan), km: tr.km, menit: Math.round(menitTotal), penumpang: rinci, pendapatan: total, tip: tip, tunai: bayarTunai || 0, qris: bayarQris || 0, tol: tr.tol, kapal: tr.kapal, bensinLiter: Math.round(bensin * 10) / 10, ev: !!(S.mobil && S.mobil.bbm === 'listrik'),
       kejadian: tr.kejadian.slice(), rating: T.rating, hari: S.hari };
-    /* Sinkronkan lokasi karakter ke desa/kecamatan tujuan Travel di Kalimantan Barat */
-    if (S.ojek && g.KK_WILAYAH && g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]) {
-      S.ojek.lokasi = (tr.tujuanDetail && tr.tujuanDetail.kecId && g.KK_WILAYAH.cariTitik)
-        ? g.KK_WILAYAH.cariTitik(tujuan, tr.tujuanDetail.kecId, tr.tujuanDetail.desa)
-        : g.KK_WILAYAH.titikAwal(tujuan);
+    /* Sinkronkan lokasi karakter ke desa/kecamatan/kota tujuan Travel (Kalbar maupun seluruh Indonesia) */
+    if (S.ojek && g.KK_WILAYAH) {
+      if (g.KK_WILAYAH.kalbar && g.KK_WILAYAH.kalbar[tujuan]) {
+        S.ojek.lokasi = (tr.tujuanDetail && tr.tujuanDetail.kecId && g.KK_WILAYAH.cariTitik)
+          ? g.KK_WILAYAH.cariTitik(tujuan, tr.tujuanDetail.kecId, tr.tujuanDetail.desa)
+          : g.KK_WILAYAH.titikAwal(tujuan);
+      } else {
+        S.ojek.lokasi = g.KK_WILAYAH.titikAwal ? g.KK_WILAYAH.titikAwal(tujuan) : { kabId: tujuan, kabNama: R.nama(tujuan), kecId: tujuan + '_0', kecNama: R.nama(tujuan), desa: R.nama(tujuan), lat: null, lon: null };
+      }
     }
     kabar.push('Tiba di ' + (tr.tujuanNama || R.nama(tujuan)) + (pnp ? '. Pendapatan ' + rp(total + tip) + ' (Tunai ' + rp(bayarTunai || 0) + ', QRIS ' + rp(bayarQris || 0) + ' cair besok).' : '.'));
     T.di = tujuan; T.status = 'tunggu'; T.trip = null; T.antri = []; T.tujuan = null; T.tujuanDetail = null; T.jalurPilihan = null; T.jemput = 0; T.berikut = 0;
@@ -916,15 +924,35 @@
   }
 
   /* ---------- untuk adegan dan HUD ---------- */
+  function lokasiPool(S, kotaId) {
+    var W = g.KK_WILAYAH;
+    if (W && W.kalbar && W.kalbar[kotaId]) {
+      if (S && S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId === kotaId && S.ojek.lokasi.kecNama) return S.ojek.lokasi;
+      return W.titikAwal(kotaId);
+    }
+    if (W && W.titikAwal) return W.titikAwal(kotaId);
+    var nm = R.nama(kotaId);
+    return { kabId: kotaId, kabNama: nm, kecId: kotaId + '_0', kecNama: nm, desa: nm, lat: null, lon: null };
+  }
   function fase(S) {
     var T = S.travel; if (!T || !T.aktif) return null;
     var di = R.kota[T.di] || R.kota[S.kota] || { tema: 'kota', nama: T.di || S.kota };
-    if (T.status === 'tunggu') return { mode: 'kota', kota: T.di, tema: di.tema, penumpang: T.antri.length, kursi: kursi(S), tujuan: T.tujuan };
-    var tr = T.trip; if (!tr) return { mode: 'kota', kota: T.di, tema: di.tema, penumpang: 0, kursi: kursi(S) };
+    if (T.status === 'tunggu') return { mode: 'kota', kota: T.di, tema: di.tema, penumpang: T.antri.length, kursi: kursi(S), tujuan: T.tujuan, lokSekarang: lokasiPool(S, T.di) };
+    var tr = T.trip; if (!tr) return { mode: 'kota', kota: T.di, tema: di.tema, penumpang: 0, kursi: kursi(S), lokSekarang: lokasiPool(S, T.di) };
     var r = tr.ruas[tr.idx], a = tr.simpul[tr.idx], b = tr.simpul[tr.idx + 1], u = T.status === 'kapal' ? 1 - Math.max(0, tr.sisaKapal) / (((r.jam || 2) + 1) * 60) : Math.min(1, tr.kmRuas / Math.max(0.1, r.km));
     var v = T.status === 'kapal' ? { kmh: 0, gigi: 0 } : kecepatan(S);
     var kdF = R.infoKondisi ? R.infoKondisi(r) : { nama: 'Aspal Mulus' };
-    var lokKoridor = r && r.lokalDesa ? r.lokalDesa : ((g.KK_WILAYAH && g.KK_WILAYAH.titikKoridorRuas) ? g.KK_WILAYAH.titikKoridorRuas(a, b, u) : null);
+    var lokKoridor = null;
+    if (T.status === 'kapal') {
+      var nmA = R.nama(a).replace(/^Kab\. |^Kota /, '').split(' (')[0];
+      var nmB = R.nama(b).replace(/^Kab\. |^Kota /, '').split(' (')[0];
+      lokKoridor = { kabId: u < 0.5 ? a : b, kabNama: R.nama(u < 0.5 ? a : b), kecNama: nmA + ' → ' + nmB, desa: '⛴️ Laut' };
+    } else if (r && r.lokalDesa) {
+      lokKoridor = r.lokalDesa;
+    } else if (g.KK_WILAYAH && g.KK_WILAYAH.titikKoridorRuas) {
+      lokKoridor = g.KK_WILAYAH.titikKoridorRuas(a, b, u);
+    }
+    if (!lokKoridor) lokKoridor = lokasiPool(S, u < 0.5 ? a : b);
     return { mode: T.status === 'kapal' ? 'kapal' : 'jalan', dari: a, ke: b, u: u, temaA: (R.kota[a] && R.kota[a].tema) || 'kota', temaB: (R.kota[b] && R.kota[b].tema) || 'kota', penumpang: T.antri.length, kursi: kursi(S), kmh: v.kmh, gigi: v.gigi, tol: (r.tol || 0) > 0, kondisi: r.kondisi || (r.tol > 0 ? 'tol' : 'mulus'), namaKondisi: kdF.nama, namaJalan: r.jalan || '', lokSekarang: lokKoridor, tujuanNama: tr.tujuanNama || R.nama(tr.ke),
       kemajuan: Math.min(1, tr.kmSelesai / Math.max(0.1, tr.km)), sisaKm: Math.max(0, tr.km - tr.kmSelesai) };
   }
