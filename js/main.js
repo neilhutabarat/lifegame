@@ -356,7 +356,12 @@
     var bbmHud = S.motor ? Math.round((S.motor.bbm === 'listrik' ? S.motor.baterai : S.motor.isi) * 10) : 0;
     var bbmCar = S.mobil ? Math.round((S.mobil.isi || 0) * 100) : 0;
     var fTrvHud = (S.travel && S.travel.aktif && TRAVEL && TRAVEL.fase) ? TRAVEL.fase(S) : null;
-    var lokHud = (fTrvHud && fTrvHud.lokSekarang) ? fTrvHud.lokSekarang : ((OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null);
+    var fOjkHud = (S.ojek && S.ojek.online && S.ojek.trip && OJEK && OJEK.fase) ? OJEK.fase(S) : null;
+    var fTrnHud = S.transit ? transitLiveInfo(S.transit) : null;
+    var lokHud = (fTrvHud && fTrvHud.lokSekarang) ? fTrvHud.lokSekarang
+      : (fOjkHud && fOjkHud.lokSekarang) ? fOjkHud.lokSekarang
+      : (fTrnHud && fTrnHud.lokSekarang) ? fTrnHud.lokSekarang
+      : ((OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null);
     var jrHud = 0;
     if (S.travel && S.travel.aktif) {
       if (S.travel.trip && fTrvHud && fTrvHud.mode !== 'kota') {
@@ -370,6 +375,8 @@
       } else {
         jrHud = S.travel.di === S.kota ? (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0) : ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km);
       }
+    } else if (fTrnHud && S.transit && S.transit.ke === 'kos') {
+      jrHud = fTrnHud.sisaKm;
     } else {
       jrHud = OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0;
     }
@@ -527,6 +534,7 @@
     $('kos-aksi').hidden = !tampilLaciAksi;
     if (tampilLaciAksi) isiKosAksi();
     $('ojek-panel').hidden = !ojek; if (ojek) { panelOjek(true); }
+    if ($('transit-panel')) { $('transit-panel').hidden = !S.transit; if (S.transit) panelTransit(true); else { $('transit-panel').innerHTML = ''; transitKunci = ''; } }
     if (ojek || trv || tr) { b.hidden = true; }
     else if (diKos) {
       if (S.usaha.berhentiSewa) {
@@ -837,6 +845,7 @@
       '<h3 class="subjudul">Mode Promo & Panduan</h3>' +
       '<div class="atur-baris"><div><b>📢 Mode Promo</b><span>Order ojol, driver, & pelanggan naik +50%–80%</span></div><div><button type="button" class="chip-tombol' + (S.promoAktif ? ' pilih' : '') + '" data-promo="1">' + (S.promoAktif ? 'Aktif ✓' : 'Mati') + '</button></div></div>' +
       '<div class="atur-baris"><div><b>🔒 Kecepatan Level 5 (Top Speed)</b><span>Mode normal maks Level 4 (realistis). Level 5 terkunci.</span></div><div><button type="button" class="chip-tombol" data-vvip="popup">🔒 Terkunci</button></div></div>' +
+      '<div class="atur-baris"><div><b>⚡ Mode Performa Layar</b><span>Auto mengikuti layar 120Hz/90Hz agar animasi super mulus</span></div><div><button type="button" class="chip-tombol' + (S.fpsMode !== '60' ? ' pilih' : '') + '" data-fps="toggle">' + (S.fpsMode === '60' ? 'Hemat 60Hz' : 'Auto 120Hz') + '</button></div></div>' +
       '<div class="atur-baris"><div><b>📖 Panduan Permainan</b><span>Lihat kembali tutorial dasar cara bermain</span></div><div><button type="button" class="chip-tombol" data-tut="0">Buka Tutorial</button></div></div>' +
       '<h3 class="subjudul">Suara & lagu tema</h3>' +
       '<div class="atur-baris"><div><b>Lagu tema orisinal</b><span>Pagi, siang, dan malam beda suasana</span></div><div><button type="button" class="chip-tombol' + (mOn ? ' pilih' : '') + '" data-suara="musik">' + (mOn ? 'Nyala' : 'Mati') + '</button></div></div>' +
@@ -4113,7 +4122,8 @@
         tutupLembar();
         S.transit = {
           ke: 'kos', pindahWilayah: true, bawaDus: true,
-          tujuanTitik: tBaru, tujuanNama: tBaru.kecNama + ', ' + tBaru.kabNama,
+          asalTitik: tAsal, tujuanTitik: tBaru, tujuanNama: tBaru.kecNama + ', ' + tBaru.kabNama,
+          medan: (window.KK_WILAYAH && window.KK_WILAYAH.medanJalan) ? window.KK_WILAYAH.medanJalan(tAsal, tBaru) : null,
           total: menitP, sisa: menitP, km: kmPindah,
           ket: kendP === 'mobil' ? ('mobil ' + S.mobil.nama + ' (bawa dus pindahan)') : kendP === 'motor' ? ('motor ' + S.motor.nama + ' (dus baju di jok belakang)') : 'angkutan pindahan',
           kabar: [], kend: kendP, bbmTarget: bbmTargetP, bbmSisa: bbmDipakaiP,
@@ -4475,18 +4485,21 @@
       else { menit = Math.min(180, Math.round(km * 12)); ket = 'jalan kaki / menumpang'; kend = 'kaki'; }
     }
     var kabarJalan = r && r.kabar && r.kabar.length ? r.kabar : [];
-    /* jarak jauh: tampilkan perjalanannya (bensin berkurang bertahap real-time selama pulang!) */
-    if (km >= 2 && menit >= 5) {
-      var durasi = Math.max(3, Math.min(15, km * 0.55));
-      S.transit = { ke: ke, total: menit, sisa: menit, km: Math.round(km * 10) / 10, ket: ket, kabar: kabarJalan, kend: kend, bbmTarget: bbmTarget, bbmSisa: bbmDipakai, mult: menit / (MENIT_PER_DETIK * durasi) };
-      simpan(); perbaruiAksi(); perbaruiHUD(true);
-      return;
-    }
-    gelapSebentar();
-    S.diri.posisi = ke; lompatWaktu(menit);
+    /* P70: Semua perjalanan (dekat maupun jauh) tampilkan animasi jalan mulus + live HUD tanpa layar hitam gelapSebentar! */
+    var asalTr = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
+    var tujuanTr = (ke === 'kos' && OJEK && OJEK.lokasiRumah) ? OJEK.lokasiRumah(S) : asalTr;
+    var mdTr = (window.KK_WILAYAH && window.KK_WILAYAH.medanJalan && asalTr && tujuanTr) ? window.KK_WILAYAH.medanJalan(asalTr, tujuanTr) : null;
+    var menitTr = Math.max(2, menit || 3);
+    var durasi = Math.max(2.2, Math.min(14, km < 2 ? (2.2 + km * 0.65) : (km * 0.52)));
+    S.transit = {
+      ke: ke, total: menitTr, sisa: menitTr, km: Math.max(0.2, Math.round(km * 10) / 10),
+      asalTitik: asalTr, tujuanTitik: tujuanTr, medan: mdTr,
+      tujuanNama: ke === 'kos' ? DIRI.tempat(S) : (S.usaha && S.usaha.berhentiSewa ? 'Area Narik' : 'Kedai'),
+      ket: ket, kabar: kabarJalan, kend: kend, bbmTarget: bbmTarget, bbmSisa: bbmDipakai,
+      mult: menitTr / (MENIT_PER_DETIK * durasi)
+    };
     simpan(); perbaruiAksi(); perbaruiHUD(true);
-    toast('Sampai di ' + (ke === 'kos' ? DIRI.tempat(S) : (S.usaha && S.usaha.berhentiSewa ? 'luar' : 'kedai')) + ' pukul ' + jam(S.menit) + ', ' + ket + '.' + (kabarJalan.length ? ' ' + kabarJalan.join(' ') : ''), 2600);
-    if (ke === 'kos') { if (OJEK.resetPos) OJEK.resetPos(S, 0, 0); cekAjakanHbPasangan(); infoPulang(); }
+    return;
   }
   function selesaiTransit() {
     var T = S.transit; if (!T) return;
@@ -4572,8 +4585,10 @@
     var durasi = Math.max(3.5, Math.min(7, km * 0.45));
     tutupLembar();
     if ($('kerja-btn')) $('kerja-btn').hidden = true;
+    var asalKr = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
     S.transit = {
       ke: 'kantor', kantorNama: job.kantorNama, job: job,
+      asalTitik: asalKr, tujuanTitik: asalKr, tujuanNama: job.kantorNama,
       total: menit, sisa: menit, km: km, ket: ket, kabar: [], kend: kend,
       bbmTarget: bbmTarget, bbmSisa: bbmDipakai, mult: menit / (MENIT_PER_DETIK * durasi)
     };
@@ -4962,15 +4977,97 @@
           '<div class="ki-aksi"><button type="button" class="chip-tombol' + (akt ? ' bahaya-kecil' : ' pilih') + '" data-diri="hiburan:' + k + '">' + (akt ? 'Hentikan' : 'Mulai 8×') + '</button></div></div>';
       }).join('') + '</div>');
   }
+  var _ojkCache = { lok: '', info: '', kmh: '', w: '' };
+  function formatLokRingkas(lok, fallback) {
+    if (lok && lok.kecNama) return '📍 ' + (lok.desa && lok.desa !== lok.kecNama ? (lok.desa + ', ' + lok.kecNama) : lok.kecNama);
+    return '📍 ' + (fallback || kotaIni().nama);
+  }
+  function bbmRingkas(isCar) {
+    if (isCar && S.mobil) return (S.mobil.bbm === 'listrik' ? '⚡ EV ' : '⛽ ') + Math.round((S.mobil.isi || 0) * 100) + '%';
+    if (!isCar && S.motor) {
+      if (S.motor.bbm === 'listrik') return '⚡ EV ' + Math.round(((S.motor.baterai || 0) / Math.max(1, S.motor.jarakPenuh || 60)) * 100) + '%';
+      return '⛽ ' + Math.round(((S.motor.isi || 0) / Math.max(1, S.motor.tangki || 4.2)) * 100) + '%';
+    }
+    return '';
+  }
+  function ojekLive(fo) {
+    if (!fo || !S || !S.ojek || !S.ojek.trip) return;
+    var mj = $('ojek-maju'), lk = $('ojek-lok'), ki = $('ojek-info'), kh = $('ojek-kmh');
+    var wStr = ((fo.kemajuan || 0) * 100).toFixed(1) + '%';
+    if (mj && wStr !== _ojkCache.w) { _ojkCache.w = wStr; mj.style.width = wStr; }
+    var lokStr = formatLokRingkas(fo.lokSekarang, fo.tujuanLabel);
+    if (lk && lokStr !== _ojkCache.lok) { _ojkCache.lok = lokStr; lk.textContent = lokStr; }
+    var kmhStr = String(Math.round(fo.kmh || 0));
+    if (kh && kmhStr !== _ojkCache.kmh) { _ojkCache.kmh = kmhStr; kh.textContent = kmhStr; }
+    var faseLbl = fo.status === 'jemput' ? 'Jemput' : 'Antar';
+    var sisaStr = (fo.sisaKm != null ? fo.sisaKm : 0).toFixed(1).replace('.', ',') + ' km';
+    var bbmT = bbmRingkas(fo.mode === 'mobil');
+    var infoStr = (fo.ikonKondisi || '🛣️') + ' ' + (fo.namaKondisi || 'Aspal') + ' · ' + faseLbl + ' · Sisa ' + sisaStr + (bbmT ? ' · ' + bbmT : '');
+    if (ki && infoStr !== _ojkCache.info) { _ojkCache.info = infoStr; ki.textContent = infoStr; }
+  }
+  var transitKunci = '', _trnCache = { lok: '', info: '', kmh: '', w: '' };
+  function transitLiveInfo(T) {
+    if (!T) return null;
+    var u = Math.max(0, Math.min(1, 1 - (T.sisa || 0) / Math.max(0.1, T.total || 1)));
+    var sisaKm = Math.max(0, (T.km || 0) * (1 - u));
+    var lokNow = (T.asalTitik && T.tujuanTitik && window.KK_WILAYAH && window.KK_WILAYAH.titikAntara)
+      ? window.KK_WILAYAH.titikAntara(T.asalTitik, T.tujuanTitik, u)
+      : (u < 0.5 ? (T.asalTitik || (OJEK && OJEK.lokasiSekarang ? OJEK.lokasiSekarang(S) : null)) : (T.tujuanTitik || T.asalTitik));
+    var mdKode = (lokNow && lokNow.medan) || (T.medan && T.medan.kode) || 'kota';
+    var kaki = T.kend === 'kaki';
+    var kmh, ikonKondisi = '🛣️', namaKondisi = 'Aspal Perkotaan';
+    if (kaki) {
+      kmh = Math.round((4.3 + 0.5 * Math.sin((S.menit || 0) * 1.4)) * 10) / 10;
+      ikonKondisi = '🚶'; namaKondisi = 'Jalan Kaki';
+    } else if (OJEK && OJEK.kecepatan) {
+      var prevMode = S.ojek ? S.ojek.mode : 'motor';
+      if (S.ojek) S.ojek.mode = T.kend === 'mobil' ? 'mobil' : 'motor';
+      var vT = OJEK.kecepatan(S, mdKode);
+      if (S.ojek) S.ojek.mode = prevMode;
+      kmh = vT.kmh; ikonKondisi = vT.ikon; namaKondisi = vT.namaKondisi;
+    } else {
+      kmh = T.kend === 'mobil' ? 48 : 38;
+    }
+    var kondisi = mdKode === 'tanah' ? 'tanah' : mdKode === 'rusak' ? 'rusak' : (mdKode === 'bergelombang' || mdKode === 'perbukitan') ? 'bergelombang' : 'mulus';
+    return { u: u, sisaKm: Math.round(sisaKm * 10) / 10, lokSekarang: lokNow, kmh: kmh, medan: mdKode, kondisi: kondisi, ikonKondisi: ikonKondisi, namaKondisi: namaKondisi };
+  }
+  function transitLive() {
+    var T = S && S.transit; if (!T) return;
+    var info = transitLiveInfo(T); if (!info) return;
+    var mj = $('trn-maju'), lk = $('trn-lok'), ki = $('trn-info'), kh = $('trn-kmh');
+    var wStr = (info.u * 100).toFixed(1) + '%';
+    if (mj && wStr !== _trnCache.w) { _trnCache.w = wStr; mj.style.width = wStr; }
+    var lokStr = formatLokRingkas(info.lokSekarang, T.tujuanNama);
+    if (lk && lokStr !== _trnCache.lok) { _trnCache.lok = lokStr; lk.textContent = lokStr; }
+    var kmhStr = T.kend === 'kaki' ? info.kmh.toFixed(1).replace('.', ',') : String(Math.round(info.kmh));
+    if (kh && kmhStr !== _trnCache.kmh) { _trnCache.kmh = kmhStr; kh.textContent = kmhStr; }
+    var bbmT = T.kend === 'mobil' ? bbmRingkas(true) : T.kend === 'motor' ? bbmRingkas(false) : '';
+    var infoStr = info.ikonKondisi + ' ' + info.namaKondisi + ' · Sisa ' + info.sisaKm.toFixed(1).replace('.', ',') + ' km' + (bbmT ? ' · ' + bbmT : '');
+    if (ki && infoStr !== _trnCache.info) { _trnCache.info = infoStr; ki.textContent = infoStr; }
+  }
+  function panelTransit(paksa) {
+    var el = $('transit-panel'); if (!el) return;
+    var T = S && S.transit;
+    if (!T) { if (transitKunci) { el.innerHTML = ''; transitKunci = ''; } el.hidden = true; return; }
+    el.hidden = false;
+    var k = T.ke + '|' + (T.tujuanNama || '') + '|' + T.kend + '|' + T.km;
+    if (!paksa && k === transitKunci) return transitLive();
+    transitKunci = k;
+    _trnCache = { lok: '', info: '', kmh: '', w: '' };
+    el.innerHTML = '<div class="trip-hud"><div class="trip-hud-atas"><div class="trip-hud-kiri"><div class="trip-hud-lok" id="trn-lok"></div><div class="trip-hud-sub" id="trn-info"></div></div><div class="trip-hud-kanan"><span class="trip-spd" id="trn-kmh">0</span><span class="trip-unit">km/j</span></div></div><div class="meteran"><i id="trn-maju"></i></div></div>';
+    transitLive();
+  }
   function panelOjek(paksa) {
     var o = S.ojek, f = OJEK.fase(S), x, jnK = o.mode === 'mobil' ? 'mobil' : 'motor';
     var k = (S.gigiJalan || 2) + '|' + (TRAVEL.vvipAktif(S) ? 'V' : 'N') + '|' + jnK + '|' + (o.mult || 1) + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
-    if (seretGigi || (!paksa && k === panelKunci)) return; panelKunci = k;
+    if (seretGigi || (!paksa && k === panelKunci)) { if (o.online && o.trip && f) ojekLive(f); return; }
+    panelKunci = k;
     var el = $('ojek-panel'), html = '';
     if (!o.online) { el.innerHTML = ''; return; }
     if (o.trip) {
       if (aksiCepatBuka) { aksiCepatBuka = false; if ($('kos-aksi')) $('kos-aksi').hidden = true; if ($('b-aksi-cepat')) $('b-aksi-cepat').classList.remove('aktif-aksi'); }
-      html = '<div class="ojek-bare"><div class="meteran"><i id="ojek-maju"></i></div>' + barisGigi(jnK) + '</div>';
+      _ojkCache = { lok: '', info: '', kmh: '', w: '' };
+      html = '<div class="ojek-bare"><div class="trip-hud"><div class="trip-hud-atas"><div class="trip-hud-kiri"><div class="trip-hud-lok" id="ojek-lok"></div><div class="trip-hud-sub" id="ojek-info"></div></div><div class="trip-hud-kanan"><span class="trip-spd" id="ojek-kmh">0</span><span class="trip-unit">km/j</span></div></div><div class="meteran"><i id="ojek-maju"></i></div></div>' + barisGigi(jnK) + '</div>';
     } else if (o.tawaran) {
       if (aksiCepatBuka) { aksiCepatBuka = false; if ($('kos-aksi')) $('kos-aksi').hidden = true; if ($('b-aksi-cepat')) $('b-aksi-cepat').classList.remove('aktif-aksi'); }
       x = o.tawaran;
@@ -4987,6 +5084,7 @@
         barisGigi(jnK) + '<div class="ojek-tombol"><button type="button" class="chip-tombol bahaya-kecil" data-ojek="berhenti">Offline</button><button type="button" class="chip-tombol" data-ojek="inapMenu">Istirahat</button><button type="button" class="chip-tombol tarif-mini" data-ojek="tarif:-0.1" aria-label="Turunkan tarif">−</button><button type="button" class="chip-tombol tarif-mini" data-ojek="tarif:0.1" aria-label="Naikkan tarif">+</button>' + tombolHiburanRingkas() + '</div></div>';
     }
     el.innerHTML = html;
+    if (o.trip && f) ojekLive(f);
   }
   function aksiOjek(nama) {
     if (nama === 'hiburanMenu') return aksiOjek('hiburan:youtube');
@@ -5056,9 +5154,12 @@
       var kendPb = caraPb === 'jalan' ? 'kaki' : caraPb === 'mobil' ? 'mobil' : caraPb === 'teman' ? 'teman' : 'motor';
       var durPb = Math.max(2.6, Math.min(7.5, kmPb * (kendPb === 'kaki' ? 1.1 : 0.35)));
       tutupLembar();
+      var asalPb = (OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
+      var tujuanPb = rpb.titik || (tjObj && tjObj.titik ? tjObj.titik : (rpb.aksi === 'pulang' && OJEK && OJEK.lokasiRumah ? OJEK.lokasiRumah(S) : null));
+      var mdPb = (window.KK_WILAYAH && window.KK_WILAYAH.medanJalan && asalPb && tujuanPb) ? window.KK_WILAYAH.medanJalan(asalPb, tujuanPb) : null;
       S.transit = {
         ke: 'peta', petaAksi: rpb.aksi, tujuanNama: (rpb.titik ? (rpb.titik.desa + ', ' + rpb.titik.kecNama) : (tjObj && tjObj.nama)) || 'Lokasi Tujuan',
-        tujuanTitik: rpb.titik || (tjObj && tjObj.titik ? tjObj.titik : null),
+        asalTitik: asalPb, tujuanTitik: tujuanPb, medan: mdPb,
         total: mntPb, sisa: mntPb, km: kmPb, ket: rpb.teks, kabar: [], kend: kendPb,
         bbmTarget: rpb.bbmTarget || null, bbmSisa: rpb.bbmSisa || 0,
         mult: mntPb / (MENIT_PER_DETIK * durPb)
@@ -5111,17 +5212,23 @@
           '<div class="ki-aksi"><button type="button" class="aksi" data-aksi="pergiBebasJalur:' + idx + '">Lewat Jalur Ini</button></div></div>';
       }).join(''));
   }
+  var _trvCache = { lok: '', info: '', kmh: '', w: '' };
   function trvLive(f) {
-    var T = S.travel, m = S.mobil, mj = $('trv-maju'), ki = $('trv-info'), kh = $('trv-kmh');
+    var T = S.travel, m = S.mobil, mj = $('trv-maju'), lk = $('trv-lok'), ki = $('trv-info'), kh = $('trv-kmh');
     if (!T.trip || !mj) return;
-    mj.style.width = ((f.mode === 'kapal' ? f.u : f.kemajuan) * 100).toFixed(1) + '%';
+    var wStr = ((f.mode === 'kapal' ? f.u : f.kemajuan) * 100).toFixed(1) + '%';
+    if (wStr !== _trvCache.w) { _trvCache.w = wStr; mj.style.width = wStr; }
     var est = TRAVEL.estimasi(S), v = TRAVEL.kecepatan(S);
-    var lokT = (f.lokSekarang && f.lokSekarang.kecNama)
-      ? ('📍 ' + (f.lokSekarang.desa && f.lokSekarang.desa !== f.lokSekarang.kecNama ? (f.lokSekarang.desa + ', ' + f.lokSekarang.kecNama) : f.lokSekarang.kecNama) + ' · ')
-      : '';
-    if (kh) kh.textContent = f.mode === 'kapal' ? '⛴️ di kapal' : Math.round(f.kmh) + ' km/j';
-    if (ki) ki.textContent = lokT + (f.mode === 'kapal' ? 'Sisa penyeberangan ±' + jamTeks(Math.max(0, T.trip.sisaKapal) / 60) : 'Sisa ' + Math.round(f.sisaKm).toLocaleString('id-ID') + ' km · tiba ±' + jamTeks(est) + (f.namaKondisi ? ' · ' + f.namaKondisi : '')) +
-      ' · ' + (m && m.bbm === 'listrik' ? 'EV ' : 'BBM ') + Math.round((m ? m.isi : 0) * 100) + '%' + (v.ket && f.mode !== 'kapal' ? ' · ' + v.ket : '');
+    var lokStr = formatLokRingkas(f.lokSekarang, f.tujuanNama);
+    if (lk && lokStr !== _trvCache.lok) { _trvCache.lok = lokStr; lk.textContent = lokStr; }
+    var kmhStr = f.mode === 'kapal' ? '⛴️' : String(Math.round(f.kmh));
+    if (kh && kmhStr !== _trvCache.kmh) { _trvCache.kmh = kmhStr; kh.textContent = kmhStr; }
+    var kIkon = f.kondisi === 'tanah' ? '🪵' : f.kondisi === 'rusak' ? '⚠️' : f.kondisi === 'tol' ? '🛣️' : '🛣️';
+    var infoStr = (f.mode === 'kapal'
+      ? ('Sisa penyeberangan ±' + jamTeks(Math.max(0, T.trip.sisaKapal) / 60))
+      : (kIkon + ' ' + (f.namaKondisi || 'Aspal') + ' · Sisa ' + Math.round(f.sisaKm).toLocaleString('id-ID') + ' km · ±' + jamTeks(est))) +
+      ' · ' + (m && m.bbm === 'listrik' ? '⚡ ' : '⛽ ') + Math.round((m ? m.isi : 0) * 100) + '%' + (v.ket && f.mode !== 'kapal' ? ' · ' + v.ket : '');
+    if (ki && infoStr !== _trvCache.info) { _trvCache.info = infoStr; ki.textContent = infoStr; }
   }
   function panelTravel(paksa) {
     var T = S.travel, el = $('travel-panel');
@@ -5156,7 +5263,8 @@
         '<input type="range" min="1" max="5" step="1" value="' + valT + '" data-gigi="trv" aria-label="Level kecepatan">' +
         '<button type="button" class="chip-tombol" style="padding:2px 7px;font-size:11px;flex-shrink:0" data-vvip="popup">' + (vvipT ? '🔓 VVIP' : '🔒 Lv5') + '</button>' +
         '<button type="button" class="chip-tombol" style="padding:2px 8px;font-size:11px;flex-shrink:0" data-trv="henti">⛽ Rehat</button></div>';
-      html = '<div class="ojek-bare"><div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:3px;white-space:nowrap;overflow:hidden"><span id="trv-info" style="overflow:hidden;text-overflow:ellipsis"></span><b id="trv-kmh" style="flex-shrink:0"></b></div><div class="meteran"><i id="trv-maju"></i></div>' + gr + '</div>';
+      _trvCache = { lok: '', info: '', kmh: '', w: '' };
+      html = '<div class="ojek-bare"><div class="trip-hud"><div class="trip-hud-atas"><div class="trip-hud-kiri"><div class="trip-hud-lok" id="trv-lok"></div><div class="trip-hud-sub" id="trv-info"></div></div><div class="trip-hud-kanan"><span class="trip-spd" id="trv-kmh">0</span><span class="trip-unit">km/j</span></div></div><div class="meteran"><i id="trv-maju"></i></div></div>' + gr + '</div>';
     }
     el.innerHTML = html; if (f.mode !== 'kota') trvLive(f);
   }
@@ -6078,8 +6186,9 @@
     }
   }
 
-  /* ---------- putaran waktu ---------- */
+  /* ---------- putaran waktu (Native 120Hz+ rAF / Opsional Hemat 60Hz) ---------- */
   function putar(t) {
+    if (S && S.fpsMode === '60' && tPrev && (t - tPrev) < 15.5) { requestAnimationFrame(putar); return; }
     var dt = tPrev ? Math.min(250, t - tPrev) : 16; tPrev = t;
     var main = layar === 'main' && S;
     var dMenit = 0, depanLama = main ? JUAL.depan() : null;
@@ -6161,6 +6270,7 @@
       }
     }
     if (main && trv) panelTravel();
+    if (main && S.transit) panelTransit();
     if (main && S.ojek.online) {
       panelOjek();
       if (S.ojek.tawaran) {
@@ -6169,7 +6279,7 @@
         var sisaT = $('ojek-sisa'); if (sisaT) sisaT.style.width = Math.max(0, 100 - tawaranUmur / 150) + '%';
         if (tawaranUmur > 15000) { OJEK.kedaluwarsa(S); tawaranUmur = 0; toast('Order terlewat.', 1400); }
       } else tawaranUmur = 0;
-      var maju = $('ojek-maju'), fo = OJEK.fase(S); if (maju && fo && fo.kemajuan != null) maju.style.width = (fo.kemajuan * 100).toFixed(1) + '%';
+      if (S.ojek.trip) ojekLive(OJEK.fase(S));
     }
     if (main && SUARA && !lembar && !document.hidden) {
       var tSfx = Math.floor(t / 3800);
@@ -6205,8 +6315,9 @@
     var cwNow = main && DUNIA.infoCuacaSekarang ? DUNIA.infoCuacaSekarang(S) : null;
     var moonNow = main && KAL.infoFaseBulan ? KAL.infoFaseBulan(S.hari) : null;
     if (main && cwNow && cwNow.petir && !lembar && S.kec > 0 && Math.random() < 0.0025 && SUARA) SUARA.bunyi('petir');
+    var trInfoAdg = (main && S.transit) ? transitLiveInfo(S.transit) : null;
     try {
-      ADEGAN.gambar(main ? { kota: S.kota, tierWilayah: HIDUP ? HIDUP.tierWilayah(S) : 'kota', warnaBaju: HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13', biled: !!(S.motor && S.motor.modif && S.motor.modif.biled) || !!(S.mobil && S.mobil.modif && S.mobil.modif.biled), kabutAsap: !!(S.real && S.real.bencana && S.real.bencana.kabutAsap), cuacaInfo: cwNow, faseBulan: moonNow, ramadan: KAL.apakahRamadan(S.hari) > 0, lebaran: KAL.statusLebaran ? KAL.statusLebaran(S.hari) : 0, natal: KAL.apakahNatal ? KAL.apakahNatal(S.hari, S.menit) : false, tahunBaru: KAL.apakahMalamTahunBaru ? KAL.apakahMalamTahunBaru(S.hari, S.menit) : false, namaToko: S.namaToko || 'Kopi Kontainer', namaPemain: S.namaPemain || 'Kamu', gender: (S.profil && S.profil.gender) || 'cewek', tampilan: warnaTampilanHex(S.profil && S.profil.tampilan, (S.profil && S.profil.gender) || 'cewek'), berhentiSewa: !!(S.usaha && S.usaha.berhentiSewa), sakitPemain: !!S.diri.sakit, capekPemain: capekP, hbTinggi: hb >= 75, hamilPemain: !!(S.diri.hamil && S.diri.hamil.terdeteksi), keluargaRumah: kelDiRumah, hbAnim: S.hbRun ? { u: Math.min(1, 1 - S.hbRun.sisa / S.hbRun.total), isLong: !!S.hbRun.isLong, varian: S.hbRun.varian, nama: S.hbRun.nama, nama2: S.hbRun.nama2 || '', gB: S.hbRun.gB, gC: S.hbRun.gC || S.hbRun.gB } : null, kerjaAnim: S.kerjaRun ? { u: Math.min(1, 1 - S.kerjaRun.sisa / S.kerjaRun.total), kantor: S.kerjaRun.kantor, peran: S.kerjaRun.peran, pulang: S.kerjaRun.pulang } : null, aktAnim: S.aktAnim ? { u: Math.min(1, 1 - S.aktAnim.sisa / S.aktAnim.total), jenis: S.aktAnim.jenis, dest: S.aktAnim.dest, mobil: !!S.aktAnim.mobil, liter: S.aktAnim.liter, ev: !!S.aktAnim.ev, bbmNama: S.aktAnim.bbmNama, judul: S.aktAnim.judul, sub: S.aktAnim.sub } : null, posisi: S.diri.posisi, transit: S.transit ? { ke: S.transit.ke, u: 1 - S.transit.sisa / S.transit.total, km: S.transit.km, kend: S.transit.kend, mult: S.transit.mult, bawaDus: !!S.transit.bawaDus, pindahWilayah: !!S.transit.pindahWilayah, tujuanNama: S.transit.tujuanNama || '', kantorNama: S.transit.kantorNama || '' } : null, ojek: OJEK.fase(S), travel: TRAVEL.fase(S), motorId: S.motor ? S.motor.id : null, mobil: S.mobil ? { id: S.mobil.id, bentuk: S.mobil.bentuk } : null, rumah: S.rumah.jenis === 'rumah' ? S.rumah.tipe : null, hunianId: (S.rumah && S.rumah.hunianId) || 'kos_ac',
+      ADEGAN.gambar(main ? { kota: S.kota, tierWilayah: HIDUP ? HIDUP.tierWilayah(S) : 'kota', warnaBaju: HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13', biled: !!(S.motor && S.motor.modif && S.motor.modif.biled) || !!(S.mobil && S.mobil.modif && S.mobil.modif.biled), kabutAsap: !!(S.real && S.real.bencana && S.real.bencana.kabutAsap), cuacaInfo: cwNow, faseBulan: moonNow, ramadan: KAL.apakahRamadan(S.hari) > 0, lebaran: KAL.statusLebaran ? KAL.statusLebaran(S.hari) : 0, natal: KAL.apakahNatal ? KAL.apakahNatal(S.hari, S.menit) : false, tahunBaru: KAL.apakahMalamTahunBaru ? KAL.apakahMalamTahunBaru(S.hari, S.menit) : false, namaToko: S.namaToko || 'Kopi Kontainer', namaPemain: S.namaPemain || 'Kamu', gender: (S.profil && S.profil.gender) || 'cewek', tampilan: warnaTampilanHex(S.profil && S.profil.tampilan, (S.profil && S.profil.gender) || 'cewek'), berhentiSewa: !!(S.usaha && S.usaha.berhentiSewa), sakitPemain: !!S.diri.sakit, capekPemain: capekP, hbTinggi: hb >= 75, hamilPemain: !!(S.diri.hamil && S.diri.hamil.terdeteksi), keluargaRumah: kelDiRumah, hbAnim: S.hbRun ? { u: Math.min(1, 1 - S.hbRun.sisa / S.hbRun.total), isLong: !!S.hbRun.isLong, varian: S.hbRun.varian, nama: S.hbRun.nama, nama2: S.hbRun.nama2 || '', gB: S.hbRun.gB, gC: S.hbRun.gC || S.hbRun.gB } : null, kerjaAnim: S.kerjaRun ? { u: Math.min(1, 1 - S.kerjaRun.sisa / S.kerjaRun.total), kantor: S.kerjaRun.kantor, peran: S.kerjaRun.peran, pulang: S.kerjaRun.pulang } : null, aktAnim: S.aktAnim ? { u: Math.min(1, 1 - S.aktAnim.sisa / S.aktAnim.total), jenis: S.aktAnim.jenis, dest: S.aktAnim.dest, mobil: !!S.aktAnim.mobil, liter: S.aktAnim.liter, ev: !!S.aktAnim.ev, bbmNama: S.aktAnim.bbmNama, judul: S.aktAnim.judul, sub: S.aktAnim.sub } : null, posisi: S.diri.posisi, transit: S.transit ? { ke: S.transit.ke, u: trInfoAdg ? trInfoAdg.u : (1 - S.transit.sisa / S.transit.total), km: S.transit.km, kend: S.transit.kend, kmh: trInfoAdg ? trInfoAdg.kmh : 38, medan: trInfoAdg ? trInfoAdg.medan : 'kota', kondisi: trInfoAdg ? trInfoAdg.kondisi : 'mulus', lokSekarang: trInfoAdg ? trInfoAdg.lokSekarang : null, mult: S.transit.mult, bawaDus: !!S.transit.bawaDus, pindahWilayah: !!S.transit.pindahWilayah, tujuanNama: S.transit.tujuanNama || '', kantorNama: S.transit.kantorNama || '' } : null, ojek: OJEK.fase(S), travel: TRAVEL.fase(S), motorId: S.motor ? S.motor.id : null, mobil: S.mobil ? { id: S.mobil.id, bentuk: S.mobil.bentuk } : null, rumah: S.rumah.jenis === 'rumah' ? S.rumah.tipe : null, hunianId: (S.rumah && S.rumah.hunianId) || 'kos_ac',
         pindah: pindahAnim ? { u: (t - pindahAnim.mulai) / 3800, pikap: pindahAnim.pikap, warna: pindahAnim.warna } : null, barang: S.rumah.barang, tidur: !!S.tidurAnim, acNyala: !S.rumah.padam && DIRI.adaAc(S), menit: S.menit, buka: S.fase === 'buka' && !S.tutupSementara, kecepatan: S.kec, jalan: !lembar && S.kec > 0, pembeli: JUAL.semua(), dMenit: dMenit, ruangBawah: ruang, motorParkir: S.motor && ANTAR.waktu(S) >= (S.motorSibukSampai || 0) ? S.motor.id : null, staf: stafHadir.length, stafGender: stafHadir.map(function (k) { return k.gender || 'cewek'; }), anakBantu: anakDiKedai, hujan: DUNIA.hujanSekarang(S) ? (S.dunia.cuaca.banjir ? 2 : 1) : 0, kotor: S.dunia.kotor, tier: S.usaha.tier, kayu: USAHA.punya(S, 'kursiKayu'), padam: !USAHA.listrikNyala(S) }
         : { latarAwal: true, namaToko: 'The Driver', menit: 1050, buka: false, kecepatan: 1, jalan: true, pembeli: [], dMenit: 0 }, t);
     } catch (errAdg) { if (window.console && console.error) console.error('ADEGAN.gambar error:', errAdg); }
@@ -6547,6 +6658,11 @@
       if ((b = e.target.closest('[data-promo]'))) {
         S.promoAktif = !S.promoAktif; simpan(); perbaruiHUD(true); perbaruiAksi();
         var gp = $('lembar-isi').scrollTop; bukaAtur(); $('lembar-isi').scrollTop = gp; return;
+      }
+      if ((b = e.target.closest('[data-fps]'))) {
+        S.fpsMode = S.fpsMode === '60' ? 'auto' : '60'; simpan();
+        toast(S.fpsMode === '60' ? '⚡ Mode Hemat 60Hz aktif.' : '⚡ Mode Auto 120Hz aktif (mengikuti refresh rate layar).', 2000);
+        var gf = $('lembar-isi').scrollTop; bukaAtur(); $('lembar-isi').scrollTop = gf; return;
       }
       if ((b = e.target.closest('[data-suara]'))) {
         if (SUARA) {

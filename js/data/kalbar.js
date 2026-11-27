@@ -628,6 +628,52 @@
     return titikDesa(pair[0], kc, kc.desa[dIdx]);
   }
 
+  /* Interpolasi lokasi real-time (Desa, Kecamatan, & medan) di sepanjang perjalanan Ojol, GoCar, Peta, maupun Pulang (u ∈ [0, 1]) */
+  var _cacheAntara = { k: '', res: null };
+  function titikAntara(asal, tujuan, u) {
+    u = Math.max(0, Math.min(1, Number(u) || 0));
+    if (!asal && !tujuan) return null;
+    if (!tujuan) return asal;
+    if (!asal) return tujuan;
+    if (u <= 0.06) return asal;
+    if (u >= 0.94) return tujuan;
+    var step = Math.floor(u * 20);
+    var ck = (asal.kabId || '') + ':' + (asal.kecId || '') + ':' + (asal.desa || '') + '>' + (tujuan.kabId || '') + ':' + (tujuan.kecId || '') + ':' + (tujuan.desa || '') + ':' + step;
+    if (_cacheAntara.k === ck && _cacheAntara.res) return _cacheAntara.res;
+    var out = null;
+    if (asal.kabId && tujuan.kabId && asal.kabId !== tujuan.kabId && (KORIDOR_KALBAR[asal.kabId + '|' + tujuan.kabId] || KORIDOR_KALBAR[tujuan.kabId + '|' + asal.kabId])) {
+      out = titikKoridorRuas(asal.kabId, tujuan.kabId, u);
+    } else if (asal.lat != null && asal.lon != null && tujuan.lat != null && tujuan.lon != null) {
+      var lat = asal.lat + (tujuan.lat - asal.lat) * u;
+      var lon = asal.lon + (tujuan.lon - asal.lon) * u;
+      var best = null, bestD2 = Infinity;
+      var minLat = Math.min(asal.lat, tujuan.lat) - 0.18, maxLat = Math.max(asal.lat, tujuan.lat) + 0.18;
+      var minLon = Math.min(asal.lon, tujuan.lon) - 0.18, maxLon = Math.max(asal.lon, tujuan.lon) + 0.18;
+      var kabs = {};
+      if (asal.kabId) kabs[asal.kabId] = true;
+      if (tujuan.kabId) kabs[tujuan.kabId] = true;
+      Object.keys(SEMUA_KAB).forEach(function (kId) {
+        var kb = SEMUA_KAB[kId];
+        if (!kb || !kb.kec) return;
+        for (var i = 0; i < kb.kec.length; i++) {
+          var kc = kb.kec[i];
+          if (kc.lat == null || kc.lon == null) continue;
+          if (kc.lat < minLat || kc.lat > maxLat || kc.lon < minLon || kc.lon > maxLon) continue;
+          var dLat = kc.lat - lat, dLon = kc.lon - lon, d2 = dLat * dLat + dLon * dLon;
+          if (d2 < bestD2) { bestD2 = d2; best = { kabId: kId, kc: kc }; }
+        }
+      });
+      if (best) {
+        var dsList = best.kc.desa || [best.kc.nama];
+        var dIdx2 = Math.max(0, Math.min(dsList.length - 1, Math.floor((u * 7.3) % dsList.length)));
+        out = titikDesa(best.kabId, best.kc, dsList[dIdx2]);
+      }
+    }
+    if (!out) out = u < 0.5 ? asal : tujuan;
+    _cacheAntara.k = ck; _cacheAntara.res = out;
+    return out;
+  }
+
   /* Tempat ibadah terdekat yang berbeda-beda sesuai kecamatan/desa tempat karakter berada */
   var MASJID_KHAS = {
     ptk_kota: ['Masjid Raya Mujahidin Pontianak', 'Masjid Al-Falah Darat Sekip'],
@@ -791,6 +837,7 @@
     cariTitik: cariTitik,
     desaAcak: desaAcak,
     titikKoridorRuas: titikKoridorRuas,
+    titikAntara: titikAntara,
     pilihTujuan: pilihTujuan,
     daftarKecamatan: daftarKecamatan,
     tempatIbadahTerdekat: tempatIbadahTerdekat,

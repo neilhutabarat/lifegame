@@ -491,19 +491,23 @@
       else ket = 'VVIP · ' + kdJ.nama + ' (maks ' + Math.round(v) + ' km/j)';
     } else {
       var gi = gigiObj(n, S);
+      var isSuvT = !!(m && (m.bentuk === 'suv' || m.bentuk === 'pikap'));
       v = pakaiVariasi
-        ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.16 * Math.sin(S.menit / 5))
+        ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.24 * Math.sin(S.menit / 3.5))
         : (gi.lo + gi.hi) / 2;
       if (v > vmax) v = vmax;
-      var fK = kdJ.faktorV * (kId === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
+      var fK = kdJ.faktorV * (kId === 'tanah' && isHujan ? 0.56 : kId === 'rusak' && isHujan ? 0.78 : isHujan ? 0.86 : 1);
+      if ((kId === 'tanah' || kId === 'rusak') && isSuvT) fK *= 1.24;
       v *= fK;
-      batasJalan = (kdJ.vMaxJalan || 92) * (kId === 'tanah' && isHujan ? 0.72 : isHujan ? 0.88 : 1);
+      var maxJ = kId === 'tanah' ? (isHujan ? 18 : 30) : kId === 'rusak' ? (isHujan ? 26 : 32) : kId === 'bergelombang' ? (isHujan ? 54 : 62) : (kdJ.vMaxJalan || 92) * (isHujan ? 0.86 : 1);
+      if ((kId === 'tanah' || kId === 'rusak') && isSuvT) maxJ = Math.round(maxJ * 1.2);
+      batasJalan = maxJ;
       if (v > batasJalan) v = batasJalan;
       if (kId === 'tanah' || kId === 'rusak' || kId === 'bergelombang') {
-        ket = kdJ.nama + (kId === 'tanah' && isHujan ? ' (becek lumpur!)' : '');
+        ket = kdJ.nama + (kId === 'tanah' && isHujan ? ' (lumpur licin!)' : kId === 'rusak' && isHujan ? ' (lubang berair!)' : '');
       }
     }
-    return { kmh: Math.max(6, v), gigi: n, ket: ket, batasJalan: batasJalan, vmax: vmax };
+    return { kmh: Math.max(8, v), gigi: n, ket: ket, batasJalan: batasJalan, vmax: vmax };
   }
 
   /* ---------- rencana perjalanan (mendukung jalur alternatif pilihan pemain & tujuan spesifik kecamatan/desa seluruh provinsi terpetakan) ---------- */

@@ -240,11 +240,12 @@
     else if (bbmTarget === 'motorEv' && S.motor) { bbmDipakai = Math.max(0, bbmSebelum - S.motor.baterai); S.motor.baterai = bbmSebelum; }
     else if (bbmTarget === 'motor' && S.motor) { bbmDipakai = Math.max(0, bbmSebelum - S.motor.isi); S.motor.isi = bbmSebelum; }
     if (S.hp && S.hp.cas) S.hp.cas = false; /* berhenti cas stopkontak toko saat berangkat antar penumpang */
+    var asalTitik = lokasiSekarang(S);
     var tunggu = x.jenis === 'makanan' ? 8 + Math.floor(Math.random() * 10) : x.jenis === 'barang' ? 4 : 2;
-    var fakMedan = (x.medan && x.medan.kec) ? Math.max(0.5, x.medan.kec) : 1;
+    var fakMedan = (x.medan && x.medan.kec) ? Math.max(0.45, x.medan.kec) : 1;
     var mntJalan = Math.max(3, Math.round(r.menit / fakMedan));
     var menitJemput = Math.round(mntJalan * x.jemput / km) + tunggu, total = mntJalan + tunggu;
-    o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kabar: r.kabar, bbmTarget: bbmTarget, bbmSisa: bbmDipakai };
+    o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kmTotal: Math.round(km * 10) / 10, kmSelesai: 0, asalTitik: asalTitik, kabar: r.kabar, bbmTarget: bbmTarget, bbmSisa: bbmDipakai };
     o.tawaran = null;
     return true;
   }
@@ -332,6 +333,73 @@
     return kabar;
   }
 
+  /* Kecepatan dinamis realistis untuk Ojol & GoCar sesuai medan jalan, hujan/lumpur, jenis kendaraan (Trail/SUV tangguh!), jam sibuk kota, dan level gigi */
+  var MOTOR_TRAIL = { klx150: 1, crf150: 1, wr155: 1, adv160: 1, xsr155: 1 };
+  function infoMedanKode(kode) {
+    var MI = g.KK_WILAYAH && g.KK_WILAYAH.MEDAN_INFO;
+    if (MI && MI[kode]) return MI[kode];
+    return { kode: kode || 'kota', nama: 'Aspal Perkotaan', ikon: '🛣️', kec: 1.0 };
+  }
+  function lokasiLive(S) {
+    var o = S && S.ojek;
+    if (!o || !o.trip) return lokasiSekarang(S);
+    var tr = o.trip, x = tr.x;
+    var uAntar = tr.total > tr.jemput ? Math.max(0, Math.min(1, (tr.jalan - tr.jemput) / Math.max(0.5, tr.total - tr.jemput))) : 0;
+    if (tr.asalTitik && x && x.tujuanTitik && g.KK_WILAYAH && g.KK_WILAYAH.titikAntara) {
+      return g.KK_WILAYAH.titikAntara(tr.asalTitik, x.tujuanTitik, uAntar);
+    }
+    return uAntar >= 0.5 && x && x.tujuanTitik ? x.tujuanTitik : (tr.asalTitik || lokasiSekarang(S));
+  }
+  function kecepatan(S, medanOpsi) {
+    var o = S && S.ojek, isCar = o && o.mode === 'mobil';
+    var tr = o && o.trip;
+    var lokNow = lokasiLive(S);
+    var mdKode = medanOpsi || (lokNow && lokNow.medan) || (tr && tr.x && tr.x.medan && tr.x.medan.kode) || 'kota';
+    var md = infoMedanKode(mdKode);
+    var isHujan = !!(g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S));
+    var gi = (g.KK_RUTE && g.KK_RUTE.gigiInfo) ? g.KK_RUTE.gigiInfo(S, isCar ? 'mobil' : 'motor') : { id: 2, lo: 35, hi: 58, mid: 46 };
+    var vvip = !!(S && S.vvip && S.vvip.aktif);
+    var base = gi.lo + (gi.hi - gi.lo) * (0.52 + 0.24 * Math.sin(((S && S.menit) || 0) * 0.85));
+    var mId = S && S.motor ? String(S.motor.id || '').replace(/-bekas$/, '') : '';
+    var isTrail = !isCar && !!MOTOR_TRAIL[mId];
+    var isSuv = isCar && S && S.mobil && (S.mobil.bentuk === 'suv' || S.mobil.bentuk === 'pikap');
+    var bonusOffroad = (isTrail || isSuv) ? 1.32 : 1.0;
+    var capLo = 12, capHi = 92, fMd = 1.0, ket = md.nama;
+    if (mdKode === 'tanah') {
+      fMd = isHujan ? 0.28 : 0.44;
+      capLo = isHujan ? 8 : 16; capHi = Math.round((isHujan ? 18 : 30) * bonusOffroad);
+      ket = isHujan ? 'Tanah Lumpur Becek' + (isTrail || isSuv ? ' (Offroad+)' : '') : 'Jalan Tanah Laterit';
+    } else if (mdKode === 'rusak') {
+      fMd = isHujan ? 0.38 : 0.46;
+      capLo = 14; capHi = Math.round((isHujan ? 26 : 32) * (bonusOffroad > 1 ? 1.18 : 1));
+      ket = isHujan ? 'Jalan Rusak · Lubang Berair' : 'Jalan Rusak Berlubang';
+    } else if (mdKode === 'perbukitan') {
+      fMd = isHujan ? 0.58 : 0.68;
+      capLo = 26; capHi = isHujan ? 44 : 52;
+      ket = 'Perbukitan Berkelok';
+    } else if (mdKode === 'bergelombang') {
+      fMd = isHujan ? 0.68 : 0.78;
+      capLo = 34; capHi = isHujan ? 54 : 64;
+      ket = 'Aspal Bergelombang';
+    } else if (mdKode === 'pesisir') {
+      fMd = isHujan ? 0.75 : 0.86;
+      capLo = 36; capHi = isHujan ? 56 : 68;
+      ket = 'Jalan Pesisir Pantai';
+    } else {
+      /* kota / mulus */
+      var jamH = ((S && S.menit) || 480) % 1440 / 60;
+      var sibuk = mdKode === 'kota' && ((jamH >= 6.5 && jamH < 9.0) || (jamH >= 16.5 && jamH < 19.0));
+      fMd = (sibuk ? 0.56 : 0.92) * (isHujan ? 0.85 : 1.0);
+      capLo = sibuk ? 18 : 28;
+      capHi = sibuk ? 36 : (vvip && gi.id >= 5 ? gi.hi : (isCar ? 92 : 76));
+      ket = sibuk ? 'Lalu Lintas Padat Kota' : (isHujan ? 'Aspal Basah Hujan' : md.nama);
+    }
+    var v = base * fMd * (mdKode === 'tanah' || mdKode === 'rusak' ? bonusOffroad : 1);
+    if (tr && tr.jalan < tr.jemput) { v *= 0.82; }
+    v = Math.max(capLo, Math.min(capHi, v));
+    return { kmh: Math.round(v * 10) / 10, medan: mdKode, ikon: md.ikon || '🛣️', namaKondisi: ket, gigi: gi.id };
+  }
+
   /* dipanggil tiap langkah waktu saat online. Hasil: kabar (teks) */
   function jalan(S, dMenit) {
     var o = S.ojek; if (!o.online) return [];
@@ -345,7 +413,12 @@
         else if (tr.bbmTarget === 'motorEv' && S.motor) S.motor.baterai = Math.max(0, S.motor.baterai - kur);
         else if (tr.bbmTarget === 'motor' && S.motor) S.motor.isi = Math.max(0, S.motor.isi - kur);
       }
-      tr.jalan += dMenit;
+      var vNow = kecepatan(S);
+      var fSpeed = Math.max(0.45, Math.min(1.65, vNow.kmh / 38));
+      var stepMnt = dMenit * fSpeed;
+      tr.jalan += stepMnt;
+      if (tr.kmTotal == null) tr.kmTotal = Math.round(((tr.x.jemput || 0) + (tr.x.km || 1)) * 10) / 10;
+      tr.kmSelesai = Math.min(tr.kmTotal, tr.kmTotal * Math.min(1, tr.jalan / Math.max(0.5, tr.total)));
       if (tr.jalan >= tr.total) return selesai(S);
       return [];
     }
@@ -354,8 +427,34 @@
   }
   function fase(S) {
     var o = S.ojek; if (!o || !o.online) return null;
-    if (o.trip) return { status: o.trip.jalan < o.trip.jemput ? 'jemput' : 'antar', mode: o.mode || 'motor', jenis: o.trip.x.jenis, kemajuan: Math.min(1, o.trip.jalan / o.trip.total), x: o.trip.x };
-    return { status: 'standby', mode: o.mode || 'motor' };
+    if (o.trip) {
+      var tr = o.trip, x = tr.x;
+      var prog = Math.min(1, tr.jalan / Math.max(0.5, tr.total));
+      var totKm = tr.kmTotal != null ? tr.kmTotal : ((x.jemput || 0) + (x.km || 1));
+      var sisaKm = Math.max(0, totKm * (1 - prog));
+      var v = kecepatan(S);
+      var lok = lokasiLive(S);
+      var md = v.medan;
+      var kondisi = md === 'tanah' ? 'tanah' : md === 'rusak' ? 'rusak' : (md === 'bergelombang' || md === 'perbukitan') ? 'bergelombang' : 'mulus';
+      return {
+        status: tr.jalan < tr.jemput ? 'jemput' : 'antar',
+        mode: o.mode || 'motor',
+        jenis: x.jenis,
+        kemajuan: prog,
+        sisaKm: Math.round(sisaKm * 10) / 10,
+        totalKm: Math.round(totKm * 10) / 10,
+        kmh: v.kmh,
+        gigi: v.gigi,
+        medan: md,
+        kondisi: kondisi,
+        ikonKondisi: v.ikon,
+        namaKondisi: v.namaKondisi,
+        lokSekarang: lok,
+        tujuanLabel: x.tujuanLabel || (x.tujuanTitik ? (x.tujuanTitik.desa + ', ' + x.tujuanTitik.kecNama) : ''),
+        x: x
+      };
+    }
+    return { status: 'standby', mode: o.mode || 'motor', lokSekarang: lokasiSekarang(S) };
   }
   /* tarik saldo ojek: 'bank' (ke rekening), 'ewallet' (ke saldo e-wallet/QRIS), atau 'dompet' (tarik ATM ke dompet pribadi) */
   function tarikSaldo(S, tujuan, qrisId) {
@@ -384,5 +483,5 @@
   }
 
   g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, tarifStandar: tarifStandar, ubahTarif: ubahTarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
-    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, lokasiRumah: lokasiRumah, lokasiSekarang: lokasiSekarang, jarakRumah: jarakRumah, resetPos: resetPos, statusMudik: statusMudik, CEPAT_TRIP: CEPAT_TRIP };
+    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, kecepatan: kecepatan, lokasiLive: lokasiLive, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, lokasiRumah: lokasiRumah, lokasiSekarang: lokasiSekarang, jarakRumah: jarakRumah, resetPos: resetPos, statusMudik: statusMudik, CEPAT_TRIP: CEPAT_TRIP };
 })(window);
