@@ -769,7 +769,7 @@
       var sudah = (S.teman || []).some(function (t) { return t.nama === k.nama; });
       if (!sudah && g.KK_TEMAN && g.KK_TEMAN.tambah) {
         var tLahir = (KAL.tgl(S.hari).y - k.usia) + '-05-14';
-        g.KK_TEMAN.tambah(S, k.nama, k.gender, tLahir, 'teman');
+        g.KK_TEMAN.tambah(S, k.nama, k.gender, 'teman', tLahir);
         var baru = S.teman[S.teman.length - 1];
         if (baru) { baru.hubungan = 45; baru.perasaan = 48; baru.hb = 55; }
       }
