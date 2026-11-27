@@ -366,7 +366,19 @@
       var sT = (haversineKm(drBarat, SIMPUL_TAYAN) + haversineKm(SIMPUL_TAYAN, SIMPUL_SINTANG) + haversineKm(SIMPUL_SINTANG, keTimur)) * 1.48;
       return Math.round(Math.max(lurus * 1.45, sT) * 10) / 10;
     }
-    /* Faktor kelokan realistis sesuai medan (kota/mulus 1.25, pesisir/bergelombang 1.30, perbukitan/rusak/tanah 1.38) */
+    /* Lintas antarkabupaten jauh (>90 km garis lurus): gunakan rasio kelokan jalan raya asli dari jaringan KK_RUTE agar jarak Kalteng/lintas-provinsi tidak memotong lurus rawa/pegunungan */
+    if (ka && kb && ka !== kb && lurus > 90 && !a.pulau && !b.pulau && g.KK_RUTE && g.KK_RUTE.jalur) {
+      var jRt = g.KK_RUTE.jalur(ka, kb);
+      if (jRt && jRt.km > 0 && !jRt.laut) {
+        var ibuA = titikAwal(ka), ibuB = titikAwal(kb);
+        var lurIbu = (ibuA && ibuB && ibuA.lat != null && ibuB.lat != null) ? haversineKm(ibuA, ibuB) : 0;
+        if (lurIbu > 25) {
+          var rasioR = Math.max(1.28, Math.min(1.95, jRt.km / lurIbu));
+          return Math.round(lurus * rasioR * 10) / 10;
+        }
+      }
+    }
+    /* Faktor kelokan realistis sesuai medan (kota/mulus 1.26, pesisir/bergelombang 1.30, perbukitan/rusak/tanah 1.38) */
     var md = medanJalan(a, b);
     var faktor = (md.kode === 'kota' || md.kode === 'mulus') ? 1.26 : (md.kode === 'rusak' || md.kode === 'tanah' || md.kode === 'perbukitan') ? 1.38 : 1.30;
     return Math.round(lurus * faktor * 10) / 10;
@@ -385,6 +397,7 @@
   var SEMUA_KAB = {};
   var PROVINSI = {};
   var PROV_BY_KAB = {};
+  var PROV_BBOX = {};
   var CACHE_PROV = {};
 
   /* Koordinat presisi tiap desa di dalam kecamatan (offset deterministik ±0,008° ≈ 0,5–1,4 km agar jarak antar desa presisi) */
@@ -479,8 +492,16 @@
       var kmAcak = Math.round((minKm + Math.random() * Math.max(0.5, maxKm - minKm)) * 10) / 10;
       return { titik: { kabId: (asal && asal.kabId) || 'kota', kabNama: (asal && asal.kabNama) || 'Kota', prov: 'Indonesia', kecId: pilihK, kecNama: pilihK, medan: 'kota', pulau: false, desa: pilihK, lat: null, lon: null }, km: kmAcak, medan: MEDAN_INFO.kota };
     }
-    var provAsal = PROV_BY_KAB[asal.kabId] || 'kalbar';
-    var semua = (maxKm >= 55 && Object.keys(PROVINSI).length > 1) ? daftarTitikSemua() : daftarTitikProv(provAsal);
+    /* Pilih hanya provinsi yang bounding-box GPS-nya bersinggungan dengan radius pencarian (skalabel 38 provinsi & dukung lintas perbatasan alami!) */
+    var padDeg = Math.max(maxKm, 85) / 80 + 0.35;
+    var semua = [];
+    Object.keys(PROVINSI).forEach(function (pid) {
+      var bb = PROV_BBOX[pid];
+      if (bb && (asal.lat + padDeg < bb.minLat || asal.lat - padDeg > bb.maxLat || asal.lon + padDeg < bb.minLon || asal.lon - padDeg > bb.maxLon)) return;
+      var arr = daftarTitikProv(pid);
+      for (var ii = 0; ii < arr.length; ii++) semua.push(arr[ii]);
+    });
+    if (!semua.length) semua = daftarTitikProv(PROV_BY_KAB[asal.kabId] || 'kalbar');
     var hindari = Array.isArray(riwayatDesa) ? riwayatDesa : [];
     var asalPulau = !!asal.pulau;
     function cariDalam(lo, hi, skipRiwayat) {
@@ -572,7 +593,7 @@
     'ketapang|kayongutara': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_mhu'], ['kayongutara', 'ku_shilir'], ['kayongutara', 'ku_sukadana']],
     'ketapang|melawi': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ntayap'], ['ketapang', 'ktp_sandai'], ['ketapang', 'ktp_hsungai'], ['melawi', 'mlw_tpbarat'], ['melawi', 'mlw_tpinoh'], ['melawi', 'mlw_bhulu'], ['melawi', 'mlw_belimbing'], ['melawi', 'mlw_npinoh']],
     'ketapang|sukamara': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_bkayong'], ['ketapang', 'ktp_mhs'], ['ketapang', 'ktp_kendawangan']],
-    'ketapang|lamandau': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ttiti'], ['ketapang', 'ktp_pemahan'], ['ketapang', 'ktp_jhulu'], ['ketapang', 'ktp_marau'], ['ketapang', 'ktp_aupas'], ['ketapang', 'ktp_mmata']]
+    'ketapang|lamandau': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_pemahan'], ['ketapang', 'ktp_ttiti'], ['ketapang', 'ktp_jelai']]
   };
 
   function titikKoridorRuas(kabA, kabB, u) {
@@ -706,6 +727,7 @@
   function daftarProvinsi(id, nama, dataObj, koridorObj, masjidObj) {
     if (!id || !dataObj) return;
     var jmlKab = 0, jmlKec = 0, jmlDesa = 0;
+    var minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
     Object.keys(dataObj).forEach(function (kId) {
       var kb = dataObj[kId];
       if (!kb.prov) kb.prov = nama;
@@ -713,9 +735,18 @@
       PROV_BY_KAB[kId] = id;
       jmlKab++;
       jmlKec += kb.kec.length;
-      kb.kec.forEach(function (kc) { jmlDesa += (kc.desa || []).length; });
+      kb.kec.forEach(function (kc) {
+        jmlDesa += (kc.desa || []).length;
+        if (typeof kc.lat === 'number' && typeof kc.lon === 'number') {
+          if (kc.lat < minLat) minLat = kc.lat;
+          if (kc.lat > maxLat) maxLat = kc.lat;
+          if (kc.lon < minLon) minLon = kc.lon;
+          if (kc.lon > maxLon) maxLon = kc.lon;
+        }
+      });
     });
     PROVINSI[id] = { id: id, nama: nama, data: dataObj, jmlKab: jmlKab, jmlKec: jmlKec, jmlDesa: jmlDesa };
+    if (minLat <= maxLat) PROV_BBOX[id] = { minLat: minLat, maxLat: maxLat, minLon: minLon, maxLon: maxLon };
     delete CACHE_PROV[id];
     if (koridorObj) {
       Object.keys(koridorObj).forEach(function (rk) { KORIDOR_KALBAR[rk] = koridorObj[rk]; });

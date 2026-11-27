@@ -196,7 +196,7 @@
     { a: 'seruyan', b: 'kotawaringintimur', km: 118, tol: 0, jalan: 'Jl. Provinsi Kuala Pembuang–Sampit', kondisi: 'bergelombang' },
     { a: 'kotawaringintimur', b: 'katingan', km: 142, tol: 0, jalan: 'Trans-Kalimantan (Sampit–Kasongan)', kondisi: 'mulus' },
     { a: 'katingan', b: 'palangkaraya', km: 84, tol: 0, jalan: 'Jl. Tjilik Riwut (Kasongan–Palangka Raya)', kondisi: 'mulus' },
-    { a: 'palangkaraya', b: 'gunungmas', km: 175, tol: 0, jalan: 'Jl. Provinsi Palangka Raya–Tangkiling–Kuala Kurun', kondisi: 'rusak' },
+    { a: 'palangkaraya', b: 'gunungmas', km: 175, tol: 0, jalan: 'Jl. Provinsi Palangka Raya–Bukit Rawi–Sepang–Kuala Kurun', kondisi: 'bergelombang' },
     { a: 'palangkaraya', b: 'pulangpisau', km: 95, tol: 0, jalan: 'Trans-Kalimantan (Jembatan Tumbang Nusa–Pulang Pisau)', kondisi: 'mulus' },
     { a: 'pulangpisau', b: 'kapuas', km: 45, tol: 0, jalan: 'Trans-Kalimantan (Pulang Pisau–Kuala Kapuas)', kondisi: 'mulus' },
     { a: 'palangkaraya', b: 'baritoselatan', km: 198, tol: 0, jalan: 'Trans-Kalimantan Poros Tengah (Palangka Raya–Timpeh–Buntok)', kondisi: 'bergelombang' },

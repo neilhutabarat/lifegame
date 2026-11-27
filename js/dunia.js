@@ -34,23 +34,27 @@
 
   /* ---------- cuaca & suhu realistis daerah Indonesia (°C per jam & musim) ---------- */
   var SUHU_DASAR = {
-    pontianak: 29.8, banjarmasin: 29.5, palangkaraya: 29.3, samarinda: 29.2, tanjungselor: 29.0,
+    pontianak: 29.8, kuburaya: 29.5, mempawah: 29.3, singkawang: 29.1, sambas: 29.0, bengkayang: 27.6, landak: 28.4, sanggau: 28.6, sekadau: 28.5, sintang: 28.4, melawi: 28.0, kapuashulu: 27.8, ketapang: 29.2, kayongutara: 29.1,
+    palangkaraya: 29.3, kotawaringinbarat: 29.1, sukamara: 29.0, lamandau: 28.2, seruyan: 29.1, kotawaringintimur: 29.4, katingan: 28.8, pulangpisau: 29.2, kapuas: 29.5, gunungmas: 27.4, baritoselatan: 28.8, baritotimur: 28.7, baritoutara: 28.2, murungraya: 26.8,
+    banjarmasin: 29.5, banjarbaru: 29.2, samarinda: 29.2, balikpapan: 29.4, tanjungselor: 29.0,
     jakarta: 29.5, surabaya: 30.2, semarang: 29.4, serang: 29.0, yogyakarta: 28.4, bandung: 23.2,
     medan: 29.0, pekanbaru: 29.8, palembang: 29.6, padang: 28.5, bandaaceh: 28.8, jambi: 29.4, bengkulu: 28.2, bandarlampung: 28.8, pangkalpinang: 28.9, tanjungpinang: 29.2,
     denpasar: 28.8, mataram: 28.6, kupang: 30.4, makassar: 29.4, manado: 28.4, palu: 30.0, kendari: 29.0, gorontalo: 29.2, mamuju: 28.8,
-    ambon: 28.0, sofifi: 28.4, jayapura: 28.6, manokwari: 28.4, sorong: 28.6, nabire: 28.0, merauke: 28.5, jayawijaya: 19.5
+    ambon: 28.0, sofifi: 28.4, jayapura: 28.6, manokwari: 28.4, sorong: 28.6, nabire: 28.0, merauke: 28.5, jayawijaya: 19.5, wamena: 19.5
   };
   function suhuSekarang(S) {
     if (!S) return { c: 29, ikon: '☀️', ket: 'Cerah', kulminasi: false };
     var t = KAL.tgl(S.hari), jam = ((S.menit || 480) % 1440) / 60;
-    var base = SUHU_DASAR[S.kota] != null ? SUHU_DASAR[S.kota] : 29.0;
+    var fTrvS = (S.travel && S.travel.aktif && g.KK_TRAVEL && g.KK_TRAVEL.fase) ? g.KK_TRAVEL.fase(S) : null;
+    var kabSuhu = (fTrvS && fTrvS.lokSekarang && fTrvS.lokSekarang.kabId) || (S.ojek && S.ojek.lokasi && S.ojek.lokasi.kabId) || S.kota || 'pontianak';
+    var base = SUHU_DASAR[kabSuhu] != null ? SUHU_DASAR[kabSuhu] : (SUHU_DASAR[S.kota] != null ? SUHU_DASAR[S.kota] : 29.0);
     /* kurva suhu harian: paling sejuk ~05.00, paling panas ~14.00 */
     var diurnal = -Math.cos(((jam - 5) / 24) * Math.PI * 2) * 4.4;
     var kemarau = (t.m >= 6 && t.m <= 9) ? 1.2 : (t.m >= 11 || t.m <= 2) ? -0.8 : 0.3;
     var hInfo = infoCuacaSekarang(S);
     var hujan = hInfo.hujan > 0;
     var deras = hInfo.hujan >= 2;
-    var kulminasi = S.kota === 'pontianak' && ((t.m === 3 || t.m === 9) && t.d >= 21 && t.d <= 23);
+    var kulminasi = kabSuhu === 'pontianak' && ((t.m === 3 || t.m === 9) && t.d >= 21 && t.d <= 23);
     var koreksiHujan = hInfo.hujan >= 3 ? -6.2 : deras ? -5.0 : hujan ? -3.4 : hInfo.mendung > 0.5 ? -2.0 : hInfo.awan > 0.5 ? -1.0 : 0;
     var variasi = Math.sin(S.hari * 0.73) * 0.9;
     var c = Math.round(base + diurnal + kemarau + koreksiHujan + (kulminasi && jam >= 10 && jam <= 15 ? 2.2 : 0) + variasi);

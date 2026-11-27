@@ -207,41 +207,55 @@
       }
     }
     if (!tj) return 'Tujuan tidak ditemukan di peta.';
+    var skNow = (g.KK_OJEK && g.KK_OJEK.lokasiSekarang) ? g.KK_OJEK.lokasiSekarang(S) : null;
     var km = (jalurOpsi && jalurOpsi.km) ? jalurOpsi.km : (tj.aksi === 'pulang' ? Math.max(0.5, (g.KK_OJEK && g.KK_OJEK.jarakRumah) ? g.KK_OJEK.jarakRumah(S) : 2) : (tj.km || 2));
-    var biayaFeri = (jalurOpsi && jalurOpsi.biayaFeri) ? Math.round(jalurOpsi.biayaFeri) : 0;
-    if (biayaFeri > 0) {
-      var byF = g.KK_UANG.bayarPilihan(S, biayaFeri, 'Tiket Feri Penyeberangan (' + tj.nama + ')', S._metodeBayar || 'bank');
-      if (byF !== true) return byF;
-    }
+    var menyeberangPulau = !!(tj.titik && tj.titik.pulau && (!skNow || skNow.kecId !== tj.titik.kecId));
+    var biayaFeri = (jalurOpsi && jalurOpsi.biayaFeri) ? Math.round(jalurOpsi.biayaFeri) : (menyeberangPulau ? (cara === 'mobil' ? 180000 : 45000) : 0);
     var menit = 10, ket = '', bbmTarget = null, bbmDipakai = 0;
 
+    /* Validasi SEMUA syarat moda perjalanan SEBELUM memotong uang tiket feri, stamina, atau BBM! */
     if (cara === 'jalan') {
+      if (menyeberangPulau || (jalurOpsi && jalurOpsi.laut)) return 'Tujuan melewati perairan / pulau (⛵). Tidak bisa jalan kaki menyeberangi laut — pakai Motor/Mobil (naik feri/klotok)!';
       if (km > 12) return 'Jarak ' + km.toFixed(1) + ' km terlalu jauh untuk jalan kaki! Pakai kendaraan sendiri atau minta dijemput teman.';
+      var kurStam0 = Math.min(25, Math.round(km * 2.8));
+      if (S.diri.stamina < kurStam0 + 5) return 'Stamina terlalu rendah untuk jalan kaki ' + km.toFixed(1) + ' km.';
+    } else if (cara === 'teman') {
+      var tmCek = (S.teman || []).filter(function (x) { return x.id === temanId; })[0];
+      if (!tmCek) return 'Pilih teman/pacar dulu untuk menjemputmu!';
+      if ((tmCek.hubungan || 0) < 45) return tmCek.nama + ' menolak jemput karena hubungan baru ' + Math.round(tmCek.hubungan || 0) + '% (butuh ≥45%).';
+    } else {
+      var pakaiMblCek = (cara === 'mobil');
+      var kndCek = pakaiMblCek ? g.KK_MOBIL : g.KK_MOTOR;
+      var kObjCek = pakaiMblCek ? S.mobil : S.motor;
+      if (pakaiMblCek && !S.mobil) return 'Belum punya mobil. Pilih Motor, Jalan Kaki, atau Dijemput Teman.';
+      if (!pakaiMblCek && !S.motor) return 'Belum punya motor! Pilih Jalan Kaki atau Minta Dijemput Teman.';
+      if (kObjCek && kObjCek.mogokAir) return (pakaiMblCek ? 'Mobil' : 'Motor') + ' sedang mogok kena banjir! Kuras mesin dulu di Garasi.';
+      if (kndCek && kndCek.disewakan && kndCek.disewakan(S)) return (pakaiMblCek ? 'Mobil' : 'Motor') + ' sedang disewakan di Sewa Aset! Hentikan sewa dulu.';
+      if (!kndCek || !kndCek.cukup(S, km)) return (pakaiMblCek ? 'Bensin mobil' : 'Bensin motor') + ' tidak cukup untuk ' + km.toFixed(1) + ' km!';
+    }
+
+    if (biayaFeri > 0) {
+      var byF = g.KK_UANG.bayarPilihan(S, biayaFeri, 'Tiket Feri / Penyeberangan (' + tj.nama + ')', S._metodeBayar || 'bank');
+      if (byF !== true) return byF;
+    }
+
+    if (cara === 'jalan') {
       menit = Math.max(6, Math.round(km * 12));
       var kurStam = Math.min(25, Math.round(km * 2.8));
-      if (S.diri.stamina < kurStam + 5) return 'Stamina terlalu rendah untuk jalan kaki ' + km.toFixed(1) + ' km.';
       S.diri.stamina = batas(S.diri.stamina - kurStam);
       S.diri.kesehatan = batas((S.diri.kesehatan || 100) + Math.min(4, km * 0.8));
       olahragaJalanKaki(S, km);
       ket = '🚶 Jalan kaki santai ' + km.toFixed(1) + ' km ke ' + tj.nama + ' (' + menit + ' mnt · sehat & bakar kalori!).';
     } else if (cara === 'teman') {
       var tm = (S.teman || []).filter(function (x) { return x.id === temanId; })[0];
-      if (!tm) return 'Pilih teman/pacar dulu untuk menjemputmu!';
-      if ((tm.hubungan || 0) < 45) return tm.nama + ' menolak jemput karena hubungan baru ' + Math.round(tm.hubungan || 0) + '% (butuh ≥45%).';
       menit = Math.max(8, Math.round(km * 2.4 + 6));
       tm.hubungan = Math.min(100, (tm.hubungan || 50) + 3);
       S.diri.stamina = batas(S.diri.stamina - 2);
-      ket = '🤝 Dijemput ' + tm.nama + ' menuju ' + tj.nama + ' (' + km.toFixed(1) + ' km · ' + menit + ' mnt · gratis bensin & makin akrab!).';
+      ket = '🤝 Dijemput ' + tm.nama + ' menuju ' + tj.nama + ' (' + km.toFixed(1) + ' km · ' + menit + ' mnt' + (biayaFeri > 0 ? ' · tiket feri ' + rp(biayaFeri) : ' · gratis bensin') + ' & makin akrab!).';
     } else {
       /* kendaraan sendiri (motor atau mobil) */
       var pakaiMbl = (cara === 'mobil');
       var knd = pakaiMbl ? g.KK_MOBIL : g.KK_MOTOR;
-      var kObj = pakaiMbl ? S.mobil : S.motor;
-      if (pakaiMbl && !S.mobil) return 'Belum punya mobil. Pilih Motor, Jalan Kaki, atau Dijemput Teman.';
-      if (!pakaiMbl && !S.motor) return 'Belum punya motor! Pilih Jalan Kaki atau Minta Dijemput Teman.';
-      if (kObj && kObj.mogokAir) return (pakaiMbl ? 'Mobil' : 'Motor') + ' sedang mogok kena banjir! Kuras mesin dulu di Garasi.';
-      if (knd && knd.disewakan && knd.disewakan(S)) return (pakaiMbl ? 'Mobil' : 'Motor') + ' sedang disewakan di Sewa Aset! Hentikan sewa dulu.';
-      if (!knd || !knd.cukup(S, km)) return (pakaiMbl ? 'Bensin mobil' : 'Bensin motor') + ' tidak cukup untuk ' + km.toFixed(1) + ' km!';
       var evM = !pakaiMbl && S.motor && S.motor.bbm === 'listrik';
       var isi0 = pakaiMbl ? S.mobil.isi : (evM ? S.motor.baterai : S.motor.isi);
       var rJ = knd.jalan(S, km, 1);
@@ -257,7 +271,7 @@
       var fakKecMd = (tj.medan && tj.medan.kec) || 1;
       menit = Math.max(4, Math.round((rJ.menit || km * 2) / Math.max(0.45, fakKecMd)));
       catatAusPerjalanan(S, pakaiMbl ? 'mobil' : 'motor', km, tj.medan);
-      ket = (pakaiMbl ? '🚗 Menyetir mobil' : '🏍️ Berkendara motor') + ' ke ' + tj.nama + ' (' + km.toFixed(1) + ' km · ' + menit + ' mnt).';
+      ket = (pakaiMbl ? '🚗 Menyetir mobil' : '🏍️ Berkendara motor') + ' ke ' + tj.nama + ' (' + km.toFixed(1) + ' km · ' + menit + ' mnt' + (biayaFeri > 0 ? ' · ⛴️ Feri ' + rp(biayaFeri) : '') + ').';
     }
 
     if (S.ojek && S.ojek.online) g.KK_OJEK.offline(S, true);

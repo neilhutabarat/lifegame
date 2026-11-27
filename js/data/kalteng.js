@@ -89,7 +89,7 @@
         { id: 'kotim_mhu', nama: 'Mentaya Hilir Utara', lat: -2.7080, lon: 112.9120, medan: 'mulus', desa: ['Bagandang Tengah', 'Bagandang', 'Bagandang Hilir', 'Bagandang Hilir Permai', 'Bagandang Hulu', 'Natai Baru', 'Pondok Damar'] },
         { id: 'kotim_mhs', nama: 'Mentaya Hilir Selatan', lat: -2.8520, lon: 112.9380, medan: 'pesisir', desa: ['Samuda Kota', 'Basirih Hilir', 'Basirih Hulu', 'Handil Sohor', 'Jaya Karet', 'Jaya Kelapa', 'Sabamban', 'Samuda Besar', 'Samuda Kecil', 'Sei Ijum Raya'] },
         { id: 'kotim_tsampit', nama: 'Teluk Sampit', lat: -3.1450, lon: 112.9780, medan: 'pesisir', desa: ['Ujung Pandaran', 'Basawang', 'Kuin Permai', 'Lampuyang', 'Parebok', 'Regei Lestari'] },
-        { id: 'kotim_phanaut', nama: 'Pulau Hanaut', lat: -2.9350, lon: 113.0250, medan: 'pesisir', desa: ['Bapinang Hulu', 'Babaung', 'Babirah', 'Bamadu', 'Bantian', 'Bapinang Hilir', 'Bapinang Hilir Laut', 'Hanaut', 'Hantipan', 'Makarti Jaya', 'Penyaguan', 'Rawa Sari', 'Satiruk', 'Serambut'] }
+        { id: 'kotim_phanaut', nama: 'Pulau Hanaut', lat: -2.9350, lon: 113.0250, medan: 'pulau', pulau: true, desa: ['Bapinang Hulu', 'Babaung', 'Babirah', 'Bamadu', 'Bantian', 'Bapinang Hilir', 'Bapinang Hilir Laut', 'Hanaut', 'Hantipan', 'Makarti Jaya', 'Penyaguan', 'Rawa Sari', 'Satiruk', 'Serambut'] }
       ]
     },
     /* 7. KAB. KATINGAN — 13 Kecamatan · 161 Desa/Kelurahan */
@@ -229,25 +229,25 @@
 
   /* Koridor kecamatan asli sepanjang ruas Trans-Kalimantan Tengah & jalur lintas provinsi (Kalbar ↔ Kalteng ↔ Kalsel ↔ Kaltim) */
   var KORIDOR_KALTENG = {
-    /* Perbatasan Kalbar ↔ Kalteng (full lintas desa/kecamatan kedua provinsi!) */
+    /* Perbatasan Kalbar ↔ Kalteng (full lintas desa/kecamatan kedua provinsi secara monotonik!) */
     'ketapang|sukamara': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_bkayong'], ['ketapang', 'ktp_mhs'], ['ketapang', 'ktp_kendawangan'], ['sukamara', 'skm_jelai'], ['sukamara', 'skm_sukamara']],
-    'ketapang|lamandau': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_ttiti'], ['ketapang', 'ktp_pemahan'], ['ketapang', 'ktp_jhulu'], ['ketapang', 'ktp_marau'], ['ketapang', 'ktp_aupas'], ['ketapang', 'ktp_mmata'], ['lamandau', 'lmd_delang'], ['lamandau', 'lmd_lamandau'], ['lamandau', 'lmd_bulik']],
+    'ketapang|lamandau': [['ketapang', 'ktp_dpawan'], ['ketapang', 'ktp_mpawan'], ['ketapang', 'ktp_smrayak'], ['ketapang', 'ktp_pemahan'], ['ketapang', 'ktp_ttiti'], ['ketapang', 'ktp_jelai'], ['lamandau', 'lmd_lamandau'], ['lamandau', 'lmd_bulik']],
     /* Intra Kalimantan Tengah (15 ruas utama) */
-    'sukamara|kotawaringinbarat': [['sukamara', 'skm_sukamara'], ['sukamara', 'skm_briam'], ['kotawaringinbarat', 'kobar_kolam'], ['kotawaringinbarat', 'kobar_arsel']],
+    'sukamara|kotawaringinbarat': [['sukamara', 'skm_sukamara'], ['kotawaringinbarat', 'kobar_kolam'], ['kotawaringinbarat', 'kobar_arsel']],
     'lamandau|kotawaringinbarat': [['lamandau', 'lmd_bulik'], ['lamandau', 'lmd_sjaya'], ['kotawaringinbarat', 'kobar_kolam'], ['kotawaringinbarat', 'kobar_arsel']],
     'kotawaringinbarat|seruyan': [['kotawaringinbarat', 'kobar_arsel'], ['kotawaringinbarat', 'kobar_plada'], ['kotawaringinbarat', 'kobar_pbanteng'], ['seruyan', 'sry_dseluluk'], ['seruyan', 'sry_hanau'], ['seruyan', 'sry_sraya'], ['seruyan', 'sry_dsembuluh'], ['seruyan', 'sry_shilir']],
     'kotawaringinbarat|kotawaringintimur': [['kotawaringinbarat', 'kobar_arsel'], ['kotawaringinbarat', 'kobar_plada'], ['kotawaringinbarat', 'kobar_pbanteng'], ['seruyan', 'sry_dseluluk'], ['seruyan', 'sry_hanau'], ['kotawaringintimur', 'kotim_telawang'], ['kotawaringintimur', 'kotim_kbesi'], ['kotawaringintimur', 'kotim_baamang'], ['kotawaringintimur', 'kotim_mbk']],
     'seruyan|kotawaringintimur': [['seruyan', 'sry_shilir'], ['seruyan', 'sry_shtimur'], ['kotawaringintimur', 'kotim_tsampit'], ['kotawaringintimur', 'kotim_mhs'], ['kotawaringintimur', 'kotim_mhu'], ['kotawaringintimur', 'kotim_mbk']],
     'kotawaringintimur|katingan': [['kotawaringintimur', 'kotim_mbk'], ['kotawaringintimur', 'kotim_baamang'], ['kotawaringintimur', 'kotim_kbesi'], ['kotawaringintimur', 'kotim_cempaga'], ['kotawaringintimur', 'kotim_chulu'], ['katingan', 'ktg_khilir']],
     'katingan|palangkaraya': [['katingan', 'ktg_khilir'], ['palangkaraya', 'plk_bbatu'], ['palangkaraya', 'plk_jraya']],
-    'palangkaraya|gunungmas': [['palangkaraya', 'plk_jraya'], ['palangkaraya', 'plk_bbatu'], ['palangkaraya', 'plk_rakumpit'], ['pulangpisau', 'pps_ktengah'], ['pulangpisau', 'pps_btingang'], ['gunungmas', 'gmas_sepang'], ['gunungmas', 'gmas_mihing'], ['gunungmas', 'gmas_kurun']],
+    'palangkaraya|gunungmas': [['palangkaraya', 'plk_jraya'], ['palangkaraya', 'plk_pahandut'], ['pulangpisau', 'pps_ktengah'], ['pulangpisau', 'pps_btingang'], ['gunungmas', 'gmas_sepang'], ['gunungmas', 'gmas_mihing'], ['gunungmas', 'gmas_kurun']],
     'palangkaraya|pulangpisau': [['palangkaraya', 'plk_pahandut'], ['palangkaraya', 'plk_sabangau'], ['pulangpisau', 'pps_jabiren'], ['pulangpisau', 'pps_khilir']],
     'pulangpisau|kapuas': [['pulangpisau', 'pps_khilir'], ['kapuas', 'kps_basarang'], ['kapuas', 'kps_selat']],
     'palangkaraya|baritoselatan': [['palangkaraya', 'plk_pahandut'], ['pulangpisau', 'pps_ktengah'], ['kapuas', 'kps_mantangai'], ['kapuas', 'kps_timpah'], ['baritoselatan', 'barsel_dsel']],
     'baritoselatan|baritotimur': [['baritoselatan', 'barsel_dsel'], ['baritotimur', 'bartim_pkarau'], ['baritotimur', 'bartim_dtengah'], ['baritotimur', 'bartim_paku'], ['baritotimur', 'bartim_kjanang'], ['baritotimur', 'bartim_dtimur']],
     'baritoselatan|baritoutara': [['baritoselatan', 'barsel_dsel'], ['baritoselatan', 'barsel_dutara'], ['baritoutara', 'barut_gtimang'], ['baritoutara', 'barut_montallat'], ['baritoutara', 'barut_tselatan'], ['baritoutara', 'barut_ttengah']],
     'baritoutara|murungraya': [['baritoutara', 'barut_ttengah'], ['baritoutara', 'barut_lahei'], ['baritoutara', 'barut_lbarat'], ['murungraya', 'mura_ltuhup'], ['murungraya', 'mura_murung']],
-    'gunungmas|baritoutara': [['gunungmas', 'gmas_kurun'], ['gunungmas', 'gmas_tewah'], ['kapuas', 'kps_ptalawang'], ['kapuas', 'kps_ktengah'], ['baritoutara', 'barut_lbarat'], ['baritoutara', 'barut_ttengah']],
+    'gunungmas|baritoutara': [['gunungmas', 'gmas_kurun'], ['kapuas', 'kps_mtalawang'], ['kapuas', 'kps_khulu'], ['baritoutara', 'barut_lbarat'], ['baritoutara', 'barut_ttengah']],
     /* Perbatasan Kalteng ↔ Kalsel & Kaltim */
     'kapuas|baritokuala': [['kapuas', 'kps_selat'], ['kapuas', 'kps_khilir'], ['kapuas', 'kps_ktimur']],
     'baritotimur|tabalong': [['baritotimur', 'bartim_dtimur'], ['baritotimur', 'bartim_blima']],

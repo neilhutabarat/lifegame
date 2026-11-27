@@ -622,7 +622,7 @@
   /* ---------- lembar bawah (otomatis pertahankan posisi scroll saat atur apa pun di layar yang sama) ---------- */
   function kunciLembar(nama) {
     if (nama === 'travelDesa') return 'travelDesa|' + (app._trvDesaKey || '');
-    if (nama === 'infoLokasi') return 'infoLokasi|' + (app._infoProv || '') + '|' + (app._infoKab || '');
+    if (nama === 'infoLokasi') return 'infoLokasi';
     if (nama !== 'hp') return nama;
     return [
       'hp', app.nama || '', app.tab || '', app.bankTab || '', app.qrisTab || '',
@@ -631,7 +631,7 @@
       app.gameTab || '', app.gameKonsolFilter || '', app.gadgetTab || '', app.merekGadget || '',
       app.apotekTab || '', app.kelTab || '', app.propTab || '', app.hunianKat || '', app.travelTab || '', app.trvFilter || '',
       app.temanTab || '', app.temanDetailId || '', app.tmFilter || '', app.rpsTab || '', app.hadiahKat || '', app.meter || '',
-      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || '', app.duniaTab || '', app.petaCara || '', app.petaProv || '', app.petaKab || '', app.realTab || ''
+      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || '', app.duniaTab || '', app.petaCara || '', app.realTab || ''
     ].join('|');
   }
   function bukaLembar(nama, html) {
@@ -3422,7 +3422,7 @@
       if (ptK) return { ket: 'Modifikasi: ' + ptK.nama, nominal: pmK[0] === 'mobil' ? ptK.hargaMobil : ptK.hargaMotor };
     } else if (nama === 'catKnd' && EKO) {
       var pcK = nilai.split('|'), wcK = EKO.WARNA_CAT.filter(function (x) { return x.id === pcK[1]; })[0];
-      if (wcK && wcK.harga > 0) return { ket: 'Repaint Cat Bodi: ' + wcK.nama, nominal: wcK.harga };
+      if (wcK && wcK.harga > 0) return { ket: 'Repaint Cat Bodi ' + (pcK[0] === 'mobil' ? 'Mobil' : 'Motor') + ': ' + wcK.nama, nominal: pcK[0] === 'mobil' ? wcK.harga * 3 : wcK.harga };
     } else if (nama === 'beliRenovasi' && EKO) {
       var rvK = EKO.RENOVASI_LIST.filter(function (x) { return x.id === nilai; })[0];
       if (rvK) return { ket: 'Renovasi Rumah: ' + rvK.nama, nominal: rvK.harga };
@@ -5076,17 +5076,29 @@
   function bukaPilihJalurPeta(targetId, kabAsal, kabTuj, cara, temanId, jList) {
     var kml = cara === 'mobil' && S.mobil ? Math.max(1, S.mobil.kml || 12) : (S.motor ? Math.max(1, S.motor.kml || 45) : 40);
     var hBbm = (MOTOR && MOTOR.hargaBbm) ? MOTOR.hargaBbm(S, cara === 'mobil' && S.mobil ? S.mobil.bbm : (S.motor ? S.motor.bbm : 'pertalite')) : 10000;
+    var W = window.KK_WILAYAH, extraDesaKm = 0, desaPulau = false, namaTujP = RUTE.nama(kabTuj);
+    if (String(targetId || '').indexOf('desa:') === 0 && W && W.cariTitik) {
+      var pdX = String(targetId).split(':');
+      var tDesaX = W.cariTitik(pdX[1], pdX[2], pdX.slice(3).join(':'));
+      if (tDesaX) {
+        extraDesaKm = Math.round(W.jarakKm(W.titikAwal(kabTuj), tDesaX) * 10) / 10;
+        desaPulau = !!tDesaX.pulau;
+        namaTujP = tDesaX.desa + ', Kec. ' + tDesaX.kecNama + ' (' + RUTE.nama(kabTuj).replace(/^Kab\. |^Kota /, '') + ')';
+      }
+    }
     var opsi = jList.map(function (j) {
-      var biayaBbm = (cara === 'jalan' || cara === 'teman') ? 0 : Math.round((j.km / kml) * hBbm);
-      var biayaFeri = j.laut ? (cara === 'mobil' ? (j.kapalMobil || 250000) : Math.round((j.kapalOrang || 60000) * 1.4)) : 0;
+      var kmTot = Math.round((j.km + extraDesaKm) * 10) / 10;
+      var lautTot = !!(j.laut || desaPulau);
+      var biayaBbm = (cara === 'jalan' || cara === 'teman') ? 0 : Math.round((kmTot / kml) * hBbm);
+      var biayaFeri = (j.laut ? (cara === 'mobil' ? (j.kapalMobil || 250000) : Math.round((j.kapalOrang || 60000) * 1.4)) : 0) + (desaPulau ? (cara === 'mobil' ? 180000 : 45000) : 0);
       var totalBiaya = biayaBbm + (j.tol || 0) + biayaFeri;
-      var jamEst = j.laut ? (j.ruas.reduce(function (a, r) { return a + (r.laut ? (r.jam || 4) + 1 : r.km / 48); }, 0)) : (j.km / 48);
-      return { km: j.km, laut: j.laut, label: j.label, viaTeks: j.viaTeks, biayaBbm: biayaBbm, biayaFeri: biayaFeri, tol: j.tol || 0, totalBiaya: totalBiaya, jamEst: jamEst };
+      var jamEst = (j.laut ? (j.ruas.reduce(function (a, r) { return a + (r.laut ? (r.jam || 4) + 1 : r.km / 48); }, 0)) : (j.km / 48)) + (extraDesaKm / 40) + (desaPulau ? 1.5 : 0);
+      return { km: kmTot, laut: lautTot, label: j.label, viaTeks: j.viaTeks, biayaBbm: biayaBbm, biayaFeri: biayaFeri, tol: j.tol || 0, totalBiaya: totalBiaya, jamEst: jamEst };
     });
     var minBiaya = Math.min.apply(null, opsi.map(function (o) { return o.totalBiaya; }));
     var minJam = Math.min.apply(null, opsi.map(function (o) { return o.jamEst; }));
     app._petaJalurPending = { targetId: targetId, cara: cara, temanId: temanId, jalurList: opsi };
-    bukaLembar('petaPilihJalur', kepala('🛣️ Pilih Jalur Perjalanan', RUTE.nama(kabAsal) + ' → ' + RUTE.nama(kabTuj)) +
+    bukaLembar('petaPilihJalur', kepala('🛣️ Pilih Jalur Perjalanan', RUTE.nama(kabAsal) + ' → ' + namaTujP, '', '<button type="button" class="chip-tombol" data-app="peta">‹ Kembali</button>') +
       '<p class="catatan">Terdapat <b>' + opsi.length + ' pilihan jalur</b> ke tujuanmu. Bandingkan jarak, waktu, dan biaya Feri vs jalur darat memutar:</p>' +
       opsi.map(function (o, idx) {
         var tagIrit = o.totalBiaya === minBiaya ? '<span class="ki-tag milik">💰 Lebih Irit Biaya</span>' : '';
