@@ -507,29 +507,46 @@
   }
 
   /* ---------- rencana perjalanan (mendukung jalur alternatif pilihan pemain & tujuan spesifik kecamatan/desa Kalbar) ---------- */
-  function tambahSegmenDesa(jDasar, tujuan, detail) {
+  function tambahSegmenDesa(S, jDasar, tujuan, detail) {
     if (!jDasar || !detail || !detail.kecId || !g.KK_WILAYAH || !g.KK_WILAYAH.kalbar || !g.KK_WILAYAH.kalbar[tujuan]) return jDasar;
     var W = g.KK_WILAYAH;
     var ibu = W.titikAwal(tujuan);
     var tDesa = W.cariTitik ? W.cariTitik(tujuan, detail.kecId, detail.desa) : ibu;
-    var extraKm = Math.round(W.jarakKm(ibu, tDesa) * 10) / 10;
-    if (extraKm < 1) return jDasar;
+    var intraKab = !jDasar.ruas || !jDasar.ruas.length;
+    var titikAsal = ibu;
+    if (intraKab && S && g.KK_OJEK && g.KK_OJEK.lokasiSekarang) {
+      var lokS = g.KK_OJEK.lokasiSekarang(S);
+      if (lokS && lokS.kabId === tujuan && lokS.lat != null) titikAsal = lokS;
+    }
+    var extraKm = Math.round(W.jarakKm(titikAsal, tDesa) * 10) / 10;
+    if (intraKab) {
+      if (extraKm < 2.5) extraKm = 2.5;
+    } else if (extraKm < 1) {
+      return {
+        simpul: jDasar.simpul, ruas: jDasar.ruas, km: jDasar.km,
+        tol: jDasar.tol || 0, laut: !!jDasar.laut,
+        viaTeks: jDasar.viaTeks, label: jDasar.label, extraKm: 0, desaTujuan: tDesa
+      };
+    }
     var mdKode = (tDesa.medan === 'kota' || tDesa.medan === 'mulus' || tDesa.medan === 'pesisir') ? 'mulus'
       : (tDesa.medan === 'rusak' ? 'rusak' : tDesa.medan === 'tanah' ? 'tanah' : 'bergelombang');
     var ruasBaru = jDasar.ruas.slice();
     var simpulBaru = jDasar.simpul.slice();
+    var namaJalanSeg = intraKab
+      ? ('Travel Lokal ' + (titikAsal.kecNama && titikAsal.kecNama !== tDesa.kecNama ? ('Kec. ' + titikAsal.kecNama + ' → Kec. ' + tDesa.kecNama) : ('Kec. ' + tDesa.kecNama)) + ' (' + tDesa.desa + ')')
+      : ('Akses Kec. ' + tDesa.kecNama + ' (' + tDesa.desa + ')');
     ruasBaru.push({
       a: tujuan, b: tujuan, km: extraKm, tol: 0,
       laut: !!tDesa.pulau, jam: tDesa.pulau ? Math.max(1.2, Math.round((extraKm / 24) * 10) / 10) : 0,
       kapalMobil: tDesa.pulau ? 180000 : 0, kapalOrang: tDesa.pulau ? 35000 : 0,
-      jalan: 'Akses Kec. ' + tDesa.kecNama + ' (' + tDesa.desa + ')',
+      jalan: namaJalanSeg,
       kondisi: mdKode, lokalDesa: tDesa
     });
     simpulBaru.push(tujuan);
     return {
       simpul: simpulBaru, ruas: ruasBaru, km: Math.round((jDasar.km + extraKm) * 10) / 10,
       tol: jDasar.tol || 0, laut: !!(jDasar.laut || tDesa.pulau),
-      viaTeks: jDasar.viaTeks, label: jDasar.label, extraKm: extraKm, desaTujuan: tDesa
+      viaTeks: intraKab ? namaJalanSeg : jDasar.viaTeks, label: jDasar.label, extraKm: extraKm, desaTujuan: tDesa
     };
   }
   function rencana(S, tujuan, jalurKustom, detailTujuan) {
@@ -546,7 +563,7 @@
       }
     }
     if (!jBase) return null;
-    var j = tambahSegmenDesa(jBase, tujuan, det);
+    var j = tambahSegmenDesa(S, jBase, tujuan, det);
     if (!j.ruas.length) return null;
     var m = S.mobil, gi = gigiObj(T.gigi, S), std = R.tarifStandar(j, m), pnp = Math.max(1, T.antri.length);
     var laut = 0, jamLaut = 0, kondisiTerburuk = 'mulus', bobotKond = { tol: 0, mulus: 1, bergelombang: 2, rusak: 3, tanah: 4 };
@@ -865,7 +882,7 @@
         if (telat > 1.8) { n -= 1; ket = 'merasa kelamaan'; }
         if (pangsa5 > 0.85) n -= 0.3;
       }
-      n = Math.max(1, Math.min(5, n)); sumNilai += n; total += bayarKursi; rinci.push({ nama: p.nama, tipe: p.tipe, nilai: Math.round(n * 10) / 10, bayar: bayarKursi, ket: ket });
+      n = Math.max(1, Math.min(5, n)); sumNilai += n; total += bayarKursi; rinci.push({ nama: p.nama, tipe: p.tipe, nilai: Math.round(n * 10) / 10, bayar: bayarKursi, ket: ket, turun: p.turun || '' });
     });
     var tujuan = tr.ke, dari = tr.dari, bensin = tr.bensinTerpakai > 0 ? tr.bensinTerpakai : Math.max(0, tr.bensin0 - S.mobil.isi * S.mobil.tangki);
     var biayaPerjalanan = tr.tol + tr.kapal;

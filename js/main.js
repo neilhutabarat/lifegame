@@ -357,7 +357,9 @@
     var bbmCar = S.mobil ? Math.round((S.mobil.isi || 0) * 100) : 0;
     var fTrvHud = (S.travel && S.travel.aktif && TRAVEL && TRAVEL.fase) ? TRAVEL.fase(S) : null;
     var lokHud = (fTrvHud && fTrvHud.lokSekarang) ? fTrvHud.lokSekarang : ((OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null);
-    var jrHud = (S.travel && S.travel.aktif) ? ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km) : (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0);
+    var jrHud = (S.travel && S.travel.aktif)
+      ? (S.travel.di === S.kota ? (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0) : ((RUTE.jalur(S.kota, S.travel.di) || { km: 0 }).km))
+      : (OJEK && OJEK.jarakRumah ? OJEK.jarakRumah(S) : 0);
     var shHud = (DUNIA && DUNIA.suhuSekarang) ? DUNIA.suhuSekarang(S) : { c: 30, ikon: '☀️', ket: 'Cerah' };
     var popHud = (window.KK_WILAYAH && window.KK_WILAYAH.pendudukWilayah) ? window.KK_WILAYAH.formatPenduduk(window.KK_WILAYAH.pendudukWilayah(S)) : '685rb';
     var warnaBajuHud = HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13';
@@ -606,6 +608,8 @@
 
   /* ---------- lembar bawah (otomatis pertahankan posisi scroll saat atur apa pun di layar yang sama) ---------- */
   function kunciLembar(nama) {
+    if (nama === 'travelDesa') return 'travelDesa|' + (app._trvDesaKey || '');
+    if (nama === 'infoLokasi') return 'infoLokasi|' + (app._infoKab || '');
     if (nama !== 'hp') return nama;
     return [
       'hp', app.nama || '', app.tab || '', app.bankTab || '', app.qrisTab || '',
@@ -628,6 +632,11 @@
     el.innerHTML = '<div class="pegangan"></div>' + html;
     $('lembar').hidden = false;
     el.scrollTop = gulirLama;
+    try {
+      [].forEach.call(el.querySelectorAll('.cat-strip > button.pilih, .kec-wrap > button.pilih'), function (btnP) {
+        if (btnP.scrollIntoView) btnP.scrollIntoView({ block: 'nearest', inline: 'center' });
+      });
+    } catch (eSc) {}
     var cvPeta = document.getElementById('peta-mini-cv');
     if (cvPeta && REAL && REAL.gambarPetaMini) REAL.gambarPetaMini(cvPeta, S);
   }
@@ -1055,7 +1064,7 @@
       html += '<button type="button" class="baris-tombol" data-app="kk"><span><b>💳 Kartu Kredit ' + esc(b.nama) + '</b><small>' + esc(infoKk) + '</small></span><span>›</span></button>' +
         '<button type="button" class="baris-tombol" data-app="paylater"><span><b>🧾 PayLater (SPayLater / GoPay Later)</b><small>' + esc(infoPl) + '</small></span><span>›</span></button>' +
         '<button type="button" class="baris-tombol" data-app="kur"><span><b>🏦 KUR Mikro</b><small>' + esc(kur) + '</small></span><span>›</span></button>' +
-        '<button type="button" class="baris-tombol" data-app="kastravel"><span><b>💼 Kas Travel</b><small>Saldo: ' + rupiah((S.travel && S.travel.kas) || 0) + ' (Auto top-up &lt; 50jt)</small></span><span>›</span></button>' +
+        '<button type="button" class="baris-tombol" data-app="kastravel"><span><b>💼 Kas Travel</b><small>Saldo: ' + rupiah((S.travel && S.travel.kas) || 0) + ' (Auto top-up &lt; ' + rupiahPendek((S.travel && S.travel.kasTarget) || TRAVEL.KAS_MIN || 5000000) + ')</small></span><span>›</span></button>' +
         '<ul class="daftar angka" style="margin-top:10px">' +
         baris('Biaya admin bulanan', b.admin ? rupiah(b.admin) : 'Gratis') +
         baris('Transfer antarbank', b.gratisTransfer ? 'Gratis ' + Math.max(0, b.gratisTransfer - S.bank.transferBulanIni) + '× lagi' : rupiah(N.biFast) + ' (BI-FAST)') +
@@ -2536,9 +2545,10 @@
         '<div class="cat-strip">' + kabListP.map(function (kb) {
           return '<button type="button" class="' + (kb.id === pKab ? 'pilih' : '') + '" data-aksi="petaKab:' + kb.id + '">' + esc(kb.nama.replace(/^Kab\. |^Kota /, '')) + ' (' + kb.jmlKec + ')</button>';
         }).join('') + '</div>' +
-        '<div class="cat-strip">' + kbObjP.kec.map(function (kc) {
+        '<div class="kec-wrap">' + kbObjP.kec.map(function (kc) {
           return '<button type="button" class="' + (kc.id === pKec ? 'pilih' : '') + '" data-aksi="petaKec:' + kc.id + '">' + esc(kc.nama) + (kc.pulau ? ' ⛵' : '') + '</button>';
         }).join('') + '</div>' +
+        '<p class="catatan" style="margin:0 0 6px">📍 <b>Kec. ' + esc(kcObjP.nama) + '</b> (' + esc(kbObjP.nama) + ' · ' + kcObjP.desa.length + ' Desa/Kel)</p>' +
         '<div class="grid-2">' + kcObjP.desa.map(function (ds) {
           var tD = W.titikDesa(pKab, kcObjP, ds);
           var kmD = (lok && lok.lat != null) ? Math.max(0.8, W.jarakKm(lok, tD)) : 2;
@@ -3236,7 +3246,7 @@
   }
   function belanja(cara) {
     var pc = String(cara).split('-'), bayar = pc[0], siapa = pc[1] || 'sendiri', tab = app.tab, k = null;
-    if (tab === 'pasar' && siapa === 'karyawan') { k = stafBelanja(); if (!k) return hasilAksi('Tidak ada karyawan yang sedang masuk dan tidak sibuk.'); }
+    if (tab === 'pasar' && siapa === 'karyawan') { k = stafBelanja(); if (!k) { hasilAksi('Tidak ada karyawan yang sedang masuk dan tidak sibuk.'); return; } }
     var nama = STOK.namaTempat(S, tab), r = STOK.beli(S, tab, app.keranjang[tab], bayar, siapa);
     if (r === true || (r && r.ok)) {
       app.keranjang[tab] = {};
@@ -3315,7 +3325,7 @@
     else if (nama === 'tunai') { var mt1 = (N.motor || []).filter(function (x) { return x.id === nilai; })[0]; if (mt1) return { ket: 'Beli Motor ' + mt1.nama, nominal: mt1.harga }; }
     else if (nama === 'bekas') { var ub1 = S.pasarBekas && S.pasarBekas.unit[+nilai]; if (ub1) return { ket: 'Beli Motor Bekas ' + ub1.id, nominal: ub1.harga }; }
     else if (nama === 'tunaiMobil') { var mc1 = (N.mobil || []).filter(function (x) { return x.id === nilai; })[0]; if (mc1) return { ket: 'Beli Mobil ' + mc1.nama, nominal: mc1.harga }; }
-    else if (nama === 'bekasMobil') { var ubc = S.pasarBekasMobil && S.pasarBekasMobil.unit[+nilai]; if (ubc) return { ket: 'Beli Mobil Bekas', nominal: ubc.harga }; }
+    else if (nama === 'bekasMobil') { var ubc = S.pasarMobilBekas && S.pasarMobilBekas.unit[+nilai]; if (ubc) return { ket: 'Beli Mobil Bekas', nominal: ubc.harga }; }
     else if (nama === 'barang') { var pb2 = nilai.split('-'), b2 = DIRI.barang(pb2[0]); if (b2 && (!DIRI.punya(S, pb2[0]) || b2.banyak)) return { ket: 'Beli ' + b2.nama, nominal: DIRI.hargaToko(S, b2, pb2[1] || 'tokopedia') }; }
     else if (nama === 'beliGadget') { var pg2 = nilai.split('-'), gm2 = DIRI.gadgetModel(pg2[0]); if (gm2 && !(S.gadget && S.gadget[pg2[0]])) { var dG = DIRI.diskonToko(S, 'tokopedia'); return { ket: 'Beli ' + gm2.nama, nominal: dG ? Math.round(gm2.harga * (1 - dG) / 5000) * 5000 : gm2.harga }; } }
     else if (nama === 'beliCharger') { var pc2 = nilai.split('-'), cm2 = DIRI.chargerModel && DIRI.chargerModel(pc2[0]); if (cm2 && !(S.hp && S.hp.chargerMilik && S.hp.chargerMilik[pc2[0]])) return { ket: 'Beli Charger ' + cm2.nama, nominal: cm2.harga }; }
@@ -3393,10 +3403,10 @@
     } else if (nama === 'catKnd' && EKO) {
       var pcK = nilai.split('|'), wcK = EKO.WARNA_CAT.filter(function (x) { return x.id === pcK[1]; })[0];
       if (wcK && wcK.harga > 0) return { ket: 'Repaint Cat Bodi: ' + wcK.nama, nominal: wcK.harga };
-    } else if (nama === 'renovasi' && EKO) {
+    } else if (nama === 'beliRenovasi' && EKO) {
       var rvK = EKO.RENOVASI_LIST.filter(function (x) { return x.id === nilai; })[0];
       if (rvK) return { ket: 'Renovasi Rumah: ' + rvK.nama, nominal: rvK.harga };
-    } else if (nama === 'bangunKos' && EKO) {
+    } else if (nama === 'bangunKosan' && EKO) {
       var ksK = EKO.KOSAN_PAKET.filter(function (x) { return x.id === nilai; })[0];
       if (ksK) return { ket: 'Bangun ' + ksK.nama, nominal: ksK.modal };
     } else if (nama === 'beliHewan' && EKO) {
@@ -3615,10 +3625,11 @@
     else if (nama === 'realTab') { app.realTab = nilai; app.pesan = ''; }
     else if (nama === 'pergiBebasJalur' && REAL) {
       var idxJp = +nilai, pending = app._petaJalurPending;
-      if (!pending || !pending.jalurList || !pending.jalurList[idxJp]) return toast('Pilihan jalur kedaluwarsa.', 1800);
+      if (!pending || !pending.jalurList || !pending.jalurList[idxJp]) { toast('Pilihan jalur kedaluwarsa.', 1800); return; }
       var jPil = pending.jalurList[idxJp];
-      app._petaJalurPending = null;
-      return jalankanPergiBebas(pending.targetId, pending.cara, pending.temanId, { km: jPil.km, biayaFeri: jPil.biayaFeri || 0, label: jPil.label });
+      var okJp = jalankanPergiBebas(pending.targetId, pending.cara, pending.temanId, { km: jPil.km, biayaFeri: jPil.biayaFeri || 0, label: jPil.label });
+      if (okJp) app._petaJalurPending = null;
+      return;
     }
     else if (nama === 'pergiBebas' && REAL) {
       if (sedangAnimasi()) { toast('Tunggu aktivitas/perjalanan saat ini selesai dulu.', 2000); return; }
@@ -3854,13 +3865,15 @@
     else if (nama === 'tarikMerchant') {
       if (nilai === 'semua') {
         var idsT = Object.keys(S.merchants || {}).filter(function (id) { return (S.merchants[id].tersedia || 0) > 0; });
-        if (!idsT.length) return hasilAksi('Belum ada saldo dompet digital yang siap ditarik.');
-        var totT = 0;
-        idsT.forEach(function (id) {
-          var sblmB = S.bank.saldo;
-          if (UANG.tarikMerchant(S, id) === true) totT += Math.max(0, S.bank.saldo - sblmB);
-        });
-        hasilAksi(true, '💸 Berhasil menarik ' + rupiah(totT) + ' dari ' + idsT.length + ' dompet digital ke rekening ' + UANG.bankIni(S).nama + '!');
+        if (!idsT.length) { hasilAksi('Belum ada saldo dompet digital yang siap ditarik.'); }
+        else {
+          var totT = 0;
+          idsT.forEach(function (id) {
+            var sblmB = S.bank.saldo;
+            if (UANG.tarikMerchant(S, id) === true) totT += Math.max(0, S.bank.saldo - sblmB);
+          });
+          hasilAksi(true, '💸 Berhasil menarik ' + rupiah(totT) + ' dari ' + idsT.length + ' dompet digital ke rekening ' + UANG.bankIni(S).nama + '!');
+        }
       } else {
         hasilAksi(UANG.tarikMerchant(S, nilai), 'Saldo sudah masuk rekening.');
       }
@@ -4059,18 +4072,17 @@
         var kendP = mobilOk ? 'mobil' : motorOk ? 'motor' : 'ojek';
         var bbmDipakaiP = 0, bbmTargetP = null, menitP = Math.max(15, Math.min(360, Math.round(kmPindah / (mobilOk ? 55 : 42) * 60)));
         if (kendP === 'mobil' && S.mobil) {
-          var kmlMb = S.mobil.kml || 12;
-          bbmDipakaiP = Math.min(S.mobil.isi * 0.92, Math.max(0.3, kmPindah / kmlMb));
+          var kmlMb = Math.max(1, S.mobil.kml || 12), tgkMb = Math.max(1, S.mobil.tangki || 45);
+          bbmDipakaiP = Math.min(S.mobil.isi * 0.92, Math.max(0.01, (kmPindah / kmlMb) / tgkMb));
           S.mobil.km = (S.mobil.km || 0) + kmPindah;
           bbmTargetP = 'mobil';
         } else if (kendP === 'motor' && S.motor) {
           var evP = S.motor.bbm === 'listrik';
           if (evP) {
-            var jp = S.motor.jarakPenuh || 60;
-            bbmDipakaiP = Math.min(S.motor.baterai * 0.92, Math.max(4, (kmPindah / jp) * 100));
+            bbmDipakaiP = Math.min(S.motor.baterai * 0.92, Math.max(2, kmPindah));
             bbmTargetP = 'motorEv';
           } else {
-            var kmlMt = S.motor.kml || 45;
+            var kmlMt = Math.max(1, S.motor.kml || 45);
             bbmDipakaiP = Math.min(S.motor.isi * 0.92, Math.max(0.15, kmPindah / kmlMt));
             bbmTargetP = 'motor';
           }
@@ -5032,9 +5044,12 @@
       if (SUARA && kendPb !== 'kaki') SUARA.bunyi('motor');
       simpan(); perbaruiHUD(true); perbaruiAksi();
       toast(rpb.teks + (jalurOpsi && jalurOpsi.label ? ' (' + jalurOpsi.label + ')' : ''), 3000);
-      return;
+      return true;
     }
     hasilAksi(rpb);
+    toast(typeof rpb === 'string' ? rpb : 'Tidak bisa berangkat ke lokasi tersebut.', 3000);
+    if (lembar === 'hp') bukaHP('peta');
+    return false;
   }
   function bukaPilihJalurPeta(targetId, kabAsal, kabTuj, cara, temanId, jList) {
     var kml = cara === 'mobil' && S.mobil ? Math.max(1, S.mobil.kml || 12) : (S.motor ? Math.max(1, S.motor.kml || 45) : 40);
@@ -5153,16 +5168,23 @@
     if (!W || !W.kalbar || !W.kalbar[kabId]) return bukaTujuanTravel();
     var kb = W.kalbar[kabId];
     var kcAkt = (kecId && kb.kec.filter(function (x) { return x.id === kecId; })[0]) || kb.kec[0];
-    var ibu = W.titikAwal(kabId);
-    bukaLembar('travelDesa', kepala('📍 ' + kb.nama + ' (' + kb.kec.length + ' Kec)', 'Pilih Kecamatan & Desa Tujuan Travel', '', '<button type="button" class="chip-tombol" data-trv="pilih">‹ Kembali</button>') +
-      '<div class="cat-strip">' + kb.kec.map(function (kc) {
+    app._trvDesaKey = kabId + '|' + kcAkt.id;
+    var T = S.travel, intraKab = T && T.di === kabId;
+    var lokS = (intraKab && OJEK && OJEK.lokasiSekarang) ? OJEK.lokasiSekarang(S) : null;
+    var titikRef = (lokS && lokS.kabId === kabId && lokS.lat != null) ? lokS : W.titikAwal(kabId);
+    var mdAkt = W.medanJalan ? W.medanJalan(titikRef, W.titikDesa(kabId, kcAkt, kcAkt.desa[0])) : { ikon: '🛣️', nama: 'Aspal' };
+    bukaLembar('travelDesa', kepala('📍 ' + kb.nama + ' (' + kb.kec.length + ' Kec)', 'Tap Kecamatan → Pilih Desa Tujuan Travel', '', '<button type="button" class="chip-tombol" data-trv="pilih">‹ Kembali</button>') +
+      '<div class="kec-wrap">' + kb.kec.map(function (kc) {
         return '<button type="button" class="' + (kc.id === kcAkt.id ? 'pilih' : '') + '" data-trv="pilihKec:' + kabId + '|' + kc.id + '">' + esc(kc.nama) + (kc.pulau ? ' ⛵' : '') + ' (' + kc.desa.length + ')</button>';
       }).join('') + '</div>' +
+      '<div class="kartu-item" style="margin-bottom:8px;background:rgba(31,138,128,.07);border-color:rgba(31,138,128,.28)"><div><span class="ki-tag milik">' + mdAkt.ikon + ' Kec. ' + esc(kcAkt.nama) + ' · ' + kcAkt.desa.length + ' Desa/Kel</span><b>🎯 Langsung ke Pusat Kec. ' + esc(kcAkt.nama) + ' (' + esc(kcAkt.desa[0]) + ')</b><small>' + esc(mdAkt.nama) + (kcAkt.pulau ? ' · Penyeberangan Kapal' : '') + '</small></div>' +
+      '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-trv="tujuanDesa:' + kabId + '|' + kcAkt.id + '|' + esc(kcAkt.desa[0]) + '">Pilih Kec. Ini</button></div></div>' +
       '<div class="grid-2">' + kcAkt.desa.map(function (ds) {
         var tD = W.titikDesa(kabId, kcAkt, ds);
-        var exKm = Math.round(W.jarakKm(ibu, tD) * 10) / 10;
-        var md = W.medanJalan ? W.medanJalan(tD, tD) : { ikon: '🛣️', nama: 'Aspal' };
-        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + md.ikon + ' ' + esc(kcAkt.nama) + '</span>' + (exKm > 0 ? '<span class="ki-tag">+' + exKm + ' km</span>' : '') + '</div>' +
+        var rawKm = Math.round(W.jarakKm(titikRef, tD) * 10) / 10;
+        var exKm = intraKab ? Math.max(2.5, rawKm) : rawKm;
+        var md = W.medanJalan ? W.medanJalan(titikRef, tD) : { ikon: '🛣️', nama: 'Aspal' };
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + md.ikon + ' ' + esc(kcAkt.nama) + '</span>' + (exKm > 0 ? '<span class="ki-tag">' + (intraKab ? '' : '+') + exKm + ' km</span>' : '') + '</div>' +
           '<b>' + esc(ds) + '</b><small>' + esc(md.nama) + (kcAkt.pulau ? ' · Penyeberangan Kapal' : '') + '</small></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-trv="tujuanDesa:' + kabId + '|' + kcAkt.id + '|' + esc(ds) + '">Tujuan Ini</button></div></div>';
       }).join('') + '</div>');
@@ -5217,11 +5239,11 @@
   function bukaLaporanTravel() {
     var T = S.travel, L = T.laporan; if (!L) return; T.laporan = null; simpan();
     var tipeNama = { cepat: 'minta cepat', santai: 'minta santai', biasa: 'biasa' };
-    bukaLembar('travelLaporan', kepala('Tiba di ' + RUTE.nama(L.ke), 'Dari ' + RUTE.nama(L.dari) + ' · pukul ' + jam(S.menit)) +
+    bukaLembar('travelLaporan', kepala('Tiba di ' + (L.tujuanNama || RUTE.nama(L.ke)), 'Dari ' + RUTE.nama(L.dari) + ' · pukul ' + jam(S.menit)) +
       '<ul class="daftar angka">' + baris('Jarak dan waktu', L.km.toLocaleString('id-ID') + ' km · ' + jamTeks(L.menit / 60)) + baris('Penumpang', L.penumpang.length) + baris('Ongkos penumpang', rupiah(L.pendapatan)) + (L.tip ? baris('Tip', rupiah(L.tip)) : '') +
       (L.tunai ? baris('Masuk dompet (Tunai)', rupiah(L.tunai)) : '') + (L.qris ? baris('Masuk QRIS (cair besok)', rupiah(L.qris)) : '') +
       baris('Tol', '−' + rupiah(L.tol)) + (L.kapal ? baris('Kapal', '−' + rupiah(L.kapal)) : '') + baris(L.ev ? 'Daya terpakai' : 'Bensin terpakai', L.bensinLiter.toLocaleString('id-ID') + (L.ev ? ' kWh' : ' L')) + baris('Nilai kamu sekarang', '★ ' + L.rating.toLocaleString('id-ID')) + '</ul>' +
-      (L.penumpang.length ? '<h3 class="subjudul">Penumpang</h3><ul class="daftar kabar">' + L.penumpang.map(function (p) { return '<li><span>' + ikonTipe(p.tipe) + ' <b>' + esc(p.nama) + '</b> · ★ ' + p.nilai.toLocaleString('id-ID') + ' · ' + rupiah(p.bayar) + (p.ket ? '<br><small>' + esc(p.ket) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>' : '') +
+      (L.penumpang.length ? '<h3 class="subjudul">Penumpang</h3><ul class="daftar kabar">' + L.penumpang.map(function (p) { return '<li><span>' + ikonTipe(p.tipe) + ' <b>' + esc(p.nama) + '</b> · ★ ' + p.nilai.toLocaleString('id-ID') + ' · ' + rupiah(p.bayar) + (p.turun ? '<br><small>📍 Turun: ' + esc(p.turun) + '</small>' : '') + (p.ket ? '<br><small>' + esc(p.ket) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>' : '') +
       (L.kejadian.length ? '<h3 class="subjudul">Di perjalanan</h3><ul class="daftar kabar">' + L.kejadian.map(function (k) { return '<li><span>' + esc(k) + '</span></li>'; }).join('') + '</ul>' : '') +
       '<div style="margin-top:16px"><button type="button" class="aksi" data-tutup>Lanjut</button></div>');
   }
@@ -5649,6 +5671,7 @@
       var listKab = W.daftarKabKalbar();
       var totalKecProv = listKab.reduce(function (a, b) { return a + (b.jmlKec || 0); }, 0);
       if (!W.kalbar[kabId]) kabId = 'pontianak';
+      app._infoKab = kabId;
       var kbObj = W.kalbar[kabId];
       html += '<h3 class="subjudul">🗺️ Provinsi Kalimantan Barat (14 Kab/Kota · ' + totalKecProv + ' Kecamatan Resmi BPS)</h3>' +
         '<div class="cat-strip">' + listKab.map(function (kb) {
