@@ -614,7 +614,7 @@
     var kb = W.kalbar[kabId];
     var kc = kb.kec.filter(function (x) { return x.id === kecId; })[0] || kb.kec[0];
     var titik = W.titikDesa(kabId, kc, kc.desa[0]);
-    S.kota = kabId === 'pontianak' ? 'pontianak' : S.kota; /* pertahankan referensi UMK Kalbar */
+    S.kota = kabId;
     S.rumah = S.rumah || {};
     S.rumah.wilayah = titik;
     if (S.ojek) { S.ojek.lokasi = titik; S.ojek.pos = { x: 0, y: 0 }; }

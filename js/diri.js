@@ -122,6 +122,175 @@
     return S;
   }
   function gadgetModel(id) { return (N.daftarGadget || []).filter(function (x) { return x.id === id; })[0]; }
+  function chargerModel(id) { return (N.daftarCharger || []).filter(function (x) { return x.id === id; })[0]; }
+  function portHp(m) {
+    if (!m) return 'typec';
+    if (m.port) return m.port;
+    var id = String(m.id || '').toLowerCase(), nm = String(m.nama || '').toLowerCase();
+    if (String(m.merek || '').toLowerCase() === 'apple') {
+      if (/iphone\s*(11|12|13|14)\b/i.test(nm) || /^iphone(11|12|13|14)/i.test(id)) return 'lightning';
+      return 'typec';
+    }
+    if (id === 'redmi12c' || id === 'infinixsmart8' || id === 'vivoy17s') return 'microusb';
+    return 'typec';
+  }
+  function labelPort(p) {
+    return p === 'lightning' ? 'Lightning' : p === 'microusb' ? 'Micro-USB' : 'Type-C';
+  }
+  /* Konsumsi daya aktif chipset nyata (mA rata-rata pemakaian aktif):
+     - iPhone (Apple Silicon + iOS): jauh lebih efisien meski mAh kecil (~275-335 mA)
+     - Mid-range modern 4nm/6nm (Snapdragon 6/7s/Dimensity 7300): sangat hemat (~375-430 mA)
+     - Chipset kencang / gaming (Snapdragon 8 Elite, Dimensity 9500s, RedMagic kipas, Tensor G3): bertenaga tapi boros (~510-675 mA)
+     - Chipset tua 12nm (Helio G36/G85): ~480-520 mA */
+  function maAktifHp(m) {
+    if (!m) return 460;
+    if (typeof m.maAktif === 'number' && m.maAktif > 0) return m.maAktif;
+    var mrk = String(m.merek || '').toLowerCase(), ket = String(m.ket || '') + ' ' + String(m.nama || '');
+    if (mrk === 'apple') {
+      if (/A20|A21|A22/i.test(ket)) return 275;
+      if (/A18|A19/i.test(ket)) return 285;
+      if (/A16|A17/i.test(ket)) return 305;
+      return 330;
+    }
+    if (/ROG|RedMagic|Dimensity 9500|8 Elite Gen 5|8 Elite/i.test(ket)) return 550;
+    if (/8 Gen 3|9400|9300|8s Gen 3|8400|8350/i.test(ket)) return 510;
+    if (/8 Gen 2|8\+ Gen 1|Tensor|Kirin/i.test(ket)) return 525;
+    if (/7s Gen 3|7 Gen 3|7300|6 Gen 4|6 Gen 3|680|685|4 Gen 2/i.test(ket)) return 405;
+    if (/Helio G99|G100|Dimensity 6/i.test(ket)) return 430;
+    if (/Helio G8|Helio G3|Unisoc/i.test(ket)) return 495;
+    return 455;
+  }
+  function bhHpAktif(S, id) {
+    var gid = id || (S && S.hp && S.hp.id);
+    var st = S && S.gadget && gid ? S.gadget[gid] : null;
+    if (st && typeof st.bh === 'number' && st.bh > 0) return Math.max(55, Math.min(100, st.bh));
+    if (st && st.dibeli != null && S) {
+      var thnPakai = Math.max(0, (S.hari || 0) - st.dibeli) / 365;
+      return Math.max(72, Math.round(100 - thnPakai * 6));
+    }
+    return 100;
+  }
+  function estimasiJamHp(S, m) {
+    var hm = m || hpAktif(S);
+    if (!hm) return 10;
+    var bh = S && hm.id === (S.hp && S.hp.id) ? bhHpAktif(S, hm.id) : (hm._bh || 100);
+    var mahEf = (hm.mah || 5000) * (bh / 100);
+    var ma = maAktifHp(hm);
+    return Math.round((mahEf / ma) * 10) / 10;
+  }
+  function siapkanCharger(S) {
+    if (!S) return;
+    S.hp = S.hp || {};
+    if (!S.hp.chargerMilik || typeof S.hp.chargerMilik !== 'object') {
+      S.hp.chargerMilik = {};
+      var hm0 = hpAktif(S), p0 = portHp(hm0);
+      var defId = p0 === 'microusb' ? 'chg_micro_10w' : p0 === 'lightning' ? 'chg_lt_20w_ank' : 'chg_c_10w';
+      S.hp.chargerMilik[defId] = { dibeli: S.hari || 0, hargaBeli: (chargerModel(defId) && chargerModel(defId).harga) || 55000 };
+      S.hp.chargerAktif = defId;
+    }
+    var ks = Object.keys(S.hp.chargerMilik);
+    if (ks.length && (!S.hp.chargerAktif || !S.hp.chargerMilik[S.hp.chargerAktif])) S.hp.chargerAktif = ks[0];
+  }
+  function chargerAktif(S) {
+    siapkanCharger(S);
+    return chargerModel(S.hp && S.hp.chargerAktif) || null;
+  }
+  function wattCasEfektif(S) {
+    siapkanCharger(S);
+    var hm = hpAktif(S), ch = chargerAktif(S);
+    if (!hm || !ch) return { ok: false, watt: 0, alasan: 'Belum punya charger! Beli adaptor & kabel di Toko Charger dulu.' };
+    var pHp = portHp(hm);
+    if (ch.port !== pHp) {
+      return { ok: false, watt: 0, alasan: 'Port tidak cocok! ' + hm.nama + ' memakai port ' + labelPort(pHp) + ', sedangkan charger aktifmu (' + ch.nama + ') memakai ' + labelPort(ch.port) + '. Ganti charger aktif atau beli charger ' + labelPort(pHp) + '.' };
+    }
+    var wattMasuk = Math.min(hm.watt || 10, ch.watt || 5);
+    return { ok: true, watt: wattMasuk, hpWatt: hm.watt || 10, chWatt: ch.watt || 5, port: pHp, charger: ch };
+  }
+  function beliCharger(S, id, caraBayar) {
+    siapkanCharger(S);
+    var ch = chargerModel(id);
+    if (!ch) return 'Charger tidak dikenal.';
+    if (S.hp.chargerMilik[id]) return 'Kamu sudah memiliki ' + ch.nama + '.';
+    var by = bayarBelanja(S, ch.harga, 'Beli Charger: ' + ch.nama, caraBayar || 'bank');
+    if (by !== true) return by;
+    S.hp.chargerMilik[id] = { dibeli: S.hari, hargaBeli: ch.harga };
+    if (portHp(hpAktif(S)) === ch.port) S.hp.chargerAktif = id;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + ch.harga;
+    return { ok: true, teks: '🔌 ' + ch.nama + ' (' + ch.watt + 'W ' + labelPort(ch.port) + ') dibeli ' + rp(ch.harga) + '!' };
+  }
+  function pakaiCharger(S, id) {
+    siapkanCharger(S);
+    var ch = chargerModel(id);
+    if (!ch || !S.hp.chargerMilik[id]) return 'Belum memiliki charger ini.';
+    S.hp.chargerAktif = id;
+    var ef = wattCasEfektif(S);
+    if (!ef.ok) return { ok: true, teks: '🔌 Charger aktif diset ke ' + ch.nama + ' (⚠️ ' + ef.alasan + ')' };
+    return { ok: true, teks: '🔌 Memakai ' + ch.nama + ' → daya masuk ke ' + hpAktif(S).nama + ': ' + ef.watt + 'W (Maks HP ' + ef.hpWatt + 'W).' };
+  }
+  function jualCharger(S, id) {
+    siapkanCharger(S);
+    var ch = chargerModel(id), st = S.hp.chargerMilik[id];
+    if (!ch || !st) return 'Belum punya charger ini.';
+    if (Object.keys(S.hp.chargerMilik).length <= 1) return 'Minimal sisakan 1 charger agar HP tetap bisa dicas.';
+    var h = Math.max(10000, Math.round((st.hargaBeli || ch.harga) * 0.55 / 5000) * 5000);
+    delete S.hp.chargerMilik[id];
+    if (S.hp.chargerAktif === id) S.hp.chargerAktif = Object.keys(S.hp.chargerMilik)[0] || null;
+    S.bank.saldo += h;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Jual charger bekas: ' + ch.nama, jml: h });
+    return { ok: true, teks: ch.nama + ' terjual ' + rp(h) + ' ke rekening.' };
+  }
+  /* ---------- Konter HP Second (stok bekas berganti tiap minggu lengkap Battery Health & kondisi) ---------- */
+  function acakPasarHpSecond(S) {
+    if (!S) return [];
+    S.hp = S.hp || {};
+    var minggu = Math.floor((S.hari || 0) / 7);
+    if (S.hp.pasarSecond && S.hp.pasarSecond.minggu === minggu && S.hp.pasarSecond.unit && S.hp.pasarSecond.unit.length) return S.hp.pasarSecond.unit;
+    var tK = KAL.tgl(S.hari || 0), thnK = tK.y, blnK = tK.m;
+    var pool = (N.daftarGadget || []).filter(function (g) {
+      if (g.jenis !== 'hp') return false;
+      var th = g.tahun || 2023, bl = g.bulanRilis || 1;
+      return th < thnK || (th === thnK && bl <= blnK);
+    });
+    var unit = [], dipakai = {};
+    var kondisiList = [
+      { label: 'Mulus Like New', faktor: 0.72, bhMin: 91, bhMax: 98, kelengkapan: 'Fullset Box + Nota Resmi' },
+      { label: 'Normal Pemakaian', faktor: 0.60, bhMin: 84, bhMax: 91, kelengkapan: 'Unit + Dus (Tanpa Charger)' },
+      { label: 'Lecet Halus / Batangan', faktor: 0.48, bhMin: 76, bhMax: 84, kelengkapan: 'Unit Only (Batangan)' }
+    ];
+    for (var i = 0; i < Math.min(12, pool.length); i++) {
+      var pick = pool[Math.floor(Math.random() * pool.length)];
+      if (!pick || dipakai[pick.id]) { continue; }
+      dipakai[pick.id] = true;
+      var kd = kondisiList[Math.floor(Math.random() * kondisiList.length)];
+      var bh = kd.bhMin + Math.floor(Math.random() * (kd.bhMax - kd.bhMin + 1));
+      var usiaThn = Math.max(0, thnK - (pick.tahun || 2023));
+      var fakUsia = Math.max(0.55, 1 - usiaThn * 0.08);
+      var hargaSec = Math.max(550000, Math.round(pick.harga * kd.faktor * fakUsia / 25000) * 25000);
+      unit.push({
+        uid: 'sec_' + minggu + '_' + i + '_' + pick.id,
+        id: pick.id, nama: pick.nama, merek: pick.merek, tahun: pick.tahun || 2023,
+        ram: pick.ram, storage: pick.storage, mah: pick.mah, watt: pick.watt, port: portHp(pick),
+        kondisi: kd.label, bh: bh, kelengkapan: kd.kelengkapan, harga: hargaSec
+      });
+    }
+    S.hp.pasarSecond = { minggu: minggu, unit: unit };
+    return unit;
+  }
+  function beliHpSecond(S, idx, caraBayar) {
+    var list = acakPasarHpSecond(S), u = list[+idx];
+    if (!u) return 'Unit HP second sudah terjual atau tidak ditemukan.';
+    if (S.gadget && S.gadget[u.id]) return 'Kamu sudah memiliki tipe ' + u.nama + '. Jual unit lama dulu kalau mau tukar.';
+    var by = bayarBelanja(S, u.harga, 'Konter HP Second: ' + u.nama + ' (BH ' + u.bh + '%)', caraBayar || 'bank');
+    if (by !== true) return by;
+    S.gadget = S.gadget || {};
+    S.gadget[u.id] = { id: u.id, dibeli: S.hari, pakai: 0, hargaBeli: u.harga, bekas: true, bh: u.bh, kondisi: u.kondisi };
+    S.hp.id = u.id;
+    S.hp.baterai = Math.min(85, 45 + Math.floor(Math.random() * 35));
+    S.hp.cas = false;
+    list.splice(+idx, 1);
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + u.harga;
+    return { ok: true, teks: '🏪 ' + u.nama + ' Second (' + u.kondisi + ' · BH ' + u.bh + '%) dibeli ' + rp(u.harga) + '! Tanpa charger bawaan (port ' + labelPort(u.port) + ').' };
+  }
   function pbModel(id) { return (N.daftarPowerBank || []).filter(function (x) { return x.id === id; })[0]; }
   function pbDipakaiList(S) {
     if (!S || !S.hp) return [];
@@ -475,24 +644,38 @@
         S.hp.pbCas = false;
       }
       if (bisaCas) {
-        var naikBat = (watt / (mah / 1000)) * j * 18;
-        var batLama = S.hp.baterai;
-        S.hp.baterai = Math.min(100, S.hp.baterai + naikBat);
-        if (batLama < 100 && S.hp.baterai >= 100) { S.hp.cas = false; kabar.push('Baterai ' + hm.nama + ' penuh 100% (charger ' + watt + 'W).'); }
+        var casEf = wattCasEfektif(S);
+        if (!casEf.ok || casEf.watt <= 0) {
+          S.hp.cas = false;
+          kabar.push('⚠️ ' + casEf.alasan);
+        } else {
+          /* kalkulasi waktu nyata: Wh baterai = (mAh * BH%) * 3.85V / 1000; daya efektif 84% (melambat di atas 80% kurva CC-CV) */
+          var bhSkrg = bhHpAktif(S, hm.id);
+          var whBat = Math.max(5, (mah * (bhSkrg / 100)) * 3.85 / 1000);
+          var kurva = S.hp.baterai >= 80 ? 0.58 : 0.86;
+          var naikBat = ((casEf.watt * kurva) / whBat) * j * 100;
+          var batLama = S.hp.baterai;
+          S.hp.baterai = Math.min(100, S.hp.baterai + naikBat);
+          if (batLama < 100 && S.hp.baterai >= 100) { S.hp.cas = false; kabar.push('⚡ Baterai ' + hm.nama + ' penuh 100% (' + casEf.watt + 'W masuk dari ' + casEf.charger.nama + ').'); }
+        }
       } else {
         if (S.hp.cas && !bisaCas) S.hp.cas = false;
         var pakaiOjek = S.ojek && S.ojek.online;
         var sedangTrip = pakaiOjek && S.ojek.trip;
         var pakaiTravel = S.travel && S.travel.aktif;
-        var lajuKuras = sedangTrip ? 8 : (pakaiOjek || pakaiTravel) ? 4.5 : 1.2;
-        var effHp = efekHp(S, hm).efisiensiBaterai || 1;
-        var butuhMah = lajuKuras * 50 * effHp * j;
+        var sedangTransit = !!(S.transit);
+        /* konsumsi mA nyata berdasarkan efisiensi chipset (Apple irit, chip gaming kencang lebih boros meski mAh besar!) */
+        var maDasar = maAktifHp(hm);
+        var fakAkt = sedangTrip ? 1.55 : (pakaiOjek || pakaiTravel || sedangTransit) ? 0.95 : 0.24;
+        var butuhMah = maDasar * fakAkt * j;
+        var bhAkt = bhHpAktif(S, hm.id);
+        var mahEfektif = Math.max(1200, mah * (bhAkt / 100));
         var pbList = pbDipakaiList(S), pbSum = pbRingkasan(S);
         if (pbList.length && pbSum.adaDaya) {
           /* suplai dari gabungan hingga 5 Power Bank aktif; UNEED Real Capacity = 100% efisiensi, merk standar = 80% */
-          var wattEf = Math.min(pbSum.wattOutMaks || 18, Math.max(15, watt));
-          var maksKirim = wattEf * 180 * j;
-          var kurangHpMah = Math.max(0, (100 - S.hp.baterai) / 100 * mah);
+          var wattEf = Math.min(pbSum.wattOutMaks || 18, Math.max(10, watt));
+          var maksKirim = ((wattEf * 0.82) / 3.85) * 1000 * j;
+          var kurangHpMah = Math.max(0, (100 - S.hp.baterai) / 100 * mahEfektif);
           var sisaTargetKirim = Math.min(maksKirim, butuhMah + kurangHpMah);
           var terkirimTotal = 0;
           for (var pi = 0; pi < pbList.length && sisaTargetKirim > 0.001; pi++) {
@@ -515,9 +698,9 @@
             }
           }
           var deltaMah = terkirimTotal - butuhMah;
-          S.hp.baterai = Math.max(0, Math.min(100, S.hp.baterai + (deltaMah / mah) * 100));
+          S.hp.baterai = Math.max(0, Math.min(100, S.hp.baterai + (deltaMah / mahEfektif) * 100));
         } else {
-          var turunBat = (butuhMah / mah) * 100;
+          var turunBat = (butuhMah / mahEfektif) * 100;
           var sblm = S.hp.baterai;
           S.hp.baterai = Math.max(0, S.hp.baterai - turunBat);
           if (sblm > 15 && S.hp.baterai <= 15) kabar.push('Baterai ' + hm.nama + ' tinggal ' + Math.round(S.hp.baterai) + '%! Singgah cas di toko/pangkalan atau sambungkan Power Bank.');
@@ -753,7 +936,16 @@
     listrikKos(S, lama, true);
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
     if (S.hp && !S.rumah.padam) {
-      if (S.hp.cas || !S.hp.pbPasang) { S.hp.baterai = 100; S.hp.cas = false; }
+      if (S.hp.cas) {
+        var casTidur = wattCasEfektif(S);
+        if (casTidur.ok && casTidur.watt > 0) {
+          var hmTd = hpAktif(S), mahTd = (hmTd && hmTd.mah) || 5000, bhTd = bhHpAktif(S, hmTd && hmTd.id);
+          var whTd = Math.max(5, (mahTd * (bhTd / 100)) * 3.85 / 1000);
+          var naikTd = ((casTidur.watt * 0.78) / whTd) * jam * 100;
+          S.hp.baterai = Math.min(100, (S.hp.baterai || 0) + naikTd);
+        }
+        if (S.hp.baterai >= 100) S.hp.cas = false;
+      }
       if ((S.hp.pbCas || S.hp.pbAutoCas) && S.hp.pbMilik) {
         var adaBelumPenuh = false;
         Object.keys(S.hp.pbMilik).forEach(function (pid) {
@@ -1004,10 +1196,14 @@
       if (S.diri.posisi !== 'kos' && (S.usaha && S.usaha.berhentiSewa)) return 'Kamu sedang di jalan! Pulang ke rumah/kos untuk colok charger listrik, atau sambungkan Power Bank.';
       if (S.diri.posisi === 'kedai' && g.KK_USAHA && !g.KK_USAHA.listrikNyala(S)) return 'Listrik sedang padam.';
       if (S.hp.baterai >= 100) return 'Baterai HP sudah penuh 100%.';
+      var efC = wattCasEfektif(S);
+      if (!efC.ok) return efC.alasan;
       S.hp.pbPasang = false;
+      S.hp.cas = true;
+      return { ok: true, teks: '⚡ Ngecas pakai ' + efC.charger.nama + ' → daya masuk ' + efC.watt + 'W (Charger ' + efC.chWatt + 'W · Maks HP ' + efC.hpWatt + 'W).' };
     }
-    S.hp.cas = !S.hp.cas;
-    return true;
+    S.hp.cas = false;
+    return { ok: true, teks: '🔌 Charger dicabut dari HP.' };
   }
   function beliPulsa(S, nominal, caraBayar) {
     var h = +nominal; if (!h || h <= 0) return 'Nominal pulsa tidak valid.';
@@ -1073,13 +1269,14 @@
     var by = bayarBelanja(S, h, 'Beli gadget: ' + gm.nama + ' (' + gm.merek + ')', caraBayar || 'bank');
     if (by !== true) return by;
     S.gadget = S.gadget || {};
-    S.gadget[id] = { id: id, dibeli: S.hari, pakai: 0, hargaBeli: h };
+    S.gadget[id] = { id: id, dibeli: S.hari, pakai: 0, hargaBeli: h, bh: 100 };
     if (gm.jenis === 'hp') {
       S.hp.id = id;
-      S.hp.baterai = 100;
+      S.hp.baterai = 75;
+      S.hp.cas = false;
     }
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
-    return true;
+    return { ok: true, teks: '📱 ' + gm.nama + ' dibeli (' + rp(h) + ')! Tanpa adaptor charger di dalam kotak (port ' + labelPort(portHp(gm)) + ', maks ' + gm.watt + 'W).' };
   }
   function pakaiHp(S, id) {
     var gm = gadgetModel(id);
@@ -3059,7 +3256,8 @@
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,
-    gadgetModel: gadgetModel, pbModel: pbModel, pbDipakaiList: pbDipakaiList, pbRingkasan: pbRingkasan, pbAktifInfo: pbAktifInfo, beliPowerBank: beliPowerBank, pakaiPowerBank: pakaiPowerBank, togglePowerBank: togglePowerBank, togglePasangPbUnit: togglePasangPbUnit, toggleCasPowerBank: toggleCasPowerBank, toggleAutoCasPb: toggleAutoCasPb, nilaiJualPowerBank: nilaiJualPowerBank, jualPowerBank: jualPowerBank, casDiPangkalan: casDiPangkalan, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
+    gadgetModel: gadgetModel, chargerModel: chargerModel, portHp: portHp, labelPort: labelPort, maAktifHp: maAktifHp, bhHpAktif: bhHpAktif, estimasiJamHp: estimasiJamHp, siapkanCharger: siapkanCharger, chargerAktif: chargerAktif, wattCasEfektif: wattCasEfektif, beliCharger: beliCharger, pakaiCharger: pakaiCharger, jualCharger: jualCharger, acakPasarHpSecond: acakPasarHpSecond, beliHpSecond: beliHpSecond,
+    pbModel: pbModel, pbDipakaiList: pbDipakaiList, pbRingkasan: pbRingkasan, pbAktifInfo: pbAktifInfo, beliPowerBank: beliPowerBank, pakaiPowerBank: pakaiPowerBank, togglePowerBank: togglePowerBank, togglePasangPbUnit: togglePasangPbUnit, toggleCasPowerBank: toggleCasPowerBank, toggleAutoCasPb: toggleAutoCasPb, nilaiJualPowerBank: nilaiJualPowerBank, jualPowerBank: jualPowerBank, casDiPangkalan: casDiPangkalan, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,

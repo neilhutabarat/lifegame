@@ -39,8 +39,10 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .hud-kec { font-size: 10px !important; font-weight: 800 !important; color: var(--kontainer-tua) !important; max-width: 100%; white-space: normal !important; overflow-wrap: break-word; line-height: 1.18 !important; text-align: right; }
 .hud-pop { font-size: 9.5px !important; font-weight: 800 !important; color: var(--tinta-pudar) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
 .status-buka { color: var(--kontainer) !important; }
-.chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 3px; height: 22px; max-width: 100%; font-size: 10px; font-weight: 800; padding: 0 8px; border-radius: 7px; background: rgba(251, 250, 246, .94); border: 1px solid rgba(29, 43, 51, .11); color: var(--tinta); box-shadow: 0 2px 6px -4px rgba(0,0,0,.32); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; }
+.chips { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; align-items: stretch; }
+.chips:empty { display: none; }
+.chip { pointer-events: auto; display: flex; align-items: center; justify-content: center; gap: 4px; height: 22px; width: 100%; min-width: 0; font-size: 10px; font-weight: 800; padding: 0 7px; border-radius: 7px; background: rgba(251, 250, 246, .94); border: 1px solid rgba(29, 43, 51, .11); color: var(--tinta); box-shadow: 0 2px 6px -4px rgba(0,0,0,.32); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; text-align: center; }
+.chip:only-child { grid-column: 1 / -1; }
 .chip.libur { background: var(--merah-libur); color: #fff; border-color: transparent; }
 .chip.cuti { background: var(--cuti); color: #fff; border-color: transparent; }
 .chip.event { background: var(--kunyit); color: #2a1d00; border-color: transparent; }
@@ -228,9 +230,9 @@ button:focus-visible { outline: 3px solid var(--kunyit); outline-offset: 2px; }
 .hp-app .hp-badge { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--merah-libur); color: #fff; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,.3); }
 .input-teks { width: 100%; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--panel-garis); background: #fff; font: inherit; font-weight: 700; color: var(--tinta); margin-top: 6px; }
 .input-teks:focus { outline: none; border-color: var(--kontainer); }
-.saldo-besar { display: grid; padding: 14px 16px; border-radius: 18px; background: var(--tinta); color: #fff; margin-bottom: 10px; }
-.saldo-besar small { font-size: 12px; font-weight: 800; opacity: .7; }
-.saldo-besar b { font-family: var(--font-judul); font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.saldo-besar { display: grid; padding: 14px 16px; border-radius: 18px; background: var(--tinta); color: #fff; margin-bottom: 10px; min-width: 0; }
+.saldo-besar small { font-size: 12px; font-weight: 800; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saldo-besar b { font-family: var(--font-judul); font-size: clamp(19px, 5.4vw, 26px); line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip-baris { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .chip-tombol { padding: 9px 14px; border-radius: 12px; background: rgba(31,138,128,.12); color: var(--kontainer-tua); font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
 .chip-tombol.pilih { background: var(--kontainer); color: #fff; }
@@ -417,10 +419,10 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .ojek-kartu.tawaran .ojek-tombol .chip-tombol { padding: 7px 10px; font-size: 12px; border-radius: 10px; }
 
 /* ---------- tampilan HP rapi, ringkas & anti-scroll panjang (P40) ---------- */
-.saldo-ringkas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
-.saldo-ringkas .saldo-besar { margin: 0; padding: 9px 11px; border-radius: 13px; }
-.saldo-ringkas .saldo-besar small { font-size: 10.5px; }
-.saldo-ringkas .saldo-besar b { font-size: 18px; }
+.saldo-ringkas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-bottom: 8px; }
+.saldo-ringkas .saldo-besar { margin: 0; padding: 10px 11px; border-radius: 13px; min-width: 0; }
+.saldo-ringkas .saldo-besar small { font-size: 10px; }
+.saldo-ringkas .saldo-besar b { font-size: clamp(13px, 3.7vw, 16.5px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .grid-nominal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 6px; }
 .grid-nominal .chip-tombol { padding: 7px 2px; font-size: 11.5px; border-radius: 9px; text-align: center; }
 .kartu-lipat { margin-top: 6px; border-radius: 11px; background: rgba(29,43,51,.05); padding: 6px 9px; }
@@ -433,8 +435,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .lembar-isi .subjudul { margin: 12px 0 6px; font-size: 13.5px; }
 .lembar-isi .chip-baris { gap: 5px; margin-top: 6px; }
 .lembar-isi .chip-tombol { padding: 7px 10px; font-size: 12.5px; border-radius: 10px; }
-.lembar-isi .saldo-besar { padding: 11px 14px; border-radius: 15px; margin-bottom: 8px; }
-.lembar-isi .saldo-besar b { font-size: 24px; }
+.lembar-isi .saldo-besar { padding: 11px 13px; border-radius: 15px; margin-bottom: 8px; }
+.lembar-isi .saldo-besar b { font-size: clamp(16px, 4.8vw, 22px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lembar-isi .saldo-ringkas .saldo-besar b { font-size: clamp(12.5px, 3.6vw, 16px); }
 .lembar-isi .daftar li { padding: 8px 10px; }
 .lembar-isi .catatan { font-size: 12px; margin-top: 6px; line-height: 1.38; }
 

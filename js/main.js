@@ -357,7 +357,8 @@
     var shHud = (DUNIA && DUNIA.suhuSekarang) ? DUNIA.suhuSekarang(S) : { c: 30, ikon: '☀️', ket: 'Cerah' };
     var popHud = (window.KK_WILAYAH && window.KK_WILAYAH.pendudukWilayah) ? window.KK_WILAYAH.formatPenduduk(window.KK_WILAYAH.pendudukWilayah(S)) : '685rb';
     var warnaBajuHud = HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13';
-    var kunciHUD = S.hari + ':' + Math.floor(S.menit) + ':' + S.fase + ':' + bbmHud + ':' + bbmCar + ':' + (lokHud ? (lokHud.desa + lokHud.kecNama) : '') + ':' + Math.round((jrHud || 0) * 10) + ':' + shHud.c + ':' + shHud.ket + ':' + popHud + ':' + warnaBajuHud;
+    var stHud = Math.round((S.diri && S.diri.stamina) || 0), mkHud = Math.round((((S.diri && S.diri.kenyang) || 0) + ((S.diri && S.diri.minum) || 0)) / 2), hbHud = Math.round((S.diri && S.diri.hb) || 0), batHud = Math.round((S.hp && S.hp.baterai) || 0);
+    var kunciHUD = S.hari + ':' + Math.floor(S.menit) + ':' + S.fase + ':' + bbmHud + ':' + bbmCar + ':' + stHud + ':' + mkHud + ':' + hbHud + ':' + batHud + ':' + (lokHud ? (lokHud.desa + lokHud.kecNama) : '') + ':' + Math.round((jrHud || 0) * 10) + ':' + shHud.c + ':' + shHud.ket + ':' + popHud + ':' + warnaBajuHud;
     if (!paksa && kunciHUD === hudTerakhir) return; hudTerakhir = kunciHUD;
     $('h-jam').textContent = jam(S.menit);
     if ($('h-kec')) $('h-kec').textContent = '📍 ' + ((lokHud && lokHud.kecNama) ? (lokHud.desa && lokHud.desa !== lokHud.kecNama ? lokHud.desa + ', ' + lokHud.kecNama : lokHud.kecNama) : kotaIni().nama);
@@ -474,11 +475,13 @@
         })() +
         (!tanpaToko && S.dunia.kotor >= 40 && S.fase !== 'malam' ? '<span class="chip libur">Kedai kotor, tap kontainer untuk bersih-bersih</span>' : '') +
         (!tanpaToko && S.dunia.maps.status === 'aktif' && S.dunia.ulasan.length ? '<span class="chip">★ ' + DUNIA.rataMaps(S).toFixed(1).replace('.', ',') + ' Maps</span>' : '');
-      $('h-chip').innerHTML = chipDunia + (tipis.length ? '<span class="chip libur">Stok menipis: ' + esc(tipis.map(function (id) { return MN.BARANG[id].nama.split(' (')[0].replace('Biji kopi robusta sangrai', 'Kopi').replace('Cup plastik 16 oz + tutup + sedotan', 'Cup plastik').replace('Cup kertas 8 oz + tutup', 'Cup kertas'); }).join(', ')) + '</span>' : '') +
+      var rawChips = chipDunia + (tipis.length ? '<span class="chip libur">Stok menipis: ' + esc(tipis.map(function (id) { return MN.BARANG[id].nama.split(' (')[0].replace('Biji kopi robusta sangrai', 'Kopi').replace('Cup plastik 16 oz + tutup + sedotan', 'Cup plastik').replace('Cup kertas 8 oz + tutup', 'Cup kertas'); }).join(', ')) + '</span>' : '') +
         isi.map(function (x) {
         var label = x.jenis === 'libur' ? 'Libur: ' + x.nama : x.jenis === 'cuti' ? 'Cuti bersama: ' + x.nama : x.nama;
         return '<span class="chip ' + x.jenis + '">' + esc(label) + '</span>';
       }).join('');
+      var mChips = rawChips.match(/<span class="chip[\s\S]*?<\/span>/g) || [];
+      $('h-chip').innerHTML = mChips.slice(0, 4).join('');
     }
   }
   function perbaruiAksi() {
@@ -598,7 +601,7 @@
       app.gameTab || '', app.gameKonsolFilter || '', app.gadgetTab || '', app.merekGadget || '',
       app.apotekTab || '', app.kelTab || '', app.propTab || '', app.hunianKat || '', app.travelTab || '', app.trvFilter || '',
       app.temanTab || '', app.temanDetailId || '', app.tmFilter || '', app.rpsTab || '', app.hadiahKat || '', app.meter || '',
-      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || ''
+      app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || ''
     ].join('|');
   }
   function bukaLembar(nama, html) {
@@ -2023,8 +2026,8 @@
     var menuT = app.tokoMenu || 'rumah', toko = app.tokoTab || 'tokopedia';
     var diRumah = DIRI.muatBarangRumah ? DIRI.muatBarangRumah(S) : S.rumah.jenis === 'rumah', kat = app.tokoKat || 'semua';
     var tk = KAL.tanggalKembar(S.hari), dsk = DIRI.diskonToko(S, toko);
-    var html = kepalaApp('Toko Online', (tk ? 'Promo ' + tk + ' (−' + Math.round(dsk * 100) + '%)' : 'Tokopedia & Shopee · Gadget & Rumah')) +
-      segTab('tokoMenu', [['rumah', '🏠 Rumah'], ['hp', '📱 HP'], ['tablap', '💻 Laptop'], ['pb', '🔋 Power Bank']], menuT) + pesanApp();
+    var html = kepalaApp('Toko Online', (tk ? 'Promo ' + tk + ' (−' + Math.round(dsk * 100) + '%)' : 'Tokopedia & Shopee · Gadget, Charger & Second')) +
+      catStrip('tokoMenu', [['rumah', '🏠 Rumah'], ['hp', '📱 HP Baru'], ['second', '🏪 HP Second'], ['charger', '🔌 Charger'], ['pb', '🔋 Power Bank'], ['tablap', '💻 Laptop']], menuT) + pesanApp();
     if (menuT === 'rumah') {
       var barangToko = N.barangRumah.filter(function (b) { return b.id !== 'ps5' && b.id !== 'ps5disc' && b.id !== 'kaset' && (!b.toko || b.toko === toko); });
       var katAda = (N.kategoriToko || [{ id: 'semua', nama: 'Semua' }]).filter(function (c) { return c.id === 'semua' || barangToko.some(function (b) { return b.kat === c.id; }); });
@@ -2058,11 +2061,39 @@
             : '<button type="button" class="chip-tombol pilih" data-aksi="beliPb:' + pb.id + '-bank">Beli</button><button type="button" class="chip-tombol" data-aksi="beliPb:' + pb.id + '-kk">KK</button>') + '</div></div>';
       }).join('') + '</div>';
     }
-    /* HP / Tablet & Laptop (katalog lengkap 2025–2026 per brand & jadwal bulan rilis realistis) */
+    if (menuT === 'charger') {
+      if (DIRI.siapkanCharger) DIRI.siapkanCharger(S);
+      var pFilt = app.chargerPort || 'semua';
+      var listCh = (N.daftarCharger || []).filter(function (c) { return pFilt === 'semua' || c.port === pFilt; });
+      var hmC = DIRI.hpAktif(S), pHpAkt = DIRI.portHp ? DIRI.portHp(hmC) : 'typec';
+      return html + '<p class="catatan" style="margin:0 0 6px">HP aktifmu (<b>' + esc(hmC.nama.replace(/\s*\(Charger\s+\d+W\)/i, '')) + '</b>) memakai port <b>' + DIRI.labelPort(pHpAkt) + '</b> (maks ' + hmC.watt + 'W). Bisa punya lebih dari 1 charger!</p>' +
+        catStrip('chargerPort', [['semua', 'Semua Port'], ['typec', '🔌 Type-C'], ['lightning', '⚡ Lightning (iPhone ≤14)'], ['microusb', '🔋 Micro-USB']], pFilt) +
+        '<div class="grid-2">' + listCh.map(function (c) {
+          var milikC = !!(S.hp && S.hp.chargerMilik && S.hp.chargerMilik[c.id]);
+          var aktC = S.hp && S.hp.chargerAktif === c.id;
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag' + (c.asli ? ' milik' : '') + '">' + (c.asli ? 'Original' : '3rd-Party') + ' · ' + c.watt + 'W</span>' + (aktC ? '<span class="ki-tag promo">Dipakai</span>' : milikC ? '<span class="ki-tag milik">Punya</span>' : '') + '</div>' +
+            '<b>' + esc(c.nama) + '</b><small>Port ' + DIRI.labelPort(c.port) + ' · ' + esc(c.ket) + '</small><div class="ki-harga">' + rupiahPendek(c.harga) + '</div></div>' +
+            '<div class="ki-aksi">' + (milikC
+              ? (!aktC ? '<button type="button" class="chip-tombol pilih" data-aksi="pakaiCharger:' + c.id + '">Pakai</button>' : '<small>Aktif ✓</small>') + '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="jualCharger:' + c.id + '">Jual</button>'
+              : '<button type="button" class="chip-tombol pilih" data-aksi="beliCharger:' + c.id + '-bank">Beli</button><button type="button" class="chip-tombol" data-aksi="beliCharger:' + c.id + '-dompet">Tunai</button>') + '</div></div>';
+        }).join('') + '</div>';
+    }
+    if (menuT === 'second') {
+      var listSec = DIRI.acakPasarHpSecond ? DIRI.acakPasarHpSecond(S) : [];
+      return html + '<p class="catatan" style="margin:0 0 6px">🏪 <b>Konter HP Second</b> — stok HP bekas resmi & inter berganti setiap minggu. Perhatikan <b>Battery Health (BH%)</b> dan port kabel (tanpa charger bawaan).</p>' +
+        (listSec.length ? '<div class="grid-2">' + listSec.map(function (u, idx) {
+          var sudahS = !!(S.gadget && S.gadget[u.id]);
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + u.tahun + ' · ' + DIRI.labelPort(u.port) + '</span><span class="ki-tag ' + (u.bh >= 90 ? 'milik' : 'promo') + '">BH ' + u.bh + '%</span></div>' +
+            '<b>' + esc(u.nama.replace(/\s*\(Charger\s+\d+W\)/i, '')) + '</b><small>' + esc(u.kondisi) + ' · ' + u.ram + '/' + u.storage + 'GB · ' + u.mah + 'mAh · ' + u.watt + 'W<br>' + esc(u.kelengkapan) + '</small>' +
+            '<div class="ki-harga">' + rupiahPendek(u.harga) + '</div></div>' +
+            '<div class="ki-aksi">' + (sudahS ? '<small>Sudah punya ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="beliHpSecond:' + idx + '-bank">Beli</button><button type="button" class="chip-tombol" data-aksi="beliHpSecond:' + idx + '-kk">KK</button>') + '</div></div>';
+        }).join('') + '</div>' : '<p class="catatan">Semua stok HP second minggu ini sudah terjual. Cek lagi minggu depan!</p>');
+    }
+    /* HP / Tablet & Laptop (katalog lengkap 18+ brand, 170+ HP realistis, tanpa charger bawaan) */
     var merekFilter = app.merekGadget || 'semua', tKiniHp = KAL.tgl(S.hari), thnKini = tKiniHp.y, blnKini = tKiniHp.m;
     var thnHpFilter = app.tahunHp || 'terbaru';
     if (menuT === 'hp') {
-      html += catStrip('merekGadget', [['semua', 'Semua'], ['jumbo', '🔋 ≥6000mAh'], ['Apple', 'Apple'], ['Samsung', 'Samsung'], ['Xiaomi', 'Xiaomi'], ['OPPO', 'OPPO'], ['Vivo', 'Vivo'], ['Realme', 'Realme'], ['Infinix', 'Infinix'], ['ASUS', 'ASUS'], ['TECNO', 'TECNO'], ['Unihertz', 'Unihertz']], merekFilter) +
+      html += catStrip('merekGadget', [['semua', 'Semua'], ['jumbo', '🔋 ≥6000mAh'], ['Apple', 'Apple'], ['Samsung', 'Samsung'], ['Xiaomi', 'Xiaomi/POCO'], ['OPPO', 'OPPO'], ['Vivo', 'Vivo/iQOO'], ['Realme', 'Realme'], ['Infinix', 'Infinix'], ['TECNO', 'TECNO'], ['ASUS', 'ASUS'], ['OnePlus', 'OnePlus'], ['Google', 'Pixel'], ['Nothing', 'Nothing'], ['Motorola', 'Motorola'], ['Honor', 'Honor'], ['Huawei', 'Huawei'], ['Nubia', 'Nubia'], ['Sony', 'Sony'], ['Itel', 'Itel'], ['Unihertz', 'Unihertz']], merekFilter) +
         segTab('tahunHp', [['terbaru', '✨ ' + (thnKini - 1) + '–' + thnKini], [String(thnKini), '🔥 ' + thnKini], [String(thnKini - 1), '📱 ' + (thnKini - 1)], ['lama', '📦 Seri Lama']], thnHpFilter);
     }
     var listG = N.daftarGadget.filter(function (g) {
@@ -2090,9 +2121,12 @@
       var blnSingkat = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
       var tagRilis = belumRilis ? ('<span class="ki-tag promo">🗓️ ' + (blnSingkat[rilisBln - 1] || 'Bln ' + rilisBln) + ' ' + rilisThn + '</span>') : (dipakai ? '<span class="ki-tag milik">Dipakai</span>' : milik ? '<span class="ki-tag milik">Punya</span>' : '');
       var efHpCard = (g.jenis === 'hp' && DIRI.efekHp) ? DIRI.efekHp(S, g) : null;
-      var ketEfek = efHpCard ? ('📡 GPS +' + Math.round(efHpCard.gpsBonus * 100) + '% · 🎥 Konten +' + Math.round(efHpCard.kontenBonus * 100) + '% · ✨ Prestise +' + Math.round(efHpCard.prestiseBonus * 100) + '%' + (efHpCard.hematPersen > 0 ? ' · 🔋 Hemat ' + efHpCard.hematPersen + '%' : '')) : '';
-      return '<div class="kartu-item' + (belumRilis ? ' redup' : '') + '"><div><div class="ki-top"><span class="ki-tag">' + esc(g.merek) + ' · ' + rilisThn + '</span>' + tagRilis + '</div>' +
-        '<b>' + esc(g.nama) + '</b><small>' + g.ram + '/' + g.storage + 'GB · ' + g.mah + 'mAh · ' + g.watt + 'W</small>' +
+      var jamAwet = (g.jenis === 'hp' && DIRI.estimasiJamHp) ? DIRI.estimasiJamHp(S, g) : 0;
+      var pLbl = (g.jenis === 'hp' && DIRI.portHp) ? DIRI.labelPort(DIRI.portHp(g)) : 'Type-C';
+      var namaBersih = String(g.nama || '').replace(/\s*\(Charger\s+\d+W\)/i, '');
+      var ketEfek = efHpCard ? ('📡 GPS +' + Math.round(efHpCard.gpsBonus * 100) + '% · 🎥 Konten +' + Math.round(efHpCard.kontenBonus * 100) + '% · ⏱️ ~' + jamAwet + ' jam aktif') : '';
+      return '<div class="kartu-item' + (belumRilis ? ' redup' : '') + '"><div><div class="ki-top"><span class="ki-tag">' + esc(g.merek) + ' · ' + rilisThn + ' · ' + pLbl + '</span>' + tagRilis + '</div>' +
+        '<b>' + esc(namaBersih) + '</b><small>' + g.ram + '/' + g.storage + 'GB · ' + g.mah.toLocaleString('id-ID') + 'mAh · Maks ' + g.watt + 'W' + (g.chip ? ' · ' + esc(g.chip) : '') + '</small>' +
         (ketEfek ? '<small style="color:var(--kontainer-tua)">' + esc(ketEfek) + '</small>' : '') +
         '<div class="ki-harga">' + rupiahPendek(g.harga) + '</div></div>' +
         '<div class="ki-aksi">' + (milik
@@ -2345,22 +2379,52 @@
 
   /* ---------- aplikasi HP & Kuota (fokus pada perangkatmu: pulsa, kuota, WiFi, cas, PB, & APK) ---------- */
   function layarGadget() {
+    if (DIRI.siapkanCharger) DIRI.siapkanCharger(S);
     var tab = app.gadgetTab || 'data';
-    if (tab !== 'data' && tab !== 'apk' && tab !== 'pb') tab = 'data';
+    if (tab !== 'data' && tab !== 'apk' && tab !== 'pb' && tab !== 'charger' && tab !== 'second') tab = 'data';
     var hm = DIRI.hpAktif(S), st = DIRI.infoStorageHp(S), wifi = DIRI.adaWifi(S);
     var bat = Math.round((S.hp && S.hp.baterai) || 95), wfInfo = N.paketData.wifiRumah;
     var pbInfoG = DIRI.pbAktifInfo ? DIRI.pbAktifInfo(S) : null;
     var efAktif = DIRI.efekHp ? DIRI.efekHp(S, hm) : { gpsBonus: 0, kontenBonus: 0, prestiseBonus: 0, hematPersen: 0, tierLabel: 'Entry' };
-    var html = kepalaApp('HP & Kuota', hm.nama + ' · ' + bat + '% · ' + (wifi ? 'WiFi' : (S.hp ? S.hp.kuota.toFixed(1).replace('.', ',') : 0) + ' GB')) +
-      '<div class="saldo-besar" style="background:#1e88e5"><small>' + esc(hm.merek + ' ' + hm.nama) + ' (' + esc(efAktif.tierLabel) + ')' + (S.hp.pbPasang && pbInfoG ? ' · 🔋 PB ' + pbInfoG.persen + '%' : '') + '</small><b>' + (S.hp.cas ? '⚡ Cas ' : '🔋 ') + bat + '% · ' + hm.ram + ' GB · ' + st.terpakaiRom + '/' + st.totalRom + ' GB</b>' + persenBar(bat) + '</div>' +
-      '<div class="stat-grid-2" style="margin-bottom:6px"><div class="stat-box"><small>📡 Sinyal GPS Ojol · 🔋 Chip</small><b>Order +' + Math.round(efAktif.gpsBonus * 100) + '% · Hemat ' + efAktif.hematPersen + '%</b></div>' +
-      '<div class="stat-box"><small>🎥 Konten · ✨ Prestise Sosial</small><b>+' + Math.round(efAktif.kontenBonus * 100) + '% · +' + Math.round(efAktif.prestiseBonus * 100) + '%</b></div></div>' +
+    var bhHp = DIRI.bhHpAktif ? DIRI.bhHpAktif(S, hm.id) : 100;
+    var jamAwet = DIRI.estimasiJamHp ? DIRI.estimasiJamHp(S, hm) : 10;
+    var pHp = DIRI.portHp ? DIRI.portHp(hm) : 'typec';
+    var casEf = DIRI.wattCasEfektif ? DIRI.wattCasEfektif(S) : { ok: true, watt: hm.watt, chWatt: hm.watt, hpWatt: hm.watt };
+    var nmHpB = String(hm.nama || '').replace(/\s*\(Charger\s+\d+W\)/i, '');
+    var html = kepalaApp('HP & Kuota', nmHpB + ' · ' + bat + '% · ' + (wifi ? 'WiFi' : (S.hp ? S.hp.kuota.toFixed(1).replace('.', ',') : 0) + ' GB')) +
+      '<div class="saldo-besar" style="background:#1e88e5"><small>' + esc(hm.merek + ' ' + nmHpB) + ' · ' + DIRI.labelPort(pHp) + ' · BH ' + bhHp + '%' + (S.hp.pbPasang && pbInfoG ? ' · 🔋 PB ' + pbInfoG.persen + '%' : '') + '</small><b>' + (S.hp.cas ? '⚡ Cas ' + casEf.watt + 'W · ' : '🔋 ') + bat + '% · ' + hm.mah.toLocaleString('id-ID') + 'mAh</b>' + persenBar(bat) + '</div>' +
+      '<div class="stat-grid-2" style="margin-bottom:6px"><div class="stat-box"><small>⚡ Charger Aktif · Daya Masuk</small><b>' + (casEf.ok ? (casEf.watt + 'W (Chg ' + casEf.chWatt + 'W / HP ' + casEf.hpWatt + 'W)') : '⚠️ Port Tidak Cocok!') + '</b></div>' +
+      '<div class="stat-box"><small>⏱️ Daya Tahan · 📡 GPS · 🎥 Konten</small><b>~' + jamAwet + ' jam · +' + Math.round(efAktif.gpsBonus * 100) + '% · +' + Math.round(efAktif.kontenBonus * 100) + '%</b></div></div>' +
       '<div class="cat-strip">' +
-      '<button type="button" class="' + (S.hp.cas ? 'pilih' : '') + '" data-aksi="casHp:1">' + (S.hp.cas ? '⚡ Cabut (' + hm.watt + 'W)' : '🔌 Cas ' + hm.watt + 'W') + '</button>' +
+      '<button type="button" class="' + (S.hp.cas ? 'pilih' : '') + '" data-aksi="casHp:1">' + (S.hp.cas ? '⚡ Cabut (' + casEf.watt + 'W)' : (casEf.ok ? '🔌 Cas ' + casEf.watt + 'W' : '⚠️ Ganti Charger')) + '</button>' +
       (pbInfoG ? '<button type="button" class="' + (S.hp.pbPasang ? 'pilih' : '') + '" data-aksi="togglePb:1">' + (S.hp.pbPasang ? '🔋 Cabut PB' : '🔋 Pakai PB ' + pbInfoG.persen + '%') + '</button>' : '') +
       '<button type="button" data-aksi="bukaTokoMenu:hp">🛒 Beli HP</button>' +
-      '<button type="button" data-aksi="bukaTokoMenu:pb">🛒 Beli PB</button></div>' +
-      segTab('gadgetTab', [['data', '📶 Pulsa & Kuota'], ['apk', '📲 APK & Game'], ['pb', '🔋 Power Bank']], tab) + pesanApp();
+      '<button type="button" data-aksi="bukaTokoMenu:charger">🔌 Toko Charger</button></div>' +
+      catStrip('gadgetTab', [['data', '📶 Kuota'], ['charger', '🔌 Charger (' + Object.keys(S.hp.chargerMilik || {}).length + ')'], ['second', '🏪 HP Second'], ['pb', '🔋 Power Bank'], ['apk', '📲 APK']], tab) + pesanApp();
+    if (tab === 'charger') {
+      var milikChKeys = Object.keys((S.hp && S.hp.chargerMilik) || {});
+      return html + '<div class="chip-baris" style="margin-bottom:8px"><button type="button" class="chip-tombol pilih" data-aksi="bukaTokoMenu:charger">🛒 Beli Charger Baru (Original / 3rd-Party)</button></div>' +
+        '<div class="grid-2">' + milikChKeys.map(function (cid) {
+          var c = DIRI.chargerModel(cid); if (!c) return '';
+          var akt = S.hp.chargerAktif === cid, cocokPort = c.port === pHp;
+          var wattMasuk = cocokPort ? Math.min(hm.watt || 10, c.watt) : 0;
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag' + (c.asli ? ' milik' : '') + '">' + DIRI.labelPort(c.port) + ' · ' + c.watt + 'W</span>' + (akt ? '<span class="ki-tag promo">Dipakai</span>' : '') + '</div>' +
+            '<b>' + esc(c.nama) + '</b><small>' + (cocokPort ? ('⚡ Masuk ke HP ini: <b>' + wattMasuk + 'W</b>') : ('⚠️ Beda port (HP butuh ' + DIRI.labelPort(pHp) + ')')) + '</small></div>' +
+            '<div class="ki-aksi">' + (!akt ? '<button type="button" class="chip-tombol pilih" data-aksi="pakaiCharger:' + cid + '">Pakai</button>' : '<small>Aktif ✓</small>') +
+            (milikChKeys.length > 1 ? '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="jualCharger:' + cid + '">Jual</button>' : '') + '</div></div>';
+        }).join('') + '</div>';
+    }
+    if (tab === 'second') {
+      var listSecG = DIRI.acakPasarHpSecond ? DIRI.acakPasarHpSecond(S) : [];
+      return html + '<p class="catatan" style="margin:0 0 6px">🏪 <b>Konter HP Second</b> — stok HP bekas berganti tiap minggu (tanpa charger bawaan).</p>' +
+        (listSecG.length ? '<div class="grid-2">' + listSecG.map(function (u, idx) {
+          var sudahS = !!(S.gadget && S.gadget[u.id]);
+          return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + u.tahun + ' · ' + DIRI.labelPort(u.port) + '</span><span class="ki-tag ' + (u.bh >= 90 ? 'milik' : 'promo') + '">BH ' + u.bh + '%</span></div>' +
+            '<b>' + esc(u.nama.replace(/\s*\(Charger\s+\d+W\)/i, '')) + '</b><small>' + esc(u.kondisi) + ' · ' + u.ram + '/' + u.storage + 'GB · ' + u.mah + 'mAh · ' + u.watt + 'W</small>' +
+            '<div class="ki-harga">' + rupiahPendek(u.harga) + '</div></div>' +
+            '<div class="ki-aksi">' + (sudahS ? '<small>Sudah punya ✓</small>' : '<button type="button" class="chip-tombol pilih" data-aksi="beliHpSecond:' + idx + '-bank">Beli</button><button type="button" class="chip-tombol" data-aksi="beliHpSecond:' + idx + '-kk">KK</button>') + '</div></div>';
+        }).join('') + '</div>' : '<p class="catatan">Stok HP second minggu ini habis.</p>');
+    }
     if (tab === 'data') {
       var noHp = (S.hp && S.hp.nomor) || '081256000088';
       var masaAktif = (S.hp && S.hp.masaAktif != null) ? S.hp.masaAktif : (S.hari + 30);
@@ -2885,6 +2949,8 @@
     else if (nama === 'bekasMobil') { var ubc = S.pasarBekasMobil && S.pasarBekasMobil.unit[+nilai]; if (ubc) return { ket: 'Beli Mobil Bekas', nominal: ubc.harga }; }
     else if (nama === 'barang') { var pb2 = nilai.split('-'), b2 = DIRI.barang(pb2[0]); if (b2 && (!DIRI.punya(S, pb2[0]) || b2.banyak)) return { ket: 'Beli ' + b2.nama, nominal: DIRI.hargaToko(S, b2, pb2[1] || 'tokopedia') }; }
     else if (nama === 'beliGadget') { var pg2 = nilai.split('-'), gm2 = DIRI.gadgetModel(pg2[0]); if (gm2 && !(S.gadget && S.gadget[pg2[0]])) { var dG = DIRI.diskonToko(S, 'tokopedia'); return { ket: 'Beli ' + gm2.nama, nominal: dG ? Math.round(gm2.harga * (1 - dG) / 5000) * 5000 : gm2.harga }; } }
+    else if (nama === 'beliCharger') { var pc2 = nilai.split('-'), cm2 = DIRI.chargerModel && DIRI.chargerModel(pc2[0]); if (cm2 && !(S.hp && S.hp.chargerMilik && S.hp.chargerMilik[pc2[0]])) return { ket: 'Beli Charger ' + cm2.nama, nominal: cm2.harga }; }
+    else if (nama === 'beliHpSecond') { var ps2 = nilai.split('-'), us2 = (DIRI.acakPasarHpSecond ? DIRI.acakPasarHpSecond(S) : [])[+ps2[0]]; if (us2) return { ket: 'HP Second: ' + us2.nama + ' (BH ' + us2.bh + '%)', nominal: us2.harga }; }
     else if (nama === 'beliPb') { var ppb2 = nilai.split('-'), pbm2 = DIRI.pbModel(ppb2[0]); if (pbm2 && !(S.hp && S.hp.pbMilik && S.hp.pbMilik[ppb2[0]])) { var dP = DIRI.diskonToko(S, 'tokopedia'); return { ket: 'Beli Power Bank ' + pbm2.nama, nominal: dP ? Math.round(pbm2.harga * (1 - dP) / 5000) * 5000 : pbm2.harga }; } }
     else if (nama === 'beliPulsa') { var pp2 = nilai.split('-'); if (+pp2[0] > 0) return { ket: 'Isi Pulsa ' + rupiah(+pp2[0]) + ' (+admin Rp1.500)', nominal: +pp2[0] + 1500 }; }
     else if (nama === 'beliKuota') { var pk2 = nilai.split('-'), pkt = (N.paketData && N.paketData.kuota || []).filter(function (x) { return x.id === pk2[0]; })[0]; if (pkt && pk2[1] !== 'pulsa') return { ket: 'Beli ' + pkt.nama, nominal: pkt.harga }; }
@@ -3257,11 +3323,16 @@
     else if (nama === 'naikLimitKk') { var rnl = UANG.naikLimitKk(S); hasilAksi(rnl === true ? true : rnl, 'Limit kartu kredit naik menjadi ' + rupiah(S.kk.limit) + '.'); }
     else if (nama === 'gadgetTab') { app.gadgetTab = nilai; app.pesan = ''; }
     else if (nama === 'merekGadget') { app.merekGadget = nilai; app.pesan = ''; }
-    else if (nama === 'casHp') { var rcas = DIRI.toggleCasHp(S); if (rcas === true && SUARA) SUARA.bunyi('cas'); hasilAksi(rcas, S.hp.cas ? 'Charger ' + DIRI.hpAktif(S).watt + 'W dicolokkan. Baterai sedang diisi.' : 'Charger dicabut.'); }
+    else if (nama === 'casHp') { var rcas = DIRI.toggleCasHp(S); if (rcas && rcas.ok && SUARA) SUARA.bunyi('cas'); hasilAksi(rcas && rcas.ok ? true : rcas, rcas && rcas.ok ? rcas.teks : ''); }
+    else if (nama === 'chargerPort') { app.chargerPort = nilai; app.pesan = ''; }
+    else if (nama === 'beliCharger') { var pch = nilai.split('-'), rch = DIRI.beliCharger(S, pch[0], pch[1]); hasilAksi(rch && rch.ok ? true : rch, rch && rch.ok ? rch.teks : ''); }
+    else if (nama === 'pakaiCharger') { var rpc = DIRI.pakaiCharger(S, nilai); hasilAksi(rpc && rpc.ok ? true : rpc, rpc && rpc.ok ? rpc.teks : ''); }
+    else if (nama === 'jualCharger') { var rjc = DIRI.jualCharger(S, nilai); hasilAksi(rjc && rjc.ok ? true : rjc, rjc && rjc.ok ? rjc.teks : ''); }
+    else if (nama === 'beliHpSecond') { var psc = nilai.split('-'), rsc = DIRI.beliHpSecond(S, psc[0], psc[1]); hasilAksi(rsc && rsc.ok ? true : rsc, rsc && rsc.ok ? rsc.teks : ''); }
     else if (nama === 'beliPulsa') { var pp = nilai.split('-'); hasilAksi(DIRI.beliPulsa(S, +pp[0], pp[1]), 'Pulsa ' + rupiah(+pp[0]) + ' berhasil diisi.'); }
     else if (nama === 'beliKuota') { var pk = nilai.split('-'); hasilAksi(DIRI.beliKuota(S, pk[0], pk[1]), 'Paket kuota internet berhasil diaktifkan!'); }
     else if (nama === 'wifiRumah') { hasilAksi(DIRI.toggleWifiRumah(S), S.rumah.wifi ? 'WiFi Fiber berhasil dipasang di ' + DIRI.tempat(S) + '! Internet bebas kuota.' : 'Langganan WiFi dihentikan.'); }
-    else if (nama === 'beliGadget') { var pg = nilai.split('-'); hasilAksi(DIRI.beliGadget(S, pg[0], pg[1]), DIRI.gadgetModel(pg[0]).nama + ' berhasil dibeli!'); }
+    else if (nama === 'beliGadget') { var pg = nilai.split('-'), rbg = DIRI.beliGadget(S, pg[0], pg[1]); hasilAksi(rbg && rbg.ok ? true : rbg, rbg && rbg.ok ? rbg.teks : ''); }
     else if (nama === 'pakaiHp') { hasilAksi(DIRI.pakaiHp(S, nilai), 'HP utama diganti ke ' + DIRI.gadgetModel(nilai).nama + '.'); }
     else if (nama === 'jualGadget') { var rjg2 = DIRI.jualGadget(S, nilai); hasilAksi(rjg2 && rjg2.ok ? true : rjg2, rjg2 && rjg2.ok ? rjg2.nama + ' terjual ' + rupiah(rjg2.harga) + ', masuk rekening.' : ''); }
     else if (nama === 'instalApk') { hasilAksi(DIRI.instalApk(S, nilai), DIRI.apkModel(nilai).nama + ' selesai diinstal di HP!'); }
@@ -3427,17 +3498,27 @@
         var tAsal = (OJEK && OJEK.lokasiRumah) ? OJEK.lokasiRumah(S) : null;
         if (tAsal && tAsal.kabId === tBaru.kabId && tAsal.kecId === tBaru.kecId) { toast('Kamu sudah tinggal di Kec. ' + tBaru.kecNama + ', ' + tBaru.kabNama + '.', 2200); return; }
         var kmPindah = (tAsal && tAsal.lat != null && tBaru.lat != null) ? Math.max(6, Math.round(window.KK_WILAYAH.jarakKm(tAsal, tBaru) * 10) / 10) : 18;
-        var mobilOk = MOBIL.siapPakai(S) && MOBIL.cukup(S, Math.min(kmPindah, 150));
-        var motorOk = MOTOR.siapPakai(S) && MOTOR.cukup(S, Math.min(kmPindah, 120));
+        var mobilOk = MOBIL.siapPakai(S) && S.mobil && ((S.mobil.isi || 0) > 0.2);
+        var motorOk = MOTOR.siapPakai(S) && S.motor && (S.motor.bbm === 'listrik' ? (S.motor.baterai || 0) > 2 : (S.motor.isi || 0) > 0.1);
         var kendP = mobilOk ? 'mobil' : motorOk ? 'motor' : 'ojek';
         var bbmDipakaiP = 0, bbmTargetP = null, menitP = Math.max(15, Math.min(360, Math.round(kmPindah / (mobilOk ? 55 : 42) * 60)));
         if (kendP === 'mobil' && S.mobil) {
-          var isiM0 = S.mobil.isi, rmP = MOBIL.jalan(S, Math.min(kmPindah, 150), 1);
-          if (rmP && rmP.ok) { bbmDipakaiP = Math.max(0, isiM0 - S.mobil.isi); S.mobil.isi = isiM0; bbmTargetP = 'mobil'; }
+          var kmlMb = S.mobil.kml || 12;
+          bbmDipakaiP = Math.min(S.mobil.isi * 0.92, Math.max(0.3, kmPindah / kmlMb));
+          S.mobil.km = (S.mobil.km || 0) + kmPindah;
+          bbmTargetP = 'mobil';
         } else if (kendP === 'motor' && S.motor) {
-          var evP = S.motor.bbm === 'listrik', isiP0 = evP ? S.motor.baterai : S.motor.isi;
-          var rmtP = MOTOR.jalan(S, Math.min(kmPindah, 120), 1);
-          if (rmtP && rmtP.ok) { bbmDipakaiP = Math.max(0, isiP0 - (evP ? S.motor.baterai : S.motor.isi)); if (evP) S.motor.baterai = isiP0; else S.motor.isi = isiP0; bbmTargetP = evP ? 'motorEv' : 'motor'; }
+          var evP = S.motor.bbm === 'listrik';
+          if (evP) {
+            var jp = S.motor.jarakPenuh || 60;
+            bbmDipakaiP = Math.min(S.motor.baterai * 0.92, Math.max(4, (kmPindah / jp) * 100));
+            bbmTargetP = 'motorEv';
+          } else {
+            var kmlMt = S.motor.kml || 45;
+            bbmDipakaiP = Math.min(S.motor.isi * 0.92, Math.max(0.15, kmPindah / kmlMt));
+            bbmTargetP = 'motor';
+          }
+          S.motor.km = (S.motor.km || 0) + kmPindah;
         }
         var durasiP = Math.max(4.5, Math.min(12, 3.5 + kmPindah * 0.08));
         tutupLembar();
@@ -4891,7 +4972,7 @@
   function aksiHud(nama, nilai) {
     if (nama === 'pilihKend') { app.bensinTarget = nilai; app.bbmPilih = null; return popupBensin(); }
     var mobil = app.bensinTarget ? (app.bensinTarget === 'mobil' && !!S.mobil) : (jenisKendaraanJalan() === 'mobil');
-    if (nama === 'casHp') { var rc = DIRI.toggleCasHp(S); if (rc === true || rc == null) { if (SUARA) SUARA.bunyi('cas'); simpan(); perbaruiHUD(true); } return popupHp(rc === true || rc == null ? (S.hp && S.hp.cas ? 'Charger dicolokkan. Baterai sedang diisi.' : 'Charger dicabut.') : rc, !(rc === true || rc == null)); }
+    if (nama === 'casHp') { var rc = DIRI.toggleCasHp(S); var okC = !!(rc && rc.ok); if (okC) { if (SUARA) SUARA.bunyi('cas'); simpan(); perbaruiHUD(true); } return popupHp(okC ? rc.teks : rc, !okC); }
     if (nama === 'casPangkalan') { var rcpk = DIRI.casDiPangkalan(S); if (rcpk && rcpk.ok) { if (SUARA) SUARA.bunyi('cas'); lompatWaktu(rcpk.menit); simpan(); perbaruiHUD(true); return popupHp(rcpk.teks, false); } return popupHp(rcpk, true); }
     if (nama === 'togglePb') { var rtp = DIRI.togglePowerBank(S); if (rtp && rtp.ok && SUARA) SUARA.bunyi('cas'); simpan(); perbaruiHUD(true); return popupHp(rtp && rtp.ok ? rtp.teks : rtp, !(rtp && rtp.ok)); }
     if (nama === 'autoCasPb') { var rac = DIRI.toggleAutoCasPb(S); simpan(); perbaruiHUD(true); return popupHp(rac && rac.ok ? rac.teks : rac, false); }

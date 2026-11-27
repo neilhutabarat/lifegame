@@ -76,47 +76,115 @@
     cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); cx.fill();
   }
 
-  /* Awan realistis vektor berlapis: cumulus cerah, stratocumulus, sebagian mendung, dan cumulonimbus gelap sebelum/saat hujan */
+  /* Awan realistis vektor berlapis: menyatu alami dengan gradien langit, kabut stratus cakrawala, dan pencahayaan waktu + mendung */
   function gambarAwanLangit(m, t, cw) {
     var awan = cw ? (cw.awan != null ? cw.awan : 0.3) : 0.25;
     var mendung = cw ? (cw.mendung || 0) : 0;
     var angin = cw ? (cw.angin || 0.15) : 0.15;
     var gp = gelap(m);
-    var nAwan = Math.max(2, Math.round(2 + awan * 7));
-    var spd = 0.004 + angin * 0.024;
+    var senja = (m >= 330 && m <= 420) || (m >= 995 && m <= 1115);
+    /* 1. Lapisan langit mendung / stratus halus di latar agar awan bergerak tidak kontras dengan langit */
+    if (awan > 0.18 || mendung > 0.15) {
+      var grStr = cx.createLinearGradient(0, 0, 0, H * 0.56);
+      var aTop = Math.min(0.72, mendung * 0.58 + awan * 0.12);
+      var aMid = Math.min(0.45, mendung * 0.36 + awan * 0.08);
+      if (gp > 0.5) {
+        grStr.addColorStop(0, 'rgba(18,26,46,' + aTop.toFixed(3) + ')');
+        grStr.addColorStop(0.65, 'rgba(28,38,62,' + aMid.toFixed(3) + ')');
+        grStr.addColorStop(1, 'rgba(28,38,62,0)');
+      } else if (mendung > 0.35) {
+        grStr.addColorStop(0, 'rgba(72,84,102,' + aTop.toFixed(3) + ')');
+        grStr.addColorStop(0.65, 'rgba(116,128,144,' + aMid.toFixed(3) + ')');
+        grStr.addColorStop(1, 'rgba(135,146,160,0)');
+      } else if (senja) {
+        grStr.addColorStop(0, 'rgba(185,148,145,' + (aTop * 0.65).toFixed(3) + ')');
+        grStr.addColorStop(0.7, 'rgba(235,188,155,' + (aMid * 0.55).toFixed(3) + ')');
+        grStr.addColorStop(1, 'rgba(240,196,162,0)');
+      } else {
+        grStr.addColorStop(0, 'rgba(205,228,244,' + (aTop * 0.65).toFixed(3) + ')');
+        grStr.addColorStop(0.7, 'rgba(222,238,248,' + (aMid * 0.55).toFixed(3) + ')');
+        grStr.addColorStop(1, 'rgba(222,238,248,0)');
+      }
+      cx.fillStyle = grStr;
+      cx.fillRect(0, 0, W, H * 0.58);
+    }
+    /* 2. Awan latar jauh (bergerak pelan, sangat menyatu dengan warna cakrawala) */
+    var nJauh = Math.max(2, Math.round(2 + awan * 4));
+    for (var cj = 0; cj < nJauh; cj++) {
+      var sj = cj * 43 + 11;
+      var xj = (((acak(sj) * (W + 180) + t * (0.0018 + angin * 0.008)) % (W + 190)) - 95);
+      var yj = H * 0.24 + acak(sj + 2) * (H * 0.14);
+      var wj = 56 + acak(sj + 4) * 50 + mendung * 28;
+      var grJ = cx.createLinearGradient(xj, yj - 18, xj, yj + 16);
+      var rJ = gp > 0.5 ? 42 : mendung > 0.45 ? Math.round(138 - mendung * 42) : senja ? 236 : 226;
+      var gJ = gp > 0.5 ? 54 : mendung > 0.45 ? Math.round(146 - mendung * 42) : senja ? 202 : 238;
+      var bJ = gp > 0.5 ? 82 : mendung > 0.45 ? Math.round(160 - mendung * 38) : senja ? 186 : 248;
+      grJ.addColorStop(0, 'rgba(' + rJ + ',' + gJ + ',' + bJ + ',' + (0.28 + awan * 0.22).toFixed(2) + ')');
+      grJ.addColorStop(1, 'rgba(' + rJ + ',' + gJ + ',' + bJ + ',0)');
+      cx.fillStyle = grJ;
+      cx.beginPath();
+      cx.ellipse(xj, yj, wj, 14 + mendung * 8, 0, 0, Math.PI * 2);
+      cx.ellipse(xj - wj * 0.35, yj - 4, wj * 0.55, 11 + mendung * 6, 0, 0, Math.PI * 2);
+      cx.ellipse(xj + wj * 0.35, yj - 2, wj * 0.5, 10 + mendung * 6, 0, 0, Math.PI * 2);
+      cx.fill();
+    }
+    /* 3. Awan cumulus / cumulonimbus depan dengan gradien atas-bawah halus selaras langit */
+    var nAwan = Math.max(2, Math.round(2 + awan * 6));
+    var spd = 0.0035 + angin * 0.02;
     for (var ci = 0; ci < nAwan; ci++) {
       var seed = ci * 31 + 7;
-      var cx0 = (((acak(seed) * (W + 140) + t * spd * (0.65 + (ci % 3) * 0.25)) % (W + 150)) - 75);
-      var cy0 = 42 + acak(seed + 3) * (H * 0.24) + (ci % 2) * 14;
-      var sk = 0.72 + acak(seed + 5) * 0.75 + mendung * 0.35;
-      var isGelap = mendung > 0.45 && (cw.kode !== 'sebagian_mendung' || ci % 2 === 0);
-      var rC, gC, bC, aC;
+      var cx0 = (((acak(seed) * (W + 150) + t * spd * (0.65 + (ci % 3) * 0.22)) % (W + 160)) - 80);
+      var cy0 = 46 + acak(seed + 3) * (H * 0.20) + (ci % 2) * 12;
+      var sk = 0.78 + acak(seed + 5) * 0.68 + mendung * 0.32;
+      var isGelap = mendung > 0.4 && (cw.kode !== 'sebagian_mendung' || ci % 2 === 0);
+      var rT, gT, bT, rB, gB, bB, aC;
       if (isGelap) {
-        rC = Math.round(92 - mendung * 38 - gp * 30);
-        gC = Math.round(102 - mendung * 40 - gp * 30);
-        bC = Math.round(118 - mendung * 38 - gp * 26);
-        aC = Math.min(0.92, 0.55 + mendung * 0.36);
+        rT = Math.round(130 - mendung * 45 - gp * 45);
+        gT = Math.round(138 - mendung * 46 - gp * 45);
+        bT = Math.round(152 - mendung * 42 - gp * 38);
+        rB = Math.max(24, rT - 34); gB = Math.max(28, gT - 32); bB = Math.max(38, bT - 26);
+        aC = Math.min(0.84, 0.44 + mendung * 0.38);
       } else {
-        var senja = (m >= 330 && m <= 410) || (m >= 1005 && m <= 1110);
-        rC = gp > 0.5 ? 60 : senja ? 248 : 246;
-        gC = gp > 0.5 ? 72 : senja ? 212 : 250;
-        bC = gp > 0.5 ? 100 : senja ? 190 : 255;
-        aC = gp > 0.5 ? 0.34 : (0.58 + awan * 0.25);
+        rT = gp > 0.5 ? 54 : senja ? 245 : 238;
+        gT = gp > 0.5 ? 66 : senja ? 210 : 246;
+        bT = gp > 0.5 ? 94 : senja ? 190 : 252;
+        rB = gp > 0.5 ? 36 : senja ? 205 : 196;
+        gB = gp > 0.5 ? 46 : senja ? 168 : 216;
+        bB = gp > 0.5 ? 72 : senja ? 158 : 232;
+        aC = gp > 0.5 ? 0.30 : Math.min(0.76, 0.42 + awan * 0.28);
       }
-      var colAtas = 'rgba(' + rC + ',' + gC + ',' + bC + ',' + aC.toFixed(2) + ')';
-      var colBawah = 'rgba(' + Math.max(20, rC - 28) + ',' + Math.max(24, gC - 26) + ',' + Math.max(32, bC - 20) + ',' + (aC * 0.85).toFixed(2) + ')';
-      cx.save(); cx.translate(cx0, cy0); cx.scale(sk, sk * (isGelap ? 0.92 : 0.78));
-      /* bayangan dasar awan */
-      bulat(0, 7, 24, colBawah); bulat(-22, 9, 17, colBawah); bulat(24, 9, 18, colBawah);
-      /* gumpalan cumulus atas */
-      bulat(-24, 2, 16, colAtas); bulat(-8, -8, 22, colAtas); bulat(12, -5, 20, colAtas); bulat(27, 3, 15, colAtas);
-      if (isGelap) { bulat(2, -16, 16, colAtas); }
+      cx.save(); cx.translate(cx0, cy0); cx.scale(sk, sk * (isGelap ? 0.88 : 0.74));
+      var grCl = cx.createLinearGradient(0, -24, 0, 22);
+      grCl.addColorStop(0, 'rgba(' + rT + ',' + gT + ',' + bT + ',' + aC.toFixed(2) + ')');
+      grCl.addColorStop(0.68, 'rgba(' + rB + ',' + gB + ',' + bB + ',' + (aC * 0.82).toFixed(2) + ')');
+      grCl.addColorStop(1, 'rgba(' + rB + ',' + gB + ',' + bB + ',0)');
+      cx.fillStyle = grCl;
+      cx.beginPath();
+      cx.arc(-25, 3, 16, 0, Math.PI * 2);
+      cx.arc(-9, -8, 22, 0, Math.PI * 2);
+      cx.arc(13, -5, 20, 0, Math.PI * 2);
+      cx.arc(28, 4, 15, 0, Math.PI * 2);
+      cx.ellipse(2, 10, 38, 12, 0, 0, Math.PI * 2);
+      if (isGelap) cx.arc(2, -16, 15, 0, Math.PI * 2);
+      cx.fill();
       cx.restore();
     }
-    if (mendung > 0.35) {
-      cx.fillStyle = 'rgba(32,42,58,' + (mendung * 0.36).toFixed(3) + ')';
-      cx.fillRect(0, 0, W, H * 0.65);
-    }
+  }
+  /* Pengaruh atmosfer mendung/awan tebal pada seluruh latar kota/desa agar pencahayaan dunia terasa nyata & menyatu */
+  function gambarAtmosferCuaca(s) {
+    var cw = s && s.cuacaInfo;
+    if (!cw || s.hbAnim || s.kerjaAnim || s.posisi === 'kos') return;
+    var mendung = cw.mendung || 0;
+    if (mendung <= 0.25) return;
+    cx.save();
+    cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
+    var grAtm = cx.createLinearGradient(0, 0, 0, H);
+    grAtm.addColorStop(0, 'rgba(42,54,72,' + (mendung * 0.22).toFixed(3) + ')');
+    grAtm.addColorStop(0.55, 'rgba(64,78,96,' + (mendung * 0.16).toFixed(3) + ')');
+    grAtm.addColorStop(1, 'rgba(38,48,64,' + (mendung * 0.14).toFixed(3) + ')');
+    cx.fillStyle = grAtm;
+    cx.fillRect(0, 0, W, H);
+    cx.restore();
   }
   function gambarLangit(m, t, s) {
     var l = langit(m), cw = s && s.cuacaInfo, mendung = cw ? (cw.mendung || 0) : 0;
@@ -2558,6 +2626,7 @@
   function gambar(s, t) {
     gambarInti(s, t);
     if (!s.hbAnim && cx) {
+      gambarAtmosferCuaca(s);
       if (s.ramadan) hiasRamadan(s, t);
       if (s.lebaran || s.natal || s.tahunBaru) hiasHariRaya(s, t);
     }
