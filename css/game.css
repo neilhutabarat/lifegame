@@ -366,10 +366,15 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .chip-tombol { max-width: 100%; white-space: normal; text-align: center; }
 #hud, #bawah { max-width: 100%; box-sizing: border-box; }
 
-/* travel antarkota */
-.travel-panel { display: grid; }
+/* travel antarkota — terkunci presisi di dalam layar tanpa los ke samping */
+.ojek-panel, .travel-panel { display: grid; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+.ojek-kartu, .ojek-bare { width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
 .ojek-kartu.travel { border-left-color: #6a4fd8; }
-.pnp-baris { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.ojek-kartu.travel .ojek-tombol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-top: 6px; }
+.ojek-kartu.travel .ojek-tombol.trv-bawah { grid-template-columns: 1.5fr 1fr 1fr; }
+.ojek-kartu.travel .ojek-tombol .chip-tombol, .ojek-kartu.travel .ojek-tombol .aksi { width: 100%; min-width: 0; padding: 7px 4px; font-size: 11px; border-radius: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ojek-kartu.travel .ojek-tombol .aksi { font-size: 12.5px; padding: 7px 6px; }
+.pnp-baris { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 6px; max-width: 100%; }
 .chip-pnp { font-size: 13px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: rgba(29,43,51,.08); }
 .chip-pnp.cepat { background: rgba(242,165,22,.25); }
 .chip-pnp.santai { background: rgba(31,138,128,.2); }
@@ -398,9 +403,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) { .popup-bulat.muncul { animation: none; } }
 .ojek-bare { display: grid; gap: 4px; padding: 0; background: transparent; box-shadow: none; }
 .ojek-bare .meteran { height: 6px; margin: 0; background: rgba(255,255,255,.6); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-.ojek-bare .gigi-slider { display: flex; align-items: center; gap: 8px; margin: 0; padding: 4px 10px; border-radius: 12px; background: rgba(251,250,246,.90); box-shadow: 0 3px 10px -4px rgba(0,0,0,.38); font-size: 11px; }
-.ojek-bare .gigi-slider span { white-space: nowrap; font-size: 11px; }
-.ojek-bare .gigi-slider input[type=range] { flex: 1; height: 22px; margin: 0; }
+.ojek-bare .gigi-slider { display: flex; align-items: center; gap: 6px; margin: 0; padding: 5px 8px; border-radius: 12px; background: rgba(251,250,246,.92); box-shadow: 0 3px 10px -4px rgba(0,0,0,.38); font-size: 11px; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+.ojek-bare .gigi-slider span { white-space: nowrap; font-size: 10.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; }
+.ojek-bare .gigi-slider input[type=range] { flex: 1 1 56px; min-width: 44px; width: 100%; height: 22px; margin: 0; }
 .ojek-bare .ojek-tombol { display: flex; justify-content: flex-end; margin-top: 2px; }
 .ojek-kartu.kecil { padding: 7px 11px; border-radius: 14px; background: rgba(251,250,246,.92); }
 .ojek-kartu.kecil b { font-size: 13.5px; line-height: 1.2; }

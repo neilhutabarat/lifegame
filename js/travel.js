@@ -7,7 +7,7 @@
   var CEPAT_JALAN = 8, CEPAT_TUNGGU = 1; /* waktu berjalan lebih cepat saat menyetir atau menunggu penumpang (setelan) */
   var MULT_MIN = 0.6, MULT_MAKS = 1.6, JEMPUT_MAKS = 3, MAKS_SUPIR = 10;
   var VVIP_HARGA = 50000000; /* mode VVIP berbayar untuk membuka gembok Kecepatan Level 5 (Top Speed) */
-  var KAS_MIN = 50000000; /* batas minimum Kas Travel: auto top-up dari bank jika di bawah Rp50.000.000 */
+  var KAS_MIN = 5000000; /* batas minimum Kas Travel: auto top-up dari bank jika di bawah Rp5.000.000 */
   var JAM_RAMAI = [0.2, 0.1, 0.1, 0.2, 0.8, 1.4, 1.6, 1.4, 1.1, 1, 1, 1.1, 1.2, 1.2, 1.3, 1.5, 1.7, 1.5, 1.1, 0.8, 0.5, 0.4, 0.3, 0.2];
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
@@ -19,7 +19,7 @@
     if (!S.travel.total.km) S.travel.total.km = 0;
     if (!S.travel.supir) S.travel.supir = [];
     if (typeof S.travel.kas !== 'number' || isNaN(S.travel.kas)) S.travel.kas = 0;
-    if (typeof S.travel.kasTarget !== 'number' || S.travel.kasTarget < 1000000) S.travel.kasTarget = KAS_MIN;
+    if (typeof S.travel.kasTarget !== 'number' || S.travel.kasTarget < 1000000 || S.travel.kasTarget === 50000000) S.travel.kasTarget = KAS_MIN;
     if (typeof S.travel.autoTopupKas !== 'boolean') S.travel.autoTopupKas = true;
     if (!Array.isArray(S.travel.kasMutasi)) S.travel.kasMutasi = [];
     S.travel.supir.forEach(function (sp) {

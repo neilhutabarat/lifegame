@@ -497,7 +497,7 @@
     }
   }
   function perbaruiAksi() {
-    var b = $('b-aksi'), diKos = S.diri.posisi === 'kos', ojek = S.ojek.online, trv = !!(S.travel && S.travel.aktif), tr = !!(S.transit || S.hbRun || S.kerjaRun);
+    var b = $('b-aksi'), diKos = S.diri.posisi === 'kos', ojek = S.ojek.online, trv = !!(S.travel && S.travel.aktif), tr = !!(S.transit || S.hbRun || S.kerjaRun || S.aktAnim);
     var sedangJalanOrder = !!(tr || (ojek && (S.ojek.tawaran || S.ojek.trip)) || (trv && S.travel.status !== 'tunggu'));
     if (sedangJalanOrder) aksiCepatBuka = false;
     $('travel-panel').hidden = !trv; if (trv) panelTravel(true);
@@ -912,7 +912,7 @@
       badge: function () { return S.travel && S.travel.aktif ? '•' : ''; } },
     { id: 'kastravel', nama: function () { return 'Kas Travel'; }, warna: function () { return '#1565c0'; },
       ikon: function () { return svgIkon('<rect x="3" y="6.5" width="18" height="13" rx="2.5"/><path d="M8 6.5V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5M3 11.5h18M12 11.5v3"/>'); },
-      badge: function () { return (S.travel && (S.travel.kas || 0) < (TRAVEL.KAS_MIN || 50000000) && S.travel.autoTopupKas === false) ? '!' : ''; } },
+      badge: function () { return (S.travel && (S.travel.kas || 0) < (TRAVEL.KAS_MIN || 5000000) && S.travel.autoTopupKas === false) ? '!' : ''; } },
     { id: 'apotek', nama: function () { return 'Apotek & RS'; }, warna: function () { return '#00a651'; },
       ikon: function () { return svgIkon('<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/>'); },
       badge: function () { return S.diri.sakit || S.diri.hiv || (S.keluarga || []).some(function (k) { return !!k.sakit; }) ? '!' : ''; } },
@@ -1345,7 +1345,9 @@
           '<div class="ki-aksi">' + (sld > 0 ? '<button type="button" class="chip-tombol pilih" data-aksi="tarikQrisSupir:' + sp.id + '">Tarik ke Bank</button>' : '<small>Saldo Rp0</small>') + '</div></div>';
       }).join('') + '</div>';
     }
-    html += '<div class="saldo-besar"><small>Saldo Dompet Digital Siap Pakai (' + Object.keys(S.merchants || {}).length + '/' + N.qris.length + ' akun)</small><b>' + rupiah(UANG.tersedia(S)) + '</b></div>';
+    var totEwTersedia = UANG.tersedia(S);
+    html += '<div class="saldo-besar"><small>Saldo Dompet Digital Siap Pakai (' + Object.keys(S.merchants || {}).length + '/' + N.qris.length + ' akun)</small><b>' + rupiah(totEwTersedia) + '</b></div>' +
+      (totEwTersedia > 0 ? '<div class="chip-baris" style="margin-bottom:8px"><button type="button" class="chip-tombol pilih" style="width:100%" data-aksi="tarikMerchant:semua">💸 Tarik Semua Saldo ke Bank ' + esc(UANG.bankIni(S).nama) + ' (' + rupiah(totEwTersedia) + ')</button></div>' : '');
     var ewPilih = app.topupEwId || Object.keys(S.merchants || {})[0] || (N.qris[0] && N.qris[0].id) || 'gopay';
     html += '<div class="kartu-item" style="margin-bottom:10px"><div><div class="ki-top"><span class="ki-tag milik">💸 Top Up dari ' + esc(UANG.bankIni(S).nama) + '</span><span class="ki-tag">Admin Rp1.000</span></div>' +
       '<b>Isi Saldo Dompet Digital</b><small>Saldo Bank: ' + rupiah(S.bank.saldo) + ' · Langsung masuk & bisa dipakai bayar di mana saja</small></div>' +
@@ -1364,7 +1366,7 @@
           ? '<small>Aktif ' + namaTanggal(mm.aktifPada) + '</small>'
           : '<div class="ki-harga">' + rupiah(mm.tersedia) + '</div>' + (menunggu > 0 ? '<small>Cair besok: ' + rupiahPendek(menunggu) + '</small>' : '<small>Siap ditarik</small>')) +
         '</div><div class="ki-aksi">' +
-        (mm.tersedia > 0 ? '<button type="button" class="chip-tombol pilih" data-aksi="tarikMerchant:' + q.id + '">Tarik</button>' : '') +
+        '<button type="button" class="chip-tombol pilih" data-aksi="tarikMerchant:' + q.id + '"' + (mm.tersedia > 0 ? '' : ' disabled') + '>💸 Tarik</button>' +
         '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="tutupQris:' + q.id + '">Tutup</button></div></div>';
     }).join('') + '</div>';
     return html + '<details class="kartu-lipat"><summary>ℹ️ Info Kelas Merchant & MDR QRIS</summary><ul class="daftar angka">' + baris('Kelas merchant', 'Merchant ' + kelas) + baris('MDR QRIS<small>0% s/d ' + rupiah(m.gratisSampai) + ', di atasnya ' + (m.tarif * 100).toFixed(1).replace('.', ',') + '%</small>', '') + '</ul></details>';
@@ -1400,17 +1402,17 @@
     var T = TRAVEL.siapkan(S);
     if (T.autoTopupKas !== false) TRAVEL.pastikanKasTravel(S, 0);
     var sld = Math.max(0, Math.round(T.kas || 0));
-    var target = T.kasTarget || TRAVEL.KAS_MIN || 50000000;
+    var target = T.kasTarget || TRAVEL.KAS_MIN || 5000000;
     var autoOn = T.autoTopupKas !== false;
     var mut = (T.kasMutasi || []).slice(0, 35);
     var bankNm = UANG.bankIni(S).nama;
     return kepalaApp('Kas Travel', 'Dana operasional bensin, servis & armada') + pesanApp() +
       '<div class="kartu-hero" style="background:linear-gradient(135deg,#0d47a1,#1976d2)"><small>Saldo Kas Travel · Auto Top-Up &lt; ' + rupiahPendek(target) + ': ' + (autoOn ? 'AKTIF ✓' : 'MATI') + '</small><b>' + rupiah(sld) + '</b></div>' +
-      '<div class="cat-strip"><button type="button" class="' + (autoOn ? 'pilih' : '') + '" data-aksi="toggleAutoKasTravel:1">' + (autoOn ? '✓ Auto Top-Up &lt; 50jt' : 'Aktifkan Auto Top-Up') + '</button><button type="button" data-app="travel">🚐 Travel</button><button type="button" data-app="qriskaryawan">📲 QRIS Supir</button></div>' +
+      '<div class="cat-strip"><button type="button" class="' + (autoOn ? 'pilih' : '') + '" data-aksi="toggleAutoKasTravel:1">' + (autoOn ? '✓ Auto Top-Up &lt; ' + rupiahPendek(target) : 'Aktifkan Auto Top-Up') + '</button><button type="button" data-app="travel">🚐 Travel</button><button type="button" data-app="qriskaryawan">📲 QRIS Supir</button></div>' +
       '<h3 class="subjudul">Isi dari Bank ' + esc(bankNm) + ' (' + rupiahPendek(S.bank.saldo) + ')</h3>' +
-      tombolNominalGrid('isiKasTravel', [5000000, 10000000, 25000000, 50000000, 100000000]) +
-      '<div class="chip-baris" style="margin-top:6px;align-items:center"><input id="in-kas-isi" class="input-teks" type="number" step="1000000" min="100000" placeholder="Nominal manual (Rp)" style="margin:0;flex:1"><button type="button" class="chip-tombol pilih" data-aksi="isiKasTravel:input">Transfer</button></div>' +
-      (sld > 0 ? '<h3 class="subjudul">Tarik ke Bank ' + esc(bankNm) + '</h3>' + tombolNominalGrid('tarikKasTravel', [10000000, 25000000, 50000000, 100000000, 'semua']) : '') +
+      tombolNominalGrid('isiKasTravel', [1000000, 2500000, 5000000, 10000000, 25000000]) +
+      '<div class="chip-baris" style="margin-top:6px;align-items:center"><input id="in-kas-isi" class="input-teks" type="number" step="500000" min="100000" placeholder="Nominal manual (Rp)" style="margin:0;flex:1"><button type="button" class="chip-tombol pilih" data-aksi="isiKasTravel:input">Transfer</button></div>' +
+      (sld > 0 ? '<h3 class="subjudul">Tarik ke Bank ' + esc(bankNm) + '</h3>' + tombolNominalGrid('tarikKasTravel', [1000000, 2500000, 5000000, 10000000, 'semua']) : '') +
       '<details class="kartu-lipat"><summary>📜 Riwayat Mutasi Kas (' + mut.length + ')</summary><ul class="daftar angka">' + (mut.length ? mut.map(function (m) {
         return baris(esc(m.ket) + '<small>' + namaTanggal(m.n) + '</small>', (m.jml < 0 ? '−' : '+') + rupiah(Math.abs(m.jml)), m.jml < 0 ? 'keluar' : 'masuk');
       }).join('') : '<li><span>Belum ada mutasi.</span></li>') + '</ul></details>';
@@ -3226,37 +3228,44 @@
     } else hasilAksi(r);
   }
   var konfirmBayarTmp = null;
-  function mintaKonfirmBayar(ket, nominal, onBayar) {
+  function mintaKonfirmBayar(ket, nominal, onBayar, opsi) {
+    opsi = opsi || {};
     var nom = Math.max(0, Math.round(+nominal || 0));
     if (nom <= 0) return onBayar('dompet');
+    var tanpaKredit = !!opsi.tanpaKredit;
     var cash = UANG.dompet(S), bank = (S.bank && S.bank.saldo) || 0, nmBank = UANG.bankIni(S).nama;
     var ewal = UANG.tersedia ? UANG.tersedia(S) : 0;
-    var kkAktif = !!(S.kk && S.kk.status === 'aktif'), sisaKk = kkAktif ? UANG.sisaLimitKk(S) : 0;
+    var kkAktif = !tanpaKredit && !!(S.kk && S.kk.status === 'aktif'), sisaKk = kkAktif ? UANG.sisaLimitKk(S) : 0;
     var pl = UANG.siapkanPaylater ? UANG.siapkanPaylater(S) : { status: 'aktif', limit: 3000000 };
-    var plAktif = pl.status === 'aktif', sisaPl = plAktif && UANG.sisaLimitPaylater ? UANG.sisaLimitPaylater(S) : 0;
+    var plAktif = !tanpaKredit && pl.status === 'aktif', sisaPl = plAktif && UANG.sisaLimitPaylater ? UANG.sisaLimitPaylater(S) : 0;
     var tnPl = app.plTenorPilih || 3;
     var cicPl = UANG.cicilanPaylater ? UANG.cicilanPaylater(nom, tnPl) : Math.ceil(nom / tnPl);
-    konfirmBayarTmp = { ket: ket, nominal: nom, onBayar: onBayar, lembarAsal: lembar, appAsal: app.nama };
+    konfirmBayarTmp = { ket: ket, nominal: nom, onBayar: onBayar, opsi: opsi, lembarAsal: lembar, appAsal: app.nama };
     bukaLembar('konfirmBayar',
-      kepala('Konfirmasi Pembayaran', 'Cash · Dompet Digital · Bank · Kartu Kredit · PayLater') +
+      kepala('Konfirmasi Pembayaran', tanpaKredit ? 'Cash · Dompet Digital · Bank (Tanpa KK/PayLater)' : 'Cash · Dompet Digital · Bank · Kartu Kredit · PayLater') +
       '<div class="saldo-besar"><small>' + esc(ket) + '</small><b>' + rupiah(nom) + '</b></div>' +
       '<div class="bayar-grid-2">' +
       '<button type="button" class="aksi kecil" data-bayar="dompet"' + (cash < nom ? ' disabled' : '') + '>💵 Cash / Tunai<small>' + rupiahPendek(cash) + '</small></button>' +
       '<button type="button" class="aksi kecil" style="background:#0097a7;color:#fff;box-shadow:0 3px 0 #006064" data-bayar="ewallet"' + (ewal < nom ? ' disabled' : '') + '>📲 Dompet Digital<small>' + rupiahPendek(ewal) + '</small></button>' +
-      '<button type="button" class="aksi kecil" style="background:var(--kontainer);color:#fff;box-shadow:0 3px 0 var(--kontainer-tua)" data-bayar="bank"' + (bank < nom ? ' disabled' : '') + '>🏦 ' + esc(nmBank) + '<small>' + rupiahPendek(bank) + '</small></button>' +
-      '<button type="button" class="aksi kecil" style="background:#1565c0;color:#fff;box-shadow:0 3px 0 #0d47a1" data-bayar="kk"' + (!kkAktif || sisaKk < nom ? ' disabled' : '') + '>💳 Kartu Kredit<small>' + (kkAktif ? 'Limit ' + rupiahPendek(sisaKk) : 'Ajukan di Bank') + '</small></button>' +
-      '<button type="button" class="aksi kecil" style="grid-column:1/-1;background:#7b1fa2;color:#fff;box-shadow:0 3px 0 #4a148c" data-bayar="paylater:' + tnPl + '"' + (!plAktif || sisaPl < nom ? ' disabled' : '') + '>🧾 PayLater ' + tnPl + '× · ' + rupiahPendek(cicPl) + '/bln<small>Sisa Limit ' + rupiahPendek(sisaPl) + '</small></button></div>' +
-      '<div class="cat-strip" style="margin-top:8px">' + [1, 3, 6, 12].map(function (t) {
+      '<button type="button" class="aksi kecil" style="' + (tanpaKredit ? 'grid-column:1/-1;' : '') + 'background:var(--kontainer);color:#fff;box-shadow:0 3px 0 var(--kontainer-tua)" data-bayar="bank"' + (bank < nom ? ' disabled' : '') + '>🏦 ' + esc(nmBank) + '<small>' + rupiahPendek(bank) + '</small></button>' +
+      (tanpaKredit ? '' :
+        '<button type="button" class="aksi kecil" style="background:#1565c0;color:#fff;box-shadow:0 3px 0 #0d47a1" data-bayar="kk"' + (!kkAktif || sisaKk < nom ? ' disabled' : '') + '>💳 Kartu Kredit<small>' + (kkAktif ? 'Limit ' + rupiahPendek(sisaKk) : 'Ajukan di Bank') + '</small></button>' +
+        '<button type="button" class="aksi kecil" style="grid-column:1/-1;background:#7b1fa2;color:#fff;box-shadow:0 3px 0 #4a148c" data-bayar="paylater:' + tnPl + '"' + (!plAktif || sisaPl < nom ? ' disabled' : '') + '>🧾 PayLater ' + tnPl + '× · ' + rupiahPendek(cicPl) + '/bln<small>Sisa Limit ' + rupiahPendek(sisaPl) + '</small></button>') +
+      '</div>' +
+      (tanpaKredit ? '' : '<div class="cat-strip" style="margin-top:8px">' + [1, 3, 6, 12].map(function (t) {
         var cT = UANG.cicilanPaylater ? UANG.cicilanPaylater(nom, t) : Math.ceil(nom / t);
         return '<button type="button" class="' + (t === tnPl ? 'pilih' : '') + '" data-pltenor="' + t + '">PayLater ' + t + ' bln (' + rupiahPendek(cT) + ')</button>';
-      }).join('') + '</div>' +
+      }).join('') + '</div>') +
       '<div style="margin-top:8px"><button type="button" class="tombol-lain gelap" style="width:100%" data-bayar="batal">Batal</button></div>' +
       (cash < nom && ewal < nom && bank < nom && (!kkAktif || sisaKk < nom) && (!plAktif || sisaPl < nom) ? '<p class="racik-pesan salah" style="margin-top:8px">Semua metode pembayaran belum mencukupi untuk transaksi ini.</p>' : ''));
   }
   function infoBayarAksi(nama, nilai) {
     if (nama === 'beliMakan') {
       var bm = nilai.split('-'), itM = (N.makanan || []).concat(N.minuman || []).filter(function (x) { return x.id === bm[0]; })[0];
-      if (itM) return { ket: (bm[1] === 'gofood' ? 'GoFood: ' : 'Warung: ') + itM.nama, nominal: bm[1] === 'gofood' ? DIRI.hargaGofood(S, itM) : DIRI.hargaItem(S, itM) };
+      if (itM) return { ket: (bm[1] === 'gofood' ? 'GoFood: ' : 'Warung: ') + itM.nama, nominal: bm[1] === 'gofood' ? DIRI.hargaGofood(S, itM) : DIRI.hargaItem(S, itM), tanpaKredit: true };
+    } else if (nama === 'beliKuliner' && REAL) {
+      var kdB = REAL.kulinerDaerah(S), itK = kdB.daftar.filter(function (x) { return x.id === nilai; })[0];
+      if (itK) return { ket: 'Kuliner ' + kdB.label + ': ' + itK.nama, nominal: itK.harga, tanpaKredit: true };
     } else if (nama === 'bensin') {
       var pb = nilai.split('-'), mM = S.motor;
       if (mM && mM.bbm !== 'listrik') {
@@ -3297,7 +3306,7 @@
     else if (nama === 'beliRokok') {
       var prk = nilai.split('|'), drk = DIRI.daftarRokok ? DIRI.daftarRokok(S) : { legal: [], ilegal: [] };
       var rkM = drk.legal.concat(drk.ilegal).filter(function (x) { return x.id === prk[0]; })[0];
-      if (rkM) return { ket: 'Beli ' + rkM.nama + (prk[1] === 'ecer' ? ' (1 batang)' : ' (1 bungkus)'), nominal: prk[1] === 'ecer' ? rkM.eceran : rkM.harga };
+      if (rkM) return { ket: 'Beli ' + rkM.nama + (prk[1] === 'ecer' ? ' (1 batang)' : ' (1 bungkus)'), nominal: prk[1] === 'ecer' ? rkM.eceran : rkM.harga, tanpaKredit: true };
     } else if (nama === 'hobi') {
       var hbA = (N.aktivitasAkhirPekan || []).filter(function (x) { return x.id === nilai; })[0];
       if (hbA && hbA.biaya > 0) return { ket: 'Akhir Pekan: ' + hbA.nama, nominal: hbA.biaya };
@@ -3326,7 +3335,54 @@
       return { ket: 'Jalur Dokter: ' + ptd3[0].toUpperCase(), nominal: nomD };
     } else if (nama === 'bookingMichat' && HIDUP) {
       var pmc3 = nilai.split('|'), pMc3 = (HIDUP.daftarMichat ? HIDUP.daftarMichat(S) : []).filter(function (x) { return x.id === pmc3[0]; })[0];
-      if (pMc3) return { ket: 'Booking MiChat: ' + pMc3.nama, nominal: pMc3.tarif };
+      if (pMc3) return { ket: 'Booking MiChat: ' + pMc3.nama, nominal: pMc3.tarif, tanpaKredit: true };
+    } else if (nama === 'beliMewah' && REAL) {
+      var mwB = REAL.MEWAH_LIST.filter(function (x) { return x.id === nilai; })[0];
+      if (mwB && !(S.real && S.real.mewah && S.real.mewah.milik[nilai])) return { ket: 'Koleksi Mewah: ' + mwB.nama, nominal: mwB.harga };
+    } else if (nama === 'tripLn' && REAL) {
+      var tlB = REAL.LUAR_NEGERI_LIST.filter(function (x) { return x.id === nilai; })[0];
+      if (tlB) return { ket: tlB.nama, nominal: tlB.biaya };
+    } else if (nama === 'beliFranchise' && REAL) {
+      var frB = REAL.FRANCHISE_LIST.filter(function (x) { return x.id === nilai; })[0];
+      if (frB) return { ket: frB.nama, nominal: frB.modal };
+    } else if (nama === 'beliKavling' && REAL) {
+      var kvB = REAL.daftarKavlingProyek(S)[+nilai];
+      if (kvB) return { ket: kvB.nama, nominal: kvB.harga };
+    } else if (nama === 'tambahDayaPln' && REAL) {
+      var dpB = REAL.DAYA_PLN.filter(function (x) { return x.va === +nilai; })[0];
+      if (dpB && dpB.biayaNaik > 0) return { ket: 'Tambah Daya PLN ' + dpB.nama, nominal: dpB.biayaNaik };
+    } else if (nama === 'pasangToren') return { ket: 'Pasang Toren Air 1000L + Pompa Sumur Bor', nominal: 6500000 };
+    else if (nama === 'buatPrenup') return { ket: 'Notaris: Akta Perjanjian Pisah Harta (Prenup)', nominal: 4500000 };
+    else if (nama === 'buatPaspor') return { ket: 'Imigrasi: E-Paspor RI (10 Tahun)', nominal: 650000 };
+    else if (nama === 'beliMasker') return { ket: 'Masker N95 Anti Kabut Asap (5 pcs)', nominal: 25000, tanpaKredit: true };
+    else if (nama === 'oliPilihan') {
+      var poB = nilai.split('|'), isMblO = poB[0] === 'mobil', isResO = poB[1] === '1';
+      return { ket: (isResO ? 'Bengkel Resmi: ' : 'Bengkel Pinggir Jalan: ') + 'Ganti Oli ' + (isMblO ? 'Mobil' : 'Motor'), nominal: isMblO ? (isResO ? 580000 : 340000) : (isResO ? 95000 : 52000) };
+    } else if (nama === 'rawatDetail') {
+      var prB = nilai.split('|'), isMblD = prB[0] === 'mobil';
+      var hD = { suspensi: isMblD ? 950000 : 240000, aki: isMblD ? 850000 : 225000, rem: isMblD ? 620000 : 115000, lampu: isMblD ? 380000 : 95000 }[prB[1]];
+      if (hD) return { ket: 'Bengkel: Perawatan ' + prB[1].toUpperCase() + ' ' + (isMblD ? 'Mobil' : 'Motor'), nominal: hD };
+    } else if (nama === 'modifKnd' && EKO) {
+      var pmK = nilai.split('|'), ptK = EKO.MODIF_PART.filter(function (x) { return x.id === pmK[1]; })[0];
+      if (ptK) return { ket: 'Modifikasi: ' + ptK.nama, nominal: pmK[0] === 'mobil' ? ptK.hargaMobil : ptK.hargaMotor };
+    } else if (nama === 'catKnd' && EKO) {
+      var pcK = nilai.split('|'), wcK = EKO.WARNA_CAT.filter(function (x) { return x.id === pcK[1]; })[0];
+      if (wcK && wcK.harga > 0) return { ket: 'Repaint Cat Bodi: ' + wcK.nama, nominal: wcK.harga };
+    } else if (nama === 'renovasi' && EKO) {
+      var rvK = EKO.RENOVASI_LIST.filter(function (x) { return x.id === nilai; })[0];
+      if (rvK) return { ket: 'Renovasi Rumah: ' + rvK.nama, nominal: rvK.harga };
+    } else if (nama === 'bangunKos' && EKO) {
+      var ksK = EKO.KOSAN_PAKET.filter(function (x) { return x.id === nilai; })[0];
+      if (ksK) return { ket: 'Bangun ' + ksK.nama, nominal: ksK.modal };
+    } else if (nama === 'beliHewan' && EKO) {
+      var hwK = EKO.HEWAN_LIST.filter(function (x) { return x.id === nilai; })[0];
+      if (hwK) return { ket: 'Adopsi Peliharaan: ' + hwK.nama, nominal: hwK.harga };
+    } else if (nama === 'serviceHp' && EKO && nilai !== 'dingin') {
+      var hmS = DIRI.hpAktif(S), skS = Math.max(1, Math.min(4, Math.round(((hmS && hmS.harga) || 2000000) / 5000000)));
+      var hSrv = nilai === 'bat_ori' ? 320000 * skS : nilai === 'bat_kw' ? 140000 * skS : 750000 * skS;
+      return { ket: 'Service HP (' + nilai + ')', nominal: hSrv };
+    } else if (nama === 'kurasAir') {
+      return { ket: 'Kuras Mesin Banjir (Water Hammer)', nominal: nilai === 'mobil' ? 1450000 : 285000 };
     }
     return null;
   }
@@ -3337,7 +3393,7 @@
         return mintaKonfirmBayar(infoB.ket, infoB.nominal, function (metode) {
           S._metodeBayar = metode;
           try { aksiHP(nama, nilai, true); } finally { delete S._metodeBayar; }
-        });
+        }, { tanpaKredit: !!infoB.tanpaKredit });
       }
     }
     var v = nilai === 'semua' ? Infinity : +nilai;
@@ -3532,20 +3588,47 @@
     else if (nama === 'realTab') { app.realTab = nilai; app.pesan = ''; }
     else if (nama === 'pergiBebas' && REAL) {
       var caraPb = app.petaCara || (S.motor ? 'motor' : S.mobil ? 'mobil' : 'jalan');
+      var dafTj = REAL.daftarTujuanPeta(S), tjObj = dafTj.filter(function (x) { return x.id === nilai; })[0];
       var rpb = REAL.pergiBebas(S, nilai, caraPb, app.petaTemanId);
       if (rpb && rpb.ok) {
-        tutupLembar(); gelapSebentar(); lompatWaktu(rpb.menit || 10); cekGantiHari(); simpan(); perbaruiHUD(true); perbaruiAksi(); toast(rpb.teks, 3600);
-        if (rpb.aksi === 'makan') setTimeout(function () { bukaHP('makan'); }, 350);
-        else if (rpb.aksi === 'spbu') setTimeout(function () { popupBensin(); }, 350);
-        else if (rpb.aksi === 'mall') setTimeout(function () { bukaHP('mall'); }, 350);
-        else if (rpb.aksi === 'bengkel') setTimeout(function () { bukaHP('motor'); }, 350);
-        else if (rpb.aksi === 'rs') setTimeout(function () { bukaHP('apotek'); }, 350);
+        var kmPb = (tjObj && tjObj.km) || 1.5, mntPb = Math.max(6, rpb.menit || 12);
+        var kendPb = caraPb === 'jalan' ? 'kaki' : caraPb === 'mobil' ? 'mobil' : caraPb === 'teman' ? 'teman' : 'motor';
+        var durPb = Math.max(2.6, Math.min(6.0, kmPb * (kendPb === 'kaki' ? 1.1 : 0.42)));
+        tutupLembar();
+        S.transit = {
+          ke: 'peta', petaAksi: rpb.aksi, tujuanNama: (tjObj && tjObj.nama) || 'Lokasi Tujuan',
+          tujuanTitik: tjObj && tjObj.titik ? tjObj.titik : null,
+          total: mntPb, sisa: mntPb, km: kmPb, ket: rpb.teks, kabar: [], kend: kendPb,
+          mult: mntPb / (MENIT_PER_DETIK * durPb)
+        };
+        if (SUARA && kendPb !== 'kaki') SUARA.bunyi('motor');
+        simpan(); perbaruiHUD(true); perbaruiAksi();
+        toast(rpb.teks, 2600);
         return;
       } else hasilAksi(rpb);
     }
-    else if (nama === 'beliKuliner' && REAL) { var rkl5 = REAL.beliKulinerDaerah(S, nilai); if (rkl5 && rkl5.ok) { if (SUARA) SUARA.bunyi('makan'); lompatWaktu(rkl5.menit || 15); hasilAksi(true, rkl5.teks); } else hasilAksi(rkl5); }
-    else if (nama === 'oliPilihan' && REAL) { var pol5 = nilai.split('|'), rol5 = REAL.gantiOliPilihan(S, pol5[0], pol5[1] === '1'); if (rol5 && rol5.ok) { lompatWaktu(rol5.menit || 25); hasilAksi(true, rol5.teks); } else hasilAksi(rol5); }
-    else if (nama === 'rawatDetail' && REAL) { var prd5 = nilai.split('|'), rrd5 = REAL.rawatDetailKnd(S, prd5[0], prd5[1]); if (rrd5 && rrd5.ok) { lompatWaktu(rrd5.menit || 30); hasilAksi(true, rrd5.teks); } else hasilAksi(rrd5); }
+    else if (nama === 'beliKuliner' && REAL) {
+      var rkl5 = REAL.beliKulinerDaerah(S, nilai);
+      if (rkl5 && rkl5.ok) {
+        if (SUARA) SUARA.bunyi('makan');
+        mulaiAktAnim({ jenis: 'makan', judul: '🍲 Menikmati Kuliner Daerah', sub: rkl5.teks.split('!')[0], menit: rkl5.menit || 15, durDetik: 3.4, pesanAkhir: rkl5.teks });
+        return;
+      } else hasilAksi(rkl5);
+    }
+    else if (nama === 'oliPilihan' && REAL) {
+      var pol5 = nilai.split('|'), rol5 = REAL.gantiOliPilihan(S, pol5[0], pol5[1] === '1');
+      if (rol5 && rol5.ok) {
+        mulaiAktAnim({ jenis: 'bengkel', mobil: pol5[0] === 'mobil', judul: '🔧 Ganti Oli di Bengkel', sub: pol5[1] === '1' ? 'Bengkel Resmi (100% Asli)' : 'Bengkel Pinggir Jalan', menit: rol5.menit || 25, durDetik: 3.2, pesanAkhir: rol5.teks });
+        return;
+      } else hasilAksi(rol5);
+    }
+    else if (nama === 'rawatDetail' && REAL) {
+      var prd5 = nilai.split('|'), rrd5 = REAL.rawatDetailKnd(S, prd5[0], prd5[1]);
+      if (rrd5 && rrd5.ok) {
+        mulaiAktAnim({ jenis: 'bengkel', mobil: prd5[0] === 'mobil', judul: '🔧 Servis Komponen di Bengkel', sub: 'Mekanik sedang memperbaiki ' + prd5[1].toUpperCase(), menit: rrd5.menit || 30, durDetik: 3.2, pesanAkhir: rrd5.teks });
+        return;
+      } else hasilAksi(rrd5);
+    }
     else if (nama === 'tambahDayaPln' && REAL) { var rtd5 = REAL.tambahDayaPln(S, +nilai); hasilAksi(rtd5 && rtd5.ok ? true : rtd5, rtd5 && rtd5.ok ? rtd5.teks : ''); }
     else if (nama === 'pasangToren' && REAL) { var rpt5 = REAL.pasangTorenSumur(S); hasilAksi(rpt5 && rpt5.ok ? true : rpt5, rpt5 && rpt5.ok ? rpt5.teks : ''); }
     else if (nama === 'beliAirTangki' && REAL) { var rat5 = REAL.beliAirTangki(S); hasilAksi(rat5 && rat5.ok ? true : rat5, rat5 && rat5.ok ? rat5.teks : ''); }
@@ -3556,7 +3639,17 @@
     else if (nama === 'jualKripto' && REAL) { var rjk5 = REAL.jualKripto(S, nilai); hasilAksi(rjk5 && rjk5.ok ? true : rjk5, rjk5 && rjk5.ok ? rjk5.teks : ''); }
     else if (nama === 'beliFranchise' && REAL) { var rbf5 = REAL.beliFranchise(S, nilai); hasilAksi(rbf5 && rbf5.ok ? true : rbf5, rbf5 && rbf5.ok ? rbf5.teks : ''); }
     else if (nama === 'buatPaspor' && REAL) { var rbp5 = REAL.buatPaspor(S); if (rbp5 && rbp5.ok) { lompatWaktu(rbp5.menit || 90); hasilAksi(true, rbp5.teks); } else hasilAksi(rbp5); }
-    else if (nama === 'tripLn' && REAL) { var rtl5 = REAL.tripLuarNegeri(S, nilai); if (rtl5 && rtl5.ok) { lompatWaktu(rtl5.menit || 90); hasilAksi(true, rtl5.teks); } else hasilAksi(rtl5); }
+    else if (nama === 'tripLn' && REAL) {
+      var rtl5 = REAL.tripLuarNegeri(S, nilai);
+      if (rtl5 && rtl5.ok) {
+        if (nilai === 'haji') { hasilAksi(true, rtl5.teks); }
+        else {
+          var tObjL = REAL.LUAR_NEGERI_LIST.filter(function (x) { return x.id === nilai; })[0];
+          mulaiAktAnim({ jenis: 'pesawat', dest: nilai, judul: (tObjL && tObjL.nama) || '✈️ Perjalanan Luar Negeri', sub: 'Menuju Bandara / Perbatasan...', menit: rtl5.menit || 120, durDetik: 7.5, pesanAkhir: rtl5.teks });
+          return;
+        }
+      } else hasilAksi(rtl5);
+    }
     else if (nama === 'lomba17' && REAL) { var rl17 = REAL.lomba17Agustus(S); if (rl17 && rl17.ok) { lompatWaktu(rl17.menit || 90); hasilAksi(true, rl17.teks); } else hasilAksi(rl17); }
     else if (nama === 'beliKavling' && REAL) { var rbv5 = REAL.beliKavlingProyek(S, +nilai); hasilAksi(rbv5 && rbv5.ok ? true : rbv5, rbv5 && rbv5.ok ? rbv5.teks : ''); }
     else if (nama === 'jualKavling' && REAL) { var rjv5 = REAL.jualKavlingProyek(S, +nilai); hasilAksi(rjv5 && rjv5.ok ? true : rjv5, rjv5 && rjv5.ok ? rjv5.teks : ''); }
@@ -3694,7 +3787,15 @@
     else if (nama === 'bekasKk') { var rbkk = MOTOR.beliBekas(S, +nilai, 'kk'); hasilAksi(rbkk, 'Motor bekas dibeli pakai KK & masuk Garasi!'); if (rbkk === true) { app.nama = 'motor'; app.garasiTab = 'motor'; } }
     else if (nama === 'beliMakan' || nama === 'minumAir' || nama === 'ngopi' || nama === 'ngopiSusu' || nama === 'makanRumah') {
       var bm2 = nilai.split('-'), rmk = nama === 'makanRumah' ? DIRI.makanDiRumah(S) : nama === 'minumAir' ? DIRI.makan(S, 'air') : nama === 'ngopi' ? DIRI.makan(S, 'kopi') : nama === 'ngopiSusu' ? DIRI.makan(S, 'kopisusu') : DIRI.beli(S, bm2[0], bm2[1]);
-      if (rmk && rmk.ok) { if (SUARA) SUARA.bunyi('makan'); if (rmk.menit) lompatWaktu(rmk.menit); hasilAksi(true, rmk.teks); } else hasilAksi(rmk);
+      if (rmk && rmk.ok) {
+        if (SUARA) SUARA.bunyi('makan');
+        if (nama === 'beliMakan' && bm2[1] !== 'gofood') {
+          mulaiAktAnim({ jenis: 'makan', judul: '🍽️ Makan di Warung Ramai', sub: rmk.teks, menit: rmk.menit || 15, durDetik: 3.2, pesanAkhir: rmk.teks });
+          return;
+        }
+        if (rmk.menit) lompatWaktu(rmk.menit);
+        hasilAksi(true, rmk.teks);
+      } else hasilAksi(rmk);
     }
     else if (nama === 'bbmPilih') { app.bbmPilih = nilai; app.pesan = ''; }
     else if (nama === 'bensin') { var pb = nilai.split('-'), rb = MOTOR.isiBensin(S, pb[0], pb[1]); hasilAksi(rb && rb.ok ? true : rb, rb && rb.ok ? 'Isi ' + N.bbm.nama[rb.jenis] + ' ' + rb.liter.toFixed(1).replace('.', ',') + ' liter, ' + rupiah(rb.biaya) + '.' + (rb.ngelitik ? ' Mesin mulai ngelitik karena bensin di bawah anjuran.' : '') : ''); }
@@ -3719,7 +3820,20 @@
     else if (nama === 'setor') hasilAksi(UANG.setor(S, v === Infinity ? 'semua' : v, 'dompet'), 'Setor tunai dari dompet pribadi ke rekening berhasil.');
     else if (nama === 'tarikDompet') hasilAksi(UANG.tarik(S, v, 'dompet'), 'Tarik tunai berhasil, uang masuk dompet pribadi.');
     else if (nama === 'tukar') hasilAksi(UANG.tukarReceh(S, v), 'Uang besar sudah ditukar ke uang kecil.');
-    else if (nama === 'tarikMerchant') hasilAksi(UANG.tarikMerchant(S, nilai), 'Saldo sudah masuk rekening.');
+    else if (nama === 'tarikMerchant') {
+      if (nilai === 'semua') {
+        var idsT = Object.keys(S.merchants || {}).filter(function (id) { return (S.merchants[id].tersedia || 0) > 0; });
+        if (!idsT.length) return hasilAksi('Belum ada saldo dompet digital yang siap ditarik.');
+        var totT = 0;
+        idsT.forEach(function (id) {
+          var sblmB = S.bank.saldo;
+          if (UANG.tarikMerchant(S, id) === true) totT += Math.max(0, S.bank.saldo - sblmB);
+        });
+        hasilAksi(true, '💸 Berhasil menarik ' + rupiah(totT) + ' dari ' + idsT.length + ' dompet digital ke rekening ' + UANG.bankIni(S).nama + '!');
+      } else {
+        hasilAksi(UANG.tarikMerchant(S, nilai), 'Saldo sudah masuk rekening.');
+      }
+    }
     else if (nama === 'pasangQris') hasilAksi(UANG.pasangQris(S, nilai), 'Pendaftaran QRIS ' + UANG.qrisData(nilai).nama + ' dikirim. Aktif besok.');
     else if (nama === 'tutupQris') { var rtq2 = UANG.tutupQris(S, nilai); hasilAksi(rtq2 && rtq2.ok ? true : rtq2, rtq2 && rtq2.teks); }
     else if (nama === 'bayarPajak') hasilAksi(UANG.bayarPajak(S, v), 'Pajak sudah disetor.');
@@ -4333,6 +4447,27 @@
       mulaiKerjaRun(T.job);
       return;
     }
+    if (T.ke === 'peta') {
+      if (T.petaAksi === 'pulang') {
+        S.diri.posisi = 'kos';
+        if (OJEK.resetPos) OJEK.resetPos(S, 0, 0);
+        simpan(); perbaruiAksi(); perbaruiHUD(true);
+        toast('🏠 Tiba di rumah pukul ' + jam(S.menit) + '!', 2600);
+        return;
+      }
+      S.diri.posisi = 'kedai';
+      if (T.tujuanTitik && S.ojek) S.ojek.lokasi = T.tujuanTitik;
+      simpan(); perbaruiAksi(); perbaruiHUD(true);
+      if (T.petaAksi === 'makan') { toast('🍲 Tiba di Sentra Kuliner & Warung! Pilih menu makananmu.', 2400); return bukaHP('makan'); }
+      if (T.petaAksi === 'spbu') { toast('⛽ Tiba di SPBU Pertamina! Pilih jenis & liter BBM.', 2400); return popupBensin(); }
+      if (T.petaAksi === 'ibadah') { return mulaiAktAnim({ jenis: 'ibadah', judul: '🕌 Beribadah di Masjid / Tempat Ibadah', sub: 'Menunaikan ibadah dengan khusyuk...', menit: 15, durDetik: 3.4, pesanAkhir: '🙏 Selesai beribadah! Hati tenang & stamina pulih.' }); }
+      if (T.petaAksi === 'mall') { return mulaiAktAnim({ jenis: 'mall', judul: '🛍️ Tiba di Grand Mall', sub: 'Masuk ke pusat perbelanjaan...', menit: 10, durDetik: 2.4, bukaApp: 'mall', pesanAkhir: '🛍️ Selamat berbelanja di Mall!' }); }
+      if (T.petaAksi === 'bengkel') { toast('🔧 Tiba di Bengkel! Pilih perawatan kendaraanmu.', 2400); return bukaHP('motor'); }
+      if (T.petaAksi === 'rs') { return mulaiAktAnim({ jenis: 'rs', judul: '🏥 Tiba di Rumah Sakit & Apotek', sub: 'Masuk ruang pemeriksaan...', menit: 10, durDetik: 2.2, bukaApp: 'apotek', pesanAkhir: '🏥 Tiba di Rumah Sakit & Apotek.' }); }
+      if (T.petaAksi === 'taman') { return mulaiAktAnim({ jenis: 'taman', judul: '🌳 Jalan Santai di Taman Kota', sub: 'Menghirup udara segar & menyegarkan pikiran...', menit: 25, durDetik: 3.4, pesanAkhir: '🌳 Segar banget jalan santai di Taman Kota! Stamina & kesehatan naik.' }); }
+      toast('📍 Tiba di ' + (T.tujuanNama || 'lokasi tujuan') + ' pukul ' + jam(S.menit) + '!', 2800);
+      return;
+    }
     S.diri.posisi = T.ke;
     simpan(); perbaruiAksi(); perbaruiHUD(true);
     toast('Sampai di ' + (T.ke === 'kos' ? DIRI.tempat(S) : (S.usaha && S.usaha.berhentiSewa ? 'luar' : 'kedai')) + ' pukul ' + jam(S.menit) + ', ' + T.ket + ' (' + T.km.toLocaleString('id-ID') + ' km).' + (T.kabar && T.kabar.length ? ' ' + T.kabar.join(' ') : ''), 2800);
@@ -4382,6 +4517,35 @@
     };
     simpan(); perbaruiAksi(); perbaruiHUD(true);
     toast('🏢 Tiba di ' + job.kantorNama + '! Memulai kerja kantor (waktu 24× s/d ' + (job.jamPulang || 17) + '.00).', 2800);
+  }
+  function mulaiAktAnim(cfg) {
+    if (!S || !cfg) return;
+    tutupLembar();
+    var mnt = Math.max(5, cfg.menit || 15);
+    var dur = Math.max(2.0, cfg.durDetik || 3.2);
+    S.aktAnim = {
+      jenis: cfg.jenis || 'makan',
+      dest: cfg.dest || '',
+      mobil: !!cfg.mobil,
+      liter: cfg.liter || 0,
+      ev: !!cfg.ev,
+      bbmNama: cfg.bbmNama || '',
+      judul: cfg.judul || 'Aktivitas',
+      sub: cfg.sub || '',
+      total: mnt,
+      sisa: mnt,
+      mult: mnt / (MENIT_PER_DETIK * dur),
+      bukaApp: cfg.bukaApp || null,
+      pesanAkhir: cfg.pesanAkhir || ''
+    };
+    simpan(); perbaruiAksi(); perbaruiHUD(true);
+  }
+  function selesaiAktAnim() {
+    var A = S.aktAnim; if (!A) return;
+    S.aktAnim = null;
+    simpan(); perbaruiAksi(); perbaruiHUD(true);
+    if (A.pesanAkhir) toast(A.pesanAkhir, 3400);
+    if (A.bukaApp) bukaHP(A.bukaApp);
   }
   function selesaiKerjaRun() {
     var K = S.kerjaRun; if (!K) return;
@@ -4837,7 +5001,7 @@
           (rc ? '<button type="button" class="chip-tombol" data-trv="tarif:-0.1">Tarif −</button><button type="button" class="chip-tombol" data-trv="tarif:0.1">Tarif +</button>' : '') +
           (rc && T.antri.length < f.kursi && T.jemput < TRAVEL.JEMPUT_MAKS ? '<button type="button" class="chip-tombol" data-trv="jemput">Jemput</button>' : '') +
           '<button type="button" class="chip-tombol" data-trv="henti">Istirahat</button></div>' +
-          '<div class="ojek-tombol"><button type="button" class="aksi" data-trv="berangkat"' + (rc ? '' : ' disabled') + '>' + (T.antri.length ? 'Berangkat (' + T.antri.length + ')' : 'Berangkat kosong') + '</button>' +
+          '<div class="ojek-tombol trv-bawah"><button type="button" class="aksi" data-trv="berangkat"' + (rc ? '' : ' disabled') + '>' + (T.antri.length ? 'Berangkat (' + T.antri.length + ')' : 'Berangkat') + '</button>' +
           (T.di === S.kota ? '<button type="button" class="chip-tombol" data-trv="selesai">Selesai</button>' : '<button type="button" class="chip-tombol" data-trv="selesaiPaksa">Pulang</button>') + tMini + '</div></div>';
       }
     } else if (f.mode === 'kapal') {
@@ -5425,7 +5589,14 @@
     if (r && r.ok) {
       if (SUARA) SUARA.bunyi('beli'); simpan(); perbaruiHUD(true);
       var satR = r.jenis === 'listrik' ? ' kWh' : ' L';
-      return popupBensin((r.jenis === 'listrik' ? 'Cas ' : 'Isi ') + N.bbm.nama[r.jenis] + ' ' + r.liter.toLocaleString('id-ID') + satR + ' · ' + rupiah(r.biaya) + '.');
+      var pesanB = (r.jenis === 'listrik' ? '⚡ Cas ' : '⛽ Isi ') + N.bbm.nama[r.jenis] + ' ' + r.liter.toLocaleString('id-ID') + satR + ' · ' + rupiah(r.biaya) + ' selesai!';
+      return mulaiAktAnim({
+        jenis: 'spbu', mobil: mobil, ev: r.jenis === 'listrik', liter: r.liter,
+        bbmNama: N.bbm.nama[r.jenis] || r.jenis,
+        judul: r.jenis === 'listrik' ? '⚡ Cas SPKLU Mobil Listrik' : '⛽ Mengisi BBM di SPBU Pertamina',
+        sub: 'Petugas SPBU sedang mengisi ' + (N.bbm.nama[r.jenis] || r.jenis) + '...',
+        menit: 8, durDetik: 3.4, pesanAkhir: pesanB
+      });
     }
     if (SUARA) SUARA.bunyi('salah'); popupBensin(r, true);
   }
@@ -5558,7 +5729,7 @@
   function cekIbadahDanHariRaya() {
     var btn = $('ibadah-btn'), btnK = $('kerja-btn');
     if (!S || !btn) return;
-    var sibuk = !!(S.hbRun || S.transit || S.kerjaRun || (S.ojek && (S.ojek.trip || S.ojek.tawaran)));
+    var sibuk = !!(S.hbRun || S.transit || S.kerjaRun || S.aktAnim || (S.ojek && (S.ojek.trip || S.ojek.tawaran)));
     if (sibuk) { btn.hidden = true; if (btnK) btnK.hidden = true; return; }
     var m = Math.floor(S.menit) % 1440, t = KAL.tgl(S.hari), ramadan = KAL.apakahRamadan(S.hari) > 0;
     /* tombol pop-up kecil Berangkat Kerja muncul pagi jam 06.45–10.00 Senin–Jumat bagi pemain yang punya pekerjaan tetap */
@@ -5676,12 +5847,12 @@
     var dt = tPrev ? Math.min(250, t - tPrev) : 16; tPrev = t;
     var main = layar === 'main' && S;
     var dMenit = 0, depanLama = main ? JUAL.depan() : null;
-    var narik = main && S.ojek.online, trv = !!(main && S.travel && S.travel.aktif), tr = !!(main && (S.transit || S.hbRun || S.kerjaRun));
+    var narik = main && S.ojek.online, trv = !!(main && S.travel && S.travel.aktif), tr = !!(main && (S.transit || S.hbRun || S.kerjaRun || S.aktAnim));
     if (main && !lembar && !document.hidden && S.kec > 0 && !animasi) {
       var trvTunggu = trv && S.travel.status === 'tunggu';
       var trvKapal = trv && S.travel.status === 'kapal';
-      dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && (S.ojek.trip || (S.hiburan && !S.ojek.tawaran)) ? OJEK.CEPAT_TRIP : 1) * (trv ? (S.hiburan && trvTunggu ? OJEK.CEPAT_TRIP : TRAVEL.cepatWaktu(S)) : 1) * (S.transit ? S.transit.mult : S.kerjaRun ? S.kerjaRun.mult : S.hbRun ? S.hbRun.mult : 1);
-      if (S.transit) dMenit = Math.min(dMenit, S.transit.sisa); else if (S.kerjaRun) dMenit = Math.min(dMenit, S.kerjaRun.sisa); else if (S.hbRun) dMenit = Math.min(dMenit, S.hbRun.sisa);
+      dMenit = dt / 1000 * MENIT_PER_DETIK * S.kec * (narik && (S.ojek.trip || (S.hiburan && !S.ojek.tawaran)) ? OJEK.CEPAT_TRIP : 1) * (trv ? (S.hiburan && trvTunggu ? OJEK.CEPAT_TRIP : TRAVEL.cepatWaktu(S)) : 1) * (S.transit ? S.transit.mult : S.kerjaRun ? S.kerjaRun.mult : S.aktAnim ? S.aktAnim.mult : S.hbRun ? S.hbRun.mult : 1);
+      if (S.transit) dMenit = Math.min(dMenit, S.transit.sisa); else if (S.kerjaRun) dMenit = Math.min(dMenit, S.kerjaRun.sisa); else if (S.aktAnim) dMenit = Math.min(dMenit, S.aktAnim.sisa); else if (S.hbRun) dMenit = Math.min(dMenit, S.hbRun.sisa);
       S.menit += dMenit;
       if (S.fase === 'buka' && !S.tutupSementara) JUAL.langkah(S, dMenit);
       var kabarStok = DUNIA.jalan(S, dMenit, false).concat(TEMAN.jalan(S)); if (S.popupSelingkuh) tampilPopupSelingkuh();
@@ -5738,6 +5909,7 @@
         if (S.transit.sisa <= 0.001) selesaiTransit();
       }
       else if (S.kerjaRun) { S.kerjaRun.sisa -= dMenit; if (S.kerjaRun.sisa <= 0.001) selesaiKerjaRun(); }
+      else if (S.aktAnim) { S.aktAnim.sisa -= dMenit; if (S.aktAnim.sisa <= 0.001) selesaiAktAnim(); }
       else if (S.hbRun) { S.hbRun.sisa -= dMenit; if (S.hbRun.sisa <= 0.001) selesaiHb(); }
       cekGantiHari();
       if (S.fase === 'buka' && S.menit >= S.jamTutup * 60) {
@@ -5798,7 +5970,7 @@
     var moonNow = main && KAL.infoFaseBulan ? KAL.infoFaseBulan(S.hari) : null;
     if (main && cwNow && cwNow.petir && !lembar && S.kec > 0 && Math.random() < 0.0025 && SUARA) SUARA.bunyi('petir');
     try {
-      ADEGAN.gambar(main ? { kota: S.kota, tierWilayah: HIDUP ? HIDUP.tierWilayah(S) : 'kota', warnaBaju: HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13', biled: !!(S.motor && S.motor.modif && S.motor.modif.biled) || !!(S.mobil && S.mobil.modif && S.mobil.modif.biled), kabutAsap: !!(S.real && S.real.bencana && S.real.bencana.kabutAsap), cuacaInfo: cwNow, faseBulan: moonNow, ramadan: KAL.apakahRamadan(S.hari) > 0, lebaran: KAL.statusLebaran ? KAL.statusLebaran(S.hari) : 0, natal: KAL.apakahNatal ? KAL.apakahNatal(S.hari, S.menit) : false, tahunBaru: KAL.apakahMalamTahunBaru ? KAL.apakahMalamTahunBaru(S.hari, S.menit) : false, namaToko: S.namaToko || 'Kopi Kontainer', namaPemain: S.namaPemain || 'Kamu', gender: (S.profil && S.profil.gender) || 'cewek', tampilan: warnaTampilanHex(S.profil && S.profil.tampilan, (S.profil && S.profil.gender) || 'cewek'), berhentiSewa: !!(S.usaha && S.usaha.berhentiSewa), sakitPemain: !!S.diri.sakit, capekPemain: capekP, hbTinggi: hb >= 75, hamilPemain: !!(S.diri.hamil && S.diri.hamil.terdeteksi), keluargaRumah: kelDiRumah, hbAnim: S.hbRun ? { u: Math.min(1, 1 - S.hbRun.sisa / S.hbRun.total), isLong: !!S.hbRun.isLong, varian: S.hbRun.varian, nama: S.hbRun.nama, nama2: S.hbRun.nama2 || '', gB: S.hbRun.gB, gC: S.hbRun.gC || S.hbRun.gB } : null, kerjaAnim: S.kerjaRun ? { u: Math.min(1, 1 - S.kerjaRun.sisa / S.kerjaRun.total), kantor: S.kerjaRun.kantor, peran: S.kerjaRun.peran, pulang: S.kerjaRun.pulang } : null, posisi: S.diri.posisi, transit: S.transit ? { ke: S.transit.ke, u: 1 - S.transit.sisa / S.transit.total, km: S.transit.km, kend: S.transit.kend, mult: S.transit.mult, bawaDus: !!S.transit.bawaDus, pindahWilayah: !!S.transit.pindahWilayah, tujuanNama: S.transit.tujuanNama || '', kantorNama: S.transit.kantorNama || '' } : null, ojek: OJEK.fase(S), travel: TRAVEL.fase(S), motorId: S.motor ? S.motor.id : null, mobil: S.mobil ? { id: S.mobil.id, bentuk: S.mobil.bentuk } : null, rumah: S.rumah.jenis === 'rumah' ? S.rumah.tipe : null, hunianId: (S.rumah && S.rumah.hunianId) || 'kos_ac',
+      ADEGAN.gambar(main ? { kota: S.kota, tierWilayah: HIDUP ? HIDUP.tierWilayah(S) : 'kota', warnaBaju: HIDUP ? HIDUP.warnaBajuAktif(S) : '#00aa13', biled: !!(S.motor && S.motor.modif && S.motor.modif.biled) || !!(S.mobil && S.mobil.modif && S.mobil.modif.biled), kabutAsap: !!(S.real && S.real.bencana && S.real.bencana.kabutAsap), cuacaInfo: cwNow, faseBulan: moonNow, ramadan: KAL.apakahRamadan(S.hari) > 0, lebaran: KAL.statusLebaran ? KAL.statusLebaran(S.hari) : 0, natal: KAL.apakahNatal ? KAL.apakahNatal(S.hari, S.menit) : false, tahunBaru: KAL.apakahMalamTahunBaru ? KAL.apakahMalamTahunBaru(S.hari, S.menit) : false, namaToko: S.namaToko || 'Kopi Kontainer', namaPemain: S.namaPemain || 'Kamu', gender: (S.profil && S.profil.gender) || 'cewek', tampilan: warnaTampilanHex(S.profil && S.profil.tampilan, (S.profil && S.profil.gender) || 'cewek'), berhentiSewa: !!(S.usaha && S.usaha.berhentiSewa), sakitPemain: !!S.diri.sakit, capekPemain: capekP, hbTinggi: hb >= 75, hamilPemain: !!(S.diri.hamil && S.diri.hamil.terdeteksi), keluargaRumah: kelDiRumah, hbAnim: S.hbRun ? { u: Math.min(1, 1 - S.hbRun.sisa / S.hbRun.total), isLong: !!S.hbRun.isLong, varian: S.hbRun.varian, nama: S.hbRun.nama, nama2: S.hbRun.nama2 || '', gB: S.hbRun.gB, gC: S.hbRun.gC || S.hbRun.gB } : null, kerjaAnim: S.kerjaRun ? { u: Math.min(1, 1 - S.kerjaRun.sisa / S.kerjaRun.total), kantor: S.kerjaRun.kantor, peran: S.kerjaRun.peran, pulang: S.kerjaRun.pulang } : null, aktAnim: S.aktAnim ? { u: Math.min(1, 1 - S.aktAnim.sisa / S.aktAnim.total), jenis: S.aktAnim.jenis, dest: S.aktAnim.dest, mobil: !!S.aktAnim.mobil, liter: S.aktAnim.liter, ev: !!S.aktAnim.ev, bbmNama: S.aktAnim.bbmNama, judul: S.aktAnim.judul, sub: S.aktAnim.sub } : null, posisi: S.diri.posisi, transit: S.transit ? { ke: S.transit.ke, u: 1 - S.transit.sisa / S.transit.total, km: S.transit.km, kend: S.transit.kend, mult: S.transit.mult, bawaDus: !!S.transit.bawaDus, pindahWilayah: !!S.transit.pindahWilayah, tujuanNama: S.transit.tujuanNama || '', kantorNama: S.transit.kantorNama || '' } : null, ojek: OJEK.fase(S), travel: TRAVEL.fase(S), motorId: S.motor ? S.motor.id : null, mobil: S.mobil ? { id: S.mobil.id, bentuk: S.mobil.bentuk } : null, rumah: S.rumah.jenis === 'rumah' ? S.rumah.tipe : null, hunianId: (S.rumah && S.rumah.hunianId) || 'kos_ac',
         pindah: pindahAnim ? { u: (t - pindahAnim.mulai) / 3800, pikap: pindahAnim.pikap, warna: pindahAnim.warna } : null, barang: S.rumah.barang, tidur: !!S.tidurAnim, acNyala: !S.rumah.padam && DIRI.adaAc(S), menit: S.menit, buka: S.fase === 'buka' && !S.tutupSementara, kecepatan: S.kec, jalan: !lembar && S.kec > 0, pembeli: JUAL.semua(), dMenit: dMenit, ruangBawah: ruang, motorParkir: S.motor && ANTAR.waktu(S) >= (S.motorSibukSampai || 0) ? S.motor.id : null, staf: stafHadir.length, stafGender: stafHadir.map(function (k) { return k.gender || 'cewek'; }), anakBantu: anakDiKedai, hujan: DUNIA.hujanSekarang(S) ? (S.dunia.cuaca.banjir ? 2 : 1) : 0, kotor: S.dunia.kotor, tier: S.usaha.tier, kayu: USAHA.punya(S, 'kursiKayu'), padam: !USAHA.listrikNyala(S) }
         : { latarAwal: true, namaToko: 'The Driver', menit: 1050, buka: false, kecepatan: 1, jalan: true, pembeli: [], dMenit: 0 }, t);
     } catch (errAdg) { if (window.console && console.error) console.error('ADEGAN.gambar error:', errAdg); }
@@ -5951,9 +6123,7 @@
         if (SUARA) SUARA.bunyi('ibadah');
         ibadahAktif = null;
         this.hidden = true;
-        lompatWaktu(rib.menit || 15);
-        simpan(); perbaruiHUD(true); perbaruiAksi();
-        toast(rib.teks, 3200);
+        mulaiAktAnim({ jenis: 'ibadah', judul: '🕌 ' + ib.nama, sub: ib.tempat || 'Tempat Ibadah Terdekat', menit: rib.menit || 15, durDetik: 3.4, pesanAkhir: rib.teks });
       }
     };
     if ($('popup-teman')) $('popup-teman').onclick = function () { this.hidden = true; this.classList.remove('muncul'); bukaHP('keluarga'); };
@@ -6062,7 +6232,7 @@
       var b;
       if ((b = e.target.closest('[data-pltenor]'))) {
         app.plTenorPilih = +b.dataset.pltenor || 3;
-        if (konfirmBayarTmp) return mintaKonfirmBayar(konfirmBayarTmp.ket, konfirmBayarTmp.nominal, konfirmBayarTmp.onBayar);
+        if (konfirmBayarTmp) return mintaKonfirmBayar(konfirmBayarTmp.ket, konfirmBayarTmp.nominal, konfirmBayarTmp.onBayar, konfirmBayarTmp.opsi);
         return;
       }
       if ((b = e.target.closest('[data-bayar]'))) {

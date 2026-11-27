@@ -536,7 +536,7 @@
         x: keKanan ? -28 : W + 28,
         arah: keKanan ? 1 : -1,
         v: 24 + Math.random() * 18,
-        skala: 0.72 + Math.random() * 0.14,
+        skala: 0.90 + Math.random() * 0.12,
         baju: ['#d9534f', '#2e7d9b', '#3f8f5b', '#e29e2e', '#7c5aa8', '#f0f2f5', '#2c3e50'][Math.floor(Math.random() * 7)],
         celana: ['#2b3540', '#3d4c5c', '#1f2937', '#54433a'][Math.floor(Math.random() * 4)],
         kulit: ['#f4c9a0', '#e3b086', '#c68d63'][Math.floor(Math.random() * 3)],
@@ -2387,9 +2387,10 @@
     kotak(0, jalan, W, H - jalan, tierW === 'desa' ? (s.hujan ? 'rgba(65,58,50,.85)' : 'rgba(98,92,84,.85)') : (s.hujan ? 'rgba(38,44,54,.72)' : 'rgba(68,72,78,.72)'));
     var g3 = (t * 0.32) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
-    /* kendaraan lain menyalip pelan (tanpa pejalan kaki meluncur sejajar motor saat melaju kencang) */
+    /* kendaraan lain menyalip pelan — warna & model hanya berganti saat sudah di luar layar */
+    var siklus1 = Math.floor((t * 0.03) / (W + 260)) % 3;
     var sx = W + 80 - ((t * 0.03) % (W + 260));
-    gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp);
+    gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][siklus1], ['avanza', 'agya', 'rush'][siklus1], false, t * 0.012, gp);
     var antar = f.status === 'antar', goyang = Math.sin(t / 90) * 1.2;
     if (f.mode === 'mobil' && s.mobil) {
       gambarMobil(W * 0.44, jalan + 76, s.mobil.bentuk, s.mobil.id, false, t * 0.018, gp);
@@ -2569,22 +2570,259 @@
     var g3 = (geser * 3.4) % 70; cx.fillStyle = '#e9e4d4'; for (var x1 = -70; x1 < W + 70; x1 += 70) cx.fillRect(x1 - g3, jalan + 64, 34, 3);
     if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.3).toFixed(3) + ')'; cx.fillRect(0, dasarRuko, W, H - dasarRuko); }
     if (kaki) anim.pejalan.forEach(function (pj) { gambarPejalanKaki(pj, jalan - 14, t, s.hujan); });
-    if (!kaki) { var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][Math.floor(t / 9000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 9000) % 3], false, t * 0.012, gp); }
+    if (!kaki) { var siklus2 = Math.floor((t * 0.03) / (W + 260)) % 3; var sx = W + 80 - ((t * 0.03) % (W + 260)); gambarMobil(sx, jalan + 130, ['mpv', 'hatch', 'suv'][siklus2], ['avanza', 'agya', 'rush'][siklus2], false, t * 0.012, gp); }
     var goyang = Math.sin(t / 90) * 1.2;
     if (f.kend === 'mobil') { var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' }; gambarMobil(W * 0.46, jalan + 84, mob.bentuk, mob.id, false, t * 0.016, gp, !!f.bawaDus); }
     else if (f.kend === 'kaki') {
-      gambarKarakterRumah(W * 0.45, jalan + 72, s.gender === 'cowok' ? 'cowok' : 'cewek', t, { skala: 0.9, jalan: true, baju: s.warnaBaju || '#2b6cb0', tampilan: s.tampilan, label: s.namaPemain || 'Kamu' });
+      gambarKarakterRumah(W * 0.45, jalan + 6, s.gender === 'cowok' ? 'cowok' : 'cewek', t, { skala: 0.56, jalan: true, baju: s.warnaBaju || '#2b6cb0', tampilan: s.tampilan, label: s.namaPemain || 'Kamu' });
     }
-    else gambarMotorKu(W * 0.42, jalan + 52 + goyang, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, baju: s.warnaBaju, bawaDus: !!f.bawaDus, bonceng: f.kend === 'ojek' && !f.bawaDus }, t);
+    else gambarMotorKu(W * 0.42, jalan + 52 + goyang, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, baju: s.warnaBaju, bawaDus: !!f.bawaDus, bonceng: (f.kend === 'ojek' || f.kend === 'teman') && !f.bawaDus }, t);
     pencahayaanLuar(m, t, jalan, kaki ? null : (f.kend === 'mobil' ? W * 0.46 + 46 : W * 0.42 + 28), kaki ? null : (f.kend === 'mobil' ? jalan + 62 + goyang : jalan + 24 + goyang), !!s.biled);
     gambarHujanRealistis(s, t, jalan, 0);
     var kePulang = f.ke === 'kos', sisa = Math.max(0, f.km * (1 - f.u));
     var judulTr = f.pindahWilayah ? ('🚚 Pindah ke ' + (f.tujuanNama || 'Wilayah Baru'))
       : f.ke === 'kantor' ? ('🏢 Berangkat ke ' + (f.kantorNama || 'Kantor'))
+      : f.ke === 'peta' ? ((f.kend === 'kaki' ? '🚶 ' : f.kend === 'teman' ? '🤝 ' : f.kend === 'mobil' ? '🚗 ' : '🏍️ ') + (f.tujuanNama || 'Menuju Lokasi'))
       : kePulang ? 'Pulang ke rumah' : 'Berangkat narik';
-    teksTengah(judulTr, 182, 17);
+    teksTengah(judulTr, 182, 16);
     teksTengah(sisa.toFixed(1).replace('.', ',') + ' km lagi · total ' + String(f.km).replace('.', ',') + ' km', 208, 13);
-    kotakBulat(60, 228, 240, 8, 4, 'rgba(29,43,51,.45)'); kotakBulat(60, 228, Math.max(8, 240 * Math.min(1, f.u)), 8, 4, f.pindahWilayah ? '#26a69a' : f.ke === 'kantor' ? '#3949ab' : '#f2a516');
+    kotakBulat(60, 228, 240, 8, 4, 'rgba(29,43,51,.45)'); kotakBulat(60, 228, Math.max(8, 240 * Math.min(1, f.u)), 8, 4, f.pindahWilayah ? '#26a69a' : f.ke === 'kantor' ? '#3949ab' : f.ke === 'peta' ? '#0ea5e9' : '#f2a516');
+  }
+
+  /* ---------- P62: Adegan Aktivitas Hidup (SPBU, Warung Makan Ramai, Masjid Sholat, Bengkel, Mall, RS, Taman, & Pesawat Wisata LN) ---------- */
+  function gambarAktivitas(s, t) {
+    var A = s.aktAnim || { jenis: 'makan', u: 0, judul: 'Aktivitas', sub: '' };
+    var u = Math.max(0, Math.min(1, A.u || 0)), m = (s.menit || 600) % 1440, gp = gelap(m);
+    var tpP = s.tampilan || tampilanDariNama(s.namaPemain || 'Kamu', s.gender || 'cewek', false);
+    var bajuP = s.warnaBaju || '#00aa13';
+    var judul = A.judul || 'Aktivitas', sub = A.sub || '';
+    var yTanah = Math.round(H * 0.66);
+
+    if (A.jenis === 'spbu') {
+      /* SPBU Pertamina + Petugas berseragam merah mengisi BBM ke motor/mobil */
+      gambarLangit(m, t, s);
+      kotak(0, yTanah - 140, W, 140, '#e5e7eb');
+      kotak(0, yTanah, W, H - yTanah, '#475569');
+      /* Kanopi ikonik SPBU merah-putih-biru */
+      kotak(18, yTanah - 210, W - 36, 42, '#dc2626');
+      kotak(18, yTanah - 172, W - 36, 9, '#ffffff');
+      kotak(18, yTanah - 163, W - 36, 6, '#1d4ed8');
+      cx.font = '800 13px "Baloo 2", sans-serif'; cx.fillStyle = '#fff'; cx.textAlign = 'center';
+      cx.fillText('PERTAMINA · PASTI PAS!', W / 2, yTanah - 186);
+      /* Tiang kanopi & pulau dispenser */
+      kotak(56, yTanah - 160, 14, 160, '#cbd5e1'); kotak(W - 70, yTanah - 160, 14, 160, '#cbd5e1');
+      kotakBulat(88, yTanah - 102, 54, 102, 6, '#dc2626');
+      kotakBulat(94, yTanah - 94, 42, 34, 4, '#0f172a');
+      var literNow = ((A.liter || 3) * u).toFixed(1).replace('.', ',');
+      cx.font = '800 10px monospace'; cx.fillStyle = '#4ade80'; cx.textAlign = 'center';
+      cx.fillText(literNow + (A.ev ? ' kWh' : ' L'), 115, yTanah - 74);
+      cx.fillStyle = '#facc15'; cx.fillText(A.bbmNama || 'BBM', 115, yTanah - 63);
+      kotak(82, yTanah - 6, 68, 12, '#94a3b8');
+      /* Kendaraan pemain sedang diisi BBM */
+      var isMbl = !!A.mobil && s.mobil;
+      if (isMbl) gambarMobil(242, yTanah + 22, s.mobil.bentuk, s.mobil.id, false, 0, gp);
+      else gambarMotorKu(238, yTanah + 4, s.motorId || 'beat', { kiri: true, baju: bajuP }, t);
+      /* Petugas SPBU berseragam merah-hitam memegang nozzle */
+      var gerakTangan = Math.sin(t / 220) * 2.5;
+      gambarKarakterRumah(166, yTanah + 6, 'cowok', t, { skala: 0.56, baju: '#dc2626', celana: '#1e293b', label: 'Petugas' });
+      /* Selang hitam melengkung dari dispenser ke tangki */
+      cx.strokeStyle = '#111827'; cx.lineWidth = 3.2; cx.beginPath();
+      cx.moveTo(142, yTanah - 58); cx.quadraticCurveTo(168, yTanah - 12, isMbl ? 204 : 220, yTanah - 16 + gerakTangan); cx.stroke();
+      /* Karakter pemain menunggu di samping */
+      gambarKarakterRumah(292, yTanah + 8, s.gender || 'cewek', t, { skala: 0.54, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      if (gp > 0) { cx.fillStyle = 'rgba(10,18,45,' + (gp * 0.22).toFixed(2) + ')'; cx.fillRect(0, 0, W, H); }
+      judul = A.judul || '⛽ Mengisi BBM di SPBU';
+      sub = (A.bbmNama || 'Pertalite') + ' · ' + literNow + (A.ev ? ' kWh' : ' L') + ' (' + Math.round(u * 100) + '%)';
+    } else if (A.jenis === 'makan') {
+      /* Warung Makan / Sentra Kuliner Ramai + Karakter Duduk Makan */
+      kotak(0, 0, W, yTanah, '#f4ebd9');
+      kotak(0, 0, W, 86, '#b45309'); /* atap tenda warung */
+      for (var st = 0; st < W; st += 32) kotak(st, 80, 16, 10, '#f59e0b');
+      kotak(0, yTanah, W, H - yTanah, '#d6c7b2');
+      /* Papan menu warung & lampu gantung hangat */
+      kotakBulat(54, yTanah - 205, 252, 42, 6, '#1e293b');
+      cx.font = '800 13px "Baloo 2", sans-serif'; cx.fillStyle = '#fde68a'; cx.textAlign = 'center';
+      cx.fillText('🍲 WARUNG KULINER NUSANTARA', W / 2, yTanah - 179);
+      /* Etalase kaca makanan di belakang */
+      kotakBulat(28, yTanah - 135, 130, 74, 5, '#e2e8f0');
+      kotak(34, yTanah - 128, 118, 28, '#bae6fd'); kotak(34, yTanah - 94, 118, 26, '#bae6fd');
+      for (var pr = 0; pr < 4; pr++) { bulat(48 + pr * 28, yTanah - 104, 8, '#f59e0b'); bulat(48 + pr * 28, yTanah - 74, 8, '#ef4444'); }
+      /* Pengunjung lain ramai makan di latar */
+      gambarKarakterRumah(212, yTanah - 26, 'cowok', t + 400, { skala: 0.44, baju: '#2563eb', label: 'Warga 1' });
+      gambarKarakterRumah(268, yTanah - 26, 'cewek', t + 900, { skala: 0.44, baju: '#db2777', label: 'Warga 2' });
+      gambarKarakterRumah(316, yTanah - 22, 'cowok', t + 1400, { skala: 0.45, baju: '#059669', label: 'Warga 3' });
+      kotakBulat(194, yTanah - 46, 140, 10, 3, '#78350f');
+      /* Meja utama pemain di depan + uap hangat makanan + gerakan menyuap */
+      var suap = Math.sin(t / 260) * 3.5;
+      gambarKarakterRumah(150, yTanah + 58, s.gender || 'cewek', t, { skala: 0.72, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      kotakBulat(84, yTanah + 6, 152, 16, 4, '#92400e');
+      kotak(94, yTanah + 22, 8, 56, '#78350f'); kotak(218, yTanah + 22, 8, 56, '#78350f');
+      /* Piring makanan, minuman & kepulan asap panas */
+      cx.fillStyle = '#fff'; cx.beginPath(); cx.ellipse(150, yTanah + 4, 22, 7, 0, 0, Math.PI * 2); cx.fill();
+      cx.fillStyle = '#ea580c'; cx.beginPath(); cx.ellipse(150, yTanah + 2, 15, 4.5, 0, 0, Math.PI * 2); cx.fill();
+      kotakBulat(186, yTanah - 14, 14, 20, 3, '#38bdf8');
+      cx.strokeStyle = 'rgba(255,255,255,.75)'; cx.lineWidth = 2;
+      for (var up = 0; up < 3; up++) {
+        var yu = ((t / 28 + up * 12) % 24);
+        cx.beginPath(); cx.moveTo(142 + up * 8, yTanah - 4 - yu); cx.quadraticCurveTo(146 + up * 8, yTanah - 10 - yu, 141 + up * 8, yTanah - 16 - yu); cx.stroke();
+      }
+      /* Sendok naik-turun */
+      cx.strokeStyle = '#cbd5e1'; cx.lineWidth = 2.4; cx.beginPath(); cx.moveTo(156, yTanah - 4 + suap); cx.lineTo(168, yTanah - 18 + suap); cx.stroke();
+      sub = (A.sub || 'Menikmati hidangan hangat...') + ' · ' + Math.round(u * 100) + '%';
+    } else if (A.jenis === 'ibadah') {
+      /* Interior Masjid / Tempat Ibadah yang tenang + adegan sholat / berdoa */
+      kotak(0, 0, W, yTanah, '#ecfdf5');
+      /* Lengkungan Mihrab emas-zamrud */
+      cx.fillStyle = '#047857';
+      cx.beginPath(); cx.moveTo(95, yTanah); cx.lineTo(95, yTanah - 175); cx.quadraticCurveTo(W / 2, yTanah - 255, W - 95, yTanah - 175); cx.lineTo(W - 95, yTanah); cx.closePath(); cx.fill();
+      cx.strokeStyle = '#f59e0b'; cx.lineWidth = 4; cx.stroke();
+      /* Karpet sajadah hijau dengan garis shaf */
+      kotak(0, yTanah, W, H - yTanah, '#065f46');
+      cx.strokeStyle = 'rgba(250,204,21,.45)'; cx.lineWidth = 2;
+      for (var sh = yTanah + 28; sh < H; sh += 36) { cx.beginPath(); cx.moveTo(0, sh); cx.lineTo(W, sh); cx.stroke(); }
+      /* Jamaah & pemain sholat khusyuk (gerakan lembut berdiri/ruku/sujud) */
+      var gerakI = Math.sin(t / 700);
+      var ySujud = gerakI > 0.35 ? 16 : 0;
+      gambarKarakterRumah(104, yTanah + 34 + ySujud * 0.7, 'cowok', t, { skala: 0.56, baju: '#f8fafc', celana: '#1e293b', label: 'Jamaah' });
+      gambarKarakterRumah(256, yTanah + 34 + ySujud * 0.7, 'cowok', t + 300, { skala: 0.56, baju: '#e2e8f0', celana: '#334155', label: 'Jamaah' });
+      gambarKarakterRumah(W / 2, yTanah + 56 + ySujud, s.gender || 'cewek', t, { skala: 0.64, baju: '#ffffff', tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      /* Cahaya lembut dari atas */
+      var grI = cx.createRadialGradient(W / 2, 120, 10, W / 2, 260, 220);
+      grI.addColorStop(0, 'rgba(254,243,199,.32)'); grI.addColorStop(1, 'rgba(254,243,199,0)');
+      cx.fillStyle = grI; cx.fillRect(0, 0, W, H);
+    } else if (A.jenis === 'bengkel') {
+      /* Bengkel Resmi / Perawatan Kendaraan + Mekanik bekerja */
+      kotak(0, 0, W, yTanah, '#e2e8f0'); kotak(0, 0, W, 62, '#1e3a8a');
+      cx.font = '800 13px "Baloo 2", sans-serif'; cx.fillStyle = '#fff'; cx.textAlign = 'center';
+      cx.fillText('🔧 BENGKEL & SERVIS KENDARAAN', W / 2, 42);
+      kotak(0, yTanah, W, H - yTanah, '#64748b');
+      /* Rak perkakas & oli */
+      kotakBulat(24, yTanah - 140, 86, 110, 4, '#334155');
+      for (var ro = 0; ro < 4; ro++) { kotak(32 + ro * 18, yTanah - 126, 12, 22, ro % 2 ? '#f59e0b' : '#ef4444'); kotak(32 + ro * 18, yTanah - 90, 12, 22, '#38bdf8'); }
+      /* Kendaraan di hidrolik & mekanik */
+      kotak(154, yTanah - 16, 140, 12, '#dc2626'); kotak(214, yTanah - 4, 20, 26, '#475569');
+      if (A.mobil && s.mobil) gambarMobil(224, yTanah - 14, s.mobil.bentuk, s.mobil.id, false, 0, 0);
+      else gambarMotorKu(224, yTanah - 32, s.motorId || 'beat', { kiri: true }, t);
+      gambarKarakterRumah(154, yTanah + 24, 'cowok', t, { skala: 0.58, baju: '#1d4ed8', celana: '#1e293b', label: 'Mekanik' });
+      gambarKarakterRumah(308, yTanah + 28, s.gender || 'cewek', t, { skala: 0.56, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+    } else if (A.jenis === 'mall' || A.jenis === 'rs' || A.jenis === 'taman') {
+      if (A.jenis === 'taman') {
+        gambarLangit(m, t, s);
+        kotak(0, yTanah - 40, W, 46, '#22c55e'); kotak(0, yTanah, W, H - yTanah, '#4ade80');
+        kotak(0, yTanah + 24, W, 56, '#d6d3d1'); /* jogging track */
+        /* Air mancur taman hidup */
+        kotakBulat(134, yTanah - 22, 92, 22, 10, '#94a3b8');
+        cx.strokeStyle = '#bae6fd'; cx.lineWidth = 3;
+        var spT = 18 + Math.sin(t / 180) * 6;
+        cx.beginPath(); cx.moveTo(180, yTanah - 22); cx.quadraticCurveTo(162, yTanah - 48 - spT, 148, yTanah - 18);
+        cx.moveTo(180, yTanah - 22); cx.quadraticCurveTo(198, yTanah - 48 - spT, 212, yTanah - 18); cx.stroke();
+        gambarKarakterRumah(100 + ((t * 0.04) % 180), yTanah + 58, s.gender || 'cewek', t, { skala: 0.58, jalan: true, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      } else if (A.jenis === 'rs') {
+        kotak(0, 0, W, yTanah, '#f0f9ff'); kotak(0, yTanah, W, H - yTanah, '#e0f2fe');
+        kotakBulat(W / 2 - 22, yTanah - 190, 44, 44, 10, '#ef4444');
+        kotak(W / 2 - 5, yTanah - 180, 10, 24, '#fff'); kotak(W / 2 - 12, yTanah - 173, 24, 10, '#fff');
+        gambarKarakterRumah(136, yTanah + 36, 'cowok', t, { skala: 0.62, baju: '#ffffff', celana: '#334155', label: 'Dokter' });
+        gambarKarakterRumah(232, yTanah + 36, s.gender || 'cewek', t, { skala: 0.62, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      } else {
+        /* Mall modern */
+        kotak(0, 0, W, yTanah, '#fdf4ff'); kotak(0, yTanah, W, H - yTanah, '#e2e8f0');
+        kotakBulat(20, yTanah - 170, 104, 150, 8, '#e0e7ff'); kotakBulat(134, yTanah - 170, 104, 150, 8, '#fce7f3'); kotakBulat(248, yTanah - 170, 96, 150, 8, '#fef3c7');
+        cx.font = '800 12px "Baloo 2", sans-serif'; cx.fillStyle = '#4c1d95'; cx.textAlign = 'center';
+        cx.fillText('🛍️ GRAND MALL NUSANTARA', W / 2, yTanah - 186);
+        gambarKarakterRumah(118, yTanah + 36, 'cewek', t, { skala: 0.52, jalan: true, baju: '#db2777', label: 'Pengunjung' });
+        gambarKarakterRumah(210, yTanah + 46, s.gender || 'cewek', t, { skala: 0.60, jalan: true, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      }
+    } else if (A.jenis === 'pesawat') {
+      /* Wisata Luar Negeri / Umrah: 3 Tahap Realistis (Bandara/PLBN → Pesawat di Atas Awan → Negara Tujuan!) */
+      var dest = A.dest || 'sg';
+      var darat = dest === 'kuching';
+      if (u < 0.30) {
+        /* Tahap 1: Terminal Bandara Internasional / PLBN Perbatasan */
+        kotak(0, 0, W, yTanah - 40, '#bae6fd'); kotak(0, yTanah - 40, W, H - yTanah + 40, '#e2e8f0');
+        kotak(0, yTanah - 180, W, 120, '#38bdf8');
+        cx.strokeStyle = '#64748b'; cx.lineWidth = 3;
+        for (var gx = 36; gx < W; gx += 60) { cx.beginPath(); cx.moveTo(gx, yTanah - 180); cx.lineTo(gx, yTanah - 60); cx.stroke(); }
+        kotakBulat(44, yTanah - 216, 272, 28, 6, '#0f172a');
+        cx.font = '800 11.5px "Baloo 2", sans-serif'; cx.fillStyle = '#facc15'; cx.textAlign = 'center';
+        cx.fillText(darat ? '🛂 PLBN ENTIKONG / ARUK · KALBAR – SARAWAK' : '🛫 TERMINAL KEBERANGKATAN · GATE A2', W / 2, yTanah - 198);
+        if (!darat) {
+          /* Pesawat parkir di luar kaca bandara */
+          kotakBulat(160, yTanah - 115, 140, 22, 11, '#ffffff');
+          cx.fillStyle = '#0284c7'; cx.beginPath(); cx.moveTo(166, yTanah - 115); cx.lineTo(150, yTanah - 144); cx.lineTo(182, yTanah - 115); cx.closePath(); cx.fill();
+        }
+        gambarKarakterRumah(136 + u * 180, yTanah + 34, s.gender || 'cewek', t, { skala: 0.60, jalan: true, baju: bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+        kotakBulat(162 + u * 180, yTanah + 12, 18, 24, 4, '#2563eb'); /* koper roda */
+        sub = darat ? 'Pemeriksaan Paspor Imigrasi PLBN...' : 'Boarding pesawat di Bandara Internasional...';
+      } else if (u < 0.68) {
+        /* Tahap 2: Terbang di Atas Awan dengan Pesawat / Jalan Raya Borneo */
+        var grFly = cx.createLinearGradient(0, 0, 0, H);
+        grFly.addColorStop(0, '#0284c7'); grFly.addColorStop(0.6, '#7dd3fc'); grFly.addColorStop(1, '#e0f2fe');
+        cx.fillStyle = grFly; cx.fillRect(0, 0, W, H);
+        /* Awan bergerak cepat dari kanan ke kiri */
+        for (var aw = 0; aw < 7; aw++) {
+          var ax = W + 80 - (((t * 0.14 + aw * 95) % (W + 160)));
+          var ay = 260 + (aw % 4) * 58;
+          bulat(ax, ay, 28, 'rgba(255,255,255,.92)'); bulat(ax + 24, ay - 6, 32, 'rgba(255,255,255,.95)'); bulat(ax + 50, ay + 2, 24, 'rgba(255,255,255,.9)');
+        }
+        if (darat) {
+          kotak(0, yTanah, W, H - yTanah, '#334155');
+          var gmK = (t * 0.35) % 60; cx.fillStyle = '#fde047'; for (var xk = -60; xk < W + 60; xk += 60) cx.fillRect(xk - gmK, yTanah + 46, 30, 4);
+          gambarMobil(W * 0.48, yTanah + 36, (s.mobil && s.mobil.bentuk) || 'mpv', (s.mobil && s.mobil.id) || 'avanza', false, t * 0.02, 0);
+          sub = 'Menyusuri jalan lintas negara menuju Kuching, Sarawak...';
+        } else {
+          /* Pesawat jet komersial terbang meluncur halus */
+          var yp = H * 0.44 + Math.sin(t / 420) * 8;
+          /* Contrail putih */
+          cx.strokeStyle = 'rgba(255,255,255,.55)'; cx.lineWidth = 5;
+          cx.beginPath(); cx.moveTo(0, yp + 6); cx.lineTo(130, yp + 4); cx.stroke();
+          /* Sayap & badan pesawat */
+          cx.fillStyle = '#cbd5e1'; cx.beginPath(); cx.moveTo(155, yp - 4); cx.lineTo(130, yp - 42); cx.lineTo(160, yp - 42); cx.lineTo(192, yp - 4); cx.closePath(); cx.fill();
+          kotakBulat(118, yp - 14, 152, 26, 13, '#ffffff');
+          cx.fillStyle = '#0284c7'; cx.beginPath(); cx.moveTo(126, yp - 14); cx.lineTo(106, yp - 48); cx.lineTo(146, yp - 14); cx.closePath(); cx.fill();
+          kotak(138, yp - 4, 114, 5, '#0284c7');
+          for (var jn = 0; jn < 9; jn++) bulat(148 + jn * 11, yp - 7, 2.2, '#38bdf8');
+          cx.fillStyle = '#94a3b8'; cx.beginPath(); cx.moveTo(165, yp + 6); cx.lineTo(142, yp + 46); cx.lineTo(172, yp + 46); cx.lineTo(200, yp + 6); cx.closePath(); cx.fill();
+          sub = '✈️ Di dalam pesawat melintasi awan (35.000 kaki)...';
+        }
+      } else {
+        /* Tahap 3: Tiba di Negara Tujuan! */
+        gambarLangit(660, t, s);
+        kotak(0, yTanah, W, H - yTanah, dest === 'umrah' ? '#f8fafc' : '#cbd5e1');
+        if (dest === 'umrah') {
+          /* Masjidil Haram & Ka'bah */
+          kotak(36, yTanah - 150, 26, 150, '#e7e5e4'); kotak(W - 62, yTanah - 150, 26, 150, '#e7e5e4');
+          kotak(W / 2 - 42, yTanah - 94, 84, 94, '#111827');
+          kotak(W / 2 - 42, yTanah - 74, 84, 10, '#eab308'); /* Kiswah emas */
+          sub = '🕋 Beribadah khusyuk di depan Ka\'bah, Masjidil Haram!';
+        } else if (dest === 'jepang') {
+          /* Gunung Fuji, Sakura & Gerbang Torii */
+          cx.fillStyle = '#64748b'; cx.beginPath(); cx.moveTo(30, yTanah); cx.lineTo(180, yTanah - 165); cx.lineTo(330, yTanah); cx.closePath(); cx.fill();
+          cx.fillStyle = '#ffffff'; cx.beginPath(); cx.moveTo(138, yTanah - 118); cx.lineTo(180, yTanah - 165); cx.lineTo(222, yTanah - 118); cx.closePath(); cx.fill();
+          kotak(126, yTanah - 86, 10, 86, '#dc2626'); kotak(224, yTanah - 86, 10, 86, '#dc2626');
+          kotak(110, yTanah - 94, 140, 10, '#dc2626'); kotak(120, yTanah - 74, 120, 7, '#dc2626');
+          for (var sk = 0; sk < 14; sk++) bulat((sk * 31 + t * 0.04) % W, (sk * 27 + t * 0.03) % yTanah, 3, '#fbcfe8');
+          sub = '🇯🇵 Tiba di Jepang! Menikmati Sakura & Gunung Fuji!';
+        } else if (dest === 'sg') {
+          /* Marina Bay Sands & Merlion */
+          kotak(72, yTanah - 150, 34, 150, '#475569'); kotak(122, yTanah - 150, 34, 150, '#475569'); kotak(172, yTanah - 150, 34, 150, '#475569');
+          kotakBulat(58, yTanah - 162, 166, 14, 7, '#0ea5e9');
+          kotak(0, yTanah - 18, W, 24, '#38bdf8');
+          sub = '🇸🇬 Tiba di Marina Bay & Merlion Park, Singapura!';
+        } else {
+          /* Kuching Waterfront & Sungai Sarawak */
+          kotak(0, yTanah - 24, W, 32, '#0ea5e9');
+          cx.strokeStyle = '#f59e0b'; cx.lineWidth = 4; cx.beginPath(); cx.moveTo(40, yTanah - 24); cx.quadraticCurveTo(180, yTanah - 104, 320, yTanah - 24); cx.stroke();
+          sub = '🇲🇾 Tiba di Kuching Waterfront, Sarawak Malaysia!';
+        }
+        gambarKarakterRumah(W / 2, yTanah + 52, s.gender || 'cewek', t, { skala: 0.62, baju: dest === 'umrah' ? '#ffffff' : bajuP, tampilan: tpP, label: s.namaPemain || 'Kamu' });
+      }
+    }
+
+    /* Banner judul & progres bar di atas adegan */
+    teksTengah(judul, 174, 16.5);
+    if (sub) teksTengah(sub, 198, 12.2);
+    kotakBulat(60, 218, 240, 8, 4, 'rgba(15,23,42,.48)');
+    kotakBulat(60, 218, Math.max(8, 240 * u), 8, 4, A.jenis === 'spbu' ? '#ef4444' : A.jenis === 'ibadah' ? '#10b981' : A.jenis === 'pesawat' ? '#38bdf8' : '#f59e0b');
   }
   /* adegan kerja kantoran live (waktu bergerak cepat 24x dari jam masuk s/d 17.00) */
   function gambarKantor(s, t) {
@@ -2767,6 +3005,7 @@
     if (s.latarAwal) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarLatarAwal(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.pindah) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPindahan(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.kerjaAnim) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKantor(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
+    if (s.aktAnim) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarAktivitas(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.transit) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarPerjalanan(s, t, dt); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.travel) {
       cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
@@ -2797,7 +3036,8 @@
       /* mode driver: saat standby motor, 1 karakter duduk di atas motornya sendiri (bukan 2 karakter dobel!) */
       kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
       if (!motorStandby) {
-        gambarKarakterRumah(196, dasarKedai + 6, s.gender || 'cewek', t, { skala: 0.88, baju: s.warnaBaju || '#00aa13', tampilan: s.tampilan, label: s.namaPemain || 'Driver' });
+        /* Proporsi manusia realistis sejajar pejalan kaki di trotoar (tidak raksasa) */
+        gambarKarakterRumah(196, dasarKedai - 2, s.gender || 'cewek', t, { skala: 0.48, baju: s.warnaBaju || '#00aa13', tampilan: s.tampilan, label: s.namaPemain || 'Driver' });
       }
     } else {
       gambarPisang(132, dasarKedai, t);
