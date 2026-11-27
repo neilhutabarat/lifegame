@@ -346,14 +346,20 @@
       { id: 'legionpro7', jenis: 'laptop', tahun: 2025, merek: 'Lenovo', nama: 'Lenovo Legion Pro 7i RTX 4080', ram: 32, storage: 2048, mah: 20000, watt: 240, kamera: 1.2, harga: 42999000, sewaHarian: 340000, ket: 'Core i9-14900HX · GeForce RTX 4080 12GB · RAM 32 GB · 2 TB SSD' }
     ],
 
-    /* katalog power bank HP (5.000 mAh – 100.000 mAh, kapasitas & efisiensi konversi 80% sesuai dunia nyata) */
+    /* katalog power bank HP (merk standar efisiensi konversi 80% + UNEED Real Capacity 100% efisiensi nyata, harga +120% lebih tinggi karena kepadatan & teknologi sel) */
     daftarPowerBank: [
       { id: 'pb5k', merek: 'Xiaomi', nama: 'Xiaomi Pocket Power Bank 5.000 mAh', mah: 5000, wattOut: 18, wattIn: 18, harga: 149000, ket: 'Tipis masuk saku · Efektif ±4.000 mAh (~1 hari narik ojol)' },
       { id: 'pb10k', merek: 'Anker', nama: 'Anker PowerCore 10.000 mAh PD', mah: 10000, wattOut: 22.5, wattIn: 20, harga: 299000, ket: 'Fast Charge 22,5W · Efektif ±8.000 mAh (~2 hari narik)' },
       { id: 'pb20k', merek: 'Baseus', nama: 'Baseus Bipow Pro 20.000 mAh', mah: 20000, wattOut: 30, wattIn: 30, harga: 459000, ket: 'Layar LED persentase · Efektif ±16.000 mAh (~4 hari narik)' },
       { id: 'pb30k', merek: 'Romoss', nama: 'Romoss Sense 8P+ 30.000 mAh', mah: 30000, wattOut: 30, wattIn: 30, harga: 599000, ket: 'Favorit driver ojol & travel · Efektif ±24.000 mAh (~6 hari narik)' },
       { id: 'pb50k', merek: 'Baseus', nama: 'Baseus Amblight 50.000 mAh PD 65W', mah: 50000, wattOut: 65, wattIn: 60, harga: 1199000, ket: 'Super kapasitas 50.000 mAh · Efektif ±40.000 mAh (~10 hari narik)' },
-      { id: 'pb100k', merek: 'EcoPower', nama: 'Monster Power Bank 100.000 mAh PD 100W', mah: 100000, wattOut: 100, wattIn: 100, harga: 2499000, ket: 'Kapasitas raksasa 100.000 mAh (efektif ±80.000 mAh) · Tahan ~20–25 hari narik / 40+ hari harian!' }
+      { id: 'pb100k', merek: 'EcoPower', nama: 'Monster Power Bank 100.000 mAh PD 100W', mah: 100000, wattOut: 100, wattIn: 100, harga: 2499000, ket: 'Kapasitas raksasa 100.000 mAh (efektif ±80.000 mAh) · Tahan ~20–25 hari narik!' },
+      { id: 'uneed8k', merek: 'UNEED', nama: 'UNEED RealCap 8.000 mAh', mah: 8000, realCapacity: true, wattOut: 22.5, wattIn: 20, harga: 440000, ket: 'REAL CAPACITY 100% (8.000 mAh murni tanpa susut) · Sel high-density premium' },
+      { id: 'uneed16k', merek: 'UNEED', nama: 'UNEED RealCap 16.000 mAh', mah: 16000, realCapacity: true, wattOut: 30, wattIn: 30, harga: 880000, ket: 'REAL CAPACITY 100% (16.000 mAh murni) · Fast Charge 30W' },
+      { id: 'uneed32k', merek: 'UNEED', nama: 'UNEED RealCap 32.000 mAh', mah: 32000, realCapacity: true, wattOut: 45, wattIn: 45, harga: 1760000, ket: 'REAL CAPACITY 100% (32.000 mAh murni) · Tahan ~8 hari narik nonstop' },
+      { id: 'uneed64k', merek: 'UNEED', nama: 'UNEED RealCap 64.000 mAh', mah: 64000, realCapacity: true, wattOut: 65, wattIn: 65, harga: 3520000, ket: 'REAL CAPACITY 100% (64.000 mAh murni) · PD 65W ultra-padat' },
+      { id: 'uneed128k', merek: 'UNEED', nama: 'UNEED RealCap 128.000 mAh', mah: 128000, realCapacity: true, wattOut: 100, wattIn: 100, harga: 7040000, ket: 'REAL CAPACITY 100% (128.000 mAh murni) · PD 100W daya tahan ekstrem' },
+      { id: 'uneed256k', merek: 'UNEED', nama: 'UNEED RealCap 256.000 mAh', mah: 256000, realCapacity: true, wattOut: 140, wattIn: 140, harga: 14080000, ket: 'REAL CAPACITY 100% (256.000 mAh murni) · Flagship PD 140W ultra-density' }
     ],
 
     /* aplikasi & game HP yang bisa diinstal (memakai RAM & Storage internal HP) */

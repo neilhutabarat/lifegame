@@ -19,7 +19,7 @@
 
   <header id="hud" hidden>
     <div class="kartu-hud tanggal"><span class="foto-wajah foto-hud" id="h-foto"></span><div class="tgl-teks"><b id="h-hari">Senin, 5 Januari</b><span id="h-tahun">2026 · Hari ke-1</span></div></div>
-    <div class="kartu-hud jam"><b id="h-jam">06.00</b><span id="h-status">Mode driver</span></div>
+    <div class="kartu-hud jam" id="h-jam-kartu"><div class="jam-atas"><b id="h-jam">06.00</b><span id="h-jarak" class="jarak-badge" hidden>🏠 +0km</span></div><span id="h-kec" class="hud-kec">📍 Pontianak Kota</span><span id="h-status">Mode driver</span></div>
     <button id="h-uang" class="kartu-hud uang mode-driver" type="button" aria-label="Lihat ringkasan harian">
       <span><small>Laci</small><b id="h-laci">Rp0</b></span>
       <span><small>Dompet</small><b id="h-dompet">Rp0</b></span>
@@ -149,6 +149,7 @@
 </div>
 
 <script src="js/data/nyata.js"></script>
+<script src="js/data/kalbar.js"></script>
 <script src="js/data/menu.js"></script>
 <script src="js/data/rute.js"></script>
 <script src="js/kalender.js"></script>

@@ -1262,6 +1262,11 @@
         cx.beginPath(); cx.ellipse(112, yRanjang + 8 + pantulKasur * 0.4, 24, 13, -0.1, 0, Math.PI * 2); cx.fill();
         /* 2. Kepala cewek bersandar natural di atas bantal */
         gambarKepalaPotret(86, yRanjang - 8 + pantulKasur * 0.5, 20, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.28 + ritme * 0.05, merem: true, tanpaLeher: false });
+        if (A.nama2) {
+          /* HB Bertiga: pasangan kedua bersandar nyaman di bantal sebelahnya di balik selimut */
+          var tpC = A.tpC || tampilanDariNama(A.nama2, A.gC || cewekDiBawah.g, false);
+          gambarKepalaPotret(112, yRanjang + 2 + pantulKasur * 0.5, 18.5, A.gC || cewekDiBawah.g, tpC, { rot: -0.18 - ritme * 0.04, merem: true, tanpaLeher: false });
+        }
         /* 3. Bahu, punggung atas & lengan cowok di atas, tersambung mulus ke kepala & masuk ke dalam selimut */
         cx.fillStyle = klCwo;
         cx.beginPath(); cx.ellipse(158, yRanjang - 14 + naikTurun * 0.85, 28, 16, 0.28, 0, Math.PI * 2); cx.fill();
@@ -1328,7 +1333,7 @@
     var jm = s.menit % 1440, jj = ('0' + Math.floor(jm / 60)).slice(-2) + '.' + ('0' + Math.floor(jm % 60)).slice(-2);
     cx.textBaseline = 'middle'; cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,12,28,.75)'; cx.fillStyle = '#fff';
     cx.font = '800 20px "Baloo 2", "Nunito", system-ui, sans-serif';
-    var jd = (v === 'ciuman' ? 'Ciuman hangat' : isForeplayIntro ? 'Foreplay romantis' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama : '');
+    var jd = (v === 'ciuman' ? 'Ciuman hangat' : isForeplayIntro ? 'Foreplay romantis' : A.nama2 ? 'Waktu hangat bertiga' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama + (A.nama2 ? ' & ' + A.nama2 : '') : '');
     cx.strokeText(jd, W / 2, 212); cx.fillText(jd, W / 2, 212);
     cx.font = '800 15px "Nunito", system-ui, sans-serif'; cx.strokeText('Pukul ' + jj, W / 2, 238); cx.fillText('Pukul ' + jj, W / 2, 238);
     kotakBulat(70, 256, 220, 8, 4, 'rgba(255,255,255,.3)'); kotakBulat(70, 256, Math.max(8, 220 * u), 8, 4, '#ff5c8a');

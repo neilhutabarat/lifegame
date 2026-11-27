@@ -27,13 +27,35 @@
     if (!S.ojek.pos) S.ojek.pos = { x: 0, y: 0 };
     return S;
   }
+  function lokasiRumah(S) {
+    if (!S) return null;
+    var W = g.KK_WILAYAH;
+    if (S.rumah && S.rumah.wilayah && S.rumah.wilayah.kabId === S.kota) return S.rumah.wilayah;
+    var t0 = W ? W.titikAwal(S.kota) : { kabId: S.kota || 'pontianak', kabNama: kota(S).nama, kecId: 'pusat', kecNama: kota(S).nama, desa: kota(S).nama, lat: null, lon: null };
+    if (S.rumah) S.rumah.wilayah = t0;
+    return t0;
+  }
+  function lokasiSekarang(S) {
+    if (!S) return null;
+    var rm = lokasiRumah(S);
+    if (S.diri && S.diri.posisi === 'kos') return rm;
+    if (S.ojek && S.ojek.lokasi && S.ojek.lokasi.kecNama) return S.ojek.lokasi;
+    if (S.ojek) S.ojek.lokasi = rm;
+    return rm;
+  }
   function jarakRumah(S) {
+    if (S && S.diri && S.diri.posisi === 'kos') return 0;
+    var rm = lokasiRumah(S), sk = lokasiSekarang(S);
+    if (g.KK_WILAYAH && rm && sk && rm.lat != null && sk.lat != null) {
+      return g.KK_WILAYAH.jarakKm(rm, sk);
+    }
     var p = (S && S.ojek && S.ojek.pos) || { x: 0, y: 0 };
     return Math.round(Math.hypot(p.x || 0, p.y || 0) * 10) / 10;
   }
   function resetPos(S, x, y) {
     if (!S.ojek) return;
     S.ojek.pos = { x: x || 0, y: y || 0 };
+    if (!x && !y) S.ojek.lokasi = lokasiRumah(S);
   }
   function aktif(S, pid) { var d = S.ojek.daftar[pid]; return !!d && d.status === 'aktif'; }
   function daftar(S, pid) {
@@ -128,25 +150,22 @@
     var isCar = S.ojek && S.ojek.mode === 'mobil';
     var r = Math.random(), jenis = isCar ? 'penumpang' : (r < (makan ? 0.45 : 0.15) ? 'makanan' : r < (makan ? 0.6 : 0.35) ? 'barang' : 'penumpang');
     /* GoCar: dalam kota 2-25 km, dan 1-5 kali sehari muncul order jarak jauh hingga 300 km; Ojol motor: 1-10 km + 1-4x 11-30 km */
-    var bisaJauh = false, km;
+    var bisaJauh = false, minKm, maxKm;
     if (isCar) {
       bisaJauh = (S.ojek.jauhCarHariIni || 0) < (S.ojek.jatahJauhCar || 3) && Math.random() < 0.36;
-      if (bisaJauh) {
-        S.ojek.jauhCarHariIni = (S.ojek.jauhCarHariIni || 0) + 1;
-        km = Math.round((35 + Math.random() * 265) * 10) / 10; /* 35 s/d 300 km */
-      } else {
-        km = Math.round((2 + Math.pow(Math.random(), 1.25) * 23) * 10) / 10; /* 2 s/d 25 km */
-      }
+      if (bisaJauh) { S.ojek.jauhCarHariIni = (S.ojek.jauhCarHariIni || 0) + 1; minKm = 35; maxKm = 280; }
+      else { minKm = 2; maxKm = 25; }
     } else {
       bisaJauh = (S.ojek.jauhHariIni || 0) < (S.ojek.jatahJauh || 2) && Math.random() < 0.28;
-      if (bisaJauh) {
-        S.ojek.jauhHariIni = (S.ojek.jauhHariIni || 0) + 1;
-        km = Math.round((11 + Math.random() * 19) * 10) / 10; /* 11 s/d 30 km */
-      } else {
-        km = Math.round((1 + Math.pow(Math.random(), 1.35) * 9) * 10) / 10; /* 1 s/d 10 km */
-      }
+      if (bisaJauh) { S.ojek.jauhHariIni = (S.ojek.jauhHariIni || 0) + 1; minKm = 11; maxKm = 35; }
+      else { minKm = 1; maxKm = 10; }
     }
-    var jemput = Math.round((0.3 + Math.random() * 1.8) * 10) / 10;
+    var asalT = lokasiSekarang(S);
+    var tj = (g.KK_WILAYAH && g.KK_WILAYAH.pilihTujuan) ? g.KK_WILAYAH.pilihTujuan(asalT, minKm, maxKm) : null;
+    var km = tj ? tj.km : Math.round((minKm + Math.random() * (maxKm - minKm)) * 10) / 10;
+    var tujuanTitik = tj ? tj.titik : null;
+    var tujuanLabel = tujuanTitik ? (tujuanTitik.desa + (tujuanTitik.kecNama && tujuanTitik.kecNama !== tujuanTitik.desa ? ', ' + tujuanTitik.kecNama : '')) : '';
+    var jemput = Math.round((0.3 + Math.random() * 1.6) * 10) / 10;
     var arah = Math.random() * Math.PI * 2;
     var dx = Math.round(km * Math.cos(arah) * 100) / 100;
     var dy = Math.round(km * Math.sin(arah) * 100) / 100;
@@ -159,7 +178,7 @@
     var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : p.layanan[jenis];
     var tipJauh = isCar && bisaJauh ? (Math.random() < 0.45 ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
       : (Math.random() < (bisaJauh ? 0.25 : 0.12) ? (2 + Math.floor(Math.random() * (bisaJauh ? 8 : 4))) * 1000 : 0);
-    return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
+    return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: tipJauh };
   }
@@ -171,6 +190,7 @@
     if (!kend.cukup(S, km)) return isCar ? 'Bensin / baterai mobil tidak cukup untuk order ini.' : 'Bensin tidak cukup untuk order ini.';
     var r = kend.jalan(S, km, 1);
     if (!r || !r.ok) return (r && r.alasan) || 'Kendaraan tidak siap.';
+    if (S.hp && S.hp.cas) S.hp.cas = false; /* berhenti cas stopkontak toko saat berangkat antar penumpang */
     var tunggu = x.jenis === 'makanan' ? 8 + Math.floor(Math.random() * 10) : x.jenis === 'barang' ? 4 : 2;
     var menitJemput = Math.round(r.menit * x.jemput / km) + tunggu, total = r.menit + tunggu;
     o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kabar: r.kabar };
@@ -202,6 +222,7 @@
     o.pos = o.pos || { x: 0, y: 0 };
     o.pos.x += (x.dx != null ? x.dx : x.km);
     o.pos.y += (x.dy != null ? x.dy : 0);
+    if (x.tujuanTitik) o.lokasi = x.tujuanTitik;
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
     if (o.mode === 'mobil') {
       if (S.mobil) S.mobil.totalHasil = (S.mobil.totalHasil || 0) + dapat;
@@ -211,7 +232,8 @@
       S.hariIni.ojek = (S.hariIni.ojek || 0) + dapat;
     }
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + dapat;
-    kabar.unshift(x.layanan + ' selesai, ' + x.km.toLocaleString('id-ID') + ' km. Standby ' + jarakRumah(S).toLocaleString('id-ID') + ' km dari rumah. +' + rp(dapat) + caraTeks + '.');
+    var diLok = (o.lokasi && o.lokasi.kecNama) ? (' di ' + o.lokasi.desa + ', ' + o.lokasi.kecNama) : '';
+    kabar.unshift(x.layanan + ' selesai (' + x.km.toLocaleString('id-ID') + ' km)' + diLok + ' · 🏠 +' + jarakRumah(S).toLocaleString('id-ID') + ' km · +' + rp(dapat) + caraTeks + '.');
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;
   }
@@ -259,5 +281,5 @@
   }
 
   g.KK_OJEK = { siapkan: siapkan, daftar: daftar, putus: putus, aktif: aktif, tarif: tarif, tarifStandar: tarifStandar, ubahTarif: ubahTarif, bisaOnline: bisaOnline, online: online, offline: offline, batalTrip: batalTrip, buatTawaran: buatTawaran, ambil: ambil, lewati: lewati,
-    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, jarakRumah: jarakRumah, resetPos: resetPos, CEPAT_TRIP: CEPAT_TRIP };
+    kedaluwarsa: kedaluwarsa, jalan: jalan, fase: fase, tarikSaldo: tarikSaldo, gantiHari: gantiHari, platform: platform, lokasiRumah: lokasiRumah, lokasiSekarang: lokasiSekarang, jarakRumah: jarakRumah, resetPos: resetPos, CEPAT_TRIP: CEPAT_TRIP };
 })(window);

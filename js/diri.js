@@ -119,13 +119,106 @@
   }
   function gadgetModel(id) { return (N.daftarGadget || []).filter(function (x) { return x.id === id; })[0]; }
   function pbModel(id) { return (N.daftarPowerBank || []).filter(function (x) { return x.id === id; })[0]; }
+  function pbDipakaiList(S) {
+    if (!S || !S.hp) return [];
+    S.hp.pbMilik = S.hp.pbMilik || {};
+    if (!Array.isArray(S.hp.pbPasangList)) {
+      S.hp.pbPasangList = (S.hp.pbPasang && S.hp.pbAktif && S.hp.pbMilik[S.hp.pbAktif]) ? [S.hp.pbAktif] : [];
+    }
+    S.hp.pbPasangList = S.hp.pbPasangList.filter(function (id, idx, arr) {
+      return id && S.hp.pbMilik[id] && pbModel(id) && arr.indexOf(id) === idx;
+    }).slice(0, 5);
+    S.hp.pbPasang = S.hp.pbPasangList.length > 0;
+    if (S.hp.pbPasangList.length && (!S.hp.pbAktif || !S.hp.pbMilik[S.hp.pbAktif])) S.hp.pbAktif = S.hp.pbPasangList[0];
+    return S.hp.pbPasangList;
+  }
+  function pbRingkasan(S) {
+    var list = pbDipakaiList(S);
+    var sisa = 0, total = 0, watt = 18;
+    list.forEach(function (id) {
+      var m = pbModel(id), st = S.hp.pbMilik[id];
+      if (!m || !st) return;
+      if (typeof st.sisaMah !== 'number' || isNaN(st.sisaMah)) st.sisaMah = m.mah;
+      st.sisaMah = Math.max(0, Math.min(m.mah, st.sisaMah));
+      sisa += st.sisaMah;
+      total += m.mah;
+      if ((m.wattOut || 18) > watt) watt = m.wattOut || 18;
+    });
+    return { list: list, jumlah: list.length, sisaMah: sisa, totalMah: total, persen: total > 0 ? Math.round((sisa / total) * 100) : 0, wattOutMaks: watt, adaDaya: sisa > 0 };
+  }
   function pbAktifInfo(S) {
-    if (!S || !S.hp || !S.hp.pbAktif) return null;
-    var m = pbModel(S.hp.pbAktif), st = S.hp.pbMilik && S.hp.pbMilik[S.hp.pbAktif];
+    if (!S || !S.hp) return null;
+    var r = pbRingkasan(S);
+    if (r.jumlah > 1) {
+      return { model: { id: r.list[0], nama: r.jumlah + ' Power Bank Aktif', mah: r.totalMah, wattOut: r.wattOutMaks, wattIn: 30, realCapacity: false }, state: { sisaMah: r.sisaMah }, persen: r.persen, jumlah: r.jumlah };
+    }
+    var idA = r.list[0] || S.hp.pbAktif;
+    if (!idA) {
+      var ks = Object.keys(S.hp.pbMilik || {});
+      idA = ks[0] || null;
+      if (idA) S.hp.pbAktif = idA;
+    }
+    if (!idA) return null;
+    var m = pbModel(idA), st = S.hp.pbMilik && S.hp.pbMilik[idA];
     if (!m || !st) return null;
     if (typeof st.sisaMah !== 'number' || isNaN(st.sisaMah)) st.sisaMah = m.mah;
     st.sisaMah = Math.max(0, Math.min(m.mah, st.sisaMah));
-    return { model: m, state: st, persen: Math.round((st.sisaMah / m.mah) * 100) };
+    return { model: m, state: st, persen: Math.round((st.sisaMah / m.mah) * 100), jumlah: r.jumlah || 0 };
+  }
+  function nilaiJualPowerBank(S, id) {
+    var m = pbModel(id), st = S.hp && S.hp.pbMilik && S.hp.pbMilik[id];
+    if (!m || !st) return 0;
+    var J = N.jualBarang || { awal: 0.75, perTahun: 0.12, perPakai: 0.0015, min: 0.2 };
+    var tahun = Math.max(0, S.hari - (st.dibeli == null ? S.hari : st.dibeli)) / 365;
+    var f = Math.max(J.min, Math.min(J.awal, J.awal - J.perTahun * tahun - J.perPakai * (st.pakai || 0)));
+    return Math.round((st.hargaBeli || m.harga) * f / 5000) * 5000;
+  }
+  function jualPowerBank(S, id) {
+    var m = pbModel(id), st = S.hp && S.hp.pbMilik && S.hp.pbMilik[id];
+    if (!m || !st) return 'Belum punya Power Bank ini.';
+    var h = nilaiJualPowerBank(S, id);
+    delete S.hp.pbMilik[id];
+    if (Array.isArray(S.hp.pbPasangList)) S.hp.pbPasangList = S.hp.pbPasangList.filter(function (x) { return x !== id; });
+    if (S.hp.pbAktif === id) S.hp.pbAktif = Object.keys(S.hp.pbMilik)[0] || null;
+    pbDipakaiList(S);
+    if (!Object.keys(S.hp.pbMilik).length) S.hp.pbCas = false;
+    S.bank.saldo += h;
+    S.bank.mutasi.unshift({ n: S.hari, ket: 'Jual Power Bank bekas: ' + m.nama, jml: h });
+    return { ok: true, harga: h, nama: m.nama, teks: m.nama + ' terjual ' + rp(h) + ' (harga usia pakai), masuk rekening.' };
+  }
+  function toggleAutoCasPb(S) {
+    S.hp = S.hp || {};
+    S.hp.pbAutoCas = !S.hp.pbAutoCas;
+    return { ok: true, teks: S.hp.pbAutoCas ? '⚡ Auto Cas Power Bank di rumah AKTIF (otomatis terisi saat di rumah/tidur).' : 'Auto Cas Power Bank dimatikan (mode manual).' };
+  }
+  function togglePasangPbUnit(S, id) {
+    var m = pbModel(id), st = S.hp && S.hp.pbMilik && S.hp.pbMilik[id];
+    if (!m || !st) return 'Belum punya Power Bank ini.';
+    var list = pbDipakaiList(S);
+    var idx = list.indexOf(id);
+    if (idx >= 0) {
+      list.splice(idx, 1);
+      S.hp.pbPasang = list.length > 0;
+      return { ok: true, teks: m.nama + ' dilepas dari HP (' + list.length + '/5 unit aktif).' };
+    }
+    if (list.length >= 5) return 'Maksimal 5 Power Bank yang bisa dipakai bersamaan! Lepas salah satu dulu.';
+    if ((st.sisaMah || 0) <= 0) return 'Daya ' + m.nama + ' habis (0 mAh). Cas dulu di rumah.';
+    S.hp.cas = false;
+    list.push(id);
+    S.hp.pbAktif = id;
+    S.hp.pbPasang = true;
+    return { ok: true, teks: '🔋 ' + m.nama + ' disambungkan ke HP (' + list.length + '/5 unit dipakai bersamaan)!' };
+  }
+  function casDiPangkalan(S) {
+    if (!S.hp) return 'HP belum siap.';
+    if (S.ojek && S.ojek.trip) return 'Tidak bisa mengecas di toko/pangkalan saat sedang mengantar penumpang! Selesaikan order dulu atau pakai Power Bank.';
+    if (S.hp.baterai >= 98) return 'Baterai HP sudah penuh (' + Math.round(S.hp.baterai) + '%).';
+    var hm = hpAktif(S), watt = (hm && hm.watt) || 18, mah = (hm && hm.mah) || 5000;
+    var menit = 30;
+    var naik = Math.min(100 - S.hp.baterai, Math.max(25, Math.round((watt / (mah / 1000)) * (menit / 60) * 22)));
+    S.hp.baterai = Math.min(100, S.hp.baterai + naik);
+    S.hp.cas = false;
+    return { ok: true, menit: menit, teks: '🔌 Singgah 30 menit cas HP di toko/pangkalan (+' + Math.round(naik) + '% → ' + Math.round(S.hp.baterai) + '%).' };
   }
   function apkModel(id) { return (N.apkHp || []).filter(function (x) { return x.id === id; })[0]; }
   function hpAktif(S) { return gadgetModel(S.hp && S.hp.id) || gadgetModel('redmi12c'); }
@@ -333,28 +426,37 @@
       }
     }
     listrikKos(S, dMenit, false);
-    /* baterai HP, Power Bank (efisiensi konversi nyata 80%), & charger sesuai mAh dan Watt asli */
+    /* baterai HP, Power Bank (maks 5 unit bersamaan; UNEED Real Capacity 100% efisiensi, merk lain 80%), & charger stop otomatis saat mengantar penumpang */
     if (S.hp) {
       var hm = hpAktif(S), mah = (hm && hm.mah) || 5000, watt = (hm && hm.watt) || 10;
-      var listrikTersedia = (d.posisi === 'kos' && !S.rumah.padam) || (d.posisi === 'kedai' && !(S.usaha && S.usaha.berhentiSewa) && (!g.KK_USAHA || g.KK_USAHA.listrikNyala(S)));
+      var sedangGerak = !!(S.transit || (S.ojek && S.ojek.trip) || (S.travel && S.travel.aktif && S.travel.status !== 'tunggu'));
+      var diRumahListrik = d.posisi === 'kos' && !S.rumah.padam;
+      var listrikTersedia = !sedangGerak && (diRumahListrik || (d.posisi === 'kedai' && !(S.usaha && S.usaha.berhentiSewa) && (!g.KK_USAHA || g.KK_USAHA.listrikNyala(S))));
+      if (sedangGerak && S.hp.cas) S.hp.cas = false;
       var bisaCas = S.hp.cas && listrikTersedia;
-      var pbInfo = pbAktifInfo(S);
-      /* cas Power Bank di stopkontak rumah/kos (wattIn × 200 mAh/jam) */
-      if (S.hp.pbCas) {
-        if (!listrikTersedia || !pbInfo) {
-          S.hp.pbCas = false;
-        } else {
-          var tambahPb = (pbInfo.model.wattIn || 18) * 200 * j;
-          var sblmPb = pbInfo.state.sisaMah;
-          pbInfo.state.sisaMah = Math.min(pbInfo.model.mah, pbInfo.state.sisaMah + tambahPb);
-          if (sblmPb < pbInfo.model.mah && pbInfo.state.sisaMah >= pbInfo.model.mah) {
-            S.hp.pbCas = false;
-            kabar.push('🔋 Power Bank ' + pbInfo.model.nama + ' penuh 100% (' + pbInfo.model.mah.toLocaleString('id-ID') + ' mAh)!');
+      /* cas semua Power Bank milik pemain di rumah (jika mode Auto Cas aktif atau manual pbCas aktif) */
+      var casPbAktif = diRumahListrik && (S.hp.pbCas || S.hp.pbAutoCas);
+      if (casPbAktif && S.hp.pbMilik) {
+        var masihBelumPenuh = false;
+        Object.keys(S.hp.pbMilik).forEach(function (pid) {
+          var pm = pbModel(pid), stP = S.hp.pbMilik[pid];
+          if (!pm || !stP) return;
+          if (typeof stP.sisaMah !== 'number' || isNaN(stP.sisaMah)) stP.sisaMah = pm.mah;
+          if (stP.sisaMah < pm.mah) {
+            var sblmP = stP.sisaMah;
+            stP.sisaMah = Math.min(pm.mah, stP.sisaMah + (pm.wattIn || 18) * 200 * j);
+            if (sblmP < pm.mah && stP.sisaMah >= pm.mah) {
+              kabar.push('🔋 Power Bank ' + pm.nama + ' penuh 100% (' + pm.mah.toLocaleString('id-ID') + ' mAh)!');
+            } else {
+              masihBelumPenuh = true;
+            }
           }
-        }
+        });
+        if (!masihBelumPenuh && S.hp.pbCas) S.hp.pbCas = false;
+      } else if (S.hp.pbCas && !listrikTersedia) {
+        S.hp.pbCas = false;
       }
       if (bisaCas) {
-        /* kecepatan cas proporsional dengan Watt charger terhadap kapasitas baterai mAh */
         var naikBat = (watt / (mah / 1000)) * j * 18;
         var batLama = S.hp.baterai;
         S.hp.baterai = Math.min(100, S.hp.baterai + naikBat);
@@ -364,35 +466,45 @@
         var pakaiOjek = S.ojek && S.ojek.online;
         var sedangTrip = pakaiOjek && S.ojek.trip;
         var pakaiTravel = S.travel && S.travel.aktif;
-        /* konsumsi nyata HP dalam mAh/jam: Maps+GPS+layar 400 mAh/j, ojol/travel standby 225 mAh/j, harian 60 mAh/j */
         var lajuKuras = sedangTrip ? 8 : (pakaiOjek || pakaiTravel) ? 4.5 : 1.2;
-        var butuhMah = lajuKuras * 50 * j; /* 1% HP 5000 mAh = 50 mAh */
-        if (S.hp.pbPasang && pbInfo && pbInfo.state.sisaMah > 0) {
-          /* Power Bank tersambung: suplai daya langsung ke HP + isi baterai HP menuju 100% (efisiensi konversi nyata 80%) */
-          var wattEf = Math.min(pbInfo.model.wattOut || 18, Math.max(15, watt));
+        var butuhMah = lajuKuras * 50 * j;
+        var pbList = pbDipakaiList(S), pbSum = pbRingkasan(S);
+        if (pbList.length && pbSum.adaDaya) {
+          /* suplai dari gabungan hingga 5 Power Bank aktif; UNEED Real Capacity = 100% efisiensi, merk standar = 80% */
+          var wattEf = Math.min(pbSum.wattOutMaks || 18, Math.max(15, watt));
           var maksKirim = wattEf * 180 * j;
           var kurangHpMah = Math.max(0, (100 - S.hp.baterai) / 100 * mah);
-          var kirimTotal = Math.min(maksKirim, butuhMah + kurangHpMah);
-          var sedotPb = kirimTotal / 0.8; /* efisiensi konversi DC-DC 3.7V->5V ~80% */
-          if (sedotPb > pbInfo.state.sisaMah) {
-            kirimTotal = pbInfo.state.sisaMah * 0.8;
-            pbInfo.state.sisaMah = 0;
-            S.hp.pbPasang = false;
-            kabar.push('🔋 Daya Power Bank ' + pbInfo.model.nama + ' habis (0 mAh)! Cas lagi di rumah/kos.');
-          } else {
-            pbInfo.state.sisaMah -= sedotPb;
+          var sisaTargetKirim = Math.min(maksKirim, butuhMah + kurangHpMah);
+          var terkirimTotal = 0;
+          for (var pi = 0; pi < pbList.length && sisaTargetKirim > 0.001; pi++) {
+            var pidA = pbList[pi], pmA = pbModel(pidA), stA = S.hp.pbMilik[pidA];
+            if (!pmA || !stA || stA.sisaMah <= 0) continue;
+            var ef = pmA.realCapacity ? 1.0 : 0.8;
+            var sedot = sisaTargetKirim / ef;
+            if (sedot >= stA.sisaMah) {
+              var kUnit = stA.sisaMah * ef;
+              terkirimTotal += kUnit;
+              sisaTargetKirim -= kUnit;
+              stA.sisaMah = 0;
+              stA.pakai = (stA.pakai || 0) + 1;
+              kabar.push('🔋 Daya ' + pmA.nama + ' habis (0 mAh)! Cas di rumah.');
+            } else {
+              stA.sisaMah -= sedot;
+              stA.pakai = (stA.pakai || 0) + (j * 0.2);
+              terkirimTotal += sisaTargetKirim;
+              sisaTargetKirim = 0;
+            }
           }
-          var deltaMah = kirimTotal - butuhMah;
+          var deltaMah = terkirimTotal - butuhMah;
           S.hp.baterai = Math.max(0, Math.min(100, S.hp.baterai + (deltaMah / mah) * 100));
         } else {
-          if (S.hp.pbPasang && (!pbInfo || pbInfo.state.sisaMah <= 0)) S.hp.pbPasang = false;
           var turunBat = (butuhMah / mah) * 100;
           var sblm = S.hp.baterai;
           S.hp.baterai = Math.max(0, S.hp.baterai - turunBat);
-          if (sblm > 15 && S.hp.baterai <= 15) kabar.push('Baterai ' + hm.nama + ' tinggal ' + Math.round(S.hp.baterai) + '%! Segera colok charger atau sambungkan Power Bank.');
+          if (sblm > 15 && S.hp.baterai <= 15) kabar.push('Baterai ' + hm.nama + ' tinggal ' + Math.round(S.hp.baterai) + '%! Singgah cas di toko/pangkalan atau sambungkan Power Bank.');
           if (sblm > 0 && S.hp.baterai <= 0) {
             if (pakaiOjek && g.KK_OJEK) { g.KK_OJEK.offline(S, true); kabar.push('HP mati kehabisan baterai karena GPS Maps ojol! Akun driver otomatis offline.'); }
-            else kabar.push('Baterai HP habis (0%). Colok charger atau sambungkan Power Bank di menu HP.');
+            else kabar.push('Baterai HP habis (0%). Cas HP atau sambungkan Power Bank di menu HP.');
           }
         }
       }
@@ -594,32 +706,33 @@
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
     if (S.hp && !S.rumah.padam) {
       if (S.hp.cas || !S.hp.pbPasang) { S.hp.baterai = 100; S.hp.cas = false; }
-      if (S.hp.pbCas) {
-        var pbInfoT = pbAktifInfo(S);
-        if (pbInfoT) {
-          var tambahPbT = (pbInfoT.model.wattIn || 18) * 200 * jam;
-          pbInfoT.state.sisaMah = Math.min(pbInfoT.model.mah, pbInfoT.state.sisaMah + tambahPbT);
-          if (pbInfoT.state.sisaMah >= pbInfoT.model.mah) S.hp.pbCas = false;
-        }
+      if ((S.hp.pbCas || S.hp.pbAutoCas) && S.hp.pbMilik) {
+        var adaBelumPenuh = false;
+        Object.keys(S.hp.pbMilik).forEach(function (pid) {
+          var pmT = pbModel(pid), stT = S.hp.pbMilik[pid];
+          if (!pmT || !stT) return;
+          stT.sisaMah = Math.min(pmT.mah, (stT.sisaMah || 0) + (pmT.wattIn || 18) * 200 * jam);
+          if (stT.sisaMah < pmT.mah) adaBelumPenuh = true;
+        });
+        if (!adaBelumPenuh) S.hp.pbCas = false;
       }
     }
-    if (S.hp && S.hp.pbPasang) {
-      var pbInfoP = pbAktifInfo(S);
-      if (pbInfoP && pbInfoP.state.sisaMah > 0) {
+    if (S.hp && pbDipakaiList(S).length) {
+      var pbListT = pbDipakaiList(S), pbSumT = pbRingkasan(S);
+      if (pbSumT.adaDaya) {
         var hmT = hpAktif(S), mahT = (hmT && hmT.mah) || 5000, wattT = (hmT && hmT.watt) || 18;
-        var wattEfT = Math.min(pbInfoP.model.wattOut || 18, Math.max(15, wattT));
-        var maksKirimT = wattEfT * 180 * jam;
-        var kurangHpT = Math.max(0, (100 - (S.hp.baterai || 0)) / 100 * mahT);
-        var kirimT = Math.min(maksKirimT, kurangHpT);
-        var sedotT = kirimT / 0.8;
-        if (sedotT > pbInfoP.state.sisaMah) {
-          kirimT = pbInfoP.state.sisaMah * 0.8;
-          pbInfoP.state.sisaMah = 0;
-          S.hp.pbPasang = false;
-        } else {
-          pbInfoP.state.sisaMah -= sedotT;
+        var wattEfT = Math.min(pbSumT.wattOutMaks || 18, Math.max(15, wattT));
+        var sisaKirimT = Math.min(wattEfT * 180 * jam, Math.max(0, (100 - (S.hp.baterai || 0)) / 100 * mahT));
+        var terkirimT = 0;
+        for (var pti = 0; pti < pbListT.length && sisaKirimT > 0.001; pti++) {
+          var pmP = pbModel(pbListT[pti]), stP = S.hp.pbMilik[pbListT[pti]];
+          if (!pmP || !stP || stP.sisaMah <= 0) continue;
+          var efP = pmP.realCapacity ? 1.0 : 0.8;
+          var sdP = sisaKirimT / efP;
+          if (sdP >= stP.sisaMah) { terkirimT += stP.sisaMah * efP; sisaKirimT -= stP.sisaMah * efP; stP.sisaMah = 0; }
+          else { stP.sisaMah -= sdP; terkirimT += sisaKirimT; sisaKirimT = 0; }
         }
-        S.hp.baterai = Math.min(100, (S.hp.baterai || 0) + (kirimT / mahT) * 100);
+        S.hp.baterai = Math.min(100, (S.hp.baterai || 0) + (terkirimT / mahT) * 100);
       }
     }
     var spb = adaSpringbed(S), bnsH = (S.rumah && S.rumah.jenis !== 'rumah') ? (hunianInfo(S.rumah && S.rumah.hunianId).bonusTidur || 1) : 0.92;
@@ -909,12 +1022,14 @@
     var h = d ? Math.round(pb.harga * (1 - d) / 5000) * 5000 : pb.harga;
     var by = bayarBelanja(S, h, 'Beli Power Bank: ' + pb.nama, caraBayar || 'bank');
     if (by !== true) return by;
-    S.hp.pbMilik[id] = { sisaMah: pb.mah, dibeli: S.hari };
+    S.hp.pbMilik[id] = { sisaMah: pb.mah, dibeli: S.hari, hargaBeli: h, pakai: 0 };
     S.hp.pbAktif = id;
-    S.hp.pbPasang = true;
+    var listPb = pbDipakaiList(S);
+    if (listPb.length < 5 && listPb.indexOf(id) < 0) listPb.push(id);
+    S.hp.pbPasang = listPb.length > 0;
     S.hp.pbCas = false;
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + h;
-    return { ok: true, teks: pb.nama + ' dibeli (' + rp(h) + ') dan langsung disambungkan ke HP!' };
+    return { ok: true, teks: pb.nama + ' dibeli (' + rp(h) + ') & terhubung (' + listPb.length + '/5 unit aktif)!' };
   }
   function pakaiPowerBank(S, id) {
     if (!S.hp || !S.hp.pbMilik || !S.hp.pbMilik[id]) return 'Belum punya Power Bank ini.';
@@ -924,28 +1039,33 @@
     return { ok: true, teks: 'Power Bank aktif diganti ke ' + (pb ? pb.nama : id) + '.' };
   }
   function togglePowerBank(S) {
-    var info = pbAktifInfo(S);
-    if (!info) return 'Belum punya Power Bank. Beli dulu di Gadget & Kuota → Power Bank.';
-    if (S.hp.pbPasang) {
+    var list = pbDipakaiList(S), milik = Object.keys((S.hp && S.hp.pbMilik) || {});
+    if (!milik.length) return 'Belum punya Power Bank. Beli dulu di Toko Online → Power Bank.';
+    if (list.length > 0) {
+      S.hp.pbPasangList = [];
       S.hp.pbPasang = false;
-      return { ok: true, teks: 'Kabel Power Bank ' + info.model.nama + ' dicabut dari HP.' };
+      return { ok: true, teks: 'Semua Power Bank (' + list.length + ' unit) dicabut dari HP.' };
     }
-    if (info.state.sisaMah <= 0) return 'Daya Power Bank ' + info.model.nama + ' habis (0 mAh). Cas dulu di rumah/kos.';
-    S.hp.pbCas = false;
+    var ada = milik.filter(function (id) { return (S.hp.pbMilik[id].sisaMah || 0) > 0; }).slice(0, 5);
+    if (!ada.length) return 'Semua Power Bank habis (0 mAh). Cas dulu di rumah/kos.';
+    S.hp.cas = false;
+    S.hp.pbPasangList = ada;
+    S.hp.pbAktif = ada[0];
     S.hp.pbPasang = true;
-    return { ok: true, teks: '🔋 Power Bank ' + info.model.nama + ' (' + Math.round(info.state.sisaMah).toLocaleString('id-ID') + ' mAh) tersambung ke HP!' };
+    var rSum = pbRingkasan(S);
+    return { ok: true, teks: '🔋 ' + ada.length + ' Power Bank tersambung ke HP (total ' + Math.round(rSum.sisaMah).toLocaleString('id-ID') + ' mAh)!' };
   }
   function toggleCasPowerBank(S) {
-    var info = pbAktifInfo(S);
-    if (!info) return 'Belum punya Power Bank.';
+    var milik = Object.keys((S.hp && S.hp.pbMilik) || {});
+    if (!milik.length) return 'Belum punya Power Bank.';
     if (S.hp.pbCas) { S.hp.pbCas = false; return { ok: true, teks: 'Cas Power Bank dicabut.' }; }
     var d = S.diri;
     if (d.posisi === 'kos' && S.rumah.padam) return 'Token listrik rumah/kos habis! Beli token di PLN Mobile dulu.';
-    if (d.posisi !== 'kos' && ((S.usaha && S.usaha.berhentiSewa) || !g.KK_USAHA || !g.KK_USAHA.listrikNyala(S))) return 'Pulang ke rumah/kos dulu untuk mengecas Power Bank di stopkontak.';
-    if (info.state.sisaMah >= info.model.mah) return 'Daya Power Bank sudah penuh 100%.';
-    S.hp.pbPasang = false;
+    if (d.posisi !== 'kos') return 'Pulang ke rumah/kos dulu untuk mengecas Power Bank di stopkontak (atau aktifkan Auto Cas di Rumah).';
+    var adaKurang = milik.some(function (id) { var m = pbModel(id); return m && (S.hp.pbMilik[id].sisaMah || 0) < m.mah; });
+    if (!adaKurang) return 'Semua Power Bank sudah penuh 100%.';
     S.hp.pbCas = true;
-    return { ok: true, teks: '⚡ Power Bank ' + info.model.nama + ' mulai dicas (' + info.model.wattIn + 'W).' };
+    return { ok: true, teks: '⚡ Semua Power Bank mulai dicas di rumah.' };
   }
   function nilaiJualGadget(S, id) {
     var gm = gadgetModel(id), info = S.gadget && S.gadget[id];
@@ -1386,8 +1506,34 @@
      - HB dengan PSK (jajan nakal): Bahagia 100%, muncul Rasa Bersalah, Kesehatan menurun;
        Risiko HIV: jika kesehatan < 50% -> 89% tanpa kondom, 30% dengan kondom; jika kesehatan >= 50% -> 1,3% (0.013) dengan kondom, 18% tanpa kondom
      - Selingkuh (dengan adik ipar / karyawan / PSK saat punya pasangan sah) berisiko ketahuan & memicu Perceraian! */
-  function lakukanHb(S, pakaiKondom, targetKode, lokasiObj, modeDurasi) {
+  function lakukanHb(S, pakaiKondom, targetKode, lokasiObj, modeDurasi, targetKode2) {
     S.kesehatan = S.kesehatan || { obat: {}, kondom: 0, kondomGerigi: 0, kbSampai: -1 };
+    /* Validasi pasangan kedua opsional untuk HB Bertiga (wajib dewasa >=18 tahun, lawan jenis, bukan anak) */
+    var p2 = null, p2Jenis = null;
+    if (targetKode2 && targetKode2 !== targetKode) {
+      var k2 = String(targetKode2);
+      if (k2.indexOf('teman:') === 0) {
+        var c2 = g.KK_TEMAN.syaratHb(S, k2.slice(6));
+        if (typeof c2 === 'string') return 'Pasangan ke-2: ' + c2;
+        p2 = c2; p2Jenis = 'teman';
+      } else {
+        var id2 = k2.indexOf('ipar:') === 0 ? k2.slice(5) : k2;
+        p2 = (S.keluarga || []).filter(function (x) { return x.id === id2; })[0];
+        if (!p2) return 'Pasangan ke-2 tidak ditemukan.';
+        if (p2.peran === 'anak' || KAL.usia(S.hari, p2.tglLahir) < 18) return 'HB Bertiga hanya untuk karakter dewasa (18+).';
+        if (p2.gender === ((S.profil && S.profil.gender) || 'cowok')) return 'Pasangan ke-2 harus lawan jenis.';
+        p2Jenis = adalahPasangan(p2) ? 'pasangan' : 'ipar';
+      }
+    }
+    function terapkanP2(res) {
+      if (!p2 || !res || !res.ok) return res;
+      p2.hb = 0;
+      p2.perasaan = Math.min(100, (p2.perasaan == null ? 60 : p2.perasaan) + 22);
+      if (p2Jenis === 'teman') p2.hubungan = Math.min(100, (p2.hubungan || 50) + 10);
+      else p2.bahagia = Math.min(100, (p2.bahagia || 80) + 15);
+      res.teks = '❤️‍🔥 HB Bertiga bersama ' + p2.nama + '! ' + res.teks;
+      return res;
+    }
     var diHotel = !!(lokasiObj && !lokasiObj.diRumah);
     var jenisTarget = 'pasangan', p = null, stafTarget = null;
     if (targetKode === 'psk') {
@@ -1509,7 +1655,7 @@
           if (crT && crT.ok) teksT += ' 💔 ' + psT.nama + ' mengetahuinya dan resmi MENCERAIKANMU! (Gono-gini ' + rp(crT.gonoGini) + ').';
         }
       }
-      return { ok: true, malam: false, menit: durasiMenit, bangun: 240, teks: (isLong ? '🔥 Long Time + Foreplay: ' : '⚡ Short Time: ') + teksT, tempat: diHotel ? 'hotel' : 'rumah', nama: tm.nama };
+      return terapkanP2({ ok: true, malam: false, menit: durasiMenit, bangun: 240, teks: (isLong ? '🔥 Long Time + Foreplay: ' : '⚡ Short Time: ') + teksT, tempat: diHotel ? 'hotel' : 'rumah', nama: tm.nama });
     }
 
     /* KASUS 2: SELINGKUH DENGAN KARYAWAN LAWAN JENIS */
@@ -1578,7 +1724,7 @@
         teks += ' (Aman, tidak diketahui ' + psSah3.nama + ').';
       }
     }
-    return { ok: true, malam: malamSkipSubuh, menit: durasiMenit, bangun: 240, hamilBaru: hamilBaru, teks: teks };
+    return terapkanP2({ ok: true, malam: malamSkipSubuh, menit: durasiMenit, bangun: 240, hamilBaru: hamilBaru, teks: teks });
   }
   /* ---------- stamina: kopi / minuman energi (harga warung) ---------- */
   var ENERGI = [
@@ -1590,10 +1736,9 @@
   function minumEnergi(S, id) {
     var x = ENERGI.filter(function (e) { return e.id === id; })[0]; if (!x) return 'Pilihan tidak dikenal.';
     var d = S.diri;
-    if (!bayarTunai(S, x.harga)) {
-      if (S.bank.saldo < x.harga) return 'Uang tidak cukup (' + rp(x.harga) + ').';
-      S.bank.saldo -= x.harga; S.bank.mutasi.unshift({ n: S.hari, ket: x.nama, jml: -x.harga }); S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
-    }
+    var byE = g.KK_UANG.bayarPilihan(S, x.harga, x.nama, S._metodeBayar || 'dompet');
+    if (byE !== true) return byE;
+    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
     d.stamina = batas(d.stamina + x.stamina); d.minum = batas(d.minum + x.minum);
     if (d.energiHari !== S.hari) { d.energiHari = S.hari; d.energiJml = 0; }
     d.energiJml++;
@@ -1610,11 +1755,13 @@
     d.hb = Math.max(0, d.hb - kurang); d.stamina = batas(d.stamina - 3);
     return { ok: true, menit: 20, teks: 'Me time sebentar. Bar HB turun ' + kurang + '%.' };
   }
-  /* hiburan HP saat menunggu: kuota terpakai per menit permainan (GB) */
+  /* hiburan HP saat menunggu (Relax): beragam aktivitas acak yang memakan kuota & baterai */
   var HIBURAN = {
-    youtube: { nama: 'Nonton YouTube', gbMenit: 0.012, bat: 0.12 },
-    tiktok: { nama: 'Scroll TikTok / Reels', gbMenit: 0.008, bat: 0.11 },
-    unduh: { nama: 'Unduh file besar', gbMenit: 0.06, bat: 0.08 }
+    youtube: { nama: 'Lagi nonton YouTube', gbMenit: 0.012, bat: 0.12 },
+    gaming: { nama: 'Lagi main game online', gbMenit: 0.007, bat: 0.14 },
+    netflix: { nama: 'Lagi nonton Netflix', gbMenit: 0.018, bat: 0.13 },
+    musik: { nama: 'Lagi dengar musik', gbMenit: 0.004, bat: 0.07 },
+    sosmed: { nama: 'Lagi buka sosmed', gbMenit: 0.009, bat: 0.11 }
   };
   function hiburanJalan(S, dMenit) {
     var h = S.hiburan && HIBURAN[S.hiburan]; if (!h || !S.hp) return null;
@@ -1622,12 +1769,15 @@
     if (r !== true) { S.hiburan = null; return r; }
     var mahHp = (hpAktif(S) && hpAktif(S).mah) || 5000;
     var butuhMah = h.bat * 50 * dMenit;
-    var pbInfo = pbAktifInfo(S);
-    if (S.hp.pbPasang && pbInfo && pbInfo.state.sisaMah > 0) {
-      var sedot = butuhMah / 0.8;
-      if (sedot <= pbInfo.state.sisaMah) { pbInfo.state.sisaMah -= sedot; return null; }
-      butuhMah -= pbInfo.state.sisaMah * 0.8;
-      pbInfo.state.sisaMah = 0; S.hp.pbPasang = false;
+    var pbList = pbDipakaiList(S);
+    for (var pi = 0; pi < pbList.length && butuhMah > 0.001; pi++) {
+      var pm = pbModel(pbList[pi]), st = S.hp.pbMilik && S.hp.pbMilik[pbList[pi]];
+      if (!pm || !st || st.sisaMah <= 0) continue;
+      var ef = pm.realCapacity ? 1.0 : 0.8;
+      var sedot = butuhMah / ef;
+      if (sedot <= st.sisaMah) { st.sisaMah -= sedot; return null; }
+      butuhMah -= st.sisaMah * ef;
+      st.sisaMah = 0;
     }
     S.hp.baterai = Math.max(0, S.hp.baterai - (butuhMah / mahHp) * 100);
     return null;
@@ -2630,7 +2780,7 @@
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,
-    gadgetModel: gadgetModel, pbModel: pbModel, pbAktifInfo: pbAktifInfo, beliPowerBank: beliPowerBank, pakaiPowerBank: pakaiPowerBank, togglePowerBank: togglePowerBank, toggleCasPowerBank: toggleCasPowerBank, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
+    gadgetModel: gadgetModel, pbModel: pbModel, pbDipakaiList: pbDipakaiList, pbRingkasan: pbRingkasan, pbAktifInfo: pbAktifInfo, beliPowerBank: beliPowerBank, pakaiPowerBank: pakaiPowerBank, togglePowerBank: togglePowerBank, togglePasangPbUnit: togglePasangPbUnit, toggleCasPowerBank: toggleCasPowerBank, toggleAutoCasPb: toggleAutoCasPb, nilaiJualPowerBank: nilaiJualPowerBank, jualPowerBank: jualPowerBank, casDiPangkalan: casDiPangkalan, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,
     adalahPasangan: adalahPasangan, adalahIpar: adalahIpar, daftarPasangan: daftarPasangan, pasanganAktif: pasanganAktif, labelPeran: labelPeran,
