@@ -162,6 +162,7 @@
     if ((kota(S).zona || 1) === 2) r *= 1.2;
     if (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) r *= g.KK_WILAYAH.faktorPenduduk(S); /* populasi kota/kabupaten memengaruhi volume order */
     if (g.KK_EKO && g.KK_EKO.infoSinyal) r *= g.KK_EKO.infoSinyal(S).faktorOjol; /* kekuatan sinyal provider SIM di kota vs desa */
+    if (g.KK_REAL && g.KK_REAL.faktorEventBudaya) r *= g.KK_REAL.faktorEventBudaya(S); /* event budaya: Cap Go Meh Singkawang +250% dll */
     r *= g.KK_DIRI.faktorPromo(S); /* promo: +50–80% bila aktif, +100% selama Ramadan */
     var mudik = statusMudik(S.hari);
     if (mudik === 'mudik') r *= 2.1;
@@ -192,7 +193,8 @@
       else { minKm = 1; maxKm = 10; }
     }
     var asalT = lokasiSekarang(S);
-    var tj = (g.KK_WILAYAH && g.KK_WILAYAH.pilihTujuan) ? g.KK_WILAYAH.pilihTujuan(asalT, minKm, maxKm) : null;
+    S.ojek.riwayatDesa = S.ojek.riwayatDesa || [];
+    var tj = (g.KK_WILAYAH && g.KK_WILAYAH.pilihTujuan) ? g.KK_WILAYAH.pilihTujuan(asalT, minKm, maxKm, S.ojek.riwayatDesa) : null;
     var km = tj ? tj.km : Math.round((minKm + Math.random() * (maxKm - minKm)) * 10) / 10;
     var tujuanTitik = tj ? tj.titik : null;
     var tujuanLabel = tujuanTitik ? (tujuanTitik.desa + (tujuanTitik.kecNama && tujuanTitik.kecNama !== tujuanTitik.desa ? ', ' + tujuanTitik.kecNama : '')) : '';
@@ -273,7 +275,14 @@
     o.pos = o.pos || { x: 0, y: 0 };
     o.pos.x += (x.dx != null ? x.dx : x.km);
     o.pos.y += (x.dy != null ? x.dy : 0);
-    if (x.tujuanTitik) o.lokasi = x.tujuanTitik;
+    if (x.tujuanTitik) {
+      o.lokasi = x.tujuanTitik;
+      o.riwayatDesa = o.riwayatDesa || [];
+      if (x.tujuanTitik.desa) {
+        o.riwayatDesa.push(x.tujuanTitik.desa);
+        if (o.riwayatDesa.length > 5) o.riwayatDesa.shift();
+      }
+    }
     o.hariIni.trip++; o.hariIni.bersih += dapat; o.total.trip++; o.total.bersih += dapat;
     if (o.mode === 'mobil') {
       if (S.mobil) S.mobil.totalHasil = (S.mobil.totalHasil || 0) + dapat;
@@ -310,6 +319,10 @@
     if (g.KK_EKO && g.KK_EKO.cekBanjirMogok) {
       var kbAir = g.KK_EKO.cekBanjirMogok(S, o.mode);
       if (kbAir) { kabar.push(kbAir); o.online = false; }
+    }
+    if (g.KK_REAL && g.KK_REAL.catatAusPerjalanan) {
+      var kbAus = g.KK_REAL.catatAusPerjalanan(S, o.mode, x.km);
+      if (kbAus) kabar.push(kbAus);
     }
     o.trip = null; o.berikut = waktu(S) + jeda(S);
     return kabar;

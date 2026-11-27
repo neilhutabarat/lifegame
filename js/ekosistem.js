@@ -200,15 +200,11 @@
       var sisaPj = e.pinjol.tempoHari - S.hari;
       out.push({ app: 'dunia', kritis: sisaPj <= 1, teks: '☠️ Pinjol ' + rp(e.pinjol.total) + (sisaPj < 0 ? ' (TELAT ' + Math.abs(sisaPj) + 'hr!)' : ' (H-' + sisaPj + ')') });
     }
-    /* Pegadaian mendekati jatuh tempo */
+    /* Pegadaian mendekati jatuh tempo (hindari fungsi ganda: SPT & Pemutihan cukup di menu Ekosistem/Garasi) */
     (e.gadai || []).forEach(function (gd) {
       var sg = gd.tempoHari - S.hari;
       if (sg <= 5) out.push({ app: 'dunia', kritis: sg <= 1, teks: '⚖️ Tebus Gadai ' + gd.nama.split(' ')[0] + ' (' + (sg <= 0 ? 'Jatuh Tempo!' : 'H-' + sg) + ')' });
     });
-    /* SPT Tahunan Maret */
-    if (t.m === 3 && e.sptTahun !== t.y) out.push({ app: 'dunia', kritis: t.d >= 25, teks: '📄 Lapor SPT Tahunan ' + t.y });
-    /* Pemutihan Pajak */
-    if (pemutihanAktif(S)) out.push({ app: 'motor', kritis: false, teks: '🏷️ Pemutihan Denda Pajak STNK!' });
     return out;
   }
 

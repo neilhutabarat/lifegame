@@ -296,8 +296,8 @@
     return { kabId: kotaId || 'jakarta', kabNama: kotaId || 'Kota', prov: 'Indonesia', kecId: (kotaId || 'kota') + '_0', kecNama: daf[0], desa: daf[0], lat: null, lon: null };
   }
 
-  /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang (dalam desa/kecamatan atau antarkecamatan/antarkabupaten di Kalbar!) */
-  function pilihTujuan(asal, minKm, maxKm) {
+  /* Pilih tujuan order ojol nyata sesuai rentang km dari titik sekarang — bebas acak ke segala arah (antardesa, antarkecamatan, hingga antarkabupaten seperti Satong → Sukadana / Sandai / Tayap / Kendawangan / Sungai Melayu tanpa terjebak bolak-balik!) */
+  function pilihTujuan(asal, minKm, maxKm, riwayatDesa) {
     if (!asal || asal.lat == null) {
       var listK = KEC_UMUM[asal && asal.kabId] || ['Pusat Kota', 'Kecamatan Timur', 'Kecamatan Barat', 'Kecamatan Selatan', 'Kecamatan Utara'];
       var pilihK = listK[Math.floor(Math.random() * listK.length)];
@@ -305,24 +305,38 @@
       return { titik: { kabId: (asal && asal.kabId) || 'kota', kabNama: (asal && asal.kabNama) || 'Kota', prov: 'Indonesia', kecId: pilihK, kecNama: pilihK, desa: pilihK, lat: null, lon: null }, km: kmAcak };
     }
     var semua = daftarTitikKalbar();
-    var cocok = [];
-    for (var i = 0; i < semua.length; i++) {
-      var t = semua[i];
-      if (t.desa === asal.desa && t.kecId === asal.kecId) continue;
-      var d = jarakKm(asal, t);
-      if (d >= minKm && d <= maxKm) cocok.push({ titik: t, km: Math.max(0.8, d) });
-    }
-    if (!cocok.length) {
-      /* perluas sedikit rentang jika di kecamatan terpencil */
-      for (var j = 0; j < semua.length; j++) {
-        var t2 = semua[j];
-        if (t2.desa === asal.desa && t2.kecId === asal.kecId) continue;
-        var d2 = jarakKm(asal, t2);
-        if (d2 >= Math.max(0.5, minKm * 0.5) && d2 <= maxKm * 1.45) cocok.push({ titik: t2, km: Math.max(0.8, d2) });
+    var hindari = Array.isArray(riwayatDesa) ? riwayatDesa : [];
+    function cariDalam(lo, hi, skipRiwayat) {
+      var res = [];
+      for (var i = 0; i < semua.length; i++) {
+        var t = semua[i];
+        if (t.desa === asal.desa && t.kecId === asal.kecId) continue;
+        if (skipRiwayat && (hindari.indexOf(t.desa) >= 0 || hindari.indexOf(t.kecId + ':' + t.desa) >= 0)) continue;
+        var d = jarakKm(asal, t);
+        if (d >= lo && d <= hi) res.push({ titik: t, km: Math.max(0.8, d) });
       }
+      return res;
     }
-    if (cocok.length) return cocok[Math.floor(Math.random() * cocok.length)];
-    /* fallback terakhir: titik terdekat */
+    var cocok = cariDalam(minKm, maxKm, true);
+    /* Jika di daerah kabupaten/pedalaman pilihan dalam radius sempit sedikit (< 8 titik atau hanya 1 kecamatan), perluas bertahap hingga 75–95 km agar bisa bebas menuju kecamatan & kabupaten tetangga (mis. Satong ↔ Sukadana ↔ Sandai ↔ Tayap ↔ Kendawangan ↔ Sungai Melayu) */
+    function hitungKec(arr) {
+      var u = {};
+      for (var i = 0; i < arr.length; i++) u[arr[i].titik.kecId] = true;
+      return Object.keys(u).length;
+    }
+    if (cocok.length < 8 || hitungKec(cocok) < 2) {
+      var maksLuas = Math.max(maxKm, maxKm <= 15 ? 42 : Math.min(180, maxKm * 1.45));
+      var perluas = cariDalam(Math.max(1, minKm * 0.7), maksLuas, true);
+      if (hitungKec(perluas) < 2) perluas = cariDalam(Math.max(1, minKm * 0.7), Math.max(85, maksLuas * 1.6), true);
+      if (perluas.length) cocok = perluas;
+    }
+    if (!cocok.length) cocok = cariDalam(Math.max(0.5, minKm * 0.5), Math.max(48, maxKm * 1.6), false);
+    if (cocok.length) {
+      /* Beri peluang tinggi (65%) menuju kecamatan berbeda agar tidak bolak-balik di desa/kecamatan yang sama terus */
+      var bedaKec = cocok.filter(function (x) { return x.titik.kecId !== asal.kecId; });
+      if (bedaKec.length && Math.random() < 0.65) return bedaKec[Math.floor(Math.random() * bedaKec.length)];
+      return cocok[Math.floor(Math.random() * cocok.length)];
+    }
     var terdekat = semua[0], minD = 9999;
     for (var k = 0; k < semua.length; k++) {
       var t3 = semua[k];
