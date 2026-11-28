@@ -3178,18 +3178,18 @@
     cx.save(); cx.translate(x, yb); if (nunduk) cx.rotate(0.35);
     kotakBulat(-8, 0, 16, 26, 6, baju);
     if (sopir) kotak(-8, 10, 16, 3, '#f3f1ea');
-    /* P74.1: Helm full/open-face menutupi penuh bagian atas kepala agar rambut tidak tembus keluar! */
-    if (sopir) {
-      gambarKepalaPotret(1, -9, 9.0, gender || 'cewek', tp || {}, { tanpaLeher: true });
-      cx.fillStyle = helm; cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.2;
-      cx.beginPath(); cx.arc(0.5, -11.5, 13.2, Math.PI * 0.92, Math.PI * 2.08); cx.closePath(); cx.fill(); cx.stroke();
-      cx.fillStyle = 'rgba(30,40,50,.68)';
-      cx.fillRect(3.5, -13.5, 9.5, 4.2);
-    } else {
-      gambarKepalaPotret(1, -9, 8.6, gender || 'cewek', tp || {}, { tanpaLeher: true });
-      cx.fillStyle = helm; cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.1;
-      cx.beginPath(); cx.arc(0.5, -11, 12.6, Math.PI * 0.92, Math.PI * 2.08); cx.closePath(); cx.fill(); cx.stroke();
-    }
+    /* P74.2: Helm open-face realistis — hanya menutup bagian atas & belakang kepala, wajah & mata 100% terlihat jelas! */
+    var hR = sopir ? 12.6 : 12.0;
+    gambarKepalaPotret(1, -9, sopir ? 9.0 : 8.6, gender || 'cewek', tp || {}, { tanpaLeher: true });
+    cx.fillStyle = helm; cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.15;
+    cx.beginPath();
+    cx.arc(0, -13.5, hR, Math.PI * 0.92, Math.PI * 1.92);
+    cx.quadraticCurveTo(hR * 0.35, -17.5, -hR * 0.25, -15.5);
+    cx.quadraticCurveTo(-hR * 0.95, -11.5, -hR * 0.92, -5.0);
+    cx.closePath(); cx.fill(); cx.stroke();
+    /* Visor bening tipis di dahi (tidak menutupi mata/wajah) */
+    cx.fillStyle = 'rgba(148,197,235,0.48)';
+    cx.fillRect(3.5, -16.5, 8.5, 3.0);
     cx.restore();
     /* lengan memegang setang / pegang HP saat standby */
     if (sopir && !hp) {
@@ -4477,13 +4477,17 @@
       gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, 0, gelap(m));
     }
     if (motorStandby) {
-      /* 1 karakter saja duduk di atas motor sesuai merk & desain aslinya sambil pantau HP menunggu order */
-      cx.save(); cx.translate(226, jalan + 24); cx.scale(1.18, 1.18);
+      /* P74.2: Skala motor proporsional (lebih kecil dari mobil) */
+      cx.save(); cx.translate(226, jalan + 24); cx.scale(0.84, 0.84);
       gambarMotorKu(0, 0, s.motorId, { naik: true, hp: true, kiri: true, baju: s.warnaBaju, tampilan: s.tampilan, gender: s.gender }, t);
       cx.restore();
     } else if (s.motorParkir) {
       var bidP = String(s.motorParkir).replace(/-bekas$/, '');
-      if (SPORT[bidP] || TRAIL[bidP] || MAXI[bidP] || RETRO[bidP]) gambarMotorKu(296, jalan + 28, s.motorParkir, { kiri: true }, t);
+      if (SPORT[bidP] || TRAIL[bidP] || MAXI[bidP] || RETRO[bidP]) {
+        cx.save(); cx.translate(296, jalan + 28); cx.scale(0.84, 0.84);
+        gambarMotorKu(0, 0, s.motorParkir, { kiri: true }, t);
+        cx.restore();
+      }
       else gambarParkir(296, jalan + 16, s.motorParkir, m);
     }
     anim.motor.forEach(function (mt) { gambarMotor(mt, jalan, m, t); });
