@@ -692,7 +692,9 @@
       app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || '', app.duniaTab || '', app.petaCara || '', app.realTab || ''
     ].join('|');
   }
+  var waktuBukaLembar = 0;
   function bukaLembar(nama, html) {
+    waktuBukaLembar = Date.now();
     aksiCepatBuka = false;
     if ($('kos-aksi')) $('kos-aksi').hidden = true;
     if ($('b-aksi-cepat')) $('b-aksi-cepat').classList.remove('aktif-aksi');
@@ -6922,7 +6924,8 @@
       dragHp = null;
     });
     $('lembar').onclick = function (e) {
-      if (e.target === $('lembar') || e.target.closest('[data-tutup]')) { tutupLembar(); return; }
+      if (e.target === $('lembar')) { if (Date.now() - waktuBukaLembar < 420) return; tutupLembar(); return; }
+      if (e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
       if ((b = e.target.closest('[data-pltenor]'))) {
         app.plTenorPilih = +b.dataset.pltenor || 3;
@@ -7051,9 +7054,9 @@
       if (layar !== 'main') return;
       if (aksiCepatBuka) { aksiCepatBuka = false; kosLainnya = false; perbaruiAksi(); return; }
       var r = $('adegan').getBoundingClientRect(), kena = ADEGAN.ketuk(e.clientX - r.left, e.clientY - r.top);
-      if (kena === 'pemainRumah' && S.diri.posisi === 'kos') return bukaAksiKarakterRumah();
-      if (kena === 'pasanganRumah' && S.diri.posisi === 'kos') return bukaAksiPasanganRumah();
-      if (kena === 'pembeli' && S.fase === 'buka') bukaRacik();
+      if (kena === 'pemainRumah' && S.diri.posisi === 'kos') { e.preventDefault(); e.stopPropagation(); return bukaAksiKarakterRumah(); }
+      if (kena === 'pasanganRumah' && S.diri.posisi === 'kos') { e.preventDefault(); e.stopPropagation(); return bukaAksiPasanganRumah(); }
+      if (kena === 'pembeli' && S.fase === 'buka') { e.preventDefault(); e.stopPropagation(); bukaRacik(); }
       else if (kena === 'barista') toast(SAPA[Math.floor(Math.random() * SAPA.length)], 1400);
       else if (kena === 'kedai' && S.dunia.kotor >= 25 && S.fase !== 'malam') { DUNIA.bersihkan(S); if (S.fase === 'buka') lompatWaktu(10); perbaruiHUD(true); toast('Meja, konter, dan lantai sudah dibersihkan (10 menit).', 2000); }
       else if (kena === 'kedai' && S.fase === 'pagi') toast('Kedai buka pukul ' + jam(S.jamBuka * 60) + ', atau tekan Buka kedai sekarang.', 2000);

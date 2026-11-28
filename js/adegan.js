@@ -2336,47 +2336,141 @@
   }
 
   function gambarCiumanBibir(cy, t, cwo, cwk) {
-    var gerak = Math.sin(t / 520);
-    var dekap = gerak * 1.4;
-    var glow = cx.createRadialGradient(180, cy - 2, 6, 180, cy - 2, 110);
-    glow.addColorStop(0, 'rgba(255,190,215,' + (0.34 + Math.abs(gerak) * 0.14).toFixed(2) + ')');
-    glow.addColorStop(1, 'rgba(255,120,160,0)');
-    cx.fillStyle = glow; cx.fillRect(70, cy - 112, 220, 220);
+    /* P76 (Poin 6): Ciuman mulut ketemu mulut 100%, sambil pelukan erat, posisi cewek miring & sedikit ditekan! */
+    var gerak = Math.sin(t / 460);
+    var tekan = (gerak + 1) * 0.5; /* 0..1 irama menekan lembut */
+    var glow = cx.createRadialGradient(180, cy + 4, 8, 180, cy + 4, 125);
+    glow.addColorStop(0, 'rgba(255,182,210,' + (0.38 + tekan * 0.16).toFixed(2) + ')');
+    glow.addColorStop(1, 'rgba(255,110,155,0)');
+    cx.fillStyle = glow; cx.fillRect(55, cy - 115, 250, 240);
 
-    /* Pakai tubuh Anime 2D asli (tidak bengkak!) berdiri sangat dekat di tengah */
-    var yBadan = cy + 166;
-    gambarKarakterAnime(cx, 152 + dekap * 0.4, yBadan, cwo.g, t, { skala: 1.48, arah: 1, tampilan: cwo.tp });
-    gambarKarakterAnime(cx, 208 - dekap * 0.4, yBadan, cwk.g, t + 200, { skala: 1.48, arah: -1, tampilan: cwk.tp });
+    var tpM = cwo.tp || {}, tpF = cwk.tp || {};
+    var skinM = tpM.kulitHex || '#fff3ea', skinF = tpF.kulitHex || '#fff5ee';
+    var colM = tpM.atasan === 'none' ? skinM : tpM.atasan === 'driver' ? '#0f766e' : tpM.atasan === 'kemeja' ? '#f8fafc' : tpM.atasan === 'formal' ? '#1e293b' : '#3b82f6';
+    var colF = tpF.atasan === 'none' ? '#334155' : tpF.atasan === 'driver' ? '#0f766e' : tpF.atasan === 'kemeja' ? '#f8fafc' : tpF.atasan === 'formal' ? '#334155' : '#ec4899';
+    var botM = tpM.bawahan === 'jeans' ? '#315b8e' : '#2d3748';
+    var botF = tpF.bawahan === 'jeans' ? '#315b8e' : '#334155';
 
-    /* Kepala profil samping Anime 2D yang bibirnya benar-benar bertemu di x=180 */
-    cx.fillStyle = 'rgba(130,36,74,0.85)';
-    cx.beginPath(); cx.ellipse(180, cy - 8, 56, 44, 0, 0, Math.PI * 2); cx.fill();
-    gambarKepalaProfilAnime(159 + dekap * 0.5, cy - 10, 1.52, true, 1, 0.06 + gerak * 0.02);
-    gambarKepalaProfilAnime(201 - dekap * 0.5, cy - 8, 1.48, false, -1, -0.06 - gerak * 0.02);
+    /* 1. Tubuh Cewek (kanan): miring ke belakang (-0.23 rad) & sedikit ditekan turun oleh dekapan cowok */
+    cx.save();
+    cx.translate(194 + tekan * 1.6, cy + 54 + tekan * 2.2);
+    cx.rotate(0.24 + tekan * 0.035); /* miring ke kanan-belakang karena ditekan lembut */
+    /* Paha & pinggul cewek */
+    _rrAnime(cx, -13, 24, 24, 56, 10, botF, '#3b2826');
+    /* Torso cewek melengkung dalam pelukan */
+    _rrAnime(cx, -14, -30, 26, 58, 11, colF, '#3b2826');
+    if (tpF.atasan === 'none') { _rrAnime(cx, -13, -12, 24, 28, 8, skinF, '#3b2826'); }
+    cx.restore();
+
+    /* 2. Tubuh Cowok (kiri): condong maju (+0.20 rad) menekan lembut tubuh cewek */
+    cx.save();
+    cx.translate(162 + tekan * 1.8, cy + 50 + tekan * 1.4);
+    cx.rotate(0.20 + tekan * 0.03);
+    _rrAnime(cx, -14, 26, 26, 58, 10, botM, '#3b2826');
+    _rrAnime(cx, -15, -34, 29, 64, 12, colM, '#3b2826');
+    cx.restore();
+
+    /* 3. Kepala Profil Samping: MULUT KETEMU MULUT 100% menempel rapat, cewek miring & sedikit ditekan! */
+    /* Pada sk=1.50, ujung bibir berada ~18.5px di depan titik pusat kepala. Jarak 34px membuat kedua bibir bertemu tepat di tengah! */
+    var kxM = 163 + tekan * 1.5, kyM = cy - 4 + tekan * 1.4;
+    var kxF = 196 + tekan * 1.2, kyF = cy + 3 + tekan * 2.3;
+    gambarKepalaProfilAnime(kxF, kyF, 1.48, false, -1, -0.26 - tekan * 0.04);
+    gambarKepalaProfilAnime(kxM, kyM, 1.52, true, 1, 0.21 + tekan * 0.035);
+
+    /* 4. Lengan Pelukan Erat (sambil pelukan: lengan cowok mendekap pinggang & punggung cewek, tangan cewek mengalung di leher/bahu cowok) */
+    cx.lineCap = 'round'; cx.lineJoin = 'round';
+    /* Lengan cewek mengalung erat ke bahu & tengkuk cowok */
+    cx.strokeStyle = '#3b2826'; cx.lineWidth = 11.5;
+    cx.beginPath(); cx.moveTo(196 + tekan * 1.4, cy + 30 + tekan * 2); cx.quadraticCurveTo(176, cy + 24, 156 + tekan, cy + 8 + tekan); cx.stroke();
+    cx.strokeStyle = skinF; cx.lineWidth = 9.2;
+    cx.beginPath(); cx.moveTo(196 + tekan * 1.4, cy + 30 + tekan * 2); cx.quadraticCurveTo(176, cy + 24, 156 + tekan, cy + 8 + tekan); cx.stroke();
+    bulat(154 + tekan, cy + 7 + tekan, 4.8, skinF);
+
+    /* Lengan cowok memeluk & menekan pinggang serta punggung cewek */
+    cx.strokeStyle = '#3b2826'; cx.lineWidth = 13;
+    cx.beginPath(); cx.moveTo(160 + tekan * 1.5, cy + 24 + tekan); cx.quadraticCurveTo(182, cy + 38 + tekan * 2, 206 + tekan * 1.5, cy + 34 + tekan * 2.2); cx.stroke();
+    cx.strokeStyle = tpM.atasan === 'none' || tpM.atasan === 'kaos' ? skinM : colM; cx.lineWidth = 10.6;
+    cx.beginPath(); cx.moveTo(160 + tekan * 1.5, cy + 24 + tekan); cx.quadraticCurveTo(182, cy + 38 + tekan * 2, 206 + tekan * 1.5, cy + 34 + tekan * 2.2); cx.stroke();
+    bulat(208 + tekan * 1.5, cy + 34 + tekan * 2.2, 5.4, skinM);
   }
 
-  /* adegan foreplay terpadu: pakai tubuh Anime 2D asli duduk/berpelukan mesra di atas kasur (tanpa badan bengkak!) */
+  /* P76 (Poin 4): Adegan Foreplay lebih intim — kedua tubuh berbaring di dalam selimut di atas kasur & tangan saling meraba lembut */
   function gambarAdeganForeplay(yRanjang, t, cwo, cwk, wrnSel, wrnSelTua) {
-    var ayun = Math.sin(t / 560);
-    var cium = Math.max(0, Math.sin(t / 900)) * 5;
-    var yD = yRanjang + 18;
-    var cg = cx.createRadialGradient(180, yD - 45, 10, 180, yD - 45, 145);
-    cg.addColorStop(0, 'rgba(255,195,145,.26)'); cg.addColorStop(1, 'rgba(255,120,100,0)');
-    cx.fillStyle = cg; cx.fillRect(35, yD - 190, 290, 260);
+    var ayun = Math.sin(t / 320);
+    var raba1 = Math.sin(t / 240) * 14;
+    var raba2 = Math.cos(t / 270) * 12;
+    var dekap = Math.sin(t / 420) * 1.6;
+    var yD = yRanjang + 14;
+    var cg = cx.createRadialGradient(180, yD - 24, 10, 180, yD - 24, 145);
+    cg.addColorStop(0, 'rgba(255,190,145,.32)'); cg.addColorStop(1, 'rgba(255,120,100,0)');
+    cx.fillStyle = cg; cx.fillRect(35, yD - 160, 290, 230);
 
-    /* Kedua tubuh Anime 2D asli saling mendekat mesra di atas ranjang */
-    var tpF1 = { atasan: 'none', bawahan: 'none' };
-    gambarKarakterAnime(cx, 152 + cium * 0.5, yD + 44, cwk.g, t, { skala: 1.26, arah: 1, tampilan: tpF1 });
-    gambarKarakterAnime(cx, 206 - cium * 0.5, yD + 44, cwo.g, t + 300, { skala: 1.28, arah: -1, tampilan: tpF1 });
+    var klCwo = (cwo.tp && cwo.tp.kulitHex) || '#fff3ea';
+    var klCwk = (cwk.tp && cwk.tp.kulitHex) || '#fff5ee';
 
-    /* Selimut lembut menutupi pinggul hingga kaki di tepi kasur */
+    /* 1. Bahu & tubuh atas keduanya berbaring mesra berhadapan di atas kasur (masuk di dalam selimut!) */
+    cx.fillStyle = klCwo; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
+    cx.beginPath();
+    cx.moveTo(98, yRanjang + 18);
+    cx.quadraticCurveTo(118, yRanjang - 8 + ayun * 1.2, 146, yRanjang + 8);
+    cx.lineTo(146, yRanjang + 26); cx.lineTo(96, yRanjang + 26); cx.closePath(); cx.fill(); cx.stroke();
+
+    cx.fillStyle = klCwk; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
+    cx.beginPath();
+    cx.moveTo(136, yRanjang + 10);
+    cx.quadraticCurveTo(160, yRanjang - 6 - ayun * 1.2, 186, yRanjang + 14);
+    cx.lineTo(186, yRanjang + 28); cx.lineTo(134, yRanjang + 28); cx.closePath(); cx.fill(); cx.stroke();
+
+    /* 2. Wajah kita (kiri, menghadap kanan) & wajah pasangan (sebelah kanan, menghadap kiri) saling menempel & berciuman lembut */
+    gambarKepalaProfilAnime(116 + dekap * 0.5, yRanjang - 12 + ayun * 0.8, 1.28, cwo.g === 'cowok', 1, 0.14 + ayun * 0.03);
+    gambarKepalaProfilAnime(145 - dekap * 0.5, yRanjang - 10 - ayun * 0.6, 1.25, cwk.g === 'cowok', -1, -0.18 - ayun * 0.03);
+
+    /* 3. Lengan atas saling membelai leher/bahu di atas tepi selimut (saling raba intim) */
+    cx.lineCap = 'round';
+    cx.strokeStyle = '#3b2826'; cx.lineWidth = 9.2;
+    cx.beginPath(); cx.moveTo(118, yRanjang + 8); cx.quadraticCurveTo(144, yRanjang + 2 + ayun * 2, 166 + raba2 * 0.4, yRanjang + 8 + ayun * 1.5); cx.stroke();
+    cx.strokeStyle = klCwo; cx.lineWidth = 7.4;
+    cx.beginPath(); cx.moveTo(118, yRanjang + 8); cx.quadraticCurveTo(144, yRanjang + 2 + ayun * 2, 166 + raba2 * 0.4, yRanjang + 8 + ayun * 1.5); cx.stroke();
+    bulat(168 + raba2 * 0.4, yRanjang + 8 + ayun * 1.5, 4.2, klCwo);
+
+    /* 4. Selimut tebal membungkus kedua tubuh di atas kasur dengan siluet lekuk tubuh & gerakan tangan saling meraba di dalam selimut! */
+    var tonjolRabaX = 186 + raba1;
+    var tonjolRabaY = yRanjang - 24 + Math.abs(ayun) * 6;
     cx.fillStyle = wrnSel;
     cx.beginPath();
-    cx.moveTo(86, yD - 12);
-    cx.quadraticCurveTo(180, yD - 20 + ayun * 1.5, 274, yD - 12);
-    cx.lineTo(286, yD + 52); cx.lineTo(74, yD + 52); cx.closePath(); cx.fill();
-    cx.strokeStyle = 'rgba(255,255,255,0.28)'; cx.lineWidth = 4; cx.lineCap = 'round';
-    cx.beginPath(); cx.moveTo(92, yD - 12); cx.quadraticCurveTo(180, yD - 19 + ayun * 1.5, 268, yD - 12); cx.stroke();
+    cx.moveTo(92, yRanjang + 16);
+    cx.bezierCurveTo(126, yRanjang - 16 + ayun * 3, tonjolRabaX - 24, tonjolRabaY, tonjolRabaX + 18, yRanjang - 14 - ayun * 2.5);
+    cx.quadraticCurveTo(262, yRanjang - 2 + ayun * 1.5, 312, yRanjang + 18);
+    cx.lineTo(312, yRanjang + 68);
+    cx.lineTo(66, yRanjang + 68);
+    cx.lineTo(66, yRanjang + 22);
+    cx.closePath();
+    cx.fill();
+
+    /* Lipatan kerah selimut putih lembut */
+    cx.strokeStyle = 'rgba(255,255,255,0.34)'; cx.lineWidth = 4.8; cx.lineCap = 'round';
+    cx.beginPath();
+    cx.moveTo(96, yRanjang + 14);
+    cx.quadraticCurveTo(146, yRanjang - 10 + ayun * 2.5, 204, yRanjang - 8 - ayun * 2);
+    cx.stroke();
+
+    /* Siluet gerakan tangan meraba di bawah kain selimut (lipatan dinamis bergerak mengikuti raba1 & raba2) */
+    cx.strokeStyle = wrnSelTua; cx.lineWidth = 2.8;
+    cx.beginPath();
+    cx.moveTo(124 + raba2 * 0.5, yRanjang + 20 + ayun * 2);
+    cx.quadraticCurveTo(tonjolRabaX, yRanjang + 2 - ayun * 3.5, 264, yRanjang + 26);
+    cx.stroke();
+    cx.beginPath();
+    cx.moveTo(142, yRanjang + 36 - ayun * 1.8);
+    cx.quadraticCurveTo(196 + raba1 * 0.8, yRanjang + 18 + ayun * 3, 288, yRanjang + 42);
+    cx.stroke();
+
+    /* Tangan pasangan meraba lembut punggung/dada di tepi selimut */
+    cx.strokeStyle = '#3b2826'; cx.lineWidth = 8.4;
+    cx.beginPath(); cx.moveTo(164, yRanjang + 16); cx.quadraticCurveTo(146, yRanjang + 14 - ayun * 2, 128 - raba2 * 0.35, yRanjang + 6 - ayun * 1.5); cx.stroke();
+    cx.strokeStyle = klCwk; cx.lineWidth = 6.6;
+    cx.beginPath(); cx.moveTo(164, yRanjang + 16); cx.quadraticCurveTo(146, yRanjang + 14 - ayun * 2, 128 - raba2 * 0.35, yRanjang + 6 - ayun * 1.5); cx.stroke();
+    bulat(126 - raba2 * 0.35, yRanjang + 6 - ayun * 1.5, 3.8, klCwk);
   }
   /* kepala vektor romantis (mata terpejam, pipi merona) tetapi tetap mengikuti kulit & gaya rambut karakter */
   function kepalaV(x, y, r, jenis, rot, tpCustom) {
@@ -2497,45 +2591,58 @@
       if (isForeplayIntro) {
         gambarAdeganForeplay(yRanjang, t, cowokDiAtas, cewekDiBawah, wrnSel, wrnSelTua);
       } else {
-        /* P75.1: Posisi HB di Ranjang — wajah benar-benar menempel mesra (pipi/bibir bertemu) & anatomi bahu-leher logis! */
-        var klCwk = '#fff5ee', klCwo = '#fff3ea';
-        var rapat = Math.sin(t / 460) * 1.6;
-        /* 1. Bahu & tubuh atas cewek berbaring di atas bantal, wajah profil menghadap ke kanan-atas */
-        cx.fillStyle = klCwk; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
+        /* P76 (Poin 5): Posisi HB di Ranjang — Wajah kita di kiri menghadap kanan (tampak jelas dari samping!) & wajah pasangan di sebelah kanan menghadap kiri, bibir/pipi saling menempel mesra! */
+        var isPlayerBoy = gA === 'cowok';
+        var isPartnerBoy = gB === 'cowok';
+        var klKita = (tpA && tpA.kulitHex) || (isPlayerBoy ? '#fff3ea' : '#fff5ee');
+        var klPas = (tpB && tpB.kulitHex) || (isPartnerBoy ? '#fff3ea' : '#fff5ee');
+        var rapat = Math.sin(t / 360) * 1.4;
+
+        /* 1. Bahu & tubuh atas pasangan di sebelah kanan (x=140..192) */
+        cx.fillStyle = klPas; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
         cx.beginPath();
-        cx.moveTo(106, yRanjang + 2 + pantulKasur * 0.4);
-        cx.quadraticCurveTo(128, yRanjang - 4 + pantulKasur * 0.4, 152, yRanjang + 10 + pantulKasur * 0.4);
-        cx.lineTo(104, yRanjang + 18); cx.closePath(); cx.fill(); cx.stroke();
-        /* 2. Cowok menunduk dekat di samping/atasnya — bahu & lengan satu kesatuan natural */
-        cx.fillStyle = klCwo; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
+        cx.moveTo(138, yRanjang + 4 + pantulKasur * 0.5);
+        cx.quadraticCurveTo(164, yRanjang - 10 + naikTurun * 0.4, 194, yRanjang + 8 + pantulKasur * 0.4);
+        cx.lineTo(194, yRanjang + 24); cx.lineTo(136, yRanjang + 22); cx.closePath(); cx.fill(); cx.stroke();
+
+        /* 2. Bahu & punggung kita di sebelah kiri (x=96..152), memeluk ke arah kanan */
+        cx.fillStyle = klKita; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
         cx.beginPath();
-        cx.moveTo(148, yRanjang - 18 + naikTurun * 0.55);
-        cx.quadraticCurveTo(176, yRanjang - 24 + naikTurun * 0.6, 198, yRanjang - 4 + naikTurun * 0.4);
-        cx.lineTo(192, yRanjang + 22); cx.lineTo(142, yRanjang + 14); cx.closePath(); cx.fill(); cx.stroke();
-        cx.strokeStyle = klCwo; cx.lineWidth = 8; cx.lineCap = 'round';
-        cx.beginPath(); cx.moveTo(156, yRanjang - 10 + naikTurun * 0.5); cx.lineTo(132, yRanjang + 12); cx.stroke();
-        /* 3. Kedua wajah profil samping benar-benar MENEMPEL mesra (x=114 & x=142 -> bibir & pipi bertemu!) */
-        gambarKepalaProfilAnime(115 + rapat * 0.4, yRanjang - 14 + pantulKasur * 0.4, 1.24, false, 1, -0.18 + ritme * 0.03);
-        gambarKepalaProfilAnime(142 - rapat * 0.5, yRanjang - 20 + naikTurun * 0.45, 1.28, true, -1, 0.24 + ritme * 0.03);
+        cx.moveTo(94, yRanjang + 10 + naikTurun * 0.4);
+        cx.quadraticCurveTo(118, yRanjang - 14 + naikTurun * 0.55, 148, yRanjang + 4 + naikTurun * 0.45);
+        cx.lineTo(148, yRanjang + 22); cx.lineTo(94, yRanjang + 22); cx.closePath(); cx.fill(); cx.stroke();
+
+        /* 3. Wajah Pasangan di SEBELAH KANAN (x=146, menghadap kiri dir=-1) & Wajah Kita di KIRI (x=116, menghadap kanan dir=1, digambar setelahnya agar profil samping wajah kita 100% tampak jelas!) */
+        gambarKepalaProfilAnime(146 - rapat * 0.4, yRanjang - 13 + pantulKasur * 0.45, 1.26, isPartnerBoy, -1, -0.18 - ritme * 0.035);
+        gambarKepalaProfilAnime(116 + rapat * 0.5, yRanjang - 16 + naikTurun * 0.45, 1.30, isPlayerBoy, 1, 0.16 + ritme * 0.035);
         if (A.nama2) {
-          gambarKepalaProfilAnime(94, yRanjang - 6 + pantulKasur * 0.4, 1.10, false, 1, -0.12);
+          gambarKepalaProfilAnime(172 - rapat * 0.3, yRanjang - 10 + pantulKasur * 0.4, 1.16, false, -1, -0.22);
         }
-        /* 5. Selimut tebal menutupi penuh kedua tubuh dari dada/punggung hingga kaki dengan siluet tubuh jelas & lipatan 3D */
+
+        /* 4. Lengan kita merangkul mesra bahu pasangan ke arah kanan */
+        cx.lineCap = 'round';
+        cx.strokeStyle = '#3b2826'; cx.lineWidth = 9.4;
+        cx.beginPath(); cx.moveTo(116, yRanjang + 4 + naikTurun * 0.5); cx.quadraticCurveTo(142, yRanjang + 10 + naikTurun * 0.4, 166, yRanjang + 4 + pantulKasur * 0.4); cx.stroke();
+        cx.strokeStyle = klKita; cx.lineWidth = 7.6;
+        cx.beginPath(); cx.moveTo(116, yRanjang + 4 + naikTurun * 0.5); cx.quadraticCurveTo(142, yRanjang + 10 + naikTurun * 0.4, 166, yRanjang + 4 + pantulKasur * 0.4); cx.stroke();
+        bulat(168, yRanjang + 4 + pantulKasur * 0.4, 4.2, klKita);
+
+        /* 5. Selimut tebal menutupi kedua tubuh dari dada/punggung hingga kaki (dimulai di yRanjang+14 agar wajah kita & pasangan sama sekali tidak tertutup selimut!) */
         cx.fillStyle = wrnSel;
         cx.beginPath();
-        cx.moveTo(106, yRanjang + 16);
-        cx.bezierCurveTo(126, yRanjang - 28 + naikTurun * 0.95, 194, yRanjang - 34 + naikTurun * 1.05, 244, yRanjang - 6 + naikTurun * 0.45);
+        cx.moveTo(96, yRanjang + 16);
+        cx.bezierCurveTo(132, yRanjang - 18 + naikTurun * 0.95, 198, yRanjang - 24 + naikTurun * 1.05, 248, yRanjang - 4 + naikTurun * 0.45);
         cx.quadraticCurveTo(286, yRanjang + 6, 314, yRanjang + 18);
         cx.lineTo(314, yRanjang + 68);
         cx.lineTo(66, yRanjang + 68);
         cx.lineTo(66, yRanjang + 22);
         cx.closePath();
         cx.fill();
-        /* lipatan kerah atas selimut (cuff putih lembut) agar batas tubuh & selimut terlihat nyata */
-        cx.strokeStyle = 'rgba(255,255,255,.32)'; cx.lineWidth = 5; cx.lineCap = 'round';
+        /* lipatan kerah atas selimut (cuff putih lembut) */
+        cx.strokeStyle = 'rgba(255,255,255,.34)'; cx.lineWidth = 5; cx.lineCap = 'round';
         cx.beginPath();
-        cx.moveTo(108, yRanjang + 14);
-        cx.quadraticCurveTo(144, yRanjang - 18 + naikTurun * 0.85, 188, yRanjang - 16 + naikTurun * 0.9);
+        cx.moveTo(98, yRanjang + 15);
+        cx.quadraticCurveTo(152, yRanjang - 10 + naikTurun * 0.85, 202, yRanjang - 10 + naikTurun * 0.9);
         cx.stroke();
         /* lipatan bayangan tubuh di bawah selimut */
         cx.strokeStyle = wrnSelTua; cx.lineWidth = 2.6;
@@ -3884,10 +3991,11 @@
       frontTireX: isCar ? vehX + 26 : vehX + 16, rearTireX: isCar ? vehX - 26 : vehX - 16, tireY: vehY + 4
     });
     var gp = st.gp, goyang = st.goyang;
-    /* Kendaraan lawan arah ke kiri di lajur bawah (Indonesia lajur kiri) */
-    var siklus1 = Math.floor((t * 0.03) / (W + 260)) % 3;
-    var sx = W + 80 - ((t * 0.03) % (W + 260));
-    gambarMobil(sx, jalan + 84, ['mpv', 'hatch', 'suv'][siklus1], ['avanza', 'agya', 'rush'][siklus1], true, t * 0.012, gp);
+    /* P76 (Poin 3): Kendaraan lawan arah di lajur bawah (jalan+84) melaju cepat ke KIRI dengan laju relatif (hdScroll + t) sehingga tidak pernah terlihat jalan mundur! */
+    var lajuLawan1 = hdScroll * 2.4 + t * 0.085;
+    var siklus1 = Math.floor(lajuLawan1 / (W + 260)) % 3;
+    var sx = W + 110 - (lajuLawan1 % (W + 260));
+    gambarMobil(sx, jalan + 84, ['mpv', 'hatch', 'suv'][siklus1], ['avanza', 'agya', 'rush'][siklus1], true, t * 0.024, gp);
     var antar = f.status === 'antar';
     if (isCar) {
       gambarBloomLampuRem(vehX - 52, vehY - 16 + goyang, gp);
@@ -4035,8 +4143,11 @@
       isCar: true, vehX: carX, vehY: carY, frontTireX: carX + 26, rearTireX: carX - 26, tireY: carY + 2
     });
     var gp = st.gp, goyang = st.goyang, mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
-    var sx = -90 + ((t * (0.02 + (f.kmh || 30) * 0.0004)) % (W + 300));
-    gambarMobil(sx, jt + 24, ['mpv', 'hatch', 'suv'][Math.floor(t / 11000) % 3], ['avanza', 'agya', 'rush'][Math.floor(t / 11000) % 3], false, t * 0.014, gp);
+    /* P76 (Poin 3): Mobil lawan arah Travel di lajur bawah (jt+84) menghadap KIRI (kiri=true) & melaju ke KIRI (tidak lagi jalan mundur di lajur kita!) */
+    var lajuLawanTrv = hdScroll * 2.4 + t * 0.085;
+    var siklusTrv = Math.floor(lajuLawanTrv / (W + 280)) % 3;
+    var sx = W + 110 - (lajuLawanTrv % (W + 280));
+    gambarMobil(sx, jt + 84, ['mpv', 'hatch', 'suv'][siklusTrv], ['avanza', 'agya', 'rush'][siklusTrv], true, t * 0.024, gp);
     gambarBloomLampuRem(carX - 44, carY - 14 + goyang, gp);
     gambarMobil(carX, carY + goyang, mob.bentuk, mob.id, false, st.wheel, gp);
     pencahayaanLuar(m, t, jt, carX + 46, carY - 20 + goyang, !!s.biled);
@@ -4082,9 +4193,10 @@
     var gp = st.gp, goyang = st.goyang;
     if (kaki) anim.pejalan.forEach(function (pj) { gambarPejalanKaki(pj, jalan - 14, t, s.hujan); });
     if (!kaki) {
-      var siklus2 = Math.floor((t * 0.03) / (W + 260)) % 3;
-      var sx = W + 80 - ((t * 0.03) % (W + 260));
-      gambarMobil(sx, jalan + 84, ['mpv', 'hatch', 'suv'][siklus2], ['avanza', 'agya', 'rush'][siklus2], true, t * 0.012, gp);
+      var lajuLawan2 = hdScroll * 2.4 + t * 0.085;
+      var siklus2 = Math.floor(lajuLawan2 / (W + 260)) % 3;
+      var sx = W + 110 - (lajuLawan2 % (W + 260));
+      gambarMobil(sx, jalan + 84, ['mpv', 'hatch', 'suv'][siklus2], ['avanza', 'agya', 'rush'][siklus2], true, t * 0.024, gp);
     }
     if (isCar) {
       var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
