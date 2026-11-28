@@ -774,11 +774,23 @@
     /* Lajur kiri Indonesia: ke kanan (arah 1) di lajur atas (jalan+24), ke kiri (arah -1) di lajur bawah (jalan+72) */
     var y = jalan + 24 + mt.jalur * 48, d = mt.arah;
     if (mt.jenis === 'mobil') {
-      /* mobil melintas dengan desain realistis */
+      /* P80: mobil lalu lintas memakai desain asli Indonesia (foto-sprite PNG & blueprint real) */
+      var idLalin = mt.modelId;
+      if (!idLalin) {
+        var poolLalin = mt.bentuk === 'pikap' ? ['granmax', 'carry', 'l300', 'traga']
+          : mt.bentuk === 'hatch' ? ['brio', 'agya', 'ayla']
+          : mt.bentuk === 'suv' ? ['fortuner', 'pajerosport', 'rush', 'hrv']
+          : mt.bentuk === 'sedan' ? ['civicrs', 'camry']
+          : ['avanza', 'innova', 'xpander', 'calya', 'alphard'];
+        var hsh = 0, sW = String(mt.warna || mt.bentuk || 'a');
+        for (var hi = 0; hi < sW.length; hi++) hsh = (hsh * 31 + sW.charCodeAt(hi)) & 1023;
+        idLalin = poolLalin[hsh % poolLalin.length];
+        mt.modelId = idLalin;
+      }
       cx.save();
       cx.translate(mt.x, y + 10);
       cx.scale(d * 0.92, 0.92);
-      gambarMobilRealistis(mt.bentuk, mt.warna, mt.roda || 0, gelap(m) > 0.4);
+      gambarMobilRealistis(mt.bentuk, mt.warna, mt.roda || 0, gelap(m) > 0.4, idLalin);
       cx.restore();
       return;
     }
@@ -885,6 +897,11 @@
     return 'lmpv';
   }
   function gambarMobilRealistis(bentuk, w, pt, lampuNyala, id) {
+    /* P80: Utamakan mesin desain mobil asli (Foto-Sprite PNG Transparan + Blueprint Bezier per model) */
+    if (g.KK_MOBIL_DESAIN && g.KK_MOBIL_DESAIN.gambarCanvas) {
+      g.KK_MOBIL_DESAIN.gambarCanvas(cx, id, bentuk, pt, lampuNyala);
+      return;
+    }
     var prof = profilMobilDari(id, bentuk);
     var isSport = prof === 'sport', isBoxy = prof === 'boxy4x4', isBig = prof === 'bigsuv' || isBoxy;
     var isVan = prof === 'luxvan' || prof === 'vancom' || prof === 'staria';
@@ -3431,8 +3448,11 @@
     }
     cx.restore();
   }
-  /* Preview SVG HD Mobil (12 profil siluet autentik) untuk Dealer Mobil, Agen Bekas, & Garasi */
+  /* Preview HD Mobil (P80: Foto-Sprite PNG Asli + Blueprint Bezier Spesifik 58 Model) untuk Dealer, Agen Bekas, & Garasi */
   function svgMobil(id, bentuk, warnaKustom) {
+    if (g.KK_MOBIL_DESAIN && g.KK_MOBIL_DESAIN.htmlPreview) {
+      return g.KK_MOBIL_DESAIN.htmlPreview(id, bentuk, warnaKustom);
+    }
     var bid = String(id || '').replace(/-bekas$/, '');
     var prof = profilMobilDari(bid, bentuk);
     var w = warnaKustom || WARNA_MOBIL[bid] || '#cbd5e1';
