@@ -17,8 +17,47 @@
     return (cw ? 'cowok-' : 'cewek-') + (hashNama(nm || (cw ? 'c' : 'p')) % 6);
   }
   var genderPemain = 'cewek';
+  var IMG_CACHE = {};
+  function muatImg(src) {
+    if (!src || typeof Image === 'undefined') return null;
+    var im = IMG_CACHE[src];
+    if (im) return (im.complete && im.naturalWidth > 0) ? im : null;
+    im = new Image();
+    im.decoding = 'async';
+    im.src = src;
+    IMG_CACHE[src] = im;
+    return null;
+  }
+  function gambarBgCover(im, tw, th) {
+    if (!im || !im.naturalWidth || !im.naturalHeight) return false;
+    var iw = im.naturalWidth, ih = im.naturalHeight;
+    var sc = Math.max(tw / iw, th / ih);
+    var dw = iw * sc, dh = ih * sc;
+    var dx = (tw - dw) * 0.5, dy = (th - dh) * 0.5;
+    cx.drawImage(im, dx, dy, dw, dh);
+    return true;
+  }
+  function srcRumahHD(kunciTema) {
+    if (kunciTema === 'kos_hemat' || kunciTema === 'kontrakan_petak') return 'img/rumah/kos_hemat.jpg';
+    if (kunciTema === 'kos_ac' || kunciTema === 'kos_eksklusif' || kunciTema === 'apt_rusunami') return 'img/rumah/kos_ac.jpg';
+    if (kunciTema === 'kontrakan_1kt' || kunciTema === 'kontrakan_2kt' || kunciTema === 'rumah_subsidi') return 'img/rumah/kontrakan.jpg';
+    if (kunciTema === 'apt_studio' || kunciTema === 'apt_2br') return 'img/rumah/apartemen.jpg';
+    return 'img/rumah/rumah_mewah.jpg';
+  }
+  function srcKarakterHD(gender, tp, o) {
+    o = o || {};
+    var sk = o.skala || 1, cw = gender === 'cowok';
+    if (sk < 0.72) return cw ? 'img/char/anak_cowok.png' : 'img/char/anak_cewek.png';
+    if (sk < 0.88 && o.label && /\(\d+t\)/.test(o.label)) return cw ? 'img/char/remaja_cowok.png' : 'img/char/remaja_cewek.png';
+    if (!cw) {
+      if (tp && tp.rambut === 'hijab') return 'img/char/cewek_hijab.png';
+      if (o.driver) return 'img/char/cewek_driver.png';
+      return 'img/char/cewek_kasual.png';
+    }
+    var h = hashNama(o.label || 'cowok');
+    return (h % 2 === 0 || o.driver) ? 'img/char/cowok_kasual.png' : 'img/char/cowok_kemeja.png';
+  }
   function gambarPotretAi() { return false; }
-  function gambarBgCover() { return false; }
   function gambarKarakterPenuh() { return false; }
   function imChar() { return null; }
   function imCharFull() { return null; }
@@ -1347,6 +1386,41 @@
     var kulit = tp.kulitHex || '#f5cb9f';
     var berhijab = cewek && tp.rambut === 'hijab';
 
+    /* P72: Render sprite karakter realistis HD (transparan) jika tersedia — dengan bayangan pijakan lembut & napas halus */
+    var imCh = muatImg(srcKarakterHD(gender, tp, o));
+    if (imCh) {
+      var targetH = (cewek ? 168 : 176) * sk;
+      var targetW = targetH * (imCh.naturalWidth / Math.max(1, imCh.naturalHeight));
+      var nafas = 1 + Math.sin(t / 780 + x * 0.05) * 0.008;
+      var goyangJalan = sedangJalan ? Math.sin(t / 130) * 0.035 : 0;
+      cx.save();
+      cx.translate(x, y);
+      /* Bayangan kontak lembut menyatu di lantai */
+      var grSh = cx.createRadialGradient(0, 0, 2, 0, 0, targetW * 0.42);
+      grSh.addColorStop(0, 'rgba(8,12,20,0.44)');
+      grSh.addColorStop(0.65, 'rgba(8,12,20,0.18)');
+      grSh.addColorStop(1, 'rgba(8,12,20,0)');
+      cx.fillStyle = grSh;
+      cx.beginPath(); cx.ellipse(0, 1, targetW * 0.42, 6.5 * sk, 0, 0, Math.PI * 2); cx.fill();
+      cx.translate(0, -bob);
+      if (goyangJalan) cx.rotate(goyangJalan);
+      cx.scale(1 / Math.sqrt(nafas), nafas);
+      cx.drawImage(imCh, -targetW * 0.5, -targetH + 3, targetW, targetH);
+      cx.restore();
+      if (o.label) {
+        var yLblH = y - targetH - 12 - bob;
+        cx.save();
+        cx.font = '800 10.5px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        var twL = Math.min(118, (cx.measureText ? cx.measureText(o.label).width : o.label.length * 6) + 14);
+        kotakBulat(x - twL / 2, yLblH - 8.5, twL, 17, 8.5, 'rgba(14,18,24,0.78)');
+        cx.strokeStyle = 'rgba(255,224,166,0.34)'; cx.lineWidth = 1;
+        cx.strokeRect(x - twL / 2 + 0.5, yLblH - 8, twL - 1, 16);
+        cx.fillStyle = '#fef3c7'; cx.fillText(o.label, x, yLblH + 0.5);
+        cx.restore();
+      }
+      return;
+    }
+
     cx.save();
     cx.translate(x, y);
     cx.scale(sk, sk);
@@ -2125,6 +2199,15 @@
     var m = s.menit % 1440, b = s.barang || {};
     var kunciTema = s.rumah ? ('rumah_' + s.rumah) : (s.hunianId || 'kos_ac');
     var T = TEMA_HUNIAN[kunciTema] || TEMA_HUNIAN.kos_ac;
+    /* P72: Latar Interior Hunian HD Realistis (Kos Hemat, Kos AC, Kontrakan, Rumah Mewah, Apartemen) */
+    var imRumah = muatImg(srcRumahHD(kunciTema));
+    if (imRumah && gambarBgCover(imRumah, W, H)) {
+      var yBerdiriHD = Math.round(H * 0.72);
+      var xKasurHD = 46, yBantalHD = Math.round(H * 0.56);
+      gambarPenghuniRumah(s, t, xKasurHD, yBantalHD, yBerdiriHD);
+      pencahayaanRuangan(m, s.tidur, t);
+      return;
+    }
     /* garis pertemuan dinding & lantai: menyisakan ruang bersih di atas dock bawah */
     var lantai = Math.max(308, Math.min(372, Math.round(H * 0.56)));
     var yBerdiri = lantai + 56;
@@ -3728,7 +3811,7 @@
       kotakKedai = { x: 160, y: dasarKedai - 140, w: 192, h: 140, bx: 180, by: dasarKedai - 110, bw: 152, bh: 54 }; kotakBarista = null;
       if (!motorStandby) {
         /* Proporsi manusia realistis sejajar pejalan kaki di trotoar (tidak raksasa) */
-        gambarKarakterRumah(196, dasarKedai - 2, s.gender || 'cewek', t, { skala: 0.48, baju: s.warnaBaju || '#00aa13', tampilan: s.tampilan, label: s.namaPemain || 'Driver' });
+        gambarKarakterRumah(196, dasarKedai - 2, s.gender || 'cewek', t, { skala: 0.48, driver: true, baju: s.warnaBaju || '#00aa13', tampilan: s.tampilan, label: s.namaPemain || 'Driver' });
       }
     } else {
       gambarPisang(132, dasarKedai, t);
