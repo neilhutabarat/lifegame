@@ -1560,6 +1560,16 @@
     var walk = !!o.jalan;
     var dir = o.arah === -1 ? -1 : 1;
     var tp = o.tampilan || {};
+    var ED = g.KK_KARAKTER_ED;
+    var tb = (!isBoy && ED) ? ED.cari(ED.TUBUH, tp.tubuh) : { bahu: 1, dada: 1, pinggang: 1, pinggul: 1, paha: 1, lengan: 1, pipi: 1 };
+    var klObj = (!isBoy && ED) ? ED.cari(ED.KULIT, tp.kulit) : { hex: '#fff5ee', mid: '#fff0e6', bayang: '#f3d8ca' };
+    var wrObj = (!isBoy && ED) ? ED.cari(ED.WARNA_RAMBUT, tp.warnaRambut) : { hex: isBoy ? '#2a1d18' : '#1b1824', hi: 'rgba(226,232,255,0.34)' };
+    var wmObj = (!isBoy && ED) ? ED.cari(ED.WARNA_MATA, tp.warnaMata) : { top: '#23181a', mid: '#4c3230', bot: '#8c6258' };
+    var idR = (!isBoy && tp.rambut != null && !isNaN(parseInt(tp.rambut, 10))) ? (parseInt(tp.rambut, 10) % 30) : 0;
+    var idM = (!isBoy && tp.mata != null && !isNaN(parseInt(tp.mata, 10))) ? (parseInt(tp.mata, 10) % 30) : 0;
+    var idA = (!isBoy && tp.alis != null && !isNaN(parseInt(tp.alis, 10))) ? (parseInt(tp.alis, 10) % 30) : 0;
+    var idH = (!isBoy && tp.hidung != null && !isNaN(parseInt(tp.hidung, 10))) ? (parseInt(tp.hidung, 10) % 30) : 0;
+    var idB = (!isBoy && tp.mulut != null && !isNaN(parseInt(tp.mulut, 10))) ? (parseInt(tp.mulut, 10) % 30) : 0;
     var topWear = tp.atasan || (o.driver ? 'driver' : 'kaos');
     var botWear = tp.bawahan || (o.driver ? 'jeans' : 'panjang');
     var INK = '#3b2826';
@@ -1581,61 +1591,80 @@
     c.scale(dir, 1);
     c.translate(0, -bob);
 
-    /* 1. Rambut belakang sebahu untuk Cewek */
+    /* 1. Rambut belakang (30 variasi panjang/bob/kepang/kuncir dengan tekstur helaian) */
     if (!isBoy) {
-      var hBg = c.createLinearGradient(0, -132, 0, -82);
-      hBg.addColorStop(0, '#181620'); hBg.addColorStop(1, '#2a2536');
-      c.fillStyle = hBg; c.strokeStyle = INK; c.lineWidth = 1.15;
-      c.beginPath();
-      c.moveTo(-16.5, -118);
-      c.quadraticCurveTo(-22, -98, -17.5, -83);
-      c.quadraticCurveTo(-9, -79, 0, -81);
-      c.quadraticCurveTo(9, -79, 17.5, -83);
-      c.quadraticCurveTo(22, -98, 16.5, -118);
-      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = wrObj.hex; c.strokeStyle = INK; c.lineWidth = 1.15;
+      var lenB = idR < 10 ? -83 : idR < 20 ? -96 : -54; /* 0-9 sebahu, 10-19 bob pendek, 20-29 panjang */
+      var wB = idR < 10 ? 17.5 : idR < 20 ? 16.0 : 19.0;
+      if (idR !== 28 && idR !== 21) { /* selain messy bun / high ponytail */
+        c.beginPath();
+        c.moveTo(-16.5, -118);
+        c.quadraticCurveTo(-wB - 4, (-118 + lenB) * 0.5, -wB, lenB);
+        c.quadraticCurveTo(-wB * 0.5, lenB + 4, 0, lenB + (idR % 3 === 1 ? 6 : 2));
+        c.quadraticCurveTo(wB * 0.5, lenB + 4, wB, lenB);
+        c.quadraticCurveTo(wB + 4, (-118 + lenB) * 0.5, 16.5, -118);
+        c.closePath(); c.fill(); c.stroke();
+        /* Tekstur helaian rambut belakang */
+        c.strokeStyle = wrObj.hi; c.lineWidth = 0.9; c.lineCap = 'round';
+        c.beginPath();
+        c.moveTo(-12, -104); c.quadraticCurveTo(-14, (-104 + lenB) * 0.5, -12, lenB - 4);
+        c.moveTo(12, -104); c.quadraticCurveTo(14, (-104 + lenB) * 0.5, 12, lenB - 4);
+        c.stroke();
+      }
+      /* Twin-tails (22, 23) atau Kepang dua (25) */
+      if (idR === 22 || idR === 23 || idR === 25) {
+        var ty = idR === 22 ? -116 : -100;
+        [-1, 1].forEach(function (sd) {
+          c.save(); c.translate(sd * 15, ty); c.rotate(sd * tailSway * 0.7);
+          c.fillStyle = wrObj.hex; c.strokeStyle = INK; c.lineWidth = 1.1;
+          c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(sd * 14, 14, sd * 8, 44); c.quadraticCurveTo(sd * 2, 48, 0, 38); c.closePath(); c.fill(); c.stroke();
+          c.fillStyle = '#fb7185'; c.beginPath(); c.arc(0, 0, 2.4, 0, Math.PI * 2); c.fill();
+          c.restore();
+        });
+      }
     }
 
-    /* 2. Kaki artikulasi & bawahan (none / pendek / panjang / jeans) */
+    /* 2. Kaki artikulasi & bawahan (skala paha mengikuti bentuk tubuh) */
     var lA = step * 9, lB = -step * 9;
     function drawLeg(ox, swing, dark) {
       c.save(); c.translate(ox, -51);
       c.strokeStyle = INK; c.lineWidth = 1.1;
-      var skinL = dark ? '#f3d8ca' : '#fff0e6';
+      var skinL = dark ? klObj.bayang : klObj.mid;
       c.fillStyle = skinL;
       c.beginPath();
       if (isBoy) {
         c.moveTo(-4.6, 0); c.lineTo(4.6, 0); c.lineTo(3.5 + swing * 0.68, 45); c.lineTo(-3.5 + swing * 0.68, 45);
       } else {
-        var sw = swing * 0.68;
-        c.moveTo(-5.4, -2);
-        c.bezierCurveTo(-6.2, 10, -4.4 + sw * 0.35, 22, -3.8 + sw * 0.65, 32);
-        c.quadraticCurveTo(-3.2 + sw * 0.85, 39, -2.5 + sw, 45);
+        var sw = swing * 0.68, pf = tb.paha;
+        c.moveTo(-5.4 * pf, -2);
+        c.bezierCurveTo(-6.2 * pf, 10, -4.4 * pf + sw * 0.35, 22, -3.8 * pf + sw * 0.65, 32);
+        c.quadraticCurveTo(-3.2 * pf + sw * 0.85, 39, -2.5 + sw, 45);
         c.lineTo(2.5 + sw, 45);
-        c.quadraticCurveTo(3.4 + sw * 0.85, 39, 4.0 + sw * 0.65, 32);
-        c.bezierCurveTo(4.6 + sw * 0.35, 22, 6.0, 10, 5.2, -2);
+        c.quadraticCurveTo(3.4 * pf + sw * 0.85, 39, 4.0 * pf + sw * 0.65, 32);
+        c.bezierCurveTo(4.6 * pf + sw * 0.35, 22, 6.0 * pf, 10, 5.2 * pf, -2);
       }
       c.closePath(); c.fill(); c.stroke();
 
       if (botWear === 'pendek') {
         c.fillStyle = isBoy ? (dark ? '#334155' : '#475569') : (dark ? '#3b5978' : '#4f7396');
         c.beginPath();
-        c.moveTo(-5.5, -4); c.lineTo(5.5, -4);
-        c.lineTo(4.9 + swing * 0.22, 14.5); c.quadraticCurveTo(swing * 0.22, 16, -4.9 + swing * 0.22, 14.5);
+        c.moveTo(-5.5 * tb.paha, -4); c.lineTo(5.5 * tb.paha, -4);
+        c.lineTo(4.9 * tb.paha + swing * 0.22, 14.5); c.quadraticCurveTo(swing * 0.22, 16, -4.9 * tb.paha + swing * 0.22, 14.5);
         c.closePath(); c.fill();
-        c.beginPath(); c.moveTo(5.5, -2); c.lineTo(4.9 + swing * 0.22, 14.5); c.quadraticCurveTo(swing * 0.22, 16, -4.9 + swing * 0.22, 14.5); c.lineTo(-5.5, -2); c.stroke();
+        c.beginPath(); c.moveTo(5.5 * tb.paha, -2); c.lineTo(4.9 * tb.paha + swing * 0.22, 14.5); c.quadraticCurveTo(swing * 0.22, 16, -4.9 * tb.paha + swing * 0.22, 14.5); c.lineTo(-5.5 * tb.paha, -2); c.stroke();
       } else if (botWear === 'panjang' || botWear === 'jeans') {
         var pCol = botWear === 'jeans' ? (dark ? '#25446b' : '#315b8e') : (dark ? '#2b303a' : '#3c4352');
         c.fillStyle = pCol;
         c.beginPath();
-        c.moveTo(-5.5, -4); c.lineTo(5.5, -4);
-        c.bezierCurveTo(5.6, 12, 4.4 + swing * 0.4, 28, 3.3 + swing * 0.68, 44);
+        c.moveTo(-5.5 * tb.paha, -4); c.lineTo(5.5 * tb.paha, -4);
+        c.bezierCurveTo(5.6 * tb.paha, 12, 4.4 * tb.paha + swing * 0.4, 28, 3.3 + swing * 0.68, 44);
         c.lineTo(-3.3 + swing * 0.68, 44);
-        c.bezierCurveTo(-4.4 + swing * 0.4, 28, -5.6, 12, -5.5, -4);
+        c.bezierCurveTo(-4.4 * tb.paha + swing * 0.4, 28, -5.6 * tb.paha, 12, -5.5 * tb.paha, -4);
         c.closePath(); c.fill();
         c.beginPath();
-        c.moveTo(5.5, -2); c.bezierCurveTo(5.6, 12, 4.4 + swing * 0.4, 28, 3.3 + swing * 0.68, 44);
+        c.moveTo(5.5 * tb.paha, -2); c.bezierCurveTo(5.6 * tb.paha, 12, 4.4 * tb.paha + swing * 0.4, 28, 3.3 + swing * 0.68, 44);
         c.lineTo(-3.3 + swing * 0.68, 44);
-        c.bezierCurveTo(-4.4 + swing * 0.4, 28, -5.6, 12, -5.5, -2);
+        c.bezierCurveTo(-4.4 * tb.paha + swing * 0.4, 28, -5.6 * tb.paha, 12, -5.5 * tb.paha, -2);
         c.stroke();
       }
 
@@ -1648,11 +1677,11 @@
       }
       c.restore();
     }
-    drawLeg(isBoy ? -5.6 : -5.1, lB, true);
-    drawLeg(isBoy ? 5.6 : 5.1, lA, false);
+    drawLeg(isBoy ? -5.6 : -5.1 * tb.paha, lB, true);
+    drawLeg(isBoy ? 5.6 : 5.1 * tb.paha, lA, false);
 
     /* 3. Lengan belakang */
-    var armCol = topWear === 'none' ? '#fff0e6'
+    var armCol = topWear === 'none' ? klObj.mid
       : topWear === 'driver' ? '#0f766e'
       : topWear === 'kaos' ? (isBoy ? '#3b82f6' : '#fbcfe8')
       : topWear === 'kemeja' ? '#f8fafc'
@@ -1660,17 +1689,18 @@
     var shortSlv = (topWear === 'none' || topWear === 'kaos');
     function drawArm(tx, rot) {
       c.save(); c.translate(tx, -86 + breath * 0.5); c.rotate(rot);
-      _rrAnime(c, -3.0, 0, 6.0, 29, 3.0, '#fff0e6', INK);
+      var aw = 3.0 * tb.lengan;
+      _rrAnime(c, -aw, 0, aw * 2, 29, aw, klObj.mid, INK);
       if (topWear !== 'none') {
-        var sw = (!isBoy && topWear === 'kaos') ? 8.2 : 6.8;
+        var sw = ((!isBoy && topWear === 'kaos') ? 8.2 : 6.8) * tb.lengan;
         _rrAnime(c, -sw / 2, -1, sw, shortSlv ? ((!isBoy && topWear === 'kaos') ? 15 : 12) : 26, 3.3, armCol, INK);
       }
-      c.fillStyle = '#fff0e6'; c.beginPath(); c.arc(0, 30.2, 2.9, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.fillStyle = klObj.mid; c.beginPath(); c.arc(0, 30.2, 2.9, 0, Math.PI * 2); c.fill(); c.stroke();
       c.restore();
     }
-    drawArm(isBoy ? -14.2 : -11.4, -step * 0.28 + 0.10);
+    drawArm(isBoy ? -14.2 : -11.4 * tb.bahu, -step * 0.28 + 0.10);
 
-    /* 4. Badan dasar + Pakaian modular (none / kaos oversize / kemeja / formal / driver) */
+    /* 4. Badan dasar (Sport-bra super slimfit untuk cewek!) + Pakaian modular */
     c.save(); c.translate(0, breath * 0.55);
     if (isBoy) {
       c.fillStyle = '#fff0e6'; c.strokeStyle = INK; c.lineWidth = 1.15;
@@ -1684,41 +1714,45 @@
       c.fillStyle = '#334155'; c.strokeStyle = INK; c.lineWidth = 1.1;
       c.beginPath(); c.moveTo(-12.2, -56); c.lineTo(12.2, -56); c.lineTo(11.6, -45); c.lineTo(2, -45); c.lineTo(0, -48); c.lineTo(-2, -45); c.lineTo(-11.6, -45); c.closePath(); c.fill(); c.stroke();
     } else {
-      c.fillStyle = '#fff0e6'; c.strokeStyle = INK; c.lineWidth = 1.15;
+      var bh = tb.bahu, dd = tb.dada, pg = tb.pinggang, pl = tb.pinggul;
+      c.fillStyle = klObj.mid; c.strokeStyle = INK; c.lineWidth = 1.15;
       c.beginPath();
       c.moveTo(-3.4, -92.5); c.lineTo(3.4, -92.5);
-      c.quadraticCurveTo(10.2, -90.8, 11.4, -84.2);
-      c.bezierCurveTo(13.4, -78.5, 12.6, -73, 8.2, -65.5);
-      c.bezierCurveTo(11.2, -60, 14.0, -55, 13.4, -48.5);
-      c.quadraticCurveTo(7.8, -43.5, 0, -43.0);
-      c.quadraticCurveTo(-7.8, -43.5, -13.4, -48.5);
-      c.bezierCurveTo(-14.0, -55, -11.2, -60, -8.2, -65.5);
-      c.bezierCurveTo(-12.6, -73, -13.4, -78.5, -11.4, -84.2);
-      c.quadraticCurveTo(-10.2, -90.8, -3.4, -92.5);
+      c.quadraticCurveTo(10.2 * bh, -90.8, 11.4 * bh, -84.2);
+      c.bezierCurveTo(13.4 * dd, -78.5, 12.6 * dd, -73, 8.2 * pg, -65.5);
+      c.bezierCurveTo(11.2 * pl, -60, 14.0 * pl, -55, 13.4 * pl, -48.5);
+      c.quadraticCurveTo(7.8 * pl, -43.5, 0, -43.0);
+      c.quadraticCurveTo(-7.8 * pl, -43.5, -13.4 * pl, -48.5);
+      c.bezierCurveTo(-14.0 * pl, -55, -11.2 * pl, -60, -8.2 * pg, -65.5);
+      c.bezierCurveTo(-12.6 * dd, -73, -13.4 * dd, -78.5, -11.4 * bh, -84.2);
+      c.quadraticCurveTo(-10.2 * bh, -90.8, -3.4, -92.5);
       c.closePath(); c.fill(); c.stroke();
 
-      c.fillStyle = 'rgba(175,118,98,0.45)';
+      c.fillStyle = 'rgba(130,80,60,0.38)';
       c.beginPath(); c.ellipse(0, -61.5, 0.85, 1.25, 0, 0, Math.PI * 2); c.fill();
 
-      c.fillStyle = '#fb7185'; c.strokeStyle = INK; c.lineWidth = 1.0;
-      c.beginPath(); c.moveTo(-7.2, -89.8); c.lineTo(-7.0, -79.5); c.moveTo(7.2, -89.8); c.lineTo(7.0, -79.5); c.stroke();
+      /* Sport-Bra Super Slimfit (mengikuti kontur dada dengan tali tipis & pita bawah rapi) */
+      c.fillStyle = '#334155'; c.strokeStyle = INK; c.lineWidth = 1.0;
       c.beginPath();
-      c.moveTo(-13.4, -77.5);
-      c.quadraticCurveTo(-6.8, -83.2, 0, -76.5);
-      c.quadraticCurveTo(6.8, -83.2, 13.4, -77.5);
-      c.quadraticCurveTo(7.8, -67.2, 0, -71.8);
-      c.quadraticCurveTo(-7.8, -67.2, -13.4, -77.5);
+      c.moveTo(-7.4 * bh, -90.0); c.lineTo(-5.2 * bh, -90.0); c.lineTo(-5.0 * dd, -81.0);
+      c.quadraticCurveTo(0, -78.5, 5.0 * dd, -81.0);
+      c.lineTo(5.2 * bh, -90.0); c.lineTo(7.4 * bh, -90.0);
+      c.lineTo(12.6 * dd, -76.5);
+      c.quadraticCurveTo(12.0 * dd, -70.5, 10.6 * dd, -68.8);
+      c.quadraticCurveTo(0, -67.8, -10.6 * dd, -68.8);
+      c.quadraticCurveTo(-12.0 * dd, -70.5, -12.6 * dd, -76.5);
       c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,0.32)';
-      c.beginPath(); c.ellipse(-6.2, -76.5, 3.4, 1.8, -0.2, 0, Math.PI * 2); c.fill();
-      c.beginPath(); c.ellipse(6.2, -76.5, 3.4, 1.8, 0.2, 0, Math.PI * 2); c.fill();
+      /* Highlight slimfit pada sport-bra */
+      c.fillStyle = 'rgba(255,255,255,0.16)';
+      c.beginPath(); c.ellipse(-5.6 * dd, -75.5, 3.8 * dd, 2.0, -0.15, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(5.6 * dd, -75.5, 3.8 * dd, 2.0, 0.15, 0, Math.PI * 2); c.fill();
 
       if (botWear === 'none') {
-        c.fillStyle = '#fb7185'; c.strokeStyle = INK; c.lineWidth = 1.0;
+        c.fillStyle = '#334155'; c.strokeStyle = INK; c.lineWidth = 1.0;
         c.beginPath();
-        c.moveTo(-12.4, -55.5); c.quadraticCurveTo(0, -53.2, 12.4, -55.5);
-        c.quadraticCurveTo(13.4, -51.5, 11.0, -48.2); c.quadraticCurveTo(5.5, -44.2, 0, -43.2);
-        c.quadraticCurveTo(-5.5, -44.2, -11.0, -48.2); c.quadraticCurveTo(-13.4, -51.5, -12.4, -55.5);
+        c.moveTo(-12.4 * pl, -55.5); c.quadraticCurveTo(0, -53.2, 12.4 * pl, -55.5);
+        c.quadraticCurveTo(13.4 * pl, -51.5, 11.0 * pl, -48.2); c.quadraticCurveTo(5.5 * pl, -44.2, 0, -43.2);
+        c.quadraticCurveTo(-5.5 * pl, -44.2, -11.0 * pl, -48.2); c.quadraticCurveTo(-13.4 * pl, -51.5, -12.4 * pl, -55.5);
         c.closePath(); c.fill(); c.stroke();
       }
     }
@@ -1811,28 +1845,33 @@
     /* 5. Lengan depan */
     drawArm(isBoy ? 14.2 : 11.4, step * 0.28 - 0.10);
 
-    /* 6. Kepala, Wajah Natural, Poni Rapi sampai Alis + Kuncir Kanan Atas */
+    /* 6. Kepala, 30 Gaya Rambut Bertekstur, 30 Mata, 30 Alis, 30 Hidung, 30 Mulut */
     c.save();
     c.translate(0, -109 + breath * 0.65);
 
-    if (!isBoy) {
-      c.save(); c.translate(13, -17); c.rotate(tailSway);
-      c.fillStyle = '#1b1824'; c.strokeStyle = INK; c.lineWidth = 1.15;
-      c.beginPath();
-      c.moveTo(0, 0); c.bezierCurveTo(13, -6, 21, 6, 17, 26); c.quadraticCurveTo(13, 33, 7.5, 27);
-      c.bezierCurveTo(9.5, 15, 4, 7.5, -1.8, 2.8); c.closePath(); c.fill(); c.stroke();
-      c.strokeStyle = 'rgba(226,232,255,0.34)'; c.lineWidth = 1.35;
-      c.beginPath(); c.moveTo(5.5, 2); c.quadraticCurveTo(13, 8, 12, 17); c.stroke();
+    if (!isBoy && (idR === 0 || idR === 5 || idR === 21 || idR === 28)) {
+      var sideP = idR === 5 ? -1 : 1;
+      c.save(); c.translate(sideP * (idR === 21 || idR === 28 ? 0 : 13), idR === 28 ? -24 : -17); c.rotate(sideP * tailSway);
+      c.fillStyle = wrObj.hex; c.strokeStyle = INK; c.lineWidth = 1.15;
+      if (idR === 28) {
+        c.beginPath(); c.arc(0, 0, 7.5, 0, Math.PI * 2); c.fill(); c.stroke();
+      } else {
+        c.beginPath();
+        c.moveTo(0, 0); c.bezierCurveTo(sideP * 13, -6, sideP * 21, 6, sideP * 17, idR === 21 ? 34 : 26);
+        c.quadraticCurveTo(sideP * 13, idR === 21 ? 40 : 33, sideP * 7.5, idR === 21 ? 34 : 27);
+        c.bezierCurveTo(sideP * 9.5, 15, sideP * 4, 7.5, -sideP * 1.8, 2.8); c.closePath(); c.fill(); c.stroke();
+        c.strokeStyle = wrObj.hi; c.lineWidth = 1.35;
+        c.beginPath(); c.moveTo(sideP * 5.5, 2); c.quadraticCurveTo(sideP * 13, 8, sideP * 12, 17); c.stroke();
+      }
       c.fillStyle = '#fb7185'; c.strokeStyle = INK; c.lineWidth = 0.85;
-      c.beginPath(); c.ellipse(-1, 0, 3.8, 2.2, -0.5, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.beginPath(); c.ellipse(2.8, -2.8, 3.3, 1.9, 0.4, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(-sideP * 1, 0, 3.8, 2.2, -sideP * 0.5, 0, Math.PI * 2); c.fill(); c.stroke();
       c.restore();
     }
 
-    _rrAnime(c, -3.4, 9, 6.8, 11, 3, '#f7dfd2', INK);
+    _rrAnime(c, -3.4, 9, 6.8, 11, 3, klObj.bayang, INK);
 
     var fcG = c.createLinearGradient(0, -17, 0, 15);
-    fcG.addColorStop(0, isBoy ? '#fff1e6' : '#fff5ee'); fcG.addColorStop(1, isBoy ? '#f7d8c4' : '#fce4d6');
+    fcG.addColorStop(0, isBoy ? '#fff1e6' : klObj.hex); fcG.addColorStop(1, isBoy ? '#f7d8c4' : klObj.mid);
     c.fillStyle = fcG; c.strokeStyle = INK; c.lineWidth = 1.15;
     c.beginPath();
     if (isBoy) {
@@ -1840,24 +1879,26 @@
       c.quadraticCurveTo(7.5, 12.6, 13.2, 5.2); c.lineTo(13.8, -5);
       c.bezierCurveTo(13.8, -17.5, 7.5, -20.8, 0, -20.8); c.bezierCurveTo(-7.5, -20.8, -13.8, -17.5, -13.8, -5);
     } else {
-      c.moveTo(-14.5, -4); c.bezierCurveTo(-14.8, 7.8, -7.8, 13.5, 0, 14.8);
-      c.bezierCurveTo(7.8, 13.5, 14.8, 7.8, 14.5, -4);
-      c.bezierCurveTo(14.5, -17.8, 8, -20.8, 0, -20.8); c.bezierCurveTo(-8, -20.8, -14.5, -17.8, -14.5, -4);
+      var pp = tb.pipi;
+      c.moveTo(-14.5 * pp, -4); c.bezierCurveTo(-14.8 * pp, 7.8, -7.8 * pp, 13.5, 0, 14.8);
+      c.bezierCurveTo(7.8 * pp, 13.5, 14.8 * pp, 7.8, 14.5 * pp, -4);
+      c.bezierCurveTo(14.5, -17.8, 8, -20.8, 0, -20.8); c.bezierCurveTo(-8, -20.8, -14.5, -17.8, -14.5 * pp, -4);
     }
     c.closePath(); c.fill(); c.stroke();
 
     if (!isBoy) {
-      c.fillStyle = 'rgba(251,146,162,0.30)';
+      c.fillStyle = 'rgba(251,146,162,0.28)';
       c.beginPath(); c.ellipse(-8.2, 4.2, 3.2, 1.6, 0, 0, Math.PI * 2); c.fill();
       c.beginPath(); c.ellipse(8.2, 4.2, 3.2, 1.6, 0, 0, Math.PI * 2); c.fill();
     }
 
+    /* 30 Model Mata & 30 Model Alis */
     [-5.8, 5.8].forEach(function (ex, idx) {
+      var sd = idx === 0 ? -1 : 1;
       if (blink) {
         c.strokeStyle = INK; c.lineWidth = 1.5; c.lineCap = 'round';
         c.beginPath(); c.moveTo(ex - 3.0, 1.0); c.quadraticCurveTo(ex, 2.2, ex + 3.0, 1.0); c.stroke();
       } else if (isBoy) {
-        /* Arda Guler expressive warm hazel-brown eyes & clean brows */
         c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.5, 3.0, 1.85, 0, 0, Math.PI * 2); c.fill();
         var irB = c.createLinearGradient(ex, -1.2, ex, 2.2);
         irB.addColorStop(0, '#3a2418'); irB.addColorStop(0.6, '#6b4732'); irB.addColorStop(1, '#9a6c48');
@@ -1868,27 +1909,42 @@
         c.strokeStyle = '#2a1d18'; c.lineWidth = 1.4;
         c.beginPath(); c.moveTo(ex - 3.2, -3.7); c.lineTo(ex + 3.0, -4.2); c.stroke();
       } else {
-        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.7, 2.9, 2.5, 0, 0, Math.PI * 2); c.fill();
+        var ew = 2.6 + (idM % 4) * 0.22;
+        var eh = 1.85 + (Math.floor(idM / 4) % 4) * 0.25;
+        var tiltM = ((idM % 3) - 1) * 0.18;
+        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.7, ew, eh, sd * tiltM, 0, Math.PI * 2); c.fill();
         var irG = c.createLinearGradient(ex, -1.8, ex, 3.0);
-        irG.addColorStop(0, '#23181a'); irG.addColorStop(0.65, '#4c3230'); irG.addColorStop(1, '#8c6258');
-        c.fillStyle = irG; c.beginPath(); c.ellipse(ex + (idx === 0 ? 0.18 : -0.18), 0.8, 2.0, 2.2, 0, 0, Math.PI * 2); c.fill();
-        c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex - 0.72, -0.35, 0.78, 0, Math.PI * 2); c.fill();
-        c.strokeStyle = '#24181c'; c.lineWidth = 1.5; c.lineCap = 'round';
-        c.beginPath(); c.moveTo(ex - 3.2, -0.2); c.quadraticCurveTo(ex, -2.5, ex + 3.2, -0.2); c.stroke();
-        c.strokeStyle = '#332428'; c.lineWidth = 1.0;
-        c.beginPath(); c.moveTo(ex - 2.6, -4.8); c.quadraticCurveTo(ex, -5.8, ex + 2.6, -4.6); c.stroke();
+        irG.addColorStop(0, wmObj.top); irG.addColorStop(0.65, wmObj.mid); irG.addColorStop(1, wmObj.bot);
+        c.fillStyle = irG; c.beginPath(); c.ellipse(ex - sd * 0.18, 0.8, 1.8 + (idM % 3) * 0.15, eh * 0.86, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex - 0.7, -0.3, 0.75, 0, Math.PI * 2); c.fill();
+        if (idM % 2 === 0) { c.beginPath(); c.arc(ex + 0.6, 1.3, 0.35, 0, Math.PI * 2); c.fill(); }
+        c.strokeStyle = '#24181c'; c.lineWidth = 1.35 + (idM % 3) * 0.2; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(ex - ew - 0.3, -0.1 + sd * tiltM); c.quadraticCurveTo(ex, -eh - 0.3, ex + ew + 0.3, -0.1 - sd * tiltM); c.stroke();
+        /* 30 Alis */
+        var ay = -4.6 - (idA % 3) * 0.35;
+        var aArch = ((Math.floor(idA / 3) % 4) - 1) * 0.45;
+        c.strokeStyle = wrObj.hex; c.lineWidth = 0.85 + (idA % 3) * 0.25;
+        c.beginPath(); c.moveTo(ex - 2.6, ay + sd * aArch * 0.4); c.quadraticCurveTo(ex, ay - 0.9 - aArch, ex + 2.6, ay - sd * aArch * 0.3); c.stroke();
       }
     });
 
+    /* 30 Hidung & 30 Mulut */
     if (isBoy) {
       c.strokeStyle = '#c48d78'; c.lineWidth = 1.0; c.lineCap = 'round';
       c.beginPath(); c.moveTo(0, 2.2); c.lineTo(-0.4, 5.2); c.lineTo(0.8, 5.6); c.stroke();
       c.strokeStyle = '#9c5a54'; c.lineWidth = 1.25;
       c.beginPath(); c.moveTo(-2.4, 9.0); c.quadraticCurveTo(0.4, 9.8, 3.0, 8.4); c.stroke();
     } else {
-      c.fillStyle = '#d49a8a'; c.fillRect(-0.5, 4.0, 1.0, 1.15);
-      c.strokeStyle = '#b46266'; c.lineWidth = 1.2; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(-2.6, 7.8); c.quadraticCurveTo(0, 9.6, 2.6, 7.8); c.stroke();
+      c.strokeStyle = '#b47868'; c.fillStyle = '#c88878'; c.lineWidth = 0.85; c.lineCap = 'round';
+      if (idH % 3 === 0) { c.fillRect(-0.45, 3.8, 0.9, 1.1); }
+      else if (idH % 3 === 1) { c.beginPath(); c.moveTo(0, 2.6); c.lineTo(-0.3, 4.6); c.lineTo(0.4, 4.9); c.stroke(); }
+      else { c.beginPath(); c.moveTo(-0.5, 4.4); c.quadraticCurveTo(0, 5.0, 0.5, 4.4); c.stroke(); }
+
+      var eks = o.ekspresi || '';
+      var mw = 2.0 + (idB % 4) * 0.35;
+      var mCurv = eks === 'netral' ? 0.1 : eks === 'cool' ? -0.6 : eks === 'senyum' ? 1.8 : (((idB % 5) - 1) * 0.65);
+      c.strokeStyle = '#b45862'; c.lineWidth = 1.15 + (idB % 2) * 0.2; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(-mw, 7.8); c.quadraticCurveTo(0, 7.8 + mCurv, mw, 7.8 - (eks === 'cool' ? 0.6 : 0)); c.stroke();
     }
 
     if (isBoy) {
@@ -1910,21 +1966,31 @@
       c.moveTo(4, -19); c.quadraticCurveTo(9, -18, 11, -12);
       c.stroke();
     } else {
-      c.fillStyle = '#1b1824'; c.strokeStyle = INK; c.lineWidth = 1.1;
+      /* 30 Variasi Poni & Rambut Depan Bertekstur Detail */
+      var pStyle = idR % 5; /* 0: poni rapi, 1: belah tengah, 2: side-swept, 3: poni tipis, 4: hime/tirai */
+      c.fillStyle = wrObj.hex; c.strokeStyle = INK; c.lineWidth = 1.1;
       c.beginPath();
       c.moveTo(-16.5, 0); c.bezierCurveTo(-17.5, -21.5, -8.2, -24.2, 0, -24.2); c.bezierCurveTo(8.2, -24.2, 17.5, -21.5, 16.5, 0);
       c.lineTo(14.5, 11.5); c.lineTo(11.8, 6.2); c.lineTo(12.0, -3.5);
-      c.quadraticCurveTo(6.5, -3.2, 3.0, -4.2); c.quadraticCurveTo(0, -3.0, -3.0, -4.2); c.quadraticCurveTo(-6.5, -3.2, -12.0, -3.5);
+      if (pStyle === 1) {
+        c.quadraticCurveTo(6.5, -5.5, 1.5, -10.5); c.lineTo(0, -13.5); c.lineTo(-1.5, -10.5); c.quadraticCurveTo(-6.5, -5.5, -12.0, -3.5);
+      } else if (pStyle === 2) {
+        c.quadraticCurveTo(5.0, -7.2, -4.0, -3.5); c.quadraticCurveTo(-8.5, -2.5, -12.0, -3.5);
+      } else if (pStyle === 3) {
+        c.quadraticCurveTo(6.0, -6.2, 2.0, -4.5); c.lineTo(0, -6.5); c.lineTo(-2.0, -4.5); c.quadraticCurveTo(-6.0, -6.2, -12.0, -3.5);
+      } else {
+        c.quadraticCurveTo(6.5, -3.2, 3.0, -4.2); c.quadraticCurveTo(0, -3.0, -3.0, -4.2); c.quadraticCurveTo(-6.5, -3.2, -12.0, -3.5);
+      }
       c.lineTo(-11.8, 6.2); c.lineTo(-14.5, 11.5); c.closePath(); c.fill(); c.stroke();
-      c.strokeStyle = 'rgba(180,192,225,0.22)'; c.lineWidth = 0.85; c.lineCap = 'round';
+      c.strokeStyle = wrObj.hi; c.lineWidth = 0.85; c.lineCap = 'round';
       c.beginPath();
-      c.moveTo(-6.8, -16.5); c.quadraticCurveTo(-7.2, -9.5, -6.5, -4.2);
-      c.moveTo(-2.5, -17.5); c.quadraticCurveTo(-2.6, -10.5, -2.4, -4.4);
-      c.moveTo(2.5, -17.5); c.quadraticCurveTo(2.6, -10.5, 2.4, -4.4);
-      c.moveTo(6.8, -16.5); c.quadraticCurveTo(7.2, -9.5, 6.5, -4.2);
+      c.moveTo(-7.2, -16.5); c.quadraticCurveTo(-7.6, -9.5, -6.8, -4.5);
+      c.moveTo(-3.0, -17.5); c.quadraticCurveTo(-3.1, -10.5, -2.8, -5.0);
+      c.moveTo(3.0, -17.5); c.quadraticCurveTo(3.1, -10.5, 2.8, -5.0);
+      c.moveTo(7.2, -16.5); c.quadraticCurveTo(7.6, -9.5, 6.8, -4.5);
       c.stroke();
     }
-    c.strokeStyle = 'rgba(226,232,255,0.34)'; c.lineWidth = 1.65; c.lineCap = 'round';
+    c.strokeStyle = wrObj.hi; c.lineWidth = 1.65; c.lineCap = 'round';
     c.beginPath(); c.arc(-4.8, -13.8, 6.2, Math.PI * 1.18, Math.PI * 1.54); c.stroke();
     c.beginPath(); c.arc(4.8, -13.8, 6.2, Math.PI * 1.46, Math.PI * 1.82); c.stroke();
     c.restore();
@@ -1941,15 +2007,20 @@
     }
   }
 
-  function gambarKarakterPreview(canvasEl, gender, tp, now) {
+  function gambarKarakterPreview(canvasEl, gender, tp, now, opts) {
     if (!canvasEl || !canvasEl.getContext) return;
+    opts = opts || {};
     var c = canvasEl.getContext('2d');
     var pw = canvasEl.width, ph = canvasEl.height;
     c.clearRect(0, 0, pw, ph);
     var bg = c.createLinearGradient(0, 0, 0, ph);
     bg.addColorStop(0, '#f7e9d4'); bg.addColorStop(0.65, '#e8cfa9'); bg.addColorStop(1, '#c8925a');
     c.fillStyle = bg; c.fillRect(0, 0, pw, ph);
-    gambarKarakterAnime(c, pw * 0.5, ph * 0.94, gender, now || Date.now(), { skala: 1.08, tampilan: tp || {} });
+    if (opts.zoom) {
+      gambarKarakterAnime(c, pw * 0.5, ph * 1.48, gender, now || Date.now(), { skala: 2.05, tampilan: tp || {} });
+    } else {
+      gambarKarakterAnime(c, pw * 0.5, ph * 0.94, gender, now || Date.now(), { skala: 1.08, tampilan: tp || {} });
+    }
   }
 
   function _gambarKarakterRumahLegacy(x, y, gender, t, o) {

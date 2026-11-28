@@ -88,17 +88,21 @@
     var wr = (K.warnaRambut || []).filter(function (x) { return x.id === t.warnaRambut; })[0] || { hex: '#1c1817', kilau: '#3e3533' };
     return { kulitHex: kl.hex, kulitBayang: kl.bayang, rambutHex: wr.hex, rambutKilau: wr.kilau, rambut: t.rambut, mata: t.mata, mulut: t.mulut, atasan: t.atasan || 'none', bawahan: t.bawahan || 'none' };
   }
+  var edTab = 'tubuh', edEks = '';
   function perbaruiPreviewKarakter() {
     var nm = (profilAwal.nama || '').trim() || 'Driver';
     var gd = profilAwal.gender === 'cowok' ? 'cowok' : 'cewek';
     var ttl = profilAwal.tglLahir || '2000-05-15';
     var usia = KAL.usia(HARI_PERTAMA, ttl);
-    profilAwal.tampilan = tampilanLengkap(profilAwal.tampilan, gd);
+    var ED = window.KK_KARAKTER_ED;
+    if (gd === 'cewek' && ED) profilAwal.tampilan = ED.normalisasi(profilAwal.tampilan);
+    else profilAwal.tampilan = tampilanLengkap(profilAwal.tampilan, gd);
     var tp = profilAwal.tampilan;
     if (!tp.atasan) tp.atasan = 'none';
     if (!tp.bawahan) tp.bawahan = 'none';
+    var isZoom = (gd === 'cewek' && edTab !== 'tubuh' && edTab !== 'baju');
     if ($('cv-awal-char') && ADEGAN && ADEGAN.gambarKarakterPreview) {
-      ADEGAN.gambarKarakterPreview($('cv-awal-char'), gd, tp, Date.now());
+      ADEGAN.gambarKarakterPreview($('cv-awal-char'), gd, tp, Date.now(), { zoom: isZoom, ekspresi: edEks });
     }
     if ($('awal-nama-prev')) $('awal-nama-prev').textContent = nm;
     if ($('awal-usia-prev')) $('awal-usia-prev').textContent = (gd === 'cowok' ? 'Cowok' : 'Cewek') + ' · Usia ' + usia + ' tahun · Tahun 2026';
@@ -106,10 +110,52 @@
     [].forEach.call(document.querySelectorAll('[data-awal-gender]'), function (btn) {
       btn.classList.toggle('pilih', btn.dataset.awalGender === gd);
     });
-    [].forEach.call(document.querySelectorAll('[data-awal-tp]'), function (btn) {
-      var pt = btn.dataset.awalTp.split(':');
-      btn.classList.toggle('pilih', tp[pt[0]] === pt[1]);
+    if ($('awal-preset-bar') && ED) {
+      $('awal-preset-bar').hidden = (gd !== 'cewek');
+      $('awal-preset-bar').innerHTML = ED.PRESET.map(function (pr, idx) {
+        return '<button type="button" class="chip-tombol" style="padding:2px 7px;font-size:10px" data-awal-preset="' + idx + '">' + esc(pr.nama) + '</button>';
+      }).join('');
+    }
+    [].forEach.call(document.querySelectorAll('[data-ed-tab]'), function (b) {
+      b.classList.toggle('pilih', b.dataset.edTab === edTab);
+      b.hidden = (gd !== 'cewek' && b.dataset.edTab !== 'baju');
     });
+    if (gd !== 'cewek') edTab = 'baju';
+    var isi = $('awal-ed-isi');
+    if (isi && ED) {
+      if (edTab === 'tubuh') {
+        isi.innerHTML = '<div style="margin-bottom:6px"><small>Bentuk Tubuh</small><div class="opsi-chip">' +
+          ED.TUBUH.map(function (t) { return '<button type="button" class="chip-tombol' + (tp.tubuh === t.id ? ' pilih' : '') + '" data-awal-tp="tubuh:' + t.id + '">' + esc(t.nama) + '</button>'; }).join('') +
+          '</div></div><div><small>Warna Kulit (Asia – Hitam Legam)</small><div class="swatch-baris">' +
+          ED.KULIT.map(function (k) { return '<button type="button" class="swatch' + (tp.kulit === k.id ? ' pilih' : '') + '" style="background:' + k.mid + '" title="' + esc(k.nama) + '" data-awal-tp="kulit:' + k.id + '"></button>'; }).join('') +
+          '</div></div>';
+      } else if (edTab === 'baju') {
+        isi.innerHTML = '<div style="margin-bottom:6px"><small>Baju Awal</small><div class="opsi-chip">' +
+          [['none', 'Dasar'], ['kaos', '👕 Kaos'], ['kemeja', '👔 Kemeja'], ['formal', '🧥 Formal']].map(function (x) {
+            return '<button type="button" class="chip-tombol' + (tp.atasan === x[0] ? ' pilih' : '') + '" data-awal-tp="atasan:' + x[0] + '">' + x[1] + '</button>';
+          }).join('') + '</div></div><div><small>Celana Awal</small><div class="opsi-chip">' +
+          [['none', 'Dasar'], ['pendek', '🩳 Pendek'], ['panjang', '👖 Panjang'], ['jeans', '👖 Jeans']].map(function (x) {
+            return '<button type="button" class="chip-tombol' + (tp.bawahan === x[0] ? ' pilih' : '') + '" data-awal-tp="bawahan:' + x[0] + '">' + x[1] + '</button>';
+          }).join('') + '</div></div>';
+      } else {
+        var mapArr = { rambut: ED.NAMA_RAMBUT, mata: ED.NAMA_MATA, alis: ED.NAMA_ALIS, hidung: ED.NAMA_HIDUNG, mulut: ED.NAMA_MULUT }[edTab] || ED.NAMA_RAMBUT;
+        var idx = parseInt(tp[edTab], 10) || 0;
+        var h = '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px">' +
+          '<button type="button" class="chip-tombol" data-ed-step="' + edTab + ':-1">◀</button>' +
+          '<b style="font-size:12px">' + (idx + 1) + '/30 · ' + esc(mapArr[idx] || '') + '</b>' +
+          '<button type="button" class="chip-tombol" data-ed-step="' + edTab + ':1">▶</button></div>';
+        if (edTab === 'rambut') {
+          h += '<small>Warna Rambut</small><div class="swatch-baris">' + ED.WARNA_RAMBUT.map(function (w) {
+            return '<button type="button" class="swatch' + (tp.warnaRambut === w.id ? ' pilih' : '') + '" style="background:' + w.hex + '" title="' + esc(w.nama) + '" data-awal-tp="warnaRambut:' + w.id + '"></button>';
+          }).join('') + '</div>';
+        } else if (edTab === 'mata') {
+          h += '<small>Warna Mata</small><div class="swatch-baris">' + ED.WARNA_MATA.map(function (w) {
+            return '<button type="button" class="swatch' + (tp.warnaMata === w.id ? ' pilih' : '') + '" style="background:' + w.mid + '" title="' + esc(w.nama) + '" data-awal-tp="warnaMata:' + w.id + '"></button>';
+          }).join('') + '</div>';
+        }
+        isi.innerHTML = h;
+      }
+    }
   }
   function isiKarakterAwal() {
     var K = N.karakterOpsi || {};
@@ -6357,11 +6403,31 @@
     if ($('layar-karakter')) {
       $('layar-karakter').onclick = function (e) {
         var gBtn = e.target.closest('[data-awal-gender]');
-        if (gBtn) { profilAwal.gender = gBtn.dataset.awalGender; profilAwal.tampilan = tampilanLengkap(profilAwal.tampilan, profilAwal.gender); perbaruiPreviewKarakter(); return; }
+        if (gBtn) { profilAwal.gender = gBtn.dataset.awalGender; edTab = profilAwal.gender === 'cewek' ? 'tubuh' : 'baju'; perbaruiPreviewKarakter(); return; }
+        var tabBtn = e.target.closest('[data-ed-tab]');
+        if (tabBtn) { edTab = tabBtn.dataset.edTab; perbaruiPreviewKarakter(); return; }
+        var stBtn = e.target.closest('[data-ed-step]');
+        if (stBtn) {
+          var sp = stBtn.dataset.edStep.split(':');
+          var cur = parseInt(profilAwal.tampilan[sp[0]], 10) || 0;
+          profilAwal.tampilan[sp[0]] = (cur + parseInt(sp[1], 10) + 30) % 30;
+          perbaruiPreviewKarakter(); return;
+        }
+        var prBtn = e.target.closest('[data-awal-preset]');
+        if (prBtn && window.KK_KARAKTER_ED) {
+          var prObj = window.KK_KARAKTER_ED.PRESET[parseInt(prBtn.dataset.awalPreset, 10)];
+          if (prObj) { profilAwal.tampilan = window.KK_KARAKTER_ED.normalisasi(prObj); perbaruiPreviewKarakter(); }
+          return;
+        }
+        var eksBtn = e.target.closest('[data-awal-eks]');
+        if (eksBtn) { edEks = (edEks === eksBtn.dataset.awalEks ? '' : eksBtn.dataset.awalEks); perbaruiPreviewKarakter(); return; }
+        if (e.target.closest('#b-awal-acak') && window.KK_KARAKTER_ED) {
+          profilAwal.tampilan = window.KK_KARAKTER_ED.acak();
+          perbaruiPreviewKarakter(); return;
+        }
         var tpBtn = e.target.closest('[data-awal-tp]');
         if (tpBtn) {
           var pt = tpBtn.dataset.awalTp.split(':');
-          profilAwal.tampilan = tampilanLengkap(profilAwal.tampilan, profilAwal.gender);
           profilAwal.tampilan[pt[0]] = pt[1];
           perbaruiPreviewKarakter();
         }
