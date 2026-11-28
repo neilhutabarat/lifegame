@@ -1247,6 +1247,95 @@
   }
   function gambarKepalaPotret(x, y, r, gender, tp, opts) {
     opts = opts || {};
+    var isBoy = gender === 'cowok';
+    var INK = '#3b2826';
+    var s = r / 14.5;
+    cx.save();
+    cx.translate(x, y);
+    if (opts.rot) cx.rotate(opts.rot);
+    cx.scale(s, s);
+
+    /* P73.2: Kepala Anime 2D konsisten untuk HB di ranjang/sofa/hotel/ciuman & Tidur */
+    if (!isBoy) {
+      /* Rambut belakang sebahu + kuncir kanan atas */
+      cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.15;
+      cx.beginPath();
+      cx.moveTo(-16.5, -10); cx.quadraticCurveTo(-21, 8, -16, 22); cx.quadraticCurveTo(0, 25, 16, 22); cx.quadraticCurveTo(21, 8, 16.5, -10);
+      cx.closePath(); cx.fill(); cx.stroke();
+      cx.save(); cx.translate(13, -16);
+      cx.beginPath(); cx.moveTo(0, 0); cx.bezierCurveTo(13, -6, 20, 6, 16, 24); cx.quadraticCurveTo(12, 31, 7, 25); cx.bezierCurveTo(9, 14, 4, 7, -1.5, 2.5); cx.closePath(); cx.fill(); cx.stroke();
+      cx.fillStyle = '#fb7185'; cx.strokeStyle = INK; cx.lineWidth = 0.85;
+      cx.beginPath(); cx.ellipse(-1, 0, 3.8, 2.2, -0.5, 0, Math.PI * 2); cx.fill(); cx.stroke();
+      cx.restore();
+    }
+    if (!opts.tanpaLeher) {
+      _rrAnime(cx, -3.4, 9, 6.8, 11, 3, '#f7dfd2', INK);
+    }
+    var fcG = cx.createLinearGradient(0, -17, 0, 15);
+    fcG.addColorStop(0, isBoy ? '#fff1e6' : '#fff5ee'); fcG.addColorStop(1, isBoy ? '#f7d8c4' : '#fce4d6');
+    cx.fillStyle = fcG; cx.strokeStyle = INK; cx.lineWidth = 1.15;
+    cx.beginPath();
+    if (isBoy) {
+      cx.moveTo(-13.8, -5); cx.lineTo(-13.2, 5.2); cx.quadraticCurveTo(-7.5, 12.6, 0, 15.8);
+      cx.quadraticCurveTo(7.5, 12.6, 13.2, 5.2); cx.lineTo(13.8, -5);
+      cx.bezierCurveTo(13.8, -17.5, 7.5, -20.8, 0, -20.8); cx.bezierCurveTo(-7.5, -20.8, -13.8, -17.5, -13.8, -5);
+    } else {
+      cx.moveTo(-14.5, -4); cx.bezierCurveTo(-14.8, 7.8, -7.8, 13.5, 0, 14.8);
+      cx.bezierCurveTo(7.8, 13.5, 14.8, 7.8, 14.5, -4);
+      cx.bezierCurveTo(14.5, -17.8, 8, -20.8, 0, -20.8); cx.bezierCurveTo(-8, -20.8, -14.5, -17.8, -14.5, -4);
+    }
+    cx.closePath(); cx.fill(); cx.stroke();
+
+    if (!isBoy) {
+      cx.fillStyle = opts.merem ? 'rgba(251,113,133,0.42)' : 'rgba(251,146,162,0.32)';
+      cx.beginPath(); cx.ellipse(-8.2, 4.2, 3.2, 1.6, 0, 0, Math.PI * 2); cx.fill();
+      cx.beginPath(); cx.ellipse(8.2, 4.2, 3.2, 1.6, 0, 0, Math.PI * 2); cx.fill();
+    }
+
+    [-5.8, 5.8].forEach(function (ex, idx) {
+      if (opts.merem) {
+        cx.strokeStyle = INK; cx.lineWidth = 1.5; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(ex - 3.0, 1.0); cx.quadraticCurveTo(ex, 2.4, ex + 3.0, 1.0); cx.stroke();
+      } else if (isBoy) {
+        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.ellipse(ex, 0.5, 3.0, 1.7, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#2d3748'; cx.beginPath(); cx.ellipse(ex + (idx === 0 ? 0.2 : -0.2), 0.5, 1.8, 1.6, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.arc(ex - 0.6, -0.25, 0.6, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = '#181820'; cx.lineWidth = 1.65; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(ex - 3.3, 0.0); cx.quadraticCurveTo(ex, -1.8, ex + 3.3, -0.3); cx.stroke();
+        cx.strokeStyle = '#1e1b24'; cx.lineWidth = 1.45;
+        cx.beginPath(); cx.moveTo(ex - 3.2, -3.6); cx.lineTo(ex + 3.0, -4.4); cx.stroke();
+      } else {
+        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.ellipse(ex, 0.7, 2.9, 2.5, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#4c3230'; cx.beginPath(); cx.ellipse(ex + (idx === 0 ? 0.18 : -0.18), 0.8, 2.0, 2.2, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.arc(ex - 0.72, -0.35, 0.78, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = '#24181c'; cx.lineWidth = 1.5; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(ex - 3.2, -0.2); cx.quadraticCurveTo(ex, -2.5, ex + 3.2, -0.2); cx.stroke();
+        cx.strokeStyle = '#332428'; cx.lineWidth = 1.0;
+        cx.beginPath(); cx.moveTo(ex - 2.6, -4.8); cx.quadraticCurveTo(ex, -5.8, ex + 2.6, -4.6); cx.stroke();
+      }
+    });
+
+    cx.strokeStyle = isBoy ? '#9c5a54' : '#b46266'; cx.lineWidth = 1.2; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(-2.5, 8.0); cx.quadraticCurveTo(0, 9.6, 2.5, 8.0); cx.stroke();
+
+    cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
+    if (isBoy) {
+      cx.beginPath();
+      cx.moveTo(-15.5, 0.5); cx.bezierCurveTo(-17, -18, -8.5, -24.5, 0.5, -25.2); cx.bezierCurveTo(9.5, -25.2, 17, -18.5, 15.5, 0.5);
+      cx.lineTo(13.2, 3.0); cx.lineTo(12.2, -5.5); cx.quadraticCurveTo(6.5, -10.5, 2.5, -4.5); cx.quadraticCurveTo(-1.5, -10.5, -9.5, -6.5);
+      cx.lineTo(-12.2, -4.0); cx.lineTo(-13.2, 3.0); cx.closePath(); cx.fill(); cx.stroke();
+    } else {
+      cx.beginPath();
+      cx.moveTo(-16.5, 0); cx.bezierCurveTo(-17.5, -21.5, -8.2, -24.2, 0, -24.2); cx.bezierCurveTo(8.2, -24.2, 17.5, -21.5, 16.5, 0);
+      cx.lineTo(14.5, 11.5); cx.lineTo(11.8, 6.2); cx.lineTo(12.0, -3.5);
+      cx.quadraticCurveTo(6.5, -3.2, 3.0, -4.2); cx.quadraticCurveTo(0, -3.0, -3.0, -4.2); cx.quadraticCurveTo(-6.5, -3.2, -12.0, -3.5);
+      cx.lineTo(-11.8, 6.2); cx.lineTo(-14.5, 11.5); cx.closePath(); cx.fill(); cx.stroke();
+    }
+    cx.restore();
+    return;
+  }
+  function _gambarKepalaPotretLegacy(x, y, r, gender, tp, opts) {
+    opts = opts || {};
     var cewek = gender === 'cewek';
     var T = (tp && tp.kulitHex) ? tp : tampilanDariNama(opts.nama || '', gender, opts.isAnak);
     var kulit = T.kulitHex || '#f5cb9f', bayang = T.kulitBayang || '#d9a473';
@@ -2167,68 +2256,7 @@
     var irama = Math.sin(t / 240), cy = Math.round(H * 0.52);
     if (v === 'metime') { gambarMeTime(s, t, u, gA); return; }
 
-    /* P73.1: Adegan HB Romantis pakai Karakter Anime 2D 120 FPS yang 100% sama dengan kamar & HUD */
-    var tpA = s.tampilan || tampilanDariNama(s.namaPemain || '', gA, false);
-    var tpB = A.tpB || tampilanDariNama(A.nama || '', gB, false);
-    var grRm = cx.createLinearGradient(0, 0, 0, H);
-    if (v === 'ciuman') { grRm.addColorStop(0, '#4a1230'); grRm.addColorStop(1, '#8c204e'); }
-    else if (v === 'foreplay') { grRm.addColorStop(0, '#3a1026'); grRm.addColorStop(1, '#6e1c3e'); }
-    else if (v === 'hotel') { grRm.addColorStop(0, '#261042'); grRm.addColorStop(1, '#50184a'); }
-    else if (v === 'mandi') { grRm.addColorStop(0, '#6a96ad'); grRm.addColorStop(1, '#3d6b82'); }
-    else if (v === 'balkon') { grRm.addColorStop(0, '#0f1636'); grRm.addColorStop(1, '#31204c'); }
-    else { grRm.addColorStop(0, '#2e1226'); grRm.addColorStop(1, '#581a36'); }
-    cx.fillStyle = grRm; cx.fillRect(0, 0, W, H);
-
-    /* Bokeh cahaya lampu hangat melayang lembut */
-    for (var bk = 0; bk < 10; bk++) {
-      var bx = 24 + ((bk * 71 + Math.sin(t / 1100 + bk) * 14) % (W - 48));
-      var by = 80 + ((bk * 59) % Math.round(H * 0.45));
-      var br = 12 + (bk % 3) * 10;
-      var grBk = cx.createRadialGradient(bx, by, 1, bx, by, br);
-      grBk.addColorStop(0, 'rgba(255,205,175,' + (0.20 + 0.12 * Math.abs(Math.sin(t / 700 + bk))).toFixed(2) + ')');
-      grBk.addColorStop(1, 'rgba(255,180,150,0)');
-      cx.fillStyle = grBk; cx.beginPath(); cx.arc(bx, by, br, 0, Math.PI * 2); cx.fill();
-    }
-
-    /* Dua karakter Anime 2D 120 FPS berhadapan mesra & berayun lembut */
-    var yCharHb = Math.round(H * 0.62), gapP = 30 - Math.sin(t / 520) * 5;
-    var tpHbA = { atasan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpA.atasan || 'kaos'), bawahan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpA.bawahan || 'pendek') };
-    var tpHbB = { atasan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpB.atasan || 'kaos'), bawahan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpB.bawahan || 'pendek') };
-    gambarKarakterAnime(cx, W * 0.5 - gapP, yCharHb, gA, t, { skala: 1.24, arah: 1, tampilan: tpHbA });
-    gambarKarakterAnime(cx, W * 0.5 + gapP, yCharHb, gB, t + 360, { skala: 1.24, arah: -1, tampilan: tpHbB });
-
-    var scHrt = 1 + Math.sin(t / 320) * 0.14;
-    cx.save(); cx.translate(W * 0.5, yCharHb - 142); cx.scale(scHrt, scHrt);
-    bulat(0, 0, 17, 'rgba(225,29,72,0.92)');
-    cx.font = '800 17px system-ui, sans-serif'; cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-    cx.fillText(v === 'ciuman' ? '💋' : '♥', 0, 1);
-    cx.restore();
-
-    /* Hati / uap / kilau hangat melayang */
-    cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
-    for (var hgH = 0; hgH < 8; hgH++) {
-      var fgP = (t / 26 + hgH * 22) % 100;
-      cx.globalAlpha = Math.max(0, 1 - fgP / 100) * 0.88;
-      cx.fillStyle = v === 'mandi' ? '#ffffff' : (hgH % 2 ? '#fda4af' : '#fb7185');
-      cx.font = '800 22px system-ui, sans-serif';
-      var symH = v === 'mandi' ? '○' : v === 'ciuman' ? (hgH % 2 ? '💋' : '♥') : v === 'foreplay' ? (hgH % 2 ? '✨' : '♥') : '♥';
-      cx.fillText(symH, 68 + hgH * 32 + Math.sin(t / 500 + hgH) * 12, yCharHb - 150 - fgP * 1.2);
-    }
-    cx.globalAlpha = 1;
-
-    /* Judul, jam & progress bar bergaya HUD Versi 1 */
-    var jmH = s.menit % 1440, jjH = ('0' + Math.floor(jmH / 60)).slice(-2) + '.' + ('0' + Math.floor(jmH % 60)).slice(-2);
-    var jdH = (v === 'ciuman' ? 'Ciuman hangat' : (v === 'foreplay' || !!(A.isLong && u < 0.30)) ? 'Foreplay romantis' : A.nama2 ? 'Waktu hangat bertiga' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama + (A.nama2 ? ' & ' + A.nama2 : '') : '');
-    var yBox = yCharHb + 22;
-    kotakBulat(32, yBox, W - 64, 72, 14, 'rgba(14,18,24,0.82)');
-    cx.textAlign = 'center'; cx.textBaseline = 'middle';
-    cx.font = '800 16px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.fillStyle = '#fde68a';
-    cx.fillText(jdH, W / 2, yBox + 22);
-    cx.font = '700 12px "Nunito", system-ui, sans-serif'; cx.fillStyle = '#e2e8f0';
-    cx.fillText('Pukul ' + jjH + ' · ' + Math.round(u * 100) + '%', W / 2, yBox + 42);
-    kotakBulat(54, yBox + 56, W - 108, 7, 3.5, 'rgba(255,255,255,0.22)');
-    kotakBulat(54, yBox + 56, Math.max(8, (W - 108) * u), 7, 3.5, '#fb7185');
-    return;
+    /* P73.2: Kembalikan animasi HB di ranjang/hotel/sofa/mandi/balkon/ciuman asli dengan kepala Anime 2D baru! */
     var ayun = irama * 2.2, goyang = irama * 9;
     /* latar */
     var gr = cx.createLinearGradient(0, 0, 0, H);
