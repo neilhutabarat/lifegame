@@ -4,7 +4,7 @@
 (function (g) {
   'use strict';
   var N = g.KK_NYATA, R = g.KK_RUTE;
-  var CEPAT_JALAN = 8, CEPAT_TUNGGU = 1; /* waktu berjalan lebih cepat saat menyetir atau menunggu penumpang (setelan) */
+  var CEPAT_JALAN = 3, CEPAT_TUNGGU = 1; /* P82 (Fase A): waktu 3x saat mengantar penumpang travel */
   var MULT_MIN = 0.6, MULT_MAKS = 1.6, JEMPUT_MAKS = 3, MAKS_SUPIR = 10;
   var VVIP_HARGA = 50000000; /* mode VVIP berbayar untuk membuka gembok Kecepatan Level 5 (Top Speed) */
   var KAS_MIN = 5000000; /* batas minimum Kas Travel: auto top-up dari bank jika di bawah Rp5.000.000 */
@@ -470,42 +470,28 @@
   function dana(S) { return danaKas(S) + Math.max(0, (S.uang && S.uang.dompet) || 0); }
   function bayar(S, jml, ket) { return bayarKasTravel(S, jml, ket, S.hari, true); }
 
-  /* ---------- perhitungan kecepatan per ruas (Normal Lv 1–4 realistis sesuai kondisi jalan; Lv 5 Top Speed khusus VVIP 🔓) ---------- */
+  /* ---------- perhitungan kecepatan per ruas (P82: otomatis realistis sesuai kondisi jalan & cuaca tanpa gigi 1–5) ---------- */
   function kecepatanRuas(S, r, levelGigi, pakaiVariasi, kenaHujan) {
-    var n = Math.max(1, Math.min(5, levelGigi || 3)), ket = '', m = S.mobil;
-    var vvip = vvipAktif(S);
-    if (n >= 5 && !vvip) n = 4; /* mode normal maksimal Level 4 dengan perhitungan kecepatan & kondisi jalan realistis */
+    var n = 3, ket = '', m = S.mobil;
     var isHujan = kenaHujan != null ? !!kenaHujan : hujan(S);
     var vmax = R.vmaxKendaraan ? R.vmaxKendaraan(S, 'mobil') : (R.vmax[m ? m.bentuk : 'mpv'] || 170);
     var kdJ = R.infoKondisi ? R.infoKondisi(r) : { faktorV: 0.76, vMaxJalan: 92, nama: 'Aspal Mulus' };
     var kId = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
-    var v, batasJalan;
-    if (n === 5 && vvip) {
-      /* Mode VVIP terbuka (Level 5): mobil bisa memakai kecepatan maksimal penuh (vmax + upgrade mesin) */
-      var vTop = pakaiVariasi ? vmax * (0.96 + 0.04 * Math.sin(S.menit / 5)) : vmax;
-      var fTop = kId === 'tol' || kId === 'mulus' ? 1 : kId === 'bergelombang' ? 0.76 : kId === 'rusak' ? 0.56 : 0.42;
-      v = vTop * fTop * (isHujan ? (kId === 'tanah' ? 0.75 : 0.88) : 1);
-      batasJalan = Math.round(vmax * fTop);
-      if (isHujan) ket = 'VVIP Hujan: ' + Math.round(v) + ' km/j.';
-      else if (kId === 'tol' || kId === 'mulus') ket = 'VVIP Top Speed (' + Math.round(vmax) + ' km/j)!';
-      else ket = 'VVIP · ' + kdJ.nama + ' (maks ' + Math.round(v) + ' km/j)';
-    } else {
-      var gi = gigiObj(n, S);
-      var isSuvT = !!(m && (m.bentuk === 'suv' || m.bentuk === 'pikap'));
-      v = pakaiVariasi
-        ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.24 * Math.sin(S.menit / 3.5))
-        : (gi.lo + gi.hi) / 2;
-      if (v > vmax) v = vmax;
-      var fK = kdJ.faktorV * (kId === 'tanah' && isHujan ? 0.56 : kId === 'rusak' && isHujan ? 0.78 : isHujan ? 0.86 : 1);
-      if ((kId === 'tanah' || kId === 'rusak') && isSuvT) fK *= 1.24;
-      v *= fK;
-      var maxJ = kId === 'tanah' ? (isHujan ? 18 : 30) : kId === 'rusak' ? (isHujan ? 26 : 32) : kId === 'bergelombang' ? (isHujan ? 54 : 62) : (kdJ.vMaxJalan || 92) * (isHujan ? 0.86 : 1);
-      if ((kId === 'tanah' || kId === 'rusak') && isSuvT) maxJ = Math.round(maxJ * 1.2);
-      batasJalan = maxJ;
-      if (v > batasJalan) v = batasJalan;
-      if (kId === 'tanah' || kId === 'rusak' || kId === 'bergelombang') {
-        ket = kdJ.nama + (kId === 'tanah' && isHujan ? ' (lumpur licin!)' : kId === 'rusak' && isHujan ? ' (lubang berair!)' : '');
-      }
+    var gi = gigiObj(n, S);
+    var isSuvT = !!(m && (m.bentuk === 'suv' || m.bentuk === 'pikap'));
+    var v = pakaiVariasi
+      ? gi.lo + (gi.hi - gi.lo) * (0.5 + 0.24 * Math.sin(S.menit / 3.5))
+      : (gi.lo + gi.hi) / 2;
+    if (v > vmax) v = vmax;
+    var fK = kdJ.faktorV * (kId === 'tanah' && isHujan ? 0.56 : kId === 'rusak' && isHujan ? 0.78 : isHujan ? 0.86 : 1);
+    if ((kId === 'tanah' || kId === 'rusak') && isSuvT) fK *= 1.24;
+    v *= fK;
+    var maxJ = kId === 'tanah' ? (isHujan ? 18 : 30) : kId === 'rusak' ? (isHujan ? 26 : 32) : kId === 'bergelombang' ? (isHujan ? 54 : 62) : (kdJ.vMaxJalan || 92) * (isHujan ? 0.86 : 1);
+    if ((kId === 'tanah' || kId === 'rusak') && isSuvT) maxJ = Math.round(maxJ * 1.2);
+    var batasJalan = maxJ;
+    if (v > batasJalan) v = batasJalan;
+    if (kId === 'tanah' || kId === 'rusak' || kId === 'bergelombang') {
+      ket = kdJ.nama + (kId === 'tanah' && isHujan ? ' (lumpur licin!)' : kId === 'rusak' && isHujan ? ' (lubang berair!)' : '');
     }
     return { kmh: Math.max(8, v), gigi: n, ket: ket, batasJalan: batasJalan, vmax: vmax };
   }
@@ -656,8 +642,8 @@
     T.jalurPilihan = jalurKustom || null;
     return true;
   }
-  function ubahTarif(S, delta) {
-    var T = siapkan(S); T.mult = Math.round(Math.max(MULT_MIN, Math.min(MULT_MAKS, T.mult + delta)) * 100) / 100; return true;
+  function ubahTarif(S) {
+    var T = siapkan(S); T.mult = 1; return true;
   }
   function autoIsiBbmTravel(S, m) {
     if (!m) return null;
@@ -747,10 +733,9 @@
     if (mc < 1) { v *= mc; if (!ket) ket = mc < 0.5 ? 'Macet parah masuk kota.' : 'Jalan padat masuk kota.'; }
     return { kmh: Math.max(6, v), gigi: res.gigi, ket: ket, batasJalan: res.batasJalan };
   }
-  function setGigi(S, n) {
-    var T = siapkan(S); n = +n; if (n < 1 || n > 5) return 'Level kecepatan 1–5.';
-    if (n === 5 && !vvipAktif(S)) return '🔒 Level 5 terkunci (Mode VVIP). Buka gembok VVIP dulu untuk memakai Top Speed!';
-    T.gigi = n; return true;
+  function setGigi(S) {
+    var T = siapkan(S);
+    T.gigi = 3; return true;
   }
 
   /* ---------- selama jalan ---------- */

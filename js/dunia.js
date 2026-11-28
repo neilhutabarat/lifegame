@@ -155,6 +155,70 @@
     }
   }
 
+  /* ---------- Sistem Keramaian Dinamis (Hari Rame / Normal / Hari Sepi) berbasis lokasi, populasi, hari & cuaca ---------- */
+  var KOTA_BESAR = {
+    jakarta: 1, surabaya: 1, bandung: 1, medan: 1, semarang: 1, makassar: 1, palembang: 1,
+    depok: 1, tangerang: 1, bekasi: 1, pekanbaru: 1, denpasar: 1, banjarmasin: 1, pontianak: 1,
+    samarinda: 1, balikpapan: 1, batam: 1, yogyakarta: 1, padang: 1, manado: 1, bandarlampung: 1, malang: 1
+  };
+  function statusKeramaian(S) {
+    if (!S) return { kode: 'normal', label: 'Normal', ikon: '☀️', faktor: 1, tier: 'kota', lokasiLabel: 'Perkotaan', alasan: 'Aktivitas berjalan normal' };
+    var t = KAL.tgl(S.hari || 0);
+    var lok = (S.ojek && S.ojek.lokasi) || (S.rumah && S.rumah.wilayah) || null;
+    var kabId = (lok && lok.kabId) || S.kota || 'pontianak';
+    var kabNama = (lok && lok.kabNama) || kabId;
+    var fPop = (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) ? g.KK_WILAYAH.faktorPenduduk(S) : 1;
+    var mdLok = (lok && lok.medan) || '';
+    var isDesa = mdLok === 'tanah' || mdLok === 'perbukitan' || mdLok === 'rusak' || fPop < 0.86;
+    var isKota = !isDesa && (!!KOTA_BESAR[kabId] || /^kota\s/i.test(kabNama) || fPop >= 1.12);
+    var tier = isKota ? 'kota' : (isDesa ? 'desa' : 'kabupaten');
+    var lokasiLabel = isKota ? 'Kota Besar' : (isDesa ? 'Desa / Pinggiran' : 'Kota Kabupaten');
+    var baseLok = isKota ? 1.18 : (isDesa ? 0.68 : 0.94);
+
+    var mod = 0, sebab = [];
+    if (KAL.apakahRamadan && KAL.apakahRamadan(S.hari) > 0) { mod += 0.42; sebab.push('Ramadan'); }
+    if (KAL.apakahLibur && KAL.apakahLibur(S.hari)) { mod += 0.25; sebab.push('Hari Libur'); }
+    if (t.d >= 25 || t.d <= 3) { mod += 0.22; sebab.push('Tanggal Gajian'); }
+    else if (t.d >= 12 && t.d <= 22 && t.dow >= 2 && t.dow <= 4) { mod -= 0.16; sebab.push('Tanggal Tua'); }
+    if (t.dow === 5 || t.dow === 6 || t.dow === 0) { mod += 0.18; sebab.push('Akhir Pekan'); }
+    else if (t.dow === 2 || t.dow === 3) { mod -= 0.08; }
+
+    /* fluktuasi harian deterministik agar hari berganti alami antara rame, normal, dan sepi */
+    var seed = (S.hari || 0) * 131 + kabId.length * 17;
+    for (var i = 0; i < kabId.length; i++) seed = (seed * 31 + kabId.charCodeAt(i)) % 100000;
+    var fluk = ((seed % 100) / 100 - 0.48) * 0.44; /* sekitar -0.21 .. +0.23 */
+    mod += fluk;
+
+    var cw = infoCuacaSekarang(S);
+    if (cw && cw.banjirCm >= 40) { mod -= 0.32; sebab.push('Banjir ' + cw.banjirCm + 'cm'); }
+
+    var skor = batas(baseLok + mod, 0.48, 2.0);
+    /* di desa, keramaian tetap terasa lebih tenang dibanding pusat kota */
+    if (isDesa) skor = Math.min(skor, 1.32);
+
+    var kode, label, ikon;
+    if (skor >= 1.24) { kode = 'rame'; label = 'Hari Rame'; ikon = '🔥'; }
+    else if (skor <= 0.84) { kode = 'sepi'; label = 'Hari Sepi'; ikon = '🌙'; }
+    else { kode = 'normal'; label = 'Normal'; ikon = '☀️'; }
+
+    if (!sebab.length) {
+      sebab.push(kode === 'rame' ? 'Mobilitas warga tinggi' : kode === 'sepi' ? 'Jalanan lengang' : 'Aktivitas harian stabil');
+    }
+    return {
+      kode: kode,
+      label: label,
+      ikon: ikon,
+      faktor: Math.round(skor * 100) / 100,
+      tier: tier,
+      lokasiLabel: lokasiLabel,
+      pendudukFaktor: Math.round(fPop * 100) / 100,
+      alasan: lokasiLabel + ' · ' + sebab.slice(0, 2).join(' & ')
+    };
+  }
+  function faktorKeramaian(S) {
+    return statusKeramaian(S).faktor;
+  }
+
   /* ---------- pengali keramaian ---------- */
   function rataMaps(S) {
     var u = S.dunia.ulasan; if (!u.length) return 0;
@@ -363,7 +427,7 @@
     return kabar;
   }
 
-  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, PROFIL_CUACA: PROFIL_CUACA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang, infoCuacaSekarang: infoCuacaSekarang, suhuSekarang: suhuSekarang,
+  g.KK_DUNIA = { pasaran: pasaran, BIAYA: BIAYA, PROFIL_CUACA: PROFIL_CUACA, siapkan: siapkan, terapkanHarga: terapkanHarga, ubahHarga: ubahHarga, faktor: faktor, faktorAntar: faktorAntar, hujanSekarang: hujanSekarang, infoCuacaSekarang: infoCuacaSekarang, suhuSekarang: suhuSekarang, statusKeramaian: statusKeramaian, faktorKeramaian: faktorKeramaian,
     catatPembeli: catatPembeli, catatPergi: catatPergi, catatKomplain: catatKomplain, rataMaps: rataMaps, daftarMaps: daftarMaps, tambahFoto: tambahFoto, balas: balas,
     beliUlasan: beliUlasan, posting: posting, siaran: siaran, iklan: iklan, endorse: endorse, beliCekUang: beliCekUang, bersihkan: bersihkan, jalan: jalan, gantiHari: gantiHari };
 })(window);

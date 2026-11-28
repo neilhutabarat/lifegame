@@ -6,7 +6,7 @@
   var N = g.KK_NYATA, KAL = g.KK_KAL, O = N.ojol;
   /* order per jam saat online (setelan) */
   var PERMINTAAN = [0.3, 0.3, 0.2, 0.2, 0.3, 0.8, 2.6, 3.2, 3, 1.6, 1.4, 2.2, 2.6, 2, 1.4, 1.6, 2.6, 3.2, 3, 2.4, 1.8, 1.4, 1, 0.6];
-  var CEPAT_TRIP = 8; /* waktu 8x saat narik */
+  var CEPAT_TRIP = 3; /* P82 (Fase A): waktu 3x saat narik / mengantar penumpang */
 
   function rp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
   function kota(S) {
@@ -98,19 +98,18 @@
     return true;
   }
 
-  /* tarif standar dunia nyata per zona, lalu dikali pengatur tarif pemain (S.ojek.mult) */
+  /* tarif standar dunia nyata per zona (P82: fitur naik-turunkan tarif dihapus, selalu tarif standar resmi) */
   function tarifStandar(S, km) {
     var z = O.zona[kota(S).zona || 1];
     var t = km <= z.kmMinimal ? z.minimal : z.minimal + (km - z.kmMinimal) * z.perKm;
     return Math.round(t / 500) * 500;
   }
   function tarif(S, km) {
-    var mult = (S.ojek && S.ojek.mult) || 1;
-    return Math.round(tarifStandar(S, km) * mult / 500) * 500;
+    return tarifStandar(S, km);
   }
-  function ubahTarif(S, delta) {
+  function ubahTarif(S) {
     siapkan(S);
-    S.ojek.mult = Math.round(Math.max(0.7, Math.min(1.6, (S.ojek.mult || 1) + delta)) * 100) / 100;
+    S.ojek.mult = 1;
     return true;
   }
   function bisaOnline(S, mode) {
@@ -173,9 +172,9 @@
     if (efHp && efHp.gpsBonus > 0) r *= (1 + efHp.gpsBonus); /* sinyal & GPS flagship bikin order masuk lebih gacor */
     var efRmh = (g.KK_DIRI && g.KK_DIRI.efekRumah) ? g.KK_DIRI.efekRumah(S) : null;
     if (efRmh && efRmh.bonusOrder > 0) r *= (1 + efRmh.bonusOrder); /* smartwatch bikin order lebih sigap */
-    var mult = (S.ojek && S.ojek.mult) || 1, isCar = S.ojek && S.ojek.mode === 'mobil';
+    var isCar = S.ojek && S.ojek.mode === 'mobil';
     var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(isCar ? S.mobil : S.motor, isCar ? 'mobil' : 'motor') : 1;
-    r *= Math.max(0.25, Math.min(1.6, Math.pow(nyaman / mult, 1.5)));
+    r *= Math.max(0.5, Math.min(1.6, Math.pow(nyaman, 1.2)));
     return r * Math.max(0.6, 1 - S.ojek.tolak * 0.05);
   }
   function jeda(S) { return Math.max(3, -Math.log(1 - Math.random()) * 60 / laju(S)); }
@@ -373,14 +372,14 @@
     var mdKode = medanOpsi || (lokNow && lokNow.medan) || (tr && tr.x && tr.x.medan && tr.x.medan.kode) || 'kota';
     var md = infoMedanKode(mdKode);
     var isHujan = !!(g.KK_DUNIA && g.KK_DUNIA.hujanSekarang && g.KK_DUNIA.hujanSekarang(S));
-    var gi = (g.KK_RUTE && g.KK_RUTE.gigiInfo) ? g.KK_RUTE.gigiInfo(S, isCar ? 'mobil' : 'motor') : { id: 2, lo: 35, hi: 58, mid: 46 };
-    var vvip = !!(S && S.vvip && S.vvip.aktif);
-    var base = gi.lo + (gi.hi - gi.lo) * (0.52 + 0.24 * Math.sin(((S && S.menit) || 0) * 0.85));
+    /* P82 (Fase A): Kecepatan normal realistis otomatis tanpa gigi 1–5 (melambat otomatis di jalan rusak/tanah/hujan/padat) */
+    var loNorm = isCar ? 42 : 34, hiNorm = isCar ? 68 : 54;
+    var base = loNorm + (hiNorm - loNorm) * (0.52 + 0.24 * Math.sin(((S && S.menit) || 0) * 0.85));
     var mId = S && S.motor ? String(S.motor.id || '').replace(/-bekas$/, '') : '';
     var isTrail = !isCar && !!MOTOR_TRAIL[mId];
     var isSuv = isCar && S && S.mobil && (S.mobil.bentuk === 'suv' || S.mobil.bentuk === 'pikap');
     var bonusOffroad = (isTrail || isSuv) ? 1.32 : 1.0;
-    var capLo = 12, capHi = 92, fMd = 1.0, ket = md.nama;
+    var capLo = 12, capHi = isCar ? 75 : 58, fMd = 1.0, ket = md.nama;
     if (mdKode === 'tanah') {
       fMd = isHujan ? 0.28 : 0.44;
       capLo = isHujan ? 8 : 16; capHi = Math.round((isHujan ? 18 : 30) * bonusOffroad);
@@ -391,29 +390,29 @@
       ket = isHujan ? 'Jalan Rusak · Lubang Berair' : 'Jalan Rusak Berlubang';
     } else if (mdKode === 'perbukitan') {
       fMd = isHujan ? 0.58 : 0.68;
-      capLo = 26; capHi = isHujan ? 44 : 52;
+      capLo = 26; capHi = isHujan ? 42 : 50;
       ket = 'Perbukitan Berkelok';
     } else if (mdKode === 'bergelombang') {
       fMd = isHujan ? 0.68 : 0.78;
-      capLo = 34; capHi = isHujan ? 54 : 64;
+      capLo = 30; capHi = isHujan ? 48 : 56;
       ket = 'Aspal Bergelombang';
     } else if (mdKode === 'pesisir') {
       fMd = isHujan ? 0.75 : 0.86;
-      capLo = 36; capHi = isHujan ? 56 : 68;
+      capLo = 34; capHi = isHujan ? 52 : 62;
       ket = 'Jalan Pesisir Pantai';
     } else {
       /* kota / mulus */
       var jamH = ((S && S.menit) || 480) % 1440 / 60;
       var sibuk = mdKode === 'kota' && ((jamH >= 6.5 && jamH < 9.0) || (jamH >= 16.5 && jamH < 19.0));
-      fMd = (sibuk ? 0.56 : 0.92) * (isHujan ? 0.85 : 1.0);
+      fMd = (sibuk ? 0.56 : 0.94) * (isHujan ? 0.85 : 1.0);
       capLo = sibuk ? 18 : 28;
-      capHi = sibuk ? 36 : (vvip && gi.id >= 5 ? gi.hi : (isCar ? 92 : 76));
+      capHi = sibuk ? 34 : (isCar ? 75 : 58);
       ket = sibuk ? 'Lalu Lintas Padat Kota' : (isHujan ? 'Aspal Basah Hujan' : md.nama);
     }
     var v = base * fMd * (mdKode === 'tanah' || mdKode === 'rusak' ? bonusOffroad : 1);
     if (tr && tr.jalan < tr.jemput) { v *= 0.82; }
     v = Math.max(capLo, Math.min(capHi, v));
-    return { kmh: Math.round(v * 10) / 10, medan: mdKode, ikon: md.ikon || '🛣️', namaKondisi: ket, gigi: gi.id };
+    return { kmh: Math.round(v * 10) / 10, medan: mdKode, ikon: md.ikon || '🛣️', namaKondisi: ket, gigi: 2 };
   }
 
   /* dipanggil tiap langkah waktu saat online. Hasil: kabar (teks) */

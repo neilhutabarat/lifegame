@@ -24,13 +24,14 @@
     siapkanPaylater(S);
   }
   function siapkanPaylater(S) {
-    var PL = N.paylater || { limitAwal: 3000000, limitMaks: 50000000, bungaBulan: 0.0295, jatuhTempo: 5, dendaPersen: 0.05 };
+    var PL = N.paylater || { limitAwal: 3000000, limitMaks: 60000000, bungaBulan: 0.0295, jatuhTempo: 5, dendaPersen: 0.05 };
     if (!S.paylater) {
       S.paylater = { status: 'aktif', limit: PL.limitAwal, tagihan: 0, denda: 0, cicilan: [], mutasi: [], sejak: S.hari || 0 };
     }
     S.paylater.cicilan = S.paylater.cicilan || [];
     S.paylater.mutasi = S.paylater.mutasi || [];
     if (typeof S.paylater.limit !== 'number' || S.paylater.limit < PL.limitAwal) S.paylater.limit = PL.limitAwal;
+    if (S.paylater.limit > PL.limitMaks) S.paylater.limit = PL.limitMaks;
     return S.paylater;
   }
   function terpakaiPaylater(S) {
@@ -79,18 +80,19 @@
     p.tagihan = 0; p.denda = 0;
     if (mode === 'semua') p.cicilan = [];
     if (p.status === 'beku') p.status = 'aktif';
-    /* naikkan limit otomatis jika rajin bayar */
-    var PL = N.paylater || { limitMaks: 50000000 };
-    var targetLim = Math.min(PL.limitMaks, Math.max(p.limit, Math.round(Math.max(penghasilanKk(S) * 1.8, p.limit + 1000000) / 500000) * 500000));
+    /* naikkan limit otomatis jika rajin bayar (maks Rp60 juta) */
+    var PL = N.paylater || { limitMaks: 60000000 };
+    var saldoPl = (S.bank && S.bank.saldo > 0) ? S.bank.saldo * 0.15 : 0;
+    var targetLim = Math.min(PL.limitMaks, Math.max(p.limit, Math.round(Math.max(penghasilanKk(S) * 1.8, saldoPl, p.limit + 1000000) / 500000) * 500000));
     if (targetLim > p.limit) p.limit = targetLim;
     return { ok: true, jml: jml, limit: p.limit };
   }
   function naikLimitPaylater(S) {
-    var p = siapkanPaylater(S), PL = N.paylater || { limitMaks: 50000000 };
+    var p = siapkanPaylater(S), PL = N.paylater || { limitMaks: 60000000 };
     if (p.status !== 'aktif' || p.denda > 0) return 'Lunasi dulu tagihan & denda PayLater sebelum menaikkan limit.';
-    var gj = penghasilanKk(S);
-    var baru = Math.min(PL.limitMaks, Math.max(p.limit, Math.round(gj * 2.2 / 500000) * 500000));
-    if (baru <= p.limit) return 'Penghasilan bulanan saat ini belum cukup untuk naikkan limit di atas ' + rp(p.limit) + '.';
+    var gj = penghasilanKk(S), saldoPl = (S.bank && S.bank.saldo > 0) ? S.bank.saldo * 0.15 : 0;
+    var baru = Math.min(PL.limitMaks, Math.max(p.limit, Math.round(Math.max(gj * 2.2, saldoPl) / 500000) * 500000));
+    if (baru <= p.limit) return 'Penghasilan atau saldo saat ini belum cukup untuk naikkan limit di atas ' + rp(p.limit) + '.';
     p.limit = baru;
     return { ok: true, limit: baru };
   }
@@ -368,8 +370,10 @@
   }
   function hitungLimitKk(S) {
     var KK = N.kartuKredit, gj = penghasilanKk(S);
-    if (gj < KK.syaratGaji) return KK.limitMin;
-    return Math.min(KK.limitMaks, Math.max(KK.limitMin, Math.round(gj * KK.kaliLimit / 1000000) * 1000000));
+    var dasarSaldo = (S.bank && S.bank.saldo > 0) ? S.bank.saldo * 0.25 : 0;
+    var acuan = Math.max(gj * KK.kaliLimit, dasarSaldo);
+    if (gj < KK.syaratGaji && dasarSaldo < KK.limitMin) return KK.limitMin;
+    return Math.min(KK.limitMaks, Math.max(KK.limitMin, Math.round(acuan / 1000000) * 1000000));
   }
   function syaratKk(S) {
     var KK = N.kartuKredit, gj = penghasilanKk(S);

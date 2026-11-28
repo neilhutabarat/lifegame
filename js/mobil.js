@@ -159,7 +159,7 @@
     var r = jalan(S, km, 1); if (!r.ok) return r.alasan;
     var BM = N.bisnisMobil, tarifDasar = g.KK_OJEK ? g.KK_OJEK.tarif(S, km) : km * 3000;
     var pengaliKls = (g.KK_RUTE && g.KK_RUTE.pengaliKelasMobil) ? g.KK_RUTE.pengaliKelasMobil(m) : 1;
-    var promo = S.promoAktif ? (1.5 + Math.random() * 0.3) : 1;
+    var promo = (g.KK_DUNIA && g.KK_DUNIA.faktorKeramaian) ? g.KK_DUNIA.faktorKeramaian(S) : 1;
     var kotor = Math.round(tarifDasar * BM.kaliTarifCar * pengaliKls * promo / 1000) * 1000;
     var bersih = Math.round(kotor * (1 - BM.potonganCar) / 500) * 500;
     S.ojek.dompet += bersih;
@@ -184,7 +184,7 @@
     if (S.bank.saldo < biayaBbm && (S.uang.dompet || 0) < biayaBbm) return 'Dana tidak cukup untuk isi bensin perjalanan ' + rt.km + ' km (' + rp(biayaBbm) + ').';
     if (S.bank.saldo >= biayaBbm) { S.bank.saldo -= biayaBbm; M().catatBank(S, 'Bensin travel ke ' + rt.tujuan, -biayaBbm); }
     else { S.uang.dompet -= biayaBbm; }
-    var minP = Math.max(2, kap - 2), pnp = S.promoAktif ? kap : (minP + Math.floor(Math.random() * (kap - minP + 1)));
+    var minP = Math.max(2, kap - 2), rameM = !!(g.KK_DUNIA && g.KK_DUNIA.statusKeramaian && g.KK_DUNIA.statusKeramaian(S).kode === 'rame'), pnp = rameM ? kap : (minP + Math.floor(Math.random() * (kap - minP + 1)));
     var kotor = pnp * rt.ongkos, bersih = kotor - biayaBbm;
     S.bank.saldo += kotor; M().catatBank(S, 'Travel ' + rt.tujuan + ' (' + pnp + ' penumpang)', kotor);
     m.km += rt.km;
@@ -204,7 +204,7 @@
     if (!ang) return 'Order angkutan tidak ditemukan.';
     if (!cukup(S, ang.km)) return 'Bensin pikap tidak cukup untuk ' + ang.km + ' km. Isi dulu.';
     var r = jalan(S, ang.km, 1); if (!r.ok) return r.alasan;
-    var promo = S.promoAktif ? (1.5 + Math.random() * 0.3) : 1;
+    var promo = (g.KK_DUNIA && g.KK_DUNIA.faktorKeramaian) ? g.KK_DUNIA.faktorKeramaian(S) : 1;
     var bayar = Math.round(ang.bayar * promo / 5000) * 5000;
     S.bank.saldo += bayar; M().catatBank(S, 'Jasa angkutan: ' + ang.nama, bayar);
     S.bisnisMobil.hariIni.trip++; S.bisnisMobil.hariIni.bersih += bayar;
@@ -394,17 +394,12 @@
     if (menit >= 990 && menit <= 1110) return KECEPATAN.pulangKantor;
     return KECEPATAN.biasa;
   }
-  function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
+  function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'mobil', 3) : { id: 3, mid: 55, boros: 1, nama: '3', lo: 45, hi: 70 }; }
   function kmhGigi(S, km) {
     var gi = gigi(S);
-    var v = gi.mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
+    var v = gi.mid * kecepatan(S) / KECEPATAN.biasa * 0.85;
     var vmax = (g.KK_RUTE && g.KK_RUTE.vmaxKendaraan) ? g.KK_RUTE.vmaxKendaraan(S, 'mobil') : 170;
-    var vvip5 = gi.id === 5 && S && S.vvip && S.vvip.aktif;
-    /* mode normal (Lv 1–4): batas realistis (<35 km: maks 58, 35–50 km: maks 90, >=50 km: maks 130); mode VVIP Lv 5: melaju hingga top speed */
-    var batas = vvip5
-      ? ((km || 0) >= 50 ? vmax : (km || 0) >= 20 ? Math.min(vmax, 145) : Math.min(vmax, 95))
-      : ((km || 0) >= 50 ? Math.min(vmax, 130) : (km || 0) >= 35 ? 90 : 58);
-    if (vvip5) v = Math.max(v, batas * 0.92);
+    var batas = (km || 0) >= 50 ? Math.min(vmax, 100) : (km || 0) >= 35 ? 82 : 58;
     return Math.max(8, Math.min(batas, v));
   }
   function cukup(S, km) {

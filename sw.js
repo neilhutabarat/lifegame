@@ -1,5 +1,5 @@
 /* sw.js — supaya game tetap jalan tanpa internet. Naikkan VERSI setiap rilis. */
-var VERSI = 'kk-24-101';
+var VERSI = 'kk-24-102';
 /* aset inti ringan — 100% desain kode asli seluruh mobil & motor (seragam di Dealer, Garasi, Mangkal, & Narik) */
 var BERKAS = ['./', 'index.html', 'css/game.css', 'js/data/nyata.js', 'js/data/katalog_nyata.js', 'js/data/kalbar.js', 'js/data/kalteng.js', 'js/data/menu.js', 'js/data/rute.js', 'js/kalender.js', 'js/simpan.js', 'js/uang.js', 'js/diri.js', 'js/teman.js', 'js/stok.js', 'js/motor.js', 'js/mobil.js', 'js/ojek.js', 'js/travel.js', 'js/properti.js', 'js/antar.js', 'js/karyawan.js', 'js/dunia.js', 'js/usaha.js', 'js/jualan.js', 'js/karakter_editor.js', 'js/mobil_desain.js', 'js/motor_desain.js', 'js/adegan.js', 'js/suara.js', 'js/kehidupan.js', 'js/ekosistem.js', 'js/dunia_nyata.js', 'js/main.js', 'manifest.webmanifest', 'img/ikon-192.png', 'img/ikon-512.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(VERSI).then(function (c) { return c.addAll(BERKAS); })); self.skipWaiting(); });

@@ -753,7 +753,7 @@
       syaratHari: 30,
       kaliLimit: 2.5,
       limitMin: 6000000,
-      limitMaks: 1000000000,
+      limitMaks: 2000000000,
       iuranTahunan: 300000,
       cetakTanggal: 1,
       jatuhTempo: 18
@@ -1126,8 +1126,8 @@
       { id: 'kuliah_anak', nama: 'Kuliah S1 Universitas', minUsia: 18, maksUsia: 24, pangkal: 4500000, spp: 750000, ket: 'Usia 18+ tahun · UKT kuliah perguruan tinggi' }
     ],
 
-    /* PayLater Indonesia (SPayLater / GoPay Later / Kredivo) — bunga 2,95%/bln, jatuh tempo tgl 5 */
-    paylater: { limitAwal: 3000000, limitMaks: 50000000, bungaBulan: 0.0295, jatuhTempo: 5, dendaPersen: 0.05, tenor: [1, 3, 6, 12] },
+    /* PayLater Indonesia (SPayLater / GoPay Later / Kredivo) — bunga 2,95%/bln, jatuh tempo tgl 5, limit maks Rp60 juta */
+    paylater: { limitAwal: 3000000, limitMaks: 60000000, bungaBulan: 0.0295, jatuhTempo: 5, dendaPersen: 0.05, tenor: [1, 3, 6, 12] },
 
     /* Rokok legal bercukai resmi Indonesia (harga eceran 2025–2026) */
     rokokLegal: [

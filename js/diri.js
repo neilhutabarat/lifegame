@@ -2428,8 +2428,10 @@
     return { ok: true, teks: 'Kamu menikahi ' + x.nama + ' (' + pk.nama + ', ' + rp(pk.biaya) + '). Selamat!' };
   }
   function faktorPromo(S) {
-    if (g.KK_KAL && g.KK_KAL.apakahRamadan && g.KK_KAL.apakahRamadan(S.hari) > 0) return 2; /* promo Ramadan +100% sebulan penuh */
-    return S.promoAktif ? 1.5 + Math.random() * 0.3 : 1;
+    /* P82 (Fase A): Mode Promo manual dihapus, diganti Sistem Keramaian Dinamis (Hari Rame / Normal / Sepi) */
+    if (g.KK_DUNIA && g.KK_DUNIA.faktorKeramaian) return g.KK_DUNIA.faktorKeramaian(S);
+    if (g.KK_KAL && g.KK_KAL.apakahRamadan && g.KK_KAL.apakahRamadan(S.hari) > 0) return 1.6;
+    return 1;
   }
   function hapusKeluarga(S, id) {
     S.keluarga = (S.keluarga || []).filter(function (x) { return x.id !== id; });

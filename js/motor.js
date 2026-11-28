@@ -305,17 +305,13 @@
     var kml = Math.max(1, m.kml || 45);
     return m.bbm === 'listrik' ? m.baterai >= km : m.isi >= km / kml * borosGigi(S);
   }
-  /* gigi (percepatan) mempengaruhi kecepatan dan pemakaian bensin */
-  function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'motor') : { id: 2, mid: 25, boros: 1, nama: '2', lo: 20, hi: 30 }; }
-  function borosGigi(S) { return gigi(S).boros; }
+  /* kecepatan normal realistis motor (P82: tanpa mode gigi 1–5 / VVIP) */
+  function gigi(S) { return g.KK_RUTE ? g.KK_RUTE.gigiInfo(S, 'motor', 2) : { id: 2, mid: 38, boros: 1, nama: '2', lo: 34, hi: 54 }; }
+  function borosGigi(S) { return 1; }
   function kmhGigi(S, km) {
     var gi = gigi(S);
-    var v = gi.mid * kecepatan(S) / KECEPATAN.biasa * 0.78;
-    var vmax = (g.KK_RUTE && g.KK_RUTE.vmaxKendaraan) ? g.KK_RUTE.vmaxKendaraan(S, 'motor') : 100;
-    var vvip5 = gi.id === 5 && S && S.vvip && S.vvip.aktif;
-    /* mode normal (Lv 1–4): batas realistis kota (<15 km: 55 km/j, >=15 km: 72 km/j); mode VVIP Lv 5: hingga top speed motor */
-    var batas = vvip5 ? ((km || 0) >= 15 ? vmax : Math.min(vmax, 95)) : ((km || 0) >= 15 ? 72 : 55);
-    if (vvip5) v = Math.max(v, batas * 0.9);
+    var v = gi.mid * kecepatan(S) / KECEPATAN.biasa * 0.84;
+    var batas = (km || 0) >= 15 ? 65 : 52;
     return Math.max(8, Math.min(batas, v));
   }
   /* jalan: kurangi bensin, tambah km, hitung waktu dan kejadian */

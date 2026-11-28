@@ -576,7 +576,12 @@
         (S.rentalPs && S.rentalPs.aktif ? '<span class="chip event">Rental PS: ' + S.rentalPs.unit.length + ' bilik · ' + rupiah((S.rentalPs.hariIni.omzetSewa || 0) + (S.rentalPs.hariIni.omzetMinum || 0)) + '</span>' : '') +
         (kelSakit.length ? '<span class="chip libur">' + esc(kelSakit[0].nama) + ' sakit (' + esc(kelSakit[0].sakit.nama) + ')</span>' : '') +
         ((d.hb || 0) >= 85 && DIRI.pasanganAktif(S) ? '<span class="chip event">HB memuncak · Pulang bersama ' + esc(DIRI.pasanganAktif(S).nama) + '</span>' : '') +
-        (S.promoAktif ? '<span class="chip event">PROMO AKTIF</span>' : '') +
+        (function () {
+          var krHud = DUNIA.statusKeramaian ? DUNIA.statusKeramaian(S) : null;
+          if (!krHud) return '';
+          var clsKr = krHud.kode === 'rame' ? 'event' : (krHud.kode === 'sepi' ? 'libur' : '');
+          return '<span class="chip ' + clsKr + '">' + krHud.ikon + ' ' + esc(krHud.label) + '</span>';
+        })() +
         (KAL.apakahRamadan(S.hari) ? '<span class="chip event">Promo Ramadan +100%</span>' : '') +
         (KAL.tanggalKembar(S.hari) ? '<span class="chip event">Diskon ' + KAL.tanggalKembar(S.hari) + ' Shopee/Tokopedia</span>' : '') +
         (S.tutupAntre ? '<span class="chip libur">Jam tutup · selesaikan antrean</span>' : '') +
@@ -1046,9 +1051,12 @@
       '<div class="form-lbl" style="margin-top:6px">Jenis mata<div class="opsi-chip">' + (K.mata || []).map(function (m) { return '<button type="button" class="chip-tombol' + (tp.mata === m.id ? ' pilih' : '') + '" data-atur-tp="mata:' + m.id + '">' + esc(m.nama) + '</button>'; }).join('') + '</div></div>' +
       '<div class="form-lbl" style="margin-top:6px">Jenis mulut<div class="opsi-chip">' + (K.mulut || []).map(function (m) { return '<button type="button" class="chip-tombol' + (tp.mulut === m.id ? ' pilih' : '') + '" data-atur-tp="mulut:' + m.id + '">' + esc(m.nama) + '</button>'; }).join('') + '</div></div>' +
       '<div style="margin-top:8px"><button type="button" class="chip-tombol pilih" data-simpan-nama>Simpan profil & identitas</button></div></details>' +
-      '<h3 class="subjudul">Mode Promo & Panduan</h3>' +
-      '<div class="atur-baris"><div><b>📢 Mode Promo</b><span>Order ojol, driver, & pelanggan naik +50%–80%</span></div><div><button type="button" class="chip-tombol' + (S.promoAktif ? ' pilih' : '') + '" data-promo="1">' + (S.promoAktif ? 'Aktif ✓' : 'Mati') + '</button></div></div>' +
-      '<div class="atur-baris"><div><b>🔒 Kecepatan Level 5 (Top Speed)</b><span>Mode normal maks Level 4 (realistis). Level 5 terkunci.</span></div><div><button type="button" class="chip-tombol" data-vvip="popup">🔒 Terkunci</button></div></div>' +
+      '<h3 class="subjudul">Keramaian Wilayah & Sistem</h3>' +
+      (function () {
+        var krA = DUNIA.statusKeramaian ? DUNIA.statusKeramaian(S) : { ikon: '☀️', label: 'Normal', alasan: 'Aktivitas stabil', faktor: 1 };
+        var clsA = krA.kode === 'rame' ? ' pilih' : '';
+        return '<div class="atur-baris"><div><b>' + krA.ikon + ' Status Hari Ini: ' + esc(krA.label) + '</b><span>' + esc(krA.alasan) + ' (Order ×' + krA.faktor.toFixed(2).replace('.', ',') + ')</span></div><div><span class="chip-tombol' + clsA + '" style="pointer-events:none">' + esc(krA.lokasiLabel || 'Wilayah') + '</span></div></div>';
+      })() +
       '<div class="atur-baris"><div><b>⚡ Mode Performa Layar</b><span>Auto mengikuti layar 120Hz/90Hz agar animasi super mulus</span></div><div><button type="button" class="chip-tombol' + (S.fpsMode !== '60' ? ' pilih' : '') + '" data-fps="toggle">' + (S.fpsMode === '60' ? 'Hemat 60Hz' : 'Auto 120Hz') + '</button></div></div>' +
       '<div class="atur-baris"><div><b>📖 Panduan Permainan</b><span>Lihat kembali tutorial dasar cara bermain</span></div><div><button type="button" class="chip-tombol" data-tut="0">Buka Tutorial</button></div></div>' +
       '<h3 class="subjudul">Suara & lagu tema</h3>' +
@@ -2166,8 +2174,7 @@
     html += '<div class="cat-strip">' +
       '<button type="button" class="pilih" data-aksi="tarikDriver:ewallet">Tarik → QRIS</button>' +
       '<button type="button" data-aksi="tarikDriver:dompet">Tarik → Dompet</button>' +
-      '<button type="button" data-aksi="tarikDriver:bank">Tarik → ' + esc(UANG.bankIni(S).nama) + '</button>' +
-      '<button type="button" class="' + (S.promoAktif ? 'pilih' : '') + '" data-aksi="promo:1">' + (S.promoAktif ? '✓ Promo' : 'Promo') + '</button></div>';
+      '<button type="button" data-aksi="tarikDriver:bank">Tarik → ' + esc(UANG.bankIni(S).nama) + '</button></div>';
     if (S.mobil && !MOBIL.pikap(S)) {
       html += '<h3 class="subjudul">🚗 Mobil Online (' + esc(S.mobil.nama) + ')</h3><div class="grid-2">' +
         '<div class="kartu-item"><div><span class="ki-tag" style="background:#00aa13;color:#fff">GoCar</span><b>Gojek Car</b><small>Dalam kota & jarak jauh</small></div><div class="ki-aksi">' +
@@ -2319,7 +2326,6 @@
       (!u.ruko2Lantai ? '<button type="button" class="chip-tombol pilih" data-aksi="sewaRuko2Lantai:1">Sewa Ruko 2 Lantai (Lt.1 Kedai + Lt.2 Rental PS)</button>' : '<span class="chip event">Ruko 2 Lantai Aktif ✓</span>') +
       '<button type="button" class="chip-tombol" data-app="rentalps">Buka / Kelola Rental PS</button>' +
       (!u.milikLahan ? '<button type="button" class="chip-tombol" data-aksi="stopSewa:' + (u.berhentiSewa ? '0' : '1') + '">' + (u.berhentiSewa ? 'Sewa lagi & buka kedai' : 'Tidak perpanjang sewa (fokus ojol)') + '</button>' : '') +
-      '<button type="button" class="chip-tombol' + (S.promoAktif ? ' pilih' : '') + '" data-aksi="promo:1">' + (S.promoAktif ? 'Promo ✓' : 'Promo') + '</button>' +
       '</div><p class="catatan">' + esc(L.ket) + ' Ruko 2 Lantai memungkinkan Lantai 1 untuk Kedai Kopi & Cemilan dan Lantai 2 untuk Usaha Rental PlayStation!</p>';
     if (u.bangun) html += '<div class="isbat">Pembangunan ' + esc(USAHA.TEMPAT[u.bangun.tier].nama) + ' selesai ' + namaTanggal(u.bangun.selesai) + '. Kedai tetap jualan selama dibangun.</div>';
     else if (next) {
@@ -4046,7 +4052,7 @@
     else if (nama === 'sewaRuko') hasilAksi(USAHA.sewaRukoLangsung(S), 'Pindah ke ruko berhasil! Kedai kini punya 40 kursi ber-AC.');
     else if (nama === 'sewaRuko2Lantai') hasilAksi(USAHA.sewaRuko2Lantai(S), 'Ruko 2 Lantai berhasil disewa! Lantai 1 untuk Kedai Kopi & Cemilan, Lantai 2 siap untuk Usaha Rental PS.');
     else if (nama === 'stopSewa') hasilAksi(USAHA.aturBerhentiSewa(S, nilai === '1'), nilai === '1' ? 'Sewa kontainer dihentikan. Kamu bisa fokus narik ojol tanpa biaya sewa.' : 'Sewa diaktifkan kembali. Kedai siap dibuka.');
-    else if (nama === 'promo') { S.promoAktif = !S.promoAktif; hasilAksi(true, S.promoAktif ? 'Promo aktif! Pelanggan kedai, pesan-antar, dan order ojek meningkat 50%–80%.' : 'Promo dimatikan.'); }
+    else if (nama === 'promo') { var krP = DUNIA.statusKeramaian ? DUNIA.statusKeramaian(S) : { ikon: '☀️', label: 'Normal', alasan: 'Dinamis' }; hasilAksi(true, krP.ikon + ' Keramaian otomatis mengikuti wilayah & hari: ' + krP.label + ' (' + krP.alasan + ').'); }
     else if (nama === 'autoMakan') { S.autoMakanMinum = !S.autoMakanMinum; hasilAksi(true, S.autoMakanMinum ? 'Auto Makan & Minum aktif! Otomatis mencari makanan/minuman paling hemat atau gratis saat lapar/haus.' : 'Auto Makan & Minum dimatikan.'); }
     else if (nama === 'alat') hasilAksi(USAHA.beliAlat(S, nilai), USAHA.ALAT[nilai].nama + ' terpasang.');
     else if (nama === 'cabang') hasilAksi(USAHA.bukaCabang(S, nilai), 'Booth cabang dipasang, buka 2 hari lagi. Tempatkan karyawan di sana.');
@@ -4724,7 +4730,7 @@
           total: menitP, sisa: menitP, km: kmPindah,
           ket: kendP === 'mobil' ? ('mobil ' + S.mobil.nama + ' (bawa dus pindahan)') : kendP === 'motor' ? ('motor ' + S.motor.nama + ' (dus baju di jok belakang)') : 'angkutan pindahan',
           kabar: [], kend: kendP, bbmTarget: bbmTargetP, bbmSisa: bbmDipakaiP,
-          mult: menitP / (MENIT_PER_DETIK * durasiP)
+          mult: 3
         };
         if (SUARA) SUARA.bunyi('motor');
         simpan(); perbaruiAksi(); perbaruiHUD(true);
@@ -5115,7 +5121,7 @@
       asalTitik: asalTr, tujuanTitik: tujuanTr, medan: mdTr,
       tujuanNama: ke === 'kos' ? DIRI.tempat(S) : (S.usaha && S.usaha.berhentiSewa ? 'Area Narik' : 'Kedai'),
       ket: ket, kabar: kabarJalan, kend: kend, bbmTarget: bbmTarget, bbmSisa: bbmDipakai,
-      mult: menitTr / (MENIT_PER_DETIK * durasi)
+      mult: 3
     };
     simpan(); perbaruiAksi(); perbaruiHUD(true);
     return;
@@ -5209,7 +5215,7 @@
       ke: 'kantor', kantorNama: job.kantorNama, job: job,
       asalTitik: asalKr, tujuanTitik: asalKr, tujuanNama: job.kantorNama,
       total: menit, sisa: menit, km: km, ket: ket, kabar: [], kend: kend,
-      bbmTarget: bbmTarget, bbmSisa: bbmDipakai, mult: menit / (MENIT_PER_DETIK * durasi)
+      bbmTarget: bbmTarget, bbmSisa: bbmDipakai, mult: 3
     };
     if (SUARA) SUARA.bunyi('motor');
     simpan(); perbaruiAksi(); perbaruiHUD(true);
@@ -5221,16 +5227,15 @@
     var sisaMnt = Math.max(60, targetPulang - mSkrg);
     S.kerjaRun = {
       id: job.id, kantor: job.kantorNama || 'Kantor', peran: job.nama || 'Karyawan',
-      pulang: job.jamPulang || 17, total: sisaMnt, sisa: sisaMnt, mult: 24
+      pulang: job.jamPulang || 17, total: sisaMnt, sisa: sisaMnt, mult: 3
     };
     simpan(); perbaruiAksi(); perbaruiHUD(true);
-    toast('🏢 Tiba di ' + job.kantorNama + '! Memulai kerja kantor (waktu 24× s/d ' + (job.jamPulang || 17) + '.00).', 2800);
+    toast('🏢 Tiba di ' + job.kantorNama + '! Memulai kerja kantor (waktu 3× s/d ' + (job.jamPulang || 17) + '.00).', 2800);
   }
   function mulaiAktAnim(cfg) {
     if (!S || !cfg) return;
     tutupLembar();
     var mnt = Math.max(5, cfg.menit || 15);
-    var dur = Math.max(2.0, cfg.durDetik || 3.2);
     S.aktAnim = {
       jenis: cfg.jenis || 'makan',
       dest: cfg.dest || '',
@@ -5242,7 +5247,7 @@
       sub: cfg.sub || '',
       total: mnt,
       sisa: mnt,
-      mult: mnt / (MENIT_PER_DETIK * dur),
+      mult: 3,
       bukaApp: cfg.bukaApp || null,
       pesanAkhir: cfg.pesanAkhir || ''
     };
@@ -5376,7 +5381,6 @@
     if (SUARA) SUARA.bunyi('hb');
     var isLong = (app.hbDurasi || 'long') === 'long';
     var total = Math.max(40, Math.min(180, r.menit || 90));
-    var durasi = total / (MENIT_PER_DETIK * 4);
     var pg = (S.profil && S.profil.gender) || 'cewek', lawanG = pg === 'cowok' ? 'cewek' : 'cowok', nmT = '', nmT2 = '', gC = lawanG;
     if (kode.indexOf('teman:') === 0) { var tx = TEMAN.cari(S, kode.slice(6)); if (tx) { nmT = tx.nama; lawanG = tx.gender; } }
     else if (kode !== 'psk' && kode.indexOf('staf:') !== 0) { var pp = kode ? (S.keluarga || []).filter(function (k) { return k.id === kode || ('ipar:' + k.id) === kode; })[0] : DIRI.pasanganAktif(S); if (kode.indexOf('ipar:') === 0) pp = (S.keluarga || []).filter(function (k) { return k.id === kode.slice(5); })[0]; if (pp) { nmT = pp.nama; lawanG = pp.gender || lawanG; } }
@@ -5384,16 +5388,16 @@
       if (kode2.indexOf('teman:') === 0) { var tx2 = TEMAN.cari(S, kode2.slice(6)); if (tx2) { nmT2 = tx2.nama; gC = tx2.gender; } }
       else { var id2m = kode2.indexOf('ipar:') === 0 ? kode2.slice(5) : kode2; var pp2 = (S.keluarga || []).filter(function (k) { return k.id === id2m; })[0]; if (pp2) { nmT2 = pp2.nama; gC = pp2.gender || lawanG; } }
     }
-    S.hbRun = { total: total, sisa: total, isLong: isLong, malam: !!r.malam, bangun: r.bangun || 240, teks: r.teks + ' (Lokasi: ' + lokasiObj.nama + ')', varian: lokasiObj.varian || 'kamar', nama: nmT, nama2: nmT2, gB: lawanG, gC: gC, mult: total / (MENIT_PER_DETIK * durasi) };
+    S.hbRun = { total: total, sisa: total, isLong: isLong, malam: !!r.malam, bangun: r.bangun || 240, teks: r.teks + ' (Lokasi: ' + lokasiObj.nama + ')', varian: lokasiObj.varian || 'kamar', nama: nmT, nama2: nmT2, gB: lawanG, gC: gC, mult: 3 };
     if (!S.kec || S.kec <= 0) S.kec = 1;
     simpan(); perbaruiAksi(); perbaruiHUD(true);
   }
-  /* me time: adegan siluet singkat (tanpa gambar eksplisit), waktu 4x */
+  /* me time: adegan bersantai (tanpa gambar eksplisit), waktu 3x */
   function mulaiMeTime() {
     if (sedangAnimasi()) return 'Tunggu sebentar.';
     var r = DIRI.meTime(S); if (!r || !r.ok) return r;
     var pg = (S.profil && S.profil.gender) || 'cewek';
-    S.hbRun = { total: r.menit, sisa: r.menit, malam: false, bangun: 0, teks: r.teks, varian: 'metime', metime: true, nama: '', gB: pg, mult: 4 };
+    S.hbRun = { total: r.menit, sisa: r.menit, malam: false, bangun: 0, teks: r.teks, varian: 'metime', metime: true, nama: '', gB: pg, mult: 3 };
     if (!S.kec || S.kec <= 0) S.kec = 1;
     simpan(); perbaruiAksi(); perbaruiHUD(true);
     return true;
@@ -5414,7 +5418,7 @@
       : (S.keluarga || []).filter(function (x) { return x.id === targetId; })[0];
     var pg = (S.profil && S.profil.gender) || 'cewek', lawanG = (target && target.gender) || (pg === 'cowok' ? 'cewek' : 'cowok');
     var total = Math.max(10, r.menit || 15);
-    S.hbRun = { total: total, sisa: total, malam: false, bangun: 0, teks: r.teks, varian: aksi, mesra: true, nama: (target && target.nama) || '', gB: lawanG, mult: 4 };
+    S.hbRun = { total: total, sisa: total, malam: false, bangun: 0, teks: r.teks, varian: aksi, mesra: true, nama: (target && target.nama) || '', gB: lawanG, mult: 3 };
     if (!S.kec || S.kec <= 0) S.kec = 1;
     simpan(); perbaruiAksi(); perbaruiHUD(true);
   }
@@ -5521,8 +5525,8 @@
     },
     {
       ikon: '🚦',
-      judul: 'Kecepatan & Kondisi Jalan Realistis',
-      isi: 'Mode normal menyediakan kecepatan <b>Level 1–4</b> yang memperhitungkan kondisi jalan asli (tol, mulus, bergelombang, rusak, tanah) dan cuaca hujan. <b>Level 5 (Top Speed)</b> tergembok 🔒 khusus <b>Mode VVIP</b>.'
+      judul: 'Kecepatan Realistis & Keramaian Dinamis',
+      isi: 'Kendaraan melaju otomatis di kecepatan normal realistis dan melambat alami di jalan rusak, tanah, atau hujan. Tekan <b>Relax</b> atau saat mengantar penumpang & cutscene untuk percepatan waktu <b>3×</b>. Order juga mengikuti <b>Hari Rame / Normal / Hari Sepi</b> sesuai kota atau desa!'
     },
     {
       ikon: '📅',
@@ -5619,35 +5623,7 @@
     }
   }
 
-  /* baris percepatan (gigi) untuk kendaraan sehari-hari: normal 1–4 realistis, Level 5 tergembok 🔒 */
-  var seretGigi = false;
-  function bukaPopupVvip() {
-    bukaLembar('vvip',
-      kepala('🔒 Kecepatan Level 5 (Terkunci)', 'Mode VVIP · Top Speed Kendaraan') +
-      '<div class="saldo-ringkas" style="background:#4a3a7a"><div><small>Status Level 5</small><b>TERKUNCI 🔒</b></div>' +
-      '<div><small>Mode Aktif</small><b>Normal (Lv 1–4)</b></div></div>' +
-      '<ul class="daftar angka">' +
-      baris('Mode Normal (Aktif)', 'Level 1 – 4 · Kecepatan realistis sesuai kondisi jalan (tol/mulus/rusak/tanah/hujan)') +
-      baris('Level 5 (Top Speed)', '🔒 Masih tergembok sementara (khusus Mode VVIP mendatang)') +
-      '</ul>' +
-      '<div style="margin-top:12px"><button type="button" class="aksi" data-tutup>Mengerti</button></div>' +
-      '<p class="catatan">Mode normal membatasi kecepatan hingga Level 4 dengan perhitungan kecepatan asli sesuai kondisi jalan dan cuaca.</p>');
-  }
-  function labelGigi(jenis, id) {
-    var vvip = TRAVEL.vvipAktif(S);
-    var gi = RUTE.gigiInfo(S, jenis === 'mobil' ? 'mobil' : 'motor', id);
-    if (gi.id === 5 && !vvip) return '🔒 Level 5 (VVIP Terkunci)';
-    if (jenis === 'mobil' && gi.id === 5 && S.travel && S.travel.aktif) return '🔓 Lv 5 VVIP · ' + gi.hi + ' km/j';
-    if (gi.id === 5) return '🔓 Lv 5 VVIP · ' + gi.lo + '–' + gi.hi + ' km/j';
-    return 'Level ' + gi.nama + ' · ' + gi.lo + '–' + gi.hi + ' km/j';
-  }
-  function barisGigi(jenis) {
-    var vvip = TRAVEL.vvipAktif(S), gi = RUTE.gigiInfo(S, jenis);
-    var val = vvip ? gi.id : Math.min(4, gi.id);
-    return '<div class="gigi-slider"><span id="gigi-label">' + labelGigi(jenis, val) + '</span>' +
-      '<input type="range" min="1" max="5" step="1" value="' + val + '" data-gigi="ojek:' + jenis + '" aria-label="Level kecepatan">' +
-      '<button type="button" class="chip-tombol" style="padding:2px 7px;font-size:11px;flex-shrink:0" data-vvip="popup">' + (vvip ? '🔓 VVIP' : '🔒 Lv5') + '</button></div>';
-  }
+  /* P82 (Fase A): Mode percepatan gigi 1–5 & VVIP Lv5 dihapus; kecepatan kendaraan berjalan otomatis realistis sesuai kondisi jalan */
   function jenisKendaraanJalan() {
     if (S.ojek && S.ojek.online) return S.ojek.mode === 'mobil' ? 'mobil' : 'motor';
     if (S.travel && S.travel.aktif) return 'mobil';
@@ -5656,17 +5632,17 @@
   }
   function tombolHiburanRingkas() {
     if (S.hiburan) {
-      return '<button type="button" class="chip-tombol pilih" data-ojek="hiburan:stop">✓ Relax ✕</button>';
+      return '<button type="button" class="chip-tombol pilih" data-ojek="hiburan:stop">✓ Relax 3× ✕</button>';
     }
-    return '<button type="button" class="chip-tombol" data-ojek="hiburan:acak">😌 Relax</button>';
+    return '<button type="button" class="chip-tombol" data-ojek="hiburan:acak">😌 Relax (3×)</button>';
   }
   function bukaHiburan() {
-    bukaLembar('hiburan', kepala('🎬 Hiburan Saat Menunggu (8×)', 'Percepat waktu tunggu order / penumpang tanpa menutupi layar') +
+    bukaLembar('hiburan', kepala('🎬 Hiburan Saat Menunggu (3×)', 'Percepat waktu tunggu order / penumpang 3× tanpa menutupi layar') +
       '<div class="grid-2">' + Object.keys(DIRI.HIBURAN).map(function (k) {
         var h = DIRI.HIBURAN[k], akt = S.hiburan === k;
-        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + (h.gbPerJam ? (h.gbPerJam * 1024).toFixed(0) + ' MB/jam' : 'Hemat Data') + '</span>' + (akt ? '<span class="ki-tag milik">Aktif 8×</span>' : '') + '</div>' +
-          '<b>' + esc(h.nama) + '</b><small>Baterai −' + (h.bateraiJam || 6) + '%/jam · Waktu jalan 8×</small></div>' +
-          '<div class="ki-aksi"><button type="button" class="chip-tombol' + (akt ? ' bahaya-kecil' : ' pilih') + '" data-diri="hiburan:' + k + '">' + (akt ? 'Hentikan' : 'Mulai 8×') + '</button></div></div>';
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + (h.gbPerJam ? (h.gbPerJam * 1024).toFixed(0) + ' MB/jam' : 'Hemat Data') + '</span>' + (akt ? '<span class="ki-tag milik">Aktif 3×</span>' : '') + '</div>' +
+          '<b>' + esc(h.nama) + '</b><small>Baterai −' + (h.bateraiJam || 6) + '%/jam · Waktu jalan 3×</small></div>' +
+          '<div class="ki-aksi"><button type="button" class="chip-tombol' + (akt ? ' bahaya-kecil' : ' pilih') + '" data-diri="hiburan:' + k + '">' + (akt ? 'Hentikan' : 'Mulai 3×') + '</button></div></div>';
       }).join('') + '</div>');
   }
   var _ojkCache = { lok: '', info: '', kmh: '', w: '' };
@@ -5751,15 +5727,16 @@
   }
   function panelOjek(paksa) {
     var o = S.ojek, f = OJEK.fase(S), x, jnK = o.mode === 'mobil' ? 'mobil' : 'motor';
-    var k = (S.gigiJalan || 2) + '|' + (TRAVEL.vvipAktif(S) ? 'V' : 'N') + '|' + jnK + '|' + (o.mult || 1) + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
-    if (seretGigi || (!paksa && k === panelKunci)) { if (o.online && o.trip && f) ojekLive(f); return; }
+    var krO = DUNIA.statusKeramaian ? DUNIA.statusKeramaian(S) : { kode: 'normal', label: 'Normal', ikon: '☀️' };
+    var k = jnK + '|' + krO.kode + '|' + (S.hiburan || '-') + (S.motor ? S.motor.id : '') + (!o.online ? 'off' : o.trip ? 'trip' + o.trip.x.nama + o.trip.x.km + f.status : o.tawaran ? 'tw' + o.tawaran.nama + o.tawaran.km : 'sb' + o.hariIni.trip);
+    if (!paksa && k === panelKunci) { if (o.online && o.trip && f) ojekLive(f); return; }
     panelKunci = k;
     var el = $('ojek-panel'), html = '';
     if (!o.online) { el.innerHTML = ''; return; }
     if (o.trip) {
       if (aksiCepatBuka) { aksiCepatBuka = false; if ($('kos-aksi')) $('kos-aksi').hidden = true; if ($('b-aksi-cepat')) $('b-aksi-cepat').classList.remove('aktif-aksi'); }
       _ojkCache = { lok: '', info: '', kmh: '', w: '' };
-      html = '<div class="ojek-bare"><div class="trip-hud"><div class="trip-hud-atas"><div class="trip-hud-kiri"><div class="trip-hud-lok" id="ojek-lok"></div><div class="trip-hud-sub" id="ojek-info"></div></div><div class="trip-hud-kanan"><span class="trip-spd" id="ojek-kmh">0</span><span class="trip-unit">km/j</span></div></div><div class="meteran"><i id="ojek-maju"></i></div></div>' + barisGigi(jnK) + '</div>';
+      html = '<div class="ojek-bare"><div class="trip-hud"><div class="trip-hud-atas"><div class="trip-hud-kiri"><div class="trip-hud-lok" id="ojek-lok"></div><div class="trip-hud-sub" id="ojek-info"></div></div><div class="trip-hud-kanan"><span class="trip-spd" id="ojek-kmh">0</span><span class="trip-unit">km/j</span></div></div><div class="meteran"><i id="ojek-maju"></i></div></div></div>';
     } else if (o.tawaran) {
       if (aksiCepatBuka) { aksiCepatBuka = false; if ($('kos-aksi')) $('kos-aksi').hidden = true; if ($('b-aksi-cepat')) $('b-aksi-cepat').classList.remove('aktif-aksi'); }
       x = o.tawaran;
@@ -5767,26 +5744,19 @@
       html = '<div class="ojek-kartu tawaran"><b>Order ' + esc(x.layanan) + (x.mobil && x.km >= 80 ? ' [ANTARKOTA 🔥]' : x.jarakJauh ? ' [JAUH 🔥]' : '') + ' · ' + rupiah(x.tarif) + '</b><small>' + (x.tujuanLabel ? '📍 ' + esc(x.tujuanLabel) + ' · ' : '') + 'Jemput ' + x.jemput.toLocaleString('id-ID') + ' km · antar ' + x.km.toLocaleString('id-ID') + ' km' + mdTag + (x.tunai ? ' · Tunai' : ' · QRIS') + ' · bersih <b>' + rupiah(x.bersih) + '</b></small>' +
         '<div class="meteran"><i id="ojek-sisa"></i></div><div class="ojek-tombol"><button type="button" class="chip-tombol" data-ojek="lewati">Lewati</button><button type="button" class="chip-tombol" data-ojek="berhenti">Offline</button><button type="button" class="aksi" data-ojek="ambil">Ambil Order</button></div></div>';
     } else {
-      var mO = o.mult || 1, pct = Math.round((mO - 1) * 100), lblT = pct === 0 ? 'Standar' : (pct > 0 ? '+' + pct + '%' : pct + '%');
       var nmOn = jnK === 'mobil' ? (o.platform === 'grab' ? 'GrabCar' : 'GoCar') : OJEK.platform(o.platform).nama;
-      var ketRelax = (S.hiburan && DIRI.HIBURAN[S.hiburan]) ? (' · ' + DIRI.HIBURAN[S.hiburan].nama) : '';
+      var ketRelax = (S.hiburan && DIRI.HIBURAN[S.hiburan]) ? (' · ' + DIRI.HIBURAN[S.hiburan].nama + ' (3×)') : '';
       var lokO = (OJEK.lokasiSekarang && OJEK.lokasiSekarang(S)) || null;
       var lokTeks = (lokO && lokO.desa) ? (lokO.desa + ', ' + lokO.kecNama) : ((OJEK.jarakRumah ? OJEK.jarakRumah(S).toLocaleString('id-ID') : 0) + ' km dari rumah');
-      html = '<div class="ojek-kartu kecil"><b>Online ' + esc(nmOn) + ' · ' + o.hariIni.trip + ' order (' + rupiahPendek(o.hariIni.bersih) + ')</b><small>📍 ' + esc(lokTeks) + ' · Tarif ' + lblT + esc(ketRelax) + '</small>' +
-        barisGigi(jnK) + '<div class="ojek-tombol"><button type="button" class="chip-tombol bahaya-kecil" data-ojek="berhenti">Offline</button><button type="button" class="chip-tombol" data-ojek="inapMenu">Istirahat</button><button type="button" class="chip-tombol tarif-mini" data-ojek="tarif:-0.1" aria-label="Turunkan tarif">−</button><button type="button" class="chip-tombol tarif-mini" data-ojek="tarif:0.1" aria-label="Naikkan tarif">+</button>' + tombolHiburanRingkas() + '</div></div>';
+      html = '<div class="ojek-kartu kecil"><b>Online ' + esc(nmOn) + ' · ' + o.hariIni.trip + ' order (' + rupiahPendek(o.hariIni.bersih) + ')</b><small>📍 ' + esc(lokTeks) + ' · ' + krO.ikon + ' ' + esc(krO.label) + esc(ketRelax) + '</small>' +
+        '<div class="ojek-tombol"><button type="button" class="chip-tombol bahaya-kecil" data-ojek="berhenti">Offline</button><button type="button" class="chip-tombol" data-ojek="inapMenu">Istirahat</button>' + tombolHiburanRingkas() + '</div></div>';
     }
     el.innerHTML = html;
     if (o.trip && f) ojekLive(f);
   }
   function aksiOjek(nama) {
     if (nama === 'hiburanMenu') return aksiOjek('hiburan:youtube');
-    if (nama.indexOf('gigi:') === 0) {
-      var gn = Math.max(1, Math.min(5, +nama.split(':')[1]));
-      if (gn === 5 && !TRAVEL.vvipAktif(S)) { bukaPopupVvip(); panelOjek(true); return; }
-      if (gn === 5 && !RUTE.bolehKhususJalan(S)) { toast('Hujan deras: kecepatan dibatasi sampai level 4.', 2200); panelOjek(true); return; }
-      S.gigiJalan = gn; simpan(); panelOjek(true); return;
-    }
-    if (nama.indexOf('tarif:') === 0) { OJEK.ubahTarif(S, +nama.split(':')[1]); simpan(); panelOjek(true); return; }
+    if (nama.indexOf('gigi:') === 0 || nama.indexOf('tarif:') === 0) return;
     if (nama === 'inapMenu') {
       bukaLembar('inapLuar', kepala('Istirahat & Penginapan', 'Pulihkan stamina di luar rumah') +
         '<div class="chip-baris" style="margin-bottom:8px"><button type="button" class="chip-tombol pilih" data-diri="tidurJalan:2">😴 Tidur Pinggir Jalan 2 Jam (Gratis · +28⚡)</button></div>' +
@@ -5854,7 +5824,7 @@
         asalTitik: asalPb, tujuanTitik: tujuanPb, medan: mdPb,
         total: mntPb, sisa: mntPb, km: kmPb, ket: rpb.teks, kabar: [], kend: kendPb,
         bbmTarget: rpb.bbmTarget || null, bbmSisa: rpb.bbmSisa || 0,
-        mult: mntPb / (MENIT_PER_DETIK * durPb)
+        mult: 3
       };
       if (SUARA && kendPb !== 'kaki') SUARA.bunyi('motor');
       simpan(); perbaruiHUD(true); perbaruiAksi();
@@ -5937,10 +5907,9 @@
         T.antri.forEach(function (p) { chips += '<span class="chip-pnp ' + p.tipe + '">' + ikonTipe(p.tipe) + ' ' + esc(p.nama.split(' ')[0]) + '</span>'; });
         for (var i = T.antri.length; i < f.kursi; i++) chips += '<span class="chip-pnp kosong">○</span>';
         html = '<div class="ojek-kartu travel kecil"><b>Pool travel · ' + esc(RUTE.nama(T.di)) + '</b><small>' +
-          (rc ? esc(rc.nama) + ' · ' + rc.km.toLocaleString('id-ID') + ' km · ±' + jamTeks(rc.jam) + (rc.viaTeks ? ' (' + esc(rc.viaTeks) + ')' : '') + (rc.laut ? ' · ⛴️ ' + rupiahPendek(rc.laut) : '') + (rc.tol ? ' · tol ' + rupiahPendek(rc.tol) : '') + ' · ' + rupiahPendek(rc.tarif) + '/kursi (×' + T.mult.toLocaleString('id-ID') + ')' : 'Pilih kota / kecamatan / desa tujuan terlebih dahulu.') + '</small>' +
+          (rc ? esc(rc.nama) + ' · ' + rc.km.toLocaleString('id-ID') + ' km · ±' + jamTeks(rc.jam) + (rc.viaTeks ? ' (' + esc(rc.viaTeks) + ')' : '') + (rc.laut ? ' · ⛴️ ' + rupiahPendek(rc.laut) : '') + (rc.tol ? ' · tol ' + rupiahPendek(rc.tol) : '') + ' · ' + rupiahPendek(rc.tarif) + '/kursi' : 'Pilih kota / kecamatan / desa tujuan terlebih dahulu.') + '</small>' +
           '<div class="pnp-baris">' + chips + '</div>' +
-          '<div class="ojek-tombol"><button type="button" class="chip-tombol pilih" data-trv="pilih">Tujuan</button>' + (jAltAda ? '<button type="button" class="chip-tombol" data-trv="gantiJalur">🛣️ Jalur</button>' : tombolHiburanRingkas()) +
-          (rc ? '<button type="button" class="chip-tombol" data-trv="tarif:-0.1">Tarif −</button><button type="button" class="chip-tombol" data-trv="tarif:0.1">Tarif +</button>' : '') +
+          '<div class="ojek-tombol"><button type="button" class="chip-tombol pilih" data-trv="pilih">Tujuan</button>' + (jAltAda ? '<button type="button" class="chip-tombol" data-trv="gantiJalur">🛣️ Jalur</button>' : '') + tombolHiburanRingkas() +
           (rc && T.antri.length < f.kursi && T.jemput < TRAVEL.JEMPUT_MAKS ? '<button type="button" class="chip-tombol" data-trv="jemput">Jemput</button>' : '') +
           '<button type="button" class="chip-tombol" data-trv="henti">Istirahat</button></div>' +
           '<div class="ojek-tombol trv-bawah"><button type="button" class="aksi" data-trv="berangkat"' + (rc ? '' : ' disabled') + '>' + (T.antri.length ? 'Berangkat (' + T.antri.length + ')' : 'Berangkat') + '</button>' +
@@ -5950,11 +5919,7 @@
       html = '<div class="ojek-kartu travel kecil"><b>⛴️ ' + esc(RUTE.nama(f.dari)) + ' → ' + esc(RUTE.nama(f.ke)) + ' · <span id="trv-kmh"></span></b><small id="trv-info"></small><div class="meteran"><i id="trv-maju"></i></div>' +
         '<div class="ojek-tombol">' + tombolHiburanRingkas() + tMini + '</div></div>';
     } else {
-      var vvipT = TRAVEL.vvipAktif(S), valT = vvipT ? Math.min(5, T.gigi || 3) : Math.min(4, T.gigi || 3);
-      var gr = '<div class="gigi-slider"><span id="gigi-label">' + labelGigi('mobil', valT) + '</span>' +
-        '<input type="range" min="1" max="5" step="1" value="' + valT + '" data-gigi="trv" aria-label="Level kecepatan">' +
-        '<button type="button" class="chip-tombol" style="padding:2px 7px;font-size:11px;flex-shrink:0" data-vvip="popup">' + (vvipT ? '🔓 VVIP' : '🔒 Lv5') + '</button>' +
-        '<button type="button" class="chip-tombol" style="padding:2px 8px;font-size:11px;flex-shrink:0" data-trv="henti">⛽ Rehat</button></div>';
+      var gr = '<div class="ojek-tombol" style="margin-top:4px"><button type="button" class="chip-tombol" style="flex:0 0 auto" data-trv="henti">⛽ Rehat di Rest Area</button></div>';
       _trvCache = { lok: '', info: '', kmh: '', w: '' };
       html = '<div class="ojek-bare"><div class="trip-hud"><div class="trip-hud-atas"><div class="trip-hud-kiri"><div class="trip-hud-lok" id="trv-lok"></div><div class="trip-hud-sub" id="trv-info"></div></div><div class="trip-hud-kanan"><span class="trip-spd" id="trv-kmh">0</span><span class="trip-unit">km/j</span></div></div><div class="meteran"><i id="trv-maju"></i></div></div>' + gr + '</div>';
     }
@@ -6213,7 +6178,7 @@
       '<div class="stat-box"><small>Total Travel</small><b>' + T.total.trip + ' trip · ' + rupiahPendek(T.total.bersih) + '</b></div></div>' +
       (T.aktif ? '<p class="catatan">Travel sedang berjalan. Tutup HP untuk melanjutkan.</p>' : e ? '<p class="racik-pesan salah">' + esc(e) + '</p>' :
         '<div style="margin:10px 0"><button type="button" class="aksi" data-aksi="mulaiTravel:1">🚐 Mulai Travel dari ' + esc(kota) + '</button></div>') +
-      '<div class="cat-strip"><button type="button" data-app="kastravel">💼 Kas Travel</button><button type="button" data-app="qriskaryawan">📲 QRIS Supir</button><button type="button" data-vvip="popup">🔒 Lv 5 VVIP</button></div>';
+      '<div class="cat-strip"><button type="button" data-app="kastravel">💼 Kas Travel</button><button type="button" data-app="qriskaryawan">📲 QRIS Supir</button></div>';
   }
   function tidurMalam() {
     /* P77 (Fase 2 - Poin 7 & 8): Tidur natural 5–9 jam tergantung sisa stamina.
@@ -6255,29 +6220,69 @@
   function bukaAksiKarakterRumah() {
     var ag = (S.profil && S.profil.agama) || 'Islam';
     var ikIb = /katolik|kristen|protestan/i.test(ag) ? '⛪' : /hindu/i.test(ag) ? '🛕' : /buddha|konghucu/i.test(ag) ? '🏯' : '🕌';
-    bukaLembar('diri', kepala('🧍 ' + esc(S.namaPemain || 'Kamu'), 'Pilih aksi cepat di rumah') +
-      '<div class="opsi-chip" style="gap:8px;margin-top:6px">' +
-      '<button type="button" class="chip-tombol pilih" data-diri="lemari:1">👗 Lemari & Beli Baju</button>' +
-      '<button type="button" class="chip-tombol" data-diri="app:makan">🍽️ Makan</button>' +
-      '<button type="button" class="chip-tombol" data-diri="makan:air">💧 Minum Air</button>' +
-      '<button type="button" class="chip-tombol" data-diri="tidurMalam:1">🛏️ Tidur Malam</button>' +
-      '<button type="button" class="chip-tombol" data-diri="istirahat:olahraga">🏃 Olahraga</button>' +
-      '<button type="button" class="chip-tombol" data-diri="meTime:1">💆 Me-Time</button>' +
-      '<button type="button" class="chip-tombol" data-diri="narik:1">🛵 Narik Ojol</button>' +
-      '<button type="button" class="chip-tombol" data-diri="app:hobi">' + ikIb + ' Aktivitas & Hobi</button>' +
+    var pr = S.profil || { gender: 'cewek', tglLahir: '2000-05-15' };
+    var usia = KAL.usia(S.hari, pr.tglLahir), tp = sinkronTampilan();
+    var wBaju = HIDUP ? HIDUP.warnaBajuAktif(S) : null;
+    var d = S.diri || {};
+    var bisaCar = MOBIL.siapPakai(S) && !MOBIL.pikap(S);
+    var bisaMtr = MOTOR.siapPakai(S) && N.ojol.platform.some(function (p) { return OJEK.aktif(S, p.id); });
+    var krR = DUNIA.statusKeramaian ? DUNIA.statusKeramaian(S) : { ikon: '☀️', label: 'Normal' };
+    var kartuAksi = function (cmd, ikon, judul, sub, primer) {
+      return '<button type="button" class="kartu-item" data-diri="' + cmd + '" style="text-align:left;cursor:pointer' + (primer ? ';border-color:rgba(242,165,22,.6);background:rgba(242,165,22,.08)' : '') + '">' +
+        '<div><b>' + ikon + ' ' + esc(judul) + '</b><small>' + esc(sub) + '</small></div></button>';
+    };
+    bukaLembar('diri',
+      kepala('Menu Karakter', DIRI.tempat(S) + ' · ' + krR.ikon + ' ' + krR.label) +
+      '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.65);border:1px solid rgba(40,30,20,.1);margin-bottom:10px">' +
+        fotoWajah(srcPemain(), 54, null, S.namaPemain, pr.gender, usia, null, tp, wBaju) +
+        '<div style="flex:1;min-width:0"><b style="font-size:15px">' + esc(S.namaPemain || 'Kamu') + '</b>' +
+        '<div style="font-size:11.5px;color:var(--tinta-pudar);font-weight:700;margin-top:2px">🍽️ ' + Math.round(d.lapar || 0) + '% · ⚡ ' + Math.round(d.stamina || 0) + '% · ❤️ ' + Math.round(d.kesehatan || 100) + '% · 💞 ' + Math.round(d.hb || 0) + '%</div></div>' +
+      '</div>' +
+      '<h3 class="subjudul" style="margin-top:4px">🍽️ Kebutuhan Dasar</h3>' +
+      '<div class="grid-2">' +
+        kartuAksi('app:makan', '🍽️', 'Makan & Minum', 'Beli / pesan makanan & minuman', false) +
+        kartuAksi('makan:air', '💧', 'Minum Air', 'Segarkan haus dengan cepat', false) +
+        kartuAksi('tidurMalam:1', '🛏️', 'Tidur Malam', 'Pulihkan stamina di ranjang', false) +
+        kartuAksi('autoMakan:1', S.autoMakanMinum ? '✅' : '🍱', S.autoMakanMinum ? 'Auto Makan: Aktif' : 'Auto Makan: Mati', 'Otomatis makan saat lapar', !!S.autoMakanMinum) +
+      '</div>' +
+      '<h3 class="subjudul">👗 Penampilan & Santai</h3>' +
+      '<div class="grid-2">' +
+        kartuAksi('lemari:1', '👗', 'Lemari & Baju', 'Ganti pakaian & beli distro', true) +
+        kartuAksi('istirahat:olahraga', '🏃', 'Olahraga', 'Jaga kebugaran & kesehatan', false) +
+        kartuAksi('meTime:1', '💆', 'Me-Time', 'Santai sejenak kurangi stres', false) +
+        kartuAksi('app:hobi', ikIb, 'Aktivitas & Hobi', 'Ibadah, game, hiburan & santai', false) +
+      '</div>' +
+      '<h3 class="subjudul">🛵 Mulai Kerja / Narik</h3>' +
+      '<div class="grid-2">' +
+        kartuAksi('narik:1', '🛵', 'Narik Ojol', bisaMtr ? 'Gojek / Grab Motor online' : 'Buka menu daftar driver', true) +
+        (bisaCar ? kartuAksi('gocar:1', '🚗', 'Narik GoCar', 'Online driver mobil penumpang', false) : '') +
+        (bisaCar ? kartuAksi('travel:1', '🚐', 'Mulai Travel', 'Antar penumpang antarkota', false) : '') +
       '</div>');
   }
   function bukaAksiPasanganRumah() {
     var pas = DIRI.pasanganAktif(S);
     if (!pas) return;
-    bukaLembar('diri', kepala('❤️ ' + esc(pas.nama), 'Aksi cepat bersama pasangan di rumah') +
-      '<div class="opsi-chip" style="gap:8px;margin-top:6px">' +
-      '<button type="button" class="chip-tombol pilih" data-diri="ciuman:' + esc(pas.id || 'pasangan') + '">💋 Ciuman</button>' +
-      '<button type="button" class="chip-tombol pilih" data-diri="foreplay:' + esc(pas.id || 'pasangan') + '">🔥 Foreplay</button>' +
-      '<button type="button" class="chip-tombol pilih" data-diri="hb:0">❤️ HB Cepat</button>' +
-      '<button type="button" class="chip-tombol pilih" data-diri="hb:1">💞 HB Long Time</button>' +
-      '<button type="button" class="chip-tombol" data-diri="app:keluarga">💬 Menu Keluarga</button>' +
-      '</div>');
+    var uPas = KAL.usia(S.hari, pas.tglLahir);
+    var peranLbl = DIRI.labelPeran ? DIRI.labelPeran(S, pas) : 'Pasangan';
+    var kartuPas = function (cmd, ikon, judul, sub, primer) {
+      return '<button type="button" class="kartu-item" data-diri="' + cmd + '" style="text-align:left;cursor:pointer' + (primer ? ';border-color:rgba(219,39,119,.45);background:rgba(219,39,119,.08)' : '') + '">' +
+        '<div><b>' + ikon + ' ' + esc(judul) + '</b><small>' + esc(sub) + '</small></div></button>';
+    };
+    bukaLembar('diri',
+      kepala('Menu Pasangan', peranLbl + ' · Di ' + DIRI.tempat(S)) +
+      '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.2);margin-bottom:10px">' +
+        fotoWajah(pas.gender === 'cowok' ? 'char-pemain' : 'char-istri', 54, '#ec4899', pas.nama, pas.gender, uPas, pas.peran, pas.tampilan) +
+        '<div style="flex:1;min-width:0"><b style="font-size:15px">' + esc(pas.nama) + ' (' + uPas + ' thn)</b>' +
+        '<div style="font-size:11.5px;color:var(--tinta-pudar);font-weight:700;margin-top:2px">😊 Bahagia ' + Math.round(pas.bahagia || 75) + '% · 💞 Bar HB ' + Math.round(pas.hb || 35) + '%</div></div>' +
+      '</div>' +
+      '<h3 class="subjudul" style="margin-top:4px">❤️ Momen Mesra</h3>' +
+      '<div class="grid-2">' +
+        kartuPas('ciuman:' + esc(pas.id || 'pasangan'), '💋', 'Ciuman', 'Tingkatkan kemesraan (3×)', false) +
+        kartuPas('foreplay:' + esc(pas.id || 'pasangan'), '🔥', 'Foreplay', 'Bangun suasana hangat (3×)', false) +
+        kartuPas('hb:0', '❤️', 'HB (Tanpa Pengaman)', 'Pulihkan stamina & bahagia', true) +
+        kartuPas('hb:1', '💞', 'HB (Pakai Pengaman)', 'Aman & tetap romantis', true) +
+      '</div>' +
+      '<div style="margin-top:10px"><button type="button" class="aksi" data-diri="app:keluarga">💬 Buka Menu Keluarga Lengkap</button></div>');
   }
   var kosLainnya = false;
   function isiKosAksi() {
@@ -6295,9 +6300,9 @@
       }
       tombol.push(['app:makan', '🍽️ Makan'], ['lemari:1', '👗 Lemari'], ['bensinHud:1', '⛽ Isi BBM']);
       if (DIRI.totalBatangRokok && DIRI.totalBatangRokok(S) > 0) tombol.push(['merokok:1', '🚬 Rokok (' + DIRI.totalBatangRokok(S) + ')']);
-      tombol.push(['app:hobi', '🎯 Hobi'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
+      tombol.push(['app:hobi', '🎯 Hobi'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan']);
       if (sedangTunggu) {
-        tombol.push(['hiburan:youtube', S.hiburan ? '✓ Lagi nonton YouTube' : '🎬 Santai']);
+        tombol.push(['hiburan:youtube', S.hiburan ? '✓ Relax 3× aktif' : '😌 Relax (3×)']);
       }
       $('kos-aksi').innerHTML = tombol.map(function (x) {
         var isAkt = x[1].indexOf('✓ ') === 0;
@@ -6319,7 +6324,7 @@
     }
     tombol.push(['tidurMalam:1', '😴 Tidur']);
     if (DIRI.totalBatangRokok && DIRI.totalBatangRokok(S) > 0) tombol.push(['merokok:1', '🚬 Rokok (' + DIRI.totalBatangRokok(S) + ')']);
-    tombol.push(['app:hobi', '🎯 Akhir Pekan'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
+    tombol.push(['app:hobi', '🎯 Akhir Pekan'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan']);
     lain.push(['istirahat:olahraga', '🏃 Olahraga']);
     if ((S.diri.hb || 0) >= 15) lain.push(['meTime:1', 'Me time']);
     if (rtAktif) lain.push(['makanRumah:1', 'Makan Rumah']);
@@ -6343,7 +6348,6 @@
     if (nama === 'hiburan') { tutupLembar(); return aksiOjek('hiburan:' + nilai); }
     if (nama === 'tidurJalan') { tutupLembar(); return tidurJalan(+nilai); }
     if (nama === 'bensinHud') { tutupLembar(); return popupBensin(); }
-    if (nama === 'promoKedai') { S.promoAktif = !S.promoAktif; simpan(); perbaruiHUD(true); perbaruiAksi(); toast(S.promoAktif ? 'Promo aktif!' : 'Promo dimatikan.'); return; }
     if (nama === 'makan') r = DIRI.makan(S, nilai);
     else if (nama === 'merokok') r = DIRI.merokok ? DIRI.merokok(S) : null;
     else if (nama === 'makanRumah') r = DIRI.makanDiRumah(S);
@@ -6401,37 +6405,150 @@
     else if (r) toast(r, 2600);
     if (lembar === 'diri') bukaDiri();
   }
-  /* P73: potret wajah Anime 2D konsisten dengan karakter di dalam game */
+  /* P82 (Fase A): Potret foto profil dinamis yang selalu sama persis dengan avatar karakter (kulit, rambut, mata, mulut, & baju aktif) */
   function fotoWajah(src, ukuran, bingkai, nama, gender, usia, peran, tampil, warnaBaju) {
     var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');
     var isBoy = gChar === 'cowok';
+    var isAnak = peran === 'anak' || /anak/.test(src) || (usia != null && usia < 12);
     var sz = ukuran || 44;
     var st = 'width:' + sz + 'px;height:' + sz + 'px' + (bingkai ? ';border-color:' + bingkai : '');
-    var svg = '<svg viewBox="0 0 64 64" width="' + sz + '" height="' + sz + '" xmlns="http://www.w3.org/2000/svg">' +
-      '<defs><linearGradient id="bgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f7e9d4"/><stop offset="100%" stop-color="#d8b282"/></linearGradient></defs>' +
-      '<rect width="64" height="64" fill="url(#bgA)"/>' +
+    var h = 0, nm = String(nama || src || 'driver');
+    for (var i = 0; i < nm.length; i++) h = ((h * 31) + nm.charCodeAt(i)) >>> 0;
+    var tp = tampil || {};
+    var ED = window.KK_KARAKTER_ED || null;
+    var K = N.karakterOpsi || {};
+
+    /* Resolusi warna kulit (mendukung palet KK_KARAKTER_ED maupun N.karakterOpsi) */
+    var kulitHex = isBoy ? '#f5d2b8' : '#fce3d2', kulitBayang = isBoy ? '#d8aa88' : '#e0b89e';
+    if (ED && ED.KULIT) {
+      var kEd = ED.KULIT.filter(function (x) { return x.id === tp.kulit; })[0];
+      if (kEd) { kulitHex = kEd.hex; kulitBayang = kEd.bayang || kEd.mid || kulitBayang; }
+    }
+    if (K.kulit) {
+      var kLeg = K.kulit.filter(function (x) { return x.id === tp.kulit; })[0];
+      if (kLeg) { kulitHex = kLeg.hex; kulitBayang = kLeg.bayang || kulitBayang; }
+      else if (!tp.kulit) { var kDef = K.kulit[h % Math.min(4, K.kulit.length)]; if (kDef) { kulitHex = kDef.hex; kulitBayang = kDef.bayang || kulitBayang; } }
+    }
+
+    /* Resolusi warna rambut */
+    var ramHex = '#1e1922', ramHi = '#493d4f';
+    if (ED && ED.WARNA_RAMBUT) {
+      var rEd = ED.WARNA_RAMBUT.filter(function (x) { return x.id === tp.warnaRambut; })[0];
+      if (rEd) { ramHex = rEd.hex; ramHi = rEd.hi || ramHi; }
+    }
+    if (K.warnaRambut) {
+      var rLeg = K.warnaRambut.filter(function (x) { return x.id === tp.warnaRambut; })[0];
+      if (rLeg) { ramHex = rLeg.hex; ramHi = rLeg.kilau || ramHi; }
+    }
+
+    /* Resolusi warna mata */
+    var mataHex = isBoy ? '#4a3226' : '#4c3230';
+    if (ED && ED.WARNA_MATA && tp.warnaMata) {
+      var mEd = ED.WARNA_MATA.filter(function (x) { return x.id === tp.warnaMata; })[0];
+      if (mEd) mataHex = mEd.mid || mEd.top || mataHex;
+    }
+
+    /* Resolusi baju & warna latar sesuai atasan aktif karakter */
+    var MAP_ATASAN = { kaos: '#3b82f6', kemeja: '#0f766e', formal: '#1e293b', driver: '#00aa13', none: isBoy ? '#334155' : '#f472b6' };
+    var bajuHex = warnaBaju || (tp.atasan && MAP_ATASAN[tp.atasan]) || (tp.baju) || (isBoy ? ['#1b6b63', '#235789', '#2b3a55', '#3c5a4b'][h % 4] : ['#ec4899', '#f472b6', '#8b5cf6', '#14b8a6'][h % 4]);
+    var bg1 = isBoy ? '#e6f0f8' : '#fdf2f8', bg2 = isBoy ? '#bfd8eb' : '#f5d0e6';
+    var gradId = 'fwBg' + (h % 997) + '_' + sz;
+
+    /* Normalisasi gaya rambut (mendukung index 0..29 dari KK_KARAKTER_ED dan id string dari N.karakterOpsi) */
+    var gayaR = tp.rambut;
+    if (typeof gayaR === 'number') {
+      if (isBoy) gayaR = ['rapi', 'koma', 'undercut', 'ikal', 'gondrong', 'peci'][gayaR % 6];
+      else gayaR = gayaR < 10 ? (gayaR % 3 === 0 ? 'kuncir' : 'sebahu') : gayaR < 20 ? 'bob' : (gayaR === 22 || gayaR === 23 ? 'twintail' : gayaR === 24 || gayaR === 25 ? 'kepang' : 'panjang');
+    } else if (!gayaR) {
+      gayaR = isBoy ? 'rapi' : 'panjang';
+    }
+    var gayaM = typeof tp.mata === 'number' ? ['cerah', 'lembut', 'cerah', 'sipit', 'cerah', 'tajam'][tp.mata % 6] : (tp.mata || 'cerah');
+    var gayaB = typeof tp.mulut === 'number' ? ['senyum', 'lebar', 'kalem', 'kalem', 'smirk', 'mungil'][tp.mulut % 6] : (tp.mulut || 'senyum');
+
+    /* Lapisan rambut belakang */
+    var hairBack = '';
+    if (isAnak) {
+      hairBack = '<circle cx="17" cy="24" r="6" fill="' + ramHex + '"/><circle cx="47" cy="24" r="6" fill="' + ramHex + '"/>';
+    } else if (isBoy) {
+      if (gayaR === 'gondrong') hairBack = '<path d="M14 27 Q12 45 17 55 L47 55 Q52 45 50 27 Q47 12 32 12 Q17 12 14 27 Z" fill="' + ramHex + '"/>';
+      else if (gayaR === 'ikal') hairBack = '<circle cx="19" cy="21" r="7" fill="' + ramHex + '"/><circle cx="32" cy="14" r="8" fill="' + ramHex + '"/><circle cx="45" cy="21" r="7" fill="' + ramHex + '"/>';
+    } else {
+      if (gayaR === 'hijab') hairBack = '<path d="M12 33 Q12 10 32 10 Q52 10 52 33 Q52 50 47 64 L17 64 Q12 50 12 33 Z" fill="' + bajuHex + '" stroke="#2b1e22" stroke-width="1.1"/>';
+      else if (gayaR === 'bob') hairBack = '<path d="M14 28 Q12 41 18 48 L46 48 Q52 41 50 28 Q48 12 32 12 Q16 12 14 28 Z" fill="' + ramHex + '"/>';
+      else if (gayaR === 'kuncir') hairBack = '<path d="M15 27 Q13 42 18 52 L46 52 Q51 42 49 27 Z" fill="' + ramHex + '"/><path d="M44 17 Q58 12 56 36 Q51 42 47 35 Q49 25 44 20 Z" fill="' + ramHex + '" stroke="#2b1e22" stroke-width="1"/><ellipse cx="45" cy="18" rx="3.2" ry="1.9" fill="#fb7185"/>';
+      else if (gayaR === 'twintail') hairBack = '<path d="M18 18 Q5 14 7 42 Q12 46 16 38 Z" fill="' + ramHex + '"/><path d="M46 18 Q59 14 57 42 Q52 46 48 38 Z" fill="' + ramHex + '"/><circle cx="18" cy="18" r="2.4" fill="#fb7185"/><circle cx="46" cy="18" r="2.4" fill="#fb7185"/>';
+      else if (gayaR === 'kepang') hairBack = '<path d="M15 28 Q12 46 16 62 L48 62 Q52 46 49 28 Z" fill="' + ramHex + '"/><circle cx="17" cy="48" r="4" fill="' + ramHex + '"/><circle cx="16" cy="55" r="3.5" fill="' + ramHex + '"/><circle cx="47" cy="48" r="4" fill="' + ramHex + '"/><circle cx="48" cy="55" r="3.5" fill="' + ramHex + '"/>';
+      else if (gayaR === 'sebahu') hairBack = '<path d="M14 27 Q11 43 16 55 L48 55 Q53 43 50 27 Z" fill="' + ramHex + '"/>';
+      else hairBack = '<path d="M13 28 Q10 46 15 63 L49 63 Q54 46 51 28 Z" fill="' + ramHex + '"/>';
+    }
+
+    /* Bahu & Pakaian sesuai outfit aktif */
+    var bajuSvg = '<path d="M11 64 Q15 51 32 51 Q49 51 53 64 Z" fill="' + bajuHex + '" stroke="#2b1e22" stroke-width="1"/>';
+    if (tp.atasan === 'driver') {
+      bajuSvg += '<path d="M22 52 L28 64 L36 64 L42 52 Z" fill="#111827"/><path d="M31.2 52 L32.8 52 L32.8 64 L31.2 64 Z" fill="#facc15"/>';
+    } else if (tp.atasan === 'formal' || tp.atasan === 'kemeja') {
+      bajuSvg += '<path d="M25 51 L32 60 L39 51 Z" fill="#ffffff"/>';
+    }
+
+    /* Leher, Telinga, & Wajah */
+    var wajahSvg = '<rect x="28" y="42" width="8" height="11" rx="3" fill="' + kulitBayang + '"/>' +
+      (gayaR !== 'hijab' ? '<circle cx="18.2" cy="34" r="2.8" fill="' + kulitHex + '"/><circle cx="45.8" cy="34" r="2.8" fill="' + kulitHex + '"/>' : '') +
       (isBoy
-        ? '<path d="M18 64 Q32 52 46 64 Z" fill="#1e293b"/>' +
-          '<rect x="28" y="42" width="8" height="12" rx="3" fill="#f7d8c4"/>' +
-          '<path d="M18 28 L19 39 Q25 47 32 50 Q39 47 45 39 L46 28 Q46 14 32 14 Q18 14 18 28 Z" fill="#fff1e6" stroke="#3b2826" stroke-width="1.3"/>' +
-          '<ellipse cx="26" cy="33" rx="3" ry="1.9" fill="#fff"/><circle cx="26.2" cy="33" r="1.8" fill="#6b4732"/><circle cx="26.2" cy="33" r="0.8" fill="#241812"/><circle cx="25.5" cy="32.2" r="0.6" fill="#fff"/>' +
-          '<ellipse cx="38" cy="33" rx="3" ry="1.9" fill="#fff"/><circle cx="37.8" cy="33" r="1.8" fill="#6b4732"/><circle cx="37.8" cy="33" r="0.8" fill="#241812"/><circle cx="37.2" cy="32.2" r="0.6" fill="#fff"/>' +
-          '<path d="M23 29 L29 28.4 M35 28.4 L41 29" stroke="#2a1d18" stroke-width="1.45" stroke-linecap="round"/>' +
-          '<path d="M29 42 Q32.5 43.2 35.5 41.2" fill="none" stroke="#a8655a" stroke-width="1.3" stroke-linecap="round"/>' +
-          '<path d="M16 30 Q14 14 27 9 Q34 7 43 11 Q50 15 48 30 L45 25 Q40 18 35 25 Q31 18 26 25 Q21 19 19 25 Z" fill="#2a1d18" stroke="#3b2826" stroke-width="1.2"/>'
-        : '<path d="M16 26 Q11 46 16 62 L48 62 Q53 46 48 26 Z" fill="#1b1824"/>' +
-          '<path d="M44 16 Q58 10 56 34 Q52 40 48 34 Q50 24 44 19 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.1"/>' +
-          '<ellipse cx="45" cy="17" rx="3.5" ry="2" fill="#fb7185" stroke="#3b2826" stroke-width="0.8"/>' +
-          '<path d="M18 64 Q32 53 46 64 Z" fill="#fbcfe8"/>' +
-          '<rect x="28.5" y="42" width="7" height="12" rx="3" fill="#f7dfd2"/>' +
-          '<path d="M18 29 Q18 45 32 49 Q46 45 46 29 Q46 14 32 14 Q18 14 18 29 Z" fill="#fff5ee" stroke="#3b2826" stroke-width="1.3"/>' +
-          '<ellipse cx="23.5" cy="37" rx="3.2" ry="1.6" fill="rgba(251,146,162,0.34)"/>' +
-          '<ellipse cx="40.5" cy="37" rx="3.2" ry="1.6" fill="rgba(251,146,162,0.34)"/>' +
-          '<ellipse cx="26" cy="33" rx="3" ry="2.5" fill="#fff"/><circle cx="26.2" cy="33.1" r="2" fill="#4c3230"/><circle cx="25.4" cy="32" r="0.8" fill="#fff"/>' +
-          '<ellipse cx="38" cy="33" rx="3" ry="2.5" fill="#fff"/><circle cx="37.8" cy="33.1" r="2" fill="#4c3230"/><circle cx="37.1" cy="32" r="0.8" fill="#fff"/>' +
-          '<path d="M29 41 Q32 43.2 35 41" fill="none" stroke="#b46266" stroke-width="1.3" stroke-linecap="round"/>' +
-          '<path d="M16 32 Q15 11 32 10 Q49 11 48 32 L45 42 L43 37 L43 28 Q37 28.5 34 27.5 Q32 28.8 30 27.5 Q27 28.5 21 28 L21 37 L19 42 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.2"/>') +
-      '</svg>';
+        ? '<path d="M18.5 28 L19.5 39 Q25 47 32 49.5 Q39 47 44.5 39 L45.5 28 Q45.5 14 32 14 Q18.5 14 18.5 28 Z" fill="' + kulitHex + '" stroke="#3b2826" stroke-width="1.2"/>'
+        : '<path d="M18.5 29 Q18.5 45 32 48.5 Q45.5 45 45.5 29 Q45.5 14 32 14 Q18.5 14 18.5 29 Z" fill="' + kulitHex + '" stroke="#3b2826" stroke-width="1.2"/>') +
+      '<ellipse cx="23.5" cy="37.2" rx="3" ry="1.5" fill="rgba(244,114,142,' + (isBoy ? '0.18' : '0.32') + ')"/>' +
+      '<ellipse cx="40.5" cy="37.2" rx="3" ry="1.5" fill="rgba(244,114,142,' + (isBoy ? '0.18' : '0.32') + ')"/>';
+
+    /* Mata & Alis */
+    var mataSvg = '<path d="M22.5 28.8 Q26 27.6 29.2 28.6 M34.8 28.6 Q38 27.6 41.5 28.8" fill="none" stroke="' + ramHex + '" stroke-width="' + (isBoy ? '1.5' : '1.15') + '" stroke-linecap="round"/>';
+    if (gayaM === 'sipit') {
+      mataSvg += '<path d="M23 33.2 Q26 31.6 29 33.2 M35 33.2 Q38 31.6 41 33.2" fill="none" stroke="#1e1513" stroke-width="1.7" stroke-linecap="round"/>' +
+        '<circle cx="26" cy="33.3" r="1.4" fill="' + mataHex + '"/><circle cx="38" cy="33.3" r="1.4" fill="' + mataHex + '"/><circle cx="26.5" cy="32.8" r="0.5" fill="#fff"/><circle cx="38.5" cy="32.8" r="0.5" fill="#fff"/>';
+    } else if (gayaM === 'tajam') {
+      mataSvg += '<ellipse cx="26" cy="33" rx="3.1" ry="1.8" fill="#fff"/><circle cx="26.2" cy="33" r="1.7" fill="' + mataHex + '"/><circle cx="25.5" cy="32.2" r="0.6" fill="#fff"/>' +
+        '<ellipse cx="38" cy="33" rx="3.1" ry="1.8" fill="#fff"/><circle cx="37.8" cy="33" r="1.7" fill="' + mataHex + '"/><circle cx="37.2" cy="32.2" r="0.6" fill="#fff"/>' +
+        '<path d="M22.5 31.8 L29.5 32.5 M41.5 31.8 L34.5 32.5" stroke="#1b1311" stroke-width="1.45" stroke-linecap="round"/>';
+    } else {
+      var ryM = isBoy ? '2.0' : '2.5';
+      mataSvg += '<ellipse cx="26" cy="33" rx="3" ry="' + ryM + '" fill="#fff"/><circle cx="26.2" cy="33.1" r="1.95" fill="' + mataHex + '"/><circle cx="26.2" cy="33.2" r="0.85" fill="#181214"/><circle cx="25.4" cy="32.1" r="0.75" fill="#fff"/>' +
+        '<ellipse cx="38" cy="33" rx="3" ry="' + ryM + '" fill="#fff"/><circle cx="37.8" cy="33.1" r="1.95" fill="' + mataHex + '"/><circle cx="37.8" cy="33.2" r="0.85" fill="#181214"/><circle cx="37.1" cy="32.1" r="0.75" fill="#fff"/>';
+    }
+    if (gayaM === 'kacamata') {
+      mataSvg += '<rect x="21.5" y="30.2" width="9" height="5.8" rx="2.1" fill="rgba(255,255,255,.16)" stroke="#2c353d" stroke-width="1.25"/><rect x="33.5" y="30.2" width="9" height="5.8" rx="2.1" fill="rgba(255,255,255,.16)" stroke="#2c353d" stroke-width="1.25"/><path d="M30.5 33h3" stroke="#2c353d" stroke-width="1.25"/>';
+    }
+
+    /* Mulut */
+    var bibir = isBoy ? '#a8655a' : '#c95e72';
+    var mulutSvg = gayaB === 'lebar' ? '<path d="M27.5 40 Q32 44.5 36.5 40 Z" fill="#fff" stroke="' + bibir + '" stroke-width="1.2"/>'
+      : gayaB === 'kalem' ? '<path d="M29 41.2 Q32 42.1 35 41.2" fill="none" stroke="' + bibir + '" stroke-width="1.35" stroke-linecap="round"/>'
+      : gayaB === 'smirk' ? '<path d="M28.8 41.5 Q32.5 42 35.8 40" fill="none" stroke="' + bibir + '" stroke-width="1.4" stroke-linecap="round"/>'
+      : '<path d="M28.5 40.8 Q32 43.3 35.5 40.8" fill="none" stroke="' + bibir + '" stroke-width="1.4" stroke-linecap="round"/>';
+
+    /* Rambut depan / poni */
+    var hairFront = '';
+    if (isBoy) {
+      if (gayaR === 'peci') {
+        hairFront = '<path d="M18 27 Q25 22 32 22 Q39 22 46 27 Q45 15 32 15 Q19 15 18 27 Z" fill="' + ramHex + '"/><rect x="18" y="9" width="28" height="12" rx="3" fill="#17191d" stroke="#2b1e22" stroke-width="1"/>';
+      } else if (gayaR === 'undercut') {
+        hairFront = '<path d="M18 27 Q19 11 32 10 Q45 11 46 27 L43 22 Q38 17 32 20 Q26 17 21 22 Z" fill="' + ramHex + '" stroke="#2b1e22" stroke-width="1.1"/>';
+      } else if (gayaR === 'koma') {
+        hairFront = '<path d="M16 30 Q15 11 32 9 Q49 11 48 30 L44 24 Q39 18 35 26 Q32 19 27 25 Q22 20 19 26 Z" fill="' + ramHex + '" stroke="#2b1e22" stroke-width="1.1"/>';
+      } else {
+        hairFront = '<path d="M16 30 Q14 13 27 9 Q34 7 43 11 Q50 15 48 30 L45 25 Q40 18 35 25 Q31 18 26 25 Q21 19 19 25 Z" fill="' + ramHex + '" stroke="#2b1e22" stroke-width="1.1"/>';
+      }
+    } else if (gayaR === 'hijab') {
+      hairFront = '<path d="M18 31 Q18 14 32 14 Q46 14 46 31 Q42 20 32 20 Q22 20 18 31 Z" fill="' + bajuHex + '"/><path d="M18.5 31 Q20 17 32 17 Q44 17 45.5 31" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>';
+    } else if (gayaR === 'poni') {
+      hairFront = '<path d="M16 31 Q15 11 32 10 Q49 11 48 31 L45 25 L19 25 Z" fill="' + ramHex + '" stroke="#2b1e22" stroke-width="1.1"/>';
+    } else {
+      hairFront = '<path d="M16 32 Q15 11 32 10 Q49 11 48 32 L45 41 L43 36 L43 27 Q37 28 34 26.5 Q32 28.5 30 26.5 Q27 28 21 27 L21 36 L19 41 Z" fill="' + ramHex + '" stroke="#2b1e22" stroke-width="1.1"/>';
+    }
+    var hiSvg = gayaR === 'hijab' || gayaR === 'peci' ? '' : '<path d="M23 18 Q32 15 41 18" fill="none" stroke="' + ramHi + '" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>';
+
+    var svg = '<svg viewBox="0 0 64 64" width="' + sz + '" height="' + sz + '" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + bg1 + '"/><stop offset="100%" stop-color="' + bg2 + '"/></linearGradient></defs>' +
+      '<rect width="64" height="64" fill="url(#' + gradId + ')"/>' +
+      hairBack + bajuSvg + wajahSvg + mataSvg + mulutSvg + hairFront + hiSvg + '</svg>';
     return '<span class="foto-wajah" style="' + st + '">' + svg + '</span>';
   }
   function _fotoWajahSvgCadangan(src, ukuran, bingkai, nama, gender, usia, peran, tampil, warnaBaju) {
@@ -7495,48 +7612,10 @@
       else pindah('kos', true);
     };
     $('travel-panel').onclick = function (e) {
-      var v = e.target.closest('[data-vvip]'); if (v) return aksiVvip(v.dataset.vvip);
       var o = e.target.closest('[data-ojek]'); if (o) return aksiOjek(o.dataset.ojek);
       var b = e.target.closest('[data-trv]'); if (b) { var tv = b.dataset.trv.split(':'); aksiTravel(tv[0], tv.slice(1).join(':')); }
     };
-    function aksiVvip(cmd) {
-      if (cmd === 'popup') return bukaPopupVvip();
-      if (cmd === 'buka') {
-        var r = TRAVEL.bukaVvip(S, false);
-        if (r && r.ok) { toast(r.teks, 2800); simpan(); travelKunci = ''; panelTravel(true); panelOjek(true); perbaruiHUD(true); bukaPopupVvip(); }
-        else toast(r || 'Gagal membuka Mode VVIP.', 2600);
-        return;
-      }
-      if (cmd === 'kunci') {
-        var rk = TRAVEL.kunciVvip(S);
-        toast((rk && rk.teks) || 'Mode VVIP dikunci.', 2400);
-        simpan(); travelKunci = ''; panelTravel(true); panelOjek(true); perbaruiHUD(true);
-        if (lembar === 'atur') bukaAtur(); else bukaPopupVvip();
-      }
-    }
-    function onSliderInput(e) {
-      var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = true;
-      var jn = s.dataset.gigi === 'trv' ? 'mobil' : (s.dataset.gigi.split(':')[1] === 'mobil' ? 'mobil' : 'motor'), lb = $('gigi-label'); if (lb) lb.textContent = labelGigi(jn, +s.value);
-    }
-    function onSliderChange(e) {
-      var s = e.target.closest('[data-gigi]'); if (!s) return; seretGigi = false; var n = Math.max(1, Math.min(5, +s.value));
-      if (s.dataset.gigi === 'trv') {
-        if (n === 5 && !TRAVEL.vvipAktif(S)) {
-          s.value = Math.min(4, S.travel.gigi || 3);
-          travelKunci = ''; panelTravel(true); bukaPopupVvip(); return;
-        }
-        var r = TRAVEL.setGigi(S, n); if (r !== true) toast(r, 2200); travelKunci = ''; panelTravel(true); simpan();
-      } else {
-        if (n === 5 && !TRAVEL.vvipAktif(S)) s.value = Math.min(4, S.gigiJalan || 2);
-        aksiOjek('gigi:' + n);
-      }
-    }
-    $('ojek-panel').oninput = onSliderInput;
-    $('ojek-panel').onchange = onSliderChange;
-    $('travel-panel').oninput = onSliderInput;
-    $('travel-panel').onchange = onSliderChange;
     $('ojek-panel').onclick = function (e) {
-      var v = e.target.closest('[data-vvip]'); if (v) return aksiVvip(v.dataset.vvip);
       var b = e.target.closest('[data-ojek]'); if (b) aksiOjek(b.dataset.ojek);
     };
     if ($('kerja-btn')) $('kerja-btn').onclick = function () { mulaiBerangkatKerja(); };
@@ -7557,11 +7636,7 @@
     $('kos-aksi').onclick = function (e) { var b = e.target.closest('[data-diri]'); if (b) { var dd = b.dataset.diri.split(':'); aksiDiri(dd[0], dd.slice(1).join(':')); } };
     if ($('kedai-aksi')) $('kedai-aksi').onclick = function (e) {
       var b = e.target.closest('[data-kedai]'); if (!b) return;
-      if (b.dataset.kedai === 'promo') {
-        S.promoAktif = !S.promoAktif;
-        simpan(); perbaruiAksi(); perbaruiHUD(true);
-        toast(S.promoAktif ? 'Promo aktif! Pelanggan semua usaha +50%–80%.' : 'Promo dimatikan.');
-      } else if (b.dataset.kedai === 'autoMakan') {
+      if (b.dataset.kedai === 'autoMakan') {
         S.autoMakanMinum = !S.autoMakanMinum;
         simpan(); perbaruiAksi(); perbaruiHUD(true);
         toast(S.autoMakanMinum ? 'Auto Makan & Minum aktif (hemat biaya).' : 'Auto Makan & Minum dimatikan.');
@@ -7683,7 +7758,6 @@
         if (b.dataset.tut === 'skip') { if (S) { S.tutorialSelesai = true; simpan(); } tutupLembar(); toast('Selamat bermain! Modal awal Rp5.000.000 siap digunakan.', 2400); return; }
         return bukaTutorial(+b.dataset.tut);
       }
-      if ((b = e.target.closest('[data-vvip]'))) return aksiVvip(b.dataset.vvip);
       if ((b = e.target.closest('[data-trv]'))) { var tv = b.dataset.trv.split(':'); return aksiTravel(tv[0], tv.slice(1).join(':')); }
       if ((b = e.target.closest('[data-hud]'))) { var hu = b.dataset.hud.split(':'); return aksiHud(hu[0], hu.slice(1).join(':')); }
       if ((b = e.target.closest('[data-besok]'))) return besok();
@@ -7740,10 +7814,6 @@
         if (net) S.profil.etnis = net;
         simpan(); perbaruiHUD(true); toast('Profil, identitas & tampilan disimpan.'); bukaAtur(); return;
       }
-      if ((b = e.target.closest('[data-promo]'))) {
-        S.promoAktif = !S.promoAktif; simpan(); perbaruiHUD(true); perbaruiAksi();
-        var gp = $('lembar-isi').scrollTop; bukaAtur(); $('lembar-isi').scrollTop = gp; return;
-      }
       if ((b = e.target.closest('[data-fps]'))) {
         S.fpsMode = S.fpsMode === '60' ? 'auto' : '60'; simpan();
         toast(S.fpsMode === '60' ? '⚡ Mode Hemat 60Hz aktif.' : '⚡ Mode Auto 120Hz aktif (mengikuti refresh rate layar).', 2000);
@@ -7758,7 +7828,7 @@
       }
       if ((b = e.target.closest('[data-bulan]'))) { var m = kal.m + (+b.dataset.bulan), y = kal.y; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } return bukaKalender(y, m); }
       if ((b = e.target.closest('[data-tg]'))) { kal.pilih = +b.dataset.tg; return bukaKalender(kal.y, kal.m); }
-      if ((b = e.target.closest('[data-jam]'))) { var p = b.dataset.jam.split(':'); if (p[0] === 'harga') { DUNIA.ubahHarga(S, p[1], +p[2]); simpan(); var g1 = $('lembar-isi').scrollTop; bukaAtur(); $('lembar-isi').scrollTop = g1; return; }
+      if ((b = e.target.closest('[data-jam]'))) { var p = b.dataset.jam.split(':'); if (p[0] === 'harga') return;
         if (p.length === 3) return ubahJam('ongkir.' + p[1], +p[2]); return ubahJam(p[0], +p[1]); }
       if ((b = e.target.closest('[data-ulang]'))) {
         if (!konfirmasiUlang) { konfirmasiUlang = true; var gu = $('lembar-isi').scrollTop; bukaAtur(); $('lembar-isi').scrollTop = gu; return; }
