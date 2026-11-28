@@ -140,17 +140,15 @@
     } else { b.hidden = true; $('info-simpan').textContent = ''; }
   }
   function isiKota() {
-    var pulauList = ['Semua', 'Sumatera', 'Jawa', 'Bali & Nusa Tenggara', 'Kalimantan', 'Sulawesi', 'Maluku & Papua'];
+    /* P73.5: Fokus pemetaan awal hanya wilayah Kalimantan yang sudah detail (Kalbar & Kalteng) */
+    var KOTA_DETAIL = { pontianak: 1, palangkaraya: 1 };
+    var daftar = N.kota.filter(function (k) { return !!KOTA_DETAIL[k.id]; });
     if ($('kota-filter')) {
-      $('kota-filter').innerHTML = pulauList.map(function (p) {
-        var jml = p === 'Semua' ? N.kota.length : N.kota.filter(function (k) { return k.pulau === p; }).length;
-        return '<button type="button" class="chip-tombol' + (kotaPulauFilter === p ? ' pilih' : '') + '" data-pulau="' + esc(p) + '">' + esc(p) + ' (' + jml + ')</button>';
-      }).join('');
+      $('kota-filter').innerHTML = '<button type="button" class="chip-tombol pilih" data-pulau="Kalimantan">Kalimantan Detail (' + daftar.length + ')</button>';
     }
-    var daftar = kotaPulauFilter === 'Semua' ? N.kota : N.kota.filter(function (k) { return k.pulau === kotaPulauFilter; });
     $('kota-daftar').innerHTML = daftar.map(function (k) {
       return '<button type="button" class="kota" data-kota="' + k.id + '"><b>' + esc(k.nama) + '</b>' +
-        '<span class="ciri">Ibu kota ' + esc(k.provinsi) + ' · ' + esc(k.pulau || '') + '</span><span class="umk">UMK 2026 ' + rupiah(k.umk) + '/bln · Sewa mulai ' + rupiahPendek(Math.round(k.kos * 0.65 / 25000) * 25000) + '</span></button>';
+        '<span class="ciri">Ibu kota ' + esc(k.provinsi) + ' · Peta Wilayah Detail</span><span class="umk">UMK 2026 ' + rupiah(k.umk) + '/bln · Sewa mulai ' + rupiahPendek(Math.round(k.kos * 0.65 / 25000) * 25000) + '</span></button>';
     }).join('');
   }
   function svgPreviewHunian(id) {

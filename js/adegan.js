@@ -3107,13 +3107,14 @@
     cx.save(); cx.translate(x, yb); if (nunduk) cx.rotate(0.35);
     kotakBulat(-8, 0, 16, 26, 6, baju);
     if (sopir) kotak(-8, 10, 16, 3, '#f3f1ea');
-    if (sopir && hp && tp) {
-      /* saat standby menunggu order di atas motor: helm open-face & wajah/rambut karakter terlihat jelas */
-      gambarKepalaPotret(1, -9, 9.5, gender || 'cewek', tp, { tanpaLeher: true });
-      cx.fillStyle = helm; cx.beginPath(); cx.arc(1, -11, 10.2, Math.PI * 1.05, Math.PI * 1.98); cx.closePath(); cx.fill();
-      kotak(5, -13, 6, 2.5, 'rgba(30,40,50,.65)');
+    /* P73.5: Karakter Anime 2D (Cewek kuncir kanan atas / Cowok Arda Guler) tampil jelas baik saat standby maupun saat narik/ngojol! */
+    if (sopir) {
+      gambarKepalaPotret(1, -9, 9.8, gender || 'cewek', tp || {}, { tanpaLeher: true });
+      cx.fillStyle = helm; cx.beginPath(); cx.arc(1, -11.5, 10.4, Math.PI * 1.06, Math.PI * 1.96); cx.closePath(); cx.fill();
+      kotak(4.5, -13, 6.5, 2.5, 'rgba(30,40,50,.55)');
     } else {
-      bulat(2, -8, 10, helm); kotak(4, -10, 9, 5, 'rgba(30,40,50,.75)');
+      gambarKepalaPotret(1, -9, 9.2, gender || 'cewek', tp || {}, { tanpaLeher: true });
+      cx.fillStyle = helm; cx.beginPath(); cx.arc(1, -11, 9.8, Math.PI * 1.06, Math.PI * 1.96); cx.closePath(); cx.fill();
     }
     cx.restore();
     /* lengan memegang setang / pegang HP saat standby */
