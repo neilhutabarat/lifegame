@@ -1053,6 +1053,7 @@
     var y = (duduk ? yKaki - 2 : yKaki) - bob - lompat, baju = BAJU[r.baju], celana = '#33414d', hadap = duduk ? (o.kursi === 1 ? -1 : 1) : o.keadaan === 'pulang' ? o.arahPulang : (o.tx > o.x + 1 ? 1 : o.tx < o.x - 1 ? -1 : 1);
     if (o.jenis === 'kantor') { baju = '#eef2f5'; celana = '#2c3640'; }
     if (o.jenis === 'ojol') baju = '#4f6b3a';
+    cx.save(); cx.translate(x, yKaki); cx.scale(0.78, 0.78); cx.translate(-x, -yKaki);
     if (!duduk) { cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(x, yKaki + 1, 13, 3.5, 0, 0, Math.PI * 2); cx.fill(); }
     /* anak kecil ikut keluarga */
     if (o.jenis === 'keluarga' && !duduk) {
@@ -1131,6 +1132,7 @@
         kotakDepan = { x: x - 18, y: byy, w: 36, h: yKaki - byy };
       }
     }
+    cx.restore();
   }
   /* gambar gelas kopi realistis (panas: cup kertas + sleeve + uap; dingin: cup bening berlapis + es batu + tutup kubah + sedotan) */
   function gambarCup(x, y, menu, sk, panas, t) {
@@ -3772,7 +3774,9 @@
       pencahayaanLuar(m, t, jalan, vehX + 46, vehY - 18 + goyang, !!s.biled);
     } else {
       gambarBloomLampuRem(vehX - 22, vehY - 18 + goyang, gp);
-      gambarMotorKu(vehX, vehY - 4 + goyang, s.motorId, { naik: true, jalan: true, baju: s.warnaBaju, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
+      cx.save(); cx.translate(vehX, vehY - 2 + goyang); cx.scale(0.80, 0.80);
+      gambarMotorKu(0, 0, s.motorId, { naik: true, jalan: true, baju: s.warnaBaju, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
+      cx.restore();
       pencahayaanLuar(m, t, jalan, vehX + 28, vehY - 26 + goyang, !!s.biled);
     }
     gambarCipratanHD(dt || 16);
@@ -3967,7 +3971,9 @@
       gambarKarakterRumah(vehX, vehY, s.gender === 'cowok' ? 'cowok' : 'cewek', t, { skala: 0.56, jalan: true, baju: s.warnaBaju || '#2b6cb0', tampilan: s.tampilan, label: s.namaPemain || 'Kamu' });
     } else {
       gambarBloomLampuRem(vehX - 22, vehY - 18 + goyang, gp);
-      gambarMotorKu(vehX, vehY - 4 + goyang, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, baju: s.warnaBaju, bawaDus: !!f.bawaDus, bonceng: (f.kend === 'ojek' || f.kend === 'teman') && !f.bawaDus }, t);
+      cx.save(); cx.translate(vehX, vehY - 2 + goyang); cx.scale(0.80, 0.80);
+      gambarMotorKu(0, 0, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, baju: s.warnaBaju, bawaDus: !!f.bawaDus, bonceng: (f.kend === 'ojek' || f.kend === 'teman') && !f.bawaDus }, t);
+      cx.restore();
     }
     pencahayaanLuar(m, t, jalan, kaki ? null : (isCar ? vehX + 46 : vehX + 28), kaki ? null : (isCar ? vehY - 18 + goyang : vehY - 26 + goyang), !!s.biled);
     gambarCipratanHD(dt || 16);
@@ -4477,8 +4483,8 @@
       gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, 0, gelap(m));
     }
     if (motorStandby) {
-      /* P74.2: Skala motor proporsional (lebih kecil dari mobil) */
-      cx.save(); cx.translate(226, jalan + 24); cx.scale(0.84, 0.84);
+      /* P74.3: Skala motor proporsional & posisi lebih naik agar tidak tertutup HUD bawah saat mangkal */
+      cx.save(); cx.translate(214, jalan + 8); cx.scale(0.82, 0.82);
       gambarMotorKu(0, 0, s.motorId, { naik: true, hp: true, kiri: true, baju: s.warnaBaju, tampilan: s.tampilan, gender: s.gender }, t);
       cx.restore();
     } else if (s.motorParkir) {
