@@ -4963,7 +4963,47 @@
       (akhir
         ? '<button type="button" class="aksi" style="flex:1.4" data-tut="skip">Mulai Bermain!</button>'
         : '<button type="button" class="aksi" style="flex:1.4" data-tut="' + (i + 1) + '">Lanjut ›</button>') +
+      '<div class="kartu-item"><div><span class="ki-tag">👗 Lemari & Distro</span><b>👕 Ganti & Beli Baju</b><small>Atur pakaian harian & beli baju distro Indonesia</small></div><div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-diri="lemari:1">Buka Lemari</button></div></div>' +
       '</div>');
+  }
+
+  var TOKO_BAJU_DISTRO = [
+    { id: 'kaos_erigo', jenis: 'atasan', kode: 'kaos', nama: 'Erigo Oversize Tee', harga: 149000, ket: 'Distro Lokal · Nyaman harian' },
+    { id: 'kemeja_3sec', jenis: 'atasan', kode: 'kemeja', nama: '3Second Kemeja Kasual', harga: 249000, ket: 'Distro Bandung · Rapi & santai' },
+    { id: 'formal_exec', jenis: 'atasan', kode: 'formal', nama: 'The Executive Blazer', harga: 499000, ket: 'Formal · Rapat & acara resmi' },
+    { id: 'jaket_ojol', jenis: 'atasan', kode: 'driver', nama: 'Jaket Driver Ojol Resmi', harga: 175000, ket: 'Atribut resmi narik ojol' },
+    { id: 'pendek_scr', jenis: 'bawahan', kode: 'pendek', nama: 'Screamous Chino Pendek', harga: 169000, ket: 'Distro · Santai di rumah/jalan' },
+    { id: 'panjang_rgh', jenis: 'bawahan', kode: 'panjang', nama: 'Roughneck Celana Panjang', harga: 259000, ket: 'Distro · Rapi buat kerja' },
+    { id: 'jeans_lois', jenis: 'bawahan', kode: 'jeans', nama: 'Lois Denim Jeans', harga: 349000, ket: 'Original Denim · Awet & keren' }
+  ];
+  function bukaLemariPakaian() {
+    if (!S.tampilan) S.tampilan = { atasan: 'none', bawahan: 'none' };
+    if (!S.lemari) {
+      S.lemari = {
+        atasan: ['none'].concat(S.tampilan.atasan && S.tampilan.atasan !== 'none' ? [S.tampilan.atasan] : []),
+        bawahan: ['none'].concat(S.tampilan.bawahan && S.tampilan.bawahan !== 'none' ? [S.tampilan.bawahan] : [])
+      };
+    }
+    var curA = S.tampilan.atasan || 'none', curB = S.tampilan.bawahan || 'none';
+    var nmA = { none: 'Dasar (Sport-bra/Polos)', kaos: 'Kaos Oversize', kemeja: 'Kemeja', formal: 'Formal', driver: 'Jaket Ojol' };
+    var nmB = { none: 'Dasar', pendek: 'Celana Pendek', panjang: 'Celana Panjang', jeans: 'Jeans' };
+    var h = kepala('👗 Lemari Pakaian & Distro', 'Tunai: ' + rupiah(S.uang || 0) + ' · Dipakai: ' + (nmA[curA] || curA) + ' + ' + (nmB[curB] || curB)) +
+      '<h3 class="subjudul">Lemari Pakaianmu</h3><div class="grid-2">' +
+      '<div class="kartu-item"><div><span class="ki-tag milik">Atasan</span><b>Baju Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
+      (S.lemari.atasan || ['none']).map(function (k) {
+        return '<button type="button" class="chip-tombol' + (curA === k ? ' pilih' : '') + '" data-diri="pakaiBaju:atasan:' + k + '">' + esc(nmA[k] || k) + '</button>';
+      }).join('') + '</div></div></div>' +
+      '<div class="kartu-item"><div><span class="ki-tag milik">Bawahan</span><b>Celana Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
+      (S.lemari.bawahan || ['none']).map(function (k) {
+        return '<button type="button" class="chip-tombol' + (curB === k ? ' pilih' : '') + '" data-diri="pakaiBaju:bawahan:' + k + '">' + esc(nmB[k] || k) + '</button>';
+      }).join('') + '</div></div></div></div>' +
+      '<h3 class="subjudul">🛍️ Toko Baju Distro & Resmi Indonesia</h3><div class="grid-2">' +
+      TOKO_BAJU_DISTRO.map(function (b) {
+        var punya = (S.lemari[b.jenis] || []).indexOf(b.kode) >= 0;
+        return '<div class="kartu-item"><div><span class="ki-tag' + (punya ? ' milik' : '') + '">' + (b.jenis === 'atasan' ? '👕 Baju' : '👖 Celana') + '</span><b>' + esc(b.nama) + '</b><small>' + esc(b.ket) + '</small></div>' +
+          '<div class="ki-aksi">' + (punya ? '<button type="button" class="chip-tombol" data-diri="pakaiBaju:' + b.jenis + ':' + b.kode + '">Pakai</button>' : '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + '">' + rupiahPendek(b.harga) + '</button>') + '</div></div>';
+      }).join('') + '</div>';
+    bukaLembar('diri', h);
   }
 
   /* baris percepatan (gigi) untuk kendaraan sehari-hari: normal 1–4 realistis, Level 5 tergembok 🔒 */
@@ -5657,6 +5697,28 @@
     else if (nama === 'travel') return mulaiTravel();
     else if (nama === 'app') { app.pesan = ''; return bukaHP(nilai); }
     else if (nama === 'tutup') { tutupLembar(); if (S.fase === 'buka') { tutupKedai(true); } return; }
+    else if (nama === 'lemari') { return bukaLemariPakaian(); }
+    else if (nama === 'pakaiBaju') {
+      var pb = nilai.split(':');
+      if (!S.tampilan) S.tampilan = {};
+      S.tampilan[pb[0]] = pb[1];
+      simpan(); perbaruiHUD(true); toast('Pakaian diganti!', 1800);
+      return bukaLemariPakaian();
+    }
+    else if (nama === 'beliBaju') {
+      var katBaju = TOKO_BAJU_DISTRO.filter(function (x) { return x.id === nilai; })[0];
+      if (!katBaju) return;
+      if (!S.lemari) S.lemari = { atasan: ['none'], bawahan: ['none'] };
+      var arrMilik = S.lemari[katBaju.jenis] || ['none'];
+      if (arrMilik.indexOf(katBaju.kode) >= 0) { toast('Sudah punya di lemari!', 1800); return; }
+      if ((S.uang || 0) < katBaju.harga) { toast('Uang tunai kurang (' + rupiah(katBaju.harga) + ')', 2200); return; }
+      S.uang -= katBaju.harga;
+      arrMilik.push(katBaju.kode); S.lemari[katBaju.jenis] = arrMilik;
+      if (!S.tampilan) S.tampilan = {};
+      S.tampilan[katBaju.jenis] = katBaju.kode;
+      simpan(); perbaruiHUD(true); toast('Beli ' + katBaju.nama + ' (' + rupiah(katBaju.harga) + ') & langsung dipakai!', 2400);
+      return bukaLemariPakaian();
+    }
     else if (nama === 'autoMakan') { S.autoMakanMinum = !S.autoMakanMinum; toast(S.autoMakanMinum ? 'Auto Makan & Minum aktif (hemat biaya).' : 'Auto Makan & Minum mati.', 2000); simpan(); perbaruiAksi(); if (lembar === 'diri') bukaDiri(); return; }
     if (r && r.ok) { if (SUARA) SUARA.bunyi(nama === 'makan' || nama === 'makanRumah' ? 'makan' : nilai === 'olahraga' ? 'olahraga' : 'tap'); if (r.menit) lompatWaktu(r.menit); toast(r.teks, 2400); simpan(); perbaruiHUD(true); }
     else if (r) toast(r, 2600);
@@ -6055,7 +6117,47 @@
             : diKedai
               ? '<div class="kartu-item"><div><span class="ki-tag">Istirahat</span><b>🏠 Pulang</b><small>Kembali ke ' + esc(DIRI.tempat(S)) + '</small></div><div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-diri="pulang:1">Pulang</button></div></div>'
               : '<div class="kartu-item"><div><span class="ki-tag">📱 ' + esc(hm.nama.split(' ').slice(0, 2).join(' ')) + '</span><b>🔋 Baterai ' + Math.round(S.hp ? S.hp.baterai : 95) + '%</b><small>' + (bisaNarik ? 'Siap narik ojol hari ini' : 'Pantau kondisi gadget') + '</small></div><div class="ki-aksi">' + (bisaNarik ? '<button type="button" class="chip-tombol pilih" data-diri="narik:1">🛵 Narik</button>' : '<button type="button" class="chip-tombol" data-diri="app:gadget">HP</button>') + '</div></div>') +
+      '<div class="kartu-item"><div><span class="ki-tag">👗 Lemari & Distro</span><b>👕 Ganti & Beli Baju</b><small>Atur pakaian harian & beli baju distro Indonesia</small></div><div class="ki-aksi"><button type="button" class="chip-tombol pilih" data-diri="lemari:1">Buka Lemari</button></div></div>' +
       '</div>');
+  }
+
+  var TOKO_BAJU_DISTRO = [
+    { id: 'kaos_erigo', jenis: 'atasan', kode: 'kaos', nama: 'Erigo Oversize Tee', harga: 149000, ket: 'Distro Lokal · Nyaman harian' },
+    { id: 'kemeja_3sec', jenis: 'atasan', kode: 'kemeja', nama: '3Second Kemeja Kasual', harga: 249000, ket: 'Distro Bandung · Rapi & santai' },
+    { id: 'formal_exec', jenis: 'atasan', kode: 'formal', nama: 'The Executive Blazer', harga: 499000, ket: 'Formal · Rapat & acara resmi' },
+    { id: 'jaket_ojol', jenis: 'atasan', kode: 'driver', nama: 'Jaket Driver Ojol Resmi', harga: 175000, ket: 'Atribut resmi narik ojol' },
+    { id: 'pendek_scr', jenis: 'bawahan', kode: 'pendek', nama: 'Screamous Chino Pendek', harga: 169000, ket: 'Distro · Santai di rumah/jalan' },
+    { id: 'panjang_rgh', jenis: 'bawahan', kode: 'panjang', nama: 'Roughneck Celana Panjang', harga: 259000, ket: 'Distro · Rapi buat kerja' },
+    { id: 'jeans_lois', jenis: 'bawahan', kode: 'jeans', nama: 'Lois Denim Jeans', harga: 349000, ket: 'Original Denim · Awet & keren' }
+  ];
+  function bukaLemariPakaian() {
+    if (!S.tampilan) S.tampilan = { atasan: 'none', bawahan: 'none' };
+    if (!S.lemari) {
+      S.lemari = {
+        atasan: ['none'].concat(S.tampilan.atasan && S.tampilan.atasan !== 'none' ? [S.tampilan.atasan] : []),
+        bawahan: ['none'].concat(S.tampilan.bawahan && S.tampilan.bawahan !== 'none' ? [S.tampilan.bawahan] : [])
+      };
+    }
+    var curA = S.tampilan.atasan || 'none', curB = S.tampilan.bawahan || 'none';
+    var nmA = { none: 'Dasar (Sport-bra/Polos)', kaos: 'Kaos Oversize', kemeja: 'Kemeja', formal: 'Formal', driver: 'Jaket Ojol' };
+    var nmB = { none: 'Dasar', pendek: 'Celana Pendek', panjang: 'Celana Panjang', jeans: 'Jeans' };
+    var h = kepala('👗 Lemari Pakaian & Distro', 'Tunai: ' + rupiah(S.uang || 0) + ' · Dipakai: ' + (nmA[curA] || curA) + ' + ' + (nmB[curB] || curB)) +
+      '<h3 class="subjudul">Lemari Pakaianmu</h3><div class="grid-2">' +
+      '<div class="kartu-item"><div><span class="ki-tag milik">Atasan</span><b>Baju Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
+      (S.lemari.atasan || ['none']).map(function (k) {
+        return '<button type="button" class="chip-tombol' + (curA === k ? ' pilih' : '') + '" data-diri="pakaiBaju:atasan:' + k + '">' + esc(nmA[k] || k) + '</button>';
+      }).join('') + '</div></div></div>' +
+      '<div class="kartu-item"><div><span class="ki-tag milik">Bawahan</span><b>Celana Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
+      (S.lemari.bawahan || ['none']).map(function (k) {
+        return '<button type="button" class="chip-tombol' + (curB === k ? ' pilih' : '') + '" data-diri="pakaiBaju:bawahan:' + k + '">' + esc(nmB[k] || k) + '</button>';
+      }).join('') + '</div></div></div></div>' +
+      '<h3 class="subjudul">🛍️ Toko Baju Distro & Resmi Indonesia</h3><div class="grid-2">' +
+      TOKO_BAJU_DISTRO.map(function (b) {
+        var punya = (S.lemari[b.jenis] || []).indexOf(b.kode) >= 0;
+        return '<div class="kartu-item"><div><span class="ki-tag' + (punya ? ' milik' : '') + '">' + (b.jenis === 'atasan' ? '👕 Baju' : '👖 Celana') + '</span><b>' + esc(b.nama) + '</b><small>' + esc(b.ket) + '</small></div>' +
+          '<div class="ki-aksi">' + (punya ? '<button type="button" class="chip-tombol" data-diri="pakaiBaju:' + b.jenis + ':' + b.kode + '">Pakai</button>' : '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + '">' + rupiahPendek(b.harga) + '</button>') + '</div></div>';
+      }).join('') + '</div>';
+    bukaLembar('diri', h);
   }
 
   /* ---------- karyawan bekerja ---------- */

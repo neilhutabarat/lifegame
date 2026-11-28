@@ -1555,7 +1555,7 @@
 
   function gambarKarakterAnime(c, x, y, gender, t, o) {
     o = o || {};
-    var sk = (o.skala || 1) * (o.diRumah ? 1.16 : 1.0);
+    var sk = (o.skala || 1) * (o.diRumah ? 1.16 : 0.64);
     var isBoy = gender === 'cowok';
     var walk = !!o.jalan;
     var dir = o.arah === -1 ? -1 : 1;
@@ -3178,14 +3178,17 @@
     cx.save(); cx.translate(x, yb); if (nunduk) cx.rotate(0.35);
     kotakBulat(-8, 0, 16, 26, 6, baju);
     if (sopir) kotak(-8, 10, 16, 3, '#f3f1ea');
-    /* P73.5: Karakter Anime 2D (Cewek kuncir kanan atas / Cowok Arda Guler) tampil jelas baik saat standby maupun saat narik/ngojol! */
+    /* P74.1: Helm full/open-face menutupi penuh bagian atas kepala agar rambut tidak tembus keluar! */
     if (sopir) {
-      gambarKepalaPotret(1, -9, 9.8, gender || 'cewek', tp || {}, { tanpaLeher: true });
-      cx.fillStyle = helm; cx.beginPath(); cx.arc(1, -11.5, 10.4, Math.PI * 1.06, Math.PI * 1.96); cx.closePath(); cx.fill();
-      kotak(4.5, -13, 6.5, 2.5, 'rgba(30,40,50,.55)');
+      gambarKepalaPotret(1, -9, 9.0, gender || 'cewek', tp || {}, { tanpaLeher: true });
+      cx.fillStyle = helm; cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.2;
+      cx.beginPath(); cx.arc(0.5, -11.5, 13.2, Math.PI * 0.92, Math.PI * 2.08); cx.closePath(); cx.fill(); cx.stroke();
+      cx.fillStyle = 'rgba(30,40,50,.68)';
+      cx.fillRect(3.5, -13.5, 9.5, 4.2);
     } else {
-      gambarKepalaPotret(1, -9, 9.2, gender || 'cewek', tp || {}, { tanpaLeher: true });
-      cx.fillStyle = helm; cx.beginPath(); cx.arc(1, -11, 9.8, Math.PI * 1.06, Math.PI * 1.96); cx.closePath(); cx.fill();
+      gambarKepalaPotret(1, -9, 8.6, gender || 'cewek', tp || {}, { tanpaLeher: true });
+      cx.fillStyle = helm; cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.1;
+      cx.beginPath(); cx.arc(0.5, -11, 12.6, Math.PI * 0.92, Math.PI * 2.08); cx.closePath(); cx.fill(); cx.stroke();
     }
     cx.restore();
     /* lengan memegang setang / pegang HP saat standby */
