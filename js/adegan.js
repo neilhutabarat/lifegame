@@ -1386,26 +1386,27 @@
     var kulit = tp.kulitHex || '#f5cb9f';
     var berhijab = cewek && tp.rambut === 'hijab';
 
-    /* P72: Render sprite karakter realistis HD (transparan) jika tersedia — dengan bayangan pijakan lembut & napas halus */
+    /* P72+: Render sprite karakter realistis HD (transparan) dengan skala proporsional nyata terhadap ruangan/jalan */
     var imCh = muatImg(srcKarakterHD(gender, tp, o));
     if (imCh) {
-      var targetH = (cewek ? 168 : 176) * sk;
+      var targetH = o.diRumah ? (Math.round(H * (cewek ? 0.43 : 0.45)) * sk) : ((cewek ? 196 : 204) * sk);
       var targetW = targetH * (imCh.naturalWidth / Math.max(1, imCh.naturalHeight));
       var nafas = 1 + Math.sin(t / 780 + x * 0.05) * 0.008;
       var goyangJalan = sedangJalan ? Math.sin(t / 130) * 0.035 : 0;
       cx.save();
       cx.translate(x, y);
       /* Bayangan kontak lembut menyatu di lantai */
-      var grSh = cx.createRadialGradient(0, 0, 2, 0, 0, targetW * 0.42);
-      grSh.addColorStop(0, 'rgba(8,12,20,0.44)');
-      grSh.addColorStop(0.65, 'rgba(8,12,20,0.18)');
+      var shR = Math.max(18, targetW * 0.42);
+      var grSh = cx.createRadialGradient(0, 0, 2, 0, 0, shR);
+      grSh.addColorStop(0, 'rgba(8,12,20,0.40)');
+      grSh.addColorStop(0.65, 'rgba(8,12,20,0.16)');
       grSh.addColorStop(1, 'rgba(8,12,20,0)');
       cx.fillStyle = grSh;
-      cx.beginPath(); cx.ellipse(0, 1, targetW * 0.42, 6.5 * sk, 0, 0, Math.PI * 2); cx.fill();
+      cx.beginPath(); cx.ellipse(0, 1, shR, Math.max(5, targetH * 0.024), 0, 0, Math.PI * 2); cx.fill();
       cx.translate(0, -bob);
       if (goyangJalan) cx.rotate(goyangJalan);
       cx.scale(1 / Math.sqrt(nafas), nafas);
-      cx.drawImage(imCh, -targetW * 0.5, -targetH + 3, targetW, targetH);
+      cx.drawImage(imCh, -targetW * 0.5, -targetH + 4, targetW, targetH);
       cx.restore();
       if (o.label) {
         var yLblH = y - targetH - 12 - bob;
@@ -1930,9 +1931,10 @@
       cx.fillText('Z', xKasur + 60, yBantal - 34 - (t / 50) % 14);
       return;
     }
-    /* berdiri tegak proporsional (tinggi ~136–142 px, jauh lebih tinggi dari kasur setinggi 38–44 px!) */
-    var xPemain = pas ? 214 : 196;
+    /* berdiri tegak proporsional sesuai skala nyata ruangan HD (43–45% tinggi layar, menyatu dengan pintu, kasur & meja!) */
+    var xPemain = pas ? 220 : 186;
     gambarKarakterRumah(xPemain, yBerdiri, s.gender || 'cewek', t, {
+      diRumah: true,
       baju: bajuPemain,
       tampilan: tpP,
       hamil: !!s.hamilPemain,
@@ -1940,18 +1942,20 @@
     });
     if (pas) {
       var tpPas = tampilanDariNama(pas.nama, pas.gender, false);
-      gambarKarakterRumah(166, yBerdiri + 2, pas.gender, t + 400, {
+      gambarKarakterRumah(140, yBerdiri + 4, pas.gender, t + 400, {
+        diRumah: true,
         baju: pas.gender === 'cewek' ? '#d46a7e' : '#2d5a88',
         tampilan: tpPas,
         hamil: !!pas.hamil,
         label: pas.nama
       });
     }
-    var posAn = [[258, 8], [126, 10], [292, 14], [92, 14]];
+    var posAn = [[284, 8], [82, 8], [312, 14], [54, 14]];
     anakList.slice(0, 4).forEach(function (an, i) {
       var sk = an.usia < 2 ? 0.45 : an.usia < 5 ? 0.56 : an.usia < 10 ? 0.68 : an.usia < 15 ? 0.82 : 0.94;
       var tpAn = tampilanDariNama(an.nama, an.gender, an.usia < 12);
       gambarKarakterRumah(posAn[i][0], yBerdiri + posAn[i][1], an.gender, t + 700 * (i + 1), {
+        diRumah: true,
         skala: sk,
         tampilan: tpAn,
         baju: an.gender === 'cewek' ? '#e88a3e' : '#3d8f52',
@@ -2199,11 +2203,13 @@
     var m = s.menit % 1440, b = s.barang || {};
     var kunciTema = s.rumah ? ('rumah_' + s.rumah) : (s.hunianId || 'kos_ac');
     var T = TEMA_HUNIAN[kunciTema] || TEMA_HUNIAN.kos_ac;
-    /* P72: Latar Interior Hunian HD Realistis (Kos Hemat, Kos AC, Kontrakan, Rumah Mewah, Apartemen) */
+    /* P72+: Latar Interior Hunian HD Realistis — posisi kaki selalu tepat di atas dock bawah & proporsi manusia 43–45% tinggi layar */
     var imRumah = muatImg(srcRumahHD(kunciTema));
     if (imRumah && gambarBgCover(imRumah, W, H)) {
-      var yBerdiriHD = Math.round(H * 0.72);
-      var xKasurHD = 46, yBantalHD = Math.round(H * 0.56);
+      var skCv = (cv && cv.getBoundingClientRect ? cv.getBoundingClientRect().width : W) / W || 1;
+      var batasBawah = s.ruangBawah ? Math.round(H - (s.ruangBawah / skCv) - 10) : Math.round(H * 0.79);
+      var yBerdiriHD = Math.max(Math.round(H * 0.70), Math.min(Math.round(H * 0.80), batasBawah));
+      var xKasurHD = 46, yBantalHD = Math.round(H * 0.55);
       gambarPenghuniRumah(s, t, xKasurHD, yBantalHD, yBerdiriHD);
       pencahayaanRuangan(m, s.tidur, t);
       return;
