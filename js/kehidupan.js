@@ -26,15 +26,55 @@
     { id: 'michelin_p4', nama: 'Michelin Primacy 4 ST (4 Ban)', merek: 'Michelin', harga: 6200000, awet: 100000, grip: 1.3, ket: 'Paling senyap, pengereman basah terbaik, awet 100rb km' }
   ];
 
-  /* ---------- 2. Mall: Koleksi Pakaian & Aksesoris Driver ---------- */
+  /* ---------- 2. Katalog Lengkap Fashion: Brand Lokal Indonesia, Brand Global, Brand Luxury Dunia & Toko Sepatu ---------- */
   var PAKAIAN = [
-    { id: 'kaos_harian', nama: 'Kaos Katun Harian', harga: 65000, warna: '#2b6cb0', karisma: 0, ket: 'Santai & adem dipakai di rumah atau jalan' },
-    { id: 'jaket_driver', nama: 'Jaket Driver Anti-Angin', harga: 145000, warna: '#00aa13', karisma: 4, ket: 'Tampilan rapi profesional saat narik ojol (+rating)' },
-    { id: 'kemeja_flanel', nama: 'Kemeja Flanel Kasual', harga: 195000, warna: '#b83227', karisma: 8, ket: 'Keren buat nongkrong warkop, mall & kencan' },
-    { id: 'batik_kantor', nama: 'Batik Lengan Panjang', harga: 240000, warna: '#7b4b2a', karisma: 12, ket: 'Wajib rapi untuk kondangan & kerja kantoran' },
-    { id: 'hoodie_street', nama: 'Hoodie Streetwear', harga: 285000, warna: '#37474f', karisma: 10, ket: 'Hangat saat malam hari & cocok buat Sunmori' },
-    { id: 'baju_lebaran', nama: 'Baju Koko / Gamis Lebaran', harga: 320000, warna: '#0d7a5f', karisma: 14, ket: 'Elegan untuk ibadah, sholat & silaturahmi Hari Raya' },
-    { id: 'jas_eksekutif', nama: 'Setelan Jas Eksekutif', harga: 850000, warna: '#1e293b', karisma: 20, ket: 'Aura bos sukses · bonus diterima karier & relasi!' }
+    /* Brand Lokal & Distro Indonesia */
+    { id: 'kaos_harian', kat: 'lokal', jenis: 'atasan', kode: 'kaos', merek: 'Basic Lokal', nama: 'Kaos Katun Combed 30s', harga: 65000, warna: '#2b6cb0', karisma: 1, ket: 'Santai & adem dipakai harian di rumah atau jalan' },
+    { id: 'kaos_erigo', kat: 'lokal', jenis: 'atasan', kode: 'kaos', merek: 'Erigo', nama: 'Erigo Oversize Tee', harga: 149000, warna: '#1e3a8a', karisma: 4, ket: 'Distro lokal populer · Potongan oversize kekinian' },
+    { id: 'jaket_driver', kat: 'lokal', jenis: 'atasan', kode: 'driver', merek: 'Atribut Ojol', nama: 'Jaket Driver Ojol Anti-Angin', harga: 175000, warna: '#00aa13', karisma: 5, ket: 'Atribut resmi rapi saat narik penumpang (+rating)' },
+    { id: 'kemeja_flanel', kat: 'lokal', jenis: 'atasan', kode: 'kemeja', merek: '3Second', nama: '3Second Kemeja Flanel Kasual', harga: 249000, warna: '#b83227', karisma: 8, ket: 'Distro Bandung · Keren buat nongkrong kafe & kencan' },
+    { id: 'hoodie_street', kat: 'lokal', jenis: 'atasan', kode: 'kaos', merek: 'Greenlight', nama: 'Greenlight Heavyweight Hoodie', harga: 329000, warna: '#37474f', karisma: 10, ket: 'Fleece tebal hangat untuk malam hari & Sunmori' },
+    { id: 'baju_lebaran', kat: 'lokal', jenis: 'atasan', kode: 'kemeja', merek: 'Samase / Rabbani', nama: 'Baju Koko / Gamis Premium', harga: 349000, warna: '#0d7a5f', karisma: 13, ket: 'Sopan & elegan untuk ibadah dan silaturahmi Hari Raya' },
+    { id: 'batik_kantor', kat: 'lokal', jenis: 'atasan', kode: 'kemeja', merek: 'Batik Keris', nama: 'Batik Keris Lengan Panjang', harga: 549000, warna: '#7b4b2a', karisma: 15, ket: 'Batik resmi berkualitas untuk kondangan & kantor' },
+    { id: 'jaket_eiger', kat: 'lokal', jenis: 'atasan', kode: 'driver', merek: 'EIGER', nama: 'Eiger Equator Windproof Jacket', harga: 579000, warna: '#0f766e', karisma: 14, ket: 'Tahan angin & gerimis saat turing antarkota' },
+    { id: 'jas_eksekutif', kat: 'lokal', jenis: 'atasan', kode: 'formal', merek: 'The Executive', nama: 'The Executive Tailored Blazer', harga: 699000, warna: '#1e293b', karisma: 18, ket: 'Tampilan rapi profesional untuk interview & kerja kantoran' },
+    { id: 'pendek_scr', kat: 'lokal', jenis: 'bawahan', kode: 'pendek', merek: 'Screamous', nama: 'Screamous Chino Shorts', harga: 169000, warna: '#92400e', karisma: 4, ket: 'Celana pendek chino santai buat di rumah & warkop' },
+    { id: 'panjang_rgh', kat: 'lokal', jenis: 'bawahan', kode: 'panjang', merek: 'Roughneck 1991', nama: 'Roughneck 1991 Cargo Pants', harga: 259000, warna: '#374151', karisma: 7, ket: 'Celana panjang tangguh banyak kantong untuk harian' },
+    { id: 'jeans_lois', kat: 'lokal', jenis: 'bawahan', kode: 'jeans', merek: 'Lois Jeans', nama: 'Lois Original Denim Jeans', harga: 399000, warna: '#1d4ed8', karisma: 10, ket: 'Denim klasik awet & gagah dipakai berkendara' },
+
+    /* Brand Global & Mall Internasional */
+    { id: 'uniqlo_airism', kat: 'global', jenis: 'atasan', kode: 'kaos', merek: 'UNIQLO', nama: 'Uniqlo U AIRism Oversized Tee', harga: 199000, warna: '#0f172a', karisma: 7, ket: 'Adem anti-gerah teknologi Jepang, favorit anak mall' },
+    { id: 'uniqlo_flanel', kat: 'global', jenis: 'atasan', kode: 'kemeja', merek: 'UNIQLO', nama: 'Uniqlo Flannel Checked Shirt', harga: 399000, warna: '#991b1b', karisma: 11, ket: 'Lembut & rapi dipakai kuliah maupun kerja santai' },
+    { id: 'hm_hoodie', kat: 'global', jenis: 'atasan', kode: 'kaos', merek: 'H&M', nama: 'H&M Relaxed Fit Hoodie', harga: 499000, warna: '#475569', karisma: 11, ket: 'Gaya kasual Eropa nyaman sepanjang hari' },
+    { id: 'uniqlo_ankle', kat: 'global', jenis: 'bawahan', kode: 'panjang', merek: 'UNIQLO', nama: 'Uniqlo Smart Ankle Pants', harga: 599000, warna: '#1f2937', karisma: 12, ket: 'Celana bahan rapi elastis tanpa ribet setrika' },
+    { id: 'levis_501', kat: 'global', jenis: 'bawahan', kode: 'jeans', merek: "Levi's", nama: "Levi's 501 Original Fit Jeans", harga: 1499000, warna: '#1e40af', karisma: 17, ket: 'Denim ikonik dunia sejak 1873, makin lama makin keren' },
+    { id: 'zara_suit', kat: 'global', jenis: 'atasan', kode: 'formal', merek: 'ZARA', nama: 'Zara Modern Tailored Suit', harga: 1799000, warna: '#111827', karisma: 22, ket: 'Potongan slim modern Eropa, menaikkan wibawa instan' },
+    { id: 'lacoste_polo', kat: 'global', jenis: 'atasan', kode: 'kaos', merek: 'Lacoste', nama: 'Lacoste Classic Piqué Polo', harga: 1899000, warna: '#15803d', karisma: 23, ket: 'Kaos kerah buaya ikonik kalangan menengah atas' },
+    { id: 'ralph_oxford', kat: 'global', jenis: 'atasan', kode: 'kemeja', merek: 'Ralph Lauren', nama: 'Polo Ralph Lauren Oxford Shirt', harga: 2499000, warna: '#2563eb', karisma: 26, ket: 'Old-money style klasik yang berkelas di setiap acara' },
+
+    /* Brand Luxury & High-End Dunia */
+    { id: 'gucci_polo', kat: 'luxury', jenis: 'atasan', kode: 'kaos', merek: 'Gucci', nama: 'Gucci Web Collar Cotton Polo', harga: 14500000, warna: '#14532d', karisma: 36, ket: 'Butik Plaza Indonesia · Simbol kesuksesan kelas atas' },
+    { id: 'balenciaga_hd', kat: 'luxury', jenis: 'atasan', kode: 'kaos', merek: 'Balenciaga', nama: 'Balenciaga Tape Type Hoodie', harga: 18500000, warna: '#18181b', karisma: 40, ket: 'Luxury streetwear Paris · Prestise sosial melonjak tinggi' },
+    { id: 'prada_pants', kat: 'luxury', jenis: 'bawahan', kode: 'panjang', merek: 'Prada', nama: 'Prada Re-Nylon Gabardine Pants', harga: 21000000, warna: '#09090b', karisma: 38, ket: 'Celana desainer Milan dengan logo segitiga enamel asli' },
+    { id: 'lv_shirt', kat: 'luxury', jenis: 'atasan', kode: 'kemeja', merek: 'Louis Vuitton', nama: 'Louis Vuitton Monogram Silk Shirt', harga: 26500000, warna: '#451a03', karisma: 45, ket: 'Sutra asli LV · Langsung dipandang sultan di mana pun' },
+    { id: 'dior_oblique', kat: 'luxury', jenis: 'atasan', kode: 'kemeja', merek: 'Dior', nama: 'Dior Oblique Jacquard Overshirt', harga: 29500000, warna: '#1e3a8a', karisma: 48, ket: 'Koleksi butik resmi Dior · Aura elegan tak terbantahkan' },
+    { id: 'gucci_jacket', kat: 'luxury', jenis: 'atasan', kode: 'formal', merek: 'Gucci', nama: 'Gucci GG Canvas Bomber Jacket', harga: 34000000, warna: '#713f12', karisma: 52, ket: 'Jaket ikonik GG Supreme Italia berkelas dunia' },
+    { id: 'hermes_knit', kat: 'luxury', jenis: 'atasan', kode: 'formal', merek: 'Hermès', nama: 'Hermès Cashmere & Silk Sweater', harga: 44000000, warna: '#9a3412', karisma: 58, ket: 'Quiet luxury kasta tertinggi dari Paris' },
+    { id: 'loropiana_jas', kat: 'luxury', jenis: 'atasan', kode: 'formal', merek: 'Loro Piana', nama: 'Loro Piana Bespoke Wool Suit', harga: 68000000, warna: '#1e293b', karisma: 68, ket: 'Setelan wol merino terbaik dunia · Karisma puncak konglomerat!' },
+
+    /* Toko Sepatu (Lokal Indonesia, Sneakers Dunia & Luxury) */
+    { id: 'sep_aero', kat: 'sepatu', jenis: 'sepatu', kode: 'lokal', merek: 'Aerostreet', nama: 'Aerostreet Hoops Low', harga: 159000, warna: '#dc2626', karisma: 3, ket: 'Sepatu lokal Klaten tahan jebol tanpa lem (teknologi Shoes Injection)' },
+    { id: 'sep_ventela', kat: 'sepatu', jenis: 'sepatu', kode: 'lokal', merek: 'Ventela', nama: 'Ventela Public Low Black Natural', harga: 289000, warna: '#1f2937', karisma: 6, ket: 'Kanvas vulcanized empuk kebanggaan buatan Bandung' },
+    { id: 'sep_kanky', kat: 'sepatu', jenis: 'sepatu', kode: 'lokal', merek: 'Kanky', nama: 'Kanky Story Honjo Sneakers', harga: 318000, warna: '#475569', karisma: 7, ket: 'Insole memory foam nyaman dipakai jalan kaki jauh & ngojol' },
+    { id: 'sep_compass', kat: 'sepatu', jenis: 'sepatu', kode: 'lokal', merek: 'Compass', nama: 'Compass Gazelle Low Vintage', harga: 438000, warna: '#1e3a8a', karisma: 10, ket: 'Sneakers lokal legendaris Bandung dengan siluet Gazelle ikonik' },
+    { id: 'sep_ortus', kat: 'sepatu', jenis: 'sepatu', kode: 'sport', merek: 'Ortuseight', nama: 'Ortuseight Hyperblast Running', harga: 599000, warna: '#f97316', karisma: 11, ket: 'Sepatu lari lokal bantalan CumulusFoam super empuk' },
+    { id: 'sep_converse', kat: 'sepatu', jenis: 'sepatu', kode: 'sneakers', merek: 'Converse', nama: 'Converse Chuck Taylor 70s High', harga: 1099000, warna: '#111827', karisma: 14, ket: 'Kanvas tebal vintage yang cocok dengan semua celana' },
+    { id: 'sep_nb530', kat: 'sepatu', jenis: 'sepatu', kode: 'sneakers', merek: 'New Balance', nama: 'New Balance 530 White Silver', harga: 1599000, warna: '#64748b', karisma: 18, ket: 'Dad-shoes ABZORB paling nyaman & hits di mal kota besar' },
+    { id: 'sep_af1', kat: 'sepatu', jenis: 'sepatu', kode: 'sneakers', merek: 'Nike', nama: "Nike Air Force 1 '07 Triple White", harga: 1729000, warna: '#cbd5e1', karisma: 19, ket: 'Sneakers kulit putih bersih sepanjang masa' },
+    { id: 'sep_samba', kat: 'sepatu', jenis: 'sepatu', kode: 'sneakers', merek: 'Adidas', nama: 'Adidas Samba OG White Black', harga: 2200000, warna: '#0f172a', karisma: 22, ket: 'Siluet klasik gum-sole favorit anak skena & eksekutif muda' },
+    { id: 'sep_jordan1', kat: 'sepatu', jenis: 'sepatu', kode: 'sneakers', merek: 'Air Jordan', nama: 'Air Jordan 1 Retro High OG Chicago', harga: 3299000, warna: '#b91c1c', karisma: 28, ket: 'Sneakers kolektor ikonik · Langsung mencuri perhatian' },
+    { id: 'sep_bally', kat: 'sepatu', jenis: 'sepatu', kode: 'luxury', merek: 'Bally', nama: 'Bally Scribe Leather Loafers', harga: 9850000, warna: '#451a03', karisma: 38, ket: 'Pantofel kulit Swiss mewah untuk pebisnis & pejabat' },
+    { id: 'sep_berluti', kat: 'sepatu', jenis: 'sepatu', kode: 'luxury', merek: 'Berluti', nama: 'Berluti Alessandro Venezia Oxford', harga: 34500000, warna: '#7c2d12', karisma: 54, ket: 'Sepatu kulit patina buatan tangan Prancis · Kasta tertinggi!' }
   ];
   var AKS_DRIVER = [
     { id: 'jashujan', nama: 'Jas Hujan Anti-Bocor', harga: 135000, ket: 'Cegah masuk angin & flu saat narik di tengah hujan!' },
@@ -277,31 +317,70 @@
     return { ok: true, menit: 25, teks: '🚿 ' + knd.nama + ' dicuci steam kinclong (' + rp(biaya) + ')! Rating penumpang lebih mantap selama 3 hari.' };
   }
 
-  /* ---------- Mall: Pakaian & Aksesoris Driver ---------- */
+  /* ---------- Mall & Toko Fashion: Pakaian, Bawahan, Sepatu & Aksesoris Driver (Sinkron 100% dengan Lemari & Karakter!) ---------- */
+  function sinkronItemKeLemari(S, p) {
+    if (!S || !p) return;
+    S.lemari = S.lemari || { atasan: ['none'], bawahan: ['none'] };
+    S.profil = S.profil || {};
+    S.profil.tampilan = S.profil.tampilan || S.tampilan || {};
+    if (p.jenis === 'bawahan') {
+      var arrB = S.lemari.bawahan || ['none'];
+      if (arrB.indexOf(p.kode || 'panjang') < 0) arrB.push(p.kode || 'panjang');
+      S.lemari.bawahan = arrB;
+      S.profil.tampilan.bawahan = p.kode || 'panjang';
+      S.pakaian.pakaiBawahan = p.id;
+    } else if (p.jenis === 'sepatu') {
+      S.pakaian.pakaiSepatu = p.id;
+    } else {
+      var kdA = p.kode || 'kaos';
+      var arrA = S.lemari.atasan || ['none'];
+      if (arrA.indexOf(kdA) < 0) arrA.push(kdA);
+      S.lemari.atasan = arrA;
+      S.profil.tampilan.atasan = kdA;
+      if (p.warna) S.profil.tampilan.warnaBaju = p.warna;
+      S.pakaian.pakai = p.id;
+    }
+    S.tampilan = S.profil.tampilan;
+  }
   function beliPakaian(S, id) {
     siapkan(S);
     var p = PAKAIAN.filter(function (x) { return x.id === id; })[0];
-    if (!p) return 'Pakaian tidak ditemukan.';
-    if (S.pakaian.milik[id]) { S.pakaian.pakai = id; return { ok: true, teks: '👕 Sekarang memakai ' + p.nama + '.' }; }
-    var by = UANG.bayarPilihan(S, p.harga, 'Mall: Beli ' + p.nama, S._metodeBayar || 'bank');
+    if (!p) return 'Produk fashion tidak ditemukan.';
+    if (S.pakaian.milik[id]) {
+      sinkronItemKeLemari(S, p);
+      return { ok: true, teks: (p.jenis === 'sepatu' ? '👟 ' : p.jenis === 'bawahan' ? '👖 ' : '👕 ') + 'Sekarang memakai ' + p.nama + '.' };
+    }
+    var by = UANG.bayarPilihan(S, p.harga, 'Toko Fashion: Beli ' + p.nama, S._metodeBayar || 'bank');
     if (by !== true) return by;
     S.pakaian.milik[id] = true;
-    S.pakaian.pakai = id;
+    sinkronItemKeLemari(S, p);
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + p.harga;
     ubahStres(S, -10);
-    return { ok: true, teks: '🛍️ ' + p.nama + ' dibeli (' + rp(p.harga) + '), masuk Lemari Pakaian & langsung dipakai!' };
+    return { ok: true, teks: '🛍️ ' + p.nama + ' (' + (p.merek || 'Resmi') + ' · ' + rp(p.harga) + ') berhasil dibeli, masuk Lemari & langsung dipakai! (+' + (p.karisma || 0) + ' Karisma)' };
   }
   function pakaiBaju(S, id) {
     siapkan(S);
-    if (!S.pakaian.milik[id]) return 'Belum punya pakaian ini. Beli dulu di Mall.';
+    if (!S.pakaian.milik[id]) return 'Belum memiliki produk ini. Beli dulu di Toko Baju / Sepatu.';
     var p = PAKAIAN.filter(function (x) { return x.id === id; })[0];
-    S.pakaian.pakai = id;
-    return { ok: true, teks: '👕 Berganti memakai ' + (p ? p.nama : id) + '.' };
+    if (p) sinkronItemKeLemari(S, p);
+    else S.pakaian.pakai = id;
+    return { ok: true, teks: (p && p.jenis === 'sepatu' ? '👟 ' : p && p.jenis === 'bawahan' ? '👖 ' : '👕 ') + 'Berganti memakai ' + (p ? p.nama : id) + '.' };
+  }
+  function karismaFashion(S) {
+    siapkan(S);
+    var tot = 0;
+    var ids = [S.pakaian && S.pakaian.pakai, S.pakaian && S.pakaian.pakaiBawahan, S.pakaian && S.pakaian.pakaiSepatu];
+    ids.forEach(function (id) {
+      if (!id) return;
+      var p = PAKAIAN.filter(function (x) { return x.id === id; })[0];
+      if (p && p.karisma) tot += p.karisma;
+    });
+    return tot;
   }
   function warnaBajuAktif(S) {
     siapkan(S);
     var p = PAKAIAN.filter(function (x) { return x.id === (S.pakaian && S.pakaian.pakai); })[0];
-    return p ? p.warna : '#00aa13';
+    return p && p.warna ? p.warna : '#00aa13';
   }
   function beliAksDriver(S, id) {
     siapkan(S);
@@ -822,7 +901,7 @@
     siapkan: siapkan, ubahStres: ubahStres, levelDidik: levelDidik, namaDidik: namaDidik, namaJurusan: namaJurusan, gajiEfektif: gajiEfektif,
     perpanjangSim: perpanjangSim, bayarTilang: bayarTilang, cekRaziaJalan: cekRaziaJalan,
     gantiBanMerek: gantiBanMerek, tambalBan: tambalBan, cuciSteam: cuciSteam,
-    beliPakaian: beliPakaian, pakaiBaju: pakaiBaju, warnaBajuAktif: warnaBajuAktif, beliAksDriver: beliAksDriver,
+    beliPakaian: beliPakaian, pakaiBaju: pakaiBaju, karismaFashion: karismaFashion, warnaBajuAktif: warnaBajuAktif, beliAksDriver: beliAksDriver,
     hargaInvest: hargaInvest, beliInvest: beliInvest, jualInvest: jualInvest, nilaiPortofolio: nilaiPortofolio,
     kuliahUpgrade: kuliahUpgrade, kuliahJurusan: kuliahJurusan, daftarKedinasan: daftarKedinasan, lanjutTahapDokter: lanjutTahapDokter, berhentiStudi: berhentiStudi,
     lamarKerja: lamarKerja, berhentiKerja: berhentiKerja, masukKerjaHariIni: masukKerjaHariIni, selesaiKerjaKantor: selesaiKerjaKantor, kerjaSampingan: kerjaSampingan,

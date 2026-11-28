@@ -266,57 +266,130 @@
     S.bank.mutasi.unshift({ n: S.hari, ket: 'Jual charger bekas: ' + ch.nama, jml: h });
     return { ok: true, teks: ch.nama + ' terjual ' + rp(h) + ' ke rekening.' };
   }
-  /* ---------- Konter HP Second (stok bekas berganti tiap minggu lengkap Battery Health & kondisi) ---------- */
+  /* ---------- P78 (Poin 9 & 16): 14 Brand Resmi HP & Toko HP Bekas (100 Unit Acak 5 Tahun Terakhir · Refresh Tiap Hari) ---------- */
+  var BRAND_HP_RESMI = [
+    { id: 'Apple', nama: 'Apple', sub: 'iPhone Resmi', warna: '#1e293b', ikon: '🍎' },
+    { id: 'Samsung', nama: 'Samsung', sub: 'Galaxy Store', warna: '#1d4ed8', ikon: '🌌' },
+    { id: 'Huawei', nama: 'Huawei', sub: 'Pura & Mate', warna: '#dc2626', ikon: '🌺' },
+    { id: 'Google', nama: 'Google', sub: 'Pixel Series', warna: '#2563eb', ikon: '🔍' },
+    { id: 'Xiaomi', nama: 'Xiaomi', sub: 'Xiaomi · POCO · Redmi', warna: '#ea580c', ikon: '🧡' },
+    { id: 'OPPO', nama: 'OPPO', sub: 'Find, Reno & A', warna: '#059669', ikon: '💚' },
+    { id: 'vivo', nama: 'vivo', sub: 'X, V & Y Series', warna: '#0284c7', ikon: '💙' },
+    { id: 'iQOO', nama: 'iQOO', sub: 'Monster Gaming', warna: '#d97706', ikon: '⚡' },
+    { id: 'realme', nama: 'realme', sub: 'GT, Number & C', warna: '#ca8a04', ikon: '💛' },
+    { id: 'Infinix', nama: 'Infinix', sub: 'GT, Note & Hot', warna: '#16a34a', ikon: '🟢' },
+    { id: 'TECNO', nama: 'TECNO', sub: 'Phantom, Camon & POVA', warna: '#0369a1', ikon: '🔵' },
+    { id: 'Sony', nama: 'Sony', sub: 'Xperia Official', warna: '#334155', ikon: '🎧' },
+    { id: 'Sharp', nama: 'Sharp', sub: 'AQUOS Japan', warna: '#b91c1c', ikon: '🇯🇵' },
+    { id: 'ASUS', nama: 'ASUS', sub: 'ROG & Zenfone', warna: '#4338ca', ikon: '🎮' }
+  ];
+  function merekHpResmi(g) {
+    if (!g) return '';
+    var mrk = String(g.merek || '').trim(), low = mrk.toLowerCase(), nm = String(g.nama || '').trim();
+    if (low === 'iqoo' || /^iqoo\b/i.test(nm)) return 'iQOO';
+    if (low === 'apple') return 'Apple';
+    if (low === 'samsung') return 'Samsung';
+    if (low === 'huawei') return 'Huawei';
+    if (low === 'google') return 'Google';
+    if (low === 'xiaomi' || low === 'poco' || low === 'redmi') return 'Xiaomi';
+    if (low === 'oppo') return 'OPPO';
+    if (low === 'vivo') return 'vivo';
+    if (low === 'realme') return 'realme';
+    if (low === 'infinix') return 'Infinix';
+    if (low === 'tecno') return 'TECNO';
+    if (low === 'sony') return 'Sony';
+    if (low === 'sharp') return 'Sharp';
+    if (low === 'asus' || low === 'asus rog') return 'ASUS';
+    return '';
+  }
   function acakPasarHpSecond(S) {
     if (!S) return [];
     S.hp = S.hp || {};
-    var minggu = Math.floor((S.hari || 0) / 7);
-    if (S.hp.pasarSecond && S.hp.pasarSecond.minggu === minggu && S.hp.pasarSecond.unit && S.hp.pasarSecond.unit.length) return S.hp.pasarSecond.unit;
-    var tK = KAL.tgl(S.hari || 0), thnK = tK.y, blnK = tK.m;
-    var pool = (N.daftarGadget || []).filter(function (g) {
-      if (g.jenis !== 'hp') return false;
-      var th = g.tahun || 2023, bl = g.bulanRilis || 1;
-      return th < thnK || (th === thnK && bl <= blnK);
+    var hari = S.hari || 0;
+    /* Hapus cache pasarSecond lama supaya simpanan localStorage tetap ringan (< 1 KB) */
+    if (S.hp.pasarSecond) delete S.hp.pasarSecond;
+    if (!S.hp.secondTerjual || S.hp.secondTerjual.hari !== hari) {
+      S.hp.secondTerjual = { hari: hari, map: {} };
+    }
+    var terjual = S.hp.secondTerjual.map || {};
+    var tK = KAL.tgl(hari), thnK = tK.y, blnK = tK.m;
+    var pool = (N.daftarGadget || []).filter(function (gd) {
+      if (gd.jenis !== 'hp') return false;
+      if (!merekHpResmi(gd)) return false;
+      var th = +(gd.tahunRilis || gd.tahun || 2023), bl = +(gd.bulanRilis || 1);
+      var sudahBeredar = th < thnK || (th === thnK && bl <= blnK);
+      return sudahBeredar && th >= (thnK - 5);
     });
-    var unit = [], dipakai = {};
+    if (!pool.length) {
+      pool = (N.daftarGadget || []).filter(function (gd) { return gd.jenis === 'hp' && !!merekHpResmi(gd); });
+    }
+    if (!pool.length) return [];
     var kondisiList = [
-      { label: 'Mulus Like New', faktor: 0.72, bhMin: 91, bhMax: 98, kelengkapan: 'Fullset Box + Nota Resmi' },
-      { label: 'Normal Pemakaian', faktor: 0.60, bhMin: 84, bhMax: 91, kelengkapan: 'Unit + Dus (Tanpa Charger)' },
-      { label: 'Lecet Halus / Batangan', faktor: 0.48, bhMin: 76, bhMax: 84, kelengkapan: 'Unit Only (Batangan)' }
+      { label: 'Mulus Like New (98%)', faktor: 0.76, bhMin: 92, bhMax: 98, kelengkapan: 'Fullset Box Ori + Nota Resmi' },
+      { label: 'Mulus Terawat', faktor: 0.66, bhMin: 86, bhMax: 93, kelengkapan: 'Unit + Dus Ori (Tanpa Charger)' },
+      { label: 'Normal Pemakaian', faktor: 0.56, bhMin: 80, bhMax: 87, kelengkapan: 'Unit + Dus Polos' },
+      { label: 'Lecet Halus / Batangan', faktor: 0.45, bhMin: 72, bhMax: 81, kelengkapan: 'Unit Only (Batangan Normal)' }
     ];
-    for (var i = 0; i < Math.min(12, pool.length); i++) {
-      var pick = pool[Math.floor(Math.random() * pool.length)];
-      if (!pick || dipakai[pick.id]) { continue; }
-      dipakai[pick.id] = true;
-      var kd = kondisiList[Math.floor(Math.random() * kondisiList.length)];
-      var bh = kd.bhMin + Math.floor(Math.random() * (kd.bhMax - kd.bhMin + 1));
-      var usiaThn = Math.max(0, thnK - (pick.tahun || 2023));
-      var fakUsia = Math.max(0.55, 1 - usiaThn * 0.08);
-      var hargaSec = Math.max(550000, Math.round(pick.harga * kd.faktor * fakUsia / 25000) * 25000);
+    var penjualList = ['Roxy Ponsel', 'Bintang Second', 'Berkah Cell', 'Sultan Gadget', 'Mitra Ponsel', 'Juragan HP', 'Sentra Second', 'Garasi Ponsel'];
+    /* PRNG deterministik per hari S.hari -> 100 unit acak dan otomatis berganti setiap ganti hari! */
+    var seed = (((hari + 137) * 2654435761) ^ 0x9e3779b9) >>> 0;
+    function nextRand() {
+      seed = (seed + 0x6D2B79F5) >>> 0;
+      var t = Math.imul ? Math.imul(seed ^ (seed >>> 15), 1 | seed) : ((seed ^ (seed >>> 15)) * 2246822519);
+      t = (t + (Math.imul ? Math.imul(t ^ (t >>> 7), 61 | t) : ((t ^ (t >>> 7)) * 3266489917))) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    var unit = [];
+    for (var i = 0; i < 100; i++) {
+      var pick = pool[Math.floor(nextRand() * pool.length)];
+      var kd = kondisiList[Math.floor(nextRand() * kondisiList.length)];
+      var bh = kd.bhMin + Math.floor(nextRand() * (kd.bhMax - kd.bhMin + 1));
+      var pnj = penjualList[Math.floor(nextRand() * penjualList.length)];
+      var varHarga = 0.94 + nextRand() * 0.12;
+      var uid = 'sec_' + hari + '_' + i;
+      if (terjual[uid]) continue;
+      var thPick = +(pick.tahunRilis || pick.tahun || 2023);
+      var usiaThn = Math.max(0, thnK - thPick);
+      var fakUsia = Math.max(0.45, 1 - usiaThn * 0.085);
+      var hargaSec = Math.max(450000, Math.round(pick.harga * kd.faktor * fakUsia * varHarga / 25000) * 25000);
       unit.push({
-        uid: 'sec_' + minggu + '_' + i + '_' + pick.id,
-        id: pick.id, nama: pick.nama, merek: pick.merek, tahun: pick.tahun || 2023,
-        ram: pick.ram, storage: pick.storage, mah: pick.mah, watt: pick.watt, port: portHp(pick),
-        kondisi: kd.label, bh: bh, kelengkapan: kd.kelengkapan, harga: hargaSec
+        uid: uid,
+        id: pick.id,
+        nama: pick.nama,
+        merek: merekHpResmi(pick),
+        tahun: thPick,
+        ram: pick.ram,
+        storage: pick.storage,
+        mah: pick.mah,
+        watt: pick.watt,
+        port: portHp(pick),
+        kondisi: kd.label,
+        bh: bh,
+        penjual: pnj,
+        kelengkapan: kd.kelengkapan,
+        harga: hargaSec
       });
     }
-    S.hp.pasarSecond = { minggu: minggu, unit: unit };
     return unit;
   }
-  function beliHpSecond(S, idx, caraBayar) {
-    var list = acakPasarHpSecond(S), u = list[+idx];
-    if (!u) return 'Unit HP second sudah terjual atau tidak ditemukan.';
+  function beliHpSecond(S, uidOrIdx, caraBayar) {
+    var list = acakPasarHpSecond(S);
+    var key = String(uidOrIdx == null ? '' : uidOrIdx);
+    var u = list.filter(function (x) { return x.uid === key; })[0];
+    if (!u && /^\d+$/.test(key)) u = list[+key];
+    if (!u) return 'Unit HP bekas ini sudah terjual atau stok hari ini sudah berganti.';
     if (S.gadget && S.gadget[u.id]) return 'Kamu sudah memiliki tipe ' + u.nama + '. Jual unit lama dulu kalau mau tukar.';
-    var by = bayarBelanja(S, u.harga, 'Konter HP Second: ' + u.nama + ' (BH ' + u.bh + '%)', caraBayar || 'bank');
+    var by = bayarBelanja(S, u.harga, 'Toko HP Bekas: ' + u.nama + ' (BH ' + u.bh + '%)', caraBayar || 'bank');
     if (by !== true) return by;
     S.gadget = S.gadget || {};
     S.gadget[u.id] = { id: u.id, dibeli: S.hari, pakai: 0, hargaBeli: u.harga, bekas: true, bh: u.bh, kondisi: u.kondisi };
     S.hp.id = u.id;
     S.hp.baterai = Math.min(85, 45 + Math.floor(Math.random() * 35));
     S.hp.cas = false;
-    list.splice(+idx, 1);
+    S.hp.secondTerjual = S.hp.secondTerjual || { hari: S.hari || 0, map: {} };
+    S.hp.secondTerjual.map[u.uid] = true;
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + u.harga;
-    return { ok: true, teks: '🏪 ' + u.nama + ' Second (' + u.kondisi + ' · BH ' + u.bh + '%) dibeli ' + rp(u.harga) + '! Tanpa charger bawaan (port ' + labelPort(u.port) + ').' };
+    return { ok: true, teks: '♻️ ' + u.nama + ' Bekas (' + u.kondisi + ' · BH ' + u.bh + '% · ' + u.penjual + ') dibeli ' + rp(u.harga) + '! Port charger: ' + labelPort(u.port) + '.' };
   }
   function pbModel(id) { return (N.daftarPowerBank || []).filter(function (x) { return x.id === id; })[0]; }
   function normalisasiSemuaPb(S) {
@@ -3573,7 +3646,7 @@
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,
-    gadgetModel: gadgetModel, chargerModel: chargerModel, portHp: portHp, labelPort: labelPort, maAktifHp: maAktifHp, bhHpAktif: bhHpAktif, estimasiJamHp: estimasiJamHp, siapkanCharger: siapkanCharger, chargerAktif: chargerAktif, wattCasEfektif: wattCasEfektif, beliCharger: beliCharger, pakaiCharger: pakaiCharger, jualCharger: jualCharger, acakPasarHpSecond: acakPasarHpSecond, beliHpSecond: beliHpSecond,
+    gadgetModel: gadgetModel, BRAND_HP_RESMI: BRAND_HP_RESMI, merekHpResmi: merekHpResmi, chargerModel: chargerModel, portHp: portHp, labelPort: labelPort, maAktifHp: maAktifHp, bhHpAktif: bhHpAktif, estimasiJamHp: estimasiJamHp, siapkanCharger: siapkanCharger, chargerAktif: chargerAktif, wattCasEfektif: wattCasEfektif, beliCharger: beliCharger, pakaiCharger: pakaiCharger, jualCharger: jualCharger, acakPasarHpSecond: acakPasarHpSecond, beliHpSecond: beliHpSecond,
     pbModel: pbModel, pbDipakaiList: pbDipakaiList, pbRingkasan: pbRingkasan, pbAktifInfo: pbAktifInfo, beliPowerBank: beliPowerBank, pakaiPowerBank: pakaiPowerBank, togglePowerBank: togglePowerBank, togglePasangPbUnit: togglePasangPbUnit, toggleCasPowerBank: toggleCasPowerBank, toggleAutoCasPb: toggleAutoCasPb, nilaiJualPowerBank: nilaiJualPowerBank, jualPowerBank: jualPowerBank, casDiPangkalan: casDiPangkalan, apkModel: apkModel, hpAktif: hpAktif, adaWifi: adaWifi, pakaiKuota: pakaiKuota, toggleCasHp: toggleCasHp,
     beliPulsa: beliPulsa, beliKuota: beliKuota, toggleWifiRumah: toggleWifiRumah, infoStorageHp: infoStorageHp,
     beliGadget: beliGadget, pakaiHp: pakaiHp, nilaiJualGadget: nilaiJualGadget, jualGadget: jualGadget, instalApk: instalApk, hapusApk: hapusApk, mainGameHp: mainGameHp,

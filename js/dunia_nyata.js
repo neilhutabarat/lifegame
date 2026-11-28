@@ -813,6 +813,7 @@
     var pf = MEWAH_LIST.filter(function (x) { return x.id === R.mewah.pakaiParfum; })[0];
     if (jm) k += jm.karisma;
     if (pf) k += pf.karisma;
+    if (g.KK_HIDUP && g.KK_HIDUP.karismaFashion) k += g.KK_HIDUP.karismaFashion(S);
     var ef = g.KK_DIRI && g.KK_DIRI.efekHp ? g.KK_DIRI.efekHp(S) : null;
     if (ef) k += Math.round((ef.prestiseBonus || 0) * 60);
     if (infoBmi(S).status === 'Ideal' || infoBmi(S).status === 'Atletis') k += 10;
@@ -826,13 +827,13 @@
     if (!suka) return { ok: true, match: false, teks: '❌ Swipe kiri ' + k.nama + '.' };
     var peluang = Math.min(0.88, 0.32 + karismaTotal(S) * 0.008);
     if (Math.random() < peluang) {
-      /* Match! Otomatis masuk ke daftar teman dengan hubungan awal 42% */
+      /* Match! Masuk daftar teman dgn flag dariMeet karena lewat fitur kenalan di APK Chat */
       var sudah = (S.teman || []).some(function (t) { return t.nama === k.nama; });
       if (!sudah && g.KK_TEMAN && g.KK_TEMAN.tambah) {
         var tLahir = (KAL.tgl(S.hari).y - k.usia) + '-05-14';
-        g.KK_TEMAN.tambah(S, k.nama, k.gender, 'teman', tLahir);
+        g.KK_TEMAN.tambah(S, k.nama, k.gender, 'teman', tLahir, null, { dariMeet: true, kerja: k.kerja });
         var baru = S.teman[S.teman.length - 1];
-        if (baru) { baru.hubungan = 45; baru.perasaan = 48; baru.hb = 55; }
+        if (baru) { baru.hubungan = 45; baru.perasaan = 48; baru.hb = 55; baru.dariMeet = true; }
       }
       R.dating.matchList.unshift({ nama: k.nama, kerja: k.kerja, hari: S.hari });
       return { ok: true, match: true, teks: '💘 IT\'S A MATCH! ' + k.nama + ' (' + k.kerja + ') langsung masuk daftar Teman/Kontak! Ajak First Date sekarang!' };
