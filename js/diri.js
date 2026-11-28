@@ -30,7 +30,7 @@
   function batas(x) { return Math.max(0, Math.min(100, x)); }
 
   function siapkan(S) {
-    if (!S.diri) S.diri = { kenyang: 80, minum: 80, stamina: 90, hb: 25, kesehatan: 100, rasaBersalah: 0, hiv: false, posisi: 'kedai', bangun: 360, ketiduran: 0, sakit: null, kebalSampai: -1, hamil: null };
+    if (!S.diri) S.diri = { kenyang: 80, minum: 80, stamina: 90, hb: 25, kesehatan: 100, rasaBersalah: 0, hiv: false, posisi: 'kedai', bangun: 360, ketiduran: 0, sakit: null, kebalSampai: -1, hamil: null, hariTidurTerakhir: S.hari || 0, waktuBangunTerakhir: (S.hari || 0) * 1440 + 360, jmlPingsan: 0, polaBuruk: 0 };
     if (typeof S.diri.melek === 'number') { S.diri.stamina = Math.round(((+S.diri.stamina || 0) + S.diri.melek) / 2); }
     delete S.diri.melek; /* stamina dan melek digabung jadi satu: stamina */
     if (typeof S.diri.hb !== 'number' || isNaN(S.diri.hb)) S.diri.hb = 25;
@@ -40,6 +40,12 @@
     if (S.diri.sakit === undefined) S.diri.sakit = null;
     if (S.diri.kebalSampai == null) S.diri.kebalSampai = -1;
     if (S.diri.hamil === undefined) S.diri.hamil = null;
+    if (S.diri.hariTidurTerakhir == null) S.diri.hariTidurTerakhir = S.hari || 0;
+    if (S.diri.waktuBangunTerakhir == null) S.diri.waktuBangunTerakhir = (S.hari || 0) * 1440 + (S.menit || 360);
+    if (typeof S.diri.jmlPingsan !== 'number') S.diri.jmlPingsan = 0;
+    if (typeof S.diri.polaBuruk !== 'number') S.diri.polaBuruk = 0;
+    if (typeof S.generasiKe !== 'number') S.generasiKe = 1;
+    S.riwayatGenerasi = S.riwayatGenerasi || [];
     S.kesehatan = S.kesehatan || { obat: {}, kondom: 0, kondomGerigi: 0, kbSampai: -1, vitaminHamilSampai: -1, arvSampai: -1 };
     S.kesehatan.obat = S.kesehatan.obat || {};
     if (typeof S.kesehatan.kondom !== 'number') S.kesehatan.kondom = 0;
@@ -609,14 +615,22 @@
     /* HB bar (gairah/kedekatan pasangan) perlahan meningkat sepanjang hari */
     var lajuHb = 2.2 * (d.stamina > 45 && !d.sakit ? 1.15 : 0.65);
     d.hb = batas((d.hb || 0) + lajuHb * j);
-    /* kesehatan pemain (dipengaruhi sakit, HIV tanpa ARV, atau istirahat/makan cukup) */
+    /* kesehatan pemain (dipengaruhi sakit, HIV tanpa ARV, begadang ekstrem, kelaparan, atau istirahat/makan cukup) */
     if (typeof d.kesehatan !== 'number') d.kesehatan = 100;
+    var jamTerjagaSkrg = ((S.hari * 1440 + S.menit) - (d.waktuBangunTerakhir || (S.hari * 1440))) / 60;
     if (d.hiv && S.hari > (S.kesehatan && S.kesehatan.arvSampai || -1)) {
-      d.kesehatan = Math.max(5, d.kesehatan - 1.8 * j);
+      d.kesehatan = Math.max(0, d.kesehatan - 2.2 * j);
     } else if (d.sakit) {
-      d.kesehatan = Math.max(15, d.kesehatan - (d.sakit.berat ? 1.6 : 0.8) * j);
+      d.kesehatan = Math.max(0, d.kesehatan - (d.sakit.berat ? 2.0 : 1.0) * (kerja ? 1.5 : 1) * j);
+    } else if (d.kenyang <= 2 || d.minum <= 2) {
+      d.kesehatan = Math.max(0, d.kesehatan - (kerja ? 2.4 : 1.2) * j);
+    } else if (jamTerjagaSkrg > 22) {
+      d.kesehatan = Math.max(0, d.kesehatan - (kerja ? 2.0 : 1.0) * j);
     } else if (d.kenyang > 35 && d.minum > 35 && d.stamina > 30) {
       d.kesehatan = Math.min(100, d.kesehatan + 0.6 * j);
+    }
+    if (kerja && d.stamina <= 5) {
+      d.kesehatan = Math.max(0, d.kesehatan - 3.2 * j);
     }
     /* pasangan juga memiliki bar HB yang meningkat & bisa mengajak HB saat karakter di rumah jam >= 20.00 */
     if (S.keluarga && S.keluarga.length) {
@@ -785,8 +799,15 @@
         S.dunia.kotor = Math.max(0, S.dunia.kotor - dMenit * 0.25 * bantu.length);
       }
     }
-    if (d.stamina < 10 && Math.random() < 0.2 * j) { d.ketiduran = 30; kabar.push('Kamu ketiduran sebentar karena mengantuk berat.'); }
-    if (d.stamina < 3) { d.ketiduran = 120; kabar.push('Kamu kelelahan dan harus istirahat 2 jam.'); d.stamina = 20; }
+    if (d.kesehatan <= 0) {
+      d.memicuMeninggal = 'Pola hidup tidak sehat & mengabaikan kondisi tubuh yang kritis hingga kesehatan habis (0%).';
+    } else if (kerja && (d.stamina <= 1.5 || (d.kesehatan <= 14 && d.stamina < 20))) {
+      d.memicuPingsan = d.stamina <= 1.5
+        ? 'Memaksakan terus bekerja saat stamina sudah habis total (' + Math.round(d.stamina) + '%).'
+        : 'Memaksakan terus bekerja saat kondisi kesehatan tubuh kritis (' + Math.round(d.kesehatan) + '%).';
+    } else if (d.stamina < 8 && !kerja && Math.random() < 0.15 * j) {
+      kabar.push('⚠️ Badan sangat lelah dan mengantuk berat! Segera pulang dan tidur agar tidak pingsan.');
+    }
     /* Auto-Merokok realistis sesuai pola perokok (hanya berjalan saat bangun; banyak tidur → lebih awet, begadang → bisa 2 bks!) */
     if (S.rokok && S.rokok.pola && S.rokok.pola !== 'off' && !S.tidurAnim && j > 0) {
       var prAuto = POLA_ROKOK[S.rokok.pola];
@@ -984,11 +1005,71 @@
     var teksPs = 'Main ' + (kAktif ? kAktif.nama : 'PS') + (gAktif ? ' (' + gAktif.nama + ')' : '') + ' satu jam. Pikiran segar lagi (+' + naik + ' stamina).';
     return { ok: true, menit: 60, teks: jenis === 'ps' ? teksPs : jenis === 'tv' ? 'Nonton TV satu jam.' : 'Tidur siang satu jam.' };
   }
-  /* tidur malam: dari jam sekarang sampai jam bangun besok. Mengembalikan menit tidur */
+  /* P77 (Fase 2 - Poin 7 & 8): Tidur natural 5–9 jam tergantung sisa stamina hingga pulih,
+     aturan anti-skip hari (minimal jam 21.00 di hari yg sama, atau bebas setelah lewat jam 00.00 tanpa skip hari esoknya),
+     dan penalti "tidak fit" jika begadang parah baru tidur! */
+  function bolehTidurSekarang(S) {
+    if (!S || !S.diri) return { ok: false, alasan: 'Data karakter belum siap.' };
+    var jamSkrg = Math.floor(S.menit) % 1440;
+    var hariTerakhir = S.diri.hariTidurTerakhir != null ? S.diri.hariTidurTerakhir : -1;
+    var sudahLewatHari = S.hari > hariTerakhir;
+    if (!sudahLewatHari && jamSkrg < 1260) {
+      var jamTeks = ('0' + Math.floor(jamSkrg / 60)).slice(-2) + '.' + ('0' + (jamSkrg % 60)).slice(-2);
+      return {
+        ok: false,
+        alasan: '⏳ Belum bisa tidur di hari yang sama sebelum pukul 21.00 (sekarang pukul ' + jamTeks + '). Tidur baru bisa dilakukan mulai pukul 21.00 atau setelah lewat pukul 00.00.'
+      };
+    }
+    return { ok: true, lewatHari: sudahLewatHari, jamSekarang: jamSkrg };
+  }
   function tidur(S, menitSekarang, bangun) {
     var d = S.diri, gelisah = (d.hb || 0) >= 95;
-    var bangunEf = gelisah ? Math.min(720, bangun + 30) : bangun;
-    var lama = Math.max(60, (S.menit < 1440 ? 1440 - S.menit : -(S.menit - 1440)) + bangunEf), jam = lama / 60;
+    var jamSkrg = Math.floor(S.menit) % 1440;
+    var hariTerakhir = d.hariTidurTerakhir != null ? d.hariTidurTerakhir : -1;
+    var lewatHari = S.hari > hariTerakhir;
+    var stAwal = Math.max(0, Math.min(100, d.stamina || 0));
+
+    /* Durasi tidur natural manusia: 5 s/d 9 jam tergantung sisa stamina (stamina 100% -> 5 jam, stamina 0% -> 9 jam) */
+    var jamDasar = 5 + ((100 - stAwal) / 100) * 4;
+    if (gelisah) jamDasar = Math.min(9, jamDasar + 0.4);
+    var jam = Math.max(5, Math.min(9, Math.round(jamDasar * 10) / 10));
+    var lama = Math.round(jam * 60); /* 300 .. 540 menit */
+
+    /* Cek berapa lama karakter sudah terjaga & apakah begadang ekstrem (tidur setelah lewat jam 04.00 pagi / bertahan hingga siang/sore/malam misal jam 19) */
+    var jamTerjaga = ((S.hari * 1440 + S.menit) - (d.waktuBangunTerakhir || (S.hari * 1440))) / 60;
+    var begadangParah = (lewatHari && jamSkrg >= 240 && jamSkrg < 1260) || jamTerjaga > 21;
+    var tidakFit = false, batasStaminaFit = 100;
+    if (begadangParah) {
+      tidakFit = true;
+      /* Semakin lama begadang (misal bertahan sampai jam 19 baru tidur), kondisi badan dianggap tidak fit sehingga saat bangun stamina tidak bisa full 100% */
+      var penaltiBegadang = (lewatHari && jamSkrg >= 240 && jamSkrg < 1260)
+        ? Math.min(34, Math.round(14 + ((jamSkrg - 240) / 60) * 1.35))
+        : Math.min(30, Math.round(12 + Math.max(0, jamTerjaga - 20) * 1.5));
+      batasStaminaFit = Math.max(62, Math.min(84, 100 - penaltiBegadang));
+      d.kesehatan = Math.max(10, (d.kesehatan == null ? 100 : d.kesehatan) - (jamSkrg >= 720 ? 8 : 5));
+      d.polaBuruk = (d.polaBuruk || 0) + 1;
+    }
+
+    /* Hitung waktu bangun & apakah melewati pergantian hari:
+       - Jika tidur normal malam (pukul 21.00-23.59): melewati jam 00.00 -> ganti ke hari esoknya (gantiHariTidur = true).
+       - Jika sudah lewat jam 00.00 (lewatHari = true, bertahan hingga pukul berapapun misal dini hari, siang, atau jam 19):
+         TIDAK skip ke hari esoknya (gantiHariTidur = false)! */
+    var gantiHariTidur = false, bangunEf = 360;
+    if (lewatHari && jamSkrg < 1260) {
+      gantiHariTidur = false;
+      bangunEf = Math.min(1435, jamSkrg + lama);
+    } else {
+      /* Tidur mulai pukul 21.00 - 23.59 */
+      var totalMnt = jamSkrg + lama;
+      if (totalMnt >= 1440) {
+        gantiHariTidur = true;
+        bangunEf = totalMnt - 1440;
+      } else {
+        gantiHariTidur = false;
+        bangunEf = totalMnt;
+      }
+    }
+
     var ac = !S.rumah.padam && adaAc(S);
     listrikKos(S, lama, true);
     catatPakai(S, 'springbed'); catatPakai(S, 'kipas'); catatPakai(S, 'ac');
@@ -1035,10 +1116,20 @@
     var spb = adaSpringbed(S), bnsH = (S.rumah && S.rumah.jenis !== 'rumah') ? (hunianInfo(S.rumah && S.rumah.hunianId).bonusTidur || 1) : 0.92;
     var bonusL2 = (S.eko && S.eko.renovasi && S.eko.renovasi.lantai2) ? 1.12 : 1;
     var penBurn = (S.eko && S.eko.burnout) ? 0.75 : 1;
-    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * bonusL2 * penBurn * (punya(S, 'airpurifier') ? 1.05 : 1) * (gelisah ? 0.8 : 1);
-    d.stamina = batas(d.stamina + jam * 14 * mutu);
+    var mutu = (ac && !S.rumah.padam ? 1 : punya(S, 'kipas') && !S.rumah.padam ? 0.85 : 0.72) * (spb ? 1.12 : 1) * bnsH * bonusL2 * penBurn * (punya(S, 'airpurifier') ? 1.05 : 1) * (gelisah ? 0.88 : 1);
+    /* Tidur natural 5-9 jam memulihkan stamina hingga 100% (kecuali jika kondisi dianggap tidak fit karena begadang ekstrem / HB gelisah) */
+    if (tidakFit) {
+      d.stamina = batasStaminaFit;
+    } else if (gelisah) {
+      d.stamina = Math.max(stAwal, 92);
+    } else {
+      d.stamina = 100;
+      if (!d.sakit) d.kesehatan = Math.min(100, (d.kesehatan == null ? 100 : d.kesehatan) + 4);
+      d.polaBuruk = Math.max(0, (d.polaBuruk || 0) - 1);
+    }
+    d.bangun = bangunEf;
     d.kenyang = batas(d.kenyang - jam * 2); d.minum = batas(d.minum - jam * 3);
-    return { jam: jam, ac: ac, mutu: mutu, gelisah: gelisah, bangunEf: bangunEf };
+    return { jam: jam, lama: lama, ac: ac, mutu: mutu, gelisah: gelisah, tidakFit: tidakFit, batasStaminaFit: batasStaminaFit, bangunEf: bangunEf, gantiHariTidur: gantiHariTidur };
   }
 
   /* ---------- isi kos, toko game & jual barang ---------- */
@@ -2069,18 +2160,41 @@
     { id: 'energi', nama: 'Minuman energi (Extra Joss)', harga: 7000, stamina: 30, minum: 6 },
     { id: 'energikaleng', nama: 'Energy drink kaleng', harga: 12000, stamina: 40, minum: 8 }
   ];
-  function minumEnergi(S, id) {
+  function minumEnergi(S, id, otomatis) {
     var x = ENERGI.filter(function (e) { return e.id === id; })[0]; if (!x) return 'Pilihan tidak dikenal.';
     var d = S.diri;
-    var byE = g.KK_UANG.bayarPilihan(S, x.harga, x.nama, S._metodeBayar || 'dompet');
-    if (byE !== true) return byE;
-    S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
+    if (!otomatis) {
+      var byE = g.KK_UANG.bayarPilihan(S, x.harga, x.nama, S._metodeBayar || 'dompet');
+      if (byE !== true) return byE;
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
+    }
     d.stamina = batas(d.stamina + x.stamina); d.minum = batas(d.minum + x.minum);
     if (d.energiHari !== S.hari) { d.energiHari = S.hari; d.energiJml = 0; }
-    d.energiJml++;
-    var teks = x.nama + ' ' + rp(x.harga) + '. Stamina +' + x.stamina + '.';
-    if (d.energiJml > 3) { d.kesehatan = Math.max(5, (d.kesehatan == null ? 100 : d.kesehatan) - 3); teks += ' Terlalu banyak kafein, kesehatan turun.'; }
-    return { ok: true, teks: teks };
+    d.energiJml = (d.energiJml || 0) + 1;
+    var teks = x.nama + ' ' + rp(x.harga) + ' (ke-' + d.energiJml + ' hari ini). Stamina +' + x.stamina + '.';
+    /* P77 (Poin 8): Jika terus menekan minuman penambah stamina, merusak kesehatan hingga bisa pingsan / meninggal! */
+    if (d.energiJml === 2) {
+      d.kesehatan = Math.max(0, (d.kesehatan == null ? 100 : d.kesehatan) - 5);
+      teks += ' ⚠️ Konsumsi ke-2 hari ini: jantung mulai berdebar (Kesehatan −5% → ' + Math.round(d.kesehatan) + '%).';
+    } else if (d.energiJml === 3) {
+      d.kesehatan = Math.max(0, (d.kesehatan == null ? 100 : d.kesehatan) - 12);
+      d.polaBuruk = (d.polaBuruk || 0) + 1;
+      teks += ' ⚠️ BAHAYA! Konsumsi ke-3 hari ini merusak kesehatanmu (Kesehatan −12% → ' + Math.round(d.kesehatan) + '%).';
+    } else if (d.energiJml >= 4) {
+      var kurangSehat = 16 + (d.energiJml - 4) * 5;
+      d.kesehatan = Math.max(0, (d.kesehatan == null ? 100 : d.kesehatan) - kurangSehat);
+      d.polaBuruk = (d.polaBuruk || 0) + 2;
+      teks += ' 🚨 OVERDOSIS KAFEIN/ENERGI (' + d.energiJml + '× hari ini)! Kesehatan anjlok −' + kurangSehat + '% → ' + Math.round(d.kesehatan) + '%!';
+      if (!d.sakit && Math.random() < 0.45) {
+        d.sakit = { id: 'tifus', nama: 'Kelelahan Akut & Gangguan Jantung/Lambung', berat: true, sampai: S.hari + 4 };
+      }
+    }
+    if (d.kesehatan <= 0) {
+      d.memicuMeninggal = 'Overdosis minuman penambah stamina (' + d.energiJml + '× dalam sehari) & pola hidup tidak sehat hingga gagal jantung.';
+    } else if (d.energiJml >= 4 && d.kesehatan <= 18) {
+      d.memicuPingsan = 'Tubuh kolaps setelah memaksakan minum penambah stamina berulang-ulang (' + d.energiJml + '× hari ini) saat kesehatan kritis!';
+    }
+    return { ok: true, teks: teks, bahaya: d.energiJml >= 2 };
   }
   /* meredakan bar HB sendiri: hanya mengurangi sebagian */
   function meTime(S) {
@@ -2716,13 +2830,16 @@
       }
       S.penghasilanBulanIni = 0;
     }
-    /* kondisi kritis: otomatis dilarikan ke IGD Rumah Sakit */
-    if ((S.diri.kesehatan != null && S.diri.kesehatan <= 15) || (S.diri.sakit && S.diri.sakit.berat && S.diri.kesehatan <= 30)) {
+    /* kondisi kritis saat ganti hari: jika kesehatan <= 0 maka meninggal, jika <= 15 dilarikan ke IGD Rumah Sakit */
+    if (S.diri.kesehatan != null && S.diri.kesehatan <= 0) {
+      S.diri.memicuMeninggal = 'Penyakit berat / pola hidup tidak sehat yang tidak diobati hingga kesehatan habis (0%).';
+    } else if ((S.diri.kesehatan != null && S.diri.kesehatan <= 15) || (S.diri.sakit && S.diri.sakit.berat && S.diri.kesehatan <= 25)) {
       var biayaIgd = hargaRs(S, 'opname');
       var bpDar = S.kesehatan && S.kesehatan.bpjs;
       if (S.bank.saldo >= biayaIgd) { S.bank.saldo -= biayaIgd; S.bank.mutasi.unshift({ n: nBaru, ket: 'Darurat Masuk RS' + (bpDar && bpDar.aktif ? ' (BPJS)' : ' (Umum)'), jml: -biayaIgd }); }
       else S.uang.dompet = Math.max(0, (S.uang.dompet || 0) - biayaIgd);
-      S.diri.sakit = null; S.diri.kesehatan = 75; S.diri.stamina = 70;
+      S.diri.sakit = null; S.diri.kesehatan = 65; S.diri.stamina = 65;
+      S.diri.jmlPingsan = (S.diri.jmlPingsan || 0) + 1;
       kabar.unshift('🚑 DARURAT! Kondisimu drop & kamu dilarikan ke Rumah Sakit! Biaya perawatan ' + rp(biayaIgd) + (bpDar && bpDar.aktif ? ' (ditanggung BPJS Kelas ' + bpDar.kelas + ')' : ' (tarif Umum — aktifkan BPJS agar jauh lebih murah!)') + '.');
     }
     return kabar;
@@ -2960,16 +3077,20 @@
   function menginapLuar(S, id) {
     var x = PENGINAPAN_LUAR.filter(function (p) { return p.id === id; })[0];
     if (!x) return 'Pilihan penginapan tidak ditemukan.';
+    var cekT = bolehTidurSekarang(S);
+    if (!cekT.ok) return cekT.alasan;
     if ((S.uang.dompet || 0) >= x.harga) { S.uang.dompet -= x.harga; }
     else if (S.bank.saldo >= x.harga) { S.bank.saldo -= x.harga; S.bank.mutasi.unshift({ n: S.hari, ket: 'Menginap di ' + x.nama, jml: -x.harga }); }
     else return 'Uang tidak cukup untuk ' + x.nama + ' (' + rp(x.harga) + ').';
     S.hariIni.pribadi = (S.hariIni.pribadi || 0) + x.harga;
+    var stAwal = Math.max(0, Math.min(100, S.diri.stamina || 0));
+    var jamNatural = Math.max(5, Math.min(9, Math.round((5 + ((100 - stAwal) / 100) * 4) * 10) / 10));
     S.diri.stamina = Math.min(100, Math.max(S.diri.stamina, x.stamina));
     S.diri.kesehatan = Math.min(100, (S.diri.kesehatan == null ? 100 : S.diri.kesehatan) + x.sehat);
     if (x.bersalah) S.diri.rasaBersalah = Math.max(0, (S.diri.rasaBersalah || 0) - x.bersalah);
     if (x.kebal) S.diri.kebalSampai = Math.max(S.diri.kebalSampai || -1, S.hari + x.kebal);
     if (x.harga >= 350000) { S.diri.kenyang = Math.min(100, S.diri.kenyang + 35); S.diri.minum = Math.min(100, S.diri.minum + 35); }
-    return { ok: true, menit: x.jam * 60, teks: 'Menginap di ' + x.nama + ' (' + rp(x.harga) + ', ' + x.jam + ' jam). Stamina ' + Math.round(S.diri.stamina) + '%, kesehatan ' + Math.round(S.diri.kesehatan) + '%!' };
+    return { ok: true, menit: Math.round(jamNatural * 60), jam: jamNatural, lewatHari: cekT.lewatHari, teks: 'Menginap di ' + x.nama + ' (' + rp(x.harga) + ', tidur ' + String(jamNatural).replace('.', ',') + ' jam). Stamina ' + Math.round(S.diri.stamina) + '%, kesehatan ' + Math.round(S.diri.kesehatan) + '%!' };
   }
   /* ---------- BPJS Kesehatan (Kelas 1, 2, 3 asli) & Masuk Rumah Sakit ---------- */
   var BPJS_KELAS = {
@@ -3315,11 +3436,140 @@
     var di = namaTempat ? (' di ' + namaTempat) : '';
     return { ok: true, menit: mnt, teks: '🙏 Selesai ' + (namaIbadah || 'beribadah') + di + ' (' + mnt + ' mnt). Hati tenang, stamina & kesehatan pulih.' };
   }
+  /* ---------- P77 (Fase 2 - Poin 8): Sistem Suksesi Generasi Tanpa Akhir (Meninggal -> Pasangan -> Anak >= 18 Tahun / Menikah Lagi / Game Over) ---------- */
+  function daftarAnak(S) {
+    return (S.keluarga || []).filter(function (kl) { return kl && kl.peran === 'anak'; });
+  }
+  function anakDewasaTerdekat(S) {
+    var list = daftarAnak(S).filter(function (a) { return KAL.usia(S.hari, a.tglLahir) >= 18; });
+    list.sort(function (a, b) { return KAL.usia(S.hari, b.tglLahir) - KAL.usia(S.hari, a.tglLahir); });
+    return list[0] || null;
+  }
+  function beralihKePewaris(S, pewaris, jenisPewaris, sebabWafat, masihHidup) {
+    var namaLama = S.namaPemain || 'Driver';
+    var genderLama = (S.profil && S.profil.gender) || 'cewek';
+    var usiaLama = KAL.usia(S.hari, S.profil && S.profil.tglLahir);
+    var genLama = S.generasiKe || 1;
+    S.riwayatGenerasi = S.riwayatGenerasi || [];
+    S.riwayatGenerasi.unshift({
+      generasi: genLama,
+      nama: namaLama,
+      gender: genderLama,
+      usia: usiaLama,
+      hari: S.hari,
+      status: masihHidup ? 'Pensiun & Meneruskan ke Anak' : 'Meninggal Dunia',
+      sebab: sebabWafat || (masihHidup ? 'Melanjutkan tongkat estafet keluarga kepada anak dewasa (18+)' : 'Pola hidup tidak sehat'),
+      penerus: pewaris.nama,
+      peranPenerus: jenisPewaris === 'pasangan' ? labelPeran(S, pewaris) : 'Anak Kandung'
+    });
+    S.generasiKe = genLama + 1;
+
+    /* Wariskan dana pribadi pasangan jika pewaris adalah pasangan */
+    var tambahanDana = (pewaris.dompet || 0) + (pewaris.tabungan || 0);
+    if (tambahanDana > 0 && S.bank) {
+      S.bank.saldo = (S.bank.saldo || 0) + tambahanDana;
+      S.bank.mutasi = S.bank.mutasi || [];
+      S.bank.mutasi.unshift({ n: S.hari, ket: 'Dana tabungan ' + pewaris.nama + ' (Penerus Generasi ke-' + S.generasiKe + ')', jml: tambahanDana });
+    }
+
+    /* Terapkan identitas, profil, dan tampilan pewaris sebagai karakter utama baru */
+    var gBaru = pewaris.gender === 'cowok' ? 'cowok' : 'cewek';
+    S.namaPemain = pewaris.nama;
+    S.profil = S.profil || {};
+    S.profil.gender = gBaru;
+    S.profil.tglLahir = pewaris.tglLahir || (jenisPewaris === 'anak' ? '2006-05-15' : '2000-05-15');
+    if (pewaris.tampilan) S.profil.tampilan = pewaris.tampilan;
+    S.tampilan = S.profil.tampilan;
+
+    /* Hapus pewaris dari daftar anggota S.keluarga karena kini menjadi karakter utama */
+    S.keluarga = (S.keluarga || []).filter(function (kl) { return kl.id !== pewaris.id; });
+
+    if (jenisPewaris === 'pasangan') {
+      /* Pasangan yang ditinggal wafat kini berstatus Janda/Duda (single parent) dan bebas membesarkan anak hingga 18 thn atau menikah lagi */
+      S.keluarga = S.keluarga.filter(function (kl) { return !adalahPasangan(kl); });
+    } else if (jenisPewaris === 'anak') {
+      /* Anak dewasa menjadi karakter utama; anggota keluarga lain yang tersisa (adik) tetap di rumah, pasangan orangtua dihapus dari slot istri/suami pemain */
+      S.keluarga = S.keluarga.filter(function (kl) { return !adalahPasangan(kl); });
+    }
+
+    /* Pulihkan kondisi fisik karakter penerus yang baru memulai gilirannya */
+    S.diri.kenyang = 85;
+    S.diri.minum = 85;
+    S.diri.stamina = 95;
+    S.diri.kesehatan = 100;
+    S.diri.hb = 15;
+    S.diri.rasaBersalah = 0;
+    S.diri.sakit = null;
+    S.diri.hiv = false;
+    S.diri.hamil = (gBaru === 'cewek' && pewaris.hamil) ? pewaris.hamil : null;
+    S.diri.posisi = 'kos';
+    S.diri.energiJml = 0;
+    S.diri.jmlPingsan = 0;
+    S.diri.polaBuruk = 0;
+    S.diri.memicuPingsan = null;
+    S.diri.memicuMeninggal = null;
+    S.diri.hariTidurTerakhir = S.hari;
+    S.diri.waktuBangunTerakhir = S.hari * 1440 + S.menit;
+
+    var anakSisa = daftarAnak(S);
+    var usiaPewaris = KAL.usia(S.hari, S.profil.tglLahir);
+    return {
+      ok: true,
+      gameOver: false,
+      generasiKe: S.generasiKe,
+      namaLama: namaLama,
+      usiaLama: usiaLama,
+      pewarisNama: S.namaPemain,
+      pewarisGender: gBaru,
+      pewarisUsia: usiaPewaris,
+      jenisPewaris: jenisPewaris,
+      anakCount: anakSisa.length,
+      teks: masihHidup
+        ? ('👑 Tongkat estafet keluarga resmi diteruskan kepada anakmu: ' + S.namaPemain + ' (' + usiaPewaris + ' tahun, Generasi ke-' + S.generasiKe + ')! Seluruh harta, kendaraan, rumah, dan usaha kini dikelola oleh ' + S.namaPemain + '.')
+        : ('🕊️ ' + namaLama + ' (' + usiaLama + ' thn) telah meninggal dunia karena ' + (sebabWafat || 'pola hidup tidak sehat') + '. Perjuangan hidup & seluruh aset keluarga kini diteruskan oleh ' + (jenisPewaris === 'pasangan' ? ('pasangannya: ' + S.namaPemain + ' (' + usiaPewaris + ' thn). Rawat anak hingga berusia 18 tahun untuk meneruskan generasi, atau menikah lagi!') : ('anak kandungnya yang telah dewasa: ' + S.namaPemain + ' (' + usiaPewaris + ' thn, Generasi ke-' + S.generasiKe + ')!')))
+    };
+  }
+  function teruskanKeAnakManual(S, anakId) {
+    var ank = (S.keluarga || []).filter(function (x) { return x.id === anakId && x.peran === 'anak'; })[0];
+    if (!ank) return 'Anak tidak ditemukan.';
+    var us = KAL.usia(S.hari, ank.tglLahir);
+    if (us < 18) return ank.nama + ' masih berusia ' + us + ' tahun. Permainan baru bisa diteruskan ke anak setelah anak berusia minimal 18 tahun!';
+    return beralihKePewaris(S, ank, 'anak', null, true);
+  }
+  function prosesKematianPemain(S, sebab) {
+    var namaLama = S.namaPemain || 'Driver';
+    var usiaLama = KAL.usia(S.hari, S.profil && S.profil.tglLahir);
+    /* 1. Jika memiliki pasangan sah (suami/istri — termasuk jika sudah menikah lagi), permainan diteruskan ke pasangannya! */
+    var pas = pasanganAktif(S);
+    if (pas) {
+      return beralihKePewaris(S, pas, 'pasangan', sebab, false);
+    }
+    /* 2. Jika pasangan tetap sendiri (tidak menikah lagi) dan meninggal: cek apakah ada anak yang sudah berusia >= 18 tahun */
+    var ankDewasa = anakDewasaTerdekat(S);
+    if (ankDewasa) {
+      return beralihKePewaris(S, ankDewasa, 'anak', sebab, false);
+    }
+    /* 3. Jika tidak ada pasangan dan anak belum berusia 18 tahun (atau belum punya anak) -> GAME OVER! */
+    var anakBelum18 = daftarAnak(S);
+    return {
+      ok: true,
+      gameOver: true,
+      namaLama: namaLama,
+      usiaLama: usiaLama,
+      generasiKe: S.generasiKe || 1,
+      sebab: sebab || 'Pola hidup tidak sehat & kelelahan ekstrem hingga kesehatan 0%.',
+      anakBelum18: anakBelum18.map(function (a) { return a.nama + ' (' + KAL.usia(S.hari, a.tglLahir) + ' thn)'; }),
+      alasanGameOver: anakBelum18.length
+        ? ('Kamu meninggal dunia tanpa pasangan pendamping, sementara anakmu (' + anakBelum18.map(function (a) { return a.nama + ' · ' + KAL.usia(S.hari, a.tglLahir) + ' thn'; }).join(', ') + ') belum berusia 18 tahun sehingga belum bisa meneruskan permainan.')
+        : 'Kamu meninggal dunia dalam keadaan sendiri tanpa pasangan maupun anak berusia 18 tahun yang dapat meneruskan perjuanganmu.'
+    };
+  }
+
   /* pemain sedang melayani: stamina rendah atau sakit membuat lambat dan kurang ramah */
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
 
-  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, POLA_ROKOK: POLA_ROKOK, aturPolaRokok: aturPolaRokok, setRokokTetap: setRokokTetap, toggleAutoBeliRokok: toggleAutoBeliRokok, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, efekHp: efekHp, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, tidur: tidur,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, POLA_ROKOK: POLA_ROKOK, aturPolaRokok: aturPolaRokok, setRokokTetap: setRokokTetap, toggleAutoBeliRokok: toggleAutoBeliRokok, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, efekHp: efekHp, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, bolehTidurSekarang: bolehTidurSekarang, tidur: tidur, daftarAnak: daftarAnak, anakDewasaTerdekat: anakDewasaTerdekat, teruskanKeAnakManual: teruskanKeAnakManual, prosesKematianPemain: prosesKematianPemain,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,

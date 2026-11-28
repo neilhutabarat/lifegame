@@ -452,7 +452,8 @@
     var kFoto = gPemain + '|' + (S.namaPemain || '') + '|' + warnaBajuHud + '|' + (tpP ? [tpP.kulit, tpP.rambut, tpP.warnaRambut, tpP.mata, tpP.mulut].join(',') : '');
     var hf = $('h-foto'); if (hf && hf.dataset.k !== kFoto) { hf.dataset.k = kFoto; hf.innerHTML = fotoWajah(srcPemain(), 36, null, S.namaPemain, gPemain, uPemain, null, tpP, warnaBajuHud).replace(/^<span[^>]*>|<\/span>$/g, ''); }
     var thn = KAL.tgl(S.hari).y;
-    $('h-tahun').textContent = thn + ' · Hari ke-' + S.hariKe + ' · ' + uPemain + ' thn';
+    var genHud = (S.generasiKe && S.generasiKe > 1) ? (' · Gen ' + S.generasiKe) : '';
+    $('h-tahun').textContent = thn + ' · Hari ke-' + S.hariKe + ' · ' + uPemain + ' thn' + genHud;
     var ramadan = KAL.apakahRamadan(S.hari);
     var st = $('h-status');
     if (st) { st.textContent = ''; st.hidden = true; }
@@ -692,8 +693,49 @@
       app.karierTab || '', app.kuliahJenjang || '', app.kuliahKat || '', app.kuliahMode || '', app.mallTab || '', app.hobiTab || '', app.rokokKat || '', app.tahunHp || '', app.sosmedTab || '', app.chatTab || '', app.chargerPort || '', app.duniaTab || '', app.petaCara || '', app.realTab || ''
     ].join('|');
   }
-  var waktuBukaLembar = 0;
+  var waktuBukaLembar = 0, _navRiwayat = [];
+  function pastikanHistoryGuard() {
+    try {
+      if (window.history && window.history.pushState) {
+        if (!window.history.state || !window.history.state.kkGuard) {
+          window.history.pushState({ kkGuard: true, t: Date.now() }, '');
+        }
+      }
+    } catch (eH) {}
+  }
+  function catatNavSekarang() {
+    if (!lembar) return null;
+    return {
+      lembar: lembar,
+      nama: app.nama || '',
+      tab: app.tab || '',
+      bankTab: app.bankTab || '',
+      tokoMenu: app.tokoMenu || '',
+      tokoTab: app.tokoTab || '',
+      merekGadget: app.merekGadget || '',
+      gadgetTab: app.gadgetTab || '',
+      apotekTab: app.apotekTab || '',
+      kelTab: app.kelTab || '',
+      temanDetailId: app.temanDetailId || '',
+      karierTab: app.karierTab || '',
+      mallTab: app.mallTab || '',
+      duniaTab: app.duniaTab || '',
+      realTab: app.realTab || ''
+    };
+  }
   function bukaLembar(nama, html) {
+    if (lembar && lembar !== 'gameOver') {
+      var snapLama = catatNavSekarang();
+      var snapKunci = kunciLembar(nama);
+      if (snapLama && (lembar !== nama || snapKunci !== lembarKunci)) {
+        var topNav = _navRiwayat[_navRiwayat.length - 1];
+        if (!topNav || topNav.lembar !== snapLama.lembar || topNav.nama !== snapLama.nama || topNav.tokoMenu !== snapLama.tokoMenu || topNav.merekGadget !== snapLama.merekGadget || topNav.temanDetailId !== snapLama.temanDetailId) {
+          _navRiwayat.push(snapLama);
+          if (_navRiwayat.length > 18) _navRiwayat.shift();
+        }
+      }
+    }
+    pastikanHistoryGuard();
     waktuBukaLembar = Date.now();
     aksiCepatBuka = false;
     if ($('kos-aksi')) $('kos-aksi').hidden = true;
@@ -713,7 +755,55 @@
     var cvPeta = document.getElementById('peta-mini-cv');
     if (cvPeta && REAL && REAL.gambarPetaMini) REAL.gambarPetaMini(cvPeta, S);
   }
-  function tutupLembar() { lembar = null; lembarKunci = ''; $('lembar').hidden = true; if (layar === 'main' && S) perbaruiAksi(); }
+  function tutupLembar() { _navRiwayat = []; lembar = null; lembarKunci = ''; $('lembar').hidden = true; if (layar === 'main' && S) perbaruiAksi(); }
+  /* P77 (Fase 2 - Poin 15): Intersepsi Tombol Kembali / Swipe Back di HP agar mengembalikan tampilan di dalam APK, tidak keluar game! */
+  function kembaliNavigasiInternal() {
+    if (lembar === 'gameOver') return true;
+    if (konfirmBayarTmp) {
+      var kbB = konfirmBayarTmp;
+      konfirmBayarTmp = null;
+      if (kbB.lembarAsal === 'hp' && kbB.appAsal) { bukaHP(kbB.appAsal); return true; }
+      tutupLembar();
+      return true;
+    }
+    if (!$('lembar').hidden && lembar) {
+      if (lembar === 'petaPilihJalur') { bukaHP('peta'); return true; }
+      if (lembar === 'travelDesa') { bukaTujuanTravel(); return true; }
+      if (lembar === 'hbLokasi') { bukaPilihPartnerHb(); return true; }
+      if (lembar === 'hudHbPilih') { popupHb(); return true; }
+      if (lembar === 'hadiah') { bukaHP(app.hadiahTargetJenis === 'teman' ? 'teman' : 'keluarga'); return true; }
+      if (lembar === 'hp') {
+        if (app.nama === 'teman' && app.temanDetailId) { app.temanDetailId = null; bukaHP('teman'); return true; }
+        if (app.nama === 'toko' && app.merekGadget) { app.merekGadget = ''; bukaHP('toko'); return true; }
+        if (app.nama === 'toko' && app.tokoMenu && app.tokoMenu !== 'utama') { app.tokoMenu = 'utama'; bukaHP('toko'); return true; }
+        if (app.nama === 'kk' || app.nama === 'paylater' || app.nama === 'kur') { bukaHP('bank'); return true; }
+        if (app.nama === 'kredit') { bukaHP('dealerMotor'); return true; }
+        if (app.nama === 'kreditMobil') { bukaHP('dealerMobil'); return true; }
+        if (app.nama === 'rentalps') { bukaHP('karier'); return true; }
+        if (app.nama === 'pasarpokok') { bukaHP('makan'); return true; }
+        if (app.nama && app.nama !== 'beranda') { app.pesan = ''; bukaHP('beranda'); return true; }
+        tutupLembar();
+        return true;
+      }
+      tutupLembar();
+      return true;
+    }
+    if (R) { tutupRacik(); return true; }
+    if (aksiCepatBuka) { aksiCepatBuka = false; kosLainnya = false; perbaruiAksi(); return true; }
+    if (layar !== 'main' && layar !== 'awal') {
+      if (layar === 'bank') tampil(kotaDipilih ? 'qris' : 'awal');
+      else if (layar === 'qris') tampil(kotaDipilih ? (modeDriver ? 'hunian' : 'lokasi') : 'awal');
+      else if (layar === 'hunian' || layar === 'lokasi') tampil('kota');
+      else if (layar === 'kota') tampil('karakter');
+      else if (layar === 'karakter') tampil('awal');
+      return true;
+    }
+    if (layar === 'main' && S) {
+      toast('📱 Kamu sudah berada di tampilan utama permainan.', 1600);
+      return true;
+    }
+    return false;
+  }
 
   function kepala(judul, sub, kiri, kanan) {
     return '<div class="kepala-lembar">' + (kiri || '') + '<div style="flex:1;min-width:0"><h2>' + esc(judul) + '</h2>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div>' +
@@ -3142,6 +3232,8 @@
             (isPas || isIpar || usia >= 17 ? barHbHtml(kl.hb == null ? 30 : kl.hb) : '') +
             (kl.ketahuan ? '<div class="kartu-pesanan" style="margin-top:4px;background:rgba(200,40,60,.12)"><b>Ketahuan bersama ' + esc(kl.ketahuan.dengan) + ' (' + (kl.ketahuan.tempat === 'hotel' ? 'hotel' : 'rumah') + ').</b><div class="chip-baris"><button type="button" class="chip-tombol" data-aksi="konfrontasi:' + kl.id + '|maaf">Maafkan</button><button type="button" class="chip-tombol bahaya-kecil" data-aksi="konfrontasi:' + kl.id + '|cerai">Ceraikan</button></div></div>' : '') +
             '<div class="chip-baris" style="margin-top:4px">' + tombolKontak +
+            (kl.peran === 'anak' && usia >= 18 ? '<button type="button" class="chip-tombol pilih" style="background:#d97706;color:#fff" data-aksi="teruskanAnak:' + kl.id + '">👑 Teruskan ke ' + esc(kl.nama.split(' ')[0]) + ' (' + usia + ' thn)</button>' : '') +
+            (kl.peran === 'anak' && usia < 18 ? '<span class="ki-tag">⏳ Penerus (18 thn · ' + (18 - usia) + ' thn lagi)</span>' : '') +
             '<button type="button" class="chip-tombol pilih" data-aksi="bukaHadiah:keluarga|' + kl.id + '">🎁 Hadiah</button>' +
             '<button type="button" class="chip-tombol" data-aksi="bayarKeb:' + kl.id + '|' + sumberB + '">💸 Kebutuhan 500rb</button>' +
             (isPas && TEMAN.sedangKeluar(kl, S) && kl.keluar.alasan !== 'kerja' ? '<button type="button" class="chip-tombol pilih" data-aksi="suruhPulang:' + kl.id + '">Suruh pulang</button>' : '') +
@@ -4204,6 +4296,15 @@
       var rcr = DIRI.ceraiPasangan(S, nilai, 'Keputusan perceraian');
       hasilAksi(rcr && rcr.ok ? true : rcr, rcr && rcr.ok ? rcr.teks : '');
     }
+    else if (nama === 'teruskanAnak') {
+      var rta = DIRI.teruskanKeAnakManual ? DIRI.teruskanKeAnakManual(S, nilai) : 'Fitur belum siap.';
+      if (rta && rta.ok) {
+        sinkronTampilan();
+        simpan(); perbaruiHUD(true); perbaruiAksi();
+        return bukaModalSuksesiGenerasi(rta, true);
+      }
+      hasilAksi(rta);
+    }
     else if (nama === 'bayarNafkah') {
       var nomNf = nilai === 'input' ? ($('in-nafkah') ? +$('in-nafkah').value : 0) : +nilai;
       var rnf = DIRI.bayarNafkah(S, nomNf);
@@ -4236,7 +4337,20 @@
     }
     else if (nama === 'inapLuar') {
       var rin = DIRI.menginapLuar(S, nilai);
-      if (rin && rin.ok) { tutupLembar(); gelapSebentar(); lompatWaktu(rin.menit); cekGantiHari(); simpan(); perbaruiHUD(true); perbaruiAksi(); toast(rin.teks, 3600); return; }
+      if (rin && rin.ok) {
+        tutupLembar(); gelapSebentar();
+        var jamInapSkrg = Math.floor(S.menit) % 1440;
+        if (rin.lewatHari && jamInapSkrg < 1260) {
+          S.menit = Math.min(1435, jamInapSkrg + rin.menit);
+        } else if (jamInapSkrg + rin.menit >= 1440) {
+          besok((jamInapSkrg + rin.menit) - 1440);
+        } else {
+          S.menit = jamInapSkrg + rin.menit;
+        }
+        S.diri.hariTidurTerakhir = S.hari;
+        S.diri.waktuBangunTerakhir = S.hari * 1440 + S.menit;
+        simpan(); perbaruiHUD(true); perbaruiAksi(); toast(rin.teks, 3600); return;
+      }
       else { toast(rin || 'Gagal menginap.', 2600); return; }
     }
     else if (nama === 'kirimPesanKel') {
@@ -5652,30 +5766,41 @@
       '<div class="cat-strip"><button type="button" data-app="kastravel">💼 Kas Travel</button><button type="button" data-app="qriskaryawan">📲 QRIS Supir</button><button type="button" data-vvip="popup">🔒 Lv 5 VVIP</button></div>';
   }
   function tidurMalam() {
-    /* P75.1: Anti-skip hari — tidur malam hanya boleh mulai pukul 21.00 (1260), ATAU jika sudah lewat tengah malam (<09.00, 540) */
-    var jamSekarang = S.menit % 1440;
-    if (jamSekarang >= 540 && jamSekarang < 1260) {
-      toast('Tidur malam hanya bisa mulai pukul 21.00 (mencegah skip hari). Gunakan Istirahat jika lelah.', 3000);
+    /* P77 (Fase 2 - Poin 7 & 8): Tidur natural 5–9 jam tergantung sisa stamina.
+       - Tidak bisa tidur di hari yang sama sebelum pukul 21.00.
+       - Jika sudah lewat pukul 00.00 (ganti hari), bisa tidur kapan saja hingga stamina pulih TANPA skip ke hari esoknya!
+       - Jika bertahan begadang terlalu lama (misal hingga jam 19) baru tidur, saat bangun stamina tidak full karena kondisi dianggap tidak fit. */
+    var cekT = DIRI.bolehTidurSekarang ? DIRI.bolehTidurSekarang(S) : { ok: true, lewatHari: (S.menit % 1440) < 540 };
+    if (!cekT.ok) {
+      toast(cekT.alasan, 3400);
       return;
     }
-    var lewatHari = jamSekarang < 540;
-    var pbCasSblm = !!(S.hp && S.hp.pbCas);
-    var t = DIRI.tidur(S, lewatHari ? jamSekarang : Math.min(S.menit, 1439), S.diri.bangun);
+    var pbCasSblm = !!(S.hp && (S.hp.pbCas || S.hp.pbAutoCas));
+    var t = DIRI.tidur(S, S.menit % 1440, S.diri.bangun);
     if (SUARA) SUARA.bunyi('tidur');
-    S.tidurAnim = true; setTimeout(function () { S.tidurAnim = false; }, 1600);
+    S.tidurAnim = true; setTimeout(function () { if (S) S.tidurAnim = false; }, 1600);
     gelapSebentar();
-    if (lewatHari) {
-      /* Sudah lewat hari (begadang dini hari): bangun di pagi hari yang SAMA tanpa lompat 1 hari ekstra! */
-      var targetBangun = Math.max(jamSekarang + 240, t.bangunEf || S.diri.bangun || 420);
-      S.menit = Math.min(840, targetBangun);
-      S.fase = 'pagi';
-      tutupLembar(); simpan(); perbaruiHUD(true); perbaruiAksi();
+    if (t.gantiHariTidur) {
+      /* Tidur mulai pukul 21.00–23.59 dan melewati tengah malam -> masuk ke pagi/siang hari berikutnya */
+      besok(t.bangunEf);
     } else {
-      besok(t.bangunEf || S.diri.bangun);
+      /* Sudah lewat jam 00.00 (ganti hari): tidur berapa pun jamnya (5–9 jam) TIDAK skip ke hari esoknya! */
+      S.menit = t.bangunEf;
+      S.fase = S.menit < 1080 ? 'pagi' : 'malam';
+      tutupLembar();
     }
+    S.diri.hariTidurTerakhir = S.hari;
+    S.diri.waktuBangunTerakhir = S.hari * 1440 + S.menit;
+    simpan(); perbaruiHUD(true); perbaruiAksi();
     var pbInfoS = pbCasSblm && DIRI.pbAktifInfo ? DIRI.pbAktifInfo(S) : null;
-    var infoPb = pbInfoS ? (' 🔋 Power Bank terisi ' + pbInfoS.persen + '%.') : '';
-    toast('Tidur ' + t.jam.toFixed(1).replace('.', ',') + ' jam' + (t.gelisah ? ' (gelisah karena Bar HB penuh, bangun +30 mnt & stamina kurang maksimal).' : t.ac ? ' pakai AC.' : ', AC mati karena token habis, kurang nyenyak.') + infoPb, 3200);
+    var infoPb = pbInfoS ? (' 🔋 Power Bank ' + pbInfoS.persen + '%.') : '';
+    var ketBangun = 'Bangun pukul ' + jam(S.menit) + (S.menit >= 540 && S.menit < 840 ? ' (bangun kesiangan!)' : '');
+    var ketKondisi = t.tidakFit
+      ? (' ⚠️ Karena begadang terlalu lama baru tidur, badan dianggap TIDAK FIT (Stamina hanya pulih ke ' + Math.round(S.diri.stamina) + '%).')
+      : t.gelisah
+        ? ' (tidur gelisah karena Bar HB penuh).'
+        : (' (Stamina pulih 100%' + (t.ac ? ', kamar AC sejuk' : '') + ').');
+    toast('😴 Tidur ' + t.jam.toFixed(1).replace('.', ',') + ' jam · ' + ketBangun + ketKondisi + infoPb, 4000);
   }
   function bukaAksiKarakterRumah() {
     var ag = (S.profil && S.profil.agama) || 'Islam';
@@ -5751,8 +5876,6 @@
     if (masak) lain.push(['makan:masak', 'Masak']);
     if (DIRI.adaKonsol(S)) lain.push(['istirahat:ps', 'Main PS']);
     if (ada('tv')) lain.push(['istirahat:tv', 'Nonton TV']);
-    if (!malam) lain.push(['istirahat:tidurSiang', 'Tidur Siang']);
-    if (malam) lain.push(['bangun:-60', 'Bangun −1j'], ['bangun:60', 'Bangun +1j']);
     if (lain.length) tombol.push(['lainnya:1', kosLainnya ? 'Ringkas ▴' : 'Lainnya ▾']);
     if (kosLainnya) tombol = tombol.concat(lain);
     $('kos-aksi').innerHTML = tombol.map(function (x) {
@@ -6008,12 +6131,162 @@
   }
   function tidurJalan(jam) {
     var o = S.ojek; if (o.trip || o.tawaran) return toast('Selesaikan atau lewati order dulu.', 1800);
+    var cekT = DIRI.bolehTidurSekarang ? DIRI.bolehTidurSekarang(S) : { ok: true };
+    if (!cekT.ok) return toast(cekT.alasan, 3400);
     gelapSebentar(); S.hiburan = null;
-    var kabar = lompatWaktu(jam * 60);
-    S.diri.stamina = Math.min(100, S.diri.stamina + jam * 14);
-    cekGantiHari();
+    var jamSkrg = Math.floor(S.menit) % 1440;
+    var mntTidur = jam * 60;
+    if (cekT.lewatHari && jamSkrg < 1260) {
+      S.menit = Math.min(1435, jamSkrg + mntTidur);
+    } else {
+      lompatWaktu(mntTidur);
+      cekGantiHari();
+    }
+    S.diri.stamina = Math.min(82, S.diri.stamina + jam * 14);
+    S.diri.hariTidurTerakhir = S.hari;
+    S.diri.waktuBangunTerakhir = S.hari * 1440 + S.menit;
     simpan(); perbaruiHUD(true); perbaruiAksi();
-    toast('Tidur ' + jam + ' jam di pinggir jalan. Stamina +' + (jam * 14) + '.' + (kabar && kabar.length ? ' ' + kabar.join(' ') : ''), 3000);
+    toast('Tidur ' + jam + ' jam di pinggir jalan (kurang nyaman, stamina pulih ke ' + Math.round(S.diri.stamina) + '%).', 3000);
+  }
+  /* ---------- P77 (Fase 2 - Poin 8): Pingsan -> Rumah Sakit -> Meninggal -> Suksesi Generasi Tanpa Akhir ---------- */
+  function hentikanSemuaAktivitasDarurat() {
+    if (!S) return;
+    if (R) tutupRacik();
+    if (S.ojek && S.ojek.online) { OJEK.offline(S, true); S.ojek.trip = null; S.ojek.tawaran = null; }
+    if (S.travel && S.travel.aktif) { S.travel.aktif = false; S.travel.trip = null; S.travel.status = 'tunggu'; }
+    S.transit = null;
+    S.kerjaRun = null;
+    S.aktAnim = null;
+    S.hbRun = null;
+    S.hiburan = null;
+  }
+  function bukaModalSuksesiGenerasi(res, isManual) {
+    var riwHtml = (S.riwayatGenerasi && S.riwayatGenerasi.length)
+      ? '<h3 class="subjudul">📜 Silsilah & Riwayat Generasi</h3><ul class="daftar">' +
+        S.riwayatGenerasi.slice(0, 6).map(function (rg) {
+          return '<li><span><b>Gen #' + rg.generasi + ': ' + esc(rg.nama) + ' (' + rg.usia + ' thn)</b><small>' + esc(rg.status) + ' · ' + esc(rg.sebab) + '</small><small style="color:#0f766e">Diteruskan ke: <b>' + esc(rg.penerus) + ' (' + esc(rg.peranPenerus) + ')</b></small></span></li>';
+        }).join('') + '</ul>'
+      : '';
+    var anakList = DIRI.daftarAnak ? DIRI.daftarAnak(S) : [];
+    var ketAturan = res.jenisPewaris === 'pasangan'
+      ? (anakList.length
+          ? '👨‍👩‍👧 Kamu kini bermain sebagai <b>' + esc(res.pewarisNama) + '</b>. Rawat anakmu (' + anakList.map(function (a) { return esc(a.nama) + ' · ' + KAL.usia(S.hari, a.tglLahir) + ' thn'; }).join(', ') + ') hingga berusia <b>18 tahun</b> agar permainan bisa diteruskan ke anak, atau <b>menikah lagi</b>! Jika kamu tetap sendiri dan meninggal saat anak belum 18 tahun, permainan akan berakhir (Game Over).'
+          : '💍 Kamu kini bermain sebagai <b>' + esc(res.pewarisNama) + '</b>. Kamu bisa menikah lagi dan memiliki keturunan agar garis generasi keluarga ini tidak pernah berakhir!')
+      : '👑 Kamu kini bermain sebagai anak penerus keluarga: <b>' + esc(res.pewarisNama) + ' (' + res.pewarisUsia + ' thn)</b>. Bangun keluarga baru agar generasi berikutnya terus berlanjut tanpa akhir!';
+    bukaLembar('suksesiGenerasi',
+      kepala(isManual ? ('👑 Generasi ke-' + res.generasiKe + ' Dimulai!') : ('🕊️ Berita Duka & Penerus Generasi ke-' + res.generasiKe), 'Siklus Kehidupan Tanpa Akhir') +
+      '<div class="kartu-pesanan" style="padding:14px;border-radius:14px;background:' + (isManual ? 'rgba(15,118,110,.12);border:1px solid rgba(15,118,110,.35)' : 'rgba(217,68,58,.12);border:1px solid rgba(217,68,58,.35)') + '">' +
+      '<b>' + (isManual ? ('✨ ' + esc(res.namaLama) + ' Menyerahkan Tongkat Estafet') : ('🕊️ ' + esc(res.namaLama) + ' (' + res.usiaLama + ' thn) Telah Berpulang')) + '</b>' +
+      '<p style="margin:8px 0;font-size:13px;line-height:1.45">' + esc(res.teks) + '</p>' +
+      '<small style="display:block;margin-top:6px;line-height:1.4;color:var(--tinta)">' + ketAturan + '</small></div>' +
+      '<ul class="daftar angka" style="margin-top:10px">' +
+      baris('Karakter Aktif Sekarang', '<b>' + esc(res.pewarisNama) + ' (' + res.pewarisUsia + ' thn · Gen #' + res.generasiKe + ')</b>') +
+      baris('Saldo Bank Diwariskan', '<b>' + rupiah(S.bank ? S.bank.saldo : 0) + '</b>') +
+      baris('Dompet Tunai', rupiah(UANG.dompet(S))) +
+      baris('Kendaraan Diwariskan', ((S.armadaMotor ? S.armadaMotor.length : 0) + ' Motor · ' + (S.armadaMobil ? S.armadaMobil.length : 0) + ' Mobil')) +
+      '</ul>' + riwHtml +
+      '<div style="margin-top:14px"><button type="button" class="aksi" data-tutup>Lanjutkan Hidup sebagai ' + esc(res.pewarisNama) + '</button></div>');
+  }
+  function alamiMeninggalDunia(sebab) {
+    if (!S || !S.diri) return;
+    S.diri.memicuMeninggal = null;
+    S.diri.memicuPingsan = null;
+    hentikanSemuaAktivitasDarurat();
+    gelapSebentar();
+    if (SUARA) SUARA.bunyi('salah');
+    var res = DIRI.prosesKematianPemain(S, sebab);
+    if (!res.gameOver) {
+      sinkronTampilan();
+      simpan(); perbaruiHUD(true); perbaruiAksi();
+      bukaModalSuksesiGenerasi(res, false);
+      return;
+    }
+    /* GAME OVER: Pasangan tetap sendiri & meninggal sementara anak belum berusia 18 tahun (atau sebatang kara) */
+    var riwGo = (S.riwayatGenerasi && S.riwayatGenerasi.length)
+      ? '<h3 class="subjudul">📜 Riwayat Generasi Sebelumnya</h3><ul class="daftar">' +
+        S.riwayatGenerasi.map(function (rg) {
+          return '<li><span><b>Gen #' + rg.generasi + ': ' + esc(rg.nama) + ' (' + rg.usia + ' thn)</b><small>' + esc(rg.sebab) + ' → Diteruskan ke ' + esc(rg.penerus) + '</small></span></li>';
+        }).join('') + '</ul>'
+      : '';
+    bukaLembar('gameOver',
+      '<div class="kepala-lembar"><div style="flex:1"><h2>⚰️ GAME OVER · Akhir Garis Keluarga</h2><p>Generasi ke-' + res.generasiKe + ' · Hari ke-' + S.hariKe + '</p></div></div>' +
+      '<div class="kartu-pesanan" style="padding:14px;border-radius:14px;background:rgba(185,28,28,.14);border:2px solid rgba(185,28,28,.45)">' +
+      '<b>🕊️ ' + esc(res.namaLama) + ' (' + res.usiaLama + ' tahun) Meninggal Dunia</b>' +
+      '<p style="margin:8px 0;font-size:13.5px;line-height:1.45"><b>Penyebab:</b> ' + esc(res.sebab) + '</p>' +
+      '<p style="margin:6px 0 0;font-size:13px;line-height:1.45">' + esc(res.alasanGameOver) + '</p></div>' +
+      '<ul class="daftar angka" style="margin-top:10px">' +
+      baris('Generasi Tercapai', 'Generasi ke-' + res.generasiKe) +
+      baris('Lama Bertahan Hidup', S.hariKe + ' hari') +
+      baris('Total Saldo Akhir', rupiah((S.bank ? S.bank.saldo : 0) + UANG.dompet(S))) +
+      (res.anakBelum18 && res.anakBelum18.length ? baris('Anak Belum Cukup Umur (<18 thn)', esc(res.anakBelum18.join(', ')), 'rugi') : '') +
+      '</ul>' + riwGo +
+      '<div style="margin-top:16px"><button type="button" class="aksi" style="background:#dc2626;color:#fff;box-shadow:0 3px 0 #991b1b" data-ulang-gameover="1">🔄 Mulai Hidup Baru</button></div>');
+  }
+  function alamiPingsanKeRs(alasan) {
+    if (!S || !S.diri) return;
+    var d = S.diri;
+    d.memicuPingsan = null;
+    d.jmlPingsan = (d.jmlPingsan || 0) + 1;
+    d.polaBuruk = (d.polaBuruk || 0) + 2;
+    /* Jika sudah pingsan berulang kali (>= 3x) dalam kondisi pola hidup sangat buruk & kesehatan <= 12%, nyawa tidak tertolong (Meninggal) */
+    if (d.kesehatan <= 0 || (d.jmlPingsan >= 3 && (d.kesehatan || 0) <= 12 && (d.polaBuruk || 0) >= 6)) {
+      return alamiMeninggalDunia('Kolaps berulang kali (' + d.jmlPingsan + '× pingsan) akibat memaksakan kerja & pola hidup tidak sehat.');
+    }
+    hentikanSemuaAktivitasDarurat();
+    gelapSebentar();
+    if (SUARA) SUARA.bunyi('salah');
+    var biayaRs = DIRI.hargaRs ? DIRI.hargaRs(S, 'igd') : 450000;
+    var bp = S.kesehatan && S.kesehatan.bpjs;
+    var bayarTeks = 'Ditanggung Asuransi / BPJS';
+    if (biayaRs > 0) {
+      if (S.bank && S.bank.saldo >= biayaRs) {
+        S.bank.saldo -= biayaRs;
+        S.bank.mutasi.unshift({ n: S.hari, ket: 'IGD RS (Pingsan Kelelahan)', jml: -biayaRs });
+        bayarTeks = rupiah(biayaRs) + (bp && bp.aktif ? ' (Subsidi BPJS Kls ' + bp.kelas + ')' : ' (Tarif Umum)');
+      } else {
+        var potongDompet = Math.min(UANG.dompet(S), biayaRs);
+        if (potongDompet > 0) S.uang.dompet -= potongDompet;
+        bayarTeks = rupiah(potongDompet) + ' (Darurat IGD)';
+      }
+      S.hariIni.pribadi = (S.hariIni.pribadi || 0) + biayaRs;
+    }
+    /* Waktu berjalan 3 jam perawatan di IGD tanpa skip hari ekstra */
+    var jamPingsan = Math.floor(S.menit) % 1440;
+    if (jamPingsan + 180 >= 1440) {
+      besok((jamPingsan + 180) - 1440);
+    } else {
+      S.menit = jamPingsan + 180;
+    }
+    d.posisi = 'kos';
+    d.stamina = 55;
+    d.kesehatan = Math.max(32, Math.min(62, Math.round((d.kesehatan || 15) + 25)));
+    d.sakit = null;
+    simpan(); perbaruiHUD(true); perbaruiAksi();
+    bukaLembar('pingsanRs',
+      kepala('🚑 Pingsan & Dirawat di IGD Rumah Sakit', 'Pukul ' + jam(S.menit) + ' · Pingsan ke-' + d.jmlPingsan) +
+      '<div class="kartu-pesanan" style="padding:14px;border-radius:14px;background:rgba(217,68,58,.12);border:1px solid rgba(217,68,58,.38)">' +
+      '<b>🚨 Layar Menggelap — Kamu Pingsan Tak Sadarkan Diri!</b>' +
+      '<p style="margin:8px 0;font-size:13px;line-height:1.45">' + esc(alasan || 'Kamu memaksakan terus bekerja saat kondisi tubuh sudah habis.') + ' Warga sekitar membawamu dengan ambulans ke IGD Rumah Sakit terdekat untuk diinfus selama 3 jam.</p>' +
+      '<small style="color:#b91c1c;font-weight:800">⚠️ Peringatan Medis: Jangan terus memaksakan kerja atau menekan minuman penambah stamina berulang-ulang! Jika kesehatan mencapai 0% atau terus kolaps, karaktermu bisa MENINGGAL DUNIA.</small></div>' +
+      '<ul class="daftar angka" style="margin-top:10px">' +
+      baris('Biaya Perawatan IGD', bayarTeks, 'rugi') +
+      baris('Stamina Pasca-Infus', Math.round(d.stamina) + '%') +
+      baris('Kesehatan Saat Ini', Math.round(d.kesehatan) + '%') +
+      baris('Riwayat Pingsan', d.jmlPingsan + '×') +
+      '</ul>' +
+      '<div style="margin-top:14px"><button type="button" class="aksi" data-tutup>Pulang & Istirahat di Rumah</button></div>');
+  }
+  function cekKondisiKritisPemain() {
+    if (!S || !S.diri || lembar === 'gameOver') return false;
+    if (S.diri.memicuMeninggal || (S.diri.kesehatan != null && S.diri.kesehatan <= 0)) {
+      alamiMeninggalDunia(S.diri.memicuMeninggal || 'Kondisi kesehatan mencapai 0% akibat pola hidup tidak sehat.');
+      return true;
+    }
+    if (S.diri.memicuPingsan) {
+      alamiPingsanKeRs(S.diri.memicuPingsan);
+      return true;
+    }
+    return false;
   }
   function cekGantiHari() {
     if (!S || sedangAnimasi() || S.menit < 1440) return false;
@@ -6156,7 +6429,12 @@
         S._metodeBayar = metode;
         try {
           var re = DIRI.minumEnergi(S, nilai);
-          if (re && re.ok) { if (SUARA) SUARA.bunyi('makan'); simpan(); perbaruiHUD(true); return popupStamina(re.teks, false); }
+          if (re && re.ok) {
+            if (SUARA) SUARA.bunyi('makan');
+            simpan(); perbaruiHUD(true);
+            if (cekKondisiKritisPemain()) return;
+            return popupStamina(re.teks, !!re.bahaya);
+          }
           return popupStamina(re, true);
         } finally { delete S._metodeBayar; }
       });
@@ -6353,6 +6631,7 @@
       S.menit += 1;
       if (S.fase === 'buka' && !S.tutupSementara) JUAL.langkah(S, 1);
       DIRI.jalan(S, 1, false); kabar = kabar.concat(DUNIA.jalan(S, 1, false), TEMAN.jalan(S)); if (S.popupSelingkuh) tampilPopupSelingkuh();
+      if (cekKondisiKritisPemain()) break;
     }
     return kabar;
   }
@@ -6546,6 +6825,7 @@
       }
       var kirimMakan = DIRI.cekKiriman(S); if (kirimMakan) kabarStok.push(kirimMakan);
       if (kabarStok.length) toast(kabarStok.join(' '), 2600);
+      if (cekKondisiKritisPemain()) { requestAnimationFrame(putar); return; }
       if (S.diri.ketiduran) { var kt = S.diri.ketiduran; S.diri.ketiduran = 0; lompatWaktu(kt); }
       var jamBukaEfektif = KAL.apakahRamadan(S.hari) > 0 ? 16 : S.jamBuka;
       /* kedai hanya buka otomatis bila sedang tidak narik ojol dan tidak ditutup manual hari ini */
@@ -6621,7 +6901,7 @@
       else kelDiRumah.push({ nama: S.tamuRumah.nama, peran: S.tamuRumah.peran || 'teman', gender: S.tamuRumah.gender || 'cewek', pasangan: false, hamil: false, usia: 24 });
     }
     var hb = (main && S.diri) ? (S.diri.hb || 0) : 0;
-    /* P75.1: Auto-beli Energy Drink Rp12.000 saat ngojek bila stamina < 20% */
+    /* P75.1 + P77: Auto-beli Energy Drink Rp12.000 saat ngojek bila stamina < 20% (terlalu sering minum merusak kesehatan!) */
     if (main && S.ojek && S.ojek.online && S.diri && (S.diri.stamina || 0) < 20) {
       var nowM = (S.hari || 0) * 1440 + Math.floor(S.menit || 0);
       if (!S._autoEdMenit || nowM - S._autoEdMenit >= 15) {
@@ -6630,11 +6910,12 @@
         if (bEd !== true) bEd = UANG.bayarPilihan(S, 12000, 'Auto Energy Drink (Ngojek)', 'bank');
         if (bEd !== true) bEd = UANG.bayarPilihan(S, 12000, 'Auto Energy Drink (Ngojek)', 'ewallet');
         if (bEd === true) {
-          S.diri.stamina = Math.min(100, (S.diri.stamina || 0) + 35);
-          S.diri.minum = Math.min(100, (S.diri.minum || 0) + 20);
+          S.hariIni.pribadi = (S.hariIni.pribadi || 0) + 12000;
+          var rEdAuto = DIRI.minumEnergi ? DIRI.minumEnergi(S, 'energikaleng', true) : null;
           if (SUARA) SUARA.bunyi('makan');
-          toast('⚡ Stamina <20%! Auto-beli Energy Drink (Rp12.000) → Stamina +35%', 2800);
+          toast(rEdAuto && rEdAuto.teks ? ('⚡ Auto Energy Drink: ' + rEdAuto.teks) : '⚡ Stamina <20%! Auto-beli Energy Drink (Rp12.000) → Stamina +40%', 3200);
           simpan(); perbaruiHUD(true);
+          if (cekKondisiKritisPemain()) { requestAnimationFrame(putar); return; }
         }
       }
     }
@@ -6924,6 +7205,10 @@
       dragHp = null;
     });
     $('lembar').onclick = function (e) {
+      if (e.target.closest('[data-ulang-gameover]')) {
+        SIMPAN.hapus(); S = null; konfirmasiUlang = false; JUAL.kosongkan(); tutupLembar(); tampil('awal'); return;
+      }
+      if (lembar === 'gameOver') return;
       if (e.target === $('lembar')) { if (Date.now() - waktuBukaLembar < 420) return; tutupLembar(); return; }
       if (e.target.closest('[data-tutup]')) { tutupLembar(); return; }
       var b;
@@ -7049,7 +7334,16 @@
         simpan(); perbaruiHUD(true);
       }
     };
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lembar) tutupLembar(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') kembaliNavigasiInternal(); });
+    window.addEventListener('popstate', function () {
+      try {
+        if (window.history && window.history.pushState) {
+          window.history.pushState({ kkGuard: true, t: Date.now() }, '');
+        }
+      } catch (eP) {}
+      kembaliNavigasiInternal();
+    });
+    document.addEventListener('pointerdown', pastikanHistoryGuard, { passive: true });
     $('adegan').addEventListener('pointerdown', function (e) {
       if (layar !== 'main') return;
       if (aksiCepatBuka) { aksiCepatBuka = false; kosLainnya = false; perbaruiAksi(); return; }
