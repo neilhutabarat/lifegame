@@ -1053,7 +1053,7 @@
     var y = (duduk ? yKaki - 2 : yKaki) - bob - lompat, baju = BAJU[r.baju], celana = '#33414d', hadap = duduk ? (o.kursi === 1 ? -1 : 1) : o.keadaan === 'pulang' ? o.arahPulang : (o.tx > o.x + 1 ? 1 : o.tx < o.x - 1 ? -1 : 1);
     if (o.jenis === 'kantor') { baju = '#eef2f5'; celana = '#2c3640'; }
     if (o.jenis === 'ojol') baju = '#4f6b3a';
-    cx.save(); cx.translate(x, yKaki); cx.scale(0.78, 0.78); cx.translate(-x, -yKaki);
+    cx.save(); cx.translate(x, yKaki); cx.scale(0.58, 0.58); cx.translate(-x, -yKaki);
     if (!duduk) { cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(x, yKaki + 1, 13, 3.5, 0, 0, Math.PI * 2); cx.fill(); }
     /* anak kecil ikut keluarga */
     if (o.jenis === 'keluarga' && !duduk) {
@@ -4421,7 +4421,7 @@
     }
     if (s.ojek && s.ojek.status !== 'standby' && (s.ojek.mode === 'mobil' ? s.mobil : s.motorId)) { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarJalanRaya(s, t, dt); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
     if (s.posisi === 'kos') { cx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); gambarKos(s, t); kotakKedai = null; kotakBarista = null; kotakDepan = null; return; }
-    var jalan = H - 190, trotoar = jalan - 72, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
+    var jalan = H - 235, trotoar = jalan - 64, dasarRuko = trotoar + 4, dasarKedai = jalan - 20, m = s.menit, yKaki = jalan - 9;
     /* angkat adegan saat panel racik menutupi kaki pembeli */
     var skala = cv.getBoundingClientRect().width / W || 1;
     var targetAngkat = Math.max(0, yKaki + 12 - (H - (s.ruangBawah || 0) / skala));
@@ -4487,8 +4487,8 @@
       gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, 0, gelap(m));
     }
     if (motorStandby) {
-      /* P74.4: Skala motor proporsional 0.68 (jelas lebih kecil dari mobil) & bebas HUD bawah */
-      cx.save(); cx.translate(214, jalan + 10); cx.scale(0.68, 0.68);
+      /* P74.5: Skala motor pangkalan 0.76 & jalan dinaikkan agar bebas HUD bawah */
+      cx.save(); cx.translate(214, jalan + 14); cx.scale(0.76, 0.76);
       gambarMotorKu(0, 0, s.motorId, { naik: true, hp: true, kiri: true, baju: s.warnaBaju, tampilan: s.tampilan, gender: s.gender }, t);
       cx.restore();
     } else if (s.motorParkir) {
