@@ -4988,6 +4988,9 @@
     var nmA = { none: 'Dasar (Sport-bra/Polos)', kaos: 'Kaos Oversize', kemeja: 'Kemeja', formal: 'Formal', driver: 'Jaket Ojol' };
     var nmB = { none: 'Dasar', pendek: 'Celana Pendek', panjang: 'Celana Panjang', jeans: 'Jeans' };
     var h = kepala('👗 Lemari Pakaian & Distro', 'Tunai: ' + rupiah(S.uang || 0) + ' · Dipakai: ' + (nmA[curA] || curA) + ' + ' + (nmB[curB] || curB)) +
+      '<div class="karakter-preview" style="margin-bottom:10px;align-items:center">' +
+      '<canvas id="cv-lemari-prev" width="160" height="200" style="width:88px;height:110px;border-radius:12px;background:#e8cfa9;flex-shrink:0;border:1px solid rgba(0,0,0,.14)"></canvas>' +
+      '<div style="min-width:0;flex:1"><b>Preview Pakaianmu</b><small>Baju: ' + esc(nmA[curA] || curA) + '</small><small>Celana: ' + esc(nmB[curB] || curB) + '</small><small style="color:#0f766e">Otomatis tersimpan & tampil di kamar/jalan</small></div></div>' +
       '<h3 class="subjudul">Lemari Pakaianmu</h3><div class="grid-2">' +
       '<div class="kartu-item"><div><span class="ki-tag milik">Atasan</span><b>Baju Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
       (S.lemari.atasan || ['none']).map(function (k) {
@@ -5004,6 +5007,9 @@
           '<div class="ki-aksi">' + (punya ? '<button type="button" class="chip-tombol" data-diri="pakaiBaju:' + b.jenis + ':' + b.kode + '">Pakai</button>' : '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + '">' + rupiahPendek(b.harga) + '</button>') + '</div></div>';
       }).join('') + '</div>';
     bukaLembar('diri', h);
+    if ($('cv-lemari-prev') && ADEGAN && ADEGAN.gambarKarakterPreview) {
+      ADEGAN.gambarKarakterPreview($('cv-lemari-prev'), S.gender || 'cewek', S.tampilan, Date.now());
+    }
   }
 
   /* baris percepatan (gigi) untuk kendaraan sehari-hari: normal 1–4 realistis, Level 5 tergembok 🔒 */
@@ -6143,6 +6149,9 @@
     var nmA = { none: 'Dasar (Sport-bra/Polos)', kaos: 'Kaos Oversize', kemeja: 'Kemeja', formal: 'Formal', driver: 'Jaket Ojol' };
     var nmB = { none: 'Dasar', pendek: 'Celana Pendek', panjang: 'Celana Panjang', jeans: 'Jeans' };
     var h = kepala('👗 Lemari Pakaian & Distro', 'Tunai: ' + rupiah(S.uang || 0) + ' · Dipakai: ' + (nmA[curA] || curA) + ' + ' + (nmB[curB] || curB)) +
+      '<div class="karakter-preview" style="margin-bottom:10px;align-items:center">' +
+      '<canvas id="cv-lemari-prev" width="160" height="200" style="width:88px;height:110px;border-radius:12px;background:#e8cfa9;flex-shrink:0;border:1px solid rgba(0,0,0,.14)"></canvas>' +
+      '<div style="min-width:0;flex:1"><b>Preview Pakaianmu</b><small>Baju: ' + esc(nmA[curA] || curA) + '</small><small>Celana: ' + esc(nmB[curB] || curB) + '</small><small style="color:#0f766e">Otomatis tersimpan & tampil di kamar/jalan</small></div></div>' +
       '<h3 class="subjudul">Lemari Pakaianmu</h3><div class="grid-2">' +
       '<div class="kartu-item"><div><span class="ki-tag milik">Atasan</span><b>Baju Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
       (S.lemari.atasan || ['none']).map(function (k) {
@@ -6159,6 +6168,9 @@
           '<div class="ki-aksi">' + (punya ? '<button type="button" class="chip-tombol" data-diri="pakaiBaju:' + b.jenis + ':' + b.kode + '">Pakai</button>' : '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + '">' + rupiahPendek(b.harga) + '</button>') + '</div></div>';
       }).join('') + '</div>';
     bukaLembar('diri', h);
+    if ($('cv-lemari-prev') && ADEGAN && ADEGAN.gambarKarakterPreview) {
+      ADEGAN.gambarKarakterPreview($('cv-lemari-prev'), S.gender || 'cewek', S.tampilan, Date.now());
+    }
   }
 
   /* ---------- karyawan bekerja ---------- */
