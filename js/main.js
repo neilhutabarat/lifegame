@@ -5627,7 +5627,7 @@
         if (bisaCarKos) tombol.push(['gocar:1', '🚗 GoCar'], ['travel:1', '🚐 Travel']);
         tombol.push(['pulang:1', '🏠 Pulang']);
       }
-      tombol.push(['app:makan', '🍽️ Makan'], ['bensinHud:1', '⛽ Isi BBM']);
+      tombol.push(['app:makan', '🍽️ Makan'], ['lemari:1', '👗 Lemari'], ['bensinHud:1', '⛽ Isi BBM']);
       if (DIRI.totalBatangRokok && DIRI.totalBatangRokok(S) > 0) tombol.push(['merokok:1', '🚬 Rokok (' + DIRI.totalBatangRokok(S) + ')']);
       tombol.push(['app:hobi', '🎯 Hobi'], ['autoMakan:1', S.autoMakanMinum ? '✓ Auto Makan' : 'Auto Makan'], ['promoKedai:1', S.promoAktif ? '✓ Promo' : '📢 Promo']);
       if (sedangTunggu) {
@@ -5643,6 +5643,7 @@
     var rtAktif = S.rumahTangga && (S.rumahTangga.aktifSampai || -1) >= S.hari;
     var pas = DIRI.pasanganAktif(S);
     if (bisaNarikKos) tombol.push(['narik:1', '🛵 Ojol']);
+    tombol.push(['lemari:1', '👗 Lemari']);
     if (bisaCarKos) tombol.push(['gocar:1', '🚗 GoCar'], ['travel:1', '🚐 Travel']);
     tombol.push(['app:makan', '🍽️ Makan']);
     if (pas && pas.lokasi !== 'kedai') {
