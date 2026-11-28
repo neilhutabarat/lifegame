@@ -79,15 +79,15 @@
   <section id="layar-karakter" class="layar" hidden>
     <h1 class="judul-game" style="font-size:26px">Buat karaktermu<small style="margin-top:3px;font-size:13px">Atur identitas & tampilan wajah sebelum mulai di tahun 2026.</small></h1>
     <div class="kartu-form">
-      <div class="karakter-preview"><span id="awal-avatar"></span><div style="min-width:0;flex:1"><b id="awal-nama-prev">Driver</b><small id="awal-usia-prev">Cewek · Usia 25 tahun · Tahun 2026</small><small id="awal-info-prev">Islam · Suku Jawa</small></div></div>
+      <div class="karakter-preview"><canvas id="cv-awal-char" width="140" height="190" style="width:74px;height:100px;border-radius:12px;background:#e8cfa9;flex-shrink:0;border:1px solid rgba(0,0,0,.12)"></canvas><div style="min-width:0;flex:1"><b id="awal-nama-prev">Driver</b><small id="awal-usia-prev">Cewek · Usia 25 tahun · Tahun 2026</small><small id="awal-info-prev">Islam · Suku Jawa</small></div></div>
       <div class="form-grid-2">
         <label class="form-lbl">Nama karakter<input id="in-awal-nama" class="input-teks" type="text" maxlength="24" placeholder="Mis. Budi / Sari"></label>
         <label class="form-lbl">Tanggal lahir (TTL)<input id="in-awal-ttl" class="input-teks" type="date" value="2000-05-15" min="1965-01-01" max="2008-12-31"></label>
       </div>
-      <div class="form-lbl">Jenis kelamin
+      <div class="form-lbl">Pilih karakter permanen
         <div class="opsi-chip">
-          <button type="button" class="chip-tombol" data-awal-gender="cowok">👨 Cowok</button>
-          <button type="button" class="chip-tombol pilih" data-awal-gender="cewek">👩 Cewek</button>
+          <button type="button" class="chip-tombol" data-awal-gender="cowok">👦 Cowok</button>
+          <button type="button" class="chip-tombol pilih" data-awal-gender="cewek">👧 Cewek</button>
         </div>
       </div>
       <div class="form-grid-2">
@@ -95,11 +95,22 @@
         <label class="form-lbl">Etnis / Suku<select id="in-awal-etnis" class="input-teks"></select></label>
       </div>
       <label class="form-lbl">Pendidikan Terakhir<select id="in-awal-didik" class="input-teks"><option value="sma">SMA / SMK</option><option value="d3">D3 Diploma</option><option value="s1">S1 Sarjana</option><option value="s2">S2 Magister</option></select></label>
-      <div class="form-lbl">Warna kulit<div id="awal-kulit" class="swatch-baris"></div></div>
-      <div class="form-lbl">Gaya rambut<div id="awal-rambut" class="opsi-chip"></div></div>
-      <div class="form-lbl">Warna rambut<div id="awal-warna-rambut" class="swatch-baris"></div></div>
-      <div class="form-lbl">Jenis mata<div id="awal-mata" class="opsi-chip"></div></div>
-      <div class="form-lbl">Jenis mulut<div id="awal-mulut" class="opsi-chip"></div></div>
+      <div class="form-lbl">Pilih Baju Awal
+        <div id="awal-atasan" class="opsi-chip">
+          <button type="button" class="chip-tombol pilih" data-awal-tp="atasan:none">Dasar</button>
+          <button type="button" class="chip-tombol" data-awal-tp="atasan:kaos">👕 Kaos</button>
+          <button type="button" class="chip-tombol" data-awal-tp="atasan:kemeja">👔 Kemeja</button>
+          <button type="button" class="chip-tombol" data-awal-tp="atasan:formal">🧥 Formal</button>
+        </div>
+      </div>
+      <div class="form-lbl">Pilih Celana Awal
+        <div id="awal-bawahan" class="opsi-chip">
+          <button type="button" class="chip-tombol pilih" data-awal-tp="bawahan:none">Dasar</button>
+          <button type="button" class="chip-tombol" data-awal-tp="bawahan:pendek">🩳 Pendek</button>
+          <button type="button" class="chip-tombol" data-awal-tp="bawahan:panjang">👖 Panjang</button>
+          <button type="button" class="chip-tombol" data-awal-tp="bawahan:jeans">👖 Jeans</button>
+        </div>
+      </div>
     </div>
     <div class="form-aksi-bawah">
       <button id="b-kembali-karakter" class="tombol-lain" type="button">Kembali</button>
@@ -173,11 +184,11 @@
 <script src="js/dunia.js?v=70"></script>
 <script src="js/usaha.js"></script>
 <script src="js/jualan.js"></script>
-<script src="js/adegan.js?v=77"></script>
+<script src="js/adegan.js?v=78"></script>
 <script src="js/suara.js"></script>
 <script src="js/kehidupan.js?v=69"></script>
 <script src="js/ekosistem.js"></script>
 <script src="js/dunia_nyata.js?v=70"></script>
-<script src="js/main.js?v=76"></script>
+<script src="js/main.js?v=78"></script>
 </body>
 </html>

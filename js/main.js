@@ -86,7 +86,7 @@
     var K = N.karakterOpsi || {}, t = tampilanLengkap(tp, gender);
     var kl = (K.kulit || []).filter(function (x) { return x.id === t.kulit; })[0] || { hex: '#f5cb9f', bayang: '#d9a473' };
     var wr = (K.warnaRambut || []).filter(function (x) { return x.id === t.warnaRambut; })[0] || { hex: '#1c1817', kilau: '#3e3533' };
-    return { kulitHex: kl.hex, kulitBayang: kl.bayang, rambutHex: wr.hex, rambutKilau: wr.kilau, rambut: t.rambut, mata: t.mata, mulut: t.mulut };
+    return { kulitHex: kl.hex, kulitBayang: kl.bayang, rambutHex: wr.hex, rambutKilau: wr.kilau, rambut: t.rambut, mata: t.mata, mulut: t.mulut, atasan: t.atasan || 'none', bawahan: t.bawahan || 'none' };
   }
   function perbaruiPreviewKarakter() {
     var nm = (profilAwal.nama || '').trim() || 'Driver';
@@ -94,30 +94,22 @@
     var ttl = profilAwal.tglLahir || '2000-05-15';
     var usia = KAL.usia(HARI_PERTAMA, ttl);
     profilAwal.tampilan = tampilanLengkap(profilAwal.tampilan, gd);
-    var K = N.karakterOpsi || {}, tp = profilAwal.tampilan;
-    if ($('awal-avatar')) $('awal-avatar').innerHTML = fotoWajah(gd === 'cowok' ? 'char-pemain' : 'char-istri', 64, null, nm, gd, usia, null, tp);
+    var tp = profilAwal.tampilan;
+    if (!tp.atasan) tp.atasan = 'none';
+    if (!tp.bawahan) tp.bawahan = 'none';
+    if ($('cv-awal-char') && ADEGAN && ADEGAN.gambarKarakterPreview) {
+      ADEGAN.gambarKarakterPreview($('cv-awal-char'), gd, tp, Date.now());
+    }
     if ($('awal-nama-prev')) $('awal-nama-prev').textContent = nm;
     if ($('awal-usia-prev')) $('awal-usia-prev').textContent = (gd === 'cowok' ? 'Cowok' : 'Cewek') + ' · Usia ' + usia + ' tahun · Tahun 2026';
     if ($('awal-info-prev')) $('awal-info-prev').textContent = (profilAwal.agama || 'Islam') + ' · Suku ' + (profilAwal.etnis || 'Jawa');
     [].forEach.call(document.querySelectorAll('[data-awal-gender]'), function (btn) {
       btn.classList.toggle('pilih', btn.dataset.awalGender === gd);
     });
-    if ($('awal-kulit')) $('awal-kulit').innerHTML = (K.kulit || []).map(function (c) {
-      return '<button type="button" class="swatch' + (tp.kulit === c.id ? ' pilih' : '') + '" style="background:' + c.hex + '" title="' + esc(c.nama) + '" data-awal-tp="kulit:' + c.id + '"></button>';
-    }).join('');
-    var listR = gd === 'cowok' ? (K.rambutCowok || []) : (K.rambutCewek || []);
-    if ($('awal-rambut')) $('awal-rambut').innerHTML = listR.map(function (r) {
-      return '<button type="button" class="chip-tombol' + (tp.rambut === r.id ? ' pilih' : '') + '" data-awal-tp="rambut:' + r.id + '">' + esc(r.nama) + '</button>';
-    }).join('');
-    if ($('awal-warna-rambut')) $('awal-warna-rambut').innerHTML = (K.warnaRambut || []).map(function (c) {
-      return '<button type="button" class="swatch' + (tp.warnaRambut === c.id ? ' pilih' : '') + '" style="background:' + c.hex + '" title="' + esc(c.nama) + '" data-awal-tp="warnaRambut:' + c.id + '"></button>';
-    }).join('');
-    if ($('awal-mata')) $('awal-mata').innerHTML = (K.mata || []).map(function (m) {
-      return '<button type="button" class="chip-tombol' + (tp.mata === m.id ? ' pilih' : '') + '" data-awal-tp="mata:' + m.id + '">' + esc(m.nama) + '</button>';
-    }).join('');
-    if ($('awal-mulut')) $('awal-mulut').innerHTML = (K.mulut || []).map(function (m) {
-      return '<button type="button" class="chip-tombol' + (tp.mulut === m.id ? ' pilih' : '') + '" data-awal-tp="mulut:' + m.id + '">' + esc(m.nama) + '</button>';
-    }).join('');
+    [].forEach.call(document.querySelectorAll('[data-awal-tp]'), function (btn) {
+      var pt = btn.dataset.awalTp.split(':');
+      btn.classList.toggle('pilih', tp[pt[0]] === pt[1]);
+    });
   }
   function isiKarakterAwal() {
     var K = N.karakterOpsi || {};
@@ -5626,16 +5618,38 @@
     else if (r) toast(r, 2600);
     if (lembar === 'diri') bukaDiri();
   }
-  /* potret wajah HD realistis (100% konsisten dengan sprite karakter lewat ADEGAN.faceSrc) */
+  /* P73: potret wajah Anime 2D konsisten dengan karakter di dalam game */
   function fotoWajah(src, ukuran, bingkai, nama, gender, usia, peran, tampil, warnaBaju) {
     var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');
-    var isDriver = !!(S && S.ojek && S.ojek.online && src === srcPemain());
-    var facePath = (ADEGAN && ADEGAN.faceSrc)
-      ? ADEGAN.faceSrc(nama || src || 'Kamu', gChar, usia, peran, tampil, isDriver)
-      : ('img/char/' + (gChar === 'cowok' ? 'face_cowok_kasual.jpg' : 'face_cewek_kasual.jpg'));
+    var isBoy = gChar === 'cowok';
     var sz = ukuran || 44;
     var st = 'width:' + sz + 'px;height:' + sz + 'px' + (bingkai ? ';border-color:' + bingkai : '');
-    return '<span class="foto-wajah" style="' + st + '"><img src="' + facePath + '" alt="' + esc(nama || 'Karakter') + '" loading="eager"></span>';
+    var svg = '<svg viewBox="0 0 64 64" width="' + sz + '" height="' + sz + '" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><linearGradient id="bgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f7e9d4"/><stop offset="100%" stop-color="#d8b282"/></linearGradient></defs>' +
+      '<rect width="64" height="64" fill="url(#bgA)"/>' +
+      (isBoy
+        ? '<path d="M18 64 Q32 52 46 64 Z" fill="#1e293b"/>' +
+          '<rect x="28" y="42" width="8" height="12" rx="3" fill="#f7d8c4"/>' +
+          '<path d="M18 28 L19 39 Q25 47 32 50 Q39 47 45 39 L46 28 Q46 14 32 14 Q18 14 18 28 Z" fill="#fff1e6" stroke="#3b2826" stroke-width="1.3"/>' +
+          '<ellipse cx="26" cy="33" rx="3" ry="1.8" fill="#fff"/><circle cx="26.2" cy="33" r="1.7" fill="#2d3748"/><circle cx="25.5" cy="32.2" r="0.6" fill="#fff"/>' +
+          '<ellipse cx="38" cy="33" rx="3" ry="1.8" fill="#fff"/><circle cx="37.8" cy="33" r="1.7" fill="#2d3748"/><circle cx="37.2" cy="32.2" r="0.6" fill="#fff"/>' +
+          '<path d="M23 29 L29 28.2 M35 28.2 L41 29" stroke="#1e1b24" stroke-width="1.5" stroke-linecap="round"/>' +
+          '<path d="M29 42 Q32.5 43.2 35.5 41.2" fill="none" stroke="#9c5a54" stroke-width="1.3" stroke-linecap="round"/>' +
+          '<path d="M16 32 Q15 11 32 10 Q49 11 48 32 L45 25 Q39 19 34 26 Q30 19 22 24 L19 27 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.2"/>'
+        : '<path d="M16 26 Q11 46 16 62 L48 62 Q53 46 48 26 Z" fill="#1b1824"/>' +
+          '<path d="M44 16 Q58 10 56 34 Q52 40 48 34 Q50 24 44 19 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.1"/>' +
+          '<ellipse cx="45" cy="17" rx="3.5" ry="2" fill="#fb7185" stroke="#3b2826" stroke-width="0.8"/>' +
+          '<path d="M18 64 Q32 53 46 64 Z" fill="#fbcfe8"/>' +
+          '<rect x="28.5" y="42" width="7" height="12" rx="3" fill="#f7dfd2"/>' +
+          '<path d="M18 29 Q18 45 32 49 Q46 45 46 29 Q46 14 32 14 Q18 14 18 29 Z" fill="#fff5ee" stroke="#3b2826" stroke-width="1.3"/>' +
+          '<ellipse cx="23.5" cy="37" rx="3.2" ry="1.6" fill="rgba(251,146,162,0.34)"/>' +
+          '<ellipse cx="40.5" cy="37" rx="3.2" ry="1.6" fill="rgba(251,146,162,0.34)"/>' +
+          '<ellipse cx="26" cy="33" rx="3" ry="2.5" fill="#fff"/><circle cx="26.2" cy="33.1" r="2" fill="#4c3230"/><circle cx="25.4" cy="32" r="0.8" fill="#fff"/>' +
+          '<ellipse cx="38" cy="33" rx="3" ry="2.5" fill="#fff"/><circle cx="37.8" cy="33.1" r="2" fill="#4c3230"/><circle cx="37.1" cy="32" r="0.8" fill="#fff"/>' +
+          '<path d="M29 41 Q32 43.2 35 41" fill="none" stroke="#b46266" stroke-width="1.3" stroke-linecap="round"/>' +
+          '<path d="M16 32 Q15 11 32 10 Q49 11 48 32 L45 42 L43 37 L43 28 Q37 28.5 34 27.5 Q32 28.8 30 27.5 Q27 28.5 21 28 L21 37 L19 42 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.2"/>') +
+      '</svg>';
+    return '<span class="foto-wajah" style="' + st + '">' + svg + '</span>';
   }
   function _fotoWajahSvgCadangan(src, ukuran, bingkai, nama, gender, usia, peran, tampil, warnaBaju) {
     var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');

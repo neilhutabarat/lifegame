@@ -1436,59 +1436,414 @@
     var kulit = tp.kulitHex || '#f5cb9f';
     var berhijab = cewek && tp.rambut === 'hijab';
 
-    /* P72.3: Render sprite karakter realistis HD — menapak lantai rapi tanpa meluncur/melayang, bayangan sol sepatu, pantulan keramik halus, & napas lembut */
-    var imCh = muatImg(srcKarakterHD(gender, tp, o));
-    if (imCh) {
-      var targetH = o.diRumah ? (Math.round(H * (cewek ? 0.43 : 0.45)) * sk) : ((cewek ? 196 : 204) * sk);
-      var targetW = targetH * (imCh.naturalWidth / Math.max(1, imCh.naturalHeight));
-      var arah = o.arah === -1 ? -1 : 1;
-      var stepBob = sedangJalan ? Math.abs(Math.sin(t / 140)) * 2.0 : 0;
-      var nafas = 1 + Math.sin(t / 1100 + x * 0.04) * 0.005;
+    /* P73: Karakter Anime 2D Artikulasi 120 FPS (Cewek sebahu + kuncir kanan atas & Cowok Ikemen + mix & match baju/celana) */
+    gambarKarakterAnime(cx, x, y, gender, t, o);
+    return;
+  }
 
-      /* 1. Pantulan samar di lantai keramik/marmer rumah */
-      if (o.diRumah) {
-        cx.save();
-        cx.beginPath(); cx.rect(x - targetW * 0.75, y, targetW * 1.5, targetH * 0.38); cx.clip();
-        cx.translate(x, y);
-        cx.scale(arah, -0.32);
-        cx.globalAlpha = 0.12;
-        cx.drawImage(imCh, -targetW * 0.5, -targetH, targetW, targetH);
-        cx.restore();
-      }
+  function _rrAnime(c, x, y, w, h, r, fill, stroke) {
+    c.beginPath();
+    c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (stroke) { c.strokeStyle = stroke; c.lineWidth = 1.15; c.stroke(); }
+  }
 
-      /* 2. Bayangan lembut ruangan + 2 bayangan kontak tepat di bawah sol sepatu kiri & kanan */
-      cx.save();
-      cx.translate(x, y);
-      var shR = Math.max(20, targetW * 0.42);
-      var grSh = cx.createRadialGradient(0, 1, 2, 0, 1, shR);
-      grSh.addColorStop(0, 'rgba(6,10,18,0.42)');
-      grSh.addColorStop(0.58, 'rgba(6,10,18,0.16)');
-      grSh.addColorStop(1, 'rgba(6,10,18,0)');
-      cx.fillStyle = grSh;
-      cx.beginPath(); cx.ellipse(0, 1, shR, Math.max(5.5, targetH * 0.024), 0, 0, Math.PI * 2); cx.fill();
-      var solOff = targetW * 0.17;
-      cx.fillStyle = 'rgba(4,8,14,0.50)';
-      cx.beginPath(); cx.ellipse(-solOff, 0.5, targetW * 0.16, 3.0 * sk, 0, 0, Math.PI * 2); cx.fill();
-      cx.beginPath(); cx.ellipse(solOff, 0.5, targetW * 0.16, 3.0 * sk, 0, 0, Math.PI * 2); cx.fill();
+  function gambarKarakterAnime(c, x, y, gender, t, o) {
+    o = o || {};
+    var sk = (o.skala || 1) * (o.diRumah ? 1.16 : 1.0);
+    var isBoy = gender === 'cowok';
+    var walk = !!o.jalan;
+    var dir = o.arah === -1 ? -1 : 1;
+    var tp = o.tampilan || {};
+    var topWear = tp.atasan || (o.driver ? 'driver' : 'kaos');
+    var botWear = tp.bawahan || (o.driver ? 'jeans' : 'panjang');
+    var INK = '#3b2826';
+    var step = walk ? Math.sin(t / 125) : 0;
+    var bob = walk ? Math.abs(step) * 2.4 : 0;
+    var breath = Math.sin(t / 740 + (isBoy ? 1.4 : 0) + x * 0.03) * 0.85;
+    var tailSway = Math.sin(t / 520 + x * 0.02) * 0.12 + (walk ? -dir * 0.16 : 0);
+    var blink = ((t + (isBoy ? 1700 : 0) + Math.round(x * 7)) % 4100) < 125;
 
-      /* 3. Tubuh karakter bertumpu 100% pada sol sepatu (y = 0) */
-      cx.translate(0, -stepBob);
-      cx.scale(arah, nafas);
-      cx.drawImage(imCh, -targetW * 0.5, -targetH + 1, targetW, targetH);
-      cx.restore();
+    c.save();
+    c.translate(x, y);
+    c.scale(sk, sk);
 
-      /* 4. Label nama pil membulat rapi (tanpa garis kotak) */
-      if (o.label) {
-        var yLblH = y - targetH - 12 - stepBob;
-        cx.save();
-        cx.font = '800 10.5px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-        var twL = Math.min(118, (cx.measureText ? cx.measureText(o.label).width : o.label.length * 6) + 14);
-        kotakBulat(x - twL / 2, yLblH - 8.5, twL, 17, 8.5, 'rgba(14,18,24,0.78)');
-        cx.fillStyle = '#fef3c7'; cx.fillText(o.label, x, yLblH + 0.5);
-        cx.restore();
-      }
-      return;
+    /* Bayangan pijakan lantai */
+    var shG = c.createRadialGradient(0, 1, 2, 0, 1, 22);
+    shG.addColorStop(0, 'rgba(42,26,22,0.38)'); shG.addColorStop(1, 'rgba(42,26,22,0)');
+    c.fillStyle = shG; c.beginPath(); c.ellipse(0, 1, 22, 4.8, 0, 0, Math.PI * 2); c.fill();
+
+    c.scale(dir, 1);
+    c.translate(0, -bob);
+
+    /* 1. Rambut belakang sebahu untuk Cewek */
+    if (!isBoy) {
+      var hBg = c.createLinearGradient(0, -132, 0, -82);
+      hBg.addColorStop(0, '#181620'); hBg.addColorStop(1, '#2a2536');
+      c.fillStyle = hBg; c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      c.moveTo(-16.5, -118);
+      c.quadraticCurveTo(-22, -98, -17.5, -83);
+      c.quadraticCurveTo(-9, -79, 0, -81);
+      c.quadraticCurveTo(9, -79, 17.5, -83);
+      c.quadraticCurveTo(22, -98, 16.5, -118);
+      c.closePath(); c.fill(); c.stroke();
     }
+
+    /* 2. Kaki artikulasi & bawahan (none / pendek / panjang / jeans) */
+    var lA = step * 9, lB = -step * 9;
+    function drawLeg(ox, swing, dark) {
+      c.save(); c.translate(ox, -51);
+      c.strokeStyle = INK; c.lineWidth = 1.1;
+      var skinL = dark ? '#f3d8ca' : '#fff0e6';
+      c.fillStyle = skinL;
+      c.beginPath();
+      if (isBoy) {
+        c.moveTo(-4.6, 0); c.lineTo(4.6, 0); c.lineTo(3.5 + swing * 0.68, 45); c.lineTo(-3.5 + swing * 0.68, 45);
+      } else {
+        var sw = swing * 0.68;
+        c.moveTo(-5.4, -2);
+        c.bezierCurveTo(-6.2, 10, -4.4 + sw * 0.35, 22, -3.8 + sw * 0.65, 32);
+        c.quadraticCurveTo(-3.2 + sw * 0.85, 39, -2.5 + sw, 45);
+        c.lineTo(2.5 + sw, 45);
+        c.quadraticCurveTo(3.4 + sw * 0.85, 39, 4.0 + sw * 0.65, 32);
+        c.bezierCurveTo(4.6 + sw * 0.35, 22, 6.0, 10, 5.2, -2);
+      }
+      c.closePath(); c.fill(); c.stroke();
+
+      if (botWear === 'pendek') {
+        c.fillStyle = isBoy ? (dark ? '#334155' : '#475569') : (dark ? '#3b5978' : '#4f7396');
+        c.beginPath();
+        c.moveTo(-5.5, -4); c.lineTo(5.5, -4);
+        c.lineTo(4.9 + swing * 0.22, 14.5); c.quadraticCurveTo(swing * 0.22, 16, -4.9 + swing * 0.22, 14.5);
+        c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(5.5, -2); c.lineTo(4.9 + swing * 0.22, 14.5); c.quadraticCurveTo(swing * 0.22, 16, -4.9 + swing * 0.22, 14.5); c.lineTo(-5.5, -2); c.stroke();
+      } else if (botWear === 'panjang' || botWear === 'jeans') {
+        var pCol = botWear === 'jeans' ? (dark ? '#25446b' : '#315b8e') : (dark ? '#2b303a' : '#3c4352');
+        c.fillStyle = pCol;
+        c.beginPath();
+        c.moveTo(-5.5, -4); c.lineTo(5.5, -4);
+        c.bezierCurveTo(5.6, 12, 4.4 + swing * 0.4, 28, 3.3 + swing * 0.68, 44);
+        c.lineTo(-3.3 + swing * 0.68, 44);
+        c.bezierCurveTo(-4.4 + swing * 0.4, 28, -5.6, 12, -5.5, -4);
+        c.closePath(); c.fill();
+        c.beginPath();
+        c.moveTo(5.5, -2); c.bezierCurveTo(5.6, 12, 4.4 + swing * 0.4, 28, 3.3 + swing * 0.68, 44);
+        c.lineTo(-3.3 + swing * 0.68, 44);
+        c.bezierCurveTo(-4.4 + swing * 0.4, 28, -5.6, 12, -5.5, -2);
+        c.stroke();
+      }
+
+      if (botWear === 'none') {
+        _rrAnime(c, -3.8 + swing * 0.68, 43.5, 9.6, 5.4, 2.7, skinL, INK);
+      } else {
+        _rrAnime(c, -4.8 + swing * 0.68, 43.5, 11.6, 6.4, 3, '#f8fafc', INK);
+        c.fillStyle = botWear === 'jeans' ? '#3b82f6' : '#64748b';
+        c.fillRect(-3.8 + swing * 0.68, 47.6, 9.6, 1.7);
+      }
+      c.restore();
+    }
+    drawLeg(isBoy ? -5.6 : -5.1, lB, true);
+    drawLeg(isBoy ? 5.6 : 5.1, lA, false);
+
+    /* 3. Lengan belakang */
+    var armCol = topWear === 'none' ? '#fff0e6'
+      : topWear === 'driver' ? '#0f766e'
+      : topWear === 'kaos' ? (isBoy ? '#3b82f6' : '#fbcfe8')
+      : topWear === 'kemeja' ? '#f8fafc'
+      : (isBoy ? '#1e293b' : '#334155');
+    var shortSlv = (topWear === 'none' || topWear === 'kaos');
+    function drawArm(tx, rot) {
+      c.save(); c.translate(tx, -86 + breath * 0.5); c.rotate(rot);
+      _rrAnime(c, -3.0, 0, 6.0, 29, 3.0, '#fff0e6', INK);
+      if (topWear !== 'none') {
+        var sw = (!isBoy && topWear === 'kaos') ? 8.2 : 6.8;
+        _rrAnime(c, -sw / 2, -1, sw, shortSlv ? ((!isBoy && topWear === 'kaos') ? 15 : 12) : 26, 3.3, armCol, INK);
+      }
+      c.fillStyle = '#fff0e6'; c.beginPath(); c.arc(0, 30.2, 2.9, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.restore();
+    }
+    drawArm(isBoy ? -14.2 : -11.4, -step * 0.28 + 0.10);
+
+    /* 4. Badan dasar + Pakaian modular (none / kaos oversize / kemeja / formal / driver) */
+    c.save(); c.translate(0, breath * 0.55);
+    if (isBoy) {
+      c.fillStyle = '#fff0e6'; c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      c.moveTo(-4.2, -92.5); c.lineTo(4.2, -92.5);
+      c.quadraticCurveTo(13.5, -90.5, 14.8, -83.5);
+      c.lineTo(12.2, -52); c.lineTo(-12.2, -52);
+      c.lineTo(-14.8, -83.5);
+      c.quadraticCurveTo(-13.5, -90.5, -4.2, -92.5);
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#334155'; c.strokeStyle = INK; c.lineWidth = 1.1;
+      c.beginPath(); c.moveTo(-12.2, -56); c.lineTo(12.2, -56); c.lineTo(11.6, -45); c.lineTo(2, -45); c.lineTo(0, -48); c.lineTo(-2, -45); c.lineTo(-11.6, -45); c.closePath(); c.fill(); c.stroke();
+    } else {
+      c.fillStyle = '#fff0e6'; c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      c.moveTo(-3.4, -92.5); c.lineTo(3.4, -92.5);
+      c.quadraticCurveTo(10.2, -90.8, 11.4, -84.2);
+      c.bezierCurveTo(13.4, -78.5, 12.6, -73, 8.2, -65.5);
+      c.bezierCurveTo(11.2, -60, 14.0, -55, 13.4, -48.5);
+      c.quadraticCurveTo(7.8, -43.5, 0, -43.0);
+      c.quadraticCurveTo(-7.8, -43.5, -13.4, -48.5);
+      c.bezierCurveTo(-14.0, -55, -11.2, -60, -8.2, -65.5);
+      c.bezierCurveTo(-12.6, -73, -13.4, -78.5, -11.4, -84.2);
+      c.quadraticCurveTo(-10.2, -90.8, -3.4, -92.5);
+      c.closePath(); c.fill(); c.stroke();
+
+      c.fillStyle = 'rgba(175,118,98,0.45)';
+      c.beginPath(); c.ellipse(0, -61.5, 0.85, 1.25, 0, 0, Math.PI * 2); c.fill();
+
+      c.fillStyle = '#fb7185'; c.strokeStyle = INK; c.lineWidth = 1.0;
+      c.beginPath(); c.moveTo(-7.2, -89.8); c.lineTo(-7.0, -79.5); c.moveTo(7.2, -89.8); c.lineTo(7.0, -79.5); c.stroke();
+      c.beginPath();
+      c.moveTo(-13.4, -77.5);
+      c.quadraticCurveTo(-6.8, -83.2, 0, -76.5);
+      c.quadraticCurveTo(6.8, -83.2, 13.4, -77.5);
+      c.quadraticCurveTo(7.8, -67.2, 0, -71.8);
+      c.quadraticCurveTo(-7.8, -67.2, -13.4, -77.5);
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.32)';
+      c.beginPath(); c.ellipse(-6.2, -76.5, 3.4, 1.8, -0.2, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(6.2, -76.5, 3.4, 1.8, 0.2, 0, Math.PI * 2); c.fill();
+
+      if (botWear === 'none') {
+        c.fillStyle = '#fb7185'; c.strokeStyle = INK; c.lineWidth = 1.0;
+        c.beginPath();
+        c.moveTo(-12.4, -55.5); c.quadraticCurveTo(0, -53.2, 12.4, -55.5);
+        c.quadraticCurveTo(13.4, -51.5, 11.0, -48.2); c.quadraticCurveTo(5.5, -44.2, 0, -43.2);
+        c.quadraticCurveTo(-5.5, -44.2, -11.0, -48.2); c.quadraticCurveTo(-13.4, -51.5, -12.4, -55.5);
+        c.closePath(); c.fill(); c.stroke();
+      }
+    }
+
+    if (botWear !== 'none') {
+      var wCol = botWear === 'jeans' ? '#315b8e' : botWear === 'pendek' ? (isBoy ? '#475569' : '#4f7396') : '#3c4352';
+      var legEdge = isBoy ? 11.1 : 10.6;
+      c.fillStyle = wCol; c.strokeStyle = INK; c.lineWidth = 1.1;
+      c.beginPath();
+      if (isBoy) {
+        c.moveTo(-12.6, -56.5); c.lineTo(12.6, -56.5); c.lineTo(legEdge, -42.0); c.lineTo(-legEdge, -42.0);
+        c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(-legEdge, -42.0); c.lineTo(-12.6, -56.5); c.lineTo(12.6, -56.5); c.lineTo(legEdge, -42.0); c.stroke();
+      } else {
+        c.moveTo(-10.2, -58.5); c.quadraticCurveTo(0, -57.8, 10.2, -58.5);
+        c.bezierCurveTo(14.6, -54.8, 14.4, -48.5, legEdge, -41.5); c.lineTo(-legEdge, -41.5);
+        c.bezierCurveTo(-14.4, -48.5, -14.6, -54.8, -10.2, -58.5);
+        c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(-legEdge, -41.5); c.bezierCurveTo(-14.4, -48.5, -14.6, -54.8, -10.2, -58.5);
+        c.quadraticCurveTo(0, -57.8, 10.2, -58.5); c.bezierCurveTo(14.6, -54.8, 14.4, -48.5, legEdge, -41.5); c.stroke();
+      }
+    }
+
+    function drawSoftBustShade(shCol, hiCol) {
+      c.save();
+      c.fillStyle = shCol;
+      c.beginPath();
+      c.moveTo(-13.2, -72.2); c.quadraticCurveTo(-6.4, -66.5, 0, -70.8); c.quadraticCurveTo(6.4, -66.5, 13.2, -72.2);
+      c.quadraticCurveTo(7.2, -62.5, 0, -67.2); c.quadraticCurveTo(-7.2, -62.5, -13.2, -72.2);
+      c.closePath(); c.fill();
+      c.fillStyle = hiCol;
+      c.beginPath(); c.ellipse(-6.0, -76.5, 5.0, 2.8, -0.15, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(6.0, -76.5, 5.0, 2.8, 0.15, 0, Math.PI * 2); c.fill();
+      c.restore();
+    }
+
+    if (topWear === 'kaos') {
+      c.fillStyle = isBoy ? '#3b82f6' : '#fbcfe8'; c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      if (isBoy) {
+        c.moveTo(-4.8, -92); c.lineTo(4.8, -92); c.quadraticCurveTo(14.0, -90.5, 15.2, -83.5);
+        c.lineTo(13.2, -53); c.quadraticCurveTo(0, -52, -13.2, -53); c.lineTo(-15.2, -83.5); c.quadraticCurveTo(-14.0, -90.5, -4.8, -92);
+      } else {
+        c.moveTo(-4.5, -92); c.lineTo(4.5, -92); c.quadraticCurveTo(12.2, -90.5, 14.2, -83.0);
+        c.bezierCurveTo(16.6, -73, 16.4, -54, 17.0, -37.5); c.quadraticCurveTo(8, -35.2, 0, -36.5);
+        c.quadraticCurveTo(-8, -35.2, -17.0, -37.5); c.bezierCurveTo(-16.4, -54, -16.6, -73, -14.2, -83.0); c.quadraticCurveTo(-12.2, -90.5, -4.5, -92);
+      }
+      c.closePath(); c.fill(); c.stroke();
+      if (!isBoy) drawSoftBustShade('rgba(190,82,126,0.22)', 'rgba(255,255,255,0.34)');
+      c.fillStyle = '#fff0e6'; c.beginPath(); c.arc(0, -91.5, 4.5, 0, Math.PI); c.fill(); c.stroke();
+    } else if (topWear === 'kemeja') {
+      c.fillStyle = '#f8fafc'; c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      if (isBoy) {
+        c.moveTo(-4.8, -92); c.lineTo(4.8, -92); c.quadraticCurveTo(14.2, -90.5, 15.5, -83.5);
+        c.lineTo(13.2, -52); c.quadraticCurveTo(0, -51, -13.2, -52); c.lineTo(-15.5, -83.5); c.quadraticCurveTo(-14.2, -90.5, -4.8, -92);
+      } else {
+        c.moveTo(-4.0, -92); c.lineTo(4.0, -92); c.quadraticCurveTo(11.0, -90.5, 12.8, -83.5);
+        c.bezierCurveTo(14.8, -76, 12.6, -69, 9.4, -55); c.quadraticCurveTo(0, -53.5, -9.4, -55);
+        c.bezierCurveTo(-12.6, -69, -14.8, -76, -12.8, -83.5); c.quadraticCurveTo(-11.0, -90.5, -4.0, -92);
+      }
+      c.closePath(); c.fill(); c.stroke();
+      if (!isBoy) drawSoftBustShade('rgba(100,116,139,0.20)', 'rgba(255,255,255,0.55)');
+      c.strokeStyle = '#94a3b8'; c.lineWidth = 1.0; c.beginPath(); c.moveTo(0, -87); c.lineTo(0, -55); c.stroke();
+      c.fillStyle = '#e2e8f0'; c.strokeStyle = INK; c.lineWidth = 0.9;
+      c.beginPath(); c.moveTo(0, -86); c.lineTo(-5.5, -90.5); c.lineTo(-4.5, -83); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(0, -86); c.lineTo(5.5, -90.5); c.lineTo(4.5, -83); c.closePath(); c.fill(); c.stroke();
+    } else if (topWear === 'formal' || topWear === 'driver') {
+      c.fillStyle = topWear === 'driver' ? '#0f766e' : (isBoy ? '#1e293b' : '#334155'); c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      if (isBoy) {
+        c.moveTo(-5.0, -92); c.lineTo(5.0, -92); c.quadraticCurveTo(14.5, -90.5, 15.8, -83.5);
+        c.lineTo(13.6, -49); c.quadraticCurveTo(0, -48, -13.6, -49); c.lineTo(-15.8, -83.5); c.quadraticCurveTo(-14.5, -90.5, -5.0, -92);
+      } else {
+        c.moveTo(-4.2, -92); c.lineTo(4.2, -92); c.quadraticCurveTo(11.4, -90.5, 13.0, -83.5);
+        c.bezierCurveTo(15.0, -76, 12.6, -69, 9.6, -62); c.quadraticCurveTo(12.2, -56, 11.8, -51);
+        c.quadraticCurveTo(0, -49.5, -11.8, -51); c.quadraticCurveTo(-12.2, -56, -9.6, -62);
+        c.bezierCurveTo(-12.6, -69, -15.0, -76, -13.0, -83.5); c.quadraticCurveTo(-11.4, -90.5, -4.2, -92);
+      }
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(-4.6, -91.5); c.lineTo(4.6, -91.5); c.lineTo(3.2, -52); c.lineTo(-3.2, -52); c.closePath(); c.fill();
+      if (!isBoy) drawSoftBustShade('rgba(15,23,42,0.28)', 'rgba(255,255,255,0.16)');
+      if (topWear === 'formal') {
+        if (isBoy) { c.fillStyle = '#dc2626'; c.fillRect(-1.4, -87, 2.8, 22); }
+        else { c.fillStyle = '#fb7185'; c.beginPath(); c.arc(0, -84, 2.0, 0, Math.PI * 2); c.fill(); }
+      }
+    }
+    c.restore();
+
+    /* 5. Lengan depan */
+    drawArm(isBoy ? 14.2 : 11.4, step * 0.28 - 0.10);
+
+    /* 6. Kepala, Wajah Natural, Poni Rapi sampai Alis + Kuncir Kanan Atas */
+    c.save();
+    c.translate(0, -109 + breath * 0.65);
+
+    if (!isBoy) {
+      c.save(); c.translate(13, -17); c.rotate(tailSway);
+      c.fillStyle = '#1b1824'; c.strokeStyle = INK; c.lineWidth = 1.15;
+      c.beginPath();
+      c.moveTo(0, 0); c.bezierCurveTo(13, -6, 21, 6, 17, 26); c.quadraticCurveTo(13, 33, 7.5, 27);
+      c.bezierCurveTo(9.5, 15, 4, 7.5, -1.8, 2.8); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(226,232,255,0.34)'; c.lineWidth = 1.35;
+      c.beginPath(); c.moveTo(5.5, 2); c.quadraticCurveTo(13, 8, 12, 17); c.stroke();
+      c.fillStyle = '#fb7185'; c.strokeStyle = INK; c.lineWidth = 0.85;
+      c.beginPath(); c.ellipse(-1, 0, 3.8, 2.2, -0.5, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(2.8, -2.8, 3.3, 1.9, 0.4, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.restore();
+    }
+
+    _rrAnime(c, -3.4, 9, 6.8, 11, 3, '#f7dfd2', INK);
+
+    var fcG = c.createLinearGradient(0, -17, 0, 15);
+    fcG.addColorStop(0, isBoy ? '#fff1e6' : '#fff5ee'); fcG.addColorStop(1, isBoy ? '#f7d8c4' : '#fce4d6');
+    c.fillStyle = fcG; c.strokeStyle = INK; c.lineWidth = 1.15;
+    c.beginPath();
+    if (isBoy) {
+      c.moveTo(-13.8, -5); c.lineTo(-13.2, 5.2); c.quadraticCurveTo(-7.5, 12.6, 0, 15.8);
+      c.quadraticCurveTo(7.5, 12.6, 13.2, 5.2); c.lineTo(13.8, -5);
+      c.bezierCurveTo(13.8, -17.5, 7.5, -20.8, 0, -20.8); c.bezierCurveTo(-7.5, -20.8, -13.8, -17.5, -13.8, -5);
+    } else {
+      c.moveTo(-14.5, -4); c.bezierCurveTo(-14.8, 7.8, -7.8, 13.5, 0, 14.8);
+      c.bezierCurveTo(7.8, 13.5, 14.8, 7.8, 14.5, -4);
+      c.bezierCurveTo(14.5, -17.8, 8, -20.8, 0, -20.8); c.bezierCurveTo(-8, -20.8, -14.5, -17.8, -14.5, -4);
+    }
+    c.closePath(); c.fill(); c.stroke();
+
+    if (!isBoy) {
+      c.fillStyle = 'rgba(251,146,162,0.30)';
+      c.beginPath(); c.ellipse(-8.2, 4.2, 3.2, 1.6, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(8.2, 4.2, 3.2, 1.6, 0, 0, Math.PI * 2); c.fill();
+    }
+
+    [-5.8, 5.8].forEach(function (ex, idx) {
+      if (blink) {
+        c.strokeStyle = INK; c.lineWidth = 1.5; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(ex - 3.0, 1.0); c.quadraticCurveTo(ex, 2.2, ex + 3.0, 1.0); c.stroke();
+      } else if (isBoy) {
+        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.5, 3.0, 1.7, 0, 0, Math.PI * 2); c.fill();
+        var irB = c.createLinearGradient(ex, -1.2, ex, 2.2);
+        irB.addColorStop(0, '#121622'); irB.addColorStop(0.6, '#2d3748'); irB.addColorStop(1, '#5a6b82');
+        c.fillStyle = irB; c.beginPath(); c.ellipse(ex + (idx === 0 ? 0.2 : -0.2), 0.5, 1.8, 1.6, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex - 0.6, -0.25, 0.6, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#181820'; c.lineWidth = 1.65; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(ex - 3.3, 0.0); c.quadraticCurveTo(ex, -1.8, ex + 3.3, -0.3); c.stroke();
+        c.strokeStyle = '#1e1b24'; c.lineWidth = 1.45;
+        c.beginPath(); c.moveTo(ex - 3.2, -3.6); c.lineTo(ex + 3.0, -4.4); c.stroke();
+      } else {
+        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.7, 2.9, 2.5, 0, 0, Math.PI * 2); c.fill();
+        var irG = c.createLinearGradient(ex, -1.8, ex, 3.0);
+        irG.addColorStop(0, '#23181a'); irG.addColorStop(0.65, '#4c3230'); irG.addColorStop(1, '#8c6258');
+        c.fillStyle = irG; c.beginPath(); c.ellipse(ex + (idx === 0 ? 0.18 : -0.18), 0.8, 2.0, 2.2, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex - 0.72, -0.35, 0.78, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#24181c'; c.lineWidth = 1.5; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(ex - 3.2, -0.2); c.quadraticCurveTo(ex, -2.5, ex + 3.2, -0.2); c.stroke();
+        c.strokeStyle = '#332428'; c.lineWidth = 1.0;
+        c.beginPath(); c.moveTo(ex - 2.6, -4.8); c.quadraticCurveTo(ex, -5.8, ex + 2.6, -4.6); c.stroke();
+      }
+    });
+
+    if (isBoy) {
+      c.strokeStyle = '#c48d78'; c.lineWidth = 1.0; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(0, 2.2); c.lineTo(-0.4, 5.2); c.lineTo(0.8, 5.6); c.stroke();
+      c.strokeStyle = '#9c5a54'; c.lineWidth = 1.25;
+      c.beginPath(); c.moveTo(-2.4, 9.0); c.quadraticCurveTo(0.4, 9.8, 3.0, 8.4); c.stroke();
+    } else {
+      c.fillStyle = '#d49a8a'; c.fillRect(-0.5, 4.0, 1.0, 1.15);
+      c.strokeStyle = '#b46266'; c.lineWidth = 1.2; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(-2.6, 7.8); c.quadraticCurveTo(0, 9.6, 2.6, 7.8); c.stroke();
+    }
+
+    c.fillStyle = '#1b1824'; c.strokeStyle = INK; c.lineWidth = 1.1;
+    if (isBoy) {
+      c.beginPath();
+      c.moveTo(-15.5, 0.5); c.bezierCurveTo(-17, -18, -8.5, -24.5, 0.5, -25.2); c.bezierCurveTo(9.5, -25.2, 17, -18.5, 15.5, 0.5);
+      c.lineTo(13.2, 3.0); c.lineTo(12.2, -5.5); c.quadraticCurveTo(6.5, -10.5, 2.5, -4.5); c.quadraticCurveTo(-1.5, -10.5, -9.5, -6.5);
+      c.lineTo(-12.2, -4.0); c.lineTo(-13.2, 3.0); c.closePath(); c.fill(); c.stroke();
+    } else {
+      c.beginPath();
+      c.moveTo(-16.5, 0); c.bezierCurveTo(-17.5, -21.5, -8.2, -24.2, 0, -24.2); c.bezierCurveTo(8.2, -24.2, 17.5, -21.5, 16.5, 0);
+      c.lineTo(14.5, 11.5); c.lineTo(11.8, 6.2); c.lineTo(12.0, -3.5);
+      c.quadraticCurveTo(6.5, -3.2, 3.0, -4.2); c.quadraticCurveTo(0, -3.0, -3.0, -4.2); c.quadraticCurveTo(-6.5, -3.2, -12.0, -3.5);
+      c.lineTo(-11.8, 6.2); c.lineTo(-14.5, 11.5); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(180,192,225,0.22)'; c.lineWidth = 0.85; c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(-6.8, -16.5); c.quadraticCurveTo(-7.2, -9.5, -6.5, -4.2);
+      c.moveTo(-2.5, -17.5); c.quadraticCurveTo(-2.6, -10.5, -2.4, -4.4);
+      c.moveTo(2.5, -17.5); c.quadraticCurveTo(2.6, -10.5, 2.4, -4.4);
+      c.moveTo(6.8, -16.5); c.quadraticCurveTo(7.2, -9.5, 6.5, -4.2);
+      c.stroke();
+    }
+    c.strokeStyle = 'rgba(226,232,255,0.34)'; c.lineWidth = 1.65; c.lineCap = 'round';
+    c.beginPath(); c.arc(-4.8, -13.8, 6.2, Math.PI * 1.18, Math.PI * 1.54); c.stroke();
+    c.beginPath(); c.arc(4.8, -13.8, 6.2, Math.PI * 1.46, Math.PI * 1.82); c.stroke();
+    c.restore();
+    c.restore();
+
+    if (o.label) {
+      var yLblH = y - 144 * sk - bob;
+      c.save();
+      c.font = '800 10.5px "Nunito", system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      var twL = Math.min(118, (c.measureText ? c.measureText(o.label).width : o.label.length * 6) + 14);
+      _rrAnime(c, x - twL / 2, yLblH - 8.5, twL, 17, 8.5, 'rgba(14,18,24,0.78)');
+      c.fillStyle = '#fef3c7'; c.fillText(o.label, x, yLblH + 0.5);
+      c.restore();
+    }
+  }
+
+  function gambarKarakterPreview(canvasEl, gender, tp, now) {
+    if (!canvasEl || !canvasEl.getContext) return;
+    var c = canvasEl.getContext('2d');
+    var pw = canvasEl.width, ph = canvasEl.height;
+    c.clearRect(0, 0, pw, ph);
+    var bg = c.createLinearGradient(0, 0, 0, ph);
+    bg.addColorStop(0, '#f7e9d4'); bg.addColorStop(0.65, '#e8cfa9'); bg.addColorStop(1, '#c8925a');
+    c.fillStyle = bg; c.fillRect(0, 0, pw, ph);
+    gambarKarakterAnime(c, pw * 0.5, ph * 0.94, gender, now || Date.now(), { skala: 1.08, tampilan: tp || {} });
+  }
+
+  function _gambarKarakterRumahLegacy(x, y, gender, t, o) {
+    var sk = o.skala || 1, cewek = gender === 'cewek';
+    var sedangJalan = !!o.jalan;
+    var ayunKaki = sedangJalan ? Math.sin(t / 140) * 6 : 0;
+    var bob = sedangJalan ? Math.abs(Math.sin(t / 140)) * 2.2 : Math.sin(t / 520 + x * 0.1) * 1.1;
+    var baju = o.baju || (cewek ? '#c85a7c' : '#1f7a72');
+    var celana = o.celana || (cewek ? '#2f3d4c' : '#263340');
+    var tp = (o.tampilan && o.tampilan.kulitHex) ? o.tampilan : tampilanDariNama(o.label || '', gender, sk < 0.72);
+    var kulit = tp.kulitHex || '#f5cb9f';
+    var berhijab = cewek && tp.rambut === 'hijab';
 
     cx.save();
     cx.translate(x, y);
@@ -2355,17 +2710,7 @@
     var m = s.menit % 1440, b = s.barang || {};
     var kunciTema = s.rumah ? ('rumah_' + s.rumah) : (s.hunianId || 'kos_ac');
     var T = TEMA_HUNIAN[kunciTema] || TEMA_HUNIAN.kos_ac;
-    /* P72+: Latar Interior Hunian HD Realistis — posisi kaki selalu tepat di atas dock bawah & proporsi manusia 43–45% tinggi layar */
-    var imRumah = muatImg(srcRumahHD(kunciTema));
-    if (imRumah && gambarBgCover(imRumah, W, H)) {
-      var skCv = (cv && cv.getBoundingClientRect ? cv.getBoundingClientRect().width : W) / W || 1;
-      var batasBawah = s.ruangBawah ? Math.round(H - (s.ruangBawah / skCv) - 10) : Math.round(H * 0.79);
-      var yBerdiriHD = Math.max(Math.round(H * 0.70), Math.min(Math.round(H * 0.80), batasBawah));
-      var xKasurHD = 46, yBantalHD = Math.round(H * 0.55);
-      gambarPenghuniRumah(s, t, xKasurHD, yBantalHD, yBerdiriHD);
-      pencahayaanRuangan(m, s.tidur, t);
-      return;
-    }
+    /* P73: Interior 2D hangat menyatu dengan karakter anime 120 FPS (foto statis P72 dinonaktifkan) */
     /* garis pertemuan dinding & lantai: menyisakan ruang bersih di atas dock bawah */
     var lantai = Math.max(308, Math.min(372, Math.round(H * 0.56)));
     var yBerdiri = lantai + 56;
@@ -4039,5 +4384,5 @@
   }
 
   function racikSaja() { anim.pantulBarista = 1; }
-  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja, pilihChar: pilihKunciChar, svgMobil: svgMobil, faceSrc: faceSrcHD };
+  g.KK_ADEGAN = { init: init, gambar: gambar, ketuk: ketuk, ukur: ukur, gelap: gelap, racikSaja: racikSaja, pilihChar: pilihKunciChar, svgMobil: svgMobil, faceSrc: faceSrcHD, gambarKarakterPreview: gambarKarakterPreview };
 })(window);
