@@ -2167,80 +2167,68 @@
     var irama = Math.sin(t / 240), cy = Math.round(H * 0.52);
     if (v === 'metime') { gambarMeTime(s, t, u, gA); return; }
 
-    /* P72.3: Latar HD Ruangan Romantis + Potret Wajah HD Konsisten (rapi & sinematik, tanpa sprite miring kaku) */
-    var kunciTemaHb = v === 'hotel' ? 'rumah_mewah' : v === 'balkon' ? 'apt_studio' : (s.rumah ? ('rumah_' + s.rumah) : (s.hunianId || 'kos_ac'));
-    var imBgHb = muatImg(srcRumahHD(kunciTemaHb));
+    /* P73.1: Adegan HB Romantis pakai Karakter Anime 2D 120 FPS yang 100% sama dengan kamar & HUD */
     var tpA = s.tampilan || tampilanDariNama(s.namaPemain || '', gA, false);
     var tpB = A.tpB || tampilanDariNama(A.nama || '', gB, false);
-    var imFA = muatImg(faceSrcHD(s.namaPemain || 'Kamu', gA, 24, 'pemain', tpA, false));
-    var imFB = muatImg(faceSrcHD(A.nama || 'Pasangan', gB, 25, 'pasangan', tpB, false));
-    if (imBgHb && imFA && imFB) {
-      gambarBgCover(imBgHb, W, H);
-      var grRm = cx.createLinearGradient(0, 0, 0, H);
-      if (v === 'ciuman') { grRm.addColorStop(0, 'rgba(68,14,44,0.58)'); grRm.addColorStop(1, 'rgba(110,24,62,0.78)'); }
-      else if (v === 'foreplay') { grRm.addColorStop(0, 'rgba(54,14,34,0.62)'); grRm.addColorStop(1, 'rgba(86,20,46,0.82)'); }
-      else if (v === 'hotel') { grRm.addColorStop(0, 'rgba(34,12,56,0.60)'); grRm.addColorStop(1, 'rgba(68,18,60,0.82)'); }
-      else if (v === 'mandi') { grRm.addColorStop(0, 'rgba(135,175,195,0.62)'); grRm.addColorStop(1, 'rgba(72,112,135,0.80)'); }
-      else if (v === 'balkon') { grRm.addColorStop(0, 'rgba(12,18,46,0.66)'); grRm.addColorStop(1, 'rgba(38,24,60,0.82)'); }
-      else { grRm.addColorStop(0, 'rgba(38,14,30,0.58)'); grRm.addColorStop(1, 'rgba(62,18,38,0.80)'); }
-      cx.fillStyle = grRm; cx.fillRect(0, 0, W, H);
+    var grRm = cx.createLinearGradient(0, 0, 0, H);
+    if (v === 'ciuman') { grRm.addColorStop(0, '#4a1230'); grRm.addColorStop(1, '#8c204e'); }
+    else if (v === 'foreplay') { grRm.addColorStop(0, '#3a1026'); grRm.addColorStop(1, '#6e1c3e'); }
+    else if (v === 'hotel') { grRm.addColorStop(0, '#261042'); grRm.addColorStop(1, '#50184a'); }
+    else if (v === 'mandi') { grRm.addColorStop(0, '#6a96ad'); grRm.addColorStop(1, '#3d6b82'); }
+    else if (v === 'balkon') { grRm.addColorStop(0, '#0f1636'); grRm.addColorStop(1, '#31204c'); }
+    else { grRm.addColorStop(0, '#2e1226'); grRm.addColorStop(1, '#581a36'); }
+    cx.fillStyle = grRm; cx.fillRect(0, 0, W, H);
 
-      /* Bokeh cahaya lampu hangat melayang lembut */
-      for (var bk = 0; bk < 10; bk++) {
-        var bx = 24 + ((bk * 71 + Math.sin(t / 1100 + bk) * 14) % (W - 48));
-        var by = 80 + ((bk * 59) % Math.round(H * 0.45));
-        var br = 12 + (bk % 3) * 10;
-        var grBk = cx.createRadialGradient(bx, by, 1, bx, by, br);
-        grBk.addColorStop(0, 'rgba(255,205,175,' + (0.20 + 0.12 * Math.abs(Math.sin(t / 700 + bk))).toFixed(2) + ')');
-        grBk.addColorStop(1, 'rgba(255,180,150,0)');
-        cx.fillStyle = grBk; cx.beginPath(); cx.arc(bx, by, br, 0, Math.PI * 2); cx.fill();
-      }
-
-      /* Dua potret wajah HD konsisten pemain & pasangan berdampingan rapi dengan denyut hati hangat */
-      var yCard = Math.round(H * 0.46), rPort = 46, gapP = 54 - Math.sin(t / 650) * 4;
-      var drawPort = function (im, px, py) {
-        cx.save();
-        cx.beginPath(); cx.arc(px, py, rPort, 0, Math.PI * 2); cx.clip();
-        cx.drawImage(im, px - rPort, py - rPort, rPort * 2, rPort * 2);
-        cx.restore();
-        cx.strokeStyle = 'rgba(253,164,175,0.82)'; cx.lineWidth = 3;
-        cx.beginPath(); cx.arc(px, py, rPort, 0, Math.PI * 2); cx.stroke();
-      };
-      drawPort(imFA, W * 0.5 - gapP, yCard);
-      drawPort(imFB, W * 0.5 + gapP, yCard);
-      var scHrt = 1 + Math.sin(t / 320) * 0.14;
-      cx.save(); cx.translate(W * 0.5, yCard); cx.scale(scHrt, scHrt);
-      bulat(0, 0, 18, 'rgba(225,29,72,0.92)');
-      cx.font = '800 18px system-ui, sans-serif'; cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(v === 'ciuman' ? '💋' : '♥', 0, 1);
-      cx.restore();
-
-      /* Hati / uap / kilau hangat melayang */
-      cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
-      for (var hgH = 0; hgH < 8; hgH++) {
-        var fgP = (t / 26 + hgH * 22) % 100;
-        cx.globalAlpha = Math.max(0, 1 - fgP / 100) * 0.88;
-        cx.fillStyle = v === 'mandi' ? '#ffffff' : (hgH % 2 ? '#fda4af' : '#fb7185');
-        cx.font = '800 22px system-ui, sans-serif';
-        var symH = v === 'mandi' ? '○' : v === 'ciuman' ? (hgH % 2 ? '💋' : '♥') : v === 'foreplay' ? (hgH % 2 ? '✨' : '♥') : '♥';
-        cx.fillText(symH, 68 + hgH * 32 + Math.sin(t / 500 + hgH) * 12, yCard - 58 - fgP * 1.2);
-      }
-      cx.globalAlpha = 1;
-
-      /* Judul, jam & progress bar bergaya HUD Versi 1 */
-      var jmH = s.menit % 1440, jjH = ('0' + Math.floor(jmH / 60)).slice(-2) + '.' + ('0' + Math.floor(jmH % 60)).slice(-2);
-      var jdH = (v === 'ciuman' ? 'Ciuman hangat' : (v === 'foreplay' || !!(A.isLong && u < 0.30)) ? 'Foreplay romantis' : A.nama2 ? 'Waktu hangat bertiga' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama + (A.nama2 ? ' & ' + A.nama2 : '') : '');
-      var yBox = yCard + 68;
-      kotakBulat(32, yBox, W - 64, 72, 14, 'rgba(14,18,24,0.80)');
-      cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.font = '800 16px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.fillStyle = '#fde68a';
-      cx.fillText(jdH, W / 2, yBox + 22);
-      cx.font = '700 12px "Nunito", system-ui, sans-serif'; cx.fillStyle = '#e2e8f0';
-      cx.fillText('Pukul ' + jjH + ' · ' + Math.round(u * 100) + '%', W / 2, yBox + 42);
-      kotakBulat(54, yBox + 56, W - 108, 7, 3.5, 'rgba(255,255,255,0.22)');
-      kotakBulat(54, yBox + 56, Math.max(8, (W - 108) * u), 7, 3.5, '#fb7185');
-      return;
+    /* Bokeh cahaya lampu hangat melayang lembut */
+    for (var bk = 0; bk < 10; bk++) {
+      var bx = 24 + ((bk * 71 + Math.sin(t / 1100 + bk) * 14) % (W - 48));
+      var by = 80 + ((bk * 59) % Math.round(H * 0.45));
+      var br = 12 + (bk % 3) * 10;
+      var grBk = cx.createRadialGradient(bx, by, 1, bx, by, br);
+      grBk.addColorStop(0, 'rgba(255,205,175,' + (0.20 + 0.12 * Math.abs(Math.sin(t / 700 + bk))).toFixed(2) + ')');
+      grBk.addColorStop(1, 'rgba(255,180,150,0)');
+      cx.fillStyle = grBk; cx.beginPath(); cx.arc(bx, by, br, 0, Math.PI * 2); cx.fill();
     }
+
+    /* Dua karakter Anime 2D 120 FPS berhadapan mesra & berayun lembut */
+    var yCharHb = Math.round(H * 0.62), gapP = 30 - Math.sin(t / 520) * 5;
+    var tpHbA = { atasan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpA.atasan || 'kaos'), bawahan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpA.bawahan || 'pendek') };
+    var tpHbB = { atasan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpB.atasan || 'kaos'), bawahan: (v === 'kamar' || v === 'hotel' || v === 'mandi') ? 'none' : (tpB.bawahan || 'pendek') };
+    gambarKarakterAnime(cx, W * 0.5 - gapP, yCharHb, gA, t, { skala: 1.24, arah: 1, tampilan: tpHbA });
+    gambarKarakterAnime(cx, W * 0.5 + gapP, yCharHb, gB, t + 360, { skala: 1.24, arah: -1, tampilan: tpHbB });
+
+    var scHrt = 1 + Math.sin(t / 320) * 0.14;
+    cx.save(); cx.translate(W * 0.5, yCharHb - 142); cx.scale(scHrt, scHrt);
+    bulat(0, 0, 17, 'rgba(225,29,72,0.92)');
+    cx.font = '800 17px system-ui, sans-serif'; cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText(v === 'ciuman' ? '💋' : '♥', 0, 1);
+    cx.restore();
+
+    /* Hati / uap / kilau hangat melayang */
+    cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
+    for (var hgH = 0; hgH < 8; hgH++) {
+      var fgP = (t / 26 + hgH * 22) % 100;
+      cx.globalAlpha = Math.max(0, 1 - fgP / 100) * 0.88;
+      cx.fillStyle = v === 'mandi' ? '#ffffff' : (hgH % 2 ? '#fda4af' : '#fb7185');
+      cx.font = '800 22px system-ui, sans-serif';
+      var symH = v === 'mandi' ? '○' : v === 'ciuman' ? (hgH % 2 ? '💋' : '♥') : v === 'foreplay' ? (hgH % 2 ? '✨' : '♥') : '♥';
+      cx.fillText(symH, 68 + hgH * 32 + Math.sin(t / 500 + hgH) * 12, yCharHb - 150 - fgP * 1.2);
+    }
+    cx.globalAlpha = 1;
+
+    /* Judul, jam & progress bar bergaya HUD Versi 1 */
+    var jmH = s.menit % 1440, jjH = ('0' + Math.floor(jmH / 60)).slice(-2) + '.' + ('0' + Math.floor(jmH % 60)).slice(-2);
+    var jdH = (v === 'ciuman' ? 'Ciuman hangat' : (v === 'foreplay' || !!(A.isLong && u < 0.30)) ? 'Foreplay romantis' : A.nama2 ? 'Waktu hangat bertiga' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama + (A.nama2 ? ' & ' + A.nama2 : '') : '');
+    var yBox = yCharHb + 22;
+    kotakBulat(32, yBox, W - 64, 72, 14, 'rgba(14,18,24,0.82)');
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.font = '800 16px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.fillStyle = '#fde68a';
+    cx.fillText(jdH, W / 2, yBox + 22);
+    cx.font = '700 12px "Nunito", system-ui, sans-serif'; cx.fillStyle = '#e2e8f0';
+    cx.fillText('Pukul ' + jjH + ' · ' + Math.round(u * 100) + '%', W / 2, yBox + 42);
+    kotakBulat(54, yBox + 56, W - 108, 7, 3.5, 'rgba(255,255,255,0.22)');
+    kotakBulat(54, yBox + 56, Math.max(8, (W - 108) * u), 7, 3.5, '#fb7185');
+    return;
     var ayun = irama * 2.2, goyang = irama * 9;
     /* latar */
     var gr = cx.createLinearGradient(0, 0, 0, H);
@@ -2419,31 +2407,11 @@
     var tpP = s.tampilan || tampilanDariNama(s.namaPemain, s.gender || 'cewek', false);
     var bajuPemain = s.warnaBaju || (s.gender === 'cewek' ? '#b84b6e' : '#1b6b63');
     if (s.tidur) {
-      /* Berbaring tenang di atas kasur dengan potret wajah HD yang 100% konsisten dengan pemain & pasangan */
-      var imFaceP = muatImg(faceSrcHD(s.namaPemain || 'Kamu', s.gender || 'cewek', 24, 'pemain', tpP, false));
-      if (imFaceP) {
-        cx.save();
-        cx.beginPath(); cx.arc(xKasur + 28, yBantal - 4, 22, 0, Math.PI * 2); cx.clip();
-        cx.drawImage(imFaceP, xKasur + 6, yBantal - 26, 44, 44);
-        cx.fillStyle = 'rgba(10,18,42,0.34)'; cx.fillRect(xKasur + 6, yBantal - 26, 44, 44);
-        cx.restore();
-        cx.strokeStyle = 'rgba(255,255,255,0.45)'; cx.lineWidth = 2;
-        cx.beginPath(); cx.arc(xKasur + 28, yBantal - 4, 22, 0, Math.PI * 2); cx.stroke();
-      } else {
-        gambarKepalaPotret(xKasur + 26, yBantal - 4, 11.5, s.gender || 'cewek', tpP, { merem: true, rot: -0.18, tanpaLeher: true, baju: bajuPemain });
-      }
+      /* P73.1: Berbaring tenang di atas kasur dengan kepala Anime 2D konsisten (tanpa foto statis P72) */
+      gambarKepalaPotret(xKasur + 26, yBantal - 4, 11.5, s.gender || 'cewek', tpP, { merem: true, rot: -0.18, tanpaLeher: true, baju: bajuPemain });
       if (pas) {
         var tpPasT = tampilanDariNama(pas.nama, pas.gender, false);
-        var imFacePas = muatImg(faceSrcHD(pas.nama, pas.gender, pas.usia || 25, 'pasangan', tpPasT, false));
-        if (imFacePas) {
-          cx.save();
-          cx.beginPath(); cx.arc(xKasur + 62, yBantal + 10, 20, 0, Math.PI * 2); cx.clip();
-          cx.drawImage(imFacePas, xKasur + 42, yBantal - 10, 40, 40);
-          cx.fillStyle = 'rgba(10,18,42,0.34)'; cx.fillRect(xKasur + 42, yBantal - 10, 40, 40);
-          cx.restore();
-        } else {
-          gambarKepalaPotret(xKasur + 28, yBantal + 15, 11, pas.gender, tpPasT, { merem: true, rot: -0.12, tanpaLeher: true, baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a' });
-        }
+        gambarKepalaPotret(xKasur + 28, yBantal + 15, 11, pas.gender, tpPasT, { merem: true, rot: -0.12, tanpaLeher: true, baju: pas.gender === 'cewek' ? '#d46a7e' : '#35608a' });
       }
       cx.fillStyle = '#fef3c7'; cx.font = '800 16px "Baloo 2", system-ui, sans-serif';
       cx.fillText('z', xKasur + 56, yBantal - 26 - (t / 40) % 14);
