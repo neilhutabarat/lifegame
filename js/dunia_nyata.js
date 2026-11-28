@@ -572,13 +572,14 @@
     if (S.diri.stamina < 18) return 'Stamina kurang untuk ngetik skripsi & bimbingan dosen.';
     S.diri.stamina = batas(S.diri.stamina - 16);
     if (R.skripsi.progres < 100) {
-      var naik = 25;
+      var bnsSkr = (g.KK_DIRI && g.KK_DIRI.efekKomputer ? g.KK_DIRI.efekKomputer(S).bonusSkripsi : 0) + (g.KK_DIRI && g.KK_DIRI.efekRumah ? g.KK_DIRI.efekRumah(S).bonusSkripsi : 0);
+      var naik = Math.min(50, Math.round(25 * (1 + bnsSkr)));
       R.skripsi.progres = Math.min(100, R.skripsi.progres + naik);
-      if (Math.random() < 0.45 && R.skripsi.revisi < 4) {
+      if (Math.random() < Math.max(0.18, 0.45 - bnsSkr * 0.35) && R.skripsi.revisi < 4) {
         R.skripsi.revisi++;
         return { ok: true, menit: 90, teks: '📄 Bimbingan ke Dosen Killer: "BAB ' + R.skripsi.revisi + ' REVISI TOTAL! Referensi kurang!" (Progres ' + R.skripsi.progres + '% · Revisi ke-' + R.skripsi.revisi + ').' };
       }
-      return { ok: true, menit: 90, teks: '🎓 Ngerjain Skripsi lancar (+25% → ' + R.skripsi.progres + '%).' };
+      return { ok: true, menit: 90, teks: '🎓 Ngerjain Skripsi lancar (+' + naik + '% → ' + R.skripsi.progres + '%' + (bnsSkr > 0 ? ' · dibantu Laptop/Meja Kerja' : '') + ').' };
     }
     R.skripsi.selesai = true;
     S.kuliahAktif.lulusPada = Math.min(S.kuliahAktif.lulusPada || (S.hari + 3), S.hari + 3);
@@ -816,6 +817,12 @@
     if (g.KK_HIDUP && g.KK_HIDUP.karismaFashion) k += g.KK_HIDUP.karismaFashion(S);
     var ef = g.KK_DIRI && g.KK_DIRI.efekHp ? g.KK_DIRI.efekHp(S) : null;
     if (ef) k += Math.round((ef.prestiseBonus || 0) * 60);
+    if (g.KK_DIRI && g.KK_DIRI.efekKomputer) k += (g.KK_DIRI.efekKomputer(S).karisma || 0);
+    if (g.KK_DIRI && g.KK_DIRI.efekRumah) k += (g.KK_DIRI.efekRumah(S).bonusKarisma || 0);
+    var karKnd = 0;
+    if (g.KK_RUTE && g.KK_RUTE.infoDampakMobil && S.mobil) karKnd = Math.max(karKnd, g.KK_RUTE.infoDampakMobil(S.mobil).karisma || 0);
+    if (g.KK_RUTE && g.KK_RUTE.infoDampakMotor && S.motor) karKnd = Math.max(karKnd, g.KK_RUTE.infoDampakMotor(S.motor).karisma || 0);
+    k += karKnd;
     if (infoBmi(S).status === 'Ideal' || infoBmi(S).status === 'Atletis') k += 10;
     return k;
   }

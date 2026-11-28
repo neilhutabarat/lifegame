@@ -65,7 +65,7 @@
     S.game = S.game || { konsol: {}, kaset: {}, pasar: null };
     S.game.konsol = S.game.konsol || {};
     S.game.kaset = S.game.kaset || {};
-    S.hp = S.hp || { id: 'redmi12c', nomor: '081256000088', masaAktif: (S.hari || 0) + 30, baterai: 95, cas: false, pulsa: 25000, kuota: 8, apk: { kasirpro: true } };
+    S.hp = S.hp || { id: 'redmi8', nomor: '081256000088', masaAktif: (S.hari || 0) + 30, baterai: 95, cas: false, pulsa: 25000, kuota: 8, apk: { kasirpro: true } };
     if (!S.hp.nomor) S.hp.nomor = '081256000088';
     if (S.hp.masaAktif == null) S.hp.masaAktif = (S.hari || 0) + 30;
     if (typeof S.hp.baterai !== 'number') S.hp.baterai = 95;
@@ -94,8 +94,8 @@
     if (!S.rentalPs.total) S.rentalPs.total = { omzet: 0, laba: 0 };
     S.gadget = S.gadget || {};
     if (!S.gadget[S.hp.id]) {
-      var gm0 = gadgetModel(S.hp.id) || gadgetModel('redmi12c');
-      if (gm0) S.gadget[gm0.id] = { id: gm0.id, dibeli: S.hari, pakai: 0, hargaBeli: gm0.harga };
+      var gm0 = gadgetModel(S.hp.id) || gadgetModel('redmi8') || gadgetModel('redmi12c') || (N.daftarGadget && N.daftarGadget[0]);
+      if (gm0) { S.hp.id = gm0.id; S.gadget[gm0.id] = { id: gm0.id, dibeli: S.hari, pakai: 0, hargaBeli: gm0.harga }; }
     }
     /* migrasi hp2 / hp3 lama ke daftarGadget asli */
     if (S.rumah.barang.hp2 && !S.gadget.galaxya54) {
@@ -316,7 +316,7 @@
     var pool = (N.daftarGadget || []).filter(function (gd) {
       if (gd.jenis !== 'hp') return false;
       if (!merekHpResmi(gd)) return false;
-      var th = +(gd.tahunRilis || gd.tahun || 2023), bl = +(gd.bulanRilis || 1);
+      var th = +(gd.tahunRilis || gd.tahun || 2019), bl = +(gd.bulanRilis || 1);
       var sudahBeredar = th < thnK || (th === thnK && bl <= blnK);
       return sudahBeredar && th >= (thnK - 5);
     });
@@ -731,7 +731,10 @@
       }
     }
     var turunStamina = TURUN.stamina * (kerja ? 1.5 : 1) * (efekRokok ? 0.65 : 1) + (kerja && (d.hb || 0) >= 95 ? 2.2 : 0) + (d.kenyang < 5 ? 8 : 0) + (d.minum < 5 ? 10 : 0) + (d.sakit ? (d.sakit.berat ? 5 : 2.5) : 0) + (d.kesehatan < 50 ? 2 : 0);
-    if (d.posisi === 'kos' && !kerja) turunStamina = -(punya(S, 'kursipijat') ? 18 : punya(S, 'sofa') ? 12 : punya(S, 'tv') || punya(S, 'karpet') ? 10 : 6);
+    if (d.posisi === 'kos' && !kerja) {
+      var efR = efekRumah(S);
+      turunStamina = -(6 + Math.min(22, efR.bonusIstirahat));
+    }
     d.stamina = batas(d.stamina - turunStamina * j);
     /* peluang sakit akibat aktivitas berlebihan, telat makan, atau cuaca hujan */
     if (!d.sakit && S.hari > (d.kebalSampai || -1) && j > 0) {
@@ -926,15 +929,16 @@
     }
     return kabar;
   }
-  /* pemakaian listrik kos (kW): kulkas 24 jam, AC saat di kos, TV/PS saat dipakai */
+  /* pemakaian listrik kos (kW): kulkas 24 jam, AC saat di kos, TV/PS saat dipakai; Genset/EcoFlow menjaga listrik darurat tidak padam */
   function listrikKos(S, menit, tidur, alat) {
-    var r = S.rumah; if (r.kwh <= 0) { r.padam = true; return; }
+    var r = S.rumah;
+    if (r.kwh <= 0) { r.padam = !punya(S, 'gensetmini'); return; }
     var kw = (punya(S, 'kulkas') ? 0.05 : 0) + (punya(S, 'kulkas2') ? 0.07 : 0);
     if (S.diri.posisi === 'kos') kw += adaAc(S) ? (tidur ? 0.35 : 0.2) : 0.05; /* AC 1/2 PK; tanpa AC hanya lampu, perkiraan */
     if (alat) kw += alat;
     var hemPln = (g.KK_EKO && g.KK_EKO.faktorHematPln) ? g.KK_EKO.faktorHematPln(S) : 1.0;
     r.kwh = Math.max(0, r.kwh - kw * hemPln * menit / 60);
-    if (r.kwh === 0) r.padam = true;
+    if (r.kwh === 0) r.padam = !punya(S, 'gensetmini');
   }
   function beliTokenKos(S, nominal) {
     var t = g.KK_USAHA.token(S, nominal);
@@ -969,14 +973,18 @@
     if (jenis === 'masak') {
       if (d.posisi !== 'kos' || !(punya(S, 'ricecooker') || punya(S, 'kompor'))) return 'Masak sendiri butuh rice cooker atau kompor.';
       if (!bayarTunai(S, 7000)) return 'Uang tunai di dompet pribadi tidak cukup untuk beras dan lauk (Rp7.000).';
-      catatPakai(S, 'ricecooker'); catatPakai(S, 'kompor'); catatPakai(S, 'mejamakan');
-      d.kenyang = batas(d.kenyang + 60 + (punya(S, 'mejamakan') ? 10 : 0) + (punya(S, 'kompor') ? 5 : 0));
-      return { ok: true, menit: 40, teks: 'Masak nasi dan telur di ' + tempat(S) + ', sekitar Rp7.000 (dari dompet pribadi).' };
+      catatPakai(S, 'ricecooker'); catatPakai(S, 'kompor'); catatPakai(S, 'mejamakan'); catatPakai(S, 'airfryer'); catatPakai(S, 'panciset');
+      var efMsk = efekRumah(S);
+      d.kenyang = batas(d.kenyang + 55 + efMsk.bonusKenyang);
+      if (efMsk.bonusSehatMakan > 0) d.kesehatan = batas((d.kesehatan == null ? 100 : d.kesehatan) + efMsk.bonusSehatMakan);
+      return { ok: true, menit: 40, teks: 'Masak di ' + tempat(S) + ' (Rp7.000 · +' + (55 + efMsk.bonusKenyang) + '% kenyang berkat peralatan dapur).' };
     }
     if (jenis === 'air') {
       if (d.posisi === 'kos') { if (!punya(S, 'dispenser') && !bayarTunai(S, 4000)) return 'Uang tunai di dompet pribadi tidak cukup (Rp4.000).'; catatPakai(S, 'dispenser'); catatPakai(S, 'kulkas'); catatPakai(S, 'kulkas2'); }
       else if (!bayarTunai(S, 4000)) return 'Uang tunai di dompet pribadi tidak cukup (Rp4.000).';
-      d.minum = batas(d.minum + (punya(S, 'kulkas') && d.posisi === 'kos' ? 50 : 40));
+      var bnsMinum = (d.posisi === 'kos' ? (punya(S, 'kulkas2') ? 16 : punya(S, 'kulkas') ? 10 : 0) : 0);
+      d.minum = batas(d.minum + 40 + bnsMinum);
+      if (d.posisi === 'kos' && (punya(S, 'blender') || punya(S, 'slowjuicer'))) d.kesehatan = batas((d.kesehatan == null ? 100 : d.kesehatan) + (punya(S, 'slowjuicer') ? 3 : 2));
       return { ok: true, menit: 2, teks: d.posisi === 'kos' ? (punya(S, 'dispenser') ? 'Minum dari dispenser.' : 'Beli air mineral Rp4.000 (dari dompet).') : 'Beli air mineral Rp4.000 (dari dompet).' };
     }
     return 'Tidak dikenal.';
@@ -1297,6 +1305,15 @@
     S.game.pasar = { minggu: Math.floor(S.hari / 7), unit: unit };
   }
   function beliKonsol(S, kode, caraBayar) {
+    if (String(kode).indexOf('pasar:') !== 0) {
+      var kmCek = konsolModel(kode);
+      if (kmCek && !kmCek.bekas) {
+        var tKsl0 = KAL.tgl(S.hari), thKsl0 = +(kmCek.tahunRilis || (kmCek.tahun && kmCek.tahun[0]) || 2020), blKsl0 = +(kmCek.bulanRilis || 1);
+        if (thKsl0 > tKsl0.y || (thKsl0 === tKsl0.y && blKsl0 > tKsl0.m)) {
+          return kmCek.nama + ' baru rilis resmi di Indonesia ' + ((N.namaBulan && N.namaBulan[blKsl0 - 1]) || ('Bulan ' + blKsl0)) + ' ' + thKsl0 + '.';
+        }
+      }
+    }
     if (!punya(S, 'tv')) return 'Butuh TV dulu di kamar untuk menyambungkan konsol PlayStation.';
     if (String(kode).indexOf('pasar:') === 0) {
       var idx = +kode.split(':')[1], u = S.game.pasar && S.game.pasar.unit[idx];
@@ -1311,6 +1328,10 @@
       return true;
     }
     var km = konsolModel(kode); if (!km) return 'Konsol tidak dikenal.';
+    var tKsl = KAL.tgl(S.hari), thKsl = +(km.tahunRilis || (km.tahun && km.tahun[0]) || 2020), blKsl = +(km.bulanRilis || 1);
+    if (!km.bekas && (thKsl > tKsl.y || (thKsl === tKsl.y && blKsl > tKsl.m))) {
+      return km.nama + ' baru rilis resmi di Indonesia ' + ((N.namaBulan && N.namaBulan[blKsl - 1]) || ('Bulan ' + blKsl)) + ' ' + thKsl + '.';
+    }
     if (punyaKonsol(S, km.id)) return 'Sudah punya ' + km.nama + '.';
     var byBaru = bayarBelanja(S, km.harga, 'Toko Game: ' + km.nama + ' (Baru)', caraBayar);
     if (byBaru !== true) return byBaru;
@@ -1344,8 +1365,8 @@
   }
   function beliGame(S, gameId, caraBayar) {
     var gm = gameModel(gameId); if (!gm) return 'Game tidak dikenal.';
-    var thnKini = KAL.tgl(S.hari).y, rilis = +(gm.tahun || 2023);
-    if (rilis > thnKini) return gm.nama + ' baru rilis tahun ' + rilis + ' (tahun saat ini ' + thnKini + ').';
+    var tGm = KAL.tgl(S.hari), rilis = +(gm.tahun || 2015), blGm = +(gm.bulanRilis || 1);
+    if (rilis > tGm.y || (rilis === tGm.y && blGm > tGm.m)) return gm.nama + ' baru rilis ' + ((N.namaBulan && N.namaBulan[blGm - 1]) || ('Bulan ' + blGm)) + ' ' + rilis + '.';
     if (S.game.kaset && S.game.kaset[gameId]) return 'Sudah punya ' + gm.nama + '.';
     if (!bisaMainGame(S, gm)) {
       var km = konsolModel(gm.konsol);
@@ -1385,9 +1406,82 @@
       if (S.hp.apk.capcut) k += 0.25;
       if (S.hp.apk.canva) k += 0.15;
     }
-    if (punya(S, 'ringlight')) k += 0.15;
-    if (punya(S, 'osmoaction')) k += 0.35;
+    var efR = efekRumah(S), efK = efekKomputer(S);
+    k += (efR.bonusKonten || 0) + (efK.bonusKonten || 0);
     return k;
+  }
+  /* P79 (Fase 4 - Poin 13): Agregasi dampak nyata SEMUA barang rumah (zero item pajangan!) */
+  function efekRumah(S) {
+    var out = {
+      bonusIstirahat: 0, bonusTidur: 0, bonusKenyang: 0, bonusSehatMakan: 0,
+      bonusSehatHarian: 0, kurangStresHarian: 0, bonusKerja: 0, bonusSkripsi: 0,
+      bonusBisnis: 0, bonusKarisma: 0, bonusPasangan: 0, bonusOrder: 0, bonusKonten: 0,
+      antiMaling: false, cadanganListrik: false
+    };
+    if (!S || !S.rumah || !S.rumah.barang) return out;
+    var p = function (id) { return !!S.rumah.barang[id]; };
+    if (p('kipas')) out.bonusTidur += 0.05;
+    if (p('ac')) out.bonusTidur += 0.18;
+    if (p('springbed')) out.bonusTidur += 0.16;
+    if (p('airpurifier')) { out.bonusTidur += 0.06; out.bonusSehatHarian += 3; }
+    if (p('dehumidifier')) out.bonusSehatHarian += 3;
+    if (p('vakumkasur')) { out.bonusTidur += 0.05; out.bonusSehatHarian += 2; }
+    if (p('tv')) out.bonusIstirahat += 3;
+    if (p('tv55')) { out.bonusIstirahat += 6; out.bonusKarisma += 4; }
+    if (p('sofa')) out.bonusIstirahat += 5;
+    if (p('sofabed')) out.bonusIstirahat += 3;
+    if (p('karpet')) out.bonusIstirahat += 2;
+    if (p('hometheater')) { out.bonusIstirahat += 3; out.kurangStresHarian += 6; }
+    if (p('kursipijat')) { out.bonusIstirahat += 12; out.kurangStresHarian += 10; out.bonusPasangan += 3; }
+    if (p('speakerjbl')) { out.bonusIstirahat += 2; out.kurangStresHarian += 5; }
+    if (p('kursigaming')) { out.bonusIstirahat += 3; out.bonusKerja += 0.06; }
+    if (p('proyektor')) out.bonusIstirahat += 4;
+    if (p('ricecooker')) out.bonusKenyang += 10;
+    if (p('kompor')) out.bonusKenyang += 15;
+    if (p('microwave')) out.bonusKenyang += 8;
+    if (p('airfryer')) { out.bonusKenyang += 8; out.bonusSehatMakan += 2; }
+    if (p('ovenlistrik')) { out.bonusKenyang += 8; out.bonusPasangan += 2; }
+    if (p('panciset')) out.bonusKenyang += 6;
+    if (p('mejamakan')) { out.bonusKenyang += 10; out.bonusPasangan += 2; }
+    if (p('blender')) out.bonusSehatHarian += 2;
+    if (p('slowjuicer')) out.bonusSehatHarian += 3;
+    if (p('treadmill')) out.bonusSehatHarian += 4;
+    if (p('polygon')) out.bonusSehatHarian += 3;
+    if (p('waterheater')) { out.bonusIstirahat += 2; out.kurangStresHarian += 4; }
+    if (p('mesincuci')) { out.bonusPasangan += 2; out.bonusKarisma += 2; }
+    if (p('robotvacuum')) { out.kurangStresHarian += 5; out.bonusPasangan += 2; }
+    if (p('lemari3pintu')) out.bonusKarisma += 4;
+    if (p('mejarias')) { out.bonusPasangan += 4; out.bonusKarisma += 4; }
+    if (p('cerminled')) { out.bonusKarisma += 4; out.bonusKonten += 0.08; }
+    if (p('lampugantung')) { out.bonusPasangan += 3; out.kurangStresHarian += 3; out.bonusKarisma += 3; }
+    if (p('mejakerja')) { out.bonusKerja += 0.12; out.bonusSkripsi += 0.15; }
+    if (p('rakbuku')) { out.bonusSkripsi += 0.12; out.bonusBisnis += 0.04; }
+    if (p('cctvwifi')) { out.antiMaling = true; out.kurangStresHarian += 4; }
+    if (p('smartlock')) { out.antiMaling = true; out.kurangStresHarian += 5; out.bonusKarisma += 3; }
+    if (p('gensetmini')) out.cadanganListrik = true;
+    if (p('smartwatch')) { out.bonusOrder += 0.06; out.bonusSehatHarian += 2; out.bonusKarisma += 3; }
+    if (p('ringlight')) out.bonusKonten += 0.15;
+    if (p('osmoaction')) out.bonusKonten += 0.35;
+    if (p('micwireless')) out.bonusKonten += 0.12;
+    return out;
+  }
+  /* P79 (Fase 4 - Poin 13): Agregasi dampak nyata Tablet/iPad, Laptop & Komputer PC milik pemain */
+  function efekKomputer(S) {
+    var out = { bonusFreelance: 0, bonusKonten: 0, bonusBisnis: 0, bonusSkripsi: 0, karisma: 0, terbaik: null };
+    if (!S || !S.gadget) return out;
+    var maksHarga = 0;
+    Object.keys(S.gadget).forEach(function (id) {
+      var gm = gadgetModel(id);
+      if (!gm || gm.jenis === 'hp') return;
+      if ((gm.harga || 0) > maksHarga) { maksHarga = gm.harga || 0; out.terbaik = gm; }
+    });
+    if (maksHarga <= 0) return out;
+    if (maksHarga >= 50000000) { out.bonusFreelance = 0.65; out.bonusKonten = 0.50; out.bonusBisnis = 0.18; out.bonusSkripsi = 0.60; out.karisma = 18; }
+    else if (maksHarga >= 28000000) { out.bonusFreelance = 0.52; out.bonusKonten = 0.45; out.bonusBisnis = 0.14; out.bonusSkripsi = 0.50; out.karisma = 14; }
+    else if (maksHarga >= 16000000) { out.bonusFreelance = 0.36; out.bonusKonten = 0.32; out.bonusBisnis = 0.10; out.bonusSkripsi = 0.40; out.karisma = 10; }
+    else if (maksHarga >= 9000000) { out.bonusFreelance = 0.24; out.bonusKonten = 0.20; out.bonusBisnis = 0.07; out.bonusSkripsi = 0.32; out.karisma = 6; }
+    else { out.bonusFreelance = 0.16; out.bonusKonten = 0.12; out.bonusBisnis = 0.05; out.bonusSkripsi = 0.25; out.karisma = 3; }
+    return out;
   }
   /* Dampak nyata spesifikasi HP: semakin tinggi kelas HP (Flagship/iPhone/Ultra), makin gacor GPS ojol, konten & prestise sosial, dan chip makin hemat baterai */
   function efekHp(S, model) {
@@ -1405,6 +1499,7 @@
       gpsBonus: Math.round(gpsBonus * 100) / 100,
       kontenBonus: Math.round(kontenBonus * 100) / 100,
       prestiseBonus: Math.round(prestiseBonus * 100) / 100,
+      karisma: Math.round(prestiseBonus * 45),
       efisiensiBaterai: efisiensiBaterai,
       hematPersen: Math.round((1 - efisiensiBaterai) * 100),
       tierLabel: tierLabel
@@ -2637,6 +2732,21 @@
       S.diri.hariHbPenuh = 0;
     }
     listrikKos(S, 0, false);
+    /* P79 (Poin 13): Dampak harian furniture & elektronik rumah (kesehatan, anti-stres, keharmonisan pasangan) */
+    var efRh = efekRumah(S);
+    if (efRh.bonusSehatHarian > 0 && !S.diri.sakit) {
+      S.diri.kesehatan = batas((S.diri.kesehatan == null ? 100 : S.diri.kesehatan) + efRh.bonusSehatHarian);
+    }
+    if (efRh.kurangStresHarian > 0 && g.KK_HIDUP && g.KK_HIDUP.ubahStres) {
+      g.KK_HIDUP.ubahStres(S, -efRh.kurangStresHarian);
+    }
+    if (efRh.bonusPasangan > 0) {
+      var pasRh = pasanganAktif(S);
+      if (pasRh) {
+        pasRh.bahagia = Math.min(100, (pasRh.bahagia == null ? 80 : pasRh.bahagia) + efRh.bonusPasangan);
+        pasRh.perasaan = Math.min(100, (pasRh.perasaan == null ? 70 : pasRh.perasaan) + Math.max(1, Math.round(efRh.bonusPasangan * 0.6)));
+      }
+    }
     if (!S.game || !S.game.pasar || S.game.pasar.minggu !== Math.floor(nBaru / 7)) acakPasarGame(S);
     if (r.jenis === 'kos' && t.d === r.tempo) {
       if (S.bank.saldo >= r.sewa) { S.bank.saldo -= r.sewa; S.bank.mutasi.unshift({ n: nBaru, ket: 'Sewa kos bulan ini', jml: -r.sewa }); kabar.push('Sewa kos ' + rp(r.sewa) + ' sudah dibayar.'); }
@@ -3642,7 +3752,7 @@
   function ramah(S) { var d = S.diri; return d ? 4.4 - (d.stamina < 25 ? 1.2 : 0) - (d.kenyang < 15 || d.minum < 15 ? 0.5 : 0) - (d.sakit ? 0.6 : 0) : 4.4; }
   function lambat(S) { var d = S.diri; return d && (d.stamina < 20 || d.sakit) ? 2 : 1; }
 
-  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, POLA_ROKOK: POLA_ROKOK, aturPolaRokok: aturPolaRokok, setRokokTetap: setRokokTetap, toggleAutoBeliRokok: toggleAutoBeliRokok, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, efekHp: efekHp, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, bolehTidurSekarang: bolehTidurSekarang, tidur: tidur, daftarAnak: daftarAnak, anakDewasaTerdekat: anakDewasaTerdekat, teruskanKeAnakManual: teruskanKeAnakManual, prosesKematianPemain: prosesKematianPemain,
+  g.KK_DIRI = { beli: beli, hargaItem: hargaItem, hargaGofood: hargaGofood, diskonToko: diskonToko, hargaToko: hargaToko, siapkan: siapkan, jalan: jalan, makan: makan, ibadah: ibadah, POLA_ROKOK: POLA_ROKOK, aturPolaRokok: aturPolaRokok, setRokokTetap: setRokokTetap, toggleAutoBeliRokok: toggleAutoBeliRokok, daftarRokok: daftarRokok, beliRokok: beliRokok, merokok: merokok, totalBatangRokok: totalBatangRokok, efekHp: efekHp, efekRumah: efekRumah, efekKomputer: efekKomputer, jalankanHobi: jalankanHobi, rincianListrikRumah: rincianListrikRumah, cekKiriman: cekKiriman, istirahat: istirahat, bolehTidurSekarang: bolehTidurSekarang, tidur: tidur, daftarAnak: daftarAnak, anakDewasaTerdekat: anakDewasaTerdekat, teruskanKeAnakManual: teruskanKeAnakManual, prosesKematianPemain: prosesKematianPemain,
     beliBarang: beliBarang, infoUmurBarang: infoUmurBarang, nilaiJualBarang: nilaiJualBarang, jualBarang: jualBarang,
     konsolModel: konsolModel, gameModel: gameModel, punyaKonsol: punyaKonsol, adaKonsol: adaKonsol, bisaMainGame: bisaMainGame,
     beliKonsol: beliKonsol, nilaiJualKonsol: nilaiJualKonsol, jualKonsol: jualKonsol, beliGame: beliGame, nilaiJualGame: nilaiJualGame, jualGame: jualGame,

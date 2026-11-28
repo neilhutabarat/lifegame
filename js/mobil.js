@@ -81,7 +81,9 @@
     return S;
   }
   function bekasBaru(S) {
-    var pool = (N.mobilBekas || []).slice(), unit = [], thnKini = KAL.tgl(S.hari || 0).y, dipakai = {};
+    var thnKini = KAL.tgl(S.hari || 0).y;
+    var pool = (N.mobilBekas || []).filter(function (x) { return !x.tahun || x.tahun[0] <= thnKini; }), unit = [], dipakai = {};
+    if (!pool.length) pool = (N.mobilBekas || []).slice();
     if (!pool.length) { S.pasarMobilBekas = { minggu: Math.floor((S.hari || 0) / 7), unit: [] }; return; }
     for (var i = 0; i < Math.min(8, pool.length); i++) {
       var b = pool[Math.floor(Math.random() * pool.length)], coba = 0;
@@ -234,8 +236,8 @@
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = model(id); if (!m) return 'Mobil tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var tK = KAL.tgl(S.hari), thC = m.tahun || 2020, blC = m.bulanRilis || 1;
+    if (thC > tK.y || (thC === tK.y && blC > tK.m)) return m.nama + ' baru rilis ' + ((N.namaBulan && N.namaBulan[blC - 1]) || ('Bulan ' + blC)) + ' ' + thC + '.';
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
     tambahArmada(S, mobilBaru(m, S)); return true;
@@ -249,8 +251,8 @@
     var e = cekGarasi(S); if (e) return e;
     if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = model(id); if (!m) return 'Mobil tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var tK = KAL.tgl(S.hari), thC = m.tahun || 2020, blC = m.bulanRilis || 1;
+    if (thC > tK.y || (thC === tK.y && blC > tK.m)) return m.nama + ' baru rilis ' + ((N.namaBulan && N.namaBulan[blC - 1]) || ('Bulan ' + blC)) + ' ' + thC + '.';
     var k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;

@@ -171,6 +171,8 @@
     if ((S.ojek.rating || 4.85) >= 4.75) r *= 1.18; /* rating tinggi buka order prioritas */
     var efHp = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : null;
     if (efHp && efHp.gpsBonus > 0) r *= (1 + efHp.gpsBonus); /* sinyal & GPS flagship bikin order masuk lebih gacor */
+    var efRmh = (g.KK_DIRI && g.KK_DIRI.efekRumah) ? g.KK_DIRI.efekRumah(S) : null;
+    if (efRmh && efRmh.bonusOrder > 0) r *= (1 + efRmh.bonusOrder); /* smartwatch bikin order lebih sigap */
     var mult = (S.ojek && S.ojek.mult) || 1, isCar = S.ojek && S.ojek.mode === 'mobil';
     var nyaman = (g.KK_RUTE && g.KK_RUTE.nyaman) ? g.KK_RUTE.nyaman(isCar ? S.mobil : S.motor, isCar ? 'mobil' : 'motor') : 1;
     r *= Math.max(0.25, Math.min(1.6, Math.pow(nyaman / mult, 1.5)));
@@ -205,7 +207,9 @@
     var dx = Math.round(km * Math.cos(arah) * 100) / 100;
     var dy = Math.round(km * Math.sin(arah) * 100) / 100;
     var p = platform(S.ojek.platform || 'gojek');
-    var pengaliMbl = (isCar && g.KK_RUTE && g.KK_RUTE.pengaliKelasMobil) ? g.KK_RUTE.pengaliKelasMobil(S.mobil) : 1;
+    var dmpMbl = (isCar && g.KK_RUTE && g.KK_RUTE.infoDampakMobil) ? g.KK_RUTE.infoDampakMobil(S.mobil) : null;
+    var dmpMtr = (!isCar && g.KK_RUTE && g.KK_RUTE.infoDampakMotor) ? g.KK_RUTE.infoDampakMotor(S.motor) : null;
+    var pengaliMbl = dmpMbl ? dmpMbl.pengali : ((isCar && g.KK_RUTE && g.KK_RUTE.pengaliKelasMobil) ? g.KK_RUTE.pengaliKelasMobil(S.mobil) : 1);
     var kaliCar = isCar ? (((N.bisnisMobil && N.bisnisMobil.kaliTarifCar) || 2.3) * pengaliMbl) : 1;
     var pot = isCar ? ((N.bisnisMobil && N.bisnisMobil.potonganCar) || 0.1) : O.potongan;
     var tuslah = statusMudik(S.hari) ? 1.3 : 1; /* tuslah Lebaran / Mudik +30% */
@@ -213,10 +217,12 @@
     var gpsB = efHpT ? (efHpT.gpsBonus || 0) : 0;
     var prioritas = (S.ojek.rating || 4.85) >= 4.75 && Math.random() < (0.35 + gpsB * 0.45);
     var t = Math.round(tarif(S, km) * kaliCar * tuslah * (prioritas ? 1.15 : 1) / 500) * 500;
-    var sufLayanan = (isCar && S.mobil) ? (S.mobil.kelas === 'sultan' ? ' VIP Sultan' : S.mobil.kelas === 'mewah' ? ' Luxe' : S.mobil.harga >= 300e6 ? ' Comfort' : '') : (prioritas ? ' Prioritas' : '');
+    var sufLayanan = (isCar && dmpMbl && dmpMbl.label !== 'Reguler') ? (' ' + dmpMbl.label) : (prioritas ? ' Prioritas' : '');
     var lay = isCar ? ((p.id === 'grab' ? 'GrabCar' : 'GoCar') + sufLayanan) : (p.layanan[jenis] + sufLayanan);
-    var tipJauh = isCar && bisaJauh ? (Math.random() < (0.45 + gpsB * 0.35) ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
-      : (Math.random() < ((prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) + gpsB * 0.25) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
+    var tipMultK = isCar ? (dmpMbl ? dmpMbl.tipMult : 1) : (dmpMtr ? dmpMtr.tipMult : 1);
+    var tipDasar = isCar && bisaJauh ? (Math.random() < Math.min(0.92, 0.45 + gpsB * 0.35 + (tipMultK - 1) * 0.12) ? (15 + Math.floor(Math.random() * 65)) * 1000 : 0)
+      : (Math.random() < Math.min(0.85, (prioritas ? 0.38 : bisaJauh ? 0.25 : 0.12) + gpsB * 0.25 + (tipMultK - 1) * 0.10) ? (2 + Math.floor(Math.random() * (bisaJauh || prioritas ? 10 : 4))) * 1000 : 0);
+    var tipJauh = tipDasar > 0 ? Math.round((tipDasar * tipMultK) / 1000) * 1000 : 0;
     return { jenis: jenis, layanan: lay, mobil: isCar, km: km, jemput: jemput, dx: dx, dy: dy, tujuanTitik: tujuanTitik, tujuanLabel: tujuanLabel, medan: medan, jarakJauh: bisaJauh, tarif: t, bersih: Math.round(t * (1 - pot)),
       tunai: jenis === 'penumpang' && Math.random() < O.tunai, nama: (g.KK_NAMA && g.KK_NAMA.acak) ? g.KK_NAMA.acak(S) : N.namaOrang[Math.floor(Math.random() * N.namaOrang.length)],
       tip: tipJauh };
@@ -243,7 +249,8 @@
     var asalTitik = lokasiSekarang(S);
     var tunggu = x.jenis === 'makanan' ? 8 + Math.floor(Math.random() * 10) : x.jenis === 'barang' ? 4 : 2;
     var fakMedan = (x.medan && x.medan.kec) ? Math.max(0.45, x.medan.kec) : 1;
-    var mntJalan = Math.max(3, Math.round(r.menit / fakMedan));
+    var dmpCpt = (!isCar && g.KK_RUTE && g.KK_RUTE.infoDampakMotor) ? (g.KK_RUTE.infoDampakMotor(S.motor).cepatBonus || 0) : 0;
+    var mntJalan = Math.max(3, Math.round((r.menit / fakMedan) * (1 - dmpCpt)));
     var menitJemput = Math.round(mntJalan * x.jemput / km) + tunggu, total = mntJalan + tunggu;
     o.trip = { x: x, total: total, jemput: menitJemput, jalan: 0, kmTotal: Math.round(km * 10) / 10, kmSelesai: 0, asalTitik: asalTitik, kabar: r.kabar, bbmTarget: bbmTarget, bbmSisa: bbmDipakai };
     o.tawaran = null;
@@ -308,6 +315,15 @@
     }
     if (S.diri && S.diri.stamina < 25) skor -= 0.35;
     if (S.ojek.cuciSampai && S.hari <= S.ojek.cuciSampai) skor += 0.2;
+    var dmpNyaman = isCarS
+      ? (g.KK_RUTE && g.KK_RUTE.infoDampakMobil ? g.KK_RUTE.infoDampakMobil(S.mobil) : null)
+      : (g.KK_RUTE && g.KK_RUTE.infoDampakMotor ? g.KK_RUTE.infoDampakMotor(S.motor) : null);
+    if (dmpNyaman) {
+      skor += (dmpNyaman.ratingBonus || 0);
+      if (S.diri && dmpNyaman.hematStamina > 0) {
+        S.diri.stamina = Math.min(100, (S.diri.stamina || 0) + Math.min(8, Math.round((tr.kmTotal || 4) * 0.25 * dmpNyaman.hematStamina * 10) / 10));
+      }
+    }
     var bintangTrip = Math.max(2, Math.min(5, Math.round(skor + (Math.random() - 0.35) * 0.7)));
     var nRat = Math.min(50, (o.ratingCount || 0));
     o.rating = Math.round((((o.rating || 4.85) * (nRat + 10) + bintangTrip) / (nRat + 11)) * 100) / 100;

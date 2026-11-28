@@ -3,15 +3,15 @@
   'use strict';
   var KAL = window.KK_KAL, N = window.KK_NYATA, SIMPAN = window.KK_SIMPAN, ADEGAN = window.KK_ADEGAN, JUAL = window.KK_JUAL, MN = window.KK_MENU, UANG = window.KK_UANG, DIRI = window.KK_DIRI, STOK = window.KK_STOK, MOTOR = window.KK_MOTOR, ANTAR = window.KK_ANTAR, STAF = window.KK_STAF, DUNIA = window.KK_DUNIA, USAHA = window.KK_USAHA, MOBIL = window.KK_MOBIL, OJEK = window.KK_OJEK, TRAVEL = window.KK_TRAVEL, RUTE = window.KK_RUTE, PROPERTI = window.KK_PROPERTI, SUARA = window.KK_SUARA, TEMAN = window.KK_TEMAN, HIDUP = window.KK_HIDUP, EKO = window.KK_EKO, REAL = window.KK_REAL;
   var MENIT_PER_DETIK = 2;               /* 1 jam game = 30 detik nyata pada kecepatan 1x */
-  var TAHUN_DASAR = 2025;               /* tahun Masehi 2026 = tahun ke-1 (sesuai dunia nyata saat ini) */
-  var HARI_PERTAMA = KAL.dn(2026, 1, 5); /* Senin pertama Januari 2026 */
+  var TAHUN_DASAR = 2019;               /* P79 (Poin 9): tahun Masehi 2020 = tahun ke-1 agar semua rilis produk nyata bisa diikuti */
+  var HARI_PERTAMA = KAL.dn(2020, 1, 6); /* Senin pertama Januari 2020 */
 
   var $ = function (id) { return document.getElementById(id); };
   var S = null, layar = 'awal', lembar = null, lembarKunci = '', tPrev = 0, menitSimpan = 0, toastT = 0, kotaDipilih = null, hunianDipilih = 'kos_ac', hunianKatFilter = 'kos', qrisDipilih = null, lokasiDipilih = null, modeDriver = true, kotaPulauFilter = 'Semua', aksiCepatBuka = false;
   function tampilanDefault(gender) {
     return { kulit: 'kuning', rambut: gender === 'cowok' ? 'rapi' : 'panjang', warnaRambut: 'hitam', mata: 'cerah', mulut: 'senyum' };
   }
-  var profilAwal = { nama: '', gender: 'cewek', tglLahir: '2000-05-15', agama: 'Islam', etnis: 'Jawa', pendidikan: 'sma', tampilan: tampilanDefault('cewek') };
+  var profilAwal = { nama: '', gender: 'cewek', tglLahir: '1996-05-15', agama: 'Islam', etnis: 'Jawa', pendidikan: 'sma', tampilan: tampilanDefault('cewek') };
   var R = null; /* racik yang sedang terbuka: { o: pembeli } */
   var kal = { y: 0, m: 0, pilih: null };
 
@@ -102,7 +102,7 @@
   function perbaruiPreviewKarakter() {
     var nm = (profilAwal.nama || '').trim() || 'Driver';
     var gd = profilAwal.gender === 'cowok' ? 'cowok' : 'cewek';
-    var ttl = profilAwal.tglLahir || '2000-05-15';
+    var ttl = profilAwal.tglLahir || '1996-05-15';
     var usia = KAL.usia(HARI_PERTAMA, ttl);
     var ED = window.KK_KARAKTER_ED;
     if (gd === 'cewek' && ED) profilAwal.tampilan = ED.normalisasi(profilAwal.tampilan);
@@ -115,7 +115,7 @@
       ADEGAN.gambarKarakterPreview($('cv-awal-char'), gd, tp, Date.now(), { zoom: isZoom, ekspresi: edEks });
     }
     if ($('awal-nama-prev')) $('awal-nama-prev').textContent = nm;
-    if ($('awal-usia-prev')) $('awal-usia-prev').textContent = (gd === 'cowok' ? 'Cowok' : 'Cewek') + ' · Usia ' + usia + ' tahun · Tahun 2026';
+    if ($('awal-usia-prev')) $('awal-usia-prev').textContent = (gd === 'cowok' ? 'Cowok' : 'Cewek') + ' · Usia ' + usia + ' tahun · Tahun 2020';
     if ($('awal-info-prev')) $('awal-info-prev').textContent = (profilAwal.agama || 'Islam') + ' · Suku ' + (profilAwal.etnis || 'Jawa');
     [].forEach.call(document.querySelectorAll('[data-awal-gender]'), function (btn) {
       btn.classList.toggle('pilih', btn.dataset.awalGender === gd);
@@ -170,7 +170,7 @@
   function isiKarakterAwal() {
     var K = N.karakterOpsi || {};
     if ($('in-awal-nama')) $('in-awal-nama').value = profilAwal.nama || '';
-    if ($('in-awal-ttl')) $('in-awal-ttl').value = profilAwal.tglLahir || '2000-05-15';
+    if ($('in-awal-ttl')) $('in-awal-ttl').value = profilAwal.tglLahir || '1996-05-15';
     if ($('in-awal-agama')) {
       $('in-awal-agama').innerHTML = (K.agama || ['Islam']).map(function (a) {
         return '<option value="' + esc(a) + '"' + (profilAwal.agama === a ? ' selected' : '') + '>' + esc(a) + '</option>';
@@ -204,7 +204,7 @@
     }
     $('kota-daftar').innerHTML = daftar.map(function (k) {
       return '<button type="button" class="kota" data-kota="' + k.id + '"><b>' + esc(k.nama) + '</b>' +
-        '<span class="ciri">Ibu kota ' + esc(k.provinsi) + ' · Peta Wilayah Detail</span><span class="umk">UMK 2026 ' + rupiah(k.umk) + '/bln · Sewa mulai ' + rupiahPendek(Math.round(k.kos * 0.65 / 25000) * 25000) + '</span></button>';
+        '<span class="ciri">Ibu kota ' + esc(k.provinsi) + ' · Peta Wilayah Detail</span><span class="umk">UMK Realistis ' + rupiah(k.umk) + '/bln · Sewa mulai ' + rupiahPendek(Math.round(k.kos * 0.65 / 25000) * 25000) + '</span></button>';
     }).join('');
   }
   function svgPreviewHunian(id) {
@@ -356,12 +356,12 @@
     return d;
   }
   function mulaiBaru(kota, qris, bank) {
-    /* game baru: modal awal bersih tepat Rp5.000.000 (Rp4.850.000 bank + Rp150.000 dompet tunai), mulai tahun 2026 dengan profil lengkap */
+    /* game baru: modal awal bersih tepat Rp5.000.000 (Rp4.850.000 bank + Rp150.000 dompet tunai), mulai Januari 2020 dengan profil lengkap */
     var nmAwal = (profilAwal.nama || '').trim().slice(0, 24) || 'Driver';
     var gdAwal = profilAwal.gender === 'cowok' ? 'cowok' : 'cewek';
     var prAwal = {
       gender: gdAwal,
-      tglLahir: profilAwal.tglLahir || '2000-05-15',
+      tglLahir: profilAwal.tglLahir || '1996-05-15',
       agama: profilAwal.agama || 'Islam',
       etnis: profilAwal.etnis || 'Jawa',
       pendidikan: profilAwal.pendidikan || 'sma',
@@ -1947,38 +1947,46 @@
   }
   function layarDealerMotor() {
     var kls = app.kelasMotor || 'harian', tM = KAL.tgl(S.hari), thnM = tM.y, blnM = tM.m;
+    var blnNm = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     var listMotor = N.motor.filter(function (x) {
-      var th = x.tahun || 2023, bl = x.bulanRilis || 1;
+      var th = x.tahun || 2020, bl = x.bulanRilis || 1;
       return (x.kelas || 'harian') === kls && (th < thnM || (th === thnM && bl <= blnM));
     });
-    return kepalaSub('🏍️ Agen Resmi Motor', 'Unit Baru OTR ' + thnM + ' · ' + listMotor.length + ' model', 'otomotif') +
+    return kepalaSub('🏍️ Agen Resmi Motor', 'Unit Baru OTR ' + thnM + ' · ' + listMotor.length + ' model rilis', 'otomotif') +
       segTab('kelasMotor', [['harian', 'Harian'], ['sport', 'Sport'], ['moge', 'Moge']], kls) + pesanApp() +
-      '<div class="grid-2">' + listMotor.map(function (x) {
+      (listMotor.length ? '<div class="grid-2">' + listMotor.map(function (x) {
         var spek = x.bbm === 'listrik' ? ('EV ' + x.jarakPenuh + ' km') : (x.kml + ' km/L · ' + N.bbm.nama[x.bbm]);
         var dpMin = Math.round(x.harga * 0.1 / 100000) * 100000;
-        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(spek) + '</span>' + (x.tahun >= thnM ? '<span class="ki-tag milik">Baru ' + x.tahun + '</span>' : '') + '</div>' +
+        var dm = (RUTE && RUTE.infoDampakMotor) ? RUTE.infoDampakMotor(x) : null;
+        var dampakTxt = dm ? ('⚡ ' + dm.label + (dm.cepatBonus ? ' · Cepat +' + Math.round(dm.cepatBonus * 100) + '%' : '') + (dm.hematStamina ? ' · Stamina −' + Math.round(dm.hematStamina * 100) + '%' : '') + (dm.tipMult > 1 ? ' · Tip ×' + dm.tipMult.toFixed(2).replace('.', ',') : '') + ' · ✨+' + dm.karisma + (dm.tahanBanjir ? ' · 🛡️Banjir' : '')) : '';
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(spek) + '</span><span class="ki-tag' + (x.tahun >= thnM ? ' milik' : '') + '">' + (blnNm[(x.bulanRilis || 1) - 1] || 'Jan') + ' ' + (x.tahun || 2020) + '</span></div>' +
           '<b>' + esc(x.nama) + '</b><small>' + esc(x.kelebihan) + '</small>' +
+          (dampakTxt ? '<small style="color:var(--kontainer-tua)">' + esc(dampakTxt) + '</small>' : '') +
           '<div class="ki-harga">' + rupiahPendek(x.harga) + '</div><small>DP mulai ' + rupiahPendek(dpMin) + '</small></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol" data-aksi="tunai:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiKk:' + x.id + '">KK</button><button type="button" class="chip-tombol pilih" data-aksi="kreditPilih:' + x.id + '">Kredit</button></div></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' : '<p class="catatan">Belum ada model baru di kelas ini pada ' + (blnNm[blnM - 1] || '') + ' ' + thnM + '. Cek kelas lain atau tunggu tanggal rilis resmi.</p>');
   }
   function layarDealerMobil() {
     var km2 = app.kelasMobil || 'keluarga', tC = KAL.tgl(S.hari), thnC = tC.y, blnC = tC.m;
+    var blnNm = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     var listMobil = N.mobil.filter(function (x) {
-      var th = x.tahun || 2023, bl = x.bulanRilis || 1;
+      var th = x.tahun || 2020, bl = x.bulanRilis || 1;
       return x.kelas === km2 && (th < thnC || (th === thnC && bl <= blnC));
     });
-    return kepalaSub('🚗 Agen Resmi Mobil', 'Unit Baru OTR ' + thnC + ' · ' + listMobil.length + ' model', 'otomotif') +
+    return kepalaSub('🚗 Agen Resmi Mobil', 'Unit Baru OTR ' + thnC + ' · ' + listMobil.length + ' model rilis', 'otomotif') +
       segTab('kelasMobil', [['pikap', 'Pikap'], ['keluarga', 'Keluarga'], ['mewah', 'Mewah'], ['sultan', 'Sultan']], km2) + pesanApp() +
-      '<div class="grid-2">' + listMobil.map(function (x) {
+      (listMobil.length ? '<div class="grid-2">' + listMobil.map(function (x) {
         var pnpM = x.bentuk === 'pikap' ? 0 : Math.max(0, (x.kursi || (N.bisnisMobil && N.bisnisMobil.kapasitas[x.bentuk]) || 5) - 1);
         var tag = x.bbm === 'listrik' ? ('EV ' + x.tangki + ' kWh') : (N.bbm.nama[x.bbm] + ' · ' + x.tangki + 'L');
-        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(tag) + '</span>' + (pnpM ? '<span class="ki-tag milik">' + pnpM + ' pnp</span>' : '') + (x.tahun >= thnC ? '<span class="ki-tag promo">Baru ' + x.tahun + '</span>' : '') + '</div>' +
+        var dc = (RUTE && RUTE.infoDampakMobil) ? RUTE.infoDampakMobil(x) : null;
+        var dampakC = dc ? ('💎 ' + dc.label + ' · Tarif ×' + dc.pengali.toFixed(2).replace('.', ',') + ' · Tip ×' + dc.tipMult.toFixed(1).replace('.', ',') + (dc.hematStamina ? ' · Stamina −' + Math.round(dc.hematStamina * 100) + '%' : '') + ' · ✨+' + dc.karisma + (dc.kontenBonus ? ' · 🎥+' + Math.round(dc.kontenBonus * 100) + '%' : '') + (dc.tahanBanjir ? ' · 🛡️Kebal Banjir' : '')) : '';
+        return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + esc(tag) + '</span>' + (pnpM ? '<span class="ki-tag milik">' + pnpM + ' pnp</span>' : '') + '<span class="ki-tag' + (x.tahun >= thnC ? ' promo' : '') + '">' + (blnNm[(x.bulanRilis || 1) - 1] || 'Jan') + ' ' + (x.tahun || 2020) + '</span></div>' +
           ((ADEGAN && ADEGAN.svgMobil) ? ADEGAN.svgMobil(x.id, x.bentuk) : '') +
           '<b>' + esc(x.nama) + '</b><small>' + esc(x.kelebihan) + '</small>' +
+          (dampakC ? '<small style="color:var(--kontainer-tua)">' + esc(dampakC) + '</small>' : '') +
           '<div class="ki-harga">' + rupiahPendek(x.harga) + '</div></div>' +
           '<div class="ki-aksi"><button type="button" class="chip-tombol" data-aksi="tunaiMobil:' + x.id + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="tunaiMobilKk:' + x.id + '">KK</button><button type="button" class="chip-tombol pilih" data-aksi="kreditMobilPilih:' + x.id + '">Kredit</button></div></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' : '<p class="catatan">Belum ada model mobil rilis di kelas ini pada ' + (blnNm[blnC - 1] || '') + ' ' + thnC + '.</p>');
   }
   function layarAgenBekas(modeKhusus) {
     var tabB = modeKhusus || app.bekasTab || 'motor';
@@ -2460,27 +2468,51 @@
     return html;
   }
 
-  /* ---------- P78 (Poin 14 & 16): Toko Online App-in-App + 14 Brand HP (Tahun Ini/Lalu) + 100 HP Bekas Harian ---------- */
-  function renderKartuGadget(g, thnKini, blnKini) {
+  /* ---------- P79 (Poin 9, 10, 13, 14, 16): Toko Online App-in-App + 14 Brand HP (Grup Seri & Varian RAM/Storage) + 100 HP Bekas ---------- */
+  var BLN_SINGKAT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  function ketDampakKomputer(g) {
+    var h = +(g.harga || 0), fl = 16, kt = 12, bs = 5, sk = 25, kr = 3;
+    if (h >= 50e6) { fl = 65; kt = 50; bs = 18; sk = 60; kr = 18; }
+    else if (h >= 28e6) { fl = 52; kt = 45; bs = 14; sk = 50; kr = 14; }
+    else if (h >= 16e6) { fl = 36; kt = 32; bs = 10; sk = 40; kr = 10; }
+    else if (h >= 9e6) { fl = 24; kt = 20; bs = 7; sk = 32; kr = 6; }
+    return '💼 Freelance +' + fl + '% · 🎥 Konten +' + kt + '% · 🏪 Bisnis +' + bs + '% · 🎓 Skripsi +' + sk + '% · ✨+' + kr;
+  }
+  function renderKartuGadget(g, thnKini, blnKini, daftarVarian, seriId) {
     var milik = S.gadget && S.gadget[g.id], dipakai = g.jenis === 'hp' && S.hp.id === g.id;
     var hJual = milik ? DIRI.nilaiJualGadget(S, g.id) : 0;
-    var rilisThn = +(g.tahunRilis || g.tahun || 2023), rilisBln = +(g.bulanRilis || 1);
+    var rilisThn = +(g.tahunRilis || g.tahun || 2020), rilisBln = +(g.bulanRilis || 1);
     var belumRilis = !milik && (rilisThn > thnKini || (rilisThn === thnKini && rilisBln > blnKini));
-    var blnSingkat = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    var tagRilis = belumRilis ? ('<span class="ki-tag promo">🗓️ ' + (blnSingkat[rilisBln - 1] || 'Bln ' + rilisBln) + ' ' + rilisThn + '</span>') : (dipakai ? '<span class="ki-tag milik">Dipakai</span>' : milik ? '<span class="ki-tag milik">Punya</span>' : '');
+    var tagRilis = belumRilis
+      ? ('<span class="ki-tag promo">🗓️ ' + (BLN_SINGKAT_ID[rilisBln - 1] || 'Bln ' + rilisBln) + ' ' + rilisThn + '</span>')
+      : (dipakai ? '<span class="ki-tag milik">Dipakai</span>' : milik ? '<span class="ki-tag milik">Punya</span>' : ('<span class="ki-tag">' + (BLN_SINGKAT_ID[rilisBln - 1] || 'Jan') + ' ' + rilisThn + '</span>'));
     var efHpCard = (g.jenis === 'hp' && DIRI.efekHp) ? DIRI.efekHp(S, g) : null;
     var jamAwet = (g.jenis === 'hp' && DIRI.estimasiJamHp) ? DIRI.estimasiJamHp(S, g) : 0;
-    var pLbl = (g.jenis === 'hp' && DIRI.portHp) ? DIRI.labelPort(DIRI.portHp(g)) : 'Type-C';
-    var namaBersih = String(g.nama || '').replace(/\s*\(Charger\s+\d+W\)/i, '');
-    var ketEfek = efHpCard ? ('📡 GPS +' + Math.round(efHpCard.gpsBonus * 100) + '% · 🎥 Konten +' + Math.round(efHpCard.kontenBonus * 100) + '% · ⏱️ ~' + jamAwet + ' jam aktif') : '';
-    return '<div class="kartu-item' + (belumRilis ? ' redup' : '') + '"><div><div class="ki-top"><span class="ki-tag">' + esc(g.merek) + ' · ' + rilisThn + ' · ' + pLbl + '</span>' + tagRilis + '</div>' +
-      '<b>' + esc(namaBersih) + '</b><small>' + g.ram + '/' + g.storage + 'GB · ' + g.mah.toLocaleString('id-ID') + 'mAh · Maks ' + g.watt + 'W' + (g.chip ? ' · ' + esc(g.chip) : '') + '</small>' +
+    var pLbl = (g.jenis === 'hp' && DIRI.portHp) ? DIRI.labelPort(DIRI.portHp(g)) : (g.jenis === 'pc' ? 'Desktop PC' : g.jenis === 'laptop' ? 'Laptop' : 'Tablet');
+    var namaBersih = String((daftarVarian && daftarVarian.length > 1 && g.seriNama) ? g.seriNama : (g.nama || '')).replace(/\s*\(Charger\s+\d+W\)/i, '');
+    var ketEfek = efHpCard
+      ? ('📡 GPS +' + Math.round(efHpCard.gpsBonus * 100) + '% · 🎥 Konten +' + Math.round(efHpCard.kontenBonus * 100) + '% · ✨+' + Math.round((efHpCard.karisma || 0)) + ' · ⏱️ ~' + jamAwet + ' jam')
+      : ketDampakKomputer(g);
+    var varChips = '';
+    if (daftarVarian && daftarVarian.length > 1) {
+      varChips = '<div class="opsi-chip" style="margin:5px 0 3px;gap:4px">' + daftarVarian.map(function (v) {
+        var aktifV = v.id === g.id, punyaV = !!(S.gadget && S.gadget[v.id]);
+        var lblV = v.varianLabel || (v.ram + '/' + (v.storage >= 1024 ? '1TB' : v.storage + 'GB'));
+        return '<button type="button" class="chip-tombol' + (aktifV ? ' pilih' : '') + '" style="padding:2px 6px;font-size:10.5px" data-aksi="hpVar:' + esc(seriId) + '|' + esc(v.id) + '">' + esc(lblV) + (punyaV ? '✓' : '') + '</button>';
+      }).join('') + '</div>';
+    }
+    var spekTxt = g.jenis === 'pc'
+      ? (g.ram + 'GB RAM · ' + (g.storage >= 1024 ? (Math.round(g.storage / 1024) + 'TB') : (g.storage + 'GB')) + ' SSD · ' + g.watt + 'W' + (g.chip ? ' · ' + esc(g.chip) : ''))
+      : (g.ram + '/' + (g.storage >= 1024 ? '1TB' : (g.storage + 'GB')) + ' · ' + g.mah.toLocaleString('id-ID') + 'mAh · ' + g.watt + 'W' + (g.chip ? ' · ' + esc(g.chip) : ''));
+    return '<div class="kartu-item' + (belumRilis ? ' redup' : '') + '"><div><div class="ki-top"><span class="ki-tag">' + esc(g.merek) + ' · ' + pLbl + '</span>' + tagRilis + '</div>' +
+      '<b>' + esc(namaBersih) + '</b>' + varChips +
+      '<small>' + spekTxt + '</small>' +
       (ketEfek ? '<small style="color:var(--kontainer-tua)">' + esc(ketEfek) + '</small>' : '') +
       '<div class="ki-harga">' + rupiahPendek(g.harga) + '</div></div>' +
       '<div class="ki-aksi">' + (milik
         ? (g.jenis === 'hp' && !dipakai ? '<button type="button" class="chip-tombol pilih" data-aksi="pakaiHp:' + g.id + '">Pakai</button>' : '') + '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="jualGadget:' + g.id + '">Jual ' + rupiahPendek(hJual) + '</button>'
         : belumRilis
-          ? '<button type="button" class="chip-tombol" disabled>Rilis ' + (blnSingkat[rilisBln - 1] || '') + ' ' + rilisThn + '</button>'
+          ? '<button type="button" class="chip-tombol" disabled>Rilis ' + (BLN_SINGKAT_ID[rilisBln - 1] || '') + ' ' + rilisThn + '</button>'
           : '<button type="button" class="chip-tombol pilih" data-aksi="beliGadget:' + g.id + '-bank">Bank</button><button type="button" class="chip-tombol" data-aksi="beliGadget:' + g.id + '-dompet">Tunai</button><button type="button" class="chip-tombol" data-aksi="beliGadget:' + g.id + '-kk">KK</button>') + '</div></div>';
   }
   function layarToko() {
@@ -2514,38 +2546,71 @@
       var brands = (DIRI.BRAND_HP_RESMI || []);
       var hpSub = app.hpSub || '';
       if (!hpSub) {
-        return kepalaSub('📱 Toko HP Resmi', 'Pilih Brand Resmi (14 Brand) atau Toko HP Bekas', 'aksi:tokoMenu:utama') + pesanApp() +
+        return kepalaSub('📱 Toko HP Resmi', 'Pilih Brand Resmi (14 Brand) · Katalog Rilis ' + (BLN_SINGKAT_ID[blnKini - 1] || '') + ' ' + thnKini, 'aksi:tokoMenu:utama') + pesanApp() +
           '<div class="subapk-banner"><div><b>♻️ Cari HP Bekas Harga Miring?</b><small>Tersedia hingga 100 unit acak dari 5 tahun terakhir, di-refresh tiap hari.</small></div>' +
           '<button type="button" class="chip-tombol pilih" data-aksi="tokoMenu:second">Buka HP Bekas ›</button></div>' +
           '<div class="subapk-grup">🏷️ Brand Resmi Smartphone (' + brands.length + ' Merk)</div>' +
           '<div class="subapk-grid">' + brands.map(function (b) {
-            var jmlUnit = N.daftarGadget.filter(function (g) {
-              if (g.jenis !== 'hp') return false;
+            var seriSeen = {}, jmlSeri = 0;
+            N.daftarGadget.forEach(function (g) {
+              if (g.jenis !== 'hp') return;
               var mId = DIRI.merekHpResmi ? DIRI.merekHpResmi(g) : '';
-              return mId === b.id && ((S.gadget && S.gadget[g.id]) || +(g.tahunRilis || g.tahun || 2023) <= thnKini);
-            }).length;
-            return kartuSubApk({ aksi: 'hpSub:' + b.id, warna: b.warna, ikon: b.ikon, nama: b.nama, sub: b.sub, badge: jmlUnit ? String(jmlUnit) : '' });
+              if (mId !== b.id) return;
+              var rT = +(g.tahunRilis || g.tahun || 2020), rB = +(g.bulanRilis || 1);
+              if ((S.gadget && S.gadget[g.id]) || rT < thnKini || (rT === thnKini && rB <= blnKini)) {
+                var sk = g.seriId || g.id;
+                if (!seriSeen[sk]) { seriSeen[sk] = 1; jmlSeri++; }
+              }
+            });
+            return kartuSubApk({ aksi: 'hpSub:' + b.id, warna: b.warna, ikon: b.ikon, nama: b.nama, sub: b.sub, badge: jmlSeri ? String(jmlSeri) : '' });
           }).join('') + '</div>';
       }
       var brObj = brands.filter(function (b) { return b.id === hpSub; })[0] || { id: hpSub, nama: hpSub, sub: 'Katalog Resmi', warna: '#2563eb' };
       var thnHpFilter = app.tahunHp || 'kini';
-      var listBrand = N.daftarGadget.filter(function (g) {
+      var listBrandRaw = N.daftarGadget.filter(function (g) {
         if (g.jenis !== 'hp') return false;
         var mId = DIRI.merekHpResmi ? DIRI.merekHpResmi(g) : '';
         if (mId !== hpSub) return false;
-        var rilisG = +(g.tahunRilis || g.tahun || 2023), sudahPunya = !!(S.gadget && S.gadget[g.id]);
+        var rilisG = +(g.tahunRilis || g.tahun || 2020), sudahPunya = !!(S.gadget && S.gadget[g.id]);
         if (!sudahPunya && rilisG > thnKini) return false;
         if (thnHpFilter === 'kini' && rilisG !== thnKini) return false;
         if (thnHpFilter === 'lalu' && rilisG !== thnKini - 1) return false;
         return true;
       }).sort(function (a, b) {
-        return ((b.tahunRilis || b.tahun || 2023) - (a.tahunRilis || a.tahun || 2023)) || ((b.bulanRilis || 1) - (a.bulanRilis || 1)) || ((b.harga || 0) - (a.harga || 0));
+        return ((b.tahunRilis || b.tahun || 2020) - (a.tahunRilis || a.tahun || 2020)) || ((b.bulanRilis || 1) - (a.bulanRilis || 1)) || ((a.harga || 0) - (b.harga || 0));
       });
+      /* Kelompokkan varian RAM/Storage menjadi 1 kartu rapi per seri HP */
+      var seriMap = {}, seriOrder = [];
+      listBrandRaw.forEach(function (g) {
+        var sk = g.seriId || g.id;
+        if (!seriMap[sk]) { seriMap[sk] = []; seriOrder.push(sk); }
+        seriMap[sk].push(g);
+      });
+      seriOrder.sort(function (ka, kb) {
+        var a = seriMap[ka][0], b = seriMap[kb][0];
+        return ((b.tahunRilis || b.tahun || 2020) - (a.tahunRilis || a.tahun || 2020)) || ((b.bulanRilis || 1) - (a.bulanRilis || 1)) || ((b.harga || 0) - (a.harga || 0));
+      });
+      var infoDebut = '';
+      if (!seriOrder.length) {
+        var semuaMerek = N.daftarGadget.filter(function (g) { return g.jenis === 'hp' && DIRI.merekHpResmi && DIRI.merekHpResmi(g) === hpSub; })
+          .sort(function (a, b) { return ((a.tahunRilis || 2020) - (b.tahunRilis || 2020)) || ((a.bulanRilis || 1) - (b.bulanRilis || 1)); });
+        if (semuaMerek.length && +(semuaMerek[0].tahunRilis || 2020) > thnKini) {
+          var firstG = semuaMerek[0];
+          infoDebut = '<b>' + esc(brObj.nama) + '</b> baru debut resmi di Indonesia pada <b>' + (BLN_SINGKAT_ID[(firstG.bulanRilis || 1) - 1] || 'Jan') + ' ' + firstG.tahunRilis + '</b> (' + esc(firstG.seriNama || firstG.nama) + ').';
+        } else {
+          infoDebut = 'Belum ada rilisan <b>' + esc(brObj.nama) + '</b> pada filter tahun ini. Coba cek tab <b>📦 Tahun Lalu (' + (thnKini - 1) + ')</b> atau <b>📋 Semua Seri</b> di atas.';
+        }
+      }
+      app.hpVar = app.hpVar || {};
       return kepalaSub('📱 Store ' + brObj.nama, brObj.sub, 'aksi:hpSub:') +
         segTab('tahunHp', [['kini', '🔥 Tahun Ini (' + thnKini + ')'], ['lalu', '📦 Tahun Lalu (' + (thnKini - 1) + ')'], ['semua', '📋 Semua Seri']], thnHpFilter) + pesanApp() +
-        '<p class="catatan" style="margin:0 0 6px">💡 Unit HP dijual resmi tanpa charger bawaan. Gunakan <b>Toko Charger</b> jika butuh kabel/kepala charger.</p>' +
-        (listBrand.length ? '<div class="grid-2">' + listBrand.map(function (g) { return renderKartuGadget(g, thnKini, blnKini); }).join('') + '</div>'
-          : '<p class="catatan">Belum ada rilisan <b>' + esc(brObj.nama) + '</b> pada filter tahun ini. Coba cek tab <b>📦 Tahun Lalu (' + (thnKini - 1) + ')</b> atau <b>📋 Semua Seri</b> di atas.</p>');
+        '<p class="catatan" style="margin:0 0 6px">💡 Ketuk chip RAM/Storage di kartu untuk ganti varian resmi. Unit dijual tanpa charger bawaan (beli di <b>Toko Charger</b>).</p>' +
+        (seriOrder.length ? '<div class="grid-2">' + seriOrder.map(function (sk) {
+          var vars = seriMap[sk].slice().sort(function (a, b) { return (a.harga || 0) - (b.harga || 0); });
+          var pilihId = app.hpVar[sk];
+          var gAkt = vars.filter(function (v) { return v.id === pilihId; })[0] || vars[0];
+          return renderKartuGadget(gAkt, thnKini, blnKini, vars, sk);
+        }).join('') + '</div>' : '<p class="catatan">' + infoDebut + '</p>');
     }
 
     if (menuT === 'second') {
@@ -2630,6 +2695,7 @@
           return '<div class="kartu-item' + (b.rumah && !diRumah ? ' redup' : '') + '"><div>' +
             '<div class="ki-top"><span class="ki-tag">' + esc(b.merek) + '</span>' + (punya ? '<span class="ki-tag milik">Punya</span>' : dsk ? '<span class="ki-tag promo">−' + Math.round(dsk * 100) + '%</span>' : b.rumah && !diRumah ? '<span class="ki-tag">Rumah</span>' : '') + '</div>' +
             '<b>' + esc(b.nama) + '</b><small>' + esc(b.ket) + '</small>' +
+            (b.dampak ? '<small style="color:var(--kontainer-tua)">' + esc(b.dampak) + '</small>' : '') +
             '<div class="ki-harga">' + (dsk ? '<s>' + rupiahPendek(hAsli) + '</s>' + rupiahPendek(hPromo) : rupiahPendek(hAsli)) + '</div></div>' +
             '<div class="ki-aksi">' + (!punya || b.banyak ? '<button type="button" class="chip-tombol pilih" data-aksi="barang:' + b.id + '-' + toko + '">Bank</button><button type="button" class="chip-tombol" data-aksi="barangDompet:' + b.id + '-' + toko + '">Tunai</button><button type="button" class="chip-tombol" data-aksi="barangKk:' + b.id + '-' + toko + '">KK</button>' : '') +
             (punya ? '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="jualBarang:' + b.id + '">Jual ' + rupiahPendek(hJual) + '</button>' : '') + '</div></div>';
@@ -2669,33 +2735,39 @@
         }).join('') + '</div>';
     }
 
-    /* menuT === 'tablap': Tablet, iPad & Laptop/Komputer */
+    /* menuT === 'tablap': Tablet, iPad, Laptop & Komputer PC */
     var listG = N.daftarGadget.filter(function (g) {
       if (g.jenis === 'hp') return false;
-      var rilisG = +(g.tahunRilis || g.tahun || 2023), sudahPunya = !!(S.gadget && S.gadget[g.id]);
-      return sudahPunya || rilisG <= thnKini;
+      var rilisG = +(g.tahunRilis || g.tahun || 2020), blnG = +(g.bulanRilis || 1), sudahPunya = !!(S.gadget && S.gadget[g.id]);
+      return sudahPunya || rilisG < thnKini || (rilisG === thnKini && blnG <= blnKini);
     }).sort(function (a, b) {
-      return ((b.tahunRilis || b.tahun || 2023) - (a.tahunRilis || a.tahun || 2023)) || ((b.harga || 0) - (a.harga || 0));
+      return ((b.tahunRilis || b.tahun || 2020) - (a.tahunRilis || a.tahun || 2020)) || ((b.bulanRilis || 1) - (a.bulanRilis || 1)) || ((b.harga || 0) - (a.harga || 0));
     });
-    return kepalaSub('💻 Toko Laptop, iPad & Tablet', listG.length + ' unit resmi tersedia', 'aksi:tokoMenu:utama') + pesanApp() +
+    return kepalaSub('💻 Laptop, iPad, Tablet & PC', listG.length + ' unit resmi rilis s.d. ' + (BLN_SINGKAT_ID[blnKini - 1] || '') + ' ' + thnKini, 'aksi:tokoMenu:utama') + pesanApp() +
       (listG.length ? '<div class="grid-2">' + listG.map(function (g) { return renderKartuGadget(g, thnKini, blnKini); }).join('') + '</div>' : '<p class="catatan">Belum ada unit pada tahun ini.</p>');
   }
   function layarGame(backTarget) {
     var tab = app.gameTab || 'konsol', filterK = app.gameKonsolFilter || 'semua';
+    var tGm = KAL.tgl(S.hari), thnGm = tGm.y, blnGm = tGm.m;
     var jmlKonsol = S.game && S.game.konsol ? Object.keys(S.game.konsol).length : 0;
     var jmlKaset = S.game && S.game.kaset ? Object.keys(S.game.kaset).length : 0;
     var html = kepalaSub('🎮 Toko Game Resmi', jmlKonsol + ' konsol · ' + jmlKaset + ' game original', backTarget || app._asalGame || 'toko') +
       segTab('gameTab', [['konsol', '🎮 Konsol'], ['kaset', '💿 Game'], ['koleksi', '📦 Koleksi (' + (jmlKonsol + jmlKaset) + ')']], tab) + pesanApp();
     if (!DIRI.punya(S, 'tv')) html += '<p class="racik-pesan">Belum punya TV di ' + DIRI.tempat(S) + '. Beli TV di Toko Furniture untuk main PS.</p>';
     if (tab === 'konsol') {
-      var ps5Baru = (N.konsolGame || []).filter(function (k) { return !k.bekas; });
+      var ps5Baru = (N.konsolGame || []).filter(function (k) {
+        if (k.bekas) return false;
+        var milikK = !!(S.game && S.game.konsol && S.game.konsol[k.id]);
+        var rT = +(k.tahunRilis || 2021), rB = +(k.bulanRilis || 1);
+        return milikK || rT < thnGm || (rT === thnGm && rB <= blnGm);
+      });
       var pasar = (S.game && S.game.pasar && S.game.pasar.unit) || [];
-      html += '<h3 class="subjudul">PS5 Resmi Sony Indonesia</h3><div class="grid-2">' + ps5Baru.map(function (k) {
+      html += '<h3 class="subjudul">PS5 Resmi Sony Indonesia</h3>' + (ps5Baru.length ? '<div class="grid-2">' + ps5Baru.map(function (k) {
         var milik = S.game && S.game.konsol && S.game.konsol[k.id], hJual = milik ? DIRI.nilaiJualKonsol(S, k.id) : 0;
         return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">Baru Segel</span>' + (milik ? '<span class="ki-tag milik">Punya</span>' : '') + '</div>' +
-          '<b>' + esc(k.nama) + '</b><small>Stamina +' + (k.pulih || 20) + '/jam</small><div class="ki-harga">' + rupiahPendek(k.harga) + '</div></div>' +
+          '<b>' + esc(k.nama) + '</b><small>Stamina +' + (k.pulih || 20) + '/jam · Stres turun cepat</small><div class="ki-harga">' + rupiahPendek(k.harga) + '</div></div>' +
           '<div class="ki-aksi">' + (milik ? '<button type="button" class="chip-tombol bahaya-kecil" data-aksi="jualKonsol:' + k.id + '">Jual ' + rupiahPendek(hJual) + '</button>' : '<button type="button" class="chip-tombol pilih" data-aksi="beliKonsol:' + k.id + '">Bank</button><button type="button" class="chip-tombol" data-aksi="beliKonsolKk:' + k.id + '">KK</button>') + '</div></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' : '<p class="catatan">🗓️ PlayStation 5 (PS5) baru resmi rilis di Indonesia mulai <b>Januari 2021</b>. Sementara kamu bisa beli PS1–PS4 bekas di bawah!</p>');
       html += '<h3 class="subjudul">PS1 – PS4 Bekas Original</h3>' + (pasar.length ? '<div class="grid-2">' + pasar.map(function (u, idx) {
         var sudah = DIRI.punyaKonsol(S, u.id);
         return '<div class="kartu-item"><div><div class="ki-top"><span class="ki-tag">' + u.tahun + '</span><span class="ki-tag">' + esc(u.kondisi) + '</span></div>' +
@@ -2705,12 +2777,12 @@
       return html;
     }
     if (tab === 'kaset') {
-      var thnGm = KAL.tgl(S.hari).y;
       html += catStrip('gameKonsolFilter', [['semua', 'Semua'], ['ps1', 'PS1'], ['ps2', 'PS2'], ['ps3', 'PS3'], ['ps4', 'PS4'], ['ps5', 'PS5']], filterK);
       var daftarG = (N.gameKonsol || []).filter(function (g) {
         if (filterK !== 'semua' && g.konsol !== filterK) return false;
         var milikG = !!(S.game && S.game.kaset && S.game.kaset[g.id]);
-        return milikG || (g.tahun || 2023) <= thnGm;
+        var gT = +(g.tahun || 2020), gB = +(g.bulanRilis || 1);
+        return milikG || gT < thnGm || (gT === thnGm && gB <= blnGm);
       });
       return html + '<div class="grid-2">' + daftarG.map(function (g) {
         var milik = S.game && S.game.kaset && S.game.kaset[g.id], bisa = DIRI.bisaMainGame(S, g), hJual = milik ? DIRI.nilaiJualGame(S, g.id) : 0;
@@ -4040,6 +4112,7 @@
     else if (nama === 'qrisTab') { app.qrisTab = nilai; app.pesan = ''; }
     else if (nama === 'tokoMenu') { app.tokoMenu = nilai; app.hpSub = ''; app.fashionSub = ''; app.secHal = 0; app.cobaFashionId = ''; app.pesan = ''; }
     else if (nama === 'hpSub') { app.hpSub = nilai; app.pesan = ''; }
+    else if (nama === 'hpVar') { var phv = String(nilai || '').split('|'); app.hpVar = app.hpVar || {}; if (phv[0] && phv[1]) app.hpVar[phv[0]] = phv[1]; app.pesan = ''; }
     else if (nama === 'fashionSub') { app.fashionSub = nilai; app.cobaFashionId = ''; app.pesan = ''; }
     else if (nama === 'cobaFashion') { app.cobaFashionId = nilai || ''; app.pesan = ''; }
     else if (nama === 'kesehatanSub') { app.kesehatanSub = nilai; app.pesan = ''; }
@@ -5399,8 +5472,8 @@
   var TUTORIAL_LANGKAH = [
     {
       ikon: '🚐',
-      judul: 'Selamat Datang di The Driver (2026)!',
-      isi: 'Kamu memulai perjalanan hidup di tahun <b>2026</b> dengan modal awal <b>Rp5.000.000</b> (Rp4.850.000 di rekening bank + Rp150.000 tunai di dompet). Narik ojol, naik kelas ke GoCar/GrabCar, lalu bangun armada Travel di seluruh 38 provinsi Indonesia!'
+      judul: 'Selamat Datang di The Driver (2020)!',
+      isi: 'Kamu memulai perjalanan hidup di <b>Januari 2020</b> dengan modal awal <b>Rp5.000.000</b> (Rp4.850.000 di rekening bank + Rp150.000 tunai di dompet). Ikuti perkembangan zaman & rilis produk asli dari 2020 ke tahun-tahun berikutnya!'
     },
     {
       ikon: '📊',
@@ -5419,8 +5492,8 @@
     },
     {
       ikon: '📅',
-      judul: 'Realisme 2026 & Kehidupan Nyata',
-      isi: 'Jaga kesehatan & BPJS, beri nafkah pasangan, dan bayar cicilan tepat waktu. Seluruh katalog <b>HP, motor, mobil, UMK, BBM, bank, dan dompet digital</b> mengikuti kebijakan asli Indonesia tahun 2026.'
+      judul: 'Realisme 2020 & Rilis Produk Asli',
+      isi: 'Jaga kesehatan & BPJS, beri nafkah pasangan, dan bayar cicilan tepat waktu. Seluruh katalog <b>14 brand HP, laptop/PC, motor, mobil, konsol PS5, dan properti</b> rilis sesuai bulan & tahun asli Indonesia serta punya dampak nyata!'
     }
   ];
   function bukaTutorial(step) {

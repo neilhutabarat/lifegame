@@ -18,7 +18,7 @@
   <canvas id="adegan" aria-label="Adegan The Driver di jalan dan rumah"></canvas>
 
   <header id="hud" hidden>
-    <div class="kartu-hud tanggal"><span class="foto-wajah foto-hud" id="h-foto"></span><div class="tgl-teks"><b id="h-hari">Senin, 5 Januari</b><span id="h-tahun">2026 · Hari ke-1</span></div></div>
+    <div class="kartu-hud tanggal"><span class="foto-wajah foto-hud" id="h-foto"></span><div class="tgl-teks"><b id="h-hari">Senin, 6 Januari</b><span id="h-tahun">2020 · Hari ke-1</span></div></div>
     <div class="kartu-hud jam" id="h-jam-kartu"><div class="jam-atas"><b id="h-jam">06.00</b><span id="h-jarak" class="jarak-badge" hidden>🏠 +0km</span></div><span id="h-kec" class="hud-kec">📍 Pontianak Kota</span><span id="h-pop" class="hud-pop">👥 685rb · ☀️ 30°C</span></div>
     <button id="h-uang" class="kartu-hud uang mode-driver" type="button" aria-label="Lihat ringkasan harian">
       <span><small>Laci</small><b id="h-laci">Rp0</b></span>
@@ -77,7 +77,7 @@
   </section>
 
   <section id="layar-karakter" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:26px">Buat karaktermu<small style="margin-top:3px;font-size:13px">Atur identitas & tampilan wajah sebelum mulai di tahun 2026.</small></h1>
+    <h1 class="judul-game" style="font-size:26px">Buat karaktermu<small style="margin-top:3px;font-size:13px">Atur identitas & tampilan wajah sebelum mulai di Januari 2020.</small></h1>
     <div class="kartu-form">
       <div class="karakter-preview" style="align-items:flex-start">
         <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
@@ -91,14 +91,14 @@
         </div>
         <div style="min-width:0;flex:1">
           <b id="awal-nama-prev">Driver</b>
-          <small id="awal-usia-prev">Cewek · Usia 25 tahun · Tahun 2026</small>
+          <small id="awal-usia-prev">Cewek · Usia 23 tahun · Tahun 2020</small>
           <small id="awal-info-prev">Islam · Suku Jawa</small>
           <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px" id="awal-preset-bar"></div>
         </div>
       </div>
       <div class="form-grid-2">
         <label class="form-lbl">Nama karakter<input id="in-awal-nama" class="input-teks" type="text" maxlength="24" placeholder="Mis. Budi / Sari"></label>
-        <label class="form-lbl">Tanggal lahir (TTL)<input id="in-awal-ttl" class="input-teks" type="date" value="2000-05-15" min="1965-01-01" max="2008-12-31"></label>
+        <label class="form-lbl">Tanggal lahir (TTL)<input id="in-awal-ttl" class="input-teks" type="date" value="1996-05-15" min="1960-01-01" max="2002-12-31"></label>
       </div>
       <div class="form-lbl">Pilih karakter permanen
         <div class="opsi-chip">
@@ -131,7 +131,7 @@
   </section>
 
   <section id="layar-kota" class="layar" hidden>
-    <h1 class="judul-game" style="font-size:28px">Mulai di ibu kota mana?<small style="font-size:13px;margin-top:4px">Fokus pemetaan wilayah detail Kalimantan (Kalbar & Kalteng · UMK & BBM 2026).</small></h1>
+    <h1 class="judul-game" style="font-size:28px">Mulai di ibu kota mana?<small style="font-size:13px;margin-top:4px">Fokus pemetaan wilayah detail Kalimantan (Kalbar & Kalteng · Mulai Januari 2020).</small></h1>
     <div id="kota-filter" class="kota-filter"></div>
     <div id="kota-daftar" class="kota-daftar"></div>
     <button id="b-kembali" class="tombol-lain" type="button">Kembali</button>
@@ -176,19 +176,20 @@
 </div>
 
 <script src="js/data/nyata.js?v=98"></script>
+<script src="js/data/katalog_nyata.js?v=99"></script>
 <script src="js/data/kalbar.js?v=72"></script>
 <script src="js/data/kalteng.js?v=71"></script>
 <script src="js/data/menu.js"></script>
-<script src="js/data/rute.js?v=70"></script>
+<script src="js/data/rute.js?v=99"></script>
 <script src="js/kalender.js"></script>
 <script src="js/simpan.js"></script>
 <script src="js/uang.js"></script>
-<script src="js/diri.js?v=98"></script>
+<script src="js/diri.js?v=99"></script>
 <script src="js/teman.js?v=98"></script>
 <script src="js/stok.js"></script>
-<script src="js/motor.js?v=66"></script>
-<script src="js/mobil.js?v=66"></script>
-<script src="js/ojek.js?v=72"></script>
+<script src="js/motor.js?v=99"></script>
+<script src="js/mobil.js?v=99"></script>
+<script src="js/ojek.js?v=99"></script>
 <script src="js/travel.js?v=72"></script>
 <script src="js/properti.js"></script>
 <script src="js/antar.js?v=66"></script>
@@ -199,9 +200,9 @@
 <script src="js/karakter_editor.js?v=84"></script>
 <script src="js/adegan.js?v=96"></script>
 <script src="js/suara.js"></script>
-<script src="js/kehidupan.js?v=98"></script>
+<script src="js/kehidupan.js?v=99"></script>
 <script src="js/ekosistem.js"></script>
-<script src="js/dunia_nyata.js?v=98"></script>
-<script src="js/main.js?v=98"></script>
+<script src="js/dunia_nyata.js?v=99"></script>
+<script src="js/main.js?v=99"></script>
 </body>
 </html>

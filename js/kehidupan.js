@@ -605,13 +605,16 @@
     if (ks.butuhMotor && !(g.KK_MOTOR && g.KK_MOTOR.siapPakai(S))) return 'Butuh motor yang tidak sedang disewakan untuk kerja sampingan ini.';
     if (S.diri.stamina < 18) return 'Stamina terlalu rendah. Istirahat dulu.';
     var efHp = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : { kontenBonus: 0 };
-    var bonusHp = id === 'jasa_konten' ? Math.round(ks.upah * (efHp.kontenBonus || 0) / 5000) * 5000 : 0;
-    var upah = ks.upah + bonusHp;
+    var efKmp = (g.KK_DIRI && g.KK_DIRI.efekKomputer) ? g.KK_DIRI.efekKomputer(S) : { bonusFreelance: 0 };
+    var efRmh = (g.KK_DIRI && g.KK_DIRI.efekRumah) ? g.KK_DIRI.efekRumah(S) : { bonusKerja: 0 };
+    var multTotal = (id === 'jasa_konten' ? (efHp.kontenBonus || 0) : 0) + (efKmp.bonusFreelance || 0) + (efRmh.bonusKerja || 0);
+    var bonusAset = multTotal > 0 ? Math.round(ks.upah * multTotal / 5000) * 5000 : 0;
+    var upah = ks.upah + bonusAset;
     S.uang.dompet = (S.uang.dompet || 0) + upah;
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + upah;
     S.diri.stamina = batas(S.diri.stamina + ks.stamina);
     ubahStres(S, ks.stres);
-    return { ok: true, menit: ks.menit, teks: '⚡ Selesai ' + ks.nama + ' (' + ks.menit + ' mnt) · cair ' + rp(upah) + (bonusHp > 0 ? ' (termasuk bonus HP +' + rp(bonusHp) + '!)' : '') + ' ke Dompet!' };
+    return { ok: true, menit: ks.menit, teks: '⚡ Selesai ' + ks.nama + ' (' + ks.menit + ' mnt) · cair ' + rp(upah) + (bonusAset > 0 ? ' (termasuk bonus HP/Laptop/Meja Kerja +' + rp(bonusAset) + '!)' : '') + ' ke Dompet!' };
   }
 
   /* ---------- Bisnis Tambahan Nyata ---------- */
@@ -723,13 +726,19 @@
       return 'Tawaran endorse berikutnya tersedia ' + (3 - (S.hari - sm.endorseKlaimHari)) + ' hari lagi.';
     }
     var efHp = (g.KK_DIRI && g.KK_DIRI.efekHp) ? g.KK_DIRI.efekHp(S) : { kontenBonus: 0 };
+    var efKmpE = (g.KK_DIRI && g.KK_DIRI.efekKomputer) ? g.KK_DIRI.efekKomputer(S) : { bonusKonten: 0 };
+    var efRmhE = (g.KK_DIRI && g.KK_DIRI.efekRumah) ? g.KK_DIRI.efekRumah(S) : { bonusKonten: 0 };
+    var kntKnd = 0;
+    if (g.KK_RUTE && g.KK_RUTE.infoDampakMobil && S.mobil) kntKnd = Math.max(kntKnd, g.KK_RUTE.infoDampakMobil(S.mobil).kontenBonus || 0);
+    if (g.KK_RUTE && g.KK_RUTE.infoDampakMotor && S.motor) kntKnd = Math.max(kntKnd, g.KK_RUTE.infoDampakMotor(S.motor).kontenBonus || 0);
+    var bonusKontenTotal = (efHp.kontenBonus || 0) + (efKmpE.bonusKonten || 0) + (efRmhE.bonusKonten || 0) + kntKnd;
     var fakPop = (g.KK_WILAYAH && g.KK_WILAYAH.faktorPenduduk) ? g.KK_WILAYAH.faktorPenduduk(S) : 1;
-    var bayaran = Math.round(Math.min(18000000, Math.max(75000, totFol * 260 * (1 + (efHp.kontenBonus || 0)) * fakPop)) / 5000) * 5000;
+    var bayaran = Math.round(Math.min(35000000, Math.max(75000, totFol * 260 * (1 + bonusKontenTotal) * fakPop)) / 5000) * 5000;
     sm.endorseKlaimHari = S.hari;
     S.bank.saldo += bayaran;
     S.bank.mutasi.unshift({ n: S.hari, ket: 'Monetisasi & Endorse Sosmed (' + totFol.toLocaleString('id-ID') + ' pengikut)', jml: bayaran });
     S.penghasilanBulanIni = (S.penghasilanBulanIni || 0) + bayaran;
-    return { ok: true, bayaran: bayaran, teks: '💸 Endorse & Monetisasi Sosmed cair ' + rp(bayaran) + ' ke Rekening Bank (' + totFol.toLocaleString('id-ID') + ' pengikut · Bonus HP +' + Math.round((efHp.kontenBonus || 0) * 100) + '%)!' };
+    return { ok: true, bayaran: bayaran, teks: '💸 Endorse & Monetisasi Sosmed cair ' + rp(bayaran) + ' ke Rekening Bank (' + totFol.toLocaleString('id-ID') + ' pengikut · Bonus Aset/HP/Kendaraan +' + Math.round(bonusKontenTotal * 100) + '%)!' };
   }
 
   var PROFIL_MICHAT = [
@@ -833,12 +842,13 @@
         S.invest.harga[a.id] = baru;
       }
     });
-    /* 2. Laba harian bisnis tambahan */
+    /* 2. Laba harian bisnis tambahan (ditingkatkan Laptop/PC & Rak Buku!) */
     var totBisnis = 0;
+    var bnsBisK = (g.KK_DIRI && g.KK_DIRI.efekKomputer ? g.KK_DIRI.efekKomputer(S).bonusBisnis : 0) + (g.KK_DIRI && g.KK_DIRI.efekRumah ? g.KK_DIRI.efekRumah(S).bonusBisnis : 0);
     Object.keys(S.bisnisLain || {}).forEach(function (bid) {
       var bm = BISNIS_LIST.filter(function (x) { return x.id === bid; })[0];
       if (!bm) return;
-      var lb = Math.round(bm.labaHari * (0.85 + Math.random() * 0.35) / 5000) * 5000;
+      var lb = Math.round(bm.labaHari * (1 + bnsBisK) * (0.85 + Math.random() * 0.35) / 5000) * 5000;
       S.bisnisLain[bid].totalLaba = (S.bisnisLain[bid].totalLaba || 0) + lb;
       totBisnis += lb;
     });

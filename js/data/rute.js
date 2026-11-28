@@ -447,19 +447,58 @@
   }
   function bulat5k(n) { return Math.round(n / 5000) * 5000; }
   /* tarif standar per kursi. Jakarta–Bandung ±Rp105.000, Jakarta–Semarang ±Rp265.000 */
-  /* pengali tarif berdasarkan kelas mobil (Reguler ×1,00 · Comfort/Innova ×1,25 · Mewah/Luxe ×1,65 · Sultan/VIP ×2,35) + bonus upgrade mesin */
+  /* P79 (Fase 4 - Poin 13): Dampak nyata & terukur untuk setiap tier Mobil & Motor (tarif, tip, stamina, karisma, konten, & ketahanan banjir) */
+  function infoDampakMobil(k) {
+    if (!k) return { pengali: 1, tarifMult: 1, label: 'Reguler', hematStamina: 0, tipMult: 1, karisma: 0, kontenBonus: 0, ratingBonus: 0, tahanBanjir: false };
+    var h = +(k.harga || 180e6), b = k.bentuk || 'mpv';
+    var pengali = 1.0, label = 'Reguler', hemat = 0, tip = 1.0, kar = 6, knt = 0, rat = 0;
+    if (h >= 3800e6) { pengali = 3.95; label = 'Supercar VIP'; hemat = 0.42; tip = 5.0; kar = 105; knt = 0.65; rat = 0.25; }
+    else if (h >= 2200e6) { pengali = 3.20; label = 'First-Class VIP'; hemat = 0.38; tip = 4.0; kar = 75; knt = 0.48; rat = 0.22; }
+    else if (h >= 1100e6 || k.kelas === 'sultan') { pengali = 2.50; label = 'VIP Sultan'; hemat = 0.32; tip = 3.2; kar = 52; knt = 0.35; rat = 0.20; }
+    else if (h >= 650e6 || k.kelas === 'mewah') { pengali = 1.95; label = 'Luxe Executive'; hemat = 0.25; tip = 2.3; kar = 32; knt = 0.22; rat = 0.16; }
+    else if (h >= 400e6) { pengali = 1.55; label = 'Comfort+'; hemat = 0.18; tip = 1.75; kar = 20; knt = 0.12; rat = 0.12; }
+    else if (h >= 250e6) { pengali = 1.25; label = 'Comfort'; hemat = 0.12; tip = 1.35; kar = 12; knt = 0.05; rat = 0.08; }
+    var bonusUpg = (k.upg && k.upg.mesin) ? k.upg.mesin * 0.05 : 0;
+    var pFinal = Math.round((pengali + bonusUpg) * 100) / 100;
+    return {
+      pengali: pFinal,
+      tarifMult: pFinal,
+      label: label,
+      hematStamina: hemat,
+      tipMult: tip,
+      karisma: kar,
+      kontenBonus: knt,
+      ratingBonus: rat,
+      tahanBanjir: b === 'suv' || b === 'pikap'
+    };
+  }
+  function infoDampakMotor(m) {
+    if (!m) return { label: 'Harian', hematStamina: 0, tipMult: 1, cepatBonus: 0, karisma: 0, kontenBonus: 0, ratingBonus: 0, tahanBanjir: false };
+    var h = +(m.harga || 18e6), kls = m.kelas || 'harian';
+    var label = 'Harian', hemat = 0, tip = 1.0, cepat = 0, kar = 2, knt = 0, rat = 0;
+    if (kls === 'moge' && h >= 600e6) { label = 'Superbike Sultan'; hemat = 0.22; tip = 2.8; cepat = 0.30; kar = 70; knt = 0.55; rat = 0.22; }
+    else if (kls === 'moge') { label = 'Moge Premium'; hemat = 0.18; tip = 2.1; cepat = 0.24; kar = 45; knt = 0.35; rat = 0.18; }
+    else if (kls === 'sport' && h >= 100e6) { label = 'Sport Collector'; hemat = 0.15; tip = 1.75; cepat = 0.20; kar = 32; knt = 0.25; rat = 0.15; }
+    else if (kls === 'sport') { label = 'Sport'; hemat = 0.12; tip = 1.45; cepat = 0.16; kar = 20; knt = 0.15; rat = 0.10; }
+    else if (h >= 60e6) { label = 'Big Skutik VIP'; hemat = 0.24; tip = 1.65; cepat = 0.10; kar = 24; knt = 0.15; rat = 0.16; }
+    else if (h >= 28e6) { label = 'Maxi Skutik'; hemat = 0.16; tip = 1.35; cepat = 0.06; kar = 10; knt = 0.06; rat = 0.12; }
+    else if (h >= 22e6) { label = 'Skutik Nyaman'; hemat = 0.08; tip = 1.15; cepat = 0.03; kar = 5; knt = 0.02; rat = 0.05; }
+    return {
+      label: label,
+      hematStamina: hemat,
+      tipMult: tip,
+      cepatBonus: cepat,
+      karisma: kar,
+      kontenBonus: knt,
+      ratingBonus: rat,
+      tahanBanjir: !!(m.kuat || /klx|crf|wr155|adv160/i.test(m.id || ''))
+    };
+  }
   function pengaliKelasMobil(k) {
-    if (!k) return 1;
-    var dasar = k.kelas === 'sultan' ? 2.35 : k.kelas === 'mewah' ? 1.65 : (k.harga >= 300e6 ? 1.25 : 1);
-    var bonusUpg = (k.upg && k.upg.mesin) ? k.upg.mesin * 0.03 : 0;
-    return Math.round((dasar + bonusUpg) * 100) / 100;
+    return infoDampakMobil(k).pengali;
   }
   function labelKelasLayanan(k) {
-    if (!k) return 'Reguler';
-    if (k.kelas === 'sultan') return 'VIP Sultan';
-    if (k.kelas === 'mewah') return 'Luxe Mewah';
-    if (k.harga >= 300e6) return 'Comfort Executive';
-    return 'Reguler';
+    return infoDampakMobil(k).label;
   }
   function tarifStandar(j, mobil) {
     var t = Math.max(DASAR.minimal, j.km * DASAR.perKm + DASAR.tetap) + (j.laut ? DASAR.tambahLaut : 0);
@@ -479,5 +518,5 @@
     var k = (r && r.kondisi) || (r && r.tol > 0 ? 'tol' : 'mulus');
     return KONDISI_JALAN[k] || KONDISI_JALAN.mulus;
   }
-  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, pengaliKelasMobil: pengaliKelasMobil, labelKelasLayanan: labelKelasLayanan, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, jalurOpsi: jalurOpsi, semuaJalur: semuaJalur, tarifStandar: tarifStandar };
+  g.KK_RUTE = { kota: KOTA, ruas: RUAS, kondisiJalan: KONDISI_JALAN, infoKondisi: infoKondisi, gigi: GIGI, gigiMotor: GIGI_MOTOR, gigiEfektif: gigiEfektif, gigiInfo: gigiInfo, bolehKhususJalan: bolehKhususJalan, vmax: VMAX, vmaxKendaraan: vmaxKendaraan, nyaman: nyaman, infoDampakMobil: infoDampakMobil, infoDampakMotor: infoDampakMotor, pengaliKelasMobil: pengaliKelasMobil, labelKelasLayanan: labelKelasLayanan, istirahat: ISTIRAHAT, dasar: DASAR, nama: nama, tetangga: tetangga, ruasAntara: ruasAntara, jalur: jalur, jalurOpsi: jalurOpsi, semuaJalur: semuaJalur, tarifStandar: tarifStandar };
 })(window);

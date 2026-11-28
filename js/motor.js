@@ -82,8 +82,8 @@
   function beliTunai(S, id, cara) {
     var e = cekGarasi(S); if (e) return e;
     var m = N.motor.filter(function (x) { return x.id === id; })[0]; if (!m) return 'Motor tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var tK = KAL.tgl(S.hari), thM = m.tahun || 2020, blM = m.bulanRilis || 1;
+    if (thM > tK.y || (thM === tK.y && blM > tK.m)) return m.nama + ' baru rilis ' + ((N.namaBulan && N.namaBulan[blM - 1]) || ('Bulan ' + blM)) + ' ' + thM + '.';
     var by = bayarDealer(S, m.harga, 'Beli ' + m.nama + ' tunai', cara);
     if (by !== true) return by;
     var unit = motorBaru(m); unit.pajakTempo = S.hari + 365; unit.dibeli = S.hari;
@@ -159,8 +159,8 @@
     var e = cekGarasi(S); if (e) return e;
     if (S.kreditBuruk) return KR.leasing + ' menolak: ada riwayat telat bayar cicilan.';
     var m = N.motor.filter(function (x) { return x.id === id; })[0]; if (!m) return 'Motor tidak dikenal.';
-    var thn = KAL.tgl(S.hari).y;
-    if ((m.tahun || 2023) > thn) return m.nama + ' baru rilis tahun ' + m.tahun + ' (tahun saat ini ' + thn + ').';
+    var tK = KAL.tgl(S.hari), thM = m.tahun || 2020, blM = m.bulanRilis || 1;
+    if (thM > tK.y || (thM === tK.y && blM > tK.m)) return m.nama + ' baru rilis ' + ((N.namaBulan && N.namaBulan[blM - 1]) || ('Bulan ' + blM)) + ' ' + thM + '.';
     var k = hitungKredit(m.harga, dp, tenor);
     var by = bayarDealer(S, k.dp, 'Uang muka kredit ' + m.nama, 'bank');
     if (by !== true) return by;
@@ -170,7 +170,8 @@
     return true;
   }
   function bekasBaru(S) {
-    var unit = [], thnKini = KAL.tgl(S.hari).y, pool = N.motorBekas.slice(), dipakai = {};
+    var unit = [], thnKini = KAL.tgl(S.hari).y, pool = N.motorBekas.filter(function (x) { return !x.tahun || x.tahun[0] <= thnKini; }), dipakai = {};
+    if (!pool.length) pool = N.motorBekas.slice();
     /* selalu tampilkan 10 unit motor bekas beragam agar pilihan luas (termasuk minimal 2 motor terjangkau <12jt) */
     var murah = pool.filter(function (x) { return x.min <= 7e6; });
     for (var i = 0; i < 10; i++) {
