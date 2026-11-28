@@ -1436,79 +1436,54 @@
     var kulit = tp.kulitHex || '#f5cb9f';
     var berhijab = cewek && tp.rambut === 'hijab';
 
-    /* P72.2: Render sprite karakter realistis HD — 100% menapak lantai (0 bob saat diam), dual shoe contact shadow, pantulan lantai keramik, napas, sway, & kedip mata hidup! */
+    /* P72.3: Render sprite karakter realistis HD — menapak lantai rapi tanpa meluncur/melayang, bayangan sol sepatu, pantulan keramik halus, & napas lembut */
     var imCh = muatImg(srcKarakterHD(gender, tp, o));
     if (imCh) {
       var targetH = o.diRumah ? (Math.round(H * (cewek ? 0.43 : 0.45)) * sk) : ((cewek ? 196 : 204) * sk);
       var targetW = targetH * (imCh.naturalWidth / Math.max(1, imCh.naturalHeight));
       var arah = o.arah === -1 ? -1 : 1;
-      /* Saat diam: kaki 100% TERKUNCI di lantai (stepBob = 0); saat jalan: langkah lembut natural */
-      var stepBob = sedangJalan ? Math.abs(Math.sin(t / 135)) * 2.2 : 0;
-      var nafas = 1 + Math.sin(t / 820 + x * 0.04) * 0.011;
-      var sway = sedangJalan ? Math.sin(t / 135) * 0.032 : Math.sin(t / 1900 + x * 0.03) * 0.008;
+      var stepBob = sedangJalan ? Math.abs(Math.sin(t / 140)) * 2.0 : 0;
+      var nafas = 1 + Math.sin(t / 1100 + x * 0.04) * 0.005;
 
-      /* 1. Pantulan samar di lantai keramik/marmer rumah (membuat karakter benar-benar menyatu dengan ruangan!) */
+      /* 1. Pantulan samar di lantai keramik/marmer rumah */
       if (o.diRumah) {
         cx.save();
-        cx.beginPath(); cx.rect(x - targetW * 0.75, y, targetW * 1.5, targetH * 0.42); cx.clip();
+        cx.beginPath(); cx.rect(x - targetW * 0.75, y, targetW * 1.5, targetH * 0.38); cx.clip();
         cx.translate(x, y);
-        cx.scale(arah, -0.34);
-        cx.globalAlpha = 0.14;
+        cx.scale(arah, -0.32);
+        cx.globalAlpha = 0.12;
         cx.drawImage(imCh, -targetW * 0.5, -targetH, targetW, targetH);
         cx.restore();
       }
 
-      /* 2. Bayangan lembut ruangan + 2 bayangan kontak gelap tepat di bawah sol sepatu kiri & kanan */
+      /* 2. Bayangan lembut ruangan + 2 bayangan kontak tepat di bawah sol sepatu kiri & kanan */
       cx.save();
       cx.translate(x, y);
-      var shR = Math.max(20, targetW * 0.44);
+      var shR = Math.max(20, targetW * 0.42);
       var grSh = cx.createRadialGradient(0, 1, 2, 0, 1, shR);
-      grSh.addColorStop(0, 'rgba(6,10,18,0.44)');
-      grSh.addColorStop(0.58, 'rgba(6,10,18,0.18)');
+      grSh.addColorStop(0, 'rgba(6,10,18,0.42)');
+      grSh.addColorStop(0.58, 'rgba(6,10,18,0.16)');
       grSh.addColorStop(1, 'rgba(6,10,18,0)');
       cx.fillStyle = grSh;
-      cx.beginPath(); cx.ellipse(0, 1, shR, Math.max(5.5, targetH * 0.025), 0, 0, Math.PI * 2); cx.fill();
-      /* Sol kiri & kanan menempel kuat di lantai */
+      cx.beginPath(); cx.ellipse(0, 1, shR, Math.max(5.5, targetH * 0.024), 0, 0, Math.PI * 2); cx.fill();
       var solOff = targetW * 0.17;
-      cx.fillStyle = 'rgba(4,8,14,0.52)';
-      cx.beginPath(); cx.ellipse(-solOff, 0.5, targetW * 0.17, 3.2 * sk, 0, 0, Math.PI * 2); cx.fill();
-      cx.beginPath(); cx.ellipse(solOff, 0.5, targetW * 0.17, 3.2 * sk, 0, 0, Math.PI * 2); cx.fill();
+      cx.fillStyle = 'rgba(4,8,14,0.50)';
+      cx.beginPath(); cx.ellipse(-solOff, 0.5, targetW * 0.16, 3.0 * sk, 0, 0, Math.PI * 2); cx.fill();
+      cx.beginPath(); cx.ellipse(solOff, 0.5, targetW * 0.16, 3.0 * sk, 0, 0, Math.PI * 2); cx.fill();
 
-      /* 3. Gambar tubuh karakter bertumpu tepat pada titik kaki (y = 0) agar sepatu tidak pernah terangkat/melayang! */
+      /* 3. Tubuh karakter bertumpu 100% pada sol sepatu (y = 0) */
       cx.translate(0, -stepBob);
-      cx.rotate(sway);
-      cx.scale(arah / Math.sqrt(nafas), nafas);
+      cx.scale(arah, nafas);
       cx.drawImage(imCh, -targetW * 0.5, -targetH + 1, targetW, targetH);
-
-      /* 4. Kedipan mata periodik alami tiap ~4 detik (halus mengikuti kulit wajah agar nampak hidup!) */
-      var fKedip = (t + hashNama(o.label || 'p') % 2600) % 4200;
-      if (o.diRumah && fKedip < 125 && !sedangJalan) {
-        var eyeY = -targetH * 0.896;
-        cx.fillStyle = kulit;
-        cx.globalAlpha = 0.72;
-        cx.beginPath(); cx.ellipse(-targetW * 0.055, eyeY, targetW * 0.036, targetH * 0.0055, 0, 0, Math.PI * 2); cx.fill();
-        cx.beginPath(); cx.ellipse(targetW * 0.055, eyeY, targetW * 0.036, targetH * 0.0055, 0, 0, Math.PI * 2); cx.fill();
-        cx.globalAlpha = 1;
-      }
       cx.restore();
 
-      /* 5. Ikon reaksi hidup (mengantuk / lapar / santai) & label nama HUD Versi 1 */
-      if (o.moodIkon) {
-        var myB = y - targetH - 28 - Math.sin(t / 480) * 3;
-        cx.save();
-        kotakBulat(x + targetW * 0.22 - 12, myB - 11, 24, 22, 11, 'rgba(14,18,24,0.76)');
-        cx.font = '13px system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-        cx.fillText(o.moodIkon, x + targetW * 0.22, myB + 0.5);
-        cx.restore();
-      }
+      /* 4. Label nama pil membulat rapi (tanpa garis kotak) */
       if (o.label) {
         var yLblH = y - targetH - 12 - stepBob;
         cx.save();
         cx.font = '800 10.5px "Nunito", system-ui, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
         var twL = Math.min(118, (cx.measureText ? cx.measureText(o.label).width : o.label.length * 6) + 14);
         kotakBulat(x - twL / 2, yLblH - 8.5, twL, 17, 8.5, 'rgba(14,18,24,0.78)');
-        cx.strokeStyle = 'rgba(255,224,166,0.34)'; cx.lineWidth = 1;
-        cx.strokeRect(x - twL / 2 + 0.5, yLblH - 8, twL - 1, 16);
         cx.fillStyle = '#fef3c7'; cx.fillText(o.label, x, yLblH + 0.5);
         cx.restore();
       }
@@ -1837,23 +1812,22 @@
     var irama = Math.sin(t / 240), cy = Math.round(H * 0.52);
     if (v === 'metime') { gambarMeTime(s, t, u, gA); return; }
 
-    /* P72.2: Latar HD Ruangan Romantis + Karakter Konsisten HD (100% orang yang sama dengan pemain & pasangan!) */
+    /* P72.3: Latar HD Ruangan Romantis + Potret Wajah HD Konsisten (rapi & sinematik, tanpa sprite miring kaku) */
     var kunciTemaHb = v === 'hotel' ? 'rumah_mewah' : v === 'balkon' ? 'apt_studio' : (s.rumah ? ('rumah_' + s.rumah) : (s.hunianId || 'kos_ac'));
     var imBgHb = muatImg(srcRumahHD(kunciTemaHb));
     var tpA = s.tampilan || tampilanDariNama(s.namaPemain || '', gA, false);
     var tpB = A.tpB || tampilanDariNama(A.nama || '', gB, false);
-    var imA = muatImg(srcKarakterHD(gA, tpA, { namaAsli: s.namaPemain || 'Kamu', label: s.namaPemain || 'Kamu' }));
-    var imB = muatImg(srcKarakterHD(gB, tpB, { namaAsli: A.nama || 'Pasangan', label: A.nama || 'Pasangan' }));
-    if (imBgHb && imA && imB) {
+    var imFA = muatImg(faceSrcHD(s.namaPemain || 'Kamu', gA, 24, 'pemain', tpA, false));
+    var imFB = muatImg(faceSrcHD(A.nama || 'Pasangan', gB, 25, 'pasangan', tpB, false));
+    if (imBgHb && imFA && imFB) {
       gambarBgCover(imBgHb, W, H);
-      /* Pencahayaan romantis hangat temaram sesuai lokasi (hotel, kamar, ciuman, foreplay, sofa, tv, balkon, mandi) */
       var grRm = cx.createLinearGradient(0, 0, 0, H);
-      if (v === 'ciuman') { grRm.addColorStop(0, 'rgba(68,14,44,0.52)'); grRm.addColorStop(1, 'rgba(120,28,68,0.68)'); }
-      else if (v === 'foreplay') { grRm.addColorStop(0, 'rgba(54,14,34,0.56)'); grRm.addColorStop(1, 'rgba(92,22,48,0.72)'); }
-      else if (v === 'hotel') { grRm.addColorStop(0, 'rgba(34,12,56,0.55)'); grRm.addColorStop(1, 'rgba(72,20,64,0.72)'); }
-      else if (v === 'mandi') { grRm.addColorStop(0, 'rgba(165,198,215,0.58)'); grRm.addColorStop(1, 'rgba(95,135,155,0.74)'); }
-      else if (v === 'balkon') { grRm.addColorStop(0, 'rgba(12,18,46,0.62)'); grRm.addColorStop(1, 'rgba(42,26,64,0.74)'); }
-      else { grRm.addColorStop(0, 'rgba(38,14,30,0.52)'); grRm.addColorStop(1, 'rgba(68,20,42,0.70)'); }
+      if (v === 'ciuman') { grRm.addColorStop(0, 'rgba(68,14,44,0.58)'); grRm.addColorStop(1, 'rgba(110,24,62,0.78)'); }
+      else if (v === 'foreplay') { grRm.addColorStop(0, 'rgba(54,14,34,0.62)'); grRm.addColorStop(1, 'rgba(86,20,46,0.82)'); }
+      else if (v === 'hotel') { grRm.addColorStop(0, 'rgba(34,12,56,0.60)'); grRm.addColorStop(1, 'rgba(68,18,60,0.82)'); }
+      else if (v === 'mandi') { grRm.addColorStop(0, 'rgba(135,175,195,0.62)'); grRm.addColorStop(1, 'rgba(72,112,135,0.80)'); }
+      else if (v === 'balkon') { grRm.addColorStop(0, 'rgba(12,18,46,0.66)'); grRm.addColorStop(1, 'rgba(38,24,60,0.82)'); }
+      else { grRm.addColorStop(0, 'rgba(38,14,30,0.58)'); grRm.addColorStop(1, 'rgba(62,18,38,0.80)'); }
       cx.fillStyle = grRm; cx.fillRect(0, 0, W, H);
 
       /* Bokeh cahaya lampu hangat melayang lembut */
@@ -1867,39 +1841,24 @@
         cx.fillStyle = grBk; cx.beginPath(); cx.arc(bx, by, br, 0, Math.PI * 2); cx.fill();
       }
 
-      /* Dua karakter HD asli saling mendekat & berpelukan hangat dengan irama lembut */
-      var isClose = v === 'ciuman' || v === 'foreplay' || !!(A.isLong && u < 0.30);
-      var targetHHb = Math.round(H * (isClose ? 0.64 : 0.56));
-      var wA = targetHHb * (imA.naturalWidth / Math.max(1, imA.naturalHeight));
-      var wB = targetHHb * (imB.naturalWidth / Math.max(1, imB.naturalHeight));
-      var baseYHb = Math.round(H * (isClose ? 0.96 : 0.88));
-      var dekat = isClose ? (46 - Math.sin(t / 650) * 4) : (42 + irama * 3.5);
-      var leanA = (isClose ? 0.065 : 0.045) + irama * 0.015;
-      var leanB = -(isClose ? 0.065 : 0.045) - irama * 0.015;
-      var nafasHb = 1 + Math.sin(t / 520) * 0.012;
-
-      /* Karakter A (Pemain — sebelah kiri menghadap kanan) */
-      cx.save();
-      cx.translate(W * 0.5 - dekat, baseYHb);
-      cx.rotate(leanA);
-      cx.scale(1, nafasHb);
-      cx.drawImage(imA, -wA * 0.5, -targetHHb, wA, targetHHb);
+      /* Dua potret wajah HD konsisten pemain & pasangan berdampingan rapi dengan denyut hati hangat */
+      var yCard = Math.round(H * 0.46), rPort = 46, gapP = 54 - Math.sin(t / 650) * 4;
+      var drawPort = function (im, px, py) {
+        cx.save();
+        cx.beginPath(); cx.arc(px, py, rPort, 0, Math.PI * 2); cx.clip();
+        cx.drawImage(im, px - rPort, py - rPort, rPort * 2, rPort * 2);
+        cx.restore();
+        cx.strokeStyle = 'rgba(253,164,175,0.82)'; cx.lineWidth = 3;
+        cx.beginPath(); cx.arc(px, py, rPort, 0, Math.PI * 2); cx.stroke();
+      };
+      drawPort(imFA, W * 0.5 - gapP, yCard);
+      drawPort(imFB, W * 0.5 + gapP, yCard);
+      var scHrt = 1 + Math.sin(t / 320) * 0.14;
+      cx.save(); cx.translate(W * 0.5, yCard); cx.scale(scHrt, scHrt);
+      bulat(0, 0, 18, 'rgba(225,29,72,0.92)');
+      cx.font = '800 18px system-ui, sans-serif'; cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(v === 'ciuman' ? '💋' : '♥', 0, 1);
       cx.restore();
-
-      /* Karakter B (Pasangan — sebelah kanan menghadap kiri) */
-      cx.save();
-      cx.translate(W * 0.5 + dekat, baseYHb + 4);
-      cx.rotate(leanB);
-      cx.scale(-1, nafasHb);
-      cx.drawImage(imB, -wB * 0.5, -targetHHb, wB, targetHHb);
-      cx.restore();
-
-      /* Lapisan selimut / vignette romantis hangat di bagian bawah */
-      var fgHb = cx.createLinearGradient(0, H * 0.58, 0, H);
-      fgHb.addColorStop(0, 'rgba(42,12,30,0)');
-      fgHb.addColorStop(0.45, 'rgba(62,18,44,0.72)');
-      fgHb.addColorStop(1, 'rgba(28,8,20,0.96)');
-      cx.fillStyle = fgHb; cx.fillRect(0, H * 0.58, W, H * 0.42);
 
       /* Hati / uap / kilau hangat melayang */
       cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
@@ -1909,22 +1868,22 @@
         cx.fillStyle = v === 'mandi' ? '#ffffff' : (hgH % 2 ? '#fda4af' : '#fb7185');
         cx.font = '800 22px system-ui, sans-serif';
         var symH = v === 'mandi' ? '○' : v === 'ciuman' ? (hgH % 2 ? '💋' : '♥') : v === 'foreplay' ? (hgH % 2 ? '✨' : '♥') : '♥';
-        cx.fillText(symH, 68 + hgH * 32 + Math.sin(t / 500 + hgH) * 12, cy - 35 - fgP * 1.4);
+        cx.fillText(symH, 68 + hgH * 32 + Math.sin(t / 500 + hgH) * 12, yCard - 58 - fgP * 1.2);
       }
       cx.globalAlpha = 1;
 
       /* Judul, jam & progress bar bergaya HUD Versi 1 */
       var jmH = s.menit % 1440, jjH = ('0' + Math.floor(jmH / 60)).slice(-2) + '.' + ('0' + Math.floor(jmH % 60)).slice(-2);
       var jdH = (v === 'ciuman' ? 'Ciuman hangat' : (v === 'foreplay' || !!(A.isLong && u < 0.30)) ? 'Foreplay romantis' : A.nama2 ? 'Waktu hangat bertiga' : (HB_JUDUL[v] || 'Waktu berdua')) + (A.nama ? ' · ' + A.nama + (A.nama2 ? ' & ' + A.nama2 : '') : '');
-      kotakBulat(32, 168, W - 64, 72, 14, 'rgba(14,18,24,0.74)');
-      cx.strokeStyle = 'rgba(255,224,166,0.28)'; cx.lineWidth = 1; cx.strokeRect(32.5, 168.5, W - 65, 71);
+      var yBox = yCard + 68;
+      kotakBulat(32, yBox, W - 64, 72, 14, 'rgba(14,18,24,0.80)');
       cx.textAlign = 'center'; cx.textBaseline = 'middle';
       cx.font = '800 16px "Baloo 2", "Nunito", system-ui, sans-serif'; cx.fillStyle = '#fde68a';
-      cx.fillText(jdH, W / 2, 190);
+      cx.fillText(jdH, W / 2, yBox + 22);
       cx.font = '700 12px "Nunito", system-ui, sans-serif'; cx.fillStyle = '#e2e8f0';
-      cx.fillText('Pukul ' + jjH + ' · ' + Math.round(u * 100) + '%', W / 2, 210);
-      kotakBulat(54, 224, W - 108, 7, 3.5, 'rgba(255,255,255,0.22)');
-      kotakBulat(54, 224, Math.max(8, (W - 108) * u), 7, 3.5, '#fb7185');
+      cx.fillText('Pukul ' + jjH + ' · ' + Math.round(u * 100) + '%', W / 2, yBox + 42);
+      kotakBulat(54, yBox + 56, W - 108, 7, 3.5, 'rgba(255,255,255,0.22)');
+      kotakBulat(54, yBox + 56, Math.max(8, (W - 108) * u), 7, 3.5, '#fb7185');
       return;
     }
     var ayun = irama * 2.2, goyang = irama * 9;
@@ -2136,33 +2095,25 @@
       cx.fillText('Z', xKasur + 72, yBantal - 42 - (t / 50) % 16);
       return;
     }
-    /* Karakter hidup di dalam kamar: berjalan santai bolak-balik di lantai keramik, berhenti santai, napas & kedip alami! */
-    var dtR = s._dt || 16;
-    var wP = gerakWargaRumah('pemain', pas ? 222 : 186, pas ? 185 : 108, 258, dtR);
-    var moodP = s.capekPemain ? '😴' : s.hbTinggi ? '❤️' : ((Math.floor(t / 9000) % 4) === 0 && !wP.jalan ? '✨' : '');
-    var wargaList = [{
-      y: yBerdiri + wP.yOff, x: wP.x, g: s.gender || 'cewek',
-      opts: { diRumah: true, jalan: wP.jalan, arah: wP.arah, namaAsli: s.namaPemain || 'Kamu', baju: bajuPemain, tampilan: tpP, hamil: !!s.hamilPemain, moodIkon: moodP, label: s.namaPemain || 'Kamu' }
-    }];
+    /* Berdiri tenang & natural di lantai kamar (tanpa meluncur ke samping seperti patung!) */
+    var xPemain = pas ? 222 : 186;
+    gambarKarakterRumah(xPemain, yBerdiri, s.gender || 'cewek', t, {
+      diRumah: true, namaAsli: s.namaPemain || 'Kamu', baju: bajuPemain, tampilan: tpP, hamil: !!s.hamilPemain, label: s.namaPemain || 'Kamu'
+    });
     if (pas) {
       var tpPas = tampilanDariNama(pas.nama, pas.gender, false);
-      var wPas = gerakWargaRumah('pas:' + pas.nama, 134, 86, 174, dtR);
-      wargaList.push({
-        y: yBerdiri + 4 + wPas.yOff, x: wPas.x, g: pas.gender,
-        opts: { diRumah: true, jalan: wPas.jalan, arah: wPas.arah, namaAsli: pas.nama, baju: pas.gender === 'cewek' ? '#d46a7e' : '#2d5a88', tampilan: tpPas, hamil: !!pas.hamil, label: pas.nama }
+      gambarKarakterRumah(136, yBerdiri + 4, pas.gender, t + 400, {
+        diRumah: true, namaAsli: pas.nama, baju: pas.gender === 'cewek' ? '#d46a7e' : '#2d5a88', tampilan: tpPas, hamil: !!pas.hamil, label: pas.nama
       });
     }
     var posAn = [[284, 8], [82, 8], [312, 14], [54, 14]];
     anakList.slice(0, 4).forEach(function (an, i) {
       var sk = an.usia < 2 ? 0.45 : an.usia < 5 ? 0.56 : an.usia < 10 ? 0.68 : an.usia < 15 ? 0.82 : 0.94;
       var tpAn = tampilanDariNama(an.nama, an.gender, an.usia < 12);
-      wargaList.push({
-        y: yBerdiri + posAn[i][1], x: posAn[i][0], g: an.gender,
-        opts: { diRumah: true, skala: sk, namaAsli: an.nama, tampilan: tpAn, baju: an.gender === 'cewek' ? '#e88a3e' : '#3d8f52', label: an.nama + ' (' + an.usia + 't)' }
+      gambarKarakterRumah(posAn[i][0], yBerdiri + posAn[i][1], an.gender, t + 700 * (i + 1), {
+        diRumah: true, skala: sk, namaAsli: an.nama, tampilan: tpAn, baju: an.gender === 'cewek' ? '#e88a3e' : '#3d8f52', label: an.nama + ' (' + an.usia + 't)'
       });
     });
-    wargaList.sort(function (a, b) { return a.y - b.y; });
-    wargaList.forEach(function (wItem) { gambarKarakterRumah(wItem.x, wItem.y, wItem.g, t, wItem.opts); });
   }
 
   /* ---------- pencahayaan realistis & hujan sungguhan ---------- */
