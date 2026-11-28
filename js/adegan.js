@@ -1610,8 +1610,8 @@
     var idA = (!isBoy && tp.alis != null && !isNaN(parseInt(tp.alis, 10))) ? (parseInt(tp.alis, 10) % 30) : 0;
     var idH = (!isBoy && tp.hidung != null && !isNaN(parseInt(tp.hidung, 10))) ? (parseInt(tp.hidung, 10) % 30) : 0;
     var idB = (!isBoy && tp.mulut != null && !isNaN(parseInt(tp.mulut, 10))) ? (parseInt(tp.mulut, 10) % 30) : 0;
-    var topWear = tp.atasan || (o.driver ? 'driver' : 'kaos');
-    var botWear = tp.bawahan || (o.driver ? 'jeans' : 'panjang');
+    var topWear = (tp.atasan && tp.atasan !== 'undefined') ? tp.atasan : (o.driver ? 'driver' : 'kaos');
+    var botWear = (tp.bawahan && tp.bawahan !== 'undefined') ? tp.bawahan : (o.driver ? 'jeans' : 'panjang');
     var INK = '#3b2826';
     var step = walk ? Math.sin(t / 125) : 0;
     var bob = walk ? Math.abs(step) * 2.4 : 0;
@@ -3218,16 +3218,18 @@
   function orangMotor(x, baju, helm, sopir, hp, nunduk, tp, gender, gaya) {
     tp = tp || {};
     var yb = nunduk ? -48 : (gaya === 'trail' ? -56 : -52);
-    var topW = tp.atasan || (sopir ? 'kaos' : 'kaos');
-    var botW = tp.bawahan || 'panjang';
+    var topW = sopir ? ((tp.atasan && tp.atasan !== 'undefined') ? tp.atasan : 'kaos') : 'kaos';
+    var botW = sopir ? ((tp.bawahan && tp.bawahan !== 'undefined') ? tp.bawahan : 'panjang') : 'panjang';
     var skinM = '#fff0e6';
     var isBoyM = gender === 'cowok';
-    var colTop = topW === 'none' ? skinM
+    var colTop = !sopir ? (baju || '#5f7f9a')
+      : topW === 'none' ? skinM
       : topW === 'driver' ? '#0f766e'
       : topW === 'kaos' ? (isBoyM ? '#3b82f6' : '#f472b6')
       : topW === 'kemeja' ? '#f8fafc'
       : topW === 'formal' ? '#1e293b' : (baju || '#1f9a3f');
-    var colBot = botW === 'none' ? skinM
+    var colBot = !sopir ? '#2d3a46'
+      : botW === 'none' ? skinM
       : botW === 'jeans' ? '#25446b'
       : botW === 'pendek' ? '#3b5978' : '#2d3a46';
     /* Posisi kaki & warna celana mengikuti pilihan Lemari / Dasar */

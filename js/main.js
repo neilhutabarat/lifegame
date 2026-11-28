@@ -70,13 +70,18 @@
     if (nama === 'main') { aksiCepatBuka = false; perbaruiHUD(true); perbaruiAksi(); perbaruiPesanan(); }
   }
   function tampilanLengkap(tp, gender) {
+    if (gender !== 'cowok' && window.KK_KARAKTER_ED) {
+      return window.KK_KARAKTER_ED.normalisasi(tp);
+    }
     var def = tampilanDefault(gender), K = N.karakterOpsi || {};
     var out = {
       kulit: (tp && tp.kulit) || def.kulit,
       rambut: (tp && tp.rambut) || def.rambut,
       warnaRambut: (tp && tp.warnaRambut) || def.warnaRambut,
       mata: (tp && tp.mata) || def.mata,
-      mulut: (tp && tp.mulut) || def.mulut
+      mulut: (tp && tp.mulut) || def.mulut,
+      atasan: (tp && tp.atasan && tp.atasan !== 'undefined') ? tp.atasan : 'none',
+      bawahan: (tp && tp.bawahan && tp.bawahan !== 'undefined') ? tp.bawahan : 'none'
     };
     var listR = gender === 'cowok' ? (K.rambutCowok || []) : (K.rambutCewek || []);
     if (listR.length && !listR.some(function (x) { return x.id === out.rambut; })) out.rambut = listR[0].id;
@@ -86,7 +91,12 @@
     var K = N.karakterOpsi || {}, t = tampilanLengkap(tp, gender);
     var kl = (K.kulit || []).filter(function (x) { return x.id === t.kulit; })[0] || { hex: '#f5cb9f', bayang: '#d9a473' };
     var wr = (K.warnaRambut || []).filter(function (x) { return x.id === t.warnaRambut; })[0] || { hex: '#1c1817', kilau: '#3e3533' };
-    return { kulitHex: kl.hex, kulitBayang: kl.bayang, rambutHex: wr.hex, rambutKilau: wr.kilau, rambut: t.rambut, mata: t.mata, mulut: t.mulut, atasan: t.atasan || 'none', bawahan: t.bawahan || 'none' };
+    return {
+      kulitHex: kl.hex, kulitBayang: kl.bayang, rambutHex: wr.hex, rambutKilau: wr.kilau,
+      tubuh: t.tubuh || 'normal', kulit: t.kulit, warnaRambut: t.warnaRambut, warnaMata: t.warnaMata || 'espresso',
+      rambut: t.rambut, mata: t.mata, alis: t.alis || 0, hidung: t.hidung || 0, mulut: t.mulut,
+      atasan: t.atasan || 'none', bawahan: t.bawahan || 'none'
+    };
   }
   var edTab = 'tubuh', edEks = '';
   function perbaruiPreviewKarakter() {
@@ -360,6 +370,10 @@
     S = lengkapi({
       v: 3, kota: kota, qris: qris, hari: HARI_PERTAMA, menit: 360, fase: 'pagi', jamBuka: 7, jamTutup: 22, kec: 1, hariKe: 1, dibuat: Date.now(),
       namaPemain: nmAwal, profil: prAwal,
+      lemari: {
+        atasan: ['none'].concat(prAwal.tampilan.atasan && prAwal.tampilan.atasan !== 'none' ? [prAwal.tampilan.atasan] : []),
+        bawahan: ['none'].concat(prAwal.tampilan.bawahan && prAwal.tampilan.bawahan !== 'none' ? [prAwal.tampilan.bawahan] : [])
+      },
       bonusBank50jt: true, bonusBank200jt: true, bonusBank500jt: true, gantiRugiKk500jt: true, bonusBank5M: true, pemutihanKredit1: true, pemutihanKredit2: true, bonusDana80jt: true,
       tutorialSelesai: false
     });
@@ -4977,17 +4991,25 @@
     { id: 'jeans_lois', jenis: 'bawahan', kode: 'jeans', nama: 'Lois Denim Jeans', harga: 349000, ket: 'Original Denim · Awet & keren' }
   ];
   var lemariPreviewId = null;
+  function sinkronTampilan() {
+    if (!S.profil) S.profil = {};
+    var srcTp = S.profil.tampilan || S.tampilan || {};
+    var tpFix = tampilanLengkap(srcTp, S.profil.gender || 'cewek');
+    S.profil.tampilan = tpFix;
+    S.tampilan = tpFix;
+    return tpFix;
+  }
   function bukaLemariPakaian() {
-    if (!S.tampilan) S.tampilan = { atasan: 'none', bawahan: 'none' };
+    var tpNow = sinkronTampilan();
     if (!S.lemari) {
       S.lemari = {
-        atasan: ['none'].concat(S.tampilan.atasan && S.tampilan.atasan !== 'none' ? [S.tampilan.atasan] : []),
-        bawahan: ['none'].concat(S.tampilan.bawahan && S.tampilan.bawahan !== 'none' ? [S.tampilan.bawahan] : [])
+        atasan: ['none'].concat(tpNow.atasan && tpNow.atasan !== 'none' ? [tpNow.atasan] : []),
+        bawahan: ['none'].concat(tpNow.bawahan && tpNow.bawahan !== 'none' ? [tpNow.bawahan] : [])
       };
     }
-    var curA = S.tampilan.atasan || 'none', curB = S.tampilan.bawahan || 'none';
+    var curA = tpNow.atasan || 'none', curB = tpNow.bawahan || 'none';
     var itemCoba = lemariPreviewId ? TOKO_BAJU_DISTRO.filter(function (x) { return x.id === lemariPreviewId; })[0] : null;
-    var prevTp = Object.assign ? Object.assign({}, S.tampilan) : JSON.parse(JSON.stringify(S.tampilan));
+    var prevTp = JSON.parse(JSON.stringify(tpNow));
     if (itemCoba) prevTp[itemCoba.jenis] = itemCoba.kode;
     var nmA = { none: 'Dasar (Sport-bra/Polos)', kaos: 'Kaos Oversize', kemeja: 'Kemeja', formal: 'Formal', driver: 'Jaket Ojol' };
     var nmB = { none: 'Dasar', pendek: 'Celana Pendek', panjang: 'Celana Panjang', jeans: 'Jeans' };
@@ -5003,7 +5025,7 @@
           '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + itemCoba.id + ':bank">🏦 Bank</button>' +
           '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + itemCoba.id + ':ewallet">📱 QRIS</button>' +
           '<button type="button" class="chip-tombol" data-diri="cobaBaju:' + itemCoba.id + '">Batal</button></div>'
-        : '<b>Pakaian Dipakai Sekarang</b><small>Baju: ' + esc(nmA[curA] || curA) + '</small><small>Celana: ' + esc(nmB[curB] || curB) + '</small><small style="color:#0f766e">Klik "Coba" di toko untuk preview dulu sebelum beli</small>') +
+        : '<b>Pakaian Dipakai Sekarang</b><small>Baju: ' + esc(nmA[curA] || curA) + '</small><small>Celana: ' + esc(nmB[curB] || curB) + '</small><small style="color:#0f766e">Pilih Coba untuk preview, lalu pilih bayar Tunai / Bank / QRIS</small>') +
       '</div></div>' +
       '<h3 class="subjudul">Lemari Pakaianmu</h3><div class="grid-2">' +
       '<div class="kartu-item"><div><span class="ki-tag milik">Atasan</span><b>Baju Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
@@ -5019,13 +5041,15 @@
         var punya = (S.lemari[b.jenis] || []).indexOf(b.kode) >= 0;
         var sedangCoba = lemariPreviewId === b.id;
         return '<div class="kartu-item"><div><span class="ki-tag' + (punya ? ' milik' : '') + '">' + (b.jenis === 'atasan' ? '👕 Baju' : '👖 Celana') + '</span><b>' + esc(b.nama) + '</b><small>' + esc(b.ket) + ' · ' + rupiah(b.harga) + '</small></div>' +
-          '<div class="ki-aksi">' + (punya
+          '<div class="ki-aksi" style="flex-wrap:wrap;gap:4px">' + (punya
             ? '<button type="button" class="chip-tombol" data-diri="pakaiBaju:' + b.jenis + ':' + b.kode + '">Pakai</button>'
-            : '<button type="button" class="chip-tombol' + (sedangCoba ? ' pilih' : '') + '" data-diri="cobaBaju:' + b.id + '">' + (sedangCoba ? '✓ Dicoba' : '👁️ Coba & Beli') + '</button>') + '</div></div>';
+            : (sedangCoba
+                ? '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + ':dompet">💵 Tunai</button><button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + ':bank">🏦 Bank</button><button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + ':ewallet">📱 QRIS</button>'
+                : '<button type="button" class="chip-tombol" data-diri="cobaBaju:' + b.id + '">👁️ Coba & Beli</button>')) + '</div></div>';
       }).join('') + '</div>';
     bukaLembar('diri', h);
     if ($('cv-lemari-prev') && ADEGAN && ADEGAN.gambarKarakterPreview) {
-      ADEGAN.gambarKarakterPreview($('cv-lemari-prev'), S.gender || 'cewek', prevTp, Date.now());
+      ADEGAN.gambarKarakterPreview($('cv-lemari-prev'), (S.profil && S.profil.gender) || 'cewek', prevTp, Date.now());
     }
   }
 
@@ -5724,8 +5748,10 @@
     else if (nama === 'lemari') { lemariPreviewId = null; return bukaLemariPakaian(); }
     else if (nama === 'pakaiBaju') {
       var pb = nilai.split(':');
-      if (!S.tampilan) S.tampilan = {};
-      S.tampilan[pb[0]] = pb[1];
+      var tpP = sinkronTampilan();
+      tpP[pb[0]] = pb[1];
+      S.profil.tampilan = tpP;
+      S.tampilan = tpP;
       lemariPreviewId = null;
       simpan(); perbaruiHUD(true); toast('Pakaian dipakai & tersimpan!', 1800);
       return bukaLemariPakaian();
@@ -5745,8 +5771,10 @@
       var hslBayar = UANG.bayarPilihan(S, katBaju.harga, 'Beli ' + katBaju.nama, metode);
       if (hslBayar !== true) { toast(hslBayar, 2400); return; }
       arrMilik.push(katBaju.kode); S.lemari[katBaju.jenis] = arrMilik;
-      if (!S.tampilan) S.tampilan = {};
-      S.tampilan[katBaju.jenis] = katBaju.kode;
+      var tpBeli = sinkronTampilan();
+      tpBeli[katBaju.jenis] = katBaju.kode;
+      S.profil.tampilan = tpBeli;
+      S.tampilan = tpBeli;
       lemariPreviewId = null;
       simpan(); perbaruiHUD(true); toast('Beli ' + katBaju.nama + ' (' + rupiah(katBaju.harga) + ') & langsung dipakai!', 2400);
       return bukaLemariPakaian();
@@ -6163,17 +6191,25 @@
     { id: 'jeans_lois', jenis: 'bawahan', kode: 'jeans', nama: 'Lois Denim Jeans', harga: 349000, ket: 'Original Denim · Awet & keren' }
   ];
   var lemariPreviewId = null;
+  function sinkronTampilan() {
+    if (!S.profil) S.profil = {};
+    var srcTp = S.profil.tampilan || S.tampilan || {};
+    var tpFix = tampilanLengkap(srcTp, S.profil.gender || 'cewek');
+    S.profil.tampilan = tpFix;
+    S.tampilan = tpFix;
+    return tpFix;
+  }
   function bukaLemariPakaian() {
-    if (!S.tampilan) S.tampilan = { atasan: 'none', bawahan: 'none' };
+    var tpNow = sinkronTampilan();
     if (!S.lemari) {
       S.lemari = {
-        atasan: ['none'].concat(S.tampilan.atasan && S.tampilan.atasan !== 'none' ? [S.tampilan.atasan] : []),
-        bawahan: ['none'].concat(S.tampilan.bawahan && S.tampilan.bawahan !== 'none' ? [S.tampilan.bawahan] : [])
+        atasan: ['none'].concat(tpNow.atasan && tpNow.atasan !== 'none' ? [tpNow.atasan] : []),
+        bawahan: ['none'].concat(tpNow.bawahan && tpNow.bawahan !== 'none' ? [tpNow.bawahan] : [])
       };
     }
-    var curA = S.tampilan.atasan || 'none', curB = S.tampilan.bawahan || 'none';
+    var curA = tpNow.atasan || 'none', curB = tpNow.bawahan || 'none';
     var itemCoba = lemariPreviewId ? TOKO_BAJU_DISTRO.filter(function (x) { return x.id === lemariPreviewId; })[0] : null;
-    var prevTp = Object.assign ? Object.assign({}, S.tampilan) : JSON.parse(JSON.stringify(S.tampilan));
+    var prevTp = JSON.parse(JSON.stringify(tpNow));
     if (itemCoba) prevTp[itemCoba.jenis] = itemCoba.kode;
     var nmA = { none: 'Dasar (Sport-bra/Polos)', kaos: 'Kaos Oversize', kemeja: 'Kemeja', formal: 'Formal', driver: 'Jaket Ojol' };
     var nmB = { none: 'Dasar', pendek: 'Celana Pendek', panjang: 'Celana Panjang', jeans: 'Jeans' };
@@ -6189,7 +6225,7 @@
           '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + itemCoba.id + ':bank">🏦 Bank</button>' +
           '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + itemCoba.id + ':ewallet">📱 QRIS</button>' +
           '<button type="button" class="chip-tombol" data-diri="cobaBaju:' + itemCoba.id + '">Batal</button></div>'
-        : '<b>Pakaian Dipakai Sekarang</b><small>Baju: ' + esc(nmA[curA] || curA) + '</small><small>Celana: ' + esc(nmB[curB] || curB) + '</small><small style="color:#0f766e">Klik "Coba" di toko untuk preview dulu sebelum beli</small>') +
+        : '<b>Pakaian Dipakai Sekarang</b><small>Baju: ' + esc(nmA[curA] || curA) + '</small><small>Celana: ' + esc(nmB[curB] || curB) + '</small><small style="color:#0f766e">Pilih Coba untuk preview, lalu pilih bayar Tunai / Bank / QRIS</small>') +
       '</div></div>' +
       '<h3 class="subjudul">Lemari Pakaianmu</h3><div class="grid-2">' +
       '<div class="kartu-item"><div><span class="ki-tag milik">Atasan</span><b>Baju Dipakai</b><div class="opsi-chip" style="margin-top:6px">' +
@@ -6205,13 +6241,15 @@
         var punya = (S.lemari[b.jenis] || []).indexOf(b.kode) >= 0;
         var sedangCoba = lemariPreviewId === b.id;
         return '<div class="kartu-item"><div><span class="ki-tag' + (punya ? ' milik' : '') + '">' + (b.jenis === 'atasan' ? '👕 Baju' : '👖 Celana') + '</span><b>' + esc(b.nama) + '</b><small>' + esc(b.ket) + ' · ' + rupiah(b.harga) + '</small></div>' +
-          '<div class="ki-aksi">' + (punya
+          '<div class="ki-aksi" style="flex-wrap:wrap;gap:4px">' + (punya
             ? '<button type="button" class="chip-tombol" data-diri="pakaiBaju:' + b.jenis + ':' + b.kode + '">Pakai</button>'
-            : '<button type="button" class="chip-tombol' + (sedangCoba ? ' pilih' : '') + '" data-diri="cobaBaju:' + b.id + '">' + (sedangCoba ? '✓ Dicoba' : '👁️ Coba & Beli') + '</button>') + '</div></div>';
+            : (sedangCoba
+                ? '<button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + ':dompet">💵 Tunai</button><button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + ':bank">🏦 Bank</button><button type="button" class="chip-tombol pilih" data-diri="beliBaju:' + b.id + ':ewallet">📱 QRIS</button>'
+                : '<button type="button" class="chip-tombol" data-diri="cobaBaju:' + b.id + '">👁️ Coba & Beli</button>')) + '</div></div>';
       }).join('') + '</div>';
     bukaLembar('diri', h);
     if ($('cv-lemari-prev') && ADEGAN && ADEGAN.gambarKarakterPreview) {
-      ADEGAN.gambarKarakterPreview($('cv-lemari-prev'), S.gender || 'cewek', prevTp, Date.now());
+      ADEGAN.gambarKarakterPreview($('cv-lemari-prev'), (S.profil && S.profil.gender) || 'cewek', prevTp, Date.now());
     }
   }
 
