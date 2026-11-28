@@ -1258,8 +1258,8 @@
     cx.scale(s, s);
 
     /* P73.2: Kepala Anime 2D konsisten untuk HB di ranjang/sofa/hotel/ciuman & Tidur */
-    if (!isBoy) {
-      /* Rambut belakang sebahu + kuncir kanan atas */
+    if (!isBoy && !opts.pakaiHelm) {
+      /* Rambut belakang sebahu + kuncir kanan atas (disembunyikan saat pakai helm!) */
       cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.15;
       cx.beginPath();
       cx.moveTo(-16.5, -10); cx.quadraticCurveTo(-21, 8, -16, 22); cx.quadraticCurveTo(0, 25, 16, 22); cx.quadraticCurveTo(21, 8, 16.5, -10);
@@ -3182,7 +3182,7 @@
     if (sopir) kotak(-8, 10, 16, 3, '#f3f1ea');
     /* P74.2: Helm open-face realistis — hanya menutup bagian atas & belakang kepala, wajah & mata 100% terlihat jelas! */
     var hR = sopir ? 12.6 : 12.0;
-    gambarKepalaPotret(1, -9, sopir ? 9.0 : 8.6, gender || 'cewek', tp || {}, { tanpaLeher: true });
+    gambarKepalaPotret(1, -9, sopir ? 9.0 : 8.6, gender || 'cewek', tp || {}, { tanpaLeher: true, pakaiHelm: true });
     cx.fillStyle = helm; cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.15;
     cx.beginPath();
     cx.arc(0, -13.5, hR, Math.PI * 0.92, Math.PI * 1.92);
@@ -3769,12 +3769,14 @@
     gambarMobil(sx, jalan + 122, ['mpv', 'hatch', 'suv'][siklus1], ['avanza', 'agya', 'rush'][siklus1], false, t * 0.012, gp);
     var antar = f.status === 'antar';
     if (isCar) {
-      gambarBloomLampuRem(vehX - 44, vehY - 14 + goyang, gp);
-      gambarMobil(vehX, vehY + goyang, s.mobil.bentuk, s.mobil.id, false, st.wheel, gp);
-      pencahayaanLuar(m, t, jalan, vehX + 46, vehY - 18 + goyang, !!s.biled);
+      gambarBloomLampuRem(vehX - 52, vehY - 16 + goyang, gp);
+      cx.save(); cx.translate(vehX, vehY + goyang); cx.scale(1.28, 1.28);
+      gambarMobil(0, 0, s.mobil.bentuk, s.mobil.id, false, st.wheel, gp);
+      cx.restore();
+      pencahayaanLuar(m, t, jalan, vehX + 58, vehY - 22 + goyang, !!s.biled);
     } else {
-      gambarBloomLampuRem(vehX - 22, vehY - 18 + goyang, gp);
-      cx.save(); cx.translate(vehX, vehY - 2 + goyang); cx.scale(0.80, 0.80);
+      gambarBloomLampuRem(vehX - 18, vehY - 14 + goyang, gp);
+      cx.save(); cx.translate(vehX, vehY + 4 + goyang); cx.scale(0.66, 0.66);
       gambarMotorKu(0, 0, s.motorId, { naik: true, jalan: true, baju: s.warnaBaju, bonceng: antar && f.jenis === 'penumpang', muatan: antar && f.jenis !== 'penumpang' ? (f.jenis === 'makanan' ? 'makanan' : 'paket') : null }, t);
       cx.restore();
       pencahayaanLuar(m, t, jalan, vehX + 28, vehY - 26 + goyang, !!s.biled);
@@ -3966,12 +3968,14 @@
     if (isCar) {
       var mob = s.mobil || { bentuk: 'mpv', id: 'avanza' };
       gambarBloomLampuRem(vehX - 44, vehY - 14 + goyang, gp);
-      gambarMobil(vehX, vehY + goyang, mob.bentuk, mob.id, false, st.wheel, gp, !!f.bawaDus);
+      cx.save(); cx.translate(vehX, vehY + goyang); cx.scale(1.28, 1.28);
+      gambarMobil(0, 0, mob.bentuk, mob.id, false, st.wheel, gp, !!f.bawaDus);
+      cx.restore();
     } else if (kaki) {
       gambarKarakterRumah(vehX, vehY, s.gender === 'cowok' ? 'cowok' : 'cewek', t, { skala: 0.56, jalan: true, baju: s.warnaBaju || '#2b6cb0', tampilan: s.tampilan, label: s.namaPemain || 'Kamu' });
     } else {
-      gambarBloomLampuRem(vehX - 22, vehY - 18 + goyang, gp);
-      cx.save(); cx.translate(vehX, vehY - 2 + goyang); cx.scale(0.80, 0.80);
+      gambarBloomLampuRem(vehX - 18, vehY - 14 + goyang, gp);
+      cx.save(); cx.translate(vehX, vehY + 4 + goyang); cx.scale(0.66, 0.66);
       gambarMotorKu(0, 0, f.kend === 'motor' ? s.motorId : 'beat', { naik: true, jalan: true, baju: s.warnaBaju, bawaDus: !!f.bawaDus, bonceng: (f.kend === 'ojek' || f.kend === 'teman') && !f.bawaDus }, t);
       cx.restore();
     }
@@ -4483,8 +4487,8 @@
       gambarMobil(carStandby ? 260 : 80, jalan + (carStandby ? 44 : 38), s.mobil.bentuk, s.mobil.id, !carStandby, 0, gelap(m));
     }
     if (motorStandby) {
-      /* P74.3: Skala motor proporsional & posisi lebih naik agar tidak tertutup HUD bawah saat mangkal */
-      cx.save(); cx.translate(214, jalan + 8); cx.scale(0.82, 0.82);
+      /* P74.4: Skala motor proporsional 0.68 (jelas lebih kecil dari mobil) & bebas HUD bawah */
+      cx.save(); cx.translate(214, jalan + 10); cx.scale(0.68, 0.68);
       gambarMotorKu(0, 0, s.motorId, { naik: true, hp: true, kiri: true, baju: s.warnaBaju, tampilan: s.tampilan, gender: s.gender }, t);
       cx.restore();
     } else if (s.motorParkir) {
