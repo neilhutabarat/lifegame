@@ -5631,11 +5631,11 @@
         ? '<path d="M18 64 Q32 52 46 64 Z" fill="#1e293b"/>' +
           '<rect x="28" y="42" width="8" height="12" rx="3" fill="#f7d8c4"/>' +
           '<path d="M18 28 L19 39 Q25 47 32 50 Q39 47 45 39 L46 28 Q46 14 32 14 Q18 14 18 28 Z" fill="#fff1e6" stroke="#3b2826" stroke-width="1.3"/>' +
-          '<ellipse cx="26" cy="33" rx="3" ry="1.8" fill="#fff"/><circle cx="26.2" cy="33" r="1.7" fill="#2d3748"/><circle cx="25.5" cy="32.2" r="0.6" fill="#fff"/>' +
-          '<ellipse cx="38" cy="33" rx="3" ry="1.8" fill="#fff"/><circle cx="37.8" cy="33" r="1.7" fill="#2d3748"/><circle cx="37.2" cy="32.2" r="0.6" fill="#fff"/>' +
-          '<path d="M23 29 L29 28.2 M35 28.2 L41 29" stroke="#1e1b24" stroke-width="1.5" stroke-linecap="round"/>' +
-          '<path d="M29 42 Q32.5 43.2 35.5 41.2" fill="none" stroke="#9c5a54" stroke-width="1.3" stroke-linecap="round"/>' +
-          '<path d="M16 32 Q15 11 32 10 Q49 11 48 32 L45 25 Q39 19 34 26 Q30 19 22 24 L19 27 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.2"/>'
+          '<ellipse cx="26" cy="33" rx="3" ry="1.9" fill="#fff"/><circle cx="26.2" cy="33" r="1.8" fill="#6b4732"/><circle cx="26.2" cy="33" r="0.8" fill="#241812"/><circle cx="25.5" cy="32.2" r="0.6" fill="#fff"/>' +
+          '<ellipse cx="38" cy="33" rx="3" ry="1.9" fill="#fff"/><circle cx="37.8" cy="33" r="1.8" fill="#6b4732"/><circle cx="37.8" cy="33" r="0.8" fill="#241812"/><circle cx="37.2" cy="32.2" r="0.6" fill="#fff"/>' +
+          '<path d="M23 29 L29 28.4 M35 28.4 L41 29" stroke="#2a1d18" stroke-width="1.45" stroke-linecap="round"/>' +
+          '<path d="M29 42 Q32.5 43.2 35.5 41.2" fill="none" stroke="#a8655a" stroke-width="1.3" stroke-linecap="round"/>' +
+          '<path d="M16 30 Q14 14 27 9 Q34 7 43 11 Q50 15 48 30 L45 25 Q40 18 35 25 Q31 18 26 25 Q21 19 19 25 Z" fill="#2a1d18" stroke="#3b2826" stroke-width="1.2"/>'
         : '<path d="M16 26 Q11 46 16 62 L48 62 Q53 46 48 26 Z" fill="#1b1824"/>' +
           '<path d="M44 16 Q58 10 56 34 Q52 40 48 34 Q50 24 44 19 Z" fill="#1b1824" stroke="#3b2826" stroke-width="1.1"/>' +
           '<ellipse cx="45" cy="17" rx="3.5" ry="2" fill="#fb7185" stroke="#3b2826" stroke-width="0.8"/>' +

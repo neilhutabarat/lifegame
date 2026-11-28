@@ -1297,13 +1297,15 @@
         cx.strokeStyle = INK; cx.lineWidth = 1.5; cx.lineCap = 'round';
         cx.beginPath(); cx.moveTo(ex - 3.0, 1.0); cx.quadraticCurveTo(ex, 2.4, ex + 3.0, 1.0); cx.stroke();
       } else if (isBoy) {
-        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.ellipse(ex, 0.5, 3.0, 1.7, 0, 0, Math.PI * 2); cx.fill();
-        cx.fillStyle = '#2d3748'; cx.beginPath(); cx.ellipse(ex + (idx === 0 ? 0.2 : -0.2), 0.5, 1.8, 1.6, 0, 0, Math.PI * 2); cx.fill();
-        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.arc(ex - 0.6, -0.25, 0.6, 0, Math.PI * 2); cx.fill();
-        cx.strokeStyle = '#181820'; cx.lineWidth = 1.65; cx.lineCap = 'round';
-        cx.beginPath(); cx.moveTo(ex - 3.3, 0.0); cx.quadraticCurveTo(ex, -1.8, ex + 3.3, -0.3); cx.stroke();
-        cx.strokeStyle = '#1e1b24'; cx.lineWidth = 1.45;
-        cx.beginPath(); cx.moveTo(ex - 3.2, -3.6); cx.lineTo(ex + 3.0, -4.4); cx.stroke();
+        /* Arda Guler expressive warm hazel-brown almond eyes & clean straight brows */
+        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.ellipse(ex, 0.5, 3.0, 1.85, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#6b4732'; cx.beginPath(); cx.ellipse(ex + (idx === 0 ? 0.18 : -0.18), 0.5, 1.85, 1.7, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#241812'; cx.beginPath(); cx.arc(ex + (idx === 0 ? 0.18 : -0.18), 0.5, 0.85, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#ffffff'; cx.beginPath(); cx.arc(ex - 0.6, -0.25, 0.65, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = '#241916'; cx.lineWidth = 1.6; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(ex - 3.3, 0.0); cx.quadraticCurveTo(ex, -1.9, ex + 3.3, -0.2); cx.stroke();
+        cx.strokeStyle = '#2a1d18'; cx.lineWidth = 1.4;
+        cx.beginPath(); cx.moveTo(ex - 3.2, -3.7); cx.lineTo(ex + 3.0, -4.2); cx.stroke();
       } else {
         cx.fillStyle = '#ffffff'; cx.beginPath(); cx.ellipse(ex, 0.7, 2.9, 2.5, 0, 0, Math.PI * 2); cx.fill();
         cx.fillStyle = '#4c3230'; cx.beginPath(); cx.ellipse(ex + (idx === 0 ? 0.18 : -0.18), 0.8, 2.0, 2.2, 0, 0, Math.PI * 2); cx.fill();
@@ -1315,16 +1317,29 @@
       }
     });
 
-    cx.strokeStyle = isBoy ? '#9c5a54' : '#b46266'; cx.lineWidth = 1.2; cx.lineCap = 'round';
+    cx.strokeStyle = isBoy ? '#a8655a' : '#b46266'; cx.lineWidth = 1.2; cx.lineCap = 'round';
     cx.beginPath(); cx.moveTo(-2.5, 8.0); cx.quadraticCurveTo(0, 9.6, 2.5, 8.0); cx.stroke();
 
-    cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
     if (isBoy) {
+      /* Arda Guler signature fluffy textured dark-brown wavy hair with natural volume & parted front */
+      cx.fillStyle = '#2a1d18'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
       cx.beginPath();
-      cx.moveTo(-15.5, 0.5); cx.bezierCurveTo(-17, -18, -8.5, -24.5, 0.5, -25.2); cx.bezierCurveTo(9.5, -25.2, 17, -18.5, 15.5, 0.5);
-      cx.lineTo(13.2, 3.0); cx.lineTo(12.2, -5.5); cx.quadraticCurveTo(6.5, -10.5, 2.5, -4.5); cx.quadraticCurveTo(-1.5, -10.5, -9.5, -6.5);
-      cx.lineTo(-12.2, -4.0); cx.lineTo(-13.2, 3.0); cx.closePath(); cx.fill(); cx.stroke();
+      cx.moveTo(-14.6, -1.5);
+      cx.bezierCurveTo(-16.5, -13, -13.5, -24.5, -3.5, -26.5);
+      cx.quadraticCurveTo(2.5, -27.8, 9.5, -24.8);
+      cx.bezierCurveTo(16.2, -21.5, 16.5, -11, 14.6, -1.5);
+      cx.lineTo(13.0, -5.5);
+      cx.quadraticCurveTo(9.2, -11.8, 3.8, -6.2);
+      cx.quadraticCurveTo(0.2, -12.2, -4.2, -6.0);
+      cx.quadraticCurveTo(-9.5, -10.8, -13.0, -5.0);
+      cx.closePath(); cx.fill(); cx.stroke();
+      cx.strokeStyle = 'rgba(155,115,92,0.42)'; cx.lineWidth = 1.3; cx.lineCap = 'round';
+      cx.beginPath();
+      cx.moveTo(-8, -17); cx.quadraticCurveTo(-3, -21, 2, -18);
+      cx.moveTo(4, -19); cx.quadraticCurveTo(9, -18, 11, -12);
+      cx.stroke();
     } else {
+      cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
       cx.beginPath();
       cx.moveTo(-16.5, 0); cx.bezierCurveTo(-17.5, -21.5, -8.2, -24.2, 0, -24.2); cx.bezierCurveTo(8.2, -24.2, 17.5, -21.5, 16.5, 0);
       cx.lineTo(14.5, 11.5); cx.lineTo(11.8, 6.2); cx.lineTo(12.0, -3.5);
@@ -1842,15 +1857,16 @@
         c.strokeStyle = INK; c.lineWidth = 1.5; c.lineCap = 'round';
         c.beginPath(); c.moveTo(ex - 3.0, 1.0); c.quadraticCurveTo(ex, 2.2, ex + 3.0, 1.0); c.stroke();
       } else if (isBoy) {
-        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.5, 3.0, 1.7, 0, 0, Math.PI * 2); c.fill();
+        /* Arda Guler expressive warm hazel-brown eyes & clean brows */
+        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.5, 3.0, 1.85, 0, 0, Math.PI * 2); c.fill();
         var irB = c.createLinearGradient(ex, -1.2, ex, 2.2);
-        irB.addColorStop(0, '#121622'); irB.addColorStop(0.6, '#2d3748'); irB.addColorStop(1, '#5a6b82');
-        c.fillStyle = irB; c.beginPath(); c.ellipse(ex + (idx === 0 ? 0.2 : -0.2), 0.5, 1.8, 1.6, 0, 0, Math.PI * 2); c.fill();
-        c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex - 0.6, -0.25, 0.6, 0, Math.PI * 2); c.fill();
-        c.strokeStyle = '#181820'; c.lineWidth = 1.65; c.lineCap = 'round';
-        c.beginPath(); c.moveTo(ex - 3.3, 0.0); c.quadraticCurveTo(ex, -1.8, ex + 3.3, -0.3); c.stroke();
-        c.strokeStyle = '#1e1b24'; c.lineWidth = 1.45;
-        c.beginPath(); c.moveTo(ex - 3.2, -3.6); c.lineTo(ex + 3.0, -4.4); c.stroke();
+        irB.addColorStop(0, '#3a2418'); irB.addColorStop(0.6, '#6b4732'); irB.addColorStop(1, '#9a6c48');
+        c.fillStyle = irB; c.beginPath(); c.ellipse(ex + (idx === 0 ? 0.18 : -0.18), 0.5, 1.85, 1.7, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex - 0.6, -0.25, 0.65, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#241916'; c.lineWidth = 1.6; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(ex - 3.3, 0.0); c.quadraticCurveTo(ex, -1.9, ex + 3.3, -0.2); c.stroke();
+        c.strokeStyle = '#2a1d18'; c.lineWidth = 1.4;
+        c.beginPath(); c.moveTo(ex - 3.2, -3.7); c.lineTo(ex + 3.0, -4.2); c.stroke();
       } else {
         c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, 0.7, 2.9, 2.5, 0, 0, Math.PI * 2); c.fill();
         var irG = c.createLinearGradient(ex, -1.8, ex, 3.0);
@@ -1875,13 +1891,26 @@
       c.beginPath(); c.moveTo(-2.6, 7.8); c.quadraticCurveTo(0, 9.6, 2.6, 7.8); c.stroke();
     }
 
-    c.fillStyle = '#1b1824'; c.strokeStyle = INK; c.lineWidth = 1.1;
     if (isBoy) {
+      /* Arda Guler signature fluffy textured dark-brown wavy hair with natural volume & parted front */
+      c.fillStyle = '#2a1d18'; c.strokeStyle = INK; c.lineWidth = 1.1;
       c.beginPath();
-      c.moveTo(-15.5, 0.5); c.bezierCurveTo(-17, -18, -8.5, -24.5, 0.5, -25.2); c.bezierCurveTo(9.5, -25.2, 17, -18.5, 15.5, 0.5);
-      c.lineTo(13.2, 3.0); c.lineTo(12.2, -5.5); c.quadraticCurveTo(6.5, -10.5, 2.5, -4.5); c.quadraticCurveTo(-1.5, -10.5, -9.5, -6.5);
-      c.lineTo(-12.2, -4.0); c.lineTo(-13.2, 3.0); c.closePath(); c.fill(); c.stroke();
+      c.moveTo(-14.6, -1.5);
+      c.bezierCurveTo(-16.5, -13, -13.5, -24.5, -3.5, -26.5);
+      c.quadraticCurveTo(2.5, -27.8, 9.5, -24.8);
+      c.bezierCurveTo(16.2, -21.5, 16.5, -11, 14.6, -1.5);
+      c.lineTo(13.0, -5.5);
+      c.quadraticCurveTo(9.2, -11.8, 3.8, -6.2);
+      c.quadraticCurveTo(0.2, -12.2, -4.2, -6.0);
+      c.quadraticCurveTo(-9.5, -10.8, -13.0, -5.0);
+      c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(155,115,92,0.42)'; c.lineWidth = 1.3; c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(-8, -17); c.quadraticCurveTo(-3, -21, 2, -18);
+      c.moveTo(4, -19); c.quadraticCurveTo(9, -18, 11, -12);
+      c.stroke();
     } else {
+      c.fillStyle = '#1b1824'; c.strokeStyle = INK; c.lineWidth = 1.1;
       c.beginPath();
       c.moveTo(-16.5, 0); c.bezierCurveTo(-17.5, -21.5, -8.2, -24.2, 0, -24.2); c.bezierCurveTo(8.2, -24.2, 17.5, -21.5, 16.5, 0);
       c.lineTo(14.5, 11.5); c.lineTo(11.8, 6.2); c.lineTo(12.0, -3.5);
@@ -2157,9 +2186,9 @@
     cx.quadraticCurveTo(234, cy + 20, 202 - dekap * 0.5, cy + 38);
     cx.lineTo(194, yBase + 90); cx.closePath(); cx.fill();
 
-    /* kepala profil saling berhadapan sehingga bibir benar-benar bertemu di tengah (x = 180) */
-    gambarKepalaProfil(153.5 + dekap * 0.6, cy - 12, 29, cwo.g, cwo.tp, 1, { rot: 0.08 + gerak * 0.02, baju: bajuCwo });
-    gambarKepalaProfil(206.5 - dekap * 0.6, cy - 8, 28, cwk.g, cwk.tp, -1, { rot: -0.10 - gerak * 0.02, baju: bajuCwk });
+    /* kepala Anime 2D baru saling berhadapan simetris & mesra di tengah (x = 180) */
+    gambarKepalaPotret(151 + dekap * 0.6, cy - 10, 27, cwo.g, cwo.tp, { rot: 0.14 + gerak * 0.03, merem: true, baju: bajuCwo });
+    gambarKepalaPotret(209 - dekap * 0.6, cy - 8, 26, cwk.g, cwk.tp, { rot: -0.14 - gerak * 0.03, merem: true, baju: bajuCwk });
 
     /* tangan cowok menyentuh lembut pipi/rahang cewek & tangan cewek merangkul bahu cowok */
     cx.strokeStyle = bajuCwo; cx.lineWidth = 14; cx.lineCap = 'round';
@@ -2200,9 +2229,9 @@
     cx.quadraticCurveTo(256, yD - 32, 262, yD + 12);
     cx.closePath(); cx.fill();
 
-    /* 3. Kepala profil 3/4 saling berhadapan sangat dekat (sesekali saling mendekat mencium kening/pipi/bibir) */
-    gambarKepalaProfil(140 + ciumSesekali * 0.35, yD - 60 + ayun * 1.5, 24, cwk.g, cwk.tp, 1, { rot: -0.14 + ayun * 0.03, baju: bajuCwk });
-    gambarKepalaProfil(196 - ciumSesekali * 0.85, yD - 64 + ayun * 1.5, 25, cwo.g, cwo.tp, -1, { rot: 0.16 - ayun * 0.03, baju: bajuCwo });
+    /* 3. Kepala Anime 2D baru saling berhadapan sangat dekat & simetris */
+    gambarKepalaPotret(142 + ciumSesekali * 0.4, yD - 58 + ayun * 1.5, 22, cwk.g, cwk.tp, { rot: -0.12 + ayun * 0.03, merem: true, baju: bajuCwk });
+    gambarKepalaPotret(196 - ciumSesekali * 0.8, yD - 62 + ayun * 1.5, 23, cwo.g, cwo.tp, { rot: 0.14 - ayun * 0.03, merem: true, baju: bajuCwo });
 
     /* 4. Lengan saling memeluk & tangan cowok mengusap lembut pipi/rambut cewek */
     cx.strokeStyle = bajuCwk; cx.lineWidth = 10; cx.lineCap = 'round';
@@ -2343,26 +2372,24 @@
       if (isForeplayIntro) {
         gambarAdeganForeplay(yRanjang, t, cowokDiAtas, cewekDiBawah, wrnSel, wrnSelTua);
       } else {
-        /* Posisi tubuh proporsional: bahu & leher tersambung jelas ke kepala, seluruh tubuh tertutup selimut tebal */
-        var klCwk = cewekDiBawah.tp.kulitHex || '#f5cb9f';
-        var klCwo = cowokDiAtas.tp.kulitHex || '#f5cb9f';
-        /* 1. Bahu & tubuh bagian atas cewek berbaring di bantal */
-        cx.fillStyle = klCwk;
-        cx.beginPath(); cx.ellipse(112, yRanjang + 8 + pantulKasur * 0.4, 24, 13, -0.1, 0, Math.PI * 2); cx.fill();
-        /* 2. Kepala cewek bersandar natural di atas bantal */
-        gambarKepalaPotret(86, yRanjang - 8 + pantulKasur * 0.5, 20, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.28 + ritme * 0.05, merem: true, tanpaLeher: false });
+        /* P73.3: Posisi tubuh simetris & anatomis nyata di atas ranjang, kulit & wajah 100% selaras Anime 2D baru */
+        var klCwk = '#fff5ee', klCwo = '#fff3ea';
+        /* 1. Bahu & tubuh atas cewek berbaring natural & simetris di atas bantal */
+        cx.fillStyle = klCwk; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.2;
+        cx.beginPath(); cx.ellipse(106, yRanjang + 8 + pantulKasur * 0.4, 22, 12, -0.06, 0, Math.PI * 2); cx.fill(); cx.stroke();
+        /* 2. Kepala cewek bersandar nyaman di bantal */
+        gambarKepalaPotret(86, yRanjang - 8 + pantulKasur * 0.5, 20, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.22 + ritme * 0.04, merem: true, tanpaLeher: false });
         if (A.nama2) {
-          /* HB Bertiga: pasangan kedua bersandar nyaman di bantal sebelahnya di balik selimut */
           var tpC = A.tpC || tampilanDariNama(A.nama2, A.gC || cewekDiBawah.g, false);
-          gambarKepalaPotret(112, yRanjang + 2 + pantulKasur * 0.5, 18.5, A.gC || cewekDiBawah.g, tpC, { rot: -0.18 - ritme * 0.04, merem: true, tanpaLeher: false });
+          gambarKepalaPotret(112, yRanjang + 2 + pantulKasur * 0.5, 18.5, A.gC || cewekDiBawah.g, tpC, { rot: -0.16 - ritme * 0.04, merem: true, tanpaLeher: false });
         }
-        /* 3. Bahu, punggung atas & lengan cowok di atas, tersambung mulus ke kepala & masuk ke dalam selimut */
-        cx.fillStyle = klCwo;
-        cx.beginPath(); cx.ellipse(158, yRanjang - 14 + naikTurun * 0.85, 28, 16, 0.28, 0, Math.PI * 2); cx.fill();
-        cx.strokeStyle = klCwo; cx.lineWidth = 9; cx.lineCap = 'round';
-        cx.beginPath(); cx.moveTo(148, yRanjang - 18 + naikTurun * 0.8); cx.quadraticCurveTo(124, yRanjang - 6 + naikTurun * 0.4, 118, yRanjang + 10); cx.stroke();
-        /* 4. Kepala cowok proporsional di atas bahunya, menunduk lembut mengikuti irama */
-        gambarKepalaPotret(136 + ritme * 2.5, yRanjang - 36 + naikTurun * 0.75, 20.5, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.34 + ritme * 0.06, merem: true, tanpaLeher: false });
+        /* 3. Bahu & lengan cowok Arda Guler tersambung simetris & rapi ke kepala */
+        cx.fillStyle = klCwo; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.2;
+        cx.beginPath(); cx.ellipse(152, yRanjang - 14 + naikTurun * 0.8, 26, 15, 0.22, 0, Math.PI * 2); cx.fill(); cx.stroke();
+        cx.strokeStyle = klCwo; cx.lineWidth = 8.5; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(142, yRanjang - 16 + naikTurun * 0.75); cx.quadraticCurveTo(122, yRanjang - 4 + naikTurun * 0.35, 114, yRanjang + 10); cx.stroke();
+        /* 4. Kepala cowok menunduk mesra & simetris di atas bahunya */
+        gambarKepalaPotret(134 + ritme * 2.0, yRanjang - 35 + naikTurun * 0.7, 20.5, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.28 + ritme * 0.05, merem: true, tanpaLeher: false });
         /* 5. Selimut tebal menutupi penuh kedua tubuh dari dada/punggung hingga kaki dengan siluet tubuh jelas & lipatan 3D */
         cx.fillStyle = wrnSel;
         cx.beginPath();
