@@ -5626,23 +5626,16 @@
     else if (r) toast(r, 2600);
     if (lembar === 'diri') bukaDiri();
   }
-  /* potret wajah HD realistis (img/char/face_*.jpg) dengan fallback SVG otomatis */
+  /* potret wajah HD realistis (100% konsisten dengan sprite karakter lewat ADEGAN.faceSrc) */
   function fotoWajah(src, ukuran, bingkai, nama, gender, usia, peran, tampil, warnaBaju) {
     var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');
-    var isAnak = peran === 'anak' || /anak/.test(src) || (usia != null && usia < 12);
-    var isRemaja = !isAnak && usia != null && usia < 19;
-    var h = 0, nm = String(nama || src || '');
-    for (var i = 0; i < nm.length; i++) h = ((h * 31) + nm.charCodeAt(i)) >>> 0;
-    var faceFile = '';
-    if (isAnak) faceFile = gChar === 'cowok' ? 'face_anak_cowok.jpg' : 'face_anak_cewek.jpg';
-    else if (isRemaja) faceFile = gChar === 'cowok' ? 'face_remaja_cowok.jpg' : 'face_remaja_cewek.jpg';
-    else if (gChar === 'cowok') faceFile = (h % 2 === 0) ? 'face_cowok_kasual.jpg' : 'face_cowok_kemeja.jpg';
-    else if (tampil && tampil.rambut === 'hijab') faceFile = 'face_cewek_hijab.jpg';
-    else if (S && S.ojek && S.ojek.online && src === srcPemain()) faceFile = 'face_cewek_driver.jpg';
-    else faceFile = 'face_cewek_kasual.jpg';
+    var isDriver = !!(S && S.ojek && S.ojek.online && src === srcPemain());
+    var facePath = (ADEGAN && ADEGAN.faceSrc)
+      ? ADEGAN.faceSrc(nama || src || 'Kamu', gChar, usia, peran, tampil, isDriver)
+      : ('img/char/' + (gChar === 'cowok' ? 'face_cowok_kasual.jpg' : 'face_cewek_kasual.jpg'));
     var sz = ukuran || 44;
     var st = 'width:' + sz + 'px;height:' + sz + 'px' + (bingkai ? ';border-color:' + bingkai : '');
-    return '<span class="foto-wajah" style="' + st + '"><img src="img/char/' + faceFile + '" alt="' + esc(nama || 'Karakter') + '" loading="eager"></span>';
+    return '<span class="foto-wajah" style="' + st + '"><img src="' + facePath + '" alt="' + esc(nama || 'Karakter') + '" loading="eager"></span>';
   }
   function _fotoWajahSvgCadangan(src, ukuran, bingkai, nama, gender, usia, peran, tampil, warnaBaju) {
     var gChar = gender || (/pemain/.test(src) ? 'cowok' : 'cewek');
