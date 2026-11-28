@@ -418,26 +418,53 @@
     gambarAwanLangit(m, t, cw);
   }
 
+  /* P74.8: Bangunan Ruko 2.5D HD Indonesia (bayangan kedalaman, atap genteng, kanopi toko, kaca reflektif, & unit AC) */
   function gambarRuko(m, dasar) {
     var gp = gelap(m);
-    ruko.forEach(function (r) {
+    ruko.forEach(function (r, idx) {
       var y0 = dasar - r.h;
-      kotak(r.x, y0, r.w, r.h, r.warna);
-      kotak(r.x - 3, y0 - 6, r.w + 6, 8, 'rgba(0,0,0,.18)');
-      /* papan nama ruko, sengaja kosong */
-      kotak(r.x + 6, dasar - 70, r.w - 12, 16, r.papan);
-      /* pintu gulung lantai dasar */
-      kotak(r.x + 8, dasar - 50, r.w - 16, 50, '#8d969b');
-      cx.fillStyle = 'rgba(0,0,0,.12)';
-      for (var j = dasar - 48; j < dasar; j += 5) cx.fillRect(r.x + 8, j, r.w - 16, 1);
-      /* jendela lantai atas */
+      /* Dinding bergradien cahaya + sisi samping 2.5D */
+      var grW = cx.createLinearGradient(r.x, y0, r.x, dasar);
+      grW.addColorStop(0, r.warna); grW.addColorStop(1, geserHex(r.warna, -24));
+      cx.fillStyle = grW; cx.fillRect(r.x, y0, r.w, r.h);
+      cx.fillStyle = 'rgba(15,23,42,0.18)'; cx.fillRect(r.x + r.w - 6, y0, 6, r.h);
+      /* Atap genteng / lis beton dengan bayangan di bawahnya */
+      cx.fillStyle = idx % 2 ? '#7c3f2c' : '#334155';
+      cx.beginPath(); cx.moveTo(r.x - 4, y0); cx.lineTo(r.x + 6, y0 - 11); cx.lineTo(r.x + r.w - 4, y0 - 11); cx.lineTo(r.x + r.w + 4, y0); cx.closePath(); cx.fill();
+      kotak(r.x - 3, y0, r.w + 6, 4, 'rgba(15,23,42,0.28)');
+      /* Papan nama berbingkai 3D */
+      kotakBulat(r.x + 5, dasar - 72, r.w - 10, 17, 2.5, r.papan);
+      kotak(r.x + 6, dasar - 71, r.w - 12, 2, 'rgba(255,255,255,0.28)');
+      /* Kanopi / awning bergaris di atas etalase */
+      var awnCol = idx % 2 ? '#b91c1c' : '#0f766e';
+      cx.fillStyle = awnCol;
+      cx.beginPath(); cx.moveTo(r.x + 3, dasar - 53); cx.lineTo(r.x + r.w - 3, dasar - 53); cx.lineTo(r.x + r.w + 1, dasar - 43); cx.lineTo(r.x - 1, dasar - 43); cx.closePath(); cx.fill();
+      cx.fillStyle = 'rgba(255,255,255,0.22)';
+      for (var sx = r.x + 4; sx < r.x + r.w - 4; sx += 10) cx.fillRect(sx, dasar - 52, 4, 9);
+      /* Pintu rolling door / etalase kaca reflektif lantai dasar */
+      var grD = cx.createLinearGradient(r.x + 7, dasar - 43, r.x + 7, dasar);
+      grD.addColorStop(0, '#64748b'); grD.addColorStop(1, '#475569');
+      cx.fillStyle = grD; cx.fillRect(r.x + 7, dasar - 43, r.w - 14, 43);
+      cx.fillStyle = 'rgba(0,0,0,.16)';
+      for (var j = dasar - 41; j < dasar; j += 4) cx.fillRect(r.x + 7, j, r.w - 14, 1);
+      cx.fillStyle = 'rgba(255,255,255,0.12)';
+      cx.beginPath(); cx.moveTo(r.x + 10, dasar - 42); cx.lineTo(r.x + 24, dasar - 42); cx.lineTo(r.x + 14, dasar); cx.lineTo(r.x + 7, dasar); cx.closePath(); cx.fill();
+      /* Jendela kaca berlapis + unit outdoor AC di lantai atas */
       for (var lt = 1; lt < r.lantai; lt++) {
-        var yj = dasar - 70 - lt * 62 + 14;
+        var yj = dasar - 72 - lt * 60 + 14;
         for (var k = 0; k < 2; k++) {
-          var xj = r.x + 10 + k * (r.w - 20) / 2, wj = (r.w - 30) / 2;
+          var xj = r.x + 9 + k * (r.w - 18) / 2, wj = (r.w - 28) / 2;
           var nyala = acak(r.seed + lt * 5 + k) > 0.45;
-          kotak(xj, yj, wj, 30, nyala && gp > 0.2 ? 'rgba(255,214,130,' + (0.35 + gp * 0.6).toFixed(2) + ')' : 'rgba(40,60,80,.35)');
-          kotak(xj + wj / 2 - 0.5, yj, 1, 30, 'rgba(0,0,0,.2)');
+          kotak(xj - 1.5, yj - 1.5, wj + 3, 33, '#334155');
+          kotak(xj, yj, wj, 30, nyala && gp > 0.2 ? 'rgba(255,214,130,' + (0.42 + gp * 0.55).toFixed(2) + ')' : '#38516b');
+          cx.fillStyle = 'rgba(255,255,255,0.22)';
+          cx.beginPath(); cx.moveTo(xj + 1, yj + 1); cx.lineTo(xj + wj * 0.55, yj + 1); cx.lineTo(xj + 2, yj + 16); cx.closePath(); cx.fill();
+          kotak(xj + wj / 2 - 0.8, yj, 1.6, 30, '#1e293b');
+        }
+        /* Unit outdoor AC */
+        if (lt === 1) {
+          kotakBulat(r.x + r.w - 20, yj + 26, 13, 9, 1.5, '#cbd5e1');
+          bulat(r.x + r.w - 15.5, yj + 30.5, 3, '#475569');
         }
       }
     });
@@ -3066,13 +3093,21 @@
     var rBan = trail ? 10 : vario ? 9.6 : 9;
     [-20, 20].forEach(function (rx) {
       bulat(rx, -rBan, rBan, '#191b1e');
-      bulat(rx, -rBan, rBan - 3.8, (cruiser || bid === 'vario160') ? '#c9a654' : '#9aa3a6');
+      bulat(rx, -rBan, rBan - 3.6, (cruiser || bid === 'vario160') ? '#c9a654' : '#9aa3a6');
+      /* Cakram rem berventilasi & kaliper */
+      if (rx > 0 || sport || maxi) {
+        cx.strokeStyle = '#cbd5e1'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(rx, -rBan, rBan - 5.0, 0, Math.PI * 2); cx.stroke();
+        kotak(rx - 2, -rBan - 5.5, 3.2, 2.6, '#d97706');
+      }
       cx.strokeStyle = '#3d434a'; cx.lineWidth = 1.25; cx.beginPath();
       for (var j = 0; j < 5; j++) { var a = putar + j * Math.PI * 2 / 5; cx.moveTo(rx, -rBan); cx.lineTo(rx + Math.cos(a) * (rBan - 4), -rBan + Math.sin(a) * (rBan - 4)); }
       cx.stroke();
       bulat(rx, -rBan, 2.2, '#cfd6dc');
     });
-    cx.strokeStyle = '#4a525a'; cx.lineWidth = 3.2; cx.beginPath(); cx.moveTo(-25, -9); cx.lineTo(-8, -7); cx.stroke();
+    /* Shockbreaker belakang & knalpot berpelindung panas */
+    cx.strokeStyle = '#d4a843'; cx.lineWidth = 2.0; cx.beginPath(); cx.moveTo(-18, -11); cx.lineTo(-14, -22); cx.stroke();
+    cx.strokeStyle = '#22262b'; cx.lineWidth = 4.2; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(-25, -11); cx.lineTo(-8, -7); cx.stroke();
+    cx.strokeStyle = '#cbd5e1'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(-23, -10.5); cx.lineTo(-12, -8); cx.stroke();
     if (vario) {
       /* Honda Vario 160 / 125: desain tajam sporty-agresif, tameng V-shape + DRL LED ganda, dek rata, buntut runcing & knalpot sporty */
       /* knalpot sporty + pelindung perak */
@@ -3155,12 +3190,23 @@
       kotakBulat(12, -31, 8, 6, 2, w);
       kotak(19, -29, 3, 3.5, '#fff4b8');
     } else {
-      /* Skutik harian & bebek (BeAT, Vario 125/160, Supra, Revo, Mio, Gear, EM1 e:) */
-      cx.fillStyle = w; cx.beginPath(); cx.moveTo(-23, -21); cx.lineTo(-3, -20); cx.lineTo(3, -12); cx.lineTo(12, -12); cx.lineTo(15, -29); cx.lineTo(23, -25); cx.lineTo(19, -10); cx.lineTo(-19, -10); cx.closePath(); cx.fill();
-      kotakBulat(-21, -24, 19, 5.5, 2.5, '#222');
-      kotak(13, -32, 4, 6, '#333');
-      cx.strokeStyle = '#555'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(15, -27); cx.stroke();
-      kotak(21, -24, 3, 4, '#fff4b8');
+      /* P74.8: Skutik harian realistis (BeAT / Mio / Gear / Supra): bodi meruncing tajam, spion, jok bertingkat, dek rata & DRL LED */
+      kotakBulat(-15, -13, 28, 4.5, 2, '#1c2026');
+      cx.fillStyle = w; cx.strokeStyle = '#1e293b'; cx.lineWidth = 0.8;
+      cx.beginPath();
+      cx.moveTo(-25, -22); cx.lineTo(-4, -20); cx.lineTo(2, -12); cx.lineTo(12, -12);
+      cx.lineTo(15, -28); cx.lineTo(24, -25); cx.lineTo(21, -14); cx.lineTo(16, -10);
+      cx.lineTo(-19, -10); cx.closePath(); cx.fill(); cx.stroke();
+      kotakBulat(-22, -25, 19, 5.2, 2.4, '#1b1f24');
+      kotakBulat(11, -33.5, 7.5, 5.5, 2, w);
+      /* Spion & tangkai */
+      cx.strokeStyle = '#1e293b'; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(14, -33); cx.lineTo(11, -39); cx.stroke();
+      kotakBulat(8, -41, 5.5, 2.8, 1.2, '#1e293b');
+      /* Fork depan & spakbor */
+      cx.strokeStyle = '#334155'; cx.lineWidth = 2.2; cx.beginPath(); cx.moveTo(20, -9); cx.lineTo(15, -27); cx.stroke();
+      cx.fillStyle = w; cx.beginPath(); cx.moveTo(15, -16); cx.lineTo(26, -14); cx.lineTo(22, -12); cx.lineTo(15, -13); cx.closePath(); cx.fill();
+      kotakBulat(21, -24, 3.2, 4.2, 1, '#fff6c4');
+      kotak(-26, -21, 2.8, 4, '#ef4444');
     }
     if (o.muatan === 'paket') { kotak(-30, -44, 20, 16, '#c8a06a'); kotak(-30, -38, 20, 2, '#a5844f'); }
     if (o.muatan === 'makanan') { kotakBulat(-34, -50, 24, 24, 3, '#1f9a3f'); kotak(-32, -42, 20, 3, '#f3f1ea'); }
