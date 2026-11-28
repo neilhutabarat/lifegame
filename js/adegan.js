@@ -2161,97 +2161,108 @@
     cx.restore();
   }
   /* adegan ciuman bibir romantis profil samping */
+  /* P73.4: Kepala Profil Samping Anime 2D (Arda Guler & Cewek kuncir kanan atas) khusus Ciuman agar bibir benar-benar bertemu! */
+  function gambarKepalaProfilAnime(x, y, sk, isBoy, dir, rot) {
+    var INK = '#3b2826';
+    cx.save();
+    cx.translate(x, y);
+    if (rot) cx.rotate(rot);
+    cx.scale(dir * sk, sk);
+
+    if (!isBoy) {
+      cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
+      cx.beginPath();
+      cx.moveTo(-14, -12); cx.quadraticCurveTo(-20, 6, -15, 22); cx.lineTo(-4, 20); cx.lineTo(-2, -10);
+      cx.closePath(); cx.fill(); cx.stroke();
+      cx.beginPath();
+      cx.moveTo(-12, -15); cx.bezierCurveTo(-26, -18, -28, -2, -20, 12); cx.quadraticCurveTo(-15, 4, -10, -10);
+      cx.closePath(); cx.fill(); cx.stroke();
+      cx.fillStyle = '#fb7185'; cx.beginPath(); cx.ellipse(-12, -14, 3.5, 2.2, -0.5, 0, Math.PI * 2); cx.fill(); cx.stroke();
+    }
+
+    _rrAnime(cx, -5, 10, 8.5, 12, 3, isBoy ? '#f7d8c4' : '#f7dfd2', INK);
+
+    cx.fillStyle = isBoy ? '#fff3ea' : '#fff5ee'; cx.strokeStyle = INK; cx.lineWidth = 1.15;
+    cx.beginPath();
+    cx.moveTo(-11, -16);
+    cx.quadraticCurveTo(2, -19, 10, -11);
+    cx.lineTo(11.5, -3);
+    cx.lineTo(14.8, 1.8);
+    cx.lineTo(11.8, 3.6);
+    cx.quadraticCurveTo(14.2, 5.2, 12.2, 7.0);
+    cx.quadraticCurveTo(13.6, 8.4, 11.4, 9.8);
+    cx.quadraticCurveTo(9.8, 13.8, 4.5, 14.2);
+    cx.quadraticCurveTo(-5, 13.8, -11, 5);
+    cx.closePath(); cx.fill(); cx.stroke();
+
+    cx.fillStyle = isBoy ? 'rgba(244,140,130,0.22)' : 'rgba(251,113,133,0.38)';
+    cx.beginPath(); cx.ellipse(4.5, 4.5, 3.6, 1.8, 0, 0, Math.PI * 2); cx.fill();
+
+    cx.strokeStyle = INK; cx.lineWidth = 1.5; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(2.5, -1.5); cx.quadraticCurveTo(6.2, 0.2, 9.5, -1.5); cx.stroke();
+    cx.strokeStyle = isBoy ? '#2a1d18' : '#332428'; cx.lineWidth = isBoy ? 1.35 : 1.0;
+    cx.beginPath(); cx.moveTo(2.0, -5.8); cx.quadraticCurveTo(6.2, -6.8, 9.8, -5.2); cx.stroke();
+
+    if (isBoy) {
+      cx.fillStyle = '#2a1d18'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
+      cx.beginPath();
+      cx.moveTo(-13, 4); cx.bezierCurveTo(-16, -12, -10, -24, 2, -25);
+      cx.quadraticCurveTo(12, -24, 14, -12);
+      cx.quadraticCurveTo(8, -12, 4, -8); cx.quadraticCurveTo(-2, -12, -6, -4);
+      cx.lineTo(-8, 4); cx.closePath(); cx.fill(); cx.stroke();
+    } else {
+      cx.fillStyle = '#1b1824'; cx.strokeStyle = INK; cx.lineWidth = 1.1;
+      cx.beginPath();
+      cx.moveTo(-13, 6); cx.bezierCurveTo(-16, -12, -8, -24, 2, -24);
+      cx.quadraticCurveTo(12, -23, 13.5, -9);
+      cx.quadraticCurveTo(9, -8, 6, -5); cx.lineTo(1, 10); cx.lineTo(-4, 6); cx.lineTo(-8, 12);
+      cx.closePath(); cx.fill(); cx.stroke();
+    }
+    cx.restore();
+  }
+
   function gambarCiumanBibir(cy, t, cwo, cwk) {
     var gerak = Math.sin(t / 520);
-    var dekap = gerak * 2.2; /* gerakan lembut bernapas saat bibir saling menyentuh */
-    var yBase = cy + 92;
-    var klCwo = cwo.tp.kulitHex || '#f5cb9f', klCwk = cwk.tp.kulitHex || '#f5cb9f';
-    var bajuCwo = '#1f6f68', bajuCwk = '#c84b74';
-    /* cahaya hangat lembut di sekitar titik ciuman */
+    var dekap = gerak * 1.4;
     var glow = cx.createRadialGradient(180, cy - 2, 6, 180, cy - 2, 110);
     glow.addColorStop(0, 'rgba(255,190,215,' + (0.34 + Math.abs(gerak) * 0.14).toFixed(2) + ')');
     glow.addColorStop(1, 'rgba(255,120,160,0)');
     cx.fillStyle = glow; cx.fillRect(70, cy - 112, 220, 220);
 
-    /* tubuh & bahu proporsional (kiri: cowok condong ke kanan; kanan: cewek condong ke kiri) */
-    cx.fillStyle = bajuCwo;
-    cx.beginPath();
-    cx.moveTo(68, yBase + 90); cx.lineTo(86, cy + 28);
-    cx.quadraticCurveTo(126, cy + 16, 158 + dekap * 0.5, cy + 36);
-    cx.lineTo(166, yBase + 90); cx.closePath(); cx.fill();
+    /* Pakai tubuh Anime 2D asli (tidak bengkak!) berdiri sangat dekat di tengah */
+    var yBadan = cy + 166;
+    gambarKarakterAnime(cx, 152 + dekap * 0.4, yBadan, cwo.g, t, { skala: 1.48, arah: 1, tampilan: cwo.tp });
+    gambarKarakterAnime(cx, 208 - dekap * 0.4, yBadan, cwk.g, t + 200, { skala: 1.48, arah: -1, tampilan: cwk.tp });
 
-    cx.fillStyle = bajuCwk;
-    cx.beginPath();
-    cx.moveTo(292, yBase + 90); cx.lineTo(272, cy + 32);
-    cx.quadraticCurveTo(234, cy + 20, 202 - dekap * 0.5, cy + 38);
-    cx.lineTo(194, yBase + 90); cx.closePath(); cx.fill();
-
-    /* kepala Anime 2D baru saling berhadapan simetris & mesra di tengah (x = 180) */
-    gambarKepalaPotret(151 + dekap * 0.6, cy - 10, 27, cwo.g, cwo.tp, { rot: 0.14 + gerak * 0.03, merem: true, baju: bajuCwo });
-    gambarKepalaPotret(209 - dekap * 0.6, cy - 8, 26, cwk.g, cwk.tp, { rot: -0.14 - gerak * 0.03, merem: true, baju: bajuCwk });
-
-    /* tangan cowok menyentuh lembut pipi/rahang cewek & tangan cewek merangkul bahu cowok */
-    cx.strokeStyle = bajuCwo; cx.lineWidth = 14; cx.lineCap = 'round';
-    cx.beginPath(); cx.moveTo(118, cy + 68); cx.quadraticCurveTo(160, cy + 56, 188 - dekap * 0.4, cy + 18); cx.stroke();
-    bulat(192 - dekap * 0.4, cy + 14, 7.5, klCwo);
-
-    cx.strokeStyle = bajuCwk; cx.lineWidth = 12; cx.lineCap = 'round';
-    cx.beginPath(); cx.moveTo(244, cy + 72); cx.quadraticCurveTo(208, cy + 56, 162 + dekap * 0.4, cy + 44); cx.stroke();
-    bulat(158 + dekap * 0.4, cy + 44, 6.8, klCwk);
+    /* Kepala profil samping Anime 2D yang bibirnya benar-benar bertemu di x=180 */
+    cx.fillStyle = 'rgba(130,36,74,0.85)';
+    cx.beginPath(); cx.ellipse(180, cy - 8, 56, 44, 0, 0, Math.PI * 2); cx.fill();
+    gambarKepalaProfilAnime(159 + dekap * 0.5, cy - 10, 1.52, true, 1, 0.06 + gerak * 0.02);
+    gambarKepalaProfilAnime(201 - dekap * 0.5, cy - 8, 1.48, false, -1, -0.06 - gerak * 0.02);
   }
-  /* adegan foreplay terpadu (dipakai saat tombol Foreplay ditekan maupun fase awal Long Time HB) */
+
+  /* adegan foreplay terpadu: pakai tubuh Anime 2D asli duduk/berpelukan mesra di atas kasur (tanpa badan bengkak!) */
   function gambarAdeganForeplay(yRanjang, t, cwo, cwk, wrnSel, wrnSelTua) {
     var ayun = Math.sin(t / 560);
-    var usap = Math.sin(t / 420);
-    var ciumSesekali = Math.max(0, Math.sin(t / 900)) * 6;
-    var klCwo = cwo.tp.kulitHex || '#f5cb9f', klCwk = cwk.tp.kulitHex || '#f5cb9f';
-    var bajuCwo = '#1b6b63', bajuCwk = '#c84b74';
+    var cium = Math.max(0, Math.sin(t / 900)) * 5;
     var yD = yRanjang + 18;
-
-    /* cahaya lilin hangat romantis */
     var cg = cx.createRadialGradient(180, yD - 45, 10, 180, yD - 45, 145);
     cg.addColorStop(0, 'rgba(255,195,145,.26)'); cg.addColorStop(1, 'rgba(255,120,100,0)');
     cx.fillStyle = cg; cx.fillRect(35, yD - 190, 290, 260);
 
-    /* 1. Torso cewek bersandar nyaman di bantal kiri-tengah, tubuh sedikit miring menghadap cowok */
-    cx.fillStyle = bajuCwk;
-    cx.beginPath();
-    cx.moveTo(96, yD + 12);
-    cx.quadraticCurveTo(106, yD - 42, 138, yD - 44);
-    cx.quadraticCurveTo(166, yD - 36, 174, yD + 12);
-    cx.closePath(); cx.fill();
+    /* Kedua tubuh Anime 2D asli saling mendekat mesra di atas ranjang */
+    var tpF1 = { atasan: 'none', bawahan: 'none' };
+    gambarKarakterAnime(cx, 152 + cium * 0.5, yD + 44, cwk.g, t, { skala: 1.26, arah: 1, tampilan: tpF1 });
+    gambarKarakterAnime(cx, 206 - cium * 0.5, yD + 44, cwo.g, t + 300, { skala: 1.28, arah: -1, tampilan: tpF1 });
 
-    /* 2. Torso cowok condong mendekat dari kanan memeluk erat & penuh kasih */
-    cx.fillStyle = bajuCwo;
-    cx.beginPath();
-    cx.moveTo(176 - ciumSesekali * 0.4, yD + 12);
-    cx.quadraticCurveTo(186 - ciumSesekali * 0.5, yD - 48, 224 - ciumSesekali * 0.3, yD - 46);
-    cx.quadraticCurveTo(256, yD - 32, 262, yD + 12);
-    cx.closePath(); cx.fill();
-
-    /* 3. Kepala Anime 2D baru saling berhadapan sangat dekat & simetris */
-    gambarKepalaPotret(142 + ciumSesekali * 0.4, yD - 58 + ayun * 1.5, 22, cwk.g, cwk.tp, { rot: -0.12 + ayun * 0.03, merem: true, baju: bajuCwk });
-    gambarKepalaPotret(196 - ciumSesekali * 0.8, yD - 62 + ayun * 1.5, 23, cwo.g, cwo.tp, { rot: 0.14 - ayun * 0.03, merem: true, baju: bajuCwo });
-
-    /* 4. Lengan saling memeluk & tangan cowok mengusap lembut pipi/rambut cewek */
-    cx.strokeStyle = bajuCwk; cx.lineWidth = 10; cx.lineCap = 'round';
-    cx.beginPath(); cx.moveTo(132, yD - 24); cx.quadraticCurveTo(168, yD - 20, 206 - ciumSesekali * 0.4, yD - 36); cx.stroke();
-    bulat(209 - ciumSesekali * 0.4, yD - 37, 5.5, klCwk);
-
-    cx.strokeStyle = bajuCwo; cx.lineWidth = 11; cx.lineCap = 'round';
-    cx.beginPath(); cx.moveTo(222, yD - 20); cx.quadraticCurveTo(186, yD - 28, 156 + usap * 2.5, yD - 44 + usap * 1.8); cx.stroke();
-    bulat(154 + usap * 2.5, yD - 45 + usap * 1.8, 6, klCwo);
-
-    /* 5. Selimut lembut menutupi pinggang ke bawah secara rapi */
+    /* Selimut lembut menutupi pinggul hingga kaki di tepi kasur */
     cx.fillStyle = wrnSel;
     cx.beginPath();
-    cx.moveTo(64, yD + 4);
-    cx.quadraticCurveTo(180, yD - 8 + ayun * 2, 312, yD + 6);
-    cx.lineTo(312, yD + 52); cx.lineTo(64, yD + 52); cx.closePath(); cx.fill();
-    cx.strokeStyle = 'rgba(255,255,255,.26)'; cx.lineWidth = 4;
-    cx.beginPath(); cx.moveTo(70, yD + 4); cx.quadraticCurveTo(180, yD - 7 + ayun * 2, 306, yD + 6); cx.stroke();
-    cx.strokeStyle = wrnSelTua; cx.lineWidth = 2.2;
-    cx.beginPath(); cx.moveTo(86, yD + 24); cx.quadraticCurveTo(185, yD + 14, 294, yD + 26); cx.stroke();
+    cx.moveTo(86, yD - 12);
+    cx.quadraticCurveTo(180, yD - 20 + ayun * 1.5, 274, yD - 12);
+    cx.lineTo(286, yD + 52); cx.lineTo(74, yD + 52); cx.closePath(); cx.fill();
+    cx.strokeStyle = 'rgba(255,255,255,0.28)'; cx.lineWidth = 4; cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(92, yD - 12); cx.quadraticCurveTo(180, yD - 19 + ayun * 1.5, 268, yD - 12); cx.stroke();
   }
   /* kepala vektor romantis (mata terpejam, pipi merona) tetapi tetap mengikuti kulit & gaya rambut karakter */
   function kepalaV(x, y, r, jenis, rot, tpCustom) {
@@ -2372,24 +2383,34 @@
       if (isForeplayIntro) {
         gambarAdeganForeplay(yRanjang, t, cowokDiAtas, cewekDiBawah, wrnSel, wrnSelTua);
       } else {
-        /* P73.3: Posisi tubuh simetris & anatomis nyata di atas ranjang, kulit & wajah 100% selaras Anime 2D baru */
+        /* P73.4: Posisi HB di Ranjang yang 100% logis & anatomis — kepala cewek rebah DI ATAS bantal, leher & bahu cowok tersambung lurus natural! */
         var klCwk = '#fff5ee', klCwo = '#fff3ea';
-        /* 1. Bahu & tubuh atas cewek berbaring natural & simetris di atas bantal */
-        cx.fillStyle = klCwk; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.2;
-        cx.beginPath(); cx.ellipse(106, yRanjang + 8 + pantulKasur * 0.4, 22, 12, -0.06, 0, Math.PI * 2); cx.fill(); cx.stroke();
-        /* 2. Kepala cewek bersandar nyaman di bantal */
-        gambarKepalaPotret(86, yRanjang - 8 + pantulKasur * 0.5, 20, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.22 + ritme * 0.04, merem: true, tanpaLeher: false });
+        /* 1. Cewek berbaring natural DI ATAS bantal (bukan nongol dari kasur) */
+        cx.fillStyle = klCwk; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
+        cx.beginPath();
+        cx.moveTo(96, yRanjang + 2 + pantulKasur * 0.4);
+        cx.quadraticCurveTo(116, yRanjang - 4 + pantulKasur * 0.4, 134, yRanjang + 10 + pantulKasur * 0.4);
+        cx.lineTo(96, yRanjang + 18); cx.closePath(); cx.fill(); cx.stroke();
+        gambarKepalaPotret(86, yRanjang - 14 + pantulKasur * 0.4, 19, cewekDiBawah.g, cewekDiBawah.tp, { rot: -0.14 + ritme * 0.03, merem: true, tanpaLeher: true });
         if (A.nama2) {
           var tpC = A.tpC || tampilanDariNama(A.nama2, A.gC || cewekDiBawah.g, false);
-          gambarKepalaPotret(112, yRanjang + 2 + pantulKasur * 0.5, 18.5, A.gC || cewekDiBawah.g, tpC, { rot: -0.16 - ritme * 0.04, merem: true, tanpaLeher: false });
+          gambarKepalaPotret(110, yRanjang - 8 + pantulKasur * 0.4, 17.5, A.gC || cewekDiBawah.g, tpC, { rot: -0.10 - ritme * 0.03, merem: true, tanpaLeher: true });
         }
-        /* 3. Bahu & lengan cowok Arda Guler tersambung simetris & rapi ke kepala */
-        cx.fillStyle = klCwo; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.2;
-        cx.beginPath(); cx.ellipse(152, yRanjang - 14 + naikTurun * 0.8, 26, 15, 0.22, 0, Math.PI * 2); cx.fill(); cx.stroke();
-        cx.strokeStyle = klCwo; cx.lineWidth = 8.5; cx.lineCap = 'round';
-        cx.beginPath(); cx.moveTo(142, yRanjang - 16 + naikTurun * 0.75); cx.quadraticCurveTo(122, yRanjang - 4 + naikTurun * 0.35, 114, yRanjang + 10); cx.stroke();
-        /* 4. Kepala cowok menunduk mesra & simetris di atas bahunya */
-        gambarKepalaPotret(134 + ritme * 2.0, yRanjang - 35 + naikTurun * 0.7, 20.5, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0.28 + ritme * 0.05, merem: true, tanpaLeher: false });
+        /* 2. Cowok Arda Guler menopang natural dengan bahu, lengan, leher & kepala satu kesatuan lurus (tidak patah!) */
+        cx.save();
+        cx.translate(154, yRanjang - 24 + naikTurun * 0.65);
+        cx.rotate(0.16 + ritme * 0.03);
+        /* Bahu & punggung atas */
+        cx.fillStyle = klCwo; cx.strokeStyle = '#3b2826'; cx.lineWidth = 1.15;
+        cx.beginPath();
+        cx.moveTo(-14, 0); cx.quadraticCurveTo(8, -8, 28, 8);
+        cx.lineTo(24, 34); cx.lineTo(-16, 26); cx.closePath(); cx.fill(); cx.stroke();
+        /* Lengan menopang di kasur */
+        cx.strokeStyle = klCwo; cx.lineWidth = 8; cx.lineCap = 'round';
+        cx.beginPath(); cx.moveTo(-8, 6); cx.lineTo(-22, 30); cx.stroke();
+        /* Kepala langsung tersambung ke leher di atas bahu (rot=0 relatif terhadap bahu -> leher 100% lurus!) */
+        gambarKepalaPotret(-8, -18, 19.5, cowokDiAtas.g, cowokDiAtas.tp, { rot: 0, merem: true, tanpaLeher: false });
+        cx.restore();
         /* 5. Selimut tebal menutupi penuh kedua tubuh dari dada/punggung hingga kaki dengan siluet tubuh jelas & lipatan 3D */
         cx.fillStyle = wrnSel;
         cx.beginPath();
